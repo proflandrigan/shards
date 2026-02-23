@@ -1,12 +1,12 @@
 {
-  "name": "echoes",
+  "name": "shards",
   "version": "1.0.0",
-  "description": "Echoes of JFL's brain — a data-focused agent suite for Claude Code",
+  "description": "Shards of JFL's brain — a data-focused agent suite for Claude Code",
   "keywords": ["claude-code", "agents", "data-science", "data-engineering", "workflows"],
   "license": "MIT",
   "author": "JFL",
   "bin": {
-    "echoes": "tools/install.js"
+    "shards": "tools/install.js"
   },
   "files": [
     "src/",

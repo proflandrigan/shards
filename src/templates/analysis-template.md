@@ -1,12 +1,12 @@
 # Analysis: {{ANALYSIS_NAME}}
 - **Created:** {{DATE}}
-- **Analyst:** Data Analyst Echo
+- **Analyst:** Data Analyst Shard
 - **Status:** In Progress
 
 ---
 
 <!--
-  Adhoc analysis output file. The Data Analyst echo populates this as it
+  Adhoc analysis output file. The Data Analyst shard populates this as it
   works through its phases.
 
   Phases:

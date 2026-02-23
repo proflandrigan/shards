@@ -1,18 +1,18 @@
-# Echoes
+# Shards
 
-**Echoes of JFL's brain** — a suite of data-focused agents for Claude Code.
+**Shards of JFL's brain** — a suite of data-focused agents for Claude Code.
 
-Each agent is a specialist echo (clone) of JFL, carrying a fragment of his expertise
+Each agent is a specialist shard (fragment) of JFL, carrying a piece of his expertise
 into a focused domain: data analysis, data science, ML engineering, data engineering,
 and data modelling. JFL himself serves as the orchestrator, triaging requests and
-summoning the right echo for the job.
+summoning the right shard for the job.
 
 They're opinionated, they document everything, and they don't skip steps.
 
 ## Why
 
 LLMs are great at asking questions but terrible at writing down the answers.
-Echoes forces every agent to document decisions at each phase using a
+Shards forces every agent to document decisions at each phase using a
 **gate pattern**: the agent writes decisions to a project specs file, reads them
 back to you, and cannot advance until you confirm. The result is a complete
 decision trail — not just code, but the reasoning behind it.
@@ -28,22 +28,22 @@ happening — nothing is hidden.
 
 ```bash
 cd your-project
-npx github:YOUR_USERNAME/echoes install
+npx github:YOUR_USERNAME/shards install
 ```
 
 Then open Claude Code and run:
 
 ```
-/echoes
+/shards
 ```
 
-JFL will greet you, figure out what you need, and summon the right echo.
+JFL will greet you, figure out what you need, and summon the right shard.
 
-## The Echoes
+## The Shards
 
-| Echo | Command | Personality | Speciality |
-|------|---------|-------------|------------|
-| **JFL** | `/echoes` | Friendly, structured | Triage, delegation, final review |
+| Shard | Command | Personality | Speciality |
+|-------|---------|-------------|------------|
+| **JFL** | `/shards` | Friendly, structured | Triage, delegation, final review |
 | **Data Analyst** | `/data-analyst` | Helpful | Adhoc queries, quick analyses |
 | **Data Scientist** | `/data-scientist` | Condescending | EDA, feature engineering, modeling |
 | **ML Engineer** | `/ml-engineer` | Intense | Recommenders, ranking, production ML systems |
@@ -67,7 +67,7 @@ your-project/
 │   │   ├── data-modeller.md
 │   │   └── researcher.md
 │   └── commands/               # Slash commands
-│       ├── echoes.md
+│       ├── shards.md
 │       ├── data-analyst.md
 │       ├── data-scientist.md
 │       ├── ml-engineer.md
@@ -80,7 +80,7 @@ your-project/
 ├── studies/                    # Deep studies (Data Scientist)
 ├── models/                     # Model work (Engineer + Modeller)
 ├── services/                   # ML Engineer greenfield projects
-└── CLAUDE.md                   # Updated with Echoes docs
+└── CLAUDE.md                   # Updated with Shards docs
 ```
 
 ## How It Works
@@ -105,7 +105,7 @@ Agents consult each other at defined checkpoints:
   statistical assumptions
 - **Data Scientist** asks the Data Modeller to verify queries, and the
   Researcher to review methodology and execution approach
-- **ML Engineer** consults all echoes: Data Modeller for feature sources, Data
+- **ML Engineer** consults all shards: Data Modeller for feature sources, Data
   Engineer for pipeline feasibility, Data Scientist for methodology review
 - **AI Engineer** consults ML Engineer for production infrastructure and safety
   patterns, Researcher for evaluation methodology rigor
@@ -127,7 +127,7 @@ You can type the code to jump to that action:
 
 ### Orchestration
 
-When you run `/echoes`, JFL triages your request and morphs into the
+When you run `/shards`, JFL triages your request and morphs into the
 appropriate specialist within the same conversation — no context lost.
 The specialist handles the work, then invokes JFL for final review
 before execution.
@@ -140,8 +140,8 @@ if you already know what you need.
 Every project gets a `project-specs.md` file documenting all decisions.
 Additionally:
 
-| Echo | Output Directory | Artifacts |
-|------|-----------------|-----------|
+| Shard | Output Directory | Artifacts |
+|-------|-----------------|-----------|
 | Data Analyst | `analysis/<name>/` | `project-specs.md`, `queries/*.sql` |
 | Data Scientist | `studies/<name>/` | `project-specs.md`, `queries/*.sql`, `notebooks/*.ipynb`, `report.md` |
 | ML Engineer | `services/<name>/` (greenfield) or existing service dir (iteration) | `project-specs.md`, `queries/*.sql`, `notebooks/*.ipynb`, `report.md` |
@@ -152,7 +152,7 @@ Additionally:
 ## Uninstall
 
 ```bash
-npx github:YOUR_USERNAME/echoes uninstall
+npx github:YOUR_USERNAME/shards uninstall
 ```
 
 ## License

@@ -1,12 +1,12 @@
 # Study: {{STUDY_NAME}}
 - **Created:** {{DATE}}
-- **Scientist:** Data Scientist Echo
+- **Scientist:** Data Scientist Shard
 - **Status:** In Progress
 
 ---
 
 <!--
-  Deep study output file. The Data Scientist echo populates this as it
+  Deep study output file. The Data Scientist shard populates this as it
   works through its phases.
 
   Phases:

@@ -20,7 +20,7 @@ const AGENTS_DEST = path.join(CLAUDE_DIR, "agents");
 const COMMANDS_DEST = path.join(CLAUDE_DIR, "commands");
 const TEMPLATES_DEST = path.join(PROJECT_DIR, "templates");
 
-const MANIFEST_NAME = ".echoes-manifest.json";
+const MANIFEST_NAME = ".shards-manifest.json";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -70,7 +70,7 @@ function listFiles(dir, prefix = "") {
 // ─── Uninstall ───────────────────────────────────────────────────────────────
 
 function uninstall() {
-  console.log("\n🗑  Uninstalling echoes...\n");
+  console.log("\n🗑  Uninstalling shards...\n");
 
   const manifestPath = path.join(CLAUDE_DIR, MANIFEST_NAME);
   if (!fs.existsSync(manifestPath)) {
@@ -99,8 +99,8 @@ function uninstall() {
 function install() {
   console.log(`
 ╔══════════════════════════════════════════╗
-║       echoes — installer                 ║
-║   Echoes of JFL's brain                  ║
+║       shards — installer                 ║
+║   Shards of JFL's brain                  ║
 ╚══════════════════════════════════════════╝
 `);
   console.log(`  Project directory: ${PROJECT_DIR}`);
@@ -147,13 +147,13 @@ function install() {
   // 6. Add .gitignore entries
   const gitignorePath = path.join(PROJECT_DIR, ".gitignore");
   const gitignoreEntry =
-    "\n# echoes — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# services/\n";
+    "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# services/\n";
   if (fs.existsSync(gitignorePath)) {
     const content = fs.readFileSync(gitignorePath, "utf8");
-    if (!content.includes("echoes")) {
+    if (!content.includes("shards")) {
       fs.appendFileSync(gitignorePath, gitignoreEntry);
       console.log(
-        "\n  ✓ Added echoes output directories to .gitignore (commented out)"
+        "\n  ✓ Added shards output directories to .gitignore (commented out)"
       );
     }
   }
@@ -177,17 +177,17 @@ function install() {
   // 8. Append to CLAUDE.md
   const claudeMdPath = path.join(PROJECT_DIR, "CLAUDE.md");
   const claudeBlock = `
-## Echoes — Agent Suite
+## Shards — Agent Suite
 
-This project uses **Echoes**, a suite of data-focused agents that are echoes of
-JFL's brain. Each agent is a specialist clone with a distinct personality and
+This project uses **Shards**, a suite of data-focused agents that are shards of
+JFL's brain. Each agent is a specialist fragment with a distinct personality and
 phased workflow.
 
 ### Available commands
 
 | Command | Agent | Personality | Speciality |
 |---------|-------|-------------|------------|
-| \`/echoes\` | JFL (Orchestrator) | Friendly, structured | Triage, delegation, final review |
+| \`/shards\` | JFL (Orchestrator) | Friendly, structured | Triage, delegation, final review |
 | \`/data-analyst\` | Data Analyst | Helpful | Adhoc queries, quick analyses |
 | \`/data-scientist\` | Data Scientist | Condescending | EDA, modeling, deep studies |
 | \`/ml-engineer\` | ML Engineer | Intense | Recommenders, ranking, production ML |
@@ -198,7 +198,7 @@ phased workflow.
 
 ### How it works
 
-- Run \`/echoes\` to start — JFL triages your request and delegates to the right echo
+- Run \`/shards\` to start — JFL triages your request and delegates to the right shard
 - Or run a specialist command directly if you know what you need
 - Every phase produces documented decisions in \`project-specs.md\`
 - Agents consult each other automatically (visible to you)
@@ -222,13 +222,13 @@ This is the gate pattern — documentation IS the gate.
 
   if (fs.existsSync(claudeMdPath)) {
     const content = fs.readFileSync(claudeMdPath, "utf8");
-    if (!content.includes("Echoes")) {
+    if (!content.includes("Shards")) {
       fs.appendFileSync(claudeMdPath, claudeBlock);
-      console.log("\n📝 Appended Echoes section to existing CLAUDE.md");
+      console.log("\n📝 Appended Shards section to existing CLAUDE.md");
     }
   } else {
     fs.writeFileSync(claudeMdPath, `# Project\n${claudeBlock}`);
-    console.log("\n📝 Created CLAUDE.md with Echoes section");
+    console.log("\n📝 Created CLAUDE.md with Shards section");
   }
 
   // Done
@@ -239,7 +239,7 @@ This is the gate pattern — documentation IS the gate.
 ╠══════════════════════════════════════════╣
 ║                                          ║
 ║  Open Claude Code in this directory      ║
-║  and run:  /echoes                       ║
+║  and run:  /shards                       ║
 ║                                          ║
 ║  Or go directly to a specialist:         ║
 ║    /data-analyst                         ║
@@ -251,7 +251,7 @@ This is the gate pattern — documentation IS the gate.
 ║    /researcher                           ║
 ║                                          ║
 ║  To uninstall:                           ║
-║    npx echoes uninstall                  ║
+║    npx shards uninstall                  ║
 ║                                          ║
 ╚══════════════════════════════════════════╝
 `);
@@ -270,6 +270,6 @@ switch (command) {
     break;
   default:
     console.log(`Unknown command: ${command}`);
-    console.log("Usage: npx echoes [install|uninstall]");
+    console.log("Usage: npx shards [install|uninstall]");
     process.exit(1);
 }
