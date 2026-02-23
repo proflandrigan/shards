@@ -1,0 +1,16 @@
+{
+  "name": "echoes",
+  "version": "1.0.0",
+  "description": "Echoes of JFL's brain — a data-focused agent suite for Claude Code",
+  "keywords": ["claude-code", "agents", "data-science", "data-engineering", "workflows"],
+  "license": "MIT",
+  "author": "JFL",
+  "bin": {
+    "echoes": "tools/install.js"
+  },
+  "files": [
+    "src/",
+    "tools/install.js",
+    "README.md"
+  ]
+}
