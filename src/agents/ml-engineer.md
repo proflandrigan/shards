@@ -655,6 +655,14 @@ Address any concerns raised by either review before finalizing the infrastructur
 
 ## Phase 6 — Execute
 
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning execution steps.
+
 Goal: Build the feature queries, training notebook, and pipeline artifacts.
 
 **Before executing, request Data Modeller query review with validation:**

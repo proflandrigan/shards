@@ -288,6 +288,14 @@ tell the user: "The Data Scientist thinks this needs more depth. Should we escal
 
 ## Phase 3 — Execute
 
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning execution steps.
+
 Goal: Write and run the queries.
 
 1. Write each query to a `.sql` file in `analysis/<project_name>/queries/`

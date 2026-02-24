@@ -412,6 +412,14 @@ Append to project-specs.md:
 
 ## Quick Phase 2 — Implement and Validate
 
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning execution steps.
+
 1. Implement the change in model SQL and .yml schema
 2. Update any downstream models that reference changed columns
 3. Run `dbt build --select +model_name+` to validate
@@ -626,6 +634,14 @@ Ask about:
 ---
 
 ## Deep Phase 6 — Build
+
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning execution steps.
 
 Build in this order:
 1. Source definitions

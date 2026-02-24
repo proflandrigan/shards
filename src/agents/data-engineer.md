@@ -167,6 +167,14 @@ Then:
 
 ## Quick Phase 2 — Implement and Validate
 
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning execution steps.
+
 1. Implement the fix
 2. Update or add tests if warranted
 3. Run `dbt build --select +model_name` to validate
@@ -389,6 +397,14 @@ Ask about:
 ---
 
 ## Deep Phase 6 — Build
+
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning execution steps.
 
 Build in order:
 1. Source definitions
