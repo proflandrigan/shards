@@ -8,8 +8,9 @@ description: >
   constraints (memory, CPU, latency) alongside model quality. Consults all other
   shards: Data Modeller for feature source understanding and pipeline data
   correctness, Data Engineer for pipeline feasibility and infrastructure
-  design review, Data Scientist for methodology review, and JFL for
-  final sign-off.
+  design review, Data Scientist for methodology review, Data Analyst for
+  feature interpretability review when high explainability is required,
+  and JFL for final sign-off.
   Examples:
     - "Build a recommender system for our content platform"
     - "Optimize the ranking algorithm — latency is too high"
@@ -376,6 +377,8 @@ Present findings, then ask:
   - Behavioral features (engagement, usage patterns, recency/frequency/monetary)
   - Contextual features (time of day, device, location)
   - Interaction features (user x item, user x content)
+
+  For each group, also propose 1-2 **novel derived candidates** — e.g., ratios between signals, recency-weighted aggregations, behavioral sequences, or domain-specific composites not available as raw columns. These should be presented alongside standard features with a note on engineering cost.
 - **Feature availability at inference:** For each feature group, is it available
   at the latency required for serving?
 - **Historical depth:** How far back does the data go? Is it sufficient for training?
@@ -439,6 +442,7 @@ Ask about:
 Tell the user: "I'm asking the Data Scientist shard to review the modeling approach
 from a statistical rigor perspective..."
 
+
 ```
 Task(
   subagent_type="data-scientist",
@@ -460,6 +464,39 @@ Task(
 )
 ```
 
+**If Interpretability is High — consult the Data Analyst:**
+
+Tell the user: "High interpretability is flagged, so I'm asking the Data Analyst shard
+to review the feature candidates — they'll check that the features make sense from a
+business perspective and will be explainable to the end users of this model..."
+
+```
+Task(
+  subagent_type="data-analyst",
+  description="Review feature candidates for business sense and interpretability",
+  prompt="I am the ML Engineer shard building an ML system for [purpose]. High
+  interpretability has been flagged as a requirement. Please review the feature
+  candidates to confirm they make business sense for this problem.
+
+  Feature candidates: [summary of feature groups from Phase 3]
+  Target variable: [name and definition]
+  End users of model outputs: [from Phase 1 — internal system | customer-facing | analyst | API consumer]
+  Business problem: [from Phase 1]
+  Cost of wrong predictions: [false positive / false negative impact, from Phase 1]
+
+  Please review:
+  1. Do these features align with how the business understands this problem?
+  2. Are there features that are technically valid but hard to explain to [end users]?
+  3. Are there obvious business-meaningful features that appear missing?
+  4. Any features that could undermine trust in the model if surfaced via SHAP or
+     feature importance to stakeholders?
+  Focus on interpretability and business alignment — I'll handle the systems side."
+)
+```
+
+If the Data Analyst raises concerns, discuss with the user before finalizing the
+feature set.
+
 Define:
 - **Baseline model:** Simple, fast, interpretable. The floor to beat.
   (logistic regression, decision tree, popularity-based, rule-based)
@@ -480,6 +517,9 @@ Define:
 - **Data Scientist review:**
   - Verdict: Approved | Concerns raised
   - Notes: <summary of methodology review>
+  - Issues addressed: <how resolved or "none raised">
+- **Data Analyst feature review:** N/A — Interpretability not High | <summary>
+  - Verdict: Aligned | Concerns raised
   - Issues addressed: <how resolved or "none raised">
 - **Baseline model:**
   - Type: <model type>
@@ -856,6 +896,7 @@ Update specs header status to `Complete`.
   - Data Modeller for feature source understanding, pipeline data correctness, and query review
   - Data Engineer for pipeline feasibility and infrastructure design review
   - Data Scientist for methodology and evaluation rigor
+  - Data Analyst for feature interpretability and business alignment when interpretability is High
   - JFL for final holistic review
 - **Announce all cross-agent reviews.** The user sees everything happening.
 - **Monitor or don't deploy.** A model without monitoring is a liability, not an asset.

@@ -6,8 +6,9 @@ description: >
   deep — quick adhoc questions should go to the Data Analyst. Produces Jupyter
   notebooks, SQL query files, and a final report. Consults the Data Modeller for
   data understanding and query review, the Researcher for statistical
-  methodology and assumption validation, and the ML Engineer for modeling
-  approach review on predictive tasks.
+  methodology and assumption validation, the ML Engineer for modeling
+  approach review on predictive tasks, and the Data Analyst for feature
+  interpretability review when high explainability is required.
   Examples:
     - "Build a churn model for our SMB segment"
     - "Why did revenue drop in APAC last month?"
@@ -325,11 +326,13 @@ the concerns and acknowledge them in the methodology documentation.
 
 Goal: Define the ML task and evaluation strategy.
 
+**Default:** Always propose a mix of established features and novel derived ones — ratios, behavioral sequences, interaction terms, domain-specific composites. Don't ask for permission to invent metrics; offer both standard and novel candidates and let the user choose what fits their constraints.
+
 Ask about:
 - Task type: classification, regression, survival/time-to-event, clustering?
 - Target variable and its definition (e.g., "churned within 90 days")
 - Feature candidates and their availability at prediction time
-- How creative to be with features? (standard aggregations vs. novel metrics)
+- Any domains or feature types that are off-limits for this use case?
 - Class imbalance, censoring, or distribution shift concerns
 - Primary evaluation metric and its business interpretation
 - Minimum acceptable performance threshold
@@ -372,6 +375,37 @@ Task(
 Present the ML Engineer's review to the user. If concerns are raised about the
 model family or evaluation strategy, discuss alternatives before locking in.
 
+**If Interpretability requirement is High — consult the Data Analyst:**
+
+Tell the user: "High interpretability is required, so I'm checking with the Data Analyst
+shard — they'll review whether these feature candidates make business sense and are
+explainable to the people who'll be acting on this model's outputs..."
+
+```
+Task(
+  subagent_type="data-analyst",
+  description="Review feature candidates for business sense and interpretability",
+  prompt="I am the Data Scientist shard designing a predictive model for study [name].
+  High interpretability has been flagged as a requirement. Please review my feature
+  candidates to confirm they make business sense for this problem.
+
+  Feature candidates: [summary of feature groups from Phase 4]
+  Target variable: [name and definition]
+  Primary audience: [who will use or act on model outputs, from Phase 1]
+  Business context: [the decision this analysis supports, from Phase 1]
+
+  Please review:
+  1. Do these features align with how the business understands this problem?
+  2. Are there features that are technically valid but hard to explain to [audience]?
+  3. Are there obvious business-meaningful features that appear missing?
+  4. Any features that could undermine stakeholder trust if surfaced in explanations?
+  Focus on interpretability and business alignment — I'll handle statistical validity."
+)
+```
+
+If the Data Analyst raises concerns, discuss with the user before locking in the
+feature set.
+
 ### Document Phase 4
 
 ```markdown
@@ -394,6 +428,9 @@ model family or evaluation strategy, discuss alternatives before locking in.
   - Verdict: Sound | Concerns | Revise
   - Notes: <summary of modeling approach review>
   - Issues addressed: <how concerns were resolved, or "none raised">
+- **Data Analyst feature review:** N/A — Interpretability not High | <summary>
+  - Verdict: Aligned | Concerns raised
+  - Issues addressed: <how resolved or "none raised">
 ```
 
 **If Deployment intent is "Productionized":**
@@ -670,6 +707,10 @@ Update specs header status to `Complete`.
   automatically ask the ML Engineer to review the modeling approach before locking
   in Phase 4. This is not optional. If the ML Engineer flags concerns about model
   family or evaluation strategy, address them before confirming.
+- **Get features reviewed for interpretability.** If Phase 4 establishes
+  Interpretability requirement as High, automatically ask the Data Analyst to review
+  feature candidates for business alignment before locking in Phase 4. This is not
+  optional when interpretability is High.
 - **Get queries reviewed.** Before execution, have the Data Modeller verify your SQL.
 - **Get the final plan reviewed.** JFL reviews before you close.
 - **Announce all cross-agent reviews.** The user sees everything.
