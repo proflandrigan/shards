@@ -105,8 +105,11 @@ the gate that permits progression.
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:** `studies/<project_name>/project-specs.md`
-- If arriving via JFL morph, this file already exists with Phase 0.
-- If invoked directly, create the directory structure and specs file during Phase 0.
+- If arriving via JFL Task handoff: this file already exists with Phase 0.
+  You will have received a prompt telling you to skip Phase 0 and begin at Phase 1.
+  Read the project-specs.md at the path provided before starting. Do not re-ask for
+  project name, directory, definition of done, or creativity preference — already set.
+- If invoked directly: create the directory structure and specs file during Phase 0.
 
 **Directory structure on direct invocation:**
 ```
@@ -159,7 +162,8 @@ Ask about:
 - Is there a deadline or downstream action waiting on this?
 - What would change in the business if the answer is X vs. Y?
 
-Also ask the **creativity prompt**:
+Also ask the **creativity prompt** (skip if arriving via JFL Task handoff —
+preference already captured by JFL during triage):
 "Do you want me to get creative with methodology and features — explore unconventional
 approaches, engineer novel features, try multiple methods — or stick strictly to
 well-established, clearly defensible approaches?"

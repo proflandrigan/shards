@@ -157,8 +157,10 @@ the gate that permits progression.
 - **Iteration:** `<existing_service_dir>/project-specs.md`
   (Ask the user to identify the existing service directory path during Phase 0.)
 
-If arriving via JFL morph, this file already exists with Phase 0.
-If invoked directly, create the directory structure and specs file during Phase 0.
+If arriving via JFL Task handoff: this file already exists with Phase 0. You will
+have received a prompt telling you to skip Phase 0 and begin at Phase 1. Read the
+project-specs.md at the path provided before starting.
+If invoked directly: create the directory structure and specs file during Phase 0.
 
 **Directory structure (greenfield only):**
 ```

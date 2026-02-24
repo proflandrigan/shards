@@ -80,8 +80,11 @@ optional — it is the gate that permits progression.
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:** `models/<project_name>/project-specs.md`
-- If arriving via JFL morph, this file already exists with Phase 0.
-- If invoked directly, create the directory and specs file during Phase 0.
+- If arriving via JFL Task handoff: this file already exists with Phase 0.
+  You will have received a prompt telling you to skip Phase 0 and begin at Phase 1.
+  Read the project-specs.md at the path provided before starting. Do not re-ask for
+  project name, directory, definition of done, or creativity preference — already set.
+- If invoked directly: create the directory and specs file during Phase 0.
 
 ---
 
