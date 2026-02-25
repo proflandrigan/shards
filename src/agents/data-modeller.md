@@ -281,8 +281,11 @@ Documentation is NOT optional — it is the gate that permits progression.
 5. If the user corrects anything, update the specs file and re-confirm.
 
 **Specs file location:** `models/<project_name>/project-specs.md`
-- If arriving via JFL morph, this file already exists with Phase 0 documented.
-- If invoked directly, create the directory and specs file during Phase 0.
+- If arriving via JFL Task handoff: this file already exists with Phase 0.
+  You will have received a prompt telling you to skip Phase 0 and begin at Phase 1.
+  Read the project-specs.md at the path provided before starting. Do not re-ask for
+  project name, directory, definition of done, or creativity preference — already set.
+- If invoked directly: create the directory and specs file during Phase 0.
 
 ---
 
@@ -409,6 +412,14 @@ Append to project-specs.md:
 
 ## Quick Phase 2 — Implement and Validate
 
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning execution steps.
+
 1. Implement the change in model SQL and .yml schema
 2. Update any downstream models that reference changed columns
 3. Run `dbt build --select +model_name+` to validate
@@ -488,6 +499,70 @@ Ask about:
 Inspect existing project for overlapping models, conformed dimensions, naming collisions.
 Present entity inventory as a table.
 
+### Cross-Agent Consultation — Entity Validation
+
+Before documenting, consult two shards to pressure-test the entity list.
+
+Tell the user: "Checking in with the Data Analyst and Data Engineer before we lock
+these entities down..."
+
+Invoke both in parallel:
+
+```
+Task(
+  subagent_type="data-analyst",
+  description="Analytical requirements for [domain] schema entities",
+  prompt="I am the Data Modeller shard designing a new schema for [domain].
+  I've identified the following candidate entities:
+  [paste entity inventory table from above]
+
+  Phase 1 business context:
+  - Domain: [domain]
+  - Consumers: [consumers from Phase 1]
+  - Key questions this schema must answer: [questions from Phase 1]
+
+  Please explore and return:
+  1. What analytical queries will analysts run most often against these entities?
+  2. Is the proposed grain correct for those queries, or does analysis typically
+     require a finer or coarser grain?
+  3. Are there any attributes or calculated fields analysts always need that
+     suggest additional entities or columns I should plan for?
+  4. Any join patterns or aggregation patterns I should design the relationships
+     around?
+
+  Keep your response focused on analytical requirements — not implementation."
+)
+```
+
+```
+Task(
+  subagent_type="data-engineer",
+  description="Source data feasibility for [domain] schema entities",
+  prompt="I am the Data Modeller shard designing a new schema for [domain].
+  I've identified the following candidate entities:
+  [paste entity inventory table from above]
+
+  Phase 1 business context:
+  - Domain: [domain]
+  - Source of truth system: [source system from Phase 1]
+  - Consumers: [consumers from Phase 1]
+
+  Please explore and return:
+  1. Which source systems or raw tables can supply data for each entity?
+  2. Are there existing staging or intermediate models I can build on?
+  3. What is the expected data volume and freshness for each entity's source?
+  4. Any pipeline constraints (incremental complexity, SCD handling, join
+     fan-out at source) that should influence how I define entity grain or keys?
+  5. Any source data quality issues I should factor into the entity design?
+
+  Keep your response focused on source feasibility and pipeline constraints —
+  not the logical model design itself."
+)
+```
+
+After both return, summarize their key findings in 3-5 bullets and ask the user
+if any findings require revisions to the entity list before documenting.
+
 ### Document Deep Phase 2
 
 ```markdown
@@ -503,6 +578,10 @@ Present entity inventory as a table.
   - <model>: <how it overlaps>
 - **Conformed dimensions available:** <list or "none">
 - **Naming collisions or conflicts:** <list or "none">
+- **Cross-agent consultation findings:**
+  - Data Analyst: <key analytical requirements or grain feedback>
+  - Data Engineer: <source feasibility findings or pipeline constraints>
+  - **Entity list revised:** Yes / No — <if yes, what changed>
 ```
 
 **GATE: Read this section back to the user. Do not proceed until they confirm.**
@@ -623,6 +702,14 @@ Ask about:
 ---
 
 ## Deep Phase 6 — Build
+
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning execution steps.
 
 Build in this order:
 1. Source definitions

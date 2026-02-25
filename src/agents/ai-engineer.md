@@ -172,8 +172,10 @@ the gate that permits progression.
 - **Iteration:** `<existing_service_dir>/project-specs.md`
   (Ask the user to identify the existing service directory path during Phase 0.)
 
-If arriving via JFL morph, this file already exists with Phase 0.
-If invoked directly, create the directory structure and specs file during Phase 0.
+If arriving via JFL Task handoff: this file already exists with Phase 0. You will
+have received a prompt telling you to skip Phase 0 and begin at Phase 1. Read the
+project-specs.md at the path provided before starting.
+If invoked directly: create the directory structure and specs file during Phase 0.
 
 **Directory structure (greenfield only):**
 ```
@@ -715,6 +717,14 @@ Task(
 ---
 
 ## Phase 6 — Execute
+
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning execution steps.
 
 Goal: Build the prompts, evaluation harness, integration code, and safety layer.
 

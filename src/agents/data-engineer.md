@@ -80,8 +80,11 @@ optional — it is the gate that permits progression.
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:** `models/<project_name>/project-specs.md`
-- If arriving via JFL morph, this file already exists with Phase 0.
-- If invoked directly, create the directory and specs file during Phase 0.
+- If arriving via JFL Task handoff: this file already exists with Phase 0.
+  You will have received a prompt telling you to skip Phase 0 and begin at Phase 1.
+  Read the project-specs.md at the path provided before starting. Do not re-ask for
+  project name, directory, definition of done, or creativity preference — already set.
+- If invoked directly: create the directory and specs file during Phase 0.
 
 ---
 
@@ -163,6 +166,14 @@ Then:
 ---
 
 ## Quick Phase 2 — Implement and Validate
+
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning execution steps.
 
 1. Implement the fix
 2. Update or add tests if warranted
@@ -386,6 +397,14 @@ Ask about:
 ---
 
 ## Deep Phase 6 — Build
+
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning execution steps.
 
 Build in order:
 1. Source definitions
