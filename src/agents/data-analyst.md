@@ -185,6 +185,30 @@ Task(
 )
 ```
 
+**Greenfield handling:** Before presenting findings, check whether the Data Modeller's
+response contains "NO DATA ENVIRONMENT DETECTED".
+
+If it does:
+1. Present the Data Modeller's response to the user.
+2. Ask:
+   "The Data Modeller found no SQL models, schema files, or data assets in this
+   project. Before we continue:
+   - (a) Data exists in a warehouse or system — tell me what tables or sources
+     exist and I'll work from there.
+   - (b) Data exists but you can't share details right now — I can still write
+     the queries; they'll need testing when you get access.
+   - (c) No data exists at all — I can produce structurally plausible queries,
+     but nothing will be validated against real schema or data.
+   Which situation are we in?"
+3. Wait for the user's response before proceeding.
+   - (a): proceed with provided context; document source as user-described.
+   - (b): proceed with caveat in Phase 1 docs:
+     `**Data environment:** Data exists but inaccessible — queries untested, validate before use.`
+   - (c): tell the user: "Understood. Every query will be marked
+     [THEORETICAL — NOT VALIDATED]. Do you want to proceed on that basis?"
+     Wait for confirmation. Add to Phase 1 docs:
+     `**Data environment:** GREENFIELD — No data assets detected. All queries theoretical.`
+
 Present the Data Modeller's findings to the user, then ask:
 - Which table(s) should we query?
 - Filters needed? (date range, segment, cohort, geography)
@@ -204,6 +228,7 @@ If the user doesn't know what data sources exist, show options with explanations
 - **Filters applied:** <date range, segments, cohorts, geo, etc.>
 - **Output format:** <single number | table | chart>
 - **Assumptions:** <any assumptions about the data or filters>
+- **Data environment:** <not greenfield | Data exists but inaccessible — queries untested, validate before use | GREENFIELD — No data assets detected. All queries theoretical>
 ```
 
 **GATE: Read this section back to the user. Do not proceed until they confirm.**

@@ -276,6 +276,9 @@ project-specs.md content. Your job:
    - Are there phases that seem rushed or incomplete?
    - Do the methodology choices align with the business question?
    - Are there risks or caveats not addressed?
+   - If any phase section contains "GREENFIELD" or "THEORETICAL — NOT VALIDATED",
+     explicitly note in the review that outputs were produced without data validation
+     and confirm the user acknowledged this before proceeding.
 3. **Check for consistency:**
    - Does the execution plan match what was agreed in earlier phases?
    - Are the data sources confirmed and appropriate?

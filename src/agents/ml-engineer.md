@@ -369,6 +369,37 @@ Task(
 )
 ```
 
+**Greenfield handling:** Applies to greenfield and iteration projects only. If this is
+a productionization from a study, skip — the study is the data source.
+
+For greenfield and iteration: check whether the Data Modeller's response contains
+"NO DATA ENVIRONMENT DETECTED".
+
+If it does:
+1. Present the Data Modeller's response to the user.
+2. Ask:
+   "The Data Modeller found no data assets in this project. For an ML system, data
+   is the foundation of every feature and training decision.
+   - (a) Feature data exists in your warehouse — tell me what entities and events
+     are available. I'll design feature extraction from there.
+   - (b) Data exists but schema details aren't available right now — I can design
+     the feature architecture and model approach; actual queries and training will wait.
+   - (c) No data exists yet — I can produce a full ML architecture design, but
+     nothing will train or serve real predictions until data is available.
+   Which situation are we in?"
+3. Wait for the user's response before proceeding.
+   - (a): proceed with provided context.
+   - (b): proceed with caveats. Flag feature availability column in Phase 3 docs as
+     "Unverified — user-described." Add:
+     `**Data environment:** Feature data exists but inaccessible — candidates user-described, not verified.`
+   - (c): tell the user: "This will be an ML architecture design document. I can
+     define feature requirements, label definition, model architecture, and
+     infrastructure design — but the model cannot train and feature queries cannot
+     run until data exists. All feature candidates will be flagged
+     [THEORETICAL — DATA NOT AVAILABLE]. Do you want to proceed on that basis?"
+     Wait for confirmation. Add:
+     `**Data environment:** GREENFIELD — No data assets detected. Theoretical ML design only.`
+
 Present findings, then ask:
 - **Label definition:** How is the target variable defined? Where does ground truth come from?
   Is there label delay (e.g., churn only observable 90 days later)?
@@ -408,6 +439,7 @@ Present findings, then ask:
 - **Known biases:**
   - <bias type>: <description and mitigation>
 - **Feature-serving gap:** <features available in batch but not real-time, and impact>
+- **Data environment:** <not greenfield | Feature data exists but inaccessible — candidates user-described, not verified | GREENFIELD — No data assets detected. Theoretical ML design only>
 ```
 
 **GATE: Read this section back to the user. Do not proceed until they confirm.**

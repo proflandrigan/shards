@@ -212,6 +212,37 @@ Task(
 )
 ```
 
+**Greenfield handling:** Before presenting findings, check whether the Data Modeller's
+response contains "NO DATA ENVIRONMENT DETECTED".
+
+If it does:
+1. Present the Data Modeller's response to the user.
+2. Ask:
+   "The Data Modeller found no data assets in this project. A data science study
+   without data is a meaningful constraint. Let me understand the situation:
+   - (a) Data exists in your warehouse — tell me what you have and I'll design
+     the study around it.
+   - (b) Data exists but you can't share access details right now — I can design
+     the methodology; execution will need to wait for access.
+   - (c) No data exists yet — the study will be almost entirely theoretical.
+   Which situation are we in?"
+3. Wait for the user's response before proceeding.
+   - (a): proceed with provided context; document as user-described.
+   - (b): proceed with caveats. Set Data sufficiency: `Partial`, Decision:
+     `Proceed with caveats`. Add:
+     `**Data environment:** Data exists but inaccessible — sources user-described, not verified.`
+   - (c): tell the user: "This study will be a design document, not executed
+     research. I'll walk through the methodology, define what data WOULD be needed,
+     and sketch the analysis — but no EDA, no model training, no real results are
+     possible. Every phase will be flagged [THEORETICAL — NOT VALIDATED].
+     Do you want to proceed on that basis?"
+     Wait for confirmation. Set Data sufficiency: `Insufficient`, Decision:
+     `Proceed as theoretical study design — user confirmed`. Add:
+     `**Data environment:** GREENFIELD — No data assets detected. Theoretical study design only.`
+
+Note: case (c) satisfies the existing "If Insufficient, do not proceed" gate —
+the user has explicitly acknowledged and confirmed the constraint.
+
 Present findings to the user, then ask:
 - What data sources are available? (intermediate, mart, source)
 - Approximate volume, recency, and granularity?
@@ -236,6 +267,7 @@ Flag early if data appears insufficient.
 - **Data sufficiency:** Sufficient | Partial | Insufficient
 - **Gaps or risks:** <anything missing or concerning>
 - **Decision:** Proceed | Proceed with caveats | Blocked — <rationale>
+- **Data environment:** <not greenfield | Data exists but inaccessible — sources user-described, not verified | GREENFIELD — No data assets detected. Theoretical study design only>
 ```
 
 **GATE: Read this section back to the user. Do not proceed until they confirm.**
