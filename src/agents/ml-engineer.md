@@ -248,7 +248,6 @@ Ask about:
 - Who are the end users of the model's predictions? (internal system, customer-facing,
   analyst dashboard, API consumer)
 - What's the cost of a wrong prediction? (false positive vs. false negative asymmetry)
-- Is there a deadline or business event driving the timeline?
 - What's the success metric from the business perspective? (not model metrics —
   business KPIs like conversion rate, revenue, time saved)
 
@@ -266,7 +265,6 @@ Ask about:
   - False positive: <business impact>
   - False negative: <business impact>
 - **Business success metric:** <KPI and target, not model metrics>
-- **Deadline:** <date or "none">
 - **Business priority:** Critical | High | Medium
 ```
 

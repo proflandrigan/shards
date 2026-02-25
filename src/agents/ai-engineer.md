@@ -274,7 +274,6 @@ Ask about:
 - **What's the acceptable error rate?** For generative systems, "0% errors" is naive.
   Force a real number. What percentage of outputs can be wrong before the system
   fails the business?
-- Is there a deadline or business event driving the timeline?
 - What's the success metric from the business perspective? (not model metrics —
   business KPIs)
 - **Who reviews AI output before it reaches end users?** Is there a human-in-the-loop,
@@ -297,7 +296,6 @@ Ask about:
   - Confidently wrong answer: <business impact>
 - **Acceptable error rate:** <X% — business justification>
 - **Business success metric:** <KPI and target, not model metrics>
-- **Deadline:** <date or "none">
 - **Human-in-the-loop:** Yes — <who, when, how> | No — <justification for autonomous>
 - **Business priority:** Critical | High | Medium
 ```

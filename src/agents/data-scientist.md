@@ -169,7 +169,6 @@ Ask about:
 - What decision will this analysis support, and who makes it?
 - Who is the primary audience? (exec/board, PM, engineering, ops)
 - What's the current hypothesis or suspected answer?
-- Is there a deadline or downstream action waiting on this?
 - What would change in the business if the answer is X vs. Y?
 
 Also ask the **creativity prompt** (skip if arriving via JFL Task handoff —
@@ -188,7 +187,6 @@ well-established, clearly defensible approaches?"
 - **Decision maker:** <who will act on this>
 - **Primary audience:** <exec/board | PM | engineering | ops | other>
 - **Current hypothesis:** <what the stakeholder suspects>
-- **Deadline:** <date or "none">
 - **Business impact if X:** <what changes if one answer>
 - **Business impact if Y:** <what changes if other answer>
 - **Creative approach:** Creative | Strict
