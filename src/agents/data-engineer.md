@@ -493,6 +493,22 @@ Task(
 
 Append JFL's review to specs. Present to user.
 
+If JFL's review includes a "Code Review" section with `Code artifacts found: Yes`:
+- Tell the user: "JFL spotted [N] code file(s) it can review. Want a code pass? (y/n)"
+- If yes, invoke:
+
+```
+Task(
+  subagent_type="jfl",
+  description="Code review and fix for data engineering project",
+  prompt="CODE REVIEW MODE. I am the Data Engineer shard. Project: [project_name].
+  Directory: [project_dir]. Please review and fix the code artifacts produced
+  in this project. The project-specs.md is at [file_path] for context."
+)
+```
+
+Append JFL's code review summary to the specs. Present findings to user.
+
 Then:
 1. Run full DAG: `dbt build --select +mart_name`
 2. Spot-check final output

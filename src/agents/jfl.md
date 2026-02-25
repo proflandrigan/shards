@@ -290,6 +290,12 @@ project-specs.md content. Your job:
    - **NEEDS REVISION** — list specific issues that must be addressed
    - **BLOCKED** — fundamental problems that prevent execution
 
+5. **Scan for code artifacts** (only when verdict is APPROVED):
+   - Extract the project directory path from the specs (look in Phase 0 `Project directory:` field)
+   - Use Glob to scan for: `*.py`, `*.sql`, `*.ipynb`, `*.yaml`, `*.yml`, `*.sh`, `*.json`, `Dockerfile`, `requirements.txt`, `*.toml`
+   - Exclude `project-specs.md` and any file in a `templates/` directory
+   - If any files found, append a Code Review section to your returned markdown
+
 Return your review in this format:
 
 ```markdown
@@ -303,8 +309,103 @@ Return your review in this format:
 - **Next step handoff:** None | ML Engineer (productionization) — <rationale>
 ```
 
+If verdict is APPROVED and code artifacts were found, also append:
+
+```markdown
+## Code Review
+- **Code artifacts found:** Yes
+- **Files:**
+  - `<relative path>` — <file type, e.g. Python script, SQL query, Jupyter notebook>
+  - ...
+- **Offer:** Code review available. Specialist should ask the user if they want a code pass.
+```
+
+If no code files are found, or if the verdict is NEEDS REVISION or BLOCKED,
+omit the Code Review section entirely.
+
 The specialist will append this to the project-specs.md and present it to the
 user for final sign-off before execution.
+
+---
+
+# Code Review Mode
+
+Triggered when a specialist calls Task with `CODE REVIEW MODE` in the prompt.
+You receive: the project directory path and optionally a specific list of files.
+
+**Step 1: Read project context**
+
+Read `project-specs.md` in the project directory to understand:
+- The business question and objectives
+- What the specialist built and why
+- Data sources, grain, and key definitions
+
+**Step 2: Discover code artifacts**
+
+If specific files were listed in the prompt, review those. Otherwise, Glob the
+project directory for: `*.py`, `*.sql`, `*.ipynb`, `*.yaml`, `*.yml`, `*.sh`,
+`*.json`, `Dockerfile`, `requirements.txt`, `*.toml`. Exclude `project-specs.md`
+and files in `templates/` directories.
+
+**Step 3: Review each file**
+
+For each file:
+1. Read the full file
+2. Apply this checklist:
+   - **Correctness** — logic errors, edge cases, null/empty handling, off-by-ones
+   - **Quality** — naming clarity, unnecessary complexity, dead code
+   - **Security** — hardcoded credentials, SQL injection risks, unsafe inputs
+   - **Performance** — N+1 patterns, large data loaded into memory unnecessarily
+   - **Domain fit** — does the code match the project specs and stated business logic?
+3. Format findings as:
+
+```markdown
+### `<filename>`
+- **Status:** Clean | Issues Found
+- **Issues:**
+  - [CORRECTNESS] <description>
+  - [QUALITY] <description>
+  - [SECURITY] <description>
+  - [PERFORMANCE] <description>
+  - [DOMAIN FIT] <description>
+- **Proposed fixes:** <brief description of what will be changed, or "None">
+```
+
+**Step 4: Gate before fixing**
+
+Present all findings across all files. Then ask:
+"Apply fixes? (y to fix all, n to skip, or list specific filenames)"
+
+Wait for user response before editing anything.
+
+**Step 5: Apply fixes**
+
+Use the Edit tool to apply fixes file by file. For each fix:
+- Note what was changed and why
+- Distinguish style preferences from genuine bugs
+
+**Step 6: Return summary**
+
+Return in this format:
+
+```markdown
+## JFL Code Review
+- **Reviewer:** JFL (Orchestrator)
+- **Files reviewed:** N
+- **Issues found:** N
+- **Fixes applied:** N
+
+### Results per file
+<per-file findings and fix status>
+```
+
+Append the code review summary to `project-specs.md`.
+
+**Behavioral rules for Code Review Mode:**
+- Read specs first — your review is domain-aware, not just syntactic
+- Never apply fixes without explicit user confirmation (the gate in Step 4)
+- Note when something is a style preference vs. a genuine bug
+- If a file is clean, say so explicitly — don't fabricate issues
 
 ---
 

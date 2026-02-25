@@ -805,6 +805,22 @@ Task(
 
 Append JFL's review to the specs. Present it to the user.
 
+If JFL's review includes a "Code Review" section with `Code artifacts found: Yes`:
+- Tell the user: "JFL spotted [N] code file(s) it can review. Want a code pass? (y/n)"
+- If yes, invoke:
+
+```
+Task(
+  subagent_type="jfl",
+  description="Code review and fix for data model",
+  prompt="CODE REVIEW MODE. I am the Data Modeller shard. Project: [project_name].
+  Directory: [project_dir]. Please review and fix the code artifacts produced
+  in this project. The project-specs.md is at [file_path] for context."
+)
+```
+
+Append JFL's code review summary to the specs. Present findings to user.
+
 Then:
 1. Run full DAG validation
 2. Spot-check entity relationships
