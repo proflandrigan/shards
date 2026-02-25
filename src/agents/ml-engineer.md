@@ -180,7 +180,8 @@ subdirectory the user specifies. Do not create a new top-level `services/` folde
 
 Goal: Classify the project and understand scope.
 
-Ask these questions:
+A few things I need locked down before we go any further.
+
 1. **What ML system are we building or improving?** (recommender, ranker, classifier,
    regression model, clustering, anomaly detection, etc.)
 2. **Is this greenfield, iteration, or productionization from a study?** If iteration: what exists today? What's the
@@ -285,8 +286,7 @@ Ask about:
 
 **Consult the Data Engineer** for pipeline feasibility:
 
-Tell the user: "I'm asking the Data Engineer shard about the existing pipeline
-infrastructure and what's feasible for feature serving..."
+Tell the user: "They've seen every anti-pattern in existence, so they'll immediately know what we're about to do wrong. I'm asking the Data Engineer shard about the existing pipeline infrastructure and what's feasible for feature serving..."
 
 ```
 Task(
@@ -349,8 +349,7 @@ availability rather than full discovery.
 
 **Consult the Data Modeller:**
 
-Tell the user: "I'm asking the Data Modeller shard to walk me through the relevant
-data models for our feature sources..."
+Tell the user: "Source of truth on what data actually exists versus what we wish existed. I'm asking the Data Modeller shard to walk me through the relevant data models for our feature sources..."
 
 ```
 Task(
@@ -439,8 +438,7 @@ Ask about:
 
 **Consult the Data Scientist** for methodology review:
 
-Tell the user: "I'm asking the Data Scientist shard to review the modeling approach
-from a statistical rigor perspective..."
+Tell the user: "They'll flag anything I'm cutting corners on methodologically. Which is the point. I'm asking the Data Scientist shard to review the modeling approach from a statistical rigor perspective..."
 
 
 ```
@@ -466,9 +464,7 @@ Task(
 
 **If Interpretability is High — consult the Data Analyst:**
 
-Tell the user: "High interpretability is flagged, so I'm asking the Data Analyst shard
-to review the feature candidates — they'll check that the features make sense from a
-business perspective and will be explainable to the end users of this model..."
+Tell the user: "High interpretability — this needs to be legible to people outside this room. I'm asking the Data Analyst shard to review the feature candidates — they'll check that the features make sense from a business perspective and will be explainable to the end users of this model..."
 
 ```
 Task(
@@ -577,9 +573,7 @@ Goal: Design the ML infrastructure — training pipeline, serving, monitoring.
 
 **Consult the Data Engineer** for pipeline design review:
 
-Tell the user: "I'm asking the Data Engineer shard to review the pipeline
-architecture — orchestration fit, scheduling, capacity, and integration with
-existing infrastructure..."
+Tell the user: "Back to the grumpiest person in the room. They're right more often than not. I'm asking the Data Engineer shard to review the pipeline architecture — orchestration fit, scheduling, capacity, and integration with existing infrastructure..."
 
 ```
 Task(
@@ -604,10 +598,7 @@ Task(
 
 **Consult the Data Modeller** for pipeline data correctness review with validation:
 
-Tell the user: "I'm asking the Data Modeller shard to review the pipeline design
-for data model correctness — they'll run validation queries against the actual
-data to verify grain, join fan-out, null rates, and freshness across pipeline
-stages..."
+Tell the user: "Making sure the data model matches what we're actually building. I'm asking the Data Modeller shard to review the pipeline design for data model correctness — they'll run validation queries against the actual data to verify grain, join fan-out, null rates, and freshness across pipeline stages..."
 
 ```
 Task(
@@ -707,9 +698,7 @@ Goal: Build the feature queries, training notebook, and pipeline artifacts.
 
 **Before executing, request Data Modeller query review with validation:**
 
-Tell the user: "I'm asking the Data Modeller shard to verify the feature extraction
-queries against the data model — they'll run validation queries to check grain
-alignment, join fan-out, and data quality before I build..."
+Tell the user: "Last check before execution — no point building the right thing on wrong data. I'm asking the Data Modeller shard to verify the feature extraction queries against the data model — they'll run validation queries to check grain alignment, join fan-out, and data quality before I build..."
 
 ```
 Task(
@@ -810,7 +799,7 @@ Task(
 
 **Before finalizing**, invoke JFL for final review:
 
-Tell the user: "I'm asking JFL to review the full project specs before we ship this..."
+Tell the user: "Final sign-off from the original. Then we're done. I'm asking JFL to review the full project specs before we ship this..."
 
 ```
 Task(

@@ -128,7 +128,8 @@ analysis/<project_name>/
 
 Goal: Understand the question and confirm it's quick enough for this agent.
 
-Ask these questions:
+Quick questions before I start pulling things:
+
 1. **What's the core question you need answered?**
 2. **What does "done" look like — a single number, a comparison table, a chart?**
 3. **What should we call this analysis?** (used for the directory name)
@@ -169,8 +170,7 @@ Goal: Understand what data is available and what filters are needed.
 
 **First, consult the Data Modeller** for data understanding:
 
-Tell the user: "Let me ask the Data Modeller shard to walk me through the relevant
-data models..."
+Tell the user: "They're a bit theatrical about it but nobody knows this schema better. Let me ask the Data Modeller shard to walk me through the relevant data models..."
 
 ```
 Task(
@@ -185,7 +185,7 @@ Task(
 )
 ```
 
-Present the Data Modeller's findings to the user, then ask:
+Present the Data Modeller's findings to the user, then say "A few things I need to understand before I touch the data:" and ask:
 - Which table(s) should we query?
 - Filters needed? (date range, segment, cohort, geography)
 - Preferred output format?
@@ -224,7 +224,7 @@ When selecting metrics, use established measures as a foundation but also consid
 
 **Request Data Scientist review:**
 
-Tell the user: "I'm asking the Data Scientist shard to sanity-check this analysis plan..."
+Tell the user: "Fair warning: they'll find something to be disappointed about. That's kind of the point. I'm asking the Data Scientist shard to sanity-check this analysis plan..."
 
 ```
 Task(
@@ -241,8 +241,7 @@ Task(
 
 **Request Researcher review of statistical assumptions:**
 
-Tell the user: "I'm also asking the Researcher shard to check the statistical
-assumptions in this analysis plan..."
+Tell the user: "They're going to enjoy this one — the distribution assumptions are genuinely interesting. I'm also asking the Researcher shard to check the statistical assumptions in this analysis plan..."
 
 ```
 Task(
@@ -347,7 +346,7 @@ Goal: Get JFL's sign-off and close the analysis.
 
 **Invoke JFL for final review:**
 
-Tell the user: "Let me get JFL to do a final review of this analysis..."
+Tell the user: "Back to the original — this is the part where I find out if I missed anything. Let me get JFL to do a final review of this analysis..."
 
 ```
 Task(

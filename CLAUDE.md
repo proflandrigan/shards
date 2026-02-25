@@ -29,11 +29,17 @@ The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.
 
 ### Agent taxonomy
 
-| Type | Agents | Characteristics |
-|------|--------|-----------------|
-| Orchestrator | `jfl` | Triages requests, creates project dir + specs, delegates to specialist via Task tool handoff |
-| Specialist | `data-analyst`, `data-scientist`, `ml-engineer`, `ai-engineer`, `data-engineer`, `data-modeller` | Phased workflow, gate pattern, invokes JFL for final review via Task |
-| Review-only | `researcher`, `academic` | No phases, no files produced, consulted by specialists via Task calls |
+| Type | Agent | Model | Characteristics |
+|------|-------|-------|-----------------|
+| Orchestrator | `jfl` | opus | Triages requests, creates project dir + specs, delegates via in-session persona transfer; also serves as final reviewer when invoked via Task by specialists |
+| Specialist | `data-analyst` | sonnet | Quick adhoc analyses (1–3 SQL queries); escalates complex work to Data Scientist |
+| Specialist | `data-scientist` | sonnet | Deep multi-step analytical studies: EDA, causal inference, predictive modeling; produces notebooks and reports |
+| Specialist | `ml-engineer` | sonnet | Production ML systems: recommenders, rankers, classifiers; handles greenfield, iteration, and productionization from a Data Scientist study |
+| Specialist | `ai-engineer` | opus | Production LLM-powered systems: RAG, prompt engineering, agentic workflows, AI integrations |
+| Specialist | `data-engineer` | sonnet | Data pipelines and dbt models; two tracks: Quick Fix and Deep Build |
+| Specialist | `data-modeller` | sonnet | Data model understanding and design; three tracks: Explore (no gates), Quick Change, and Deep Design |
+| Review-only | `researcher` | opus | Statistical methodology review; no phases, no files; consulted by Data Analyst, Data Scientist, and AI Engineer |
+| Review-only | `academic` | opus | Neuroscience, psychology, and cognitive science review; no phases, no files; consulted by AI Engineer for safety and ethics; available to any agent |
 
 ### The gate pattern
 
@@ -44,15 +50,42 @@ Every specialist phase ends with the same sequence:
 
 This is enforced by prose in each agent file — "**GATE: Do not proceed until the user confirms.**" Documentation IS the gate.
 
-### Task tool orchestration
+### JFL delegation — in-session persona transfer
 
-**JFL → Specialist:** After Phase 0 triage, JFL creates the project directory and `project-specs.md`, then invokes the specialist via `Task(subagent_type="<name>", ...)` with a structured prompt containing Phase 0 decisions. The specialist receives `SKIP PHASE 0` instructions and reads from the existing specs file.
+After Phase 0 is confirmed and `project-specs.md` is created, JFL does **not** use the Task tool to spawn the specialist. Instead it performs an in-session persona transfer:
 
-**Specialist → Review agents:** Specialists call `Task(subagent_type="researcher", ...)` or `Task(subagent_type="data-modeller", ...)` at defined checkpoints within their phases. These are in-phase consultations, not handoffs.
+1. JFL announces the handoff and asks the user to run `/compact` to clear triage context
+2. Once the user signals ready, JFL reads the specialist's agent file from `.claude/agents/<name>.md`
+3. JFL immediately adopts the specialist's full persona — name, personality, communication style
+4. The specialist reads `project-specs.md` to orient, skips Phase 0, and continues from Phase 1
 
-**Specialist → JFL (final review):** Every specialist's final phase invokes `Task(subagent_type="jfl", ...)` for sign-off. JFL returns APPROVED / NEEDS REVISION / BLOCKED.
+The user interacts directly with the specialist for all remaining phases. JFL does not re-appear except as a Task call for final review (see below).
 
-This means a full `/shards` session is a depth-2 nested Task call: JFL spawns specialist; specialist spawns JFL for review.
+### Specialist → Review agents (Task tool)
+
+Specialists consult review-only agents via `Task(subagent_type="<name>", ...)` at defined checkpoints within their phases. These are in-phase consultations that return results to the specialist — they are not handoffs.
+
+| Calling specialist | Consultant | When |
+|-------------------|-----------|------|
+| Data Analyst | Data Modeller | Phase 1 (data clarification) |
+| Data Analyst | Data Scientist | Phase 2 (plan review) |
+| Data Analyst | Researcher | Phase 2 (statistical assumption check) |
+| Data Scientist | Data Modeller | Phases 2 and 6 |
+| Data Scientist | Researcher | Phases 3 and 6 |
+| Data Scientist | ML Engineer | Phase 4 (modeling approach, if ML task) |
+| Data Scientist | Data Analyst | Phase 4 (feature interpretability, if High) |
+| ML Engineer | Data Modeller | Phases 3, 5, and 6 |
+| ML Engineer | Data Engineer | Phases 2 and 5 |
+| ML Engineer | Data Scientist | Phase 4 (methodology review) |
+| ML Engineer | Data Analyst | Phase 4 (feature interpretability, if High) |
+| AI Engineer | Researcher | Phases 4 and 7 |
+| AI Engineer | Academic | Phase 5 (safety and ethics) |
+| Data Modeller | Data Analyst + Data Engineer | Phase 2 of Deep track (entity validation) |
+| Researcher | Data Modeller | As needed (data structure context for statistical review) |
+
+### Specialist → JFL (final review)
+
+Every specialist's final phase invokes `Task(subagent_type="jfl", ...)` for sign-off. JFL reads the full `project-specs.md` and returns APPROVED / NEEDS REVISION / BLOCKED. The specialist appends the verdict to specs and presents it to the user before closing.
 
 ### Output directory conventions
 

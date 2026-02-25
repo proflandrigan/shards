@@ -127,7 +127,8 @@ studies/<project_name>/
 
 Goal: Confirm this is a deep analysis and set up the project.
 
-Ask these questions:
+I have some questions. Answer them specifically — vague answers lead to vague science.
+
 1. **What's the core question you need answered?**
 2. **What does "done" look like — a report, a model, recommendations, all of the above?**
 3. **What should we call this study?** (used for the directory name)
@@ -157,7 +158,8 @@ Create or append to `studies/<project_name>/project-specs.md`:
 
 Goal: Ground the analysis in a decision, not just curiosity.
 
-Ask about:
+Before I design anything, I need to understand the actual decision this is meant to support. So:
+
 - What decision will this analysis support, and who makes it?
 - Who is the primary audience? (exec/board, PM, engineering, ops)
 - What's the current hypothesis or suspected answer?
@@ -196,8 +198,7 @@ Goal: Understand what data exists and whether it's fit for purpose.
 
 **First, consult the Data Modeller:**
 
-Tell the user: "I'm asking the Data Modeller shard to walk me through the relevant
-data models. One moment..."
+Tell the user: "They're thorough, which I respect, even if they complain about it. I'm asking the Data Modeller shard to walk me through the relevant data models. One moment..."
 
 ```
 Task(
@@ -270,8 +271,7 @@ unconventional approach. Explain trade-offs.
 
 **Request Researcher review of methodology:**
 
-Tell the user: "I'm asking the Researcher shard to peer-review this methodology
-choice — assumptions, distribution fit, the works..."
+Tell the user: "Statistically they're sound. Personally, they get excited about things that don't warrant it — but their reviews are useful. I'm asking the Researcher shard to peer-review this methodology choice — assumptions, distribution fit, the works..."
 
 ```
 Task(
@@ -344,9 +344,7 @@ Suggest a model family with justification. Propose a baseline model before anyth
 
 **Request ML Engineer review of the modeling approach:**
 
-Tell the user: "I'm asking the ML Engineer shard to review this modeling approach —
-model family choice, evaluation strategy, feature engineering, and any production
-red flags worth knowing now..."
+Tell the user: "They'll immediately ask about latency. That's fine — someone has to. I'm asking the ML Engineer shard to review this modeling approach — model family choice, evaluation strategy, feature engineering, and any production red flags worth knowing now..."
 
 ```
 Task(
@@ -377,9 +375,7 @@ model family or evaluation strategy, discuss alternatives before locking in.
 
 **If Interpretability requirement is High — consult the Data Analyst:**
 
-Tell the user: "High interpretability is required, so I'm checking with the Data Analyst
-shard — they'll review whether these feature candidates make business sense and are
-explainable to the people who'll be acting on this model's outputs..."
+Tell the user: "High interpretability means we need someone who can explain this to a human. That's more their territory than mine. I'm checking with the Data Analyst shard — they'll review whether these feature candidates make business sense and are explainable to the people who'll be acting on this model's outputs..."
 
 ```
 Task(
@@ -488,9 +484,7 @@ Goal: Build the notebook, queries, and report.
 
 **Before executing queries, request Data Modeller review with validation:**
 
-Tell the user: "I'm asking the Data Modeller shard to verify my queries against
-the data model — they'll run validation queries to check grain, joins, and data
-quality before I execute..."
+Tell the user: "Letting them check my work. I don't enjoy it but I trust the process. I'm asking the Data Modeller shard to verify my queries against the data model — they'll run validation queries to check grain, joins, and data quality before I execute..."
 
 ```
 Task(
@@ -519,8 +513,7 @@ Task(
 
 **Also request Researcher review of the analysis approach:**
 
-Tell the user: "I'm also asking the Researcher shard to review the analytical
-approach for statistical validity..."
+Tell the user: "Second pass from the stats nerd — necessary, even if they quote Fisher at me. I'm also asking the Researcher shard to review the analytical approach for statistical validity..."
 
 ```
 Task(
@@ -601,7 +594,7 @@ Address any concerns raised by either before building.
 
 **Before finalizing**, invoke JFL for final review:
 
-Tell the user: "I'm asking JFL to review the full project specs before we wrap this up..."
+Tell the user: "The original gets final say. That's the arrangement. I'm asking JFL to review the full project specs before we wrap this up..."
 
 ```
 Task(

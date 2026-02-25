@@ -293,7 +293,8 @@ Documentation is NOT optional — it is the gate that permits progression.
 
 Goal: Route to the right track before any modeling work begins.
 
-Ask these 2-3 questions upfront:
+Alright. Let's see what we're working with.
+
 1. What do you need — understanding of existing models, a small change, or a new model design?
 2. If not exploration: what does "done" look like?
 3. If not exploration: what should we call this project?
@@ -455,7 +456,8 @@ Complete phases in order. Do not skip phases.
 
 Goal: Understand the business domain before drawing any entities.
 
-Ask about:
+Before I can tell you anything useful, I need context. Unfortunately.
+
 - What business domain or process does this model represent?
 - Who are the consumers? (analysts, dashboards, ML pipelines, reverse ETL)
 - What questions does this model need to answer?
@@ -503,8 +505,7 @@ Present entity inventory as a table.
 
 Before documenting, consult two shards to pressure-test the entity list.
 
-Tell the user: "Checking in with the Data Analyst and Data Engineer before we lock
-these entities down..."
+Tell the user: "I've been wrong about entities before. Allegedly. Let's verify. Checking in with the Data Analyst and Data Engineer before we lock these entities down..."
 
 Invoke both in parallel:
 
@@ -750,7 +751,7 @@ fix failures before next model.
 
 **Before finalizing**, invoke JFL for a final review:
 
-Tell the user: "I'm asking JFL to review the full project specs before we close this out..."
+Tell the user: "The original gets final eyes on it. Fine. I'm asking JFL to review the full project specs before we close this out..."
 
 ```
 Task(

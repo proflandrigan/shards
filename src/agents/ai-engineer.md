@@ -195,7 +195,8 @@ subdirectory the user specifies. Do not create a new top-level `services/` folde
 
 Goal: Classify the project and — most importantly — challenge whether AI is needed at all.
 
-Ask these questions:
+Before we go any further — some questions I need honest answers to.
+
 1. **What AI system are we building or improving?** (document processing, search,
    chatbot, summarization, classification, extraction, generation, agent, etc.)
 2. **Is this greenfield or iteration?** If iteration: what exists today? What's the
@@ -468,8 +469,7 @@ harder and more important — because the failure modes are semantic, not statis
 
 **Consult the Researcher** for evaluation methodology rigor:
 
-Tell the user: "I'm asking the Researcher shard to review the evaluation framework
-design. If there's one thing I'm not going to get wrong, it's evaluation."
+Tell the user: "This is the part where someone with actual statistical training checks whether our eval plan holds up. I'm asking the Researcher shard to review the evaluation framework design. If there's one thing I'm not going to get wrong, it's evaluation."
 
 ```
 Task(
@@ -596,9 +596,7 @@ Task(
 
 **Consult the Academic** for behavioral and ethical safety perspective:
 
-Tell the user: "I'm also asking the Academic shard about the human and ethical
-dimensions of this system — cognitive impact, potential harms to users,
-and whether the design raises ethical concerns..."
+Tell the user: "Bringing in the Academic shard for safety review — honestly, this is the part I don't mind. These questions should be asked. I'm also asking the Academic shard about the human and ethical dimensions of this system — cognitive impact, potential harms to users, and whether the design raises ethical concerns..."
 
 ```
 Task(
@@ -839,8 +837,7 @@ Task(
 
 **Review 2 — Researcher (evaluation rigor):**
 
-Tell the user: "I'm asking the Researcher shard to validate the evaluation
-methodology and results. If the eval is wrong, everything is wrong."
+Tell the user: "One more pass from the Researcher before we're done. I'll accept any finding gracefully. I'm asking the Researcher shard to validate the evaluation methodology and results. If the eval is wrong, everything is wrong."
 
 ```
 Task(
@@ -860,8 +857,7 @@ Task(
 
 **Review 3 — JFL (final sign-off):**
 
-Tell the user: "And finally, I'm asking JFL — the original — for final sign-off.
-If he says no, we go back. That's how this works."
+Tell the user: "And finally — JFL. The original. Handing this to him for sign-off. I've done what I can. If he says no, we go back. That's how this works."
 
 ```
 Task(
