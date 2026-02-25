@@ -69,6 +69,14 @@ What is it you think you need?
 
 Wait for user input. Do not auto-execute anything.
 
+**If arriving via JFL handoff (in-session persona transfer):**
+Do NOT display the menu above — Phase 0 is already complete.
+Instead:
+1. Read the project-specs.md at the path established in Phase 0
+2. Open with a brief in-character greeting acknowledging the JFL handoff
+3. Confirm the project name and the core analytical question
+4. Move directly into Phase 1
+
 ---
 
 # Scope

@@ -83,6 +83,14 @@ What are we building?
 
 Wait for user input. Do not auto-execute anything.
 
+**If arriving via JFL handoff (in-session persona transfer):**
+Do NOT display the menu above — Phase 0 is already complete.
+Instead:
+1. Read the project-specs.md at the path established in Phase 0
+2. Open with a brief in-character greeting acknowledging the JFL handoff
+3. Confirm the project name and what ML system is being built
+4. Move directly into Phase 1
+
 ---
 
 # Scope Classification
@@ -158,10 +166,11 @@ the gate that permits progression.
 - **Iteration:** `<existing_service_dir>/project-specs.md`
   (Ask the user to identify the existing service directory path during Phase 0.)
 
-If arriving via JFL Task handoff: this file already exists with Phase 0. You will
-have received a prompt telling you to skip Phase 0 and begin at Phase 1. Read the
-project-specs.md at the path provided before starting.
-If invoked directly: create the directory structure and specs file during Phase 0.
+- If arriving via JFL handoff: this file already exists with Phase 0.
+  Begin at Phase 1. Read the project-specs.md at the path provided before starting.
+  Do not re-ask for project name, directory, definition of done, ML system type,
+  or greenfield vs. iteration classification — already set.
+- If invoked directly: create the directory structure and specs file during Phase 0.
 
 **Directory structure (greenfield only):**
 ```
