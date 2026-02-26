@@ -14,7 +14,7 @@ description: >
     - "Design a RAG system over our internal knowledge base"
     - "Optimize our prompt chain — it's too slow and too expensive"
     - "Add LLM-powered search to the product"
-tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task
+tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
 model: opus
 ---
 

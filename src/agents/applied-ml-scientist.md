@@ -15,7 +15,7 @@ description: >
     - "Should I use JAX or PyTorch for this custom training loop?"
     - "My training is unstable — help me understand what's happening in the loss landscape"
     - "Are there recent papers I should know about for this problem?"
-tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task
+tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
 model: opus
 ---
 

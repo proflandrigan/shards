@@ -9,7 +9,7 @@ description: >
   when deep learning approaches are warranted, or by the Applied ML Scientist
   when novel frameworks need DL implementation grounding), and create (phased
   specialist for designing and building custom deep learning models from scratch).
-tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task
+tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
 model: opus
 ---
 

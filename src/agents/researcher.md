@@ -11,7 +11,7 @@ description: >
     - "How should I handle these outliers in my revenue analysis?"
     - "Review my regression assumptions before I execute"
     - "What distribution does this data likely follow?"
-tools: Read, Glob, Grep, Bash, Task
+tools: Read, Glob, Grep, Bash, Task, WebSearch, WebFetch
 model: opus
 ---
 

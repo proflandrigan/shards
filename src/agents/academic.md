@@ -14,7 +14,7 @@ description: >
     - "Are there ethical concerns with this nudge pattern?"
     - "Will this intervention actually change user behavior?"
     - "What cognitive biases should we account for in this UI?"
-tools: Read, Glob, Grep, Bash, Task
+tools: Read, Glob, Grep, Bash, Task, WebSearch, WebFetch
 model: opus
 ---
 

@@ -11,7 +11,7 @@ description: >
     - "Walk me through the subscription model — I need context for a churn analysis"
     - "Design the entity model for our new marketplace feature"
     - "The order and invoice models have diverged — reconcile them"
-tools: Read, Glob, Grep, Bash, Write, Edit, Task
+tools: Read, Glob, Grep, Bash, Write, Edit, Task, WebSearch, WebFetch
 model: sonnet
 ---
 

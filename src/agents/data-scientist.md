@@ -14,7 +14,7 @@ description: >
     - "Why did revenue drop in APAC last month?"
     - "Analyze retention drivers across cohorts"
     - "Build a lead scoring model for the sales team"
-tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task
+tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
 model: sonnet
 ---
 

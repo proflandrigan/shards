@@ -11,7 +11,7 @@ description: >
     - "Top 10 customers by revenue last month"
     - "How many active teachers do we have by region?"
     - "Quick comparison of engagement metrics week over week"
-tools: Read, Write, Edit, Glob, Grep, Bash, Task
+tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
 model: sonnet
 ---
 
