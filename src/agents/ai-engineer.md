@@ -942,6 +942,22 @@ Task(
 
 Append all four reviews to specs. Present to user.
 
+**If JFL returns NEEDS REVISION:**
+1. Address the specific issues JFL flagged.
+2. Update project-specs.md with the changes.
+3. Re-gate with the user: "JFL flagged [N] issues. Here's what I changed: [summary]. Confirm to resubmit?"
+4. Resubmit to JFL ONCE more.
+
+**If JFL returns NEEDS REVISION a second time:**
+Do not resubmit again. Instead, present to the user:
+"JFL has flagged concerns twice. Here is the current conflict:
+- JFL's concern: [verbatim from JFL's second review]
+- Current state of specs: [summary of what's documented]
+How would you like to proceed? (a) Override JFL and execute as-is — I'll document the disagreement. (b) Continue revising — tell me what to change. (c) Stop the project."
+
+Document the outcome in specs:
+**JFL review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
+
 If JFL's review includes a "Code Review" section with `Code artifacts found: Yes`:
 - Tell the user: "JFL spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
@@ -994,6 +1010,7 @@ Then:
   - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary>
   - Recommendation: <proceed | revise phase X | discuss with user>
+- **JFL review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Report location:** <file path>
 - **System summary:**
   - Architecture: <simplicity ladder position and description>
