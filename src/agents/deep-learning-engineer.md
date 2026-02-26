@@ -697,8 +697,32 @@ Task(
 
 Append MLOps Engineer's review to specs.
 
-If any review raises blocking concerns, discuss with the user and revise
-before proceeding.
+**Multi-reviewer conflict protocol:**
+
+If no reviewer returns a blocking verdict (REDESIGN, Revise, or Redesign needed):
+→ Proceed to report.md. Document all three verdicts.
+
+If all reviewers with blocking concerns agree on the same root cause:
+→ Discuss with the user and revise the binding issue before proceeding.
+
+If reviewers disagree — one or two block while the other(s) do not:
+→ Present the conflict explicitly to the user:
+
+  "The reviewers disagree:
+   - ML Engineer verdict: [DEPLOY | OPTIMIZE | REDESIGN] — [key reason]
+   - Applied ML Scientist verdict: [Sound | Consider Alternatives | Revise] — [key reason]
+   - MLOps Engineer verdict: [Approved | Concerns | Redesign needed] — [key reason]
+
+   This is a genuine constraint conflict. Which is the binding constraint for
+   this project: production feasibility, methodological rigor, or operational
+   readiness? Your answer determines what we fix first."
+
+Document the user's decision in project-specs.md:
+
+**Reviewer conflict resolution:** Production-first | Methodology-first | Operations-first | User override — <rationale>
+
+Then address the binding constraint before proceeding. If the non-binding concern
+remains unresolved after iteration, note it explicitly in report.md Limitations.
 
 **Create `models/<project_name>/report.md`:**
 
