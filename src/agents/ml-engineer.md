@@ -219,9 +219,10 @@ Ask these questions:
 1. **What ML system are we building or improving?** (recommender, ranker, classifier,
    regression model, clustering, anomaly detection, etc.)
 2. **Is this greenfield, iteration, or productionization from a study?** If iteration: what exists today? What's the
-   current performance? What needs to improve? If the user mentions a Data Scientist
-   study or handoff: ask for the study directory path and read the study's
-   `project-specs.md` to understand the research context.
+   current performance? What needs to improve? If productionization from a study: ask for the study directory path.
+   Look for `ml-engineer-handoff.md` in that directory and read it if present — it contains the model design,
+   results, and business context from the Data Scientist. Also read `project-specs.md` for full research context.
+   If `ml-engineer-handoff.md` is not found, ask the user to describe the study's key model and feature decisions.
 3. **If iteration — where does the service live?** What is the path to the existing
    service directory? (This is where `project-specs.md` and artifacts will be written.)
 4. **What does "done" look like?** (trained model, deployed service, performance

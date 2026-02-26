@@ -692,28 +692,47 @@ Then:
 4. Flag open questions or follow-up analyses
 5. Ask if the result answered the original decision question
 
-6. **If Deployment intent was "Productionized"** — prepare the ML Engineer handoff:
+6. **If Deployment intent was "Productionized"** — write a persistent handoff file before closing:
 
    Tell the user: "This study is complete, and the analysis stands on its own. But since
    you flagged this for productionization, the next step is handing off to the ML Engineer
    shard. They handle the production side — serving infrastructure, retraining pipelines,
-   monitoring, and deployment. I'm preparing a handoff summary they can reference."
+   monitoring, and deployment. I'm writing a handoff file they can read directly."
 
-   Then include in your final output:
+   Write the file `studies/<project_name>/ml-engineer-handoff.md`:
 
    ```
-   ## ML Engineer Handoff Summary
-   - **Source study:** studies/<project_name>/
-   - **Study specs:** studies/<project_name>/project-specs.md
-   - **Model type:** <from Phase 4 — task type and candidate model(s)>
-   - **Target variable:** <from Phase 4>
-   - **Key features:** <from Phase 4 — feature candidates summary>
-   - **Best model performance:** <from Phase 6 — metric: value>
-   - **Notebook location:** <from Phase 6>
-   - **Query files:** <from Phase 6>
-   - **Business context:** <from Phase 1 — decision this supports>
-   - **Interpretability requirement:** <from Phase 4>
-   - **Recommended next step:** Run `/ml-engineer` or `/shards` to start productionization
+   # ML Engineer Handoff: <project_name>
+
+   ## Source Study
+   - Study directory: studies/<project_name>/
+   - Study specs: studies/<project_name>/project-specs.md
+   - Study report: studies/<project_name>/report.md
+
+   ## Model Design (from Phase 4)
+   - Task type: <from Phase 4>
+   - Target variable: <from Phase 4>
+   - Prediction window: <from Phase 4>
+   - Feature candidates: <summary from Phase 4>
+   - Baseline model: <from Phase 4>
+   - Candidate model(s): <from Phase 4>
+   - Interpretability requirement: <from Phase 4>
+
+   ## Results (from Phase 6)
+   - Best metric: <metric: value>
+   - Notebook: <path from Phase 6>
+   - Query files: <paths from Phase 6>
+
+   ## Business Context (from Phase 1)
+   - Decision this supports: <from Phase 1>
+   - Decision maker: <from Phase 1>
+
+   ## Constraints
+   - Deployment intent: Productionized
+   - Constraints flagged: <any from ML Engineer review in Phase 4, or "None">
+
+   ## Next Step
+   Run `/ml-engineer` or `/shards`. Reference this file in Phase 0.
    ```
 
    Stop here and suggest running `/ml-engineer` or `/shards` to start the productionization project.
@@ -739,7 +758,7 @@ Then:
   - <question or follow-up>
 - **Original question answered:** Yes | Partially | No — <explanation>
 - **Productionization handoff:** Yes — ML Engineer | No — one-off study
-- **If handoff — ML Engineer summary:** <included in report or "N/A">
+- **If handoff — ML Engineer handoff file:** studies/<project_name>/ml-engineer-handoff.md | N/A
 - **Status:** Complete
 ```
 
