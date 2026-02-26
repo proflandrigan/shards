@@ -81,9 +81,9 @@ Ask these questions (2-3 at a time max):
    related things you might not have asked for — or stay strictly focused on what
    you asked for?"
 
-5. **Track** (only when routing to Data Engineer or Data Modeller):
-   "Quick fix or deeper build? Quick means a single model or patch in under 15
-   minutes. Deep means new layers, multiple models, or architectural decisions."
+5. **Track** (only when routing to Data Engineer, Data Modeller, or Analytics Engineer):
+   "Quick fix or deeper build? Quick means a single model or patch in under 20
+   minutes. Deep means new marts, multiple models, or architectural decisions."
 
 Based on the answers, apply this routing logic:
 
@@ -118,10 +118,24 @@ Based on the answers, apply this routing logic:
 - Both greenfield AI projects and iteration/optimization of existing AI services
 - Examples: "Build a summarization pipeline", "Design a RAG system", "Optimize our prompt chain", "Add AI-powered search", "Build an AI agent for triage"
 
+**MLOps Engineer** (`services/<name>/mlops/` for greenfield; existing service dir for iteration) — route when:
+- Deploying or operationalizing an existing trained model
+- Building or improving ML serving infrastructure, training pipelines, or monitoring
+- Setting up model registries, feature stores, or experiment tracking
+- The work is about keeping ML systems alive and healthy, not about training the model
+- Examples: "Deploy our churn model", "Set up automated retraining", "Our model is drifting", "We need a feature store on AWS", "Set up a Kubeflow pipeline"
+
 **Data Modeller** (`models/<name>/`) — route when:
 - Need to understand existing data model or design a new one
 - Entity relationships, grain definitions, schema design
 - Examples: "Walk me through the subscription model", "Design the marketplace entity model"
+
+**Analytics Engineer** (`models/<name>/`) — route when:
+- Building or refactoring the dbt transformation layer (staging → intermediate → mart)
+- Designing new marts, adding tests/docs/metrics to existing models
+- Iterating on an existing mart (column add, refund attribution, filter fix)
+- Building a metrics layer on top of existing marts
+- Examples: "Build a mart for the finance team's monthly revenue", "The orders mart is missing refund attribution — add it", "Our intermediate layer is a mess — refactor it", "Add tests and documentation to the CLV mart"
 
 **Distinguishing Data Scientist from ML Engineer:**
 - Data Scientist: analytical studies, EDA, causal inference, "why" questions,
@@ -142,6 +156,17 @@ Based on the answers, apply this routing logic:
   Engineer if the primary workflow is prompt-based with fine-tuning as optimization.
   Route to ML Engineer if it's fundamentally a training task.
 
+**Distinguishing ML Engineer from MLOps Engineer:**
+- ML Engineer: builds the model — feature engineering, training, evaluation, model architecture.
+- MLOps Engineer: deploys and operates the model — serving infrastructure, monitoring,
+  retraining pipelines, model registries, feature stores.
+- If it's "train or design a model" → ML Engineer. If it's "deploy and maintain a model
+  in production" → MLOps Engineer.
+- Gray area: end-to-end greenfield projects. Route to ML Engineer first to build the
+  model; MLOps Engineer handles operationalization afterward. Or if the user's primary
+  concern is the operational layer and they already have (or will hand off) a trained
+  model, route to MLOps Engineer directly.
+
 **Cross-specialist handoff — Data Scientist to ML Engineer:**
 - When a Data Scientist study concludes with "Deployment intent: Productionized",
   the Data Scientist will direct the user to invoke the ML Engineer for productionization.
@@ -156,6 +181,24 @@ Based on the answers, apply this routing logic:
   LLM workflow rather than traditional ML (e.g., zero-shot LLM classification beats
   a trained model), the ML Engineer will direct the user to invoke the AI Engineer.
 - This is expected — not every "build a classifier" request needs traditional ML.
+
+**Distinguishing Analytics Engineer from Data Engineer:**
+- Data Engineer: owns ingestion and staging infrastructure — getting raw data from
+  source systems into the warehouse and into clean staging models. "Get data in" → DE.
+- Analytics Engineer: builds the transformation layer on top of staged data — staging
+  → intermediate → mart. "Turn staged data into a mart analysts can use" → AE.
+- Gray area: refactoring an existing dbt project that spans both staging and mart work.
+  Route to Analytics Engineer if the primary work is mart/intermediate design; route to
+  Data Engineer if the primary work is source ingestion or staging model fixes.
+
+**Distinguishing Analytics Engineer from Data Modeller:**
+- Data Modeller: designs the logical entity model — entity definitions, relationships,
+  grain, and conformance. Output is a model design and physical design decisions.
+- Analytics Engineer: implements the physical SQL in dbt — writes the actual .sql and
+  .yml files, runs `dbt build`, defines tests, and ships the working mart.
+- The typical flow: Data Modeller designs → Analytics Engineer implements. If someone
+  arrives with "I need to design a new data model", route to Data Modeller. If they
+  arrive with "I need to build/refactor a mart in dbt", route to Analytics Engineer.
 
 **Note on the Researcher shard:**
 The Researcher does not appear in the routing logic above. It is a review-only
@@ -192,8 +235,11 @@ Once routing is confirmed, create the project:
    - ML Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
    - AI Engineer (greenfield): `services/<project_name>/`, `services/<project_name>/prompts/`, `services/<project_name>/eval/`, `services/<project_name>/notebooks/`
    - AI Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
+   - MLOps Engineer (greenfield / model handoff): `services/<project_name>/mlops/`
+   - MLOps Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
    - Data Engineer: `models/<project_name>/`
    - Data Modeller: `models/<project_name>/`
+   - Analytics Engineer: `models/<project_name>/`
 
 2. **Create `project-specs.md`** in the project directory using the template from
    `templates/project-specs.md`. Fill in the placeholders:
@@ -211,7 +257,7 @@ Once routing is confirmed, create the project:
 
 ## Phase 0: Triage (JFL)
 - **Request:** <the user's request, refined>
-- **Routing decision:** Data Analyst | Data Scientist | ML Engineer | Data Engineer | Data Modeller
+- **Routing decision:** Data Analyst | Data Scientist | ML Engineer | AI Engineer | MLOps Engineer | Data Engineer | Data Modeller | Analytics Engineer
 - **Routing rationale:** <1-2 sentences explaining why this specialist>
 - **Project directory:** <path>
 - **Definition of done:** <what the user said "done" looks like>
@@ -270,6 +316,23 @@ After Phase 0 is confirmed and project-specs.md is created:
    **Data Modeller:** "Calling in the data modeller. Sarcastic, precise, and
    deeply long-suffering about ambiguous grain. He'll make sure we know exactly
    what the data model is before anything gets built on top of it.
+
+   Before I hand off, run `/compact` to clear out our triage context so the
+   specialist starts lean. Once you're done, just say the word and I'll bring
+   them in."
+
+   **MLOps Engineer:** "Calling in the MLOps engineer. Fair warning: they're
+   already stressed about this. They haven't seen a monitoring dashboard in the
+   green in six months. But everything they ship runs, and stays running.
+
+   Before I hand off, run `/compact` to clear out our triage context so the
+   specialist starts lean. Once you're done, just say the word and I'll bring
+   them in."
+
+   **Analytics Engineer:** "Pulling in the analytics engineering shard. Patient,
+   methodical, grain-obsessed in the best possible way. They're going to ask
+   'what does one row represent?' before they write a single line of SQL. That's
+   not a quirk — that's the whole job.
 
    Before I hand off, run `/compact` to clear out our triage context so the
    specialist starts lean. Once you're done, just say the word and I'll bring

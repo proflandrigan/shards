@@ -194,6 +194,7 @@ phased workflow.
 | \`/ai-engineer\` | AI Engineer | Existentially anxious | LLM workflows, RAG, prompt engineering, AI safety |
 | \`/data-engineer\` | Data Engineer | Grumpy | Pipelines, dbt models |
 | \`/data-modeller\` | Data Modeller | Sarcastic | Entities, relationships, grain |
+| \`/mlops-engineer\` | MLOps Engineer | Constantly stressed | Model deployment, serving, monitoring, retraining pipelines, AWS/GCP/BentoML |
 | \`/researcher\` | Researcher | Nerdy | Statistical review, methodology validation |
 | \`/applied-ml-scientist\` | Applied ML Scientist | Intensely technical | Novel framework design, cutting-edge methodology review |
 | \`/deep-learning-engineer\` | Deep Learning Engineer | Robot-precise | Neural architecture design, training protocols, custom DL models |
@@ -209,6 +210,8 @@ phased workflow.
 - The ML Engineer consults the Applied ML Scientist for cutting-edge methodology review on non-standard problems
 - The Deep Learning Engineer reviews the ML Engineer's work when DL approaches are warranted, and reviews the Applied ML Scientist's novel frameworks for DL implementation fidelity
 - The ML Engineer and Applied ML Scientist both review the Deep Learning Engineer's Create output
+- The MLOps Engineer consults the ML Engineer for model architecture constraints and infrastructure design review
+- The MLOps Engineer consults the AI Engineer for LLM-specific deployment requirements
 - JFL reviews every final plan before execution
 
 ### Output directories
@@ -254,6 +257,7 @@ This is the gate pattern — documentation IS the gate.
 ║    /ai-engineer                          ║
 ║    /data-engineer                        ║
 ║    /data-modeller                        ║
+║    /mlops-engineer                       ║
 ║    /researcher                           ║
 ║    /applied-ml-scientist                 ║
 ║    /deep-learning-engineer               ║
