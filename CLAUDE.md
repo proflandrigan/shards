@@ -31,8 +31,8 @@ The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.
 
 | Type | Agents | Characteristics |
 |------|--------|-----------------|
-| Orchestrator | `jfl` | Triages requests, creates project dir + specs, delegates to specialist via Task tool handoff |
-| Specialist | `data-analyst`, `data-scientist`, `ml-engineer`, `ai-engineer`, `data-engineer`, `data-modeller` | Phased workflow, gate pattern, invokes JFL for final review via Task |
+| Orchestrator | `jfl` | Triages requests, creates project dir + specs, delegates to specialist via in-session persona transfer |
+| Specialist | `data-analyst`, `data-scientist`, `ml-engineer`, `ai-engineer`, `data-engineer`, `data-modeller`, `applied-ml-scientist`, `deep-learning-engineer` | Phased workflow, gate pattern, invokes JFL for final review via Task |
 | Review-only | `researcher`, `academic` | No phases, no files produced, consulted by specialists via Task calls |
 
 ### The gate pattern
@@ -46,7 +46,7 @@ This is enforced by prose in each agent file — "**GATE: Do not proceed until t
 
 ### Task tool orchestration
 
-**JFL → Specialist:** After Phase 0 triage, JFL creates the project directory and `project-specs.md`, then invokes the specialist via `Task(subagent_type="<name>", ...)` with a structured prompt containing Phase 0 decisions. The specialist receives `SKIP PHASE 0` instructions and reads from the existing specs file.
+**JFL → Specialist:** After Phase 0 triage, JFL creates the project directory and `project-specs.md`, then prompts the user to run `/compact` to clear context. After the user signals readiness, JFL reads the specialist's agent file (`.claude/agents/<name>.md`) and performs an **in-session persona transfer** — JFL becomes the specialist for all subsequent phases. The specialist reads the existing `project-specs.md` and skips Phase 0.
 
 **Specialist → Review agents:** Specialists call `Task(subagent_type="researcher", ...)` or `Task(subagent_type="data-modeller", ...)` at defined checkpoints within their phases. These are in-phase consultations, not handoffs.
 
@@ -63,6 +63,8 @@ This means a full `/shards` session is a depth-2 nested Task call: JFL spawns sp
 | Data Engineer, Data Modeller | `models/<project_name>/` |
 | ML Engineer, AI Engineer (greenfield) | `services/<project_name>/` |
 | ML Engineer, AI Engineer (iteration) | existing service directory |
+| Applied ML Scientist | `research/<project_name>/` |
+| Deep Learning Engineer | `services/<project_name>/` |
 
 ### Editing workflow
 
