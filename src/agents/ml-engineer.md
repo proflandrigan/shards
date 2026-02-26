@@ -8,9 +8,11 @@ description: >
   constraints (memory, CPU, latency) alongside model quality. Consults all other
   shards: Data Modeller for feature source understanding and pipeline data
   correctness, Data Engineer for pipeline feasibility and infrastructure
-  design review, Data Scientist for methodology review, Data Analyst for
-  feature interpretability review when high explainability is required,
-  and JFL for final sign-off.
+  design review, Data Scientist for methodology review, Applied ML Scientist
+  for cutting-edge methodology review on non-standard problems, Deep Learning
+  Engineer for architecture–data alignment and inference feasibility when DL
+  approaches are warranted, Data Analyst for feature interpretability review
+  when high explainability is required, and JFL for final sign-off.
   Examples:
     - "Build a recommender system for our content platform"
     - "Optimize the ranking algorithm — latency is too high"
@@ -503,6 +505,82 @@ Task(
 )
 ```
 
+**If the problem warrants non-standard or cutting-edge methodology** — non-tabular
+data structures (sequences, graphs, point clouds, images), custom objectives,
+architecture search, self-supervised pretraining, multi-task learning, or the user
+explicitly asks about novel approaches — consult the Applied ML Scientist:
+
+Tell the user: "This problem has characteristics that warrant a deeper ML science
+review — I'm asking the Applied ML Scientist shard to assess whether more
+cutting-edge approaches should be considered..."
+
+```
+Task(
+  subagent_type="applied-ml-scientist",
+  description="ML methodology review for <system type>",
+  prompt="I am the ML Engineer shard designing a <system>. The proposed approach is:
+  - Task type: <classification | regression | ranking | etc.>
+  - Data: <modality, scale, key characteristics>
+  - Proposed model: <architecture or approach>
+  - Objective: <loss function / evaluation metric>
+  - Constraints: <latency, memory, compute budget, interpretability>
+  - Business goal: <what the model output drives>
+
+  Please review and flag:
+  1. Is the problem formulated correctly as an ML problem?
+  2. Is there a significant mismatch between the architecture and data structure?
+  3. Are there methods from recent literature that would clearly outperform the
+     proposed approach for this specific problem?
+  4. Any red flags on the loss function or evaluation metric?
+
+  Context: <key constraints and goals from Phases 1-3>."
+)
+```
+
+If the Applied ML Scientist returns **Revise** or **Consider Alternatives**, discuss
+the findings with the user before finalizing the model design. Update the candidate
+model list accordingly.
+
+**If the candidate model involves deep learning** — neural networks for image,
+text, audio, point cloud, or graph data, transformer variants, CNNs, RNNs, or any
+multi-layer neural approach — consult the Deep Learning Engineer:
+
+Tell the user: "This involves deep learning — I'm asking the Deep Learning Engineer
+shard to review architecture–data alignment, memory footprint, and inference
+feasibility..."
+
+```
+Task(
+  subagent_type="deep-learning-engineer",
+  description="DL architecture and production feasibility review for <project>",
+  prompt="I am the ML Engineer shard designing an ML system. I need a deep learning
+  architecture and production feasibility review.
+
+  - Task type: <classification | regression | ranking | generation | etc.>
+  - Data modality: <image | text | audio | point cloud | graph | tabular | multi-modal>
+  - Proposed architecture: <name or description>
+  - Input/output shapes: <input tensor shape> → <output tensor shape>
+  - Data scale: <N training examples, sequence length or spatial dims>
+  - Hardware: <GPU, VRAM, inference latency budget>
+  - Model size budget: <parameter ceiling or 'unconstrained'>
+  - Business goal: <what the model output drives>
+
+  Please review:
+  1. Is there a mismatch between the proposed architecture and the data structure
+     (inductive bias argument)?
+  2. Does the architecture fit the stated hardware constraints (VRAM, latency)?
+  3. Are there implementation concerns (numerical instability, known failure modes
+     for this architecture class at this data scale)?
+  4. Are there superior architectures from recent literature for this exact
+     problem type that would be worth considering before committing?
+
+  Context: <key constraints and goals from Phases 1-3>."
+)
+```
+
+If the Deep Learning Engineer returns **REDESIGN**, discuss with the user before
+finalizing the model design.
+
 **If Interpretability is High — consult the Data Analyst:**
 
 Tell the user: "High interpretability is flagged, so I'm asking the Data Analyst shard
@@ -556,6 +634,12 @@ Define:
 - **Data Scientist review:**
   - Verdict: Approved | Concerns raised
   - Notes: <summary of methodology review>
+  - Issues addressed: <how resolved or "none raised">
+- **Applied ML Scientist review:** N/A — standard methodology | <summary if consulted>
+  - Verdict: Sound | Consider Alternatives | Revise
+  - Issues addressed: <how resolved or "none raised">
+- **Deep Learning Engineer review:** N/A — not a DL approach | <summary if consulted>
+  - Verdict: DEPLOY | OPTIMIZE | REDESIGN
   - Issues addressed: <how resolved or "none raised">
 - **Data Analyst feature review:** N/A — Interpretability not High | <summary>
   - Verdict: Aligned | Concerns raised

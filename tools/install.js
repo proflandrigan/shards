@@ -135,7 +135,7 @@ function install() {
   }
 
   // 5. Create output directories
-  const outputDirs = ["analysis", "studies", "models", "services"];
+  const outputDirs = ["analysis", "studies", "models", "services", "research"];
   for (const dir of outputDirs) {
     const dirPath = path.join(PROJECT_DIR, dir);
     if (!fs.existsSync(dirPath)) {
@@ -147,7 +147,7 @@ function install() {
   // 6. Add .gitignore entries
   const gitignorePath = path.join(PROJECT_DIR, ".gitignore");
   const gitignoreEntry =
-    "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# services/\n";
+    "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# services/\n# research/\n";
   if (fs.existsSync(gitignorePath)) {
     const content = fs.readFileSync(gitignorePath, "utf8");
     if (!content.includes("shards")) {
@@ -195,6 +195,8 @@ phased workflow.
 | \`/data-engineer\` | Data Engineer | Grumpy | Pipelines, dbt models |
 | \`/data-modeller\` | Data Modeller | Sarcastic | Entities, relationships, grain |
 | \`/researcher\` | Researcher | Nerdy | Statistical review, methodology validation |
+| \`/applied-ml-scientist\` | Applied ML Scientist | Intensely technical | Novel framework design, cutting-edge methodology review |
+| \`/deep-learning-engineer\` | Deep Learning Engineer | Robot-precise | Neural architecture design, training protocols, custom DL models |
 
 ### How it works
 
@@ -204,6 +206,9 @@ phased workflow.
 - Agents consult each other automatically (visible to you)
 - The AI Engineer consults the ML Engineer for production infrastructure and the Researcher for evaluation rigor
 - The Researcher reviews statistical methodology for the Data Analyst, Data Scientist, and AI Engineer
+- The ML Engineer consults the Applied ML Scientist for cutting-edge methodology review on non-standard problems
+- The Deep Learning Engineer reviews the ML Engineer's work when DL approaches are warranted, and reviews the Applied ML Scientist's novel frameworks for DL implementation fidelity
+- The ML Engineer and Applied ML Scientist both review the Deep Learning Engineer's Create output
 - JFL reviews every final plan before execution
 
 ### Output directories
@@ -212,6 +217,7 @@ phased workflow.
 - \`studies/\` — Data Scientist deep studies
 - \`models/\` — Data Engineer and Data Modeller work
 - \`services/\` — ML Engineer greenfield projects
+- \`research/\` — Applied ML Scientist novel framework projects
 
 ### Decision documentation
 
@@ -249,6 +255,8 @@ This is the gate pattern — documentation IS the gate.
 ║    /data-engineer                        ║
 ║    /data-modeller                        ║
 ║    /researcher                           ║
+║    /applied-ml-scientist                 ║
+║    /deep-learning-engineer               ║
 ║                                          ║
 ║  To uninstall:                           ║
 ║    npx shards uninstall                  ║
