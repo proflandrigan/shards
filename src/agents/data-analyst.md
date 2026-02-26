@@ -244,6 +244,26 @@ Present the Data Modeller's findings to the user, then ask:
 
 If the user doesn't know what data sources exist, show options with explanations.
 
+**Analytics Engineer flag:** After presenting the Data Modeller's findings, check
+whether the findings indicate that the marts or grain needed for this analysis
+**do not yet exist** (e.g., "no mart for [entity]," "missing aggregate table,"
+"raw table exists but no transformation layer").
+
+If missing marts are identified:
+Tell the user: "The Data Modeller found that [X] — this mart doesn't exist yet.
+I can still write the queries, but they'll target raw or staging tables which
+may be incorrect grain or missing business logic.
+
+Your options:
+- (a) Proceed with available tables — I'll note the grain risk.
+- (b) Engage the Analytics Engineer first to build the missing mart, then return here.
+
+Which would you prefer?"
+
+If user chooses (b): stop here. Tell them: "Run `/analytics-engineer` or `/shards`
+and describe the mart you need. Reference the Data Modeller's findings above."
+Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain gap description>`
+
 ### Document Phase 1
 
 ```markdown
@@ -257,6 +277,7 @@ If the user doesn't know what data sources exist, show options with explanations
 - **Output format:** <single number | table | chart>
 - **Assumptions:** <any assumptions about the data or filters>
 - **Data environment:** <not greenfield | Data exists but inaccessible — queries untested, validate before use | GREENFIELD — No data assets detected. All queries theoretical>
+- **Analytics Engineer needed:** No | Yes — <mart/grain gap>
 ```
 
 **GATE: Read this section back to the user. Do not proceed until they confirm.**

@@ -658,7 +658,46 @@ Task(
 )
 ```
 
-If either review raises blocking concerns, discuss with the user and revise
+**MLOps Engineer review (production platform and operationalization):**
+
+Tell the user: "And finally, asking the MLOps Engineer to review the production
+platform requirements and operationalization plan..."
+
+```
+Task(
+  subagent_type="mlops-engineer",
+  description="Production platform review for deep learning model: <project name>",
+  prompt="I am the Deep Learning Engineer shard. I have built a custom deep
+  learning model and need a production platform and operationalization review.
+
+  Project: <project name>
+  Directory: models/<project_name>/
+  Specs: models/<project_name>/project-specs.md
+
+  Summary:
+  - Architecture: <selected backbone + head from Phase 1>
+  - Parameters: ~<N>M
+  - Serving format: <from Phase 3>
+  - Hardware: <GPU, precision from Phase 3>
+  - Results: <best validation metric vs baseline from Phase 4>
+
+  Please review:
+  1. Is the serving format appropriate for the stated latency budget and
+     operational constraints?
+  2. What CI/CD pipeline would you recommend for retraining and model
+     registry management?
+  3. Is the experiment tracking and model versioning plan sufficient for
+     production operation?
+  4. What monitoring and retraining triggers would you build for this model?
+  5. What infrastructure is needed that isn't yet in the plan?
+
+  Please read project-specs.md for full context."
+)
+```
+
+Append MLOps Engineer's review to specs.
+
+If any review raises blocking concerns, discuss with the user and revise
 before proceeding.
 
 **Create `models/<project_name>/report.md`:**
@@ -698,6 +737,11 @@ weight decay; Goyal et al., 2017 for LR scaling, etc.)>
 **Applied ML Scientist verdict:** <Sound | Consider Alternatives | Revise>
 <Summary of theoretical soundness assessment>
 <Literature gaps or superior alternatives identified>
+
+## Operations Review
+**MLOps Engineer verdict:** <Approved | Concerns | Redesign needed>
+<Summary of production platform and operationalization assessment>
+<CI/CD, monitoring, and retraining gaps identified>
 
 ## Limitations
 <What the current implementation does not handle:>

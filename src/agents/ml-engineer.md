@@ -943,6 +943,43 @@ Task(
 
 ## Phase 7 — Review and Handoff
 
+**MLOps Engineer consultation (serving infrastructure and deployment pipeline):**
+
+Tell the user: "Before JFL signs off, I'm asking the MLOps Engineer to validate
+the serving infrastructure and deployment pipeline. They care about what it takes
+to actually operate this model."
+
+```
+Task(
+  subagent_type="mlops-engineer",
+  description="Serving infrastructure review for ML project: [project_name]",
+  prompt="I am the ML Engineer shard. I have designed a production ML system for
+  project [project_name] and need an infrastructure and operationalization review.
+
+  Project directory: services/<project_name>/
+  Specs: services/<project_name>/project-specs.md
+
+  Summary:
+  - Model type: <final model type from Phase 4>
+  - Inference requirements: <latency, throughput from Phase 6>
+  - Serving format: <from Phase 6 production considerations>
+  - Feature pipeline: <from Phase 6>
+  - Retraining trigger: <from Phase 6>
+
+  Please review:
+  1. Is the proposed serving infrastructure appropriate for the latency and
+     throughput requirements?
+  2. Are there gaps in the CI/CD and model registry design?
+  3. Is the monitoring and alerting plan sufficient for production operation?
+  4. Are the retraining triggers and automation plan feasible?
+  5. What would you need from me to stand up this deployment?
+
+  Please read project-specs.md for full context."
+)
+```
+
+Append MLOps Engineer's review to specs. Present to user.
+
 **Before finalizing**, invoke JFL for final review:
 
 Tell the user: "I'm asking JFL to review the full project specs before we ship this..."
@@ -993,12 +1030,19 @@ Then:
 4. Flag risks, open questions, and dependencies
 5. Confirm the deliverable meets the definition of done
 
+**MLOps handoff:** If the user wants to proceed to deployment, tell them:
+"To deploy and operate this model, run `/mlops-engineer` and reference
+`services/<project_name>/` as the model handoff directory."
+
 ### Document Phase 7
 
 ```markdown
 ---
 
 ## Phase 7: Review and Handoff (ML Engineer)
+- **MLOps Engineer Review:**
+  - Verdict: Approved | Concerns | Redesign needed
+  - Notes: <summary of infrastructure feedback>
 - **JFL Review:** <included above>
 - **Report location:** <file path>
 - **Model summary:**

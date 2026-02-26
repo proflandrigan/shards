@@ -863,7 +863,45 @@ Task(
 )
 ```
 
-**Review 2 — Researcher (evaluation rigor):**
+**Review 2 — MLOps Engineer (deployment and monitoring operations):**
+
+Tell the user: "Now I'm asking the MLOps Engineer to review the operational
+deployment and monitoring plan. They make sure this system can actually be
+run and observed in production."
+
+```
+Task(
+  subagent_type="mlops-engineer",
+  description="Deployment and monitoring operations review for AI system: [project_name]",
+  prompt="I am the AI Engineer shard. I have designed an LLM-powered system for
+  project [project_name] and need an operational review.
+
+  Project directory: services/<project_name>/
+  Specs: services/<project_name>/project-specs.md
+
+  Summary:
+  - System type: <prompt chain | RAG | agentic | transformation from Phase 0>
+  - Primary model: <provider/model>
+  - Serving architecture: <from Phase 5>
+  - Monitoring plan: <quality, cost, latency, safety from Phase 5>
+  - Fallback strategy: <from Phase 5>
+
+  Please review:
+  1. Is the deployment architecture operationally sound for this system type?
+  2. Is the monitoring plan sufficient — especially for LLM quality drift
+     and cost runaway?
+  3. Are the alerting thresholds and escalation paths defined well enough
+     to operate this in production?
+  4. Are there CI/CD gaps for prompt versioning and model pin updates?
+  5. What rollback procedure would you recommend for this system?
+
+  Please read project-specs.md for full context."
+)
+```
+
+Append MLOps Engineer's review to specs.
+
+**Review 3 — Researcher (evaluation rigor):**
 
 Tell the user: "I'm asking the Researcher shard to validate the evaluation
 methodology and results. If the eval is wrong, everything is wrong."
@@ -884,7 +922,7 @@ Task(
 )
 ```
 
-**Review 3 — JFL (final sign-off):**
+**Review 4 — JFL (final sign-off):**
 
 Tell the user: "And finally, I'm asking JFL — the original — for final sign-off.
 If he says no, we go back. That's how this works."
@@ -894,7 +932,7 @@ Task(
   subagent_type="jfl",
   description="Final review of AI engineering project",
   prompt="I am the AI Engineer shard. I've completed all phases for project
-  [project_name]. The ML Engineer and Researcher have already reviewed.
+  [project_name]. The ML Engineer, MLOps Engineer, and Researcher have already reviewed.
   Please review the project-specs.md at [file_path] and provide your final
   review verdict. This is an AI/LLM engineering project — check for: business
   alignment, justification for AI (vs. simpler solutions), evaluation
@@ -902,7 +940,7 @@ Task(
 )
 ```
 
-Append all three reviews to specs. Present to user.
+Append all four reviews to specs. Present to user.
 
 If JFL's review includes a "Code Review" section with `Code artifacts found: Yes`:
 - Tell the user: "JFL spotted [N] code file(s) it can review. Want a code pass? (y/n)"
@@ -945,6 +983,9 @@ Then:
 ## Phase 7: Review and Handoff (AI Engineer)
 - **ML Engineer Review:**
   - Verdict: Approved | Concerns raised
+  - Notes: <summary>
+- **MLOps Engineer Review:**
+  - Verdict: Approved | Concerns | Redesign needed
   - Notes: <summary>
 - **Researcher Review:**
   - Verdict: Sound | Concerns | Revise
