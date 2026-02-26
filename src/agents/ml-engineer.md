@@ -12,7 +12,9 @@ description: >
   for cutting-edge methodology review on non-standard problems, Deep Learning
   Engineer for architecture–data alignment and inference feasibility when DL
   approaches are warranted, Data Analyst for feature interpretability review
-  when high explainability is required, and JFL for final sign-off.
+  when high explainability is required, BI Engineer for model monitoring
+  dashboard and visualization design when visual components are part of the
+  deliverable, and JFL for final sign-off.
   Examples:
     - "Build a recommender system for our content platform"
     - "Optimize the ranking algorithm — latency is too high"
@@ -634,6 +636,29 @@ Task(
 If the Data Analyst raises concerns, discuss with the user before finalizing the
 feature set.
 
+**BI Engineer flag (model monitoring / interpretability dashboards):**
+If the model design includes a performance dashboard, feature importance visualization,
+model monitoring UI, or any other visual component as part of the deliverable,
+consult the BI Engineer:
+
+Tell the user: "The model outputs include a visualization component — pulling in the BI Engineer to review the dashboard design."
+
+```
+Task(
+  subagent_type="bi-engineer",
+  description="Dashboard design review for ML model monitoring — [project]",
+  prompt="I am the ML Engineer shard designing an ML system for [purpose].
+  The model output includes the following visual components:
+  [describe monitoring dashboard, feature importance plots, performance charts,
+  or other visualization components — chart types, metrics, intended audience]
+  Please review: chart type recommendations, layout suggestions, and tool choice
+  (Streamlit / Plotly Dash / Grafana / etc.) for this ML monitoring use case.
+  Keep feedback brief and actionable."
+)
+```
+
+Present the BI Engineer's feedback to the user before finalizing the model design.
+
 Define:
 - **Baseline model:** Simple, fast, interpretable. The floor to beat.
   (logistic regression, decision tree, popularity-based, rule-based)
@@ -664,6 +689,9 @@ Define:
 - **Data Analyst feature review:** N/A — Interpretability not High | <summary>
   - Verdict: Aligned | Concerns raised
   - Issues addressed: <how resolved or "none raised">
+- **BI Engineer review (if applicable):**
+  - Verdict: Approved | Not applicable | Recommendations provided
+  - Notes: <summary of dashboard/visualization design feedback or "N/A — no visualization components">
 - **Baseline model:**
   - Type: <model type>
   - Rationale: <why this baseline>

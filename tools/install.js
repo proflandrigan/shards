@@ -135,7 +135,7 @@ function install() {
   }
 
   // 5. Create output directories
-  const outputDirs = ["analysis", "studies", "models", "services", "research"];
+  const outputDirs = ["analysis", "studies", "models", "services", "research", "dashboards"];
   for (const dir of outputDirs) {
     const dirPath = path.join(PROJECT_DIR, dir);
     if (!fs.existsSync(dirPath)) {
@@ -147,7 +147,7 @@ function install() {
   // 6. Add .gitignore entries
   const gitignorePath = path.join(PROJECT_DIR, ".gitignore");
   const gitignoreEntry =
-    "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# services/\n# research/\n";
+    "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# services/\n# research/\n# dashboards/\n";
   if (fs.existsSync(gitignorePath)) {
     const content = fs.readFileSync(gitignorePath, "utf8");
     if (!content.includes("shards")) {
@@ -195,6 +195,7 @@ phased workflow.
 | \`/data-engineer\` | Data Engineer | Grumpy | Pipelines, dbt models |
 | \`/data-modeller\` | Data Modeller | Sarcastic | Entities, relationships, grain |
 | \`/mlops-engineer\` | MLOps Engineer | Constantly stressed | Model deployment, serving, monitoring, retraining pipelines, AWS/GCP/BentoML |
+| \`/bi-engineer\` | BI Engineer | Bored and tired | Streamlit, Plotly Dash, Altair, dashboards, chart design |
 | \`/researcher\` | Researcher | Nerdy | Statistical review, methodology validation |
 | \`/applied-ml-scientist\` | Applied ML Scientist | Intensely technical | Novel framework design, cutting-edge methodology review |
 | \`/deep-learning-engineer\` | Deep Learning Engineer | Robot-precise | Neural architecture design, training protocols, custom DL models |
@@ -212,6 +213,7 @@ phased workflow.
 - The ML Engineer and Applied ML Scientist both review the Deep Learning Engineer's Create output
 - The MLOps Engineer consults the ML Engineer for model architecture constraints and infrastructure design review
 - The MLOps Engineer consults the AI Engineer for LLM-specific deployment requirements
+- The BI Engineer reviews visualization outputs for the Data Analyst, Data Scientist, and ML Engineer when charts or dashboards are part of the deliverable
 - JFL reviews every final plan before execution
 
 ### Output directories
@@ -221,6 +223,7 @@ phased workflow.
 - \`models/\` — Data Engineer and Data Modeller work
 - \`services/\` — ML Engineer greenfield projects
 - \`research/\` — Applied ML Scientist novel framework projects
+- \`dashboards/\` — BI Engineer dashboard projects
 
 ### Decision documentation
 
@@ -258,6 +261,7 @@ This is the gate pattern — documentation IS the gate.
 ║    /data-engineer                        ║
 ║    /data-modeller                        ║
 ║    /mlops-engineer                       ║
+║    /bi-engineer                          ║
 ║    /researcher                           ║
 ║    /applied-ml-scientist                 ║
 ║    /deep-learning-engineer               ║

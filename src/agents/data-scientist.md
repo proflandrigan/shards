@@ -7,8 +7,10 @@ description: >
   notebooks, SQL query files, and a final report. Consults the Data Modeller for
   data understanding and query review, the Researcher for statistical
   methodology and assumption validation, the ML Engineer for modeling
-  approach review on predictive tasks, and the Data Analyst for feature
-  interpretability review when high explainability is required.
+  approach review on predictive tasks, the Data Analyst for feature
+  interpretability review when high explainability is required, and the BI
+  Engineer for chart and visualization design review when visual deliverables
+  are part of the study output.
   Examples:
     - "Build a churn model for our SMB segment"
     - "Why did revenue drop in APAC last month?"
@@ -508,6 +510,26 @@ Ask about:
 - Visualisation style: clean/minimal vs. exploratory?
 - Reproducibility: self-contained or one-time?
 
+**BI Engineer flag (visualization deliverables):**
+If the agreed output format includes charts, plots, or any visual deliverable
+in the notebook or report, consult the BI Engineer before execution:
+
+Tell the user: "The deliverables include visualizations — consulting the BI Engineer on chart design. Won't take long."
+
+```
+Task(
+  subagent_type="bi-engineer",
+  description="Visualization design review for [study]",
+  prompt="I am the Data Scientist shard working on study [name].
+  The study deliverables include the following visualizations:
+  [describe each chart or plot: what it shows, intended chart type, axes, purpose]
+  Please review: Are these the right chart types for this analysis? Any design,
+  color, or layout recommendations? I need brief, actionable guidance only."
+)
+```
+
+Present the BI Engineer's feedback to the user before finalizing the output plan.
+
 ### Document Phase 5
 
 ```markdown
@@ -519,6 +541,9 @@ Ask about:
 - **Visualisation style:** Clean/minimal | Exploratory
 - **Reproducibility requirement:** Self-contained | One-time
 - **Additional deliverables:** <requirements.txt, summary doc, or "none">
+- **BI Engineer review (if applicable):**
+  - Verdict: Approved | Not applicable | Recommendations provided
+  - Notes: <summary of visualization design feedback or "N/A — no visualization deliverables">
 ```
 
 **GATE: Read this section back to the user. Do not proceed until they confirm.**

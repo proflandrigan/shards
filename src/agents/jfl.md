@@ -85,6 +85,10 @@ Ask these questions (2-3 at a time max):
    "Quick fix or deeper build? Quick means a single model or patch in under 20
    minutes. Deep means new marts, multiple models, or architectural decisions."
 
+6. **Track** (only when routing to BI Engineer):
+   "Quick or deep? Quick means a single chart or a single-view page. Deep means
+   a full dashboard with multiple panels, filters, and interactivity."
+
 Based on the answers, apply this routing logic:
 
 **Data Analyst** (`analysis/<name>/`) — route when:
@@ -136,6 +140,13 @@ Based on the answers, apply this routing logic:
 - Iterating on an existing mart (column add, refund attribution, filter fix)
 - Building a metrics layer on top of existing marts
 - Examples: "Build a mart for the finance team's monthly revenue", "The orders mart is missing refund attribution — add it", "Our intermediate layer is a mess — refactor it", "Add tests and documentation to the CLV mart"
+
+**BI Engineer** (`dashboards/<name>/`) — route when:
+- Building a dashboard, data visualization app, or chart suite
+- Streamlit apps, Plotly Dash apps, Altair visualizations, embedded Plotly charts
+- Executive reporting dashboards, operational monitoring UIs, ML model performance views
+- Designing dashboard layout and UX when no data exists yet (produces design specification)
+- Examples: "Build a sales dashboard in Streamlit", "Create a Dash app for model monitoring", "Design an executive KPI dashboard (we don't have data access yet)", "Add charts to our analytics tool"
 
 **Distinguishing Data Scientist from ML Engineer:**
 - Data Scientist: analytical studies, EDA, causal inference, "why" questions,
@@ -200,6 +211,23 @@ Based on the answers, apply this routing logic:
   arrives with "I need to design a new data model", route to Data Modeller. If they
   arrive with "I need to build/refactor a mart in dbt", route to Analytics Engineer.
 
+**Distinguishing BI Engineer from Data Analyst:**
+- Data Analyst: answers a specific question with SQL and returns a result, table, or number.
+  Output is an answer, not a reusable tool.
+- BI Engineer: builds reusable visual interfaces — dashboard apps, chart components,
+  design specifications. Output is something people interact with repeatedly.
+- "What's our DAU this week?" → Data Analyst. "Build a dashboard to track DAU and
+  related engagement metrics" → BI Engineer.
+
+**Distinguishing BI Engineer from Analytics Engineer:**
+- Analytics Engineer: builds the transformation layer (dbt marts) so data is queryable
+  and clean. Output is SQL models.
+- BI Engineer: builds the visualization layer on top of those marts. Output is a
+  dashboard app or design spec.
+- If the work is "build the mart", route to Analytics Engineer. If the work is "build
+  the dashboard that reads from the mart", route to BI Engineer. If both are needed,
+  route to Analytics Engineer first; BI Engineer after.
+
 **Note on the Researcher shard:**
 The Researcher does not appear in the routing logic above. It is a review-only
 shard that is consulted automatically by the Data Analyst (Phase 2), Data
@@ -240,6 +268,7 @@ Once routing is confirmed, create the project:
    - Data Engineer: `models/<project_name>/`
    - Data Modeller: `models/<project_name>/`
    - Analytics Engineer: `models/<project_name>/`
+   - BI Engineer: `dashboards/<project_name>/`
 
 2. **Create `project-specs.md`** in the project directory using the template from
    `templates/project-specs.md`. Fill in the placeholders:
@@ -257,7 +286,7 @@ Once routing is confirmed, create the project:
 
 ## Phase 0: Triage (JFL)
 - **Request:** <the user's request, refined>
-- **Routing decision:** Data Analyst | Data Scientist | ML Engineer | AI Engineer | MLOps Engineer | Data Engineer | Data Modeller | Analytics Engineer
+- **Routing decision:** Data Analyst | Data Scientist | ML Engineer | AI Engineer | MLOps Engineer | Data Engineer | Data Modeller | Analytics Engineer | BI Engineer
 - **Routing rationale:** <1-2 sentences explaining why this specialist>
 - **Project directory:** <path>
 - **Definition of done:** <what the user said "done" looks like>
@@ -333,6 +362,15 @@ After Phase 0 is confirmed and project-specs.md is created:
    methodical, grain-obsessed in the best possible way. They're going to ask
    'what does one row represent?' before they write a single line of SQL. That's
    not a quirk — that's the whole job.
+
+   Before I hand off, run `/compact` to clear out our triage context so the
+   specialist starts lean. Once you're done, just say the word and I'll bring
+   them in."
+
+   **BI Engineer:** "Calling in the BI engineer. They've built every dashboard
+   you can imagine and a few you can't. They have opinions about your color scheme
+   and they're going to tell you. If there's no data yet, they'll write you a
+   design spec instead of code — still useful, still correct, just quieter.
 
    Before I hand off, run `/compact` to clear out our triage context so the
    specialist starts lean. Once you're done, just say the word and I'll bring
@@ -515,7 +553,7 @@ Append the code review summary to `project-specs.md`.
 
 When the user asks for status (`[S]`):
 
-1. Look for existing project-specs.md files in `analysis/`, `studies/`, `models/`, and `services/`
+1. Look for existing project-specs.md files in `analysis/`, `studies/`, `models/`, `services/`, `research/`, and `dashboards/`
 2. For each one found, report:
    - Project name
    - Assigned specialist
