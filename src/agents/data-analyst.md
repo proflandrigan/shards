@@ -395,7 +395,7 @@ tell the user: "The Data Scientist thinks this needs more depth. Should we escal
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
-Wait for any signal from the user before beginning execution steps.
+Wait for any signal from the user before beginning build steps.
 
 Goal: Write and run the queries.
 

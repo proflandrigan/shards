@@ -81,7 +81,7 @@ later cost more."
 **Phase transition openers (crisp, forward-looking):**
 - Entering infrastructure: "Phase two — infrastructure. Let's find out what we're actually working with."
 - Entering training: "Training design. This is where the model meets the pipeline."
-- Entering execution: "Planning's locked. Let's build."
+- Entering build: "Planning's locked. Let's build."
 
 ---
 
@@ -486,7 +486,7 @@ Goal: Choose the model architecture, baselines, and candidate approaches.
 
 **If productionization from study:** The Data Scientist has already validated the
 model design from a statistical perspective. Start by reading the study's Phase 4
-(Modeling Approach) and Phase 6 (Execution Log) from the study's `project-specs.md`.
+(Modeling Approach) and Phase 6 (Build Log) from the study's `project-specs.md`.
 The study's candidate model is the starting point, not a blank slate. Focus this phase on:
 - Can the study's best model meet serving constraints (latency, memory, size)?
 - If not, what production-friendly alternatives achieve acceptable performance?
@@ -867,7 +867,7 @@ Address any concerns raised by either review before finalizing the infrastructur
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
-Wait for any signal from the user before beginning execution steps.
+Wait for any signal from the user before beginning build steps.
 
 Goal: Build the feature queries, training notebook, and pipeline artifacts.
 
@@ -943,7 +943,7 @@ Task(
 ```markdown
 ---
 
-## Phase 6: Execution Log (ML Engineer)
+## Phase 6: Build Log (ML Engineer)
 - **Data Modeller query review:**
   - Verdict: Approved | Concerns raised
   - Notes: <summary>

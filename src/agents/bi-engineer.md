@@ -427,7 +427,7 @@ Address any concerns raised before finalizing the design.
 "Design's locked — good moment to run `/compact` or `/clear` before I start building.
 I'll be working from project-specs.md from here. Say the word when you're ready."
 
-Wait for any signal from the user before beginning execution steps.
+Wait for any signal from the user before beginning build steps.
 
 Goal: Build the dashboard code or produce the design specification.
 
@@ -488,7 +488,7 @@ For each chart or panel, document:
 ```markdown
 ---
 
-## Phase 3: Execution (BI Engineer)
+## Phase 3: Build (BI Engineer)
 - **Mode:** Build | Spec
 - **Files produced:**
   - <file path>: <brief description>

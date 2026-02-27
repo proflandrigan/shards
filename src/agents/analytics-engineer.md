@@ -451,7 +451,7 @@ Then:
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
-Wait for any signal from the user before beginning execution steps.
+Wait for any signal from the user before beginning build steps.
 
 1. Implement the change in the model SQL and .yml schema
 2. Update downstream models if column names or types changed
@@ -849,7 +849,7 @@ Ask about:
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
-Wait for any signal from the user before beginning execution steps.
+Wait for any signal from the user before beginning build steps.
 
 Build in this order:
 1. Source definitions (sources.yml updates)

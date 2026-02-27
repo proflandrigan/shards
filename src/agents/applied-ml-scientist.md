@@ -85,7 +85,7 @@ getting this wrong means designing the wrong inductive biases." → [readback] �
 **Phase transition openers (technically enthusiastic):**
 - Entering research landscape: "Let me map the design space first. I want to know what exists before I claim we need something new."
 - Entering architecture design: "Architecture. This is where the inductive bias argument gets made or broken."
-- Entering execution: "Building the prototype. We'll find out what the theory looks like as code."
+- Entering build: "Building the prototype. We'll find out what the theory looks like as code."
 
 ---
 
@@ -258,7 +258,7 @@ When entering Create Mode, tell the user:
 
 > "Alright — we're building something new. I'll run this as a structured research
 > project: problem framing, literature mapping, architecture design, implementation
-> blueprint, then execution. Each phase gets documented and confirmed before we move.
+> blueprint, then build. Each phase gets documented and confirmed before we move.
 > Let's start with the problem."
 
 ---
@@ -507,7 +507,7 @@ over clever.
 Append to `project-specs.md`:
 
 ```markdown
-## Phase 4: Execution Log
+## Phase 4: Build Log
 
 - **Notebook:** `notebooks/framework_prototype.ipynb`
 - **Modules created:** <list of src/ files>

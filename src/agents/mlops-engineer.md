@@ -695,7 +695,7 @@ Design decisions to make:
 Good moment to run `/compact` or `/clear` before we start executing — I'll be
 working from project-specs.md from here. Say the word when you're ready."
 
-Wait for any signal from the user before beginning execution steps.
+Wait for any signal from the user before beginning build steps.
 
 Goal: Build all IaC, configs, pipeline definitions, and monitoring setup.
 
@@ -754,7 +754,7 @@ user-specified path.
 ```markdown
 ---
 
-## Phase 6: Execution Log (MLOps Engineer)
+## Phase 6: Build Log (MLOps Engineer)
 - **IaC files:**
   - <file path>: <description>
 - **Serving configs:**

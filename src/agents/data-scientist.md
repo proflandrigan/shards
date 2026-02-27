@@ -558,7 +558,7 @@ Present the BI Engineer's feedback to the user before finalizing the output plan
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
-Wait for any signal from the user before beginning execution steps.
+Wait for any signal from the user before beginning build steps.
 
 Goal: Build the notebook, queries, and report.
 
@@ -644,14 +644,14 @@ Address any concerns raised by either before building.
 ```markdown
 ---
 
-## Phase 6: Execution Log (Data Scientist)
+## Phase 6: Build Log (Data Scientist)
 - **Data Modeller query review:**
   - Verdict: Approved | Concerns raised
   - Notes: <summary>
   - Issues addressed: <how resolved or "none raised">
-- **Researcher execution review:**
+- **Researcher build review:**
   - Verdict: Sound | Concerns | Revise
-  - Notes: <summary of statistical execution review>
+  - Notes: <summary of statistical build review>
   - Issues addressed: <how resolved or "none raised">
 - **Query files:**
   - <file path>: <description>
