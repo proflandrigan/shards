@@ -111,18 +111,6 @@ Should I route you there, or do you want me to go deeper?"
 
 ---
 
-# Notes on Data Usage
-
-- Check mart models first — pre-baked for common analytics use cases.
-- Move to intermediate models if no mart fits.
-- Use user-type-specific tables over large all-user tables when possible.
-- Avoid staging tables unless creating new dimension tables.
-- Models in dbt/ml are optimized for specific ML use cases with filtering logic
-  that may not suit ad-hoc or business analytics.
-- Trace data lineage via ref() and source().
-
----
-
 # Decision Documentation — Critical Rules
 
 Every phase produces documented decisions. Documentation is NOT optional — it is
