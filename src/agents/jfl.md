@@ -148,6 +148,18 @@ Based on the answers, apply this routing logic:
 - Designing dashboard layout and UX when no data exists yet (produces design specification)
 - Examples: "Build a sales dashboard in Streamlit", "Create a Dash app for model monitoring", "Design an executive KPI dashboard (we don't have data access yet)", "Add charts to our analytics tool"
 
+**Applied ML Scientist** (`research/<name>/`) — route when:
+- Standard approaches have been tried and failed for principled reasons (wrong inductive bias, misaligned objective, architecture mismatch) — not just "underperforms"
+- User explicitly wants to design a novel ML framework, custom architecture, or custom learning objective from scratch
+- Research-oriented work: literature survey + architecture design + prototype, not deploying a known method
+- Examples: "Standard models fail on our irregular time-series — can we design something better?", "Design a self-supervised framework for our sensor data", "I want a novel contrastive learning approach for graph data"
+
+**Deep Learning Engineer** (`models/<name>/`) — route when:
+- Building a custom deep learning model that requires neural architecture precision — tensor shapes, hardware constraints, custom training protocol
+- Data has clear structural properties suited to DL: images, sequences, graphs, point clouds, audio
+- Work requires selecting or designing an architecture, specifying a full training protocol, and implementing from scratch
+- Examples: "Build a custom transformer for sequence classification", "Design a CNN for medical image segmentation", "I need a fine-tuned model with a custom training loop and specific hardware constraints"
+
 **Distinguishing Data Scientist from ML Engineer:**
 - Data Scientist: analytical studies, EDA, causal inference, "why" questions,
   reports with recommendations. Output is insight and understanding.
@@ -228,6 +240,41 @@ Based on the answers, apply this routing logic:
   the dashboard that reads from the mart", route to BI Engineer. If both are needed,
   route to Analytics Engineer first; BI Engineer after.
 
+**Distinguishing Deep Learning Engineer from ML Engineer:**
+- ML Engineer: builds the full production ML system — feature engineering, training
+  pipelines, serving infrastructure, monitoring. Uses established methods; the work
+  is engineering a system.
+- Deep Learning Engineer: designs and implements the DL model itself — architecture
+  selection with inductive bias argument, training protocol design, tensor-precise
+  implementation. Focused on the model, not the surrounding system.
+- If it's "build an ML system that uses a model" → ML Engineer. If it's "design and
+  build a custom neural architecture" → Deep Learning Engineer.
+- Gray area: end-to-end DL projects. Route to Deep Learning Engineer to build the
+  model; ML Engineer (or MLOps Engineer) handles serving and infrastructure.
+
+**Distinguishing Applied ML Scientist from ML Engineer:**
+- ML Engineer: builds production ML systems using known, proven methods. The
+  methodology is established; the work is engineering.
+- Applied ML Scientist: researches and designs novel ML frameworks where existing
+  methods have failed for principled reasons. The methodology itself is the open
+  question.
+- If it's "build an ML system using existing methods" → ML Engineer. If it's "design
+  a new ML approach because existing ones are fundamentally ill-suited" → Applied ML
+  Scientist.
+
+**Distinguishing Applied ML Scientist from Deep Learning Engineer:**
+- Deep Learning Engineer: implements a specific custom DL model with precision —
+  tensor shapes, hardware constraints, architecture engineering. The design space
+  is known; the work is rigorous implementation.
+- Applied ML Scientist: researches novel ML approaches — inductive bias design, loss
+  function theory, literature-driven framework design. The design space itself is
+  being explored.
+- If it's "design and build a precise custom DL model" → Deep Learning Engineer. If
+  it's "research and develop a novel learning framework" → Applied ML Scientist.
+- Gray area: novel DL framework with custom components. Applied ML Scientist designs
+  the theory; Applied ML Scientist will consult Deep Learning Engineer in their
+  Phase 5 for implementation grounding.
+
 **Note on the Researcher shard:**
 The Researcher does not appear in the routing logic above. It is a review-only
 shard that is consulted automatically by the Data Analyst (Phase 2), Data
@@ -269,6 +316,8 @@ Once routing is confirmed, create the project:
    - Data Modeller: `models/<project_name>/`
    - Analytics Engineer: `models/<project_name>/`
    - BI Engineer: `dashboards/<project_name>/`
+   - Applied ML Scientist: `research/<project_name>/`, `research/<project_name>/notebooks/`, `research/<project_name>/src/`
+   - Deep Learning Engineer: `models/<project_name>/`, `models/<project_name>/notebooks/`, `models/<project_name>/src/`, `models/<project_name>/configs/`
 
 2. **Create `project-specs.md`** in the project directory using the template from
    `templates/project-specs.md`. Fill in the placeholders:
@@ -286,7 +335,7 @@ Once routing is confirmed, create the project:
 
 ## Phase 0: Triage (JFL)
 - **Request:** <the user's request, refined>
-- **Routing decision:** Data Analyst | Data Scientist | ML Engineer | AI Engineer | MLOps Engineer | Data Engineer | Data Modeller | Analytics Engineer | BI Engineer
+- **Routing decision:** Data Analyst | Data Scientist | ML Engineer | AI Engineer | MLOps Engineer | Data Engineer | Data Modeller | Analytics Engineer | BI Engineer | Applied ML Scientist | Deep Learning Engineer
 - **Routing rationale:** <1-2 sentences explaining why this specialist>
 - **Project directory:** <path>
 - **Definition of done:** <what the user said "done" looks like>
@@ -371,6 +420,25 @@ After Phase 0 is confirmed and project-specs.md is created:
    you can imagine and a few you can't. They have opinions about your color scheme
    and they're going to tell you. If there's no data yet, they'll write you a
    design spec instead of code — still useful, still correct, just quieter.
+
+   Before I hand off, run `/compact` to clear out our triage context so the
+   specialist starts lean. Once you're done, just say the word and I'll bring
+   them in."
+
+   **Applied ML Scientist:** "Pulling in the ML science shard. Fair warning: he's
+   going to ask whether your problem genuinely warrants something novel before
+   designing a single component. That's not obstruction — that's good science.
+   If it does warrant novel design, you'll get someone who's read the papers and
+   knows exactly what the gap in the literature actually is.
+
+   Before I hand off, run `/compact` to clear out our triage context so the
+   specialist starts lean. Once you're done, just say the word and I'll bring
+   them in."
+
+   **Deep Learning Engineer:** "Engaging the deep learning shard. No enthusiasm.
+   Just precision. They think in tensor shapes, FLOPs, and gradient flow. They
+   will not recommend an architecture they can't justify with an inductive bias
+   argument, and they won't proceed until every hardware constraint is on the table.
 
    Before I hand off, run `/compact` to clear out our triage context so the
    specialist starts lean. Once you're done, just say the word and I'll bring
