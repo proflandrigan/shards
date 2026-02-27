@@ -48,9 +48,12 @@ JFL will greet you, figure out what you need, and summon the right shard.
 | **Data Scientist** | `/data-scientist` | Condescending | EDA, feature engineering, modeling |
 | **ML Engineer** | `/ml-engineer` | Intense | Recommenders, ranking, production ML systems |
 | **AI Engineer** | `/ai-engineer` | Existentially anxious | LLM workflows, RAG, prompt engineering, AI safety |
+| **Applied ML Scientist** | `/applied-ml-scientist` | Technically obsessed | Novel ML framework design, custom architectures, research-oriented ML |
+| **Deep Learning Engineer** | `/deep-learning-engineer` | Robot-precise | Neural architecture design, training protocols, custom model implementation |
 | **Data Engineer** | `/data-engineer` | Grumpy | Pipelines, dbt models, infrastructure |
 | **Data Modeller** | `/data-modeller` | Sarcastic | Entities, relationships, grain |
 | **Researcher** | `/researcher` | Nerdy | Statistical review, methodology validation |
+| **Academic** | `/academic` | Cool professor | Safety, ethics, cognitive science, behavioral research |
 
 ## What Gets Installed
 
@@ -63,23 +66,30 @@ your-project/
 │   │   ├── data-scientist.md
 │   │   ├── ml-engineer.md
 │   │   ├── ai-engineer.md
+│   │   ├── applied-ml-scientist.md
+│   │   ├── deep-learning-engineer.md
 │   │   ├── data-engineer.md
 │   │   ├── data-modeller.md
-│   │   └── researcher.md
+│   │   ├── researcher.md
+│   │   └── academic.md
 │   └── commands/               # Slash commands
 │       ├── shards.md
 │       ├── data-analyst.md
 │       ├── data-scientist.md
 │       ├── ml-engineer.md
 │       ├── ai-engineer.md
+│       ├── applied-ml-scientist.md
+│       ├── deep-learning-engineer.md
 │       ├── data-engineer.md
 │       ├── data-modeller.md
-│       └── researcher.md
+│       ├── researcher.md
+│       └── academic.md
 ├── templates/                  # Output templates
 ├── analysis/                   # Adhoc analyses (Data Analyst)
 ├── studies/                    # Deep studies (Data Scientist)
 ├── models/                     # Model work (Engineer + Modeller)
-├── services/                   # ML Engineer greenfield projects
+├── services/                   # ML / AI / Deep Learning greenfield projects
+├── research/                   # Applied ML Scientist novel frameworks
 └── CLAUDE.md                   # Updated with Shards docs
 ```
 
@@ -106,9 +116,17 @@ Agents consult each other at defined checkpoints:
 - **Data Scientist** asks the Data Modeller to verify queries, and the
   Researcher to review methodology and execution approach
 - **ML Engineer** consults all shards: Data Modeller for feature sources, Data
-  Engineer for pipeline feasibility, Data Scientist for methodology review
+  Engineer for pipeline feasibility, Data Scientist for methodology review,
+  Deep Learning Engineer when DL approaches are warranted, Applied ML Scientist
+  for novel methodology assessment
 - **AI Engineer** consults ML Engineer for production infrastructure and safety
   patterns, Researcher for evaluation methodology rigor
+- **Applied ML Scientist** consults Deep Learning Engineer for implementation
+  grounding on novel DL-based frameworks
+- **Deep Learning Engineer** consults Applied ML Scientist for theoretical review
+  on research-heavy architecture questions
+- **Any agent** can consult the Academic when safety, ethical, or behavioral
+  science questions arise
 - **All specialists** invoke JFL for a final review before execution
 
 You see every review happening. The agent announces it, runs the review, and
@@ -146,6 +164,8 @@ Additionally:
 | Data Scientist | `studies/<name>/` | `project-specs.md`, `queries/*.sql`, `notebooks/*.ipynb`, `report.md` |
 | ML Engineer | `services/<name>/` (greenfield) or existing service dir (iteration) | `project-specs.md`, `queries/*.sql`, `notebooks/*.ipynb`, `report.md` |
 | AI Engineer | `services/<name>/` (greenfield) or existing service dir (iteration) | `project-specs.md`, `prompts/`, `eval/`, `notebooks/*.ipynb`, `report.md` |
+| Applied ML Scientist | `research/<name>/` | `project-specs.md`, `notebooks/*.ipynb`, `report.md` |
+| Deep Learning Engineer | `services/<name>/` | `project-specs.md`, `notebooks/*.ipynb`, `report.md` |
 | Data Engineer | `models/<name>/` | `project-specs.md` |
 | Data Modeller | `models/<name>/` | `project-specs.md` |
 
