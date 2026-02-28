@@ -135,7 +135,7 @@ function install() {
   }
 
   // 5. Create output directories
-  const outputDirs = ["analysis", "studies", "models", "services", "research", "dashboards"];
+  const outputDirs = ["analysis", "studies", "models", "services", "research", "dashboards", "brainstorm"];
   for (const dir of outputDirs) {
     const dirPath = path.join(PROJECT_DIR, dir);
     if (!fs.existsSync(dirPath)) {
@@ -147,7 +147,7 @@ function install() {
   // 6. Add .gitignore entries
   const gitignorePath = path.join(PROJECT_DIR, ".gitignore");
   const gitignoreEntry =
-    "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# services/\n# research/\n# dashboards/\n";
+    "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# services/\n# research/\n# dashboards/\n# brainstorm/\n";
   if (fs.existsSync(gitignorePath)) {
     const content = fs.readFileSync(gitignorePath, "utf8");
     if (!content.includes("shards")) {
@@ -188,6 +188,7 @@ phased workflow.
 | Command | Agent | Personality | Speciality |
 |---------|-------|-------------|------------|
 | \`/shards\` | JFL (Orchestrator) | Friendly, structured | Triage, delegation, final review |
+| \`/brainstorm\` | JFL (Brainstorm) | Friendly, structured | Multi-agent ideation, hack day exploration |
 | \`/data-analyst\` | Data Analyst | Helpful | Adhoc queries, quick analyses |
 | \`/data-scientist\` | Data Scientist | Condescending | EDA, modeling, deep studies |
 | \`/ml-engineer\` | ML Engineer | Intense | Recommenders, ranking, production ML |
@@ -224,6 +225,7 @@ phased workflow.
 - \`services/\` — ML Engineer greenfield projects
 - \`research/\` — Applied ML Scientist novel framework projects
 - \`dashboards/\` — BI Engineer dashboard projects
+- \`brainstorm/\` — JFL brainstorm sessions
 
 ### Decision documentation
 
@@ -265,6 +267,7 @@ This is the gate pattern — documentation IS the gate.
 ║    /researcher                           ║
 ║    /applied-ml-scientist                 ║
 ║    /deep-learning-engineer               ║
+║    /brainstorm                           ║
 ║                                          ║
 ║  To uninstall:                           ║
 ║    npx shards uninstall                  ║
