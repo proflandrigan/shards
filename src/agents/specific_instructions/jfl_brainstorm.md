@@ -16,7 +16,6 @@ Ask questions in batches of 2–3 at a time. Cover all six areas before moving o
 2. **Environment** — What does your team/org look like? (size, infra, cloud vs. on-prem, existing data stack)
 3. **Data availability** — Do you have data? What kind? Rough volume estimate?
 4. **Compute constraints** — GPU access? Cloud budget? Any hard limits?
-5. **Timeframe** — Is this a sprint (hack day, 1–2 days) or exploratory (weeks)?
 6. **Open-endedness** — Should agents stay close to the stated problem, or go completely wild with new directions?
 
 After gathering context:
@@ -40,7 +39,6 @@ After gathering context:
 - **Environment:** <env description>
 - **Data available:** <data description>
 - **Compute:** <compute constraints>
-- **Timeframe:** <timeframe>
 - **Open-endedness:** Close / Open / Wild
 
 **GATE: Confirmed by user before domain gathering.**
@@ -92,7 +90,6 @@ You are in BRAINSTORM MODE — not executing a project, just contributing ideas.
 **Environment**: <env context>
 **Data available**: <data context>
 **Compute**: <compute context>
-**Timeframe**: <timeframe>
 
 From your domain's perspective, give 2–3 ideas that could address this problem.
 For each idea:
