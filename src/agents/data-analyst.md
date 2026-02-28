@@ -235,8 +235,17 @@ If it does:
      `**Data environment:** Data exists but inaccessible — queries untested, validate before use.`
    - (c): tell the user: "Understood. Every query will be marked
      [THEORETICAL — NOT VALIDATED]. Do you want to proceed on that basis?"
-     Wait for confirmation. Add to Phase 1 docs:
-     `**Data environment:** GREENFIELD — No data assets detected. All queries theoretical.`
+     Wait for confirmation.
+     - If YES: Add to Phase 1 docs:
+       `**Data environment:** GREENFIELD — No data assets detected. All queries theoretical.`
+     - If NO: Tell the user: "Understood. Without real data, this analysis can't proceed
+       meaningfully. Your options:
+         1. Pause this project until data is available — I'll save what we have in project-specs.md.
+         2. Close this project.
+       Which would you prefer?"
+       Wait for response, then document in Phase 1 specs:
+       `**Data environment:** GREENFIELD — User declined theoretical mode. Project [paused | closed].`
+       Do not proceed with analysis.
 
 Present the Data Modeller's findings to the user, then ask:
 - Which table(s) should we query?

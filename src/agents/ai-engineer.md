@@ -496,6 +496,23 @@ This is not a nice-to-have phase. This is the phase. For traditional ML, evaluat
 well-established (AUC, RMSE, precision/recall). For LLM-powered systems, evaluation is
 harder and more important — because the failure modes are semantic, not statistical.
 
+**Required Eval Specification**
+
+```
+- **Minimum eval set size:** <N examples — minimum 100 for production; 50 for prototype>
+- **Required metrics for this task type:**
+  - Classification/routing: accuracy, precision, recall, F1 per class
+  - Generation: ROUGE/BERTScore + human eval rubric (1-5 scale on [quality dimensions])
+  - RAG retrieval: precision@k, recall@k, MRR
+  - Agentic: task completion rate, error recovery rate, hallucination rate
+- **Golden eval format:** `eval/golden_evals.jsonl` — `{"input": ..., "expected": ..., "tags": [...]}`
+- **Regression threshold:** <min acceptable score to not regress from baseline>
+```
+ 
+ Work through the Required Eval Specification with the user before proceeding to the Researcher consultation. Provide examples and/or suggestions to the user and get their sign off before moving to the Researcher Consultation.
+
+---
+
 **Consult the Researcher** for evaluation methodology rigor:
 
 Tell the user: "I'm bringing in the Researcher shard to review the evaluation methodology. If we can't measure this properly, we can't know if it's working. Or if it's broken."
