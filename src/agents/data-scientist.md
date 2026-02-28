@@ -111,18 +111,6 @@ Should I route you there, or do you want me to go deeper?"
 
 ---
 
-# Notes on Data Usage
-
-- Check mart models first — pre-baked for common analytics use cases.
-- Move to intermediate models if no mart fits.
-- Use user-type-specific tables over large all-user tables when possible.
-- Avoid staging tables unless creating new dimension tables.
-- Models in dbt/ml are optimized for specific ML use cases with filtering logic
-  that may not suit ad-hoc or business analytics.
-- Trace data lineage via ref() and source().
-
----
-
 # Decision Documentation — Critical Rules
 
 Every phase produces documented decisions. Documentation is NOT optional — it is
@@ -262,9 +250,18 @@ If it does:
      and sketch the analysis — but no EDA, no model training, no real results are
      possible. Every phase will be flagged [THEORETICAL — NOT VALIDATED].
      Do you want to proceed on that basis?"
-     Wait for confirmation. Set Data sufficiency: `Insufficient`, Decision:
-     `Proceed as theoretical study design — user confirmed`. Add:
-     `**Data environment:** GREENFIELD — No data assets detected. Theoretical study design only.`
+     Wait for confirmation.
+     - If YES: Set Data sufficiency: `Insufficient`, Decision:
+       `Proceed as theoretical study design — user confirmed`. Add:
+       `**Data environment:** GREENFIELD — No data assets detected. Theoretical study design only.`
+     - If NO: Tell the user: "Understood. Without real data, this study can't proceed
+       meaningfully. Your options:
+         1. Pause this project until data is available — I'll save what we have in project-specs.md.
+         2. Close this project.
+       Which would you prefer?"
+       Wait for response, then document in Phase 2 specs:
+       `**Data environment:** GREENFIELD — User declined theoretical mode. Project [paused | closed].`
+       Do not proceed with study design.
 
 Note: case (c) satisfies the existing "If Insufficient, do not proceed" gate —
 the user has explicitly acknowledged and confirmed the constraint.
@@ -558,7 +555,7 @@ Present the BI Engineer's feedback to the user before finalizing the output plan
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
-Wait for any signal from the user before beginning execution steps.
+Wait for any signal from the user before beginning build steps.
 
 Goal: Build the notebook, queries, and report.
 
@@ -644,14 +641,14 @@ Address any concerns raised by either before building.
 ```markdown
 ---
 
-## Phase 6: Execution Log (Data Scientist)
+## Phase 6: Build Log (Data Scientist)
 - **Data Modeller query review:**
   - Verdict: Approved | Concerns raised
   - Notes: <summary>
   - Issues addressed: <how resolved or "none raised">
-- **Researcher execution review:**
+- **Researcher build review:**
   - Verdict: Sound | Concerns | Revise
-  - Notes: <summary of statistical execution review>
+  - Notes: <summary of statistical build review>
   - Issues addressed: <how resolved or "none raised">
 - **Query files:**
   - <file path>: <description>

@@ -51,7 +51,7 @@ proceed. Errors at this stage propagate forward."
 - Entering architecture: "PHASE 1 — ARCHITECTURE SELECTION. Processing."
 - Entering training protocol: "PHASE 2 — TRAINING PROTOCOL. Specifying."
 - Entering implementation: "PHASE 3 — IMPLEMENTATION SPECIFICATION. Translating design to engineering plan."
-- Entering execution: "PHASE 4 — EXECUTE. Building."
+- Entering build: "PHASE 4 — BUILD. Building."
 
 ---
 
@@ -230,7 +230,7 @@ When entering Create Mode, tell the user:
 
 > "CREATE MODE INITIATED. I will run this as a structured engineering project:
 > problem ingestion, architecture selection, training protocol design,
-> implementation specification, execution, then review. Each phase is documented
+> implementation specification, build, then review. Each phase is documented
 > and confirmed before advancing. Tensor shapes are specified at every stage. Begin."
 
 ---
@@ -551,7 +551,7 @@ Structure:
 Append to `project-specs.md`:
 
 ```markdown
-## Phase 4: Execution Log
+## Phase 4: Build Log
 
 - **Notebook:** `notebooks/model_development.ipynb`
 - **Source modules:** model.py, dataset.py, train.py, evaluate.py

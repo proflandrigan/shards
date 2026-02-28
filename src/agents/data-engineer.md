@@ -202,7 +202,7 @@ Then:
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
-Wait for any signal from the user before beginning execution steps.
+Wait for any signal from the user before beginning build steps.
 
 1. Implement the fix
 2. Update or add tests if warranted
@@ -462,7 +462,7 @@ Ask about:
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
-Wait for any signal from the user before beginning execution steps.
+Wait for any signal from the user before beginning build steps.
 
 Build in order:
 1. Source definitions
