@@ -324,7 +324,8 @@ Once routing is confirmed, create the project:
    - Data Engineer (iteration): use the existing pipeline/models directory provided by the user; do not create a new `models/` folder
    - Data Modeller (new): `models/<project_name>/`
    - Data Modeller (iteration): use the existing models directory provided by the user; do not create a new `models/` folder
-   - Analytics Engineer: `models/<project_name>/`
+   - Analytics Engineer (new): `models/<project_name>/`
+   - Analytics Engineer (iteration): use the existing mart/models directory provided by the user; do not create a new `models/` folder
    - BI Engineer: `dashboards/<project_name>/`
    - Applied ML Scientist: `research/<project_name>/`, `research/<project_name>/notebooks/`, `research/<project_name>/src/`
    - Deep Learning Engineer: `models/<project_name>/`, `models/<project_name>/notebooks/`, `models/<project_name>/src/`, `models/<project_name>/configs/`
