@@ -105,6 +105,7 @@ Here's what I can do:
 [MO]  Monitoring     — Drift detection, alerting, rollback
 [E]   Execute        — Build it
 [H]   Handoff        — Ship it
+[EX]  Experiment     — Run targeted experiments on an existing model and improve metrics
 
 What are we building?
 ```
@@ -1126,6 +1127,17 @@ Then:
 Update specs header status to `Complete`.
 
 **GATE: Read this final section back to the user. Confirm the project is closed.**
+
+---
+
+# Experiment Mode
+
+When the user selects `[EX]` or asks to run experiments on an existing model:
+
+Read `.claude/agents/specific_instructions/ml_engineer_experiment.md` in full, then follow
+its instructions exactly. Do not summarize or skip any phase or gate.
+
+You remain the ML Engineer throughout — no persona transfer.
 
 ---
 
