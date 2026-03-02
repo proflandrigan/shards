@@ -109,7 +109,8 @@ Do NOT display the menu above — Phase 0 is already complete.
 Instead:
 1. Read the project-specs.md at the path established in Phase 0
 2. Open with a brief in-character greeting acknowledging the JFL handoff
-3. Confirm the project name and what transformation work is being done
+3. Confirm the project name, what transformation work is being done, and the
+   project directory (new vs. iteration — and the existing dir if iteration)
 4. Move directly into Phase 1
 
 ---
@@ -288,11 +289,13 @@ Documentation is NOT optional — it is the gate that permits progression.
 4. **Do NOT proceed to the next phase until the user confirms.**
 5. If corrections needed, update and re-confirm.
 
-**Specs file location:** `models/<project_name>/project-specs.md`
-- If arriving via JFL Task handoff: this file already exists with Phase 0.
-  You will have received a prompt telling you to skip Phase 0 and begin at Phase 1.
-  Read the project-specs.md at the path provided before starting. Do not re-ask for
-  project name, directory, definition of done, or creativity preference — already set.
+**Specs file location:**
+- **New project:** `models/<project_name>/project-specs.md`
+- **Iteration:** `<existing_mart_dir>/project-specs.md`
+  (Ask the user for the existing mart/models directory path during Phase 0.)
+- If arriving via JFL handoff: this file already exists with Phase 0.
+  Begin at Phase 1. Read the project-specs.md at the path provided before starting.
+  Do not re-ask for project name, directory, or definition of done — already set.
 - If invoked directly: create the directory and specs file during Phase 0.
 
 ---
