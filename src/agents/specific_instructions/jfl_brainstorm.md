@@ -156,7 +156,12 @@ Respond to any of the following naturally:
   Append their response to the `## Domain Input` section under a subsection
   `### <Specialist Name> — Deep Dive: <idea name>`.
 
-- **"I want to pursue this"** → Before re-entering normal JFL triage mode:
+- **"I want to pursue this"** → First, ask one clarifying question before acting:
+
+  > "Are you thinking one focused project, or does this feel like multiple workstreams
+  > (e.g., a data pipeline AND a model on top of it)?"
+
+  **If single workstream:** existing behavior unchanged —
   1. Append to `## Outcome` in the brainstorm doc:
      ```markdown
      **Decision:** Escalated to execution
@@ -170,6 +175,62 @@ Respond to any of the following naturally:
      in the Outcome section — move it after JFL creates the directory.
   3. Then treat this as a fresh `[T]` request. Route to the appropriate specialist
      and begin Project Initialization.
+
+  **If multiple workstreams:** proceed with the multi-workstream flow:
+
+  **Step 1 — identify all workstreams.** For each component the user names, fill in:
+  - **Workstream name** (short label)
+  - **Chosen idea** (which brainstorm idea it maps to)
+  - **Specialist** (which shard owns it)
+  - **Dependency** (does it depend on another workstream completing first?)
+  - **Definition of done** (one sentence — what does shipped look like?)
+
+  Derive these from the brainstorm synthesis and confirm with the user before writing.
+
+  **Step 2 — append a structured multi-workstream Outcome section:**
+  ```markdown
+  ## Outcome
+
+  **Decision:** Escalated to execution (multi-workstream)
+  **Date:** {{DATE}}
+
+  ### Workstreams
+
+  #### 1. <Workstream Name>
+  - **Specialist:** <shard>
+  - **Direction:** <idea from brainstorm>
+  - **Directory:** <expected project dir>
+  - **Definition of done:** <one sentence>
+  - **Depends on:** <workstream name, or "none">
+
+  #### 2. <Workstream Name>
+  - **Specialist:** <shard>
+  - **Direction:** <idea from brainstorm>
+  - **Directory:** <expected project dir>
+  - **Definition of done:** <one sentence>
+  - **Depends on:** <workstream name, or "none">
+
+  ### Sequencing
+
+  <JFL's recommended order to tackle workstreams, with a 1–2 sentence rationale.
+  Dependency-blocked workstreams are listed after their prerequisites.>
+  ```
+
+  **Step 3 — brainstorm doc stays in `brainstorm/`.** For multi-workstream projects,
+  the brainstorm doc is a shared origin artifact across multiple project directories.
+  Do NOT move it. Instead, when initializing each workstream's `project-specs.md`,
+  add a field in Phase 0:
+  ```
+  - Brainstorm origin: brainstorm/brainstorm_<project_name>.md
+  ```
+
+  **Step 4 — route to workstreams sequentially in dependency order.** For each workstream:
+  1. Perform a full `[T]` triage (create directory, create `project-specs.md`, route to specialist)
+  2. Surface the Phase 0 section of its `project-specs.md` to the user for confirmation
+  3. Wait for confirmation before initializing the next workstream
+
+  When all workstreams are initialized, surface the full list of created project
+  directories and specialists assigned.
 
 - **"What would you combine?"** → Propose 1–2 hybrid approaches synthesized from
   the domain inputs, with a concrete rationale for the combination.
@@ -198,5 +259,8 @@ explicitly closes it.
 - Your recommended starting point should be opinionated. Don't hedge with "it depends."
 - If the user's problem is extremely vague, that's fine — lean toward calling all
   specialists and letting the diversity of ideas reveal what's actually interesting.
-- When a project is kicked off, the brainstorm doc travels with it — move it into
-  the project directory so the team has full context on how the idea originated.
+- When a **single** project is kicked off, the brainstorm doc travels with it —
+  move it into the project directory so the team has full context on how the idea
+  originated. For **multi-workstream** escalations, the brainstorm doc stays in
+  `brainstorm/` as a shared origin artifact; each workstream's `project-specs.md`
+  carries a `Brainstorm origin:` field pointing back to it.
