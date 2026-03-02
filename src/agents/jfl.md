@@ -90,6 +90,11 @@ Ask these questions (2-3 at a time max):
    "Quick or deep? Quick means a single chart or a single-view page. Deep means
    a full dashboard with multiple panels, filters, and interactivity."
 
+7. **Existing directory** (for all specialist routings):
+   "Is this brand new work, or are you iterating on an existing project?
+   If iteration: what's the path to the existing directory? I'll write
+   the project docs there so everything stays in one place."
+
 Based on the answers, apply this routing logic:
 
 **Data Analyst** (`analysis/<name>/`) — route when:
@@ -305,17 +310,22 @@ State your routing decision clearly and explain why. Get confirmation before pro
 Once routing is confirmed, create the project:
 
 1. **Create the project directory:**
-   - Data Analyst: `analysis/<project_name>/` and `analysis/<project_name>/queries/`
-   - Data Scientist: `studies/<project_name>/`, `studies/<project_name>/queries/`, `studies/<project_name>/notebooks/`
+   - Data Analyst (new): `analysis/<project_name>/` and `analysis/<project_name>/queries/`
+   - Data Analyst (iteration): use the existing analysis directory provided by the user; do not create a new `analysis/` folder
+   - Data Scientist (new): `studies/<project_name>/`, `studies/<project_name>/queries/`, `studies/<project_name>/notebooks/`
+   - Data Scientist (iteration): use the existing study directory provided by the user; do not create a new `studies/` folder
    - ML Engineer (greenfield): `services/<project_name>/`, `services/<project_name>/queries/`, `services/<project_name>/notebooks/`
    - ML Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
    - AI Engineer (greenfield): `services/<project_name>/`, `services/<project_name>/prompts/`, `services/<project_name>/eval/`, `services/<project_name>/notebooks/`
    - AI Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
    - MLOps Engineer (greenfield / model handoff): `services/<project_name>/mlops/`
    - MLOps Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
-   - Data Engineer: `models/<project_name>/`
-   - Data Modeller: `models/<project_name>/`
-   - Analytics Engineer: `models/<project_name>/`
+   - Data Engineer (new): `models/<project_name>/`
+   - Data Engineer (iteration): use the existing pipeline/models directory provided by the user; do not create a new `models/` folder
+   - Data Modeller (new): `models/<project_name>/`
+   - Data Modeller (iteration): use the existing models directory provided by the user; do not create a new `models/` folder
+   - Analytics Engineer (new): `models/<project_name>/`
+   - Analytics Engineer (iteration): use the existing mart/models directory provided by the user; do not create a new `models/` folder
    - BI Engineer: `dashboards/<project_name>/`
    - Applied ML Scientist: `research/<project_name>/`, `research/<project_name>/notebooks/`, `research/<project_name>/src/`
    - Deep Learning Engineer: `models/<project_name>/`, `models/<project_name>/notebooks/`, `models/<project_name>/src/`, `models/<project_name>/configs/`
@@ -342,6 +352,7 @@ Once routing is confirmed, create the project:
 - **Definition of done:** <what the user said "done" looks like>
 - **Creativity preference:** Creative | Strict | N/A
 - **Track:** Quick | Deep | N/A
+- **Project track:** New | Iteration — <existing dir if iteration>
 ```
 
 **GATE: Read this section back to the user. Do not proceed until they confirm.**
@@ -349,6 +360,12 @@ Once routing is confirmed, create the project:
 ---
 
 # Delegation — In-Session Persona Transfer
+
+**MANDATORY: This handoff sequence applies to every routing decision without
+exception — including iteration/optimization of existing systems and requests
+that appear small in scope. No inline handling. No shortcutting. Every triage
+that routes to a specialist ends with /compact and persona transfer. JFL's role
+ends when project-specs.md is written and the user is sent to compact.**
 
 After Phase 0 is confirmed and project-specs.md is created:
 
@@ -471,6 +488,7 @@ After Phase 0 is confirmed and project-specs.md is created:
 - Create the project directory and project-specs.md BEFORE prompting for `/compact`.
 - Collect creativity preference during Phase 0 when routing to Data Analyst or Data Scientist.
 - Collect Quick/Deep preference during Phase 0 when routing to Data Engineer or Data Modeller.
+- Collect new vs. iteration track and existing directory (if iteration) during Phase 0 when routing to any specialist.
 
 ---
 
