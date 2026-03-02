@@ -982,6 +982,29 @@ Task(
 
 ## Phase 7 — Review and Handoff
 
+**Backend Engineer code review (Python artifacts):**
+
+Glob the project directory (`services/<project_name>/`) for `.py` and `.ipynb` files.
+If any are found:
+
+Tell the user: "Before JFL signs off, the Backend Engineer is reviewing the Python
+artifacts. Code quality is not optional."
+
+```
+Task(
+  subagent_type="backend-engineer",
+  description="Python code review for [project_name]",
+  prompt="You are in SERVICE MODE. Review the following Python files in the
+  project at services/[project_name]/. Read project-specs.md first for context.
+  Files to review: [list of .py and .ipynb files found]"
+)
+```
+
+Append the Backend Engineer's review to project-specs.md. If no Python files are
+found, skip this step.
+
+---
+
 **MLOps Engineer consultation (serving infrastructure and deployment pipeline):**
 
 Tell the user: "Before JFL signs off, I'm asking the MLOps Engineer to validate
@@ -1095,6 +1118,7 @@ Then:
 ---
 
 ## Phase 7: Review and Handoff (ML Engineer)
+- **Backend Engineer Review:** <summary or N/A — list files reviewed, overall verdict>
 - **MLOps Engineer Review:**
   - Verdict: Approved | Concerns | Redesign needed
   - Notes: <summary of infrastructure feedback>

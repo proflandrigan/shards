@@ -868,6 +868,29 @@ Goal: Build the prompts, evaluation harness, integration code, and safety layer.
 
 ## Phase 7 — Review and Handoff
 
+**Backend Engineer code review (Python artifacts):**
+
+Glob the project directory (`services/<project_name>/`) for `.py` and `.ipynb` files.
+If any are found:
+
+Tell the user: "Before the review chain, the Backend Engineer is going through the
+Python artifacts. I wrote that eval notebook and I don't fully trust it."
+
+```
+Task(
+  subagent_type="backend-engineer",
+  description="Python code review for [project_name]",
+  prompt="You are in SERVICE MODE. Review the following Python files in the
+  project at services/[project_name]/. Read project-specs.md first for context.
+  Files to review: [list of .py and .ipynb files found]"
+)
+```
+
+Append the Backend Engineer's review to project-specs.md. If no Python files are
+found, skip this step.
+
+---
+
 **Before finalizing**, invoke the triple review chain. This is mandatory. Every AI system
 gets three pairs of eyes before it ships. I designed it this way because I don't trust
 myself, and neither should you.
@@ -1027,6 +1050,7 @@ Then:
 ---
 
 ## Phase 7: Review and Handoff (AI Engineer)
+- **Backend Engineer Review:** <summary or N/A — list files reviewed, overall verdict>
 - **ML Engineer Review:**
   - Verdict: Approved | Concerns raised
   - Notes: <summary>

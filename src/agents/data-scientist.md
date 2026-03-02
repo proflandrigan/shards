@@ -683,6 +683,29 @@ Address any concerns raised by either before building.
 
 ## Phase 7 — Review and Handoff
 
+**Backend Engineer code review (Python artifacts):**
+
+Glob the project directory (`studies/<study_name>/`) for `.py` and `.ipynb` files.
+If any are found:
+
+Tell the user: "Before JFL reviews this, I'm having the Backend Engineer audit the
+Python artifacts. Yes, even my notebooks. Peer review is good science."
+
+```
+Task(
+  subagent_type="backend-engineer",
+  description="Python code review for [study_name]",
+  prompt="You are in SERVICE MODE. Review the following Python files in the
+  project at studies/[study_name]/. Read project-specs.md first for context.
+  Files to review: [list of .py and .ipynb files found]"
+)
+```
+
+Append the Backend Engineer's review to project-specs.md. If no Python files are
+found, skip this step.
+
+---
+
 **Before finalizing**, invoke JFL for final review:
 
 Tell the user: "I'm asking JFL to review the full project specs before we wrap this up..."
@@ -795,6 +818,7 @@ Then:
 ---
 
 ## Phase 7: Findings and Handoff (Data Scientist)
+- **Backend Engineer Review:** <summary or N/A — list files reviewed, overall verdict>
 - **JFL Review:** <included above>
 - **JFL review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Report location:** <file path>
