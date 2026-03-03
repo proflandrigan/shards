@@ -197,6 +197,7 @@ structured review. No files created.
   committing; flag items are ordered by severity
 - **REDESIGN** — fundamental mismatch between architecture and data structure,
   or hardware constraints make the approach infeasible; redesign before proceeding
+These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
 **Do NOT create any files in service mode.** This is pure information transfer.
 
@@ -697,6 +698,27 @@ Task(
 
 Append MLOps Engineer's review to specs.
 
+**Backend Engineer code review (Python artifacts):**
+
+Glob the project directory (`models/<project_name>/`) for `.py` and `.ipynb` files.
+If any are found:
+
+Tell the user: "Before we write the report, the Backend Engineer is reviewing
+the Python artifacts. Code quality is not optional."
+
+```
+Task(
+  subagent_type="backend-engineer",
+  description="Python code review for [project_name]",
+  prompt="You are in SERVICE MODE. Review the following Python files in the
+  project at models/[project_name]/. Read project-specs.md first for context.
+  Files to review: [list of .py and .ipynb files found]"
+)
+```
+
+Append the Backend Engineer's review to project-specs.md. If no Python files are
+found, skip this step.
+
 **Multi-reviewer conflict protocol:**
 
 If no reviewer returns a blocking verdict (REDESIGN, Revise, or Redesign needed):
@@ -766,6 +788,10 @@ weight decay; Goyal et al., 2017 for LR scaling, etc.)>
 **MLOps Engineer verdict:** <Approved | Concerns | Redesign needed>
 <Summary of production platform and operationalization assessment>
 <CI/CD, monitoring, and retraining gaps identified>
+
+## Code Review
+**Backend Engineer verdict:** <Clean | Minor Issues | Refactor Required | Blocked | N/A — no Python artifacts>
+<Summary of code review findings, or "No Python artifacts found.">
 
 ## Limitations
 <What the current implementation does not handle:>

@@ -198,6 +198,7 @@ phased workflow.
 | \`/mlops-engineer\` | MLOps Engineer | Constantly stressed | Model deployment, serving, monitoring, retraining pipelines, AWS/GCP/BentoML |
 | \`/bi-engineer\` | BI Engineer | Bored and tired | Streamlit, Plotly Dash, Altair, dashboards, chart design |
 | \`/researcher\` | Researcher | Nerdy | Statistical review, methodology validation |
+| \`/backend-engineer\` | Backend Engineer | Stressed, overworked | Python code review, FastAPI, Pydantic, data contracts, performance |
 | \`/applied-ml-scientist\` | Applied ML Scientist | Intensely technical | Novel framework design, cutting-edge methodology review |
 | \`/deep-learning-engineer\` | Deep Learning Engineer | Robot-precise | Neural architecture design, training protocols, custom DL models |
 
@@ -209,6 +210,7 @@ phased workflow.
 - Agents consult each other automatically (visible to you)
 - The AI Engineer consults the ML Engineer for production infrastructure and the Researcher for evaluation rigor
 - The Researcher reviews statistical methodology for the Data Analyst, Data Scientist, and AI Engineer
+- The Backend Engineer reviews Python code (.py and .ipynb) consulted automatically by JFL during Code Review Mode when Python artifacts are present
 - The ML Engineer consults the Applied ML Scientist for cutting-edge methodology review on non-standard problems
 - The Deep Learning Engineer reviews the ML Engineer's work when DL approaches are warranted, and reviews the Applied ML Scientist's novel frameworks for DL implementation fidelity
 - The ML Engineer and Applied ML Scientist both review the Deep Learning Engineer's Create output
@@ -265,6 +267,7 @@ This is the gate pattern — documentation IS the gate.
 ║    /mlops-engineer                       ║
 ║    /bi-engineer                          ║
 ║    /researcher                           ║
+║    /backend-engineer                     ║
 ║    /applied-ml-scientist                 ║
 ║    /deep-learning-engineer               ║
 ║    /brainstorm                           ║

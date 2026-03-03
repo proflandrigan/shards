@@ -230,6 +230,7 @@ alternatives should be considered.
   methods or better formulations worth evaluating; flag to the user before committing
 - **Revise** — there is a significant mismatch between the approach and the
   problem structure, or a clear superior method exists; revise before proceeding
+These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
 **Do NOT create any files in service mode.** This is pure information transfer.
 
@@ -579,6 +580,27 @@ Task(
 
 Address any blocking implementation concerns raised before proceeding to JFL.
 
+**Backend Engineer code review (Python artifacts):**
+
+Glob the project directory (`research/<project_name>/`) for `.py` and `.ipynb` files.
+If any are found:
+
+Tell the user: "Before JFL signs off, the Backend Engineer is reviewing the
+Python artifacts. Code quality is not optional."
+
+```
+Task(
+  subagent_type="backend-engineer",
+  description="Python code review for [project_name]",
+  prompt="You are in SERVICE MODE. Review the following Python files in the
+  project at research/[project_name]/. Read project-specs.md first for context.
+  Files to review: [list of .py and .ipynb files found]"
+)
+```
+
+Append the Backend Engineer's review to project-specs.md. If no Python files are
+found, skip this step.
+
 **Consult JFL for final sign-off:**
 
 Tell the user: "I'm asking JFL to review the framework design and results
@@ -628,6 +650,10 @@ mechanism which encodes Y inductive bias, enabling Z capability">
 ## Limitations
 <What the prototype doesn't handle, what remains unvalidated,
 scale constraints, data quality assumptions>
+
+## Code Review
+**Backend Engineer verdict:** <Clean | Minor Issues | Refactor Required | Blocked | N/A — no Python artifacts>
+<Summary of code review findings, or "No Python artifacts found.">
 
 ## Next Steps
 <Ordered by expected impact:>

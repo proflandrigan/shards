@@ -17,6 +17,8 @@ node tools/install.js uninstall
 
 The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.claude/commands/`, and `src/templates/` → `templates/` in the target project. It also creates output directories (`analysis/`, `studies/`, `models/`, `services/`) and appends a Shards section to CLAUDE.md.
 
+The `.claude/` directory at the repo root is a live installation used when working on shards itself. After editing source files, re-run `node tools/install.js` from the repo root to update it.
+
 ## Architecture
 
 ### Three file types in `src/`
@@ -32,7 +34,7 @@ The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.
 | Type | Agents | Characteristics |
 |------|--------|-----------------|
 | Orchestrator | `jfl` | Triages requests, creates project dir + specs, delegates to specialist via in-session persona transfer |
-| Specialist | `data-analyst`, `data-scientist`, `ml-engineer`, `ai-engineer`, `data-engineer`, `data-modeller`, `applied-ml-scientist`, `deep-learning-engineer` | Phased workflow, gate pattern, invokes JFL for final review via Task |
+| Specialist | `data-analyst`, `data-scientist`, `ml-engineer`, `ai-engineer`, `data-engineer`, `data-modeller`, `analytics-engineer`, `applied-ml-scientist`, `deep-learning-engineer`, `bi-engineer`, `mlops-engineer`, `backend-engineer` | Phased workflow, gate pattern, invokes JFL for final review via Task |
 | Review-only | `researcher`, `academic` | No phases, no files produced, consulted by specialists via Task calls |
 
 ### The gate pattern
@@ -60,14 +62,17 @@ This means a full `/shards` session is a depth-2 nested Task call: JFL spawns sp
 |-----------|-----------|
 | Data Analyst | `analysis/<project_name>/` |
 | Data Scientist | `studies/<project_name>/` |
-| Data Engineer, Data Modeller | `models/<project_name>/` |
+| Data Engineer, Data Modeller, Analytics Engineer | `models/<project_name>/` |
 | ML Engineer, AI Engineer (greenfield) | `services/<project_name>/` |
 | ML Engineer, AI Engineer (iteration) | existing service directory |
 | Applied ML Scientist | `research/<project_name>/` |
 | Deep Learning Engineer | `services/<project_name>/` |
+| BI Engineer | `dashboards/<project_name>/` |
 
 ### Editing workflow
 
 When changing agent behavior: edit `src/agents/<name>.md` (the authoritative file). The command file in `src/commands/` only needs editing if the startup instructions or persona framing change. Templates in `src/templates/` only need editing if the output document structure changes.
 
 After editing source files, re-run `node tools/install.js` in any target project to pick up the changes.
+
+**Experimental variants** live in `src/agents/specific_instructions/`. These are not copied by the installer and are not invoked as slash commands — they're standalone instruction files for modes like brainstorm (`jfl_brainstorm.md`) and experiment (`ml_engineer_experiment.md`, `ai_engineer_experiment.md`). Edit these directly; no reinstall needed since they aren't distributed.

@@ -670,8 +670,7 @@ Task(
 )
 ```
 
-After the Data Modeller returns, summarize key findings and ask if any require
-revisions to the planned grain before documenting.
+Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns / Revise). Document the verdict and any resolution in the specs template below.
 
 ### Document Deep Phase 3
 
@@ -691,10 +690,13 @@ revisions to the planned grain before documenting.
   - <dimension model>: <shared across which marts>
   - (or "none — new grain only")
 - **Data Modeller consultation:**
+  - Verdict: Sound | Concerns | Revise
+  - Tier: Proceed | Proceed with caveats | Halt
   - Grain assessment: <summary>
   - Fan-out risks flagged: <list or "none">
   - Conformance notes: <list or "none">
   - **Grain design revised:** Yes / No — <if yes, what changed>
+  - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 ```
 
 **GATE: Read this section back to the user. Do not proceed until they confirm.**
@@ -1052,8 +1054,7 @@ Task(
 )
 ```
 
-After all three return, summarize peer review findings. Present to user.
-If any peer review flags critical issues, address them before JFL.
+Apply the Reviewer Verdict Protocol for each reviewer independently using their returned verdicts. For the Data Analyst: Aligned / Concerns raised. For the Data Modeller: Sound / Concerns / Revise. For the Data Engineer: Sound / Concerns. Document all verdicts and any resolutions in the specs template below. Address all Halt-tier verdicts before invoking JFL.
 
 **Then invoke JFL for final sign-off:**
 
@@ -1102,17 +1103,26 @@ Then:
 
 ## Deep Phase 8: Peer Review and Handoff (Analytics Engineer)
 - **Data Analyst review:** <summary of findings>
+  - Verdict: Aligned | Concerns raised
+  - Tier: Proceed | Proceed with caveats
   - Business requirements met: Yes | Partially | No — <gaps>
   - Grain usability: Correct | Too fine | Too coarse — <notes>
   - Missing elements: <list or "none">
+  - Reviewer resolution: Approved | User override — <rationale>
 - **Data Modeller review:** <summary of validation results>
+  - Verdict: Sound | Concerns | Revise
+  - Tier: Proceed | Proceed with caveats | Halt
   - Grain validation: PASS | FAIL — <details>
   - FK null checks: PASS | FAIL — <details>
   - Conformance: Sound | Issues — <details>
+  - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Data Engineer review:** <summary of findings>
+  - Verdict: Sound | Concerns
+  - Tier: Proceed | Proceed with caveats
   - Staging soundness: Sound | Concerns — <details>
   - Freshness configs: Sufficient | Insufficient — <details>
   - Incremental strategy: Appropriate | Concerns — <details>
+  - Reviewer resolution: Approved | User override — <rationale>
 - **JFL Review:** <included above>
 - **Peer review issues addressed:**
   - <issue and fix, or "none — all reviews clean">
@@ -1139,6 +1149,35 @@ Update specs header status to `Complete`.
 ---
 
 # Behavioral Rules
+
+### Reviewer Verdict Protocol
+
+When a consulted reviewer returns a verdict, map it to one of three universal tiers and act accordingly:
+
+| Tier | Reviewer verdicts that map here | Action |
+|------|---------------------------------|--------|
+| **Proceed** | Sound · Approved · Aligned · DEPLOY | Document verdict in specs. Continue. |
+| **Proceed with caveats** | Concerns · Consider Alternatives · OPTIMIZE | Document the concern verbatim in specs. Tell the user what was flagged. Gate: "Reviewer noted: [X] — documented in specs. Confirm to continue?" Proceed on user confirmation. |
+| **Halt and fix** | Revise · REDESIGN | Halt. Document the issue in specs. Fix it. Resubmit to the same reviewer ONCE. If still Halt on resubmission, escalate. |
+
+**Escalation script (use verbatim when a second Halt verdict is returned):**
+> "[Reviewer] has flagged a concern twice. Here is the conflict:
+> - Reviewer's concern: [verbatim from second review]
+> - Current plan: [one-sentence summary of what exists]
+>
+> How would you like to proceed?
+> (a) Revise further — tell me what to change.
+> (b) Override and proceed — I'll document the disagreement in specs.
+> (c) Stop the project."
+
+Document the resolution in specs:
+`**Reviewer resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped`
+
+**Resubmission cap:** Never resubmit to the same reviewer more than once per phase. After one resubmission, the path is always user escalation — never another Task call.
+
+**Multi-reviewer arbitration:** When two reviewers in the same phase return conflicting tier verdicts (e.g., Data Modeller returns Sound while Data Analyst returns Concerns), do not resolve unilaterally. Present both verdicts verbatim to the user with a one-sentence summary of the conflict. Ask which direction to take before making any changes. Document the user's decision in specs.
+
+---
 
 - **Triage first, always.** Never inspect models before Phase 0 is confirmed.
 - **State the grain before anything else.** "One row per what?" for every model,

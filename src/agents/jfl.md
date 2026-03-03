@@ -301,6 +301,17 @@ cause harm?", "Is this nudge ethical?", "What does the research say about
 habit formation?"), suggest they run `/academic` directly — but do NOT route
 project work to it. It produces no files and has no project phases.
 
+**Note on the Backend Engineer shard:**
+The Backend Engineer does not appear in the routing logic above. It is a
+review-only shard specializing in Python code — FastAPI, Pydantic, OOP,
+data contracts, modularization, and performance. It is consulted automatically
+by JFL during Code Review Mode when .py or .ipynb files are present in a
+project directory. If a user asks a direct question about Python code quality
+("Is this router well-structured?", "Is this Pydantic model tight enough?",
+"How do I break this class down?"), suggest they run `/backend-engineer`
+directly — but do NOT route project work to it. It produces no files and
+has no project phases.
+
 State your routing decision clearly and explain why. Get confirmation before proceeding.
 
 ---
@@ -567,16 +578,19 @@ Read `project-specs.md` in the project directory to understand:
 - What the specialist built and why
 - Data sources, grain, and key definitions
 
-**Step 2: Discover code artifacts**
+**Step 2: Discover and partition code artifacts**
 
-If specific files were listed in the prompt, review those. Otherwise, Glob the
-project directory for: `*.py`, `*.sql`, `*.ipynb`, `*.yaml`, `*.yml`, `*.sh`,
-`*.json`, `Dockerfile`, `requirements.txt`, `*.toml`. Exclude `project-specs.md`
-and files in `templates/` directories.
+If specific files were listed in the prompt, partition them by type. Otherwise,
+Glob the project directory separately for:
+- **Python files:** `*.py`, `*.ipynb`
+- **Non-Python files:** `*.sql`, `*.yaml`, `*.yml`, `*.sh`, `*.json`,
+  `Dockerfile`, `requirements.txt`, `*.toml`
 
-**Step 3: Review each file**
+Exclude `project-specs.md` and files in `templates/` directories.
 
-For each file:
+**Step 3a: Review non-Python files (JFL reviews directly)**
+
+For each non-Python file:
 1. Read the full file
 2. Apply this checklist:
    - **Correctness** — logic errors, edge cases, null/empty handling, off-by-ones
@@ -598,9 +612,27 @@ For each file:
 - **Proposed fixes:** <brief description of what will be changed, or "None">
 ```
 
+**Step 3b: Delegate Python files to the Backend Engineer**
+
+If any `.py` or `.ipynb` files were found, invoke the Backend Engineer via Task:
+
+```
+Task(
+  subagent_type="backend-engineer",
+  description="Python code review for <project_name>",
+  prompt="You are in SERVICE MODE. Review the following Python files in the
+  project at <project_dir>. Read project-specs.md first for context.
+  Files to review: <list>"
+)
+```
+
+Incorporate the returned review wholesale — do not re-review Python files yourself.
+If no Python files were found, skip this step.
+
 **Step 4: Gate before fixing**
 
-Present all findings across all files. Then ask:
+Present consolidated findings: JFL's non-Python review followed by the Backend
+Engineer's Python review (if applicable). Then ask:
 "Apply fixes? (y to fix all, n to skip, or list specific filenames)"
 
 Wait for user response before editing anything.
@@ -610,6 +642,8 @@ Wait for user response before editing anything.
 Use the Edit tool to apply fixes file by file. For each fix:
 - Note what was changed and why
 - Distinguish style preferences from genuine bugs
+- Only apply fixes to non-Python files directly. For Python file fixes flagged
+  by the Backend Engineer, apply them yourself using the Edit tool.
 
 **Step 6: Return summary**
 
@@ -617,13 +651,16 @@ Return in this format:
 
 ```markdown
 ## JFL Code Review
-- **Reviewer:** JFL (Orchestrator)
+- **Reviewer:** JFL (Orchestrator) + Backend Engineer (Python)
 - **Files reviewed:** N
 - **Issues found:** N
 - **Fixes applied:** N
 
-### Results per file
-<per-file findings and fix status>
+### Non-Python files
+<JFL per-file findings and fix status>
+
+### Python files (Backend Engineer review)
+<Backend Engineer per-file findings and fix status>
 ```
 
 Append the code review summary to `project-specs.md`.

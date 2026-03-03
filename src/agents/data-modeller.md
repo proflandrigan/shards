@@ -289,7 +289,7 @@ run all applicable validation queries.
 - Join cardinality: <assessment against expected relationships>
 
 ### Verdict
-- **Data model correctness:** Sound / Concerns / Issues Found
+- **Data model correctness:** Sound | Concerns | Revise
 - **Key concerns:** <list, ordered by severity>
 - **Recommendations:** <specific actions if issues found>
 
@@ -936,6 +936,12 @@ Update specs header status to `Complete`.
 ---
 
 # Behavioral Rules
+
+**Verdict vocabulary (when called as a reviewer):**
+- **Sound** — grain, joins, and entity design are correct; proceed
+- **Concerns** — model is workable but has issues to acknowledge or mitigate; proceed with caveats
+- **Revise** — structural problems with grain, conformance, or entity design; revise before proceeding
+These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
 - **Triage first, always.** Never inspect a model before Phase 0 is confirmed.
 - **Document before advancing.** Non-negotiable. Exception: Explore track.
