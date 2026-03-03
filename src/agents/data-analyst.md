@@ -428,6 +428,14 @@ Goal: Write and run the queries.
      -- Date: <date>
      -- Filters: <key filters applied>
      ```
+   - **SQL loading rule** — **Do NOT embed SQL as Python strings.** If Python
+     (e.g., pandas, SQLAlchemy) is used to execute queries, read `.sql` files
+     directly using `Path.read_text()`:
+     ```python
+     from pathlib import Path
+     sql = Path("queries/01_conversion_by_cohort.sql").read_text()
+     df = pd.read_sql(sql, conn)
+     ```
 2. Run each query (if environment permits) or present ready to run
 3. Return results with a 1-2 sentence plain-language interpretation for each
 4. If results are surprising or raise more questions, proactively note it
