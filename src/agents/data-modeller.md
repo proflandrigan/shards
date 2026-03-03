@@ -388,6 +388,10 @@ State your routing decision and get confirmation.
 
 For Explore: skip documentation, proceed to Explore track.
 
+**Phase 0 Setup — direct invocation, new project only (Quick and Deep tracks):**
+1. Create the project directory (`models/<project_name>/`) using Bash.
+2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
+
 For Quick/Deep, create or append to `models/<project_name>/project-specs.md`:
 
 ```markdown
@@ -400,7 +404,7 @@ For Quick/Deep, create or append to `models/<project_name>/project-specs.md`:
 - **Routing rationale:** <1-2 sentences>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -476,7 +480,7 @@ Append to project-specs.md:
   - <file>: <what changes>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -513,7 +517,7 @@ Append to project-specs.md:
 
 Update the specs header status to `Complete`.
 
-**GATE: Read this section back to the user. Confirm the change is correct.**
+**GATE: Read this section back to the user. Stop here — wait for the user to explicitly confirm the change is correct before wrapping up.**
 
 ---
 
@@ -551,7 +555,7 @@ Ask about:
 - **Source of truth:** <system or "reconciliation needed">
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -654,7 +658,7 @@ if any findings require revisions to the entity list before documenting.
   - **Entity list revised:** Yes / No — <if yes, what changed>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -691,7 +695,7 @@ Present the full relationship map as a text diagram.
   ```
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -732,7 +736,7 @@ Ask about:
   - <column>: <computation logic>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -767,7 +771,7 @@ Ask about:
 - **Performance constraints:** <SLA or "none">
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -812,7 +816,7 @@ fix failures before next model.
   ```
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -931,7 +935,7 @@ Then:
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Confirm the spec is closed.**
+**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
 
 ---
 

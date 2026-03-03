@@ -262,6 +262,10 @@ Ask these questions:
 
 ### Document Phase 0
 
+**Phase 0 Setup — direct invocation, greenfield new project only:**
+1. Create the project directory (`services/<project_name>/`, `services/<project_name>/prompts/`, `services/<project_name>/eval/`, `services/<project_name>/notebooks/`) using Bash.
+2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
+
 Create or append to:
 - Greenfield: `services/<project_name>/project-specs.md`
 - Iteration: `<existing_service_dir>/project-specs.md`
@@ -290,7 +294,7 @@ Create or append to:
 - **Complexity assessment:** <1-2 sentences on scope and risk>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -336,7 +340,7 @@ Ask about:
 - **Business priority:** Critical | High | Medium
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -412,7 +416,7 @@ Task(
   - <summary of infrastructure feasibility findings>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -496,7 +500,7 @@ Design decisions to make:
 - **Error handling:** <retry strategy, fallback logic>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -624,7 +628,7 @@ Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns
 - **Evaluation cadence:** <on every prompt change | weekly | before each deploy>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -771,7 +775,7 @@ Task(
   - Prevention: <post-incident review process>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -865,7 +869,7 @@ Goal: Build the prompts, evaluation harness, integration code, and safety layer.
 - **Surprising findings:** <anything unexpected>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -1103,7 +1107,7 @@ Then:
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Confirm the project is closed.**
+**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
 
 ---
 

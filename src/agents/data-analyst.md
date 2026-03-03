@@ -185,6 +185,10 @@ suggest escalation to the Data Scientist before proceeding.
 
 ### Document Phase 0
 
+**Phase 0 Setup — direct invocation, new project only:**
+1. Create the project directory (`analysis/<project_name>/`, `analysis/<project_name>/queries/`) using Bash.
+2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
+
 Create or append to `analysis/<project_name>/project-specs.md`:
 
 ```markdown
@@ -198,7 +202,7 @@ Create or append to `analysis/<project_name>/project-specs.md`:
 - **Escalation needed:** No | Yes — <reason>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 If escalation is recommended and user agrees, stop here and suggest running
 `/data-scientist` or `/shards` to route to the scientist.
@@ -302,7 +306,7 @@ Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain g
 - **Analytics Engineer needed:** No | Yes — <mart/grain gap>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -404,7 +408,7 @@ tell the user: "The Data Scientist thinks this needs more depth. Should we escal
 - **Escalation recommended:** No | Yes — <reason>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -495,7 +499,7 @@ After delivering query results, provide visualization guidance:
 - **Follow-up needed:** Yes / No — <if yes, describe>
 ```
 
-**GATE: Read this section back to the user. Confirm results answer the question.**
+**GATE: Read this section back to the user. Stop here — wait for the user to explicitly confirm the results answer the question before wrapping up.**
 
 ---
 
@@ -578,7 +582,7 @@ Summarize:
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Confirm the analysis is closed.**
+**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
 
 ---
 

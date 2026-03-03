@@ -259,6 +259,10 @@ Ask (skip any already answered from context):
 
 ### Document Phase 0
 
+**Phase 0 Setup — direct invocation, new project only:**
+1. Create the project directory (`models/<project_name>/`, `models/<project_name>/notebooks/`, `models/<project_name>/src/`, `models/<project_name>/configs/`) using Bash.
+2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
+
 Create `models/<project_name>/project-specs.md`:
 
 ```markdown
@@ -279,7 +283,7 @@ Create `models/<project_name>/project-specs.md`:
 - **Starting point:** <Pretrained: model name> | <Scratch>
 ```
 
-**GATE: Read Phase 0 back to the user. Do not proceed until confirmed.**
+**GATE: Read Phase 0 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -343,7 +347,7 @@ Append to `project-specs.md`:
 **Parameter estimate:** ~<N>M total (backbone: ~<X>M, head: ~<Y>M)
 ```
 
-**GATE: Read Phase 1 back to the user. Do not proceed until confirmed.**
+**GATE: Read Phase 1 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -431,7 +435,7 @@ Append to `project-specs.md`:
 <best val metric | every N epochs | both — rationale>
 ```
 
-**GATE: Read Phase 2 back to the user. Do not proceed until confirmed.**
+**GATE: Read Phase 2 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -495,7 +499,7 @@ Append to `project-specs.md`:
 - **Expected inference latency:** ~<X>ms per sample on <hardware>
 ```
 
-**GATE: Read Phase 3 back to the user. Do not proceed until confirmed.**
+**GATE: Read Phase 3 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -806,7 +810,7 @@ weight decay; Goyal et al., 2017 for LR scaling, etc.)>
 3. <experiment or engineering step>
 ```
 
-**GATE: Read Phase 5 summary to the user. Confirm before closing the session.**
+**GATE: Read Phase 5 summary to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
 
 ---
 

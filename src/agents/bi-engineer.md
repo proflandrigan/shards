@@ -222,6 +222,10 @@ This answer determines **build mode**:
 
 ### Document Phase 0
 
+**Phase 0 Setup — direct invocation, new project only:**
+1. Create the project directory (`dashboards/<project_name>/`) using Bash.
+2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
+
 Create or append to `dashboards/<project_name>/project-specs.md`:
 
 ```markdown
@@ -237,7 +241,7 @@ Create or append to `dashboards/<project_name>/project-specs.md`:
 - **Build mode:** Build | Spec
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -334,7 +338,7 @@ Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain g
 - **Analytics Engineer needed:** No | Yes — <mart/grain gap>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -416,7 +420,7 @@ Address any concerns raised before finalizing the design.
   - Issues addressed: <how concerns were resolved, or "none raised">
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -519,7 +523,7 @@ For each chart or panel, document:
   - <suggestion or "none">
 ```
 
-**GATE: Read this section back to the user. Confirm deliverables meet the requirement.**
+**GATE: Read this section back to the user. Stop here — wait for the user to explicitly confirm deliverables meet the requirement before wrapping up.**
 
 ---
 
@@ -602,7 +606,7 @@ Summarize:
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Confirm the project is closed.**
+**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
 
 ---
 

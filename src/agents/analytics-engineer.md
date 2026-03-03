@@ -350,6 +350,10 @@ State routing decision and get confirmation.
 
 ### Document Phase 0
 
+**Phase 0 Setup — direct invocation, new project only:**
+1. Create the project directory (`models/<project_name>/`) using Bash.
+2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
+
 Create or append to `models/<project_name>/project-specs.md`:
 
 ```markdown
@@ -362,7 +366,7 @@ Create or append to `models/<project_name>/project-specs.md`:
 - **Routing rationale:** <1-2 sentences>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -442,7 +446,7 @@ Then:
   - <file>: <what changes>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -478,7 +482,7 @@ Wait for any signal from the user before beginning build steps.
 
 Update specs header status to `Complete`.
 
-**GATE: Read this section back to the user. Confirm the change is correct.**
+**GATE: Read this section back to the user. Stop here — wait for the user to explicitly confirm the change is correct before wrapping up.**
 
 ---
 
@@ -520,7 +524,7 @@ Always ask the grain question directly: "What should one row in this mart repres
   - <rule 2>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -615,7 +619,7 @@ If it does:
 - **Data environment:** <not greenfield | Staging exists, transform layer missing | GREENFIELD — no transformation layer detected. Contract-first design only>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 **If Insufficient, do not proceed. Discuss alternatives.**
 
 ---
@@ -699,7 +703,7 @@ Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -759,7 +763,7 @@ Materialization guidance (state your reasoning, not just the choice):
 - **Naming conventions confirmed:** Yes | No — <deviations from project standard>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -807,7 +811,7 @@ Ask about:
 - **Test coverage:** Full | Partial — <gaps and rationale>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -842,7 +846,7 @@ Ask about:
 - **External documentation:** <wiki, README, or "none">
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -978,7 +982,7 @@ select * from final
 - **Performance notes:** <run time, row counts, anything notable>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -1144,7 +1148,7 @@ Then:
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Confirm the spec is closed.**
+**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
 
 ---
 

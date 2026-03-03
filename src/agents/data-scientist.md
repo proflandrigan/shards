@@ -168,6 +168,10 @@ suggest the Data Analyst. Otherwise, proceed as Deep.
 
 ### Document Phase 0
 
+**Phase 0 Setup — direct invocation, new project only:**
+1. Create the project directory (`studies/<project_name>/`, `studies/<project_name>/queries/`, `studies/<project_name>/notebooks/`) using Bash.
+2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
+
 Create or append to `studies/<project_name>/project-specs.md`:
 
 ```markdown
@@ -180,7 +184,7 @@ Create or append to `studies/<project_name>/project-specs.md`:
 - **Routing decision:** Proceed as Deep | Recommend Data Analyst
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -215,7 +219,7 @@ well-established, clearly defensible approaches?"
 - **Creative approach:** Creative | Strict
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -307,7 +311,7 @@ Flag early if data appears insufficient.
 - **Data environment:** <not greenfield | Data exists but inaccessible — sources user-described, not verified | GREENFIELD — No data assets detected. Theoretical study design only>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 **If Insufficient, do not proceed. Discuss alternatives.**
 
 ---
@@ -385,7 +389,7 @@ Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns
 - **Proceeds to Phase 4 (ML):** Yes | No — skipping to Phase 5
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -506,7 +510,7 @@ this study wraps."
 
 This is informational only — do not pause or redirect. Continue to Phase 5.
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -556,7 +560,7 @@ Present the BI Engineer's feedback to the user before finalizing the output plan
   - Notes: <summary of visualization design feedback or "N/A — no visualization deliverables">
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -686,7 +690,7 @@ Apply the Reviewer Verdict Protocol for each reviewer independently using the re
 - **Surprising findings:** <anything unexpected>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -853,7 +857,7 @@ Then:
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Confirm the study is closed.**
+**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
 
 ---
 

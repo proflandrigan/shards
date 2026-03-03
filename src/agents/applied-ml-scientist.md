@@ -290,6 +290,10 @@ context — if some are already answered, skip them):
 
 ### Document Phase 0
 
+**Phase 0 Setup — direct invocation, new project only:**
+1. Create the project directory (`research/<project_name>/`, `research/<project_name>/notebooks/`, `research/<project_name>/src/`) using Bash.
+2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
+
 Create `research/<project_name>/project-specs.md`:
 
 ```markdown
@@ -316,7 +320,7 @@ Create `research/<project_name>/project-specs.md`:
 - **Starting point:** Greenfield | Existing code at <path> | Existing data at <path>
 ```
 
-**GATE: Read Phase 0 back to the user. Do not proceed until confirmed.**
+**GATE: Read Phase 0 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -357,7 +361,7 @@ testable claim: "If we [architectural choice], then the model will [behavior]
 because [inductive bias reasoning].">
 ```
 
-**GATE: Read Phase 1 back to the user. Do not proceed until confirmed.**
+**GATE: Read Phase 1 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -413,7 +417,7 @@ Compared to <closest prior work>, this framework differs in:
 3. <What this enables that prior work cannot do>
 ```
 
-**GATE: Read Phase 2 back to the user. Do not proceed until confirmed.**
+**GATE: Read Phase 2 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -472,7 +476,7 @@ src/
 capture the essential properties needed to test the hypothesis?>
 ```
 
-**GATE: Read Phase 3 back to the user. Do not proceed until confirmed.**
+**GATE: Read Phase 3 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -662,7 +666,7 @@ scale constraints, data quality assumptions>
 3. <experiment or engineering step>
 ```
 
-**GATE: Read Phase 5 summary to the user. Confirm before closing the session.**
+**GATE: Read Phase 5 summary to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
 
 ---
 

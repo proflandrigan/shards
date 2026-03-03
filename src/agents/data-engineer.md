@@ -157,6 +157,10 @@ State routing decision and get confirmation.
 
 ### Document Phase 0
 
+**Phase 0 Setup — direct invocation, new project only:**
+1. Create the project directory (`models/<project_name>/`) using Bash.
+2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
+
 Create or append to `models/<project_name>/project-specs.md`:
 
 ```markdown
@@ -169,7 +173,7 @@ Create or append to `models/<project_name>/project-specs.md`:
 - **Routing rationale:** <1-2 sentences>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -203,7 +207,7 @@ Then:
 - **Downstream impact:** <models or consumers affected>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -238,7 +242,7 @@ Wait for any signal from the user before beginning build steps.
 
 Update specs header status to `Complete`.
 
-**GATE: Read this section back to the user. Confirm the fix is correct.**
+**GATE: Read this section back to the user. Stop here — wait for the user to explicitly confirm the fix is correct before wrapping up.**
 
 ---
 
@@ -274,7 +278,7 @@ Ask about:
 - **Replaces existing model:** Yes — <which> | No — net new
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -356,7 +360,7 @@ After the Data Modeller responds (and any greenfield path is resolved), assess f
 - **Data environment:** <not greenfield | Source exists but schema inaccessible — architecture sound, implementation pending | GREENFIELD — No source data detected. Contract-first design only>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 **If Insufficient, do not proceed. Discuss alternatives.**
 
 ---
@@ -402,7 +406,7 @@ Present as a DAG:
 - **Naming conventions confirmed:** Yes | No — <deviations>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -437,7 +441,7 @@ Define: schema tests (.yml), custom data tests (tests/), source freshness.
 - **Test coverage:** Full | Partial — <gaps>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -467,7 +471,7 @@ Ask about:
 - **External documentation:** <wiki, README, or "none">
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -517,7 +521,7 @@ sql = Path("models/marts/mart_name.sql").read_text()
 - **Performance notes:** <run time, row counts, anything notable>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -587,7 +591,7 @@ Then:
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Confirm the spec is closed.**
+**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
 
 ---
 

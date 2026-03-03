@@ -227,6 +227,10 @@ Ask these questions:
 
 ### Document Phase 0
 
+**Phase 0 Setup — direct invocation, new project only (Greenfield and Model Handoff):**
+1. Create the project directory (`services/<project_name>/mlops/`, `services/<project_name>/mlops/terraform/`, `services/<project_name>/mlops/serving/`, `services/<project_name>/mlops/pipelines/`, `services/<project_name>/mlops/monitoring/`) using Bash.
+2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
+
 Create or append to:
 - Greenfield / Handoff: `services/<project_name>/mlops/project-specs.md`
 - Iteration: `<existing_service_dir>/mlops/project-specs.md`
@@ -254,7 +258,7 @@ Create or append to:
 - **Complexity assessment:** <1-2 sentences on scope and risk>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -298,7 +302,7 @@ Ask about:
 - **Business priority:** Critical | High | Medium
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -374,7 +378,7 @@ Task(
   - Serving constraints: <summary of findings>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -469,7 +473,7 @@ Choose based on model type, team capabilities, and cloud:
 - **Cloud lock-in assessment:** <trade-offs for chosen serving approach>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -587,7 +591,7 @@ Task(
 - **AI Engineer consultation (LLM only):** N/A | <summary of findings>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -683,7 +687,7 @@ Design decisions to make:
 - **Dashboard locations:** <links or "TBD">
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -769,7 +773,7 @@ user-specified path.
 - **Known gaps:** <anything that requires manual setup or future work>
 ```
 
-**GATE: Read this section back to the user. Do not proceed until they confirm.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -896,7 +900,7 @@ Report contents:
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Confirm the project is closed.**
+**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
 
 ---
 
