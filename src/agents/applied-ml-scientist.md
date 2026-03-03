@@ -230,6 +230,7 @@ alternatives should be considered.
   methods or better formulations worth evaluating; flag to the user before committing
 - **Revise** — there is a significant mismatch between the approach and the
   problem structure, or a clear superior method exists; revise before proceeding
+These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
 **Do NOT create any files in service mode.** This is pure information transfer.
 

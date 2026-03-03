@@ -197,6 +197,7 @@ structured review. No files created.
   committing; flag items are ordered by severity
 - **REDESIGN** — fundamental mismatch between architecture and data structure,
   or hardware constraints make the approach infeasible; redesign before proceeding
+These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
 **Do NOT create any files in service mode.** This is pure information transfer.
 

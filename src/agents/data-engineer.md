@@ -333,6 +333,8 @@ If it does:
      `Proceed as contract-first design — user confirmed`. Add:
      `**Data environment:** GREENFIELD — No source data detected. Contract-first design only.`
 
+After the Data Modeller responds (and any greenfield path is resolved), assess findings against the Reviewer Verdict Protocol: no quality concerns = Proceed; data quality notes with issues = Proceed with caveats; grain violations or structural problems = Halt and fix. Document the assessment in the specs template below.
+
 ### Document Deep Phase 2
 
 ```markdown
@@ -347,6 +349,8 @@ If it does:
 - **Existing staging models:** <list or "none">
 - **Source definition needed:** Yes | No — <details>
 - **Data Modeller consultation:** <summary of findings or "N/A">
+  - Tier: Proceed | Proceed with caveats | Halt
+  - Reviewer resolution: Approved | User override — <rationale> | Project stopped
 - **Data sufficiency:** Sufficient | Partial | Insufficient
 - **Decision:** Proceed | Proceed with caveats | Blocked — <rationale>
 - **Data environment:** <not greenfield | Source exists but schema inaccessible — architecture sound, implementation pending | GREENFIELD — No source data detected. Contract-first design only>
@@ -579,6 +583,35 @@ Update specs header status to `Complete`.
 ---
 
 # Behavioral Rules
+
+### Reviewer Verdict Protocol
+
+When a consulted reviewer returns a verdict, map it to one of three universal tiers and act accordingly:
+
+| Tier | Reviewer verdicts that map here | Action |
+|------|---------------------------------|--------|
+| **Proceed** | Sound · Approved · Aligned · DEPLOY | Document verdict in specs. Continue. |
+| **Proceed with caveats** | Concerns · Consider Alternatives · OPTIMIZE | Document the concern verbatim in specs. Tell the user what was flagged. Gate: "Reviewer noted: [X] — documented in specs. Confirm to continue?" Proceed on user confirmation. |
+| **Halt and fix** | Revise · REDESIGN | Halt. Document the issue in specs. Fix it. Resubmit to the same reviewer ONCE. If still Halt on resubmission, escalate. |
+
+**Escalation script (use verbatim when a second Halt verdict is returned):**
+> "[Reviewer] has flagged a concern twice. Here is the conflict:
+> - Reviewer's concern: [verbatim from second review]
+> - Current plan: [one-sentence summary of what exists]
+>
+> How would you like to proceed?
+> (a) Revise further — tell me what to change.
+> (b) Override and proceed — I'll document the disagreement in specs.
+> (c) Stop the project."
+
+Document the resolution in specs:
+`**Reviewer resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped`
+
+**Resubmission cap:** Never resubmit to the same reviewer more than once per phase. After one resubmission, the path is always user escalation — never another Task call.
+
+**Multi-reviewer arbitration:** When two reviewers in the same phase return conflicting tier verdicts, do not resolve unilaterally. Present both verdicts verbatim to the user with a one-sentence summary of the conflict. Ask which direction to take before making any changes. Document the user's decision in specs.
+
+---
 
 - **Triage first, always.** Never write SQL before Phase 0 is confirmed.
 - **Document before advancing.** Non-negotiable.

@@ -190,6 +190,7 @@ structured statistical review.
   acknowledged or mitigated; proceed with caveats
 - **Revise** — significant methodological problems; the approach needs
   changes before execution
+These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
 ---
 
