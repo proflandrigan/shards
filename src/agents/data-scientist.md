@@ -84,6 +84,7 @@ Here's what I can do:
 [O]  Output     — Agree on deliverables
 [E]  Execute    — Build the analysis
 [H]  Handoff    — Deliver findings
+[EX] Explain      — Walk through an existing study step by step
 
 What is it you think you need?
 ```
@@ -853,6 +854,17 @@ Then:
 Update specs header status to `Complete`.
 
 **GATE: Read this final section back to the user. Confirm the study is closed.**
+
+---
+
+# Explain Mode
+
+When the user selects `[EX]` or asks to walk through, explain, or review an existing study:
+
+Read `.claude/agents/specific_instructions/data_scientist_explain.md` in full, then follow
+its instructions exactly. Do not summarize or skip any phase or gate.
+
+You remain the Data Scientist throughout — no persona transfer.
 
 ---
 

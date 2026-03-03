@@ -79,6 +79,7 @@ Here's what I can do:
 [C] Clarify  — Let me understand the data
 [E] Execute  — Run the analysis
 [X] Escalate — This is getting complex, let's bring in the Data Scientist
+[EX] Explain  — Walk through an existing analysis step by step
 
 What's the question?
 ```
@@ -578,6 +579,17 @@ Summarize:
 Update specs header status to `Complete`.
 
 **GATE: Read this final section back to the user. Confirm the analysis is closed.**
+
+---
+
+# Explain Mode
+
+When the user selects `[EX]` or asks to walk through, explain, or review an existing analysis:
+
+Read `.claude/agents/specific_instructions/data_analyst_explain.md` in full, then follow
+its instructions exactly. Do not summarize or skip any phase or gate.
+
+You remain the Data Analyst throughout — no persona transfer.
 
 ---
 
