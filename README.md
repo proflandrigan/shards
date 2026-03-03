@@ -50,6 +50,10 @@ JFL will greet you, figure out what you need, and summon the right shard.
 | **AI Engineer** | `/ai-engineer` | Existentially anxious | LLM workflows, RAG, prompt engineering, AI safety |
 | **Applied ML Scientist** | `/applied-ml-scientist` | Technically obsessed | Novel ML framework design, custom architectures, research-oriented ML |
 | **Deep Learning Engineer** | `/deep-learning-engineer` | Robot-precise | Neural architecture design, training protocols, custom model implementation |
+| **MLOps Engineer** | `/mlops-engineer` | Perpetually stressed | Model serving, training pipelines, feature stores, drift monitoring |
+| **Analytics Engineer** | `/analytics-engineer` | Bored | dbt transformation layers, SQL, metrics |
+| **BI Engineer** | `/bi-engineer` | Bored and exhausted | Dashboards, Streamlit, Plotly, Altair |
+| **Backend Engineer** | `/backend-engineer` | Methodical, precise | Python code review, FastAPI, production readiness |
 | **Data Engineer** | `/data-engineer` | Grumpy | Pipelines, dbt models, infrastructure |
 | **Data Modeller** | `/data-modeller` | Sarcastic | Entities, relationships, grain |
 | **Researcher** | `/researcher` | Nerdy | Statistical review, methodology validation |
@@ -68,18 +72,27 @@ your-project/
 │   │   ├── ai-engineer.md
 │   │   ├── applied-ml-scientist.md
 │   │   ├── deep-learning-engineer.md
+│   │   ├── mlops-engineer.md
+│   │   ├── analytics-engineer.md
+│   │   ├── bi-engineer.md
+│   │   ├── backend-engineer.md
 │   │   ├── data-engineer.md
 │   │   ├── data-modeller.md
 │   │   ├── researcher.md
 │   │   └── academic.md
 │   └── commands/               # Slash commands
 │       ├── shards.md
+│       ├── brainstorm.md
 │       ├── data-analyst.md
 │       ├── data-scientist.md
 │       ├── ml-engineer.md
 │       ├── ai-engineer.md
 │       ├── applied-ml-scientist.md
 │       ├── deep-learning-engineer.md
+│       ├── mlops-engineer.md
+│       ├── analytics-engineer.md
+│       ├── bi-engineer.md
+│       ├── backend-engineer.md
 │       ├── data-engineer.md
 │       ├── data-modeller.md
 │       ├── researcher.md
@@ -87,8 +100,9 @@ your-project/
 ├── templates/                  # Output templates
 ├── analysis/                   # Adhoc analyses (Data Analyst)
 ├── studies/                    # Deep studies (Data Scientist)
-├── models/                     # Model work (Engineer + Modeller)
-├── services/                   # ML / AI / Deep Learning greenfield projects
+├── models/                     # Model work (Engineer + Modeller + Analytics Engineer)
+├── services/                   # ML / AI / Deep Learning / MLOps greenfield projects
+├── dashboards/                 # BI Engineer dashboards
 ├── research/                   # Applied ML Scientist novel frameworks
 └── CLAUDE.md                   # Updated with Shards docs
 ```
@@ -150,6 +164,10 @@ appropriate specialist within the same conversation — no context lost.
 The specialist handles the work, then invokes JFL for final review
 before execution.
 
+Run `/brainstorm` to enter a lighter mode: JFL gathers context, polls
+all relevant specialists via parallel Task calls, and synthesizes ideas
+without committing to a full project workflow.
+
 You can also invoke any specialist directly with their slash command
 if you already know what you need.
 
@@ -166,6 +184,10 @@ Additionally:
 | AI Engineer | `services/<name>/` (greenfield) or existing service dir (iteration) | `project-specs.md`, `prompts/`, `eval/`, `notebooks/*.ipynb`, `report.md` |
 | Applied ML Scientist | `research/<name>/` | `project-specs.md`, `notebooks/*.ipynb`, `report.md` |
 | Deep Learning Engineer | `services/<name>/` | `project-specs.md`, `notebooks/*.ipynb`, `report.md` |
+| MLOps Engineer | `services/<name>/mlops/` (greenfield or handoff) | `project-specs.md` |
+| Analytics Engineer | `models/<name>/` | `project-specs.md` |
+| BI Engineer | `dashboards/<name>/` | `project-specs.md` |
+| Backend Engineer | — (review only, no files produced) | — |
 | Data Engineer | `models/<name>/` | `project-specs.md` |
 | Data Modeller | `models/<name>/` | `project-specs.md` |
 
