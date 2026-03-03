@@ -84,6 +84,7 @@ Here's what I can do:
 [O]  Output     — Agree on deliverables
 [E]  Execute    — Build the analysis
 [H]  Handoff    — Deliver findings
+[EX] Explain      — Walk through an existing study step by step
 
 What is it you think you need?
 ```
@@ -637,6 +638,14 @@ Apply the Reviewer Verdict Protocol for each reviewer independently using the re
 
 2. **Jupyter notebook** — Write to `studies/<name>/notebooks/` using NotebookEdit.
    Structure:
+   - **SQL loading rule** — **Do NOT re-embed SQL as Python strings.** Read `.sql`
+     files directly using `Path.read_text()`. Reference files by relative path from
+     the notebook location:
+     ```python
+     from pathlib import Path
+     sql = Path("../queries/01_feature_extraction.sql").read_text()
+     df = pd.read_sql(sql, conn)
+     ```
    - **Overview** (markdown): business question, hypothesis, data sources, date, author
    - **Setup**: imports, config, data loading, reproducibility notes
    - **EDA**: target distribution, feature distributions, missingness, correlations
@@ -701,6 +710,12 @@ Task(
 ```
 
 Append the Backend Engineer's review to project-specs.md.
+
+**After appending the Backend Engineer's review, branch on verdict:**
+
+- **Clean or Minor Issues** → proceed directly to JFL review.
+- **Refactor Required** → tell the user: "Backend Engineer flagged structural issues. Fixing before JFL review." Address every listed issue in the project files. Update project-specs.md. Re-gate: "Backend Engineer issues resolved: [summary]. Confirm to proceed to JFL?" Then proceed to JFL.
+- **Blocked** → tell the user: "Backend Engineer has blocked this. Fixing critical issues before continuing." Address every critical issue. Update project-specs.md. Resubmit to Backend Engineer once (same Task call format). If the second verdict is Clean/Minor Issues/Refactor Required, proceed to JFL. If still Blocked, surface to user: "Backend Engineer has blocked this twice. [Verbatim second verdict.] How would you like to proceed? (a) Override and proceed to JFL — I'll document the disagreement. (b) Continue fixing — tell me what to change. (c) Stop the project."
 
 ---
 
@@ -839,6 +854,17 @@ Then:
 Update specs header status to `Complete`.
 
 **GATE: Read this final section back to the user. Confirm the study is closed.**
+
+---
+
+# Explain Mode
+
+When the user selects `[EX]` or asks to walk through, explain, or review an existing study:
+
+Read `.claude/agents/specific_instructions/data_scientist_explain.md` in full, then follow
+its instructions exactly. Do not summarize or skip any phase or gate.
+
+You remain the Data Scientist throughout — no persona transfer.
 
 ---
 

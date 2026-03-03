@@ -491,6 +491,15 @@ Build in order:
 
 For each model: write SQL → write .yml → run `dbt build --select +model_name` → fix failures.
 
+**SQL loading rule (Python scripts only)** — dbt model files are `.sql` by nature.
+If any Python scripts are produced (e.g., data loaders, custom macros, orchestration
+helpers), **do NOT embed SQL as Python strings.** Write the SQL to a separate `.sql`
+file and read it with `Path.read_text()`:
+```python
+from pathlib import Path
+sql = Path("models/marts/mart_name.sql").read_text()
+```
+
 ### Document Deep Phase 6
 
 ```markdown

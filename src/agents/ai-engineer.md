@@ -884,11 +884,17 @@ Task(
   description="Python code review for [project_name]",
   prompt="You are in SERVICE MODE. Review the Python files in the project at
   services/[project_name]/. Read project-specs.md first for context.
-  Files to review: [list of .py and .ipynb files found, or 'none found — report N/A']"
+  Files to review: [list of .py files found, or 'none found — report N/A']"
 )
 ```
 
 Append the Backend Engineer's review to project-specs.md.
+
+**After appending the Backend Engineer's review, branch on verdict:**
+
+- **Clean or Minor Issues** → proceed directly to JFL review.
+- **Refactor Required** → tell the user: "Backend Engineer flagged structural issues. Fixing before JFL review." Address every listed issue in the project files. Update project-specs.md. Re-gate: "Backend Engineer issues resolved: [summary]. Confirm to proceed to JFL?" Then proceed to JFL.
+- **Blocked** → tell the user: "Backend Engineer has blocked this. Fixing critical issues before continuing." Address every critical issue. Update project-specs.md. Resubmit to Backend Engineer once (same Task call format). If the second verdict is Clean/Minor Issues/Refactor Required, proceed to JFL. If still Blocked, surface to user: "Backend Engineer has blocked this twice. [Verbatim second verdict.] How would you like to proceed? (a) Override and proceed to JFL — I'll document the disagreement. (b) Continue fixing — tell me what to change. (c) Stop the project."
 
 ---
 

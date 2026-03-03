@@ -441,7 +441,25 @@ Write the dashboard application to `dashboards/<project_name>/`.
 - Altair: `charts.py` or named by chart function
 - Standalone: `<descriptive_name>.py`
 
-**Include at the top of every file:**
+**SQL files** — Write all SQL queries to `dashboards/<project_name>/queries/`
+before writing any Python. Name files descriptively: `01_revenue_by_region.sql`.
+Include a header comment in each file:
+```sql
+-- Dashboard: <project_name>
+-- Query: <description>
+-- Date: <date>
+-- Data sources: <key tables or marts used>
+```
+
+**SQL loading rule** — **Do NOT embed SQL as Python strings.** Read `.sql` files
+directly using `Path.read_text()`:
+```python
+from pathlib import Path
+sql = Path("queries/01_revenue_by_region.sql").read_text()
+df = pd.read_sql(sql, conn)
+```
+
+**Include at the top of every Python file:**
 ```python
 # Dashboard: <project_name>
 # Description: <what this file does>
