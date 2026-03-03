@@ -984,24 +984,22 @@ Task(
 
 **Backend Engineer code review (Python artifacts):**
 
-Glob the project directory (`services/<project_name>/`) for `.py` and `.ipynb` files.
-If any are found:
-
 Tell the user: "Before JFL signs off, the Backend Engineer is reviewing the Python
 artifacts. Code quality is not optional."
+
+Glob the project directory (`services/<project_name>/`) for `.py` and `.ipynb` files.
 
 ```
 Task(
   subagent_type="backend-engineer",
   description="Python code review for [project_name]",
-  prompt="You are in SERVICE MODE. Review the following Python files in the
-  project at services/[project_name]/. Read project-specs.md first for context.
-  Files to review: [list of .py and .ipynb files found]"
+  prompt="You are in SERVICE MODE. Review the Python files in the project at
+  services/[project_name]/. Read project-specs.md first for context.
+  Files to review: [list of .py and .ipynb files found, or 'none found — report N/A']"
 )
 ```
 
-Append the Backend Engineer's review to project-specs.md. If no Python files are
-found, skip this step.
+Append the Backend Engineer's review to project-specs.md.
 
 ---
 

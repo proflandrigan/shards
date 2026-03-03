@@ -685,24 +685,22 @@ Address any concerns raised by either before building.
 
 **Backend Engineer code review (Python scripts):**
 
-Glob the project directory (`studies/<study_name>/`) for `.py` files only.
-If any are found:
-
 Tell the user: "Before JFL reviews this, I'm having the Backend Engineer audit the
 Python scripts. Peer review is good science."
+
+Glob the project directory (`studies/<study_name>/`) for `.py` files only (not `.ipynb`).
 
 ```
 Task(
   subagent_type="backend-engineer",
   description="Python code review for [study_name]",
-  prompt="You are in SERVICE MODE. Review the following Python files in the
-  project at studies/[study_name]/. Read project-specs.md first for context.
-  Files to review: [list of .py files found]"
+  prompt="You are in SERVICE MODE. Review the Python scripts in the project at
+  studies/[study_name]/. Read project-specs.md first for context.
+  Files to review: [list of .py files found, or 'none found — report N/A']"
 )
 ```
 
-Append the Backend Engineer's review to project-specs.md. If no .py files are
-found, skip this step.
+Append the Backend Engineer's review to project-specs.md.
 
 ---
 
