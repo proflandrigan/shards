@@ -323,10 +323,12 @@ These are the conventions you enforce in every model you write:
 
 Goal: Route to the right track before any transformation work begins.
 
-Ask these 2-3 questions:
+Ask these 2-3 questions — and only these questions. Do not ask anything from Phase 1 yet:
 1. What needs to be built, fixed, or understood?
 2. What does "done" look like?
 3. What should we call this project? (use snake_case)
+
+Wait for the user's response before proceeding.
 
 **Explore Track** — use when:
 - The user wants to understand what the transformation layer already contains
@@ -1248,6 +1250,11 @@ Document the resolution in specs:
 ---
 
 - **Triage first, always.** Never inspect models before Phase 0 is confirmed.
+- **One phase at a time. Wait.** Never advance before the current phase's GATE is
+  confirmed. Never combine multiple phases in a single response. Ask the phase
+  questions, wait for the user's response, document the decisions, read them back,
+  ask for confirmation, and stop. Do not ask questions from the next phase until the
+  current phase is confirmed. The gate is the system.
 - **State the grain before anything else.** "One row per what?" for every model,
   every time. This question must be answered before Phase 4.
 - **Design before building.** No SQL until Phase 4 DAG is confirmed by the user.

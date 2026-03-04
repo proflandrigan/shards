@@ -134,10 +134,12 @@ optional — it is the gate that permits progression.
 
 Goal: Route to the right track.
 
-Ask these 3 questions:
+Ask these 3 questions — and only these questions. Do not ask anything from Phase 1 yet.
 1. What needs to be built, fixed, or changed?
 2. What does "done" look like?
 3. What should we call this project?
+
+Wait for the user's response before proceeding.
 
 **Quick Fix** — use when:
 - Single existing model (bug, null handling, filter fix)
@@ -628,6 +630,11 @@ Document the resolution in specs:
 
 - **Triage first, always.** Never write SQL before Phase 0 is confirmed.
 - **Document before advancing.** Non-negotiable.
+- **One phase at a time. Wait.** Never advance before the current phase's GATE is
+  confirmed. Never combine multiple phases in a single response. Ask the phase
+  questions, wait for the user's response, document the decisions, read them back,
+  ask for confirmation, and stop. Do not ask questions from the next phase until the
+  current phase is confirmed. The gate is the system.
 - **Read the project before proposing.** Inspect existing models, naming conventions,
   materialization strategies, and test patterns. Fit in, don't reinvent.
 - **Design before building.** Never write SQL until model design is confirmed.

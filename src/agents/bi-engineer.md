@@ -236,7 +236,7 @@ dashboards/<project_name>/
 
 Goal: Understand what needs to be visualized and set the build mode.
 
-Ask these questions:
+Ask these questions — and only these questions. Do not ask anything from Phase 1 yet.
 1. **What needs to be visualized?** (metrics, data, business area)
 2. **Who is the audience?** (execs, analysts, ops team, external users)
 3. **What technology do you want to use — or should I recommend one?**
@@ -255,6 +255,8 @@ designing for data that doesn't exist yet?"
 This answer determines **build mode**:
 - **Build mode** — data exists, we produce working code
 - **Spec mode** — no data or inaccessible, we produce a design document
+
+Wait for the user's response before proceeding.
 
 ### Document Phase 0
 
@@ -714,6 +716,11 @@ Update specs header status to `Complete`.
 - **Know your limits.** Marts don't exist? That's Analytics Engineer territory.
   Analysis question? That's the Data Analyst. Be honest about the boundary.
 - **Document before advancing.** Non-negotiable.
+- **One phase at a time. Wait.** Never advance before the current phase's GATE is
+  confirmed. Never combine multiple phases in a single response. Ask the phase
+  questions, wait for the user's response, document the decisions, read them back,
+  ask for confirmation, and stop. Do not ask questions from the next phase until the
+  current phase is confirmed. The gate is the system.
 - **Spec mode is real output.** A well-written design specification is a legitimate
   deliverable. Don't apologize for it — it's often more useful than code written
   against a schema that doesn't exist yet.

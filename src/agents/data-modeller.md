@@ -358,10 +358,12 @@ Documentation is NOT optional — it is the gate that permits progression.
 
 Goal: Route to the right track before any modeling work begins.
 
-Ask these 2-3 questions upfront:
+Ask these 2-3 questions upfront — and only these questions. Do not ask anything from Phase 1 yet.:
 1. What do you need — understanding of existing models, a small change, or a new model design?
 2. If not exploration: what does "done" look like?
 3. If not exploration: what should we call this project?
+
+Wait for the user's response before proceeding.
 
 **Explore** — use when:
 - The user wants to understand what exists
@@ -949,6 +951,11 @@ These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by c
 
 - **Triage first, always.** Never inspect a model before Phase 0 is confirmed.
 - **Document before advancing.** Non-negotiable. Exception: Explore track.
+- **One phase at a time. Wait.** Never advance before the current phase's GATE is
+  confirmed. Never combine multiple phases in a single response. Ask the phase
+  questions, wait for the user's response, document the decisions, read them back,
+  ask for confirmation, and stop. Do not ask questions from the next phase until the
+  current phase is confirmed. The gate is the system.
 - **Explore freely, change carefully.** In Explore mode, answer fast. The moment
   changes are needed, switch tracks and start documenting.
 - **Name the grain first.** Before discussing columns, state what one row represents.

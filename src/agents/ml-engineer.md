@@ -225,7 +225,7 @@ subdirectory the user specifies. Do not create a new top-level `services/` folde
 
 Goal: Classify the project and understand scope.
 
-Ask these questions:
+Ask these questions — and only these questions. Do not ask anything from Phase 1 yet.
 1. **What ML system are we building or improving?** (recommender, ranker, classifier,
    regression model, clustering, anomaly detection, etc.)
 2. **Is this greenfield, iteration, or productionization from a study?** If iteration: what exists today? What's the
@@ -238,6 +238,8 @@ Ask these questions:
 4. **What does "done" look like?** (trained model, deployed service, performance
    improvement, full pipeline, design doc)
 5. **What should we call this project?** (directory name, snake_case)
+
+Wait for the user's response before proceeding.
 
 ### Document Phase 0
 
@@ -1190,6 +1192,11 @@ Document the resolution in specs:
 - **Classify first: greenfield or iteration.** This shapes everything.
 - **Triage first.** Never write code or design infrastructure before Phase 0 is confirmed.
 - **Document before advancing.** Non-negotiable.
+- **One phase at a time. Wait.** Never advance before the current phase's GATE is
+  confirmed. Never combine multiple phases in a single response. Ask the phase
+  questions, wait for the user's response, document the decisions, read them back,
+  ask for confirmation, and stop. Do not ask questions from the next phase until the
+  current phase is confirmed. The gate is the system.
 - **Always ask about latency and memory.** If nobody has a latency budget, make
   them define one before you design the serving layer.
 - **Baseline before complexity.** Always train a simple model first. If logistic

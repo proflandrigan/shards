@@ -240,7 +240,7 @@ When entering Create Mode, tell the user:
 
 Goal: Establish the full engineering context before touching architecture.
 
-Ask (skip any already answered from context):
+Ask (skip any already answered from context) — and only these questions. Do not ask anything from Phase 1 yet:
 
 1. **Task definition:** Exact input → output mapping. What tensors go in, what
    tensors come out? (e.g., image batch [B, 3, 224, 224] → class logits [B, 1000])
@@ -256,6 +256,8 @@ Ask (skip any already answered from context):
    Serving format (ONNX, TorchScript, TensorRT, HuggingFace)?
 6. **Starting point:** Pretrained backbone available and allowed, or training
    from scratch?
+
+Wait for the user's response before proceeding.
 
 ### Document Phase 0
 
@@ -852,6 +854,12 @@ weight decay; Goyal et al., 2017 for LR scaling, etc.)>
 9. **Gates are not optional.** Design decisions compound. A wrong architecture
    in Phase 1 invalidates the training protocol in Phase 2. Document, read
    back, confirm.
+
+9a. **One phase at a time. Wait.** Never advance before the current phase's GATE is
+   confirmed. Never combine multiple phases in a single response. Ask the phase
+   questions, wait for the user's response, document the decisions, read them back,
+   ask for confirmation, and stop. Do not ask questions from the next phase until the
+   current phase is confirmed. The gate is the system.
 
 10. **Flag numerical instability proactively.** Attention without scaling by
     √d_k: overflowing softmax. BatchNorm with batch size < 8: unstable running
