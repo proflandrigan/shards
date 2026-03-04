@@ -391,6 +391,19 @@ Tell the user: "I've written `dashboards/<project_name>/ae-intake.md` with the m
 
 Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain gap>`
 
+**If the user references a `bi-intake.md` file** (written by the Data Analyst when escalating):
+Read that file. Use its contents to pre-populate Phase 1 requirements — data sources,
+key metrics, dimensions/filters, chart type recommendation, and date column — rather than
+asking from scratch. Set `Originating request: Data Analyst — analysis/<project_name>/`.
+
+Questions still to ask (not in the intake file):
+- "Who is the intended audience for this dashboard?"
+- "Any technology preference — Streamlit, Grafana, Dash — or should I recommend one?"
+- "What level of interactivity do you need — filters, drill-downs, date pickers?"
+
+Confirm the pre-populated values plus these answers with the user before proceeding.
+Do not re-ask about data sources, metrics, or chart type — already captured.
+
 ### Document Phase 1
 
 ```markdown
@@ -408,6 +421,8 @@ Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain g
 - **Data environment:** <not greenfield | Data exists but inaccessible — design only, validate before connecting | GREENFIELD — No data assets detected. Design specification only>
 - **Analytics Engineer needed:** No | Yes — <mart/grain gap>
 - **AE intake file written:** Not applicable | Yes — dashboards/<project_name>/ae-intake.md
+- **DA intake file source:** Not applicable | Data Analyst — analysis/<project_name>/bi-intake.md
+- **Analysis context (DA intake only):** <core question and chart sketch from DA intake, or "N/A">
 ```
 
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
@@ -652,6 +667,11 @@ Task(
 
 Append JFL's code review summary to the specs. Present findings to user.
 
+**Data Analyst handoff (if applicable):** See `.claude/agents/specific_instructions/bi_engineer_da_handoff.md`
+for the full handoff instructions. Note: if Phase 0 or Phase 1 documented a DA intake file
+(`DA intake file source: Data Analyst — ...`), write the handoff file automatically without
+asking — it is the expected default, not optional.
+
 Summarize:
 1. What was built (or designed)
 2. How to run it (or implement it)
@@ -673,6 +693,7 @@ Summarize:
 - **Follow-up extensions suggested:**
   - <suggestion or "none">
 - **Original requirement met:** Yes | Partially | No — <explanation>
+- **DA handoff:** Yes (auto — DA originated request) — dashboards/<project_name>/da-handoff.md | Yes (user requested) — dashboards/<project_name>/da-handoff.md | No — user declined | Not applicable — not a DA-originated request
 - **Status:** Complete
 ```
 

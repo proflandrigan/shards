@@ -508,7 +508,25 @@ Always ask the grain question directly: "What should one row in this mart repres
 
 **If the downstream consumer is a BI dashboard:** Note in Phase 4 (Model Layer Architecture) that aggregations and the date spine should be designed with dashboard query patterns in mind — pre-aggregated at the mart level where possible, date dimension at the right granularity for time-series charts, and dimension columns kept at manageable cardinality for filter dropdowns.
 
-**If the user references an `ae-intake.md` file** (written by the BI Engineer when escalating): Read that file and use its contents to pre-populate the Phase 1 business requirements — grain, downstream consumer, business questions, required measures and dimensions, date spine, and refresh cadence — rather than asking from scratch. Confirm the pre-populated values with the user before proceeding.
+**If the user references an `ae-intake.md` file:** Read that file. Check the
+`Originating agent` field to determine the source:
+
+- **If originating agent is "BI Engineer":** Pre-populate Phase 1 business
+  requirements — grain, downstream consumer, business questions, required
+  measures and dimensions, date spine, and refresh cadence. Set
+  `Downstream consumer: Dashboard (BI Engineer)`. Confirm pre-populated
+  values with the user before proceeding.
+
+- **If originating agent is "Data Analyst":** Pre-populate Phase 1 business
+  requirements — grain, business questions the mart must answer, required
+  measures, required dimensions, date spine, and update frequency. Set
+  `Downstream consumer: Direct analyst queries (Data Analyst)`. Also
+  populate analysis context fields (core question, filters, definition of
+  done) from the intake file. Confirm pre-populated values with the user
+  before proceeding. Do not re-ask questions already answered in the intake file.
+
+In both cases: if a required field is missing or unclear, ask only about
+the missing field — not the whole set.
 
 ### Document Deep Phase 1
 
@@ -517,7 +535,9 @@ Always ask the grain question directly: "What should one row in this mart repres
 
 ## Deep Phase 1: Business Requirements (Analytics Engineer)
 - **Consumer(s):** <who uses this and how>
-- **Downstream consumer:** Dashboard (BI Engineer) | ML feature store | Finance report | Direct analyst queries | Other: <describe>
+- **Downstream consumer:** Dashboard (BI Engineer) | ML feature store | Finance report | Direct analyst queries (Data Analyst) | Other: <describe>
+- **Intake file source:** Not applicable | BI Engineer — dashboards/<project_name>/ae-intake.md | Data Analyst — analysis/<project_name>/ae-intake.md
+- **Analysis context (DA intake only):** <core question from DA intake, or "N/A">
 - **Business questions this mart answers:**
   - <question 1>
   - <question 2>
@@ -1134,6 +1154,8 @@ Then:
 
 6. **BI dashboard handoff:** See `.claude/agents/specific_instructions/analytics_engineer_bi_handoff.md` for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Dashboard (BI Engineer)", write the handoff file automatically without asking — it is the expected default, not optional.
 
+7. **Data Analyst handoff:** See `.claude/agents/specific_instructions/analytics_engineer_da_handoff.md` for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Direct analyst queries (Data Analyst)", write the handoff file automatically without asking — it is the expected default, not optional.
+
 ### Document Deep Phase 8
 
 ```markdown
@@ -1184,6 +1206,7 @@ Then:
   - <consumer walkthrough, downstream consumer notification, metrics layer, etc.>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
 - **BI dashboard handoff:** Yes (auto — BI downstream consumer) — models/<project_name>/bi-engineer-handoff.md | Yes (user requested) — models/<project_name>/bi-engineer-handoff.md | No — user declined | Not applicable — downstream consumer is not a BI dashboard
+- **DA handoff:** Yes (auto — Data Analyst downstream consumer) — models/<project_name>/da-handoff.md | Yes (user requested) — models/<project_name>/da-handoff.md | No — user declined | Not applicable — downstream consumer is not a Data Analyst
 - **Status:** Complete
 ```
 
