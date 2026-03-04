@@ -480,7 +480,7 @@ capture the essential properties needed to test the hypothesis?>
 
 ---
 
-## Create Mode — Phase 4: Execute
+## Create Mode — Phase 4: Execute (Gated)
 
 Goal: Build the prototype.
 
@@ -529,6 +529,8 @@ Append to `project-specs.md`:
 - **Known limitations:** <what the prototype doesn't handle yet>
 - **Ablation results (if run):** <summary>
 ```
+
+**GATE: Read the Phase 4 build log back to the user. Stop here — do not begin Phase 5 or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 

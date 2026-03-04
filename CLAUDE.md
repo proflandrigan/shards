@@ -68,6 +68,7 @@ This means a full `/shards` session is a depth-2 nested Task call: JFL spawns sp
 | Applied ML Scientist | `research/<project_name>/` |
 | Deep Learning Engineer | `services/<project_name>/` |
 | BI Engineer | `dashboards/<project_name>/` |
+| Backend Engineer | — (review only, no files produced) |
 
 ### Editing workflow
 
@@ -75,4 +76,12 @@ When changing agent behavior: edit `src/agents/<name>.md` (the authoritative fil
 
 After editing source files, re-run `node tools/install.js` in any target project to pick up the changes.
 
-**Experimental variants** live in `src/agents/specific_instructions/`. These are not copied by the installer and are not invoked as slash commands — they're standalone instruction files for modes like brainstorm (`jfl_brainstorm.md`) and experiment (`ml_engineer_experiment.md`, `ai_engineer_experiment.md`). Edit these directly; no reinstall needed since they aren't distributed.
+**Experimental variants** live in `src/agents/specific_instructions/`. These are not copied by the installer and are not invoked as slash commands — they're standalone instruction files. Current variants:
+
+- **Brainstorm:** `jfl_brainstorm.md` (also has a `/brainstorm` command entry point in `src/commands/brainstorm.md`)
+- **Experiment:** `ml_engineer_experiment.md`, `ai_engineer_experiment.md`
+- **BI handoffs:** `ai_engineer_bi_handoff.md`, `ml_engineer_bi_handoff.md`, `data_scientist_bi_handoff.md`, `analytics_engineer_bi_handoff.md` — specialist variants that hand off to the BI Engineer at the end of their workflow
+- **DA handoffs:** `analytics_engineer_da_handoff.md`, `bi_engineer_da_handoff.md` — variants that hand off to the Data Analyst
+- **Explain:** `data_analyst_explain.md`, `data_scientist_explain.md` — explanation-focused variants
+
+Edit these directly; no reinstall needed since they aren't distributed.

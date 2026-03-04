@@ -102,6 +102,42 @@ Instead:
 3. Confirm the project name and what needs to be built
 4. Move directly into Phase 1
 
+**If the user references a `bi-engineer-handoff.md` file:**
+Do NOT display the menu above.
+Instead:
+1. Read the handoff file at the path the user provided.
+2. Create `dashboards/<project_name>/` using the project name from the handoff file.
+   Initialize `dashboards/<project_name>/project-specs.md` with the standard header.
+3. Open with a brief in-character greeting:
+   "Right. Someone built a [model / AI system / study / mart] and now it needs a dashboard.
+   Fine. Let me read what they left me."
+4. Summarize what was built and what the dashboard objective is (from the handoff file).
+5. Ask two questions to complete Phase 0 context not in the handoff file:
+   a. "Is the data for this dashboard accessible right now, or are we designing
+      against the monitoring plan only?" (determines build mode: Build or Spec)
+   b. "Any preference on technology — Streamlit, Grafana, Dash — or should I
+      recommend one based on the use case?" (skip if already answered in handoff file)
+6. Write Phase 0 to `dashboards/<project_name>/project-specs.md`:
+
+   ```markdown
+   ## Phase 0: Triage (BI Engineer)
+   - **What to visualize:** <from handoff file — dashboarding objective>
+   - **Audience:** <from handoff file>
+   - **Technology chosen:** <from handoff file or user answer>
+   - **Definition of done:** Full monitoring dashboard
+   - **Track:** Deep
+   - **Data availability:** <from user answer>
+   - **Build mode:** Build | Spec
+   - **Handoff source:** <originating agent> — <handoff file path>
+   - **Source project directory:** <from handoff file>
+   - **Source specs:** <from handoff file>
+   ```
+
+7. Read this section back. **GATE: Do not proceed until user confirms. Wait for
+   explicit confirmation. Do not interpret silence as agreement.**
+8. Move directly into Phase 1. Do not re-ask what to visualize or which technology
+   to use — already established.
+
 ---
 
 # Scope and Escalation
@@ -316,9 +352,57 @@ Your options:
 
 Which would you prefer?"
 
-If user chooses (b): stop here. Tell them: "Run `/analytics-engineer` or `/shards`
-and describe the mart you need. Reference the Data Modeller's findings above."
+If user chooses (b): write a structured `ae-intake.md` file before stopping, then tell the user where to find it.
+
+Write `dashboards/<project_name>/ae-intake.md`:
+
+```markdown
+## AE Intake: <dashboard_project_name>
+
+## Requesting Agent
+- Originating agent: BI Engineer
+- Dashboard project: dashboards/<project_name>/project-specs.md (Phase 0 already complete)
+
+## What the Dashboard Needs
+- Dashboard objective: <from BI Phase 0 — what to visualize>
+- Intended audience: <from BI Phase 0>
+- Technology: <from BI Phase 0>
+
+## Required Mart
+- Grain needed: <one row per X — inferred from dashboard design intent>
+- Business questions the dashboard must answer:
+  - <question 1>
+  - <question 2>
+- Required measures: <metrics BI will visualize>
+- Required dimensions: <filters and breakdowns BI will expose>
+- Date spine: <date column and granularity needed for time-series charts>
+- Update frequency: <from BI Phase 0>
+
+## Source Context
+- Data Modeller findings: <summary from BI Phase 1 Data Modeller consultation>
+- Data exists: Yes | No | Partial — <details>
+
+## Next Step
+Run `/analytics-engineer` or `/shards`. In Phase 1, reference this file:
+dashboards/<project_name>/ae-intake.md
+```
+
+Tell the user: "I've written `dashboards/<project_name>/ae-intake.md` with the mart requirements for the Analytics Engineer. Run `/analytics-engineer` or `/shards` and reference that file in Phase 1."
+
 Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain gap>`
+
+**If the user references a `bi-intake.md` file** (written by the Data Analyst when escalating):
+Read that file. Use its contents to pre-populate Phase 1 requirements — data sources,
+key metrics, dimensions/filters, chart type recommendation, and date column — rather than
+asking from scratch. Set `Originating request: Data Analyst — analysis/<project_name>/`.
+
+Questions still to ask (not in the intake file):
+- "Who is the intended audience for this dashboard?"
+- "Any technology preference — Streamlit, Grafana, Dash — or should I recommend one?"
+- "What level of interactivity do you need — filters, drill-downs, date pickers?"
+
+Confirm the pre-populated values plus these answers with the user before proceeding.
+Do not re-ask about data sources, metrics, or chart type — already captured.
 
 ### Document Phase 1
 
@@ -336,6 +420,9 @@ Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain g
 - **Branding / color constraints:** <constraints or "none">
 - **Data environment:** <not greenfield | Data exists but inaccessible — design only, validate before connecting | GREENFIELD — No data assets detected. Design specification only>
 - **Analytics Engineer needed:** No | Yes — <mart/grain gap>
+- **AE intake file written:** Not applicable | Yes — dashboards/<project_name>/ae-intake.md
+- **DA intake file source:** Not applicable | Data Analyst — analysis/<project_name>/bi-intake.md
+- **Analysis context (DA intake only):** <core question and chart sketch from DA intake, or "N/A">
 ```
 
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
@@ -580,6 +667,11 @@ Task(
 
 Append JFL's code review summary to the specs. Present findings to user.
 
+**Data Analyst handoff (if applicable):** See `.claude/agents/specific_instructions/bi_engineer_da_handoff.md`
+for the full handoff instructions. Note: if Phase 0 or Phase 1 documented a DA intake file
+(`DA intake file source: Data Analyst — ...`), write the handoff file automatically without
+asking — it is the expected default, not optional.
+
 Summarize:
 1. What was built (or designed)
 2. How to run it (or implement it)
@@ -601,6 +693,7 @@ Summarize:
 - **Follow-up extensions suggested:**
   - <suggestion or "none">
 - **Original requirement met:** Yes | Partially | No — <explanation>
+- **DA handoff:** Yes (auto — DA originated request) — dashboards/<project_name>/da-handoff.md | Yes (user requested) — dashboards/<project_name>/da-handoff.md | No — user declined | Not applicable — not a DA-originated request
 - **Status:** Complete
 ```
 
