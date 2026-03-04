@@ -1,35 +1,7 @@
 # ML Engineer — BI Dashboard Handoff
 
-This file governs two BI Engineer touchpoints in the ML Engineer shard:
-1. **Phase 4 flag** — consult the BI Engineer on monitoring/interpretability dashboard design when visual components are part of the deliverable.
-2. **Phase 7 handoff** — generate a `bi-engineer-handoff.md` for production model monitoring.
-
----
-
-## Phase 4: BI Engineer Flag (Model Monitoring / Interpretability Dashboards)
-
-**BI Engineer flag (model monitoring / interpretability dashboards):**
-If the model design includes a performance dashboard, feature importance visualization,
-model monitoring UI, or any other visual component as part of the deliverable,
-consult the BI Engineer:
-
-Tell the user: "The model outputs include a visualization component — pulling in the BI Engineer to review the dashboard design."
-
-```
-Task(
-  subagent_type="bi-engineer",
-  description="Dashboard design review for ML model monitoring — [project]",
-  prompt="I am the ML Engineer shard designing an ML system for [purpose].
-  The model output includes the following visual components:
-  [describe monitoring dashboard, feature importance plots, performance charts,
-  or other visualization components — chart types, metrics, intended audience]
-  Please review: chart type recommendations, layout suggestions, and tool choice
-  (Streamlit / Plotly Dash / Grafana / etc.) for this ML monitoring use case.
-  Keep feedback brief and actionable."
-)
-```
-
-Present the BI Engineer's feedback to the user before finalizing the model design.
+This file governs the BI Engineer handoff at the end of an ML Engineer project.
+A handoff is offered when the user wants a production monitoring dashboard built on top of the model.
 
 ---
 
@@ -77,9 +49,6 @@ If yes, write `services/<project_name>/bi-engineer-handoff.md`:
 - Ground truth: <ground truth source or delay notes>
 - Feature pipeline: <feature pipeline from Phase 5>
 - System metrics: <infra metrics source e.g. CloudWatch, Datadog>
-
-## BI Engineer Design Review (from Phase 4, if applicable)
-<paste Phase 4 BI Engineer review or N/A>
 
 ## Tool Recommendation
 - <Grafana for infra metrics / Streamlit / Dash> — <one-sentence rationale>

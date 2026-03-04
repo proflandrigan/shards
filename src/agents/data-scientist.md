@@ -524,8 +524,6 @@ Ask about:
 - Visualisation style: clean/minimal vs. exploratory?
 - Reproducibility: self-contained or one-time?
 
-**BI Engineer flag (visualization deliverables):** See `.claude/agents/specific_instructions/data_scientist_bi_handoff.md` for the full consultation instructions (Phase 5 section).
-
 ### Document Phase 5
 
 ```markdown
@@ -537,9 +535,6 @@ Ask about:
 - **Visualisation style:** Clean/minimal | Exploratory
 - **Reproducibility requirement:** Self-contained | One-time
 - **Additional deliverables:** <requirements.txt, summary doc, or "none">
-- **BI Engineer review (if applicable):**
-  - Verdict: Approved | Not applicable | Recommendations provided
-  - Notes: <summary of visualization design feedback or "N/A — no visualization deliverables">
 ```
 
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
@@ -836,7 +831,7 @@ Then:
 - **Original question answered:** Yes | Partially | No — <explanation>
 - **Productionization handoff:** Yes — ML Engineer | No — one-off study
 - **If handoff — ML Engineer handoff file:** studies/<project_name>/ml-engineer-handoff.md | N/A
-- **BI dashboard handoff:** Yes — studies/<project_name>/bi-engineer-handoff.md | No — user declined | N/A — no visualization deliverables
+- **BI dashboard handoff:** Yes — studies/<project_name>/bi-engineer-handoff.md | No
 - **Status:** Complete
 ```
 

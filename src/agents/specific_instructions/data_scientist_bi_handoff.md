@@ -1,45 +1,16 @@
 # Data Scientist — BI Dashboard Handoff
 
-This file governs two BI Engineer touchpoints in the Data Scientist shard:
-1. **Phase 5 flag** — consult the BI Engineer on chart design when visualizations are part of the deliverable.
-2. **Phase 7, Step 7** — generate a `bi-engineer-handoff.md` to productionize recurring visualizations as a live dashboard.
+This file governs the BI Engineer handoff at the end of a Data Scientist study.
+A handoff is offered when the user wants a live dashboard built from the study's findings.
 
 ---
 
-## Phase 5: BI Engineer Flag (Visualization Deliverables)
+## Phase 7, Step 7: BI Dashboard Handoff
 
-**BI Engineer flag (visualization deliverables):**
-If the agreed output format includes charts, plots, or any visual deliverable
-in the notebook or report, consult the BI Engineer before execution:
+7. **BI dashboard handoff:**
 
-Tell the user: "The deliverables include visualizations — consulting the BI Engineer on chart design. Won't take long."
-
-```
-Task(
-  subagent_type="bi-engineer",
-  description="Visualization design review for [study]",
-  prompt="I am the Data Scientist shard working on study [name].
-  The study deliverables include the following visualizations:
-  [describe each chart or plot: what it shows, intended chart type, axes, purpose]
-  Please review: Are these the right chart types for this analysis? Any design,
-  color, or layout recommendations? I need brief, actionable guidance only."
-)
-```
-
-Present the BI Engineer's feedback to the user before finalizing the output plan.
-
----
-
-## Phase 7, Step 7: BI Dashboard Handoff (Recurring Visualizations)
-
-7. **BI dashboard handoff (recurring visualizations):**
-
-   Check Phase 5 of project-specs.md. If `BI Engineer review (if applicable)` shows
-   "Not applicable" or "N/A", skip this step.
-
-   Otherwise, ask: "The study included visualizations reviewed by the BI Engineer shard.
-   If these need to be a live dashboard — rather than notebook-embedded charts — I can
-   write a handoff file for the BI Engineer. Do you want a `bi-engineer-handoff.md`?"
+   Ask: "If you want a live dashboard to track these metrics or findings on an ongoing basis,
+   I can write a handoff file for the BI Engineer. Do you want a `bi-engineer-handoff.md`?"
 
    **GATE: Wait for an explicit yes or no. Do not generate the file unless the user confirms.**
 
@@ -65,16 +36,13 @@ Present the BI Engineer's feedback to the user before finalizing the output plan
    - Dashboard type: Recurring reporting dashboard / exploratory analytics view
 
    ## Visualizations to Productionize
-   <chart list from Phase 5 BI Engineer review — chart type, what it shows, data source>
+   <list charts or plots from the study — chart type, what it shows, data source>
 
    ## Key Metrics and Data Sources
    - Primary metric(s): <metric list>
    - Dimensions / filters: <dimension list>
    - Data source(s): <table or mart references from Phase 2 or 3>
    - Update frequency needed: <one-off or refresh cadence>
-
-   ## BI Engineer Design Review (from Phase 5)
-   <paste BI Engineer review verdict and notes from Phase 5 specs>
 
    ## Tool Recommendation
    - <Streamlit / Dash / Altair / Superset> — <one-sentence rationale>

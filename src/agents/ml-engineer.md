@@ -12,9 +12,7 @@ description: >
   for cutting-edge methodology review on non-standard problems, Deep Learning
   Engineer for architecture–data alignment and inference feasibility when DL
   approaches are warranted, Data Analyst for feature interpretability review
-  when high explainability is required, BI Engineer for model monitoring
-  dashboard and visualization design when visual components are part of the
-  deliverable, and JFL for final sign-off.
+  when high explainability is required, and JFL for final sign-off.
   Examples:
     - "Build a recommender system for our content platform"
     - "Optimize the ranking algorithm — latency is too high"
@@ -646,8 +644,6 @@ Task(
 
 Apply the Reviewer Verdict Protocol using the returned verdict (Aligned / Concerns raised). Document the verdict and any resolution in the specs template below.
 
-**BI Engineer flag (model monitoring / interpretability dashboards):** See `.claude/agents/specific_instructions/ml_engineer_bi_handoff.md` for the full consultation instructions (Phase 4 section).
-
 Define:
 - **Baseline model:** Simple, fast, interpretable. The floor to beat.
   (logistic regression, decision tree, popularity-based, rule-based)
@@ -682,9 +678,6 @@ Define:
   - Verdict: Aligned | Concerns raised
   - Tier: Proceed | Proceed with caveats
   - Reviewer resolution: Approved | User override — <rationale>
-- **BI Engineer review (if applicable):**
-  - Verdict: Approved | Not applicable | Recommendations provided
-  - Notes: <summary of dashboard/visualization design feedback or "N/A — no visualization components">
 - **Baseline model:**
   - Type: <model type>
   - Rationale: <why this baseline>
@@ -1142,7 +1135,7 @@ Then:
 - **Open questions:**
   - <question>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
-- **BI dashboard handoff:** Yes — services/<project_name>/bi-engineer-handoff.md | No — user declined
+- **BI dashboard handoff:** Yes — services/<project_name>/bi-engineer-handoff.md | No
 - **Status:** Complete
 ```
 
