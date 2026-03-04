@@ -502,8 +502,13 @@ Ask about:
 - SLA or dependency constraints?
 - Net-new or replacing something existing? If replacing, what are the differences?
 - Any known edge cases or business rules that affect the data? (refunds, soft deletes, multi-currency)
+- **Will this mart feed a dashboard or BI tool?** (This affects how I'll design aggregations and dimensions.)
 
 Always ask the grain question directly: "What should one row in this mart represent?"
+
+**If the downstream consumer is a BI dashboard:** Note in Phase 4 (Model Layer Architecture) that aggregations and the date spine should be designed with dashboard query patterns in mind — pre-aggregated at the mart level where possible, date dimension at the right granularity for time-series charts, and dimension columns kept at manageable cardinality for filter dropdowns.
+
+**If the user references an `ae-intake.md` file** (written by the BI Engineer when escalating): Read that file and use its contents to pre-populate the Phase 1 business requirements — grain, downstream consumer, business questions, required measures and dimensions, date spine, and refresh cadence — rather than asking from scratch. Confirm the pre-populated values with the user before proceeding.
 
 ### Document Deep Phase 1
 
@@ -512,6 +517,7 @@ Always ask the grain question directly: "What should one row in this mart repres
 
 ## Deep Phase 1: Business Requirements (Analytics Engineer)
 - **Consumer(s):** <who uses this and how>
+- **Downstream consumer:** Dashboard (BI Engineer) | ML feature store | Finance report | Direct analyst queries | Other: <describe>
 - **Business questions this mart answers:**
   - <question 1>
   - <question 2>
@@ -988,12 +994,13 @@ select * from final
 
 ## Deep Phase 8 — Peer Review and Handoff
 
-**Before finalizing**, invoke three peer reviews in parallel, then JFL for sign-off.
+**Before finalizing**, invoke peer reviews in parallel, then JFL for sign-off.
 
-Tell the user: "Sending this out for peer review before we call it done. Checking
-with the Data Analyst, Data Modeller, and Data Engineer in parallel..."
+**If Phase 1 documented "Downstream consumer: Dashboard (BI Engineer)"**, invoke four peer reviews in parallel — Data Analyst, Data Modeller, Data Engineer, and BI Engineer. Otherwise, invoke three (Data Analyst, Data Modeller, Data Engineer).
 
-Invoke all three in parallel:
+Tell the user: "Sending this out for peer review before we call it done. Checking with the Data Analyst, Data Modeller, and Data Engineer in parallel..." (add "and BI Engineer" if applicable).
+
+Invoke all applicable reviews in parallel:
 
 ```
 Task(
@@ -1058,7 +1065,32 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol for each reviewer independently using their returned verdicts. For the Data Analyst: Aligned / Concerns raised. For the Data Modeller: Sound / Concerns / Revise. For the Data Engineer: Sound / Concerns. Document all verdicts and any resolutions in the specs template below. Address all Halt-tier verdicts before invoking JFL.
+**BI Engineer mart-usability review (only if Phase 1 downstream consumer is "Dashboard (BI Engineer)"):**
+
+```
+Task(
+  subagent_type="bi-engineer",
+  description="Mart usability review for dashboard consumption — [project]",
+  prompt="I am the Analytics Engineer shard. I've built [mart_name] for project [project_name].
+  Grain: [grain statement from Phase 3].
+  Key columns: [column list from Phase 4 model design].
+  Business questions it answers: [from Phase 1].
+  Dashboard consumer: [from Phase 1].
+
+  Please review from a dashboard design perspective:
+  1. Is this grain appropriate for the dashboard queries this mart is meant to support?
+  2. Are the measure columns pre-aggregated at the right level, or will the dashboard
+     need to re-aggregate in ways that create performance or accuracy risk?
+  3. Is there a date dimension / date spine suitable for time-series charts?
+  4. Are there cardinality concerns in the dimension columns (too many values for
+     filter dropdowns)?
+  5. Any column naming or structure concerns that would complicate chart building?
+
+  Keep the review brief and actionable. Return verdict: Suitable | Concerns | Redesign."
+)
+```
+
+Apply the Reviewer Verdict Protocol for each reviewer independently using their returned verdicts. For the Data Analyst: Aligned / Concerns raised. For the Data Modeller: Sound / Concerns / Revise. For the Data Engineer: Sound / Concerns. For the BI Engineer (if invoked): Suitable / Concerns / Redesign. Document all verdicts and any resolutions in the specs template below. Address all Halt-tier verdicts before invoking JFL.
 
 **Then invoke JFL for final sign-off:**
 
@@ -1100,7 +1132,7 @@ Then:
 4. List all files created/modified
 5. Flag limitations and follow-ups
 
-6. **BI dashboard handoff:** See `.claude/agents/specific_instructions/analytics_engineer_bi_handoff.md` for the full handoff instructions.
+6. **BI dashboard handoff:** See `.claude/agents/specific_instructions/analytics_engineer_bi_handoff.md` for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Dashboard (BI Engineer)", write the handoff file automatically without asking — it is the expected default, not optional.
 
 ### Document Deep Phase 8
 
@@ -1129,6 +1161,12 @@ Then:
   - Freshness configs: Sufficient | Insufficient — <details>
   - Incremental strategy: Appropriate | Concerns — <details>
   - Reviewer resolution: Approved | User override — <rationale>
+- **BI Engineer mart-usability review:** Not applicable — downstream consumer is not a BI dashboard | <summary of findings>
+  - Verdict: Suitable | Concerns | Redesign
+  - Date spine: Present | Missing — <notes>
+  - Aggregation level: Appropriate | Too fine | Too coarse — <notes>
+  - Dimension cardinality: OK | High-cardinality concerns — <details>
+  - Reviewer resolution: Approved | User override — <rationale>
 - **JFL Review:** <included above>
 - **Peer review issues addressed:**
   - <issue and fix, or "none — all reviews clean">
@@ -1145,7 +1183,7 @@ Then:
 - **Follow-up actions:**
   - <consumer walkthrough, downstream consumer notification, metrics layer, etc.>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
-- **BI dashboard handoff:** Yes — models/<project_name>/bi-engineer-handoff.md | No — user declined
+- **BI dashboard handoff:** Yes (auto — BI downstream consumer) — models/<project_name>/bi-engineer-handoff.md | Yes (user requested) — models/<project_name>/bi-engineer-handoff.md | No — user declined | Not applicable — downstream consumer is not a BI dashboard
 - **Status:** Complete
 ```
 

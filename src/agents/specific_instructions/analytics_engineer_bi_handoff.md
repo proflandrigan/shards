@@ -6,13 +6,18 @@ This file governs Step 6 of Phase 8 (Deliver and Document) for the Analytics Eng
 
 6. **BI dashboard handoff:**
 
-   Ask the user: "This mart is built for downstream consumption. Do you want a
-   `bi-engineer-handoff.md` so the BI Engineer shard can build a dashboard on
-   top of it?"
+   **Conditional default behavior:**
 
-   **GATE: Wait for an explicit yes or no. Do not generate the file unless the user confirms.**
+   - **If Phase 1 documented "Downstream consumer: Dashboard (BI Engineer)":**
+     Tell the user: "Phase 1 flagged this mart as destined for a BI dashboard. Writing a `bi-engineer-handoff.md` now." Write the file without asking.
 
-   If yes, write `models/<project_name>/bi-engineer-handoff.md`:
+   - **If the downstream consumer was not a BI dashboard:**
+     Ask the user: "This mart is built for downstream consumption. Do you want a
+     `bi-engineer-handoff.md` so the BI Engineer shard can build a dashboard on
+     top of it?"
+     **GATE: Wait for an explicit yes or no. Do not generate the file unless the user confirms.**
+
+   If writing the file (either automatically or after user confirmation), write `models/<project_name>/bi-engineer-handoff.md`:
 
    ```
    # BI Engineer Handoff: <project_name>
@@ -50,10 +55,25 @@ This file governs Step 6 of Phase 8 (Deliver and Document) for the Analytics Eng
    ## Analytics Engineer Mart Review Notes
    - Data Analyst verdict: <Aligned / Concerns — summary from Phase 8>
    - Data Modeller grain validation: <PASS / FAIL — details from Phase 8>
+   - BI Engineer mart-usability verdict: <Suitable / Concerns / Redesign — summary from Phase 8, or "Not reviewed">
 
    ## Tool Recommendation
    - <Streamlit / Dash / Superset / Metabase> — <one-sentence rationale>
    - No preference? Let the BI Engineer recommend during Phase 0.
+
+   ## Suggested KPIs for the Dashboard
+   - Primary metric(s) this mart is designed to surface: <from Phase 1 business questions>
+   - Secondary metrics available: <measure columns that have clear business meaning>
+   - Recommended starting panels: <e.g., "trend over time for X, breakdown by Y">
+
+   ## Performance Characteristics
+   - Approximate row count: <from Phase 8 spot-check>
+   - Expected query pattern: Aggregated at mart level | Requires GROUP BY in dashboard queries
+   - Index / partition key: <date column and pk column — confirms fast filtering>
+
+   ## Known Limitations for Dashboarding
+   - <data quality caveats from Phase 8 peer reviews, or "none">
+   - <freshness delays that affect dashboard accuracy, or "none">
 
    ## Constraints
    - Data availability: Mart is built and accessible

@@ -352,8 +352,43 @@ Your options:
 
 Which would you prefer?"
 
-If user chooses (b): stop here. Tell them: "Run `/analytics-engineer` or `/shards`
-and describe the mart you need. Reference the Data Modeller's findings above."
+If user chooses (b): write a structured `ae-intake.md` file before stopping, then tell the user where to find it.
+
+Write `dashboards/<project_name>/ae-intake.md`:
+
+```markdown
+## AE Intake: <dashboard_project_name>
+
+## Requesting Agent
+- Originating agent: BI Engineer
+- Dashboard project: dashboards/<project_name>/project-specs.md (Phase 0 already complete)
+
+## What the Dashboard Needs
+- Dashboard objective: <from BI Phase 0 — what to visualize>
+- Intended audience: <from BI Phase 0>
+- Technology: <from BI Phase 0>
+
+## Required Mart
+- Grain needed: <one row per X — inferred from dashboard design intent>
+- Business questions the dashboard must answer:
+  - <question 1>
+  - <question 2>
+- Required measures: <metrics BI will visualize>
+- Required dimensions: <filters and breakdowns BI will expose>
+- Date spine: <date column and granularity needed for time-series charts>
+- Update frequency: <from BI Phase 0>
+
+## Source Context
+- Data Modeller findings: <summary from BI Phase 1 Data Modeller consultation>
+- Data exists: Yes | No | Partial — <details>
+
+## Next Step
+Run `/analytics-engineer` or `/shards`. In Phase 1, reference this file:
+dashboards/<project_name>/ae-intake.md
+```
+
+Tell the user: "I've written `dashboards/<project_name>/ae-intake.md` with the mart requirements for the Analytics Engineer. Run `/analytics-engineer` or `/shards` and reference that file in Phase 1."
+
 Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain gap>`
 
 ### Document Phase 1
@@ -372,6 +407,7 @@ Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain g
 - **Branding / color constraints:** <constraints or "none">
 - **Data environment:** <not greenfield | Data exists but inaccessible — design only, validate before connecting | GREENFIELD — No data assets detected. Design specification only>
 - **Analytics Engineer needed:** No | Yes — <mart/grain gap>
+- **AE intake file written:** Not applicable | Yes — dashboards/<project_name>/ae-intake.md
 ```
 
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**

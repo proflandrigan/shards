@@ -503,7 +503,7 @@ Append to `project-specs.md`:
 
 ---
 
-## Create Mode — Phase 4: Execute
+## Create Mode — Phase 4: Execute (Gated)
 
 Goal: Build the model implementation.
 
@@ -576,6 +576,8 @@ Append to `project-specs.md`:
 - **Gradient diagnostics:** <healthy convergence | anomalies observed — describe>
 - **Known implementation limitations:** <what prototype doesn't handle>
 ```
+
+**GATE: Read the Phase 4 build log back to the user. Stop here — do not begin Phase 5 or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 

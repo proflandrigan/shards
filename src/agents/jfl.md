@@ -635,7 +635,7 @@ Present consolidated findings: JFL's non-Python review followed by the Backend
 Engineer's Python review (if applicable). Then ask:
 "Apply fixes? (y to fix all, n to skip, or list specific filenames)"
 
-Wait for user response before editing anything.
+**GATE: Read these findings back to the user. Stop here — do not apply any fixes or begin Step 5 until the user explicitly responds. Do not interpret silence or partial agreement as confirmation.**
 
 **Step 5: Apply fixes**
 
