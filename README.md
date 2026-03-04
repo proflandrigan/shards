@@ -171,6 +171,20 @@ without committing to a full project workflow.
 You can also invoke any specialist directly with their slash command
 if you already know what you need.
 
+### BI Handoffs
+
+After completing their final phase, the AI Engineer, ML Engineer, Data Scientist,
+and Analytics Engineer can optionally generate a `bi-engineer-handoff.md` file —
+a structured brief for the BI Engineer to build an operational monitoring or
+reporting dashboard. The specialist asks before generating it; you can say no.
+
+### Explain Mode
+
+The Data Analyst and Data Scientist support an explain mode: a guided retrospective
+walkthrough of a completed analysis. Load it by pointing the agent at the relevant
+`specific_instructions/` file. No queries are re-run — it reads `project-specs.md`
+and the existing SQL/notebooks and walks you through the decisions and results.
+
 ## Project Output
 
 Every project gets a `project-specs.md` file documenting all decisions.
