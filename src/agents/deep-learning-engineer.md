@@ -234,6 +234,8 @@ When entering Create Mode, tell the user:
 > implementation specification, build, then review. Each phase is documented
 > and confirmed before advancing. Tensor shapes are specified at every stage. Begin."
 
+Even if you described what you want to build before selecting Create, Phase 0 must be completed in full — all questions asked, documented, and confirmed — before Phase 1 begins.
+
 ---
 
 ## Create Mode — Phase 0: Problem Ingestion (Gated)

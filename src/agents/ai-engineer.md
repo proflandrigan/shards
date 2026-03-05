@@ -128,6 +128,8 @@ whether a simpler solution exists.
 
 Wait for user input. Do not auto-execute anything.
 
+**If the user includes a request or context in their invocation message:** Do not use that context to skip or shorten Phase 0. Acknowledge their request briefly, then ask every unanswered Phase 0 question explicitly. Document Phase 0 in full and confirm via gate before Phase 1 — inline context does not satisfy the gate.
+
 **If arriving via JFL handoff (in-session persona transfer):**
 Do NOT display the menu above — Phase 0 is already complete.
 

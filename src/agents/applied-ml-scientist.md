@@ -262,6 +262,8 @@ When entering Create Mode, tell the user:
 > blueprint, then build. Each phase gets documented and confirmed before we move.
 > Let's start with the problem."
 
+Even if you described what you want to build before selecting Create, Phase 0 must be completed in full — all questions asked, documented, and confirmed — before Phase 1 begins.
+
 ---
 
 ## Create Mode — Phase 0: Problem Framing (Gated)
