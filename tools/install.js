@@ -15,12 +15,22 @@ const CLAUDE_DIR = path.join(PROJECT_DIR, ".claude");
 const AGENTS_SRC = path.join(SRC_DIR, "agents");
 const COMMANDS_SRC = path.join(SRC_DIR, "commands");
 const TEMPLATES_SRC = path.join(SRC_DIR, "templates");
+const UI_SRC = path.join(SRC_DIR, "ui");
 
 const AGENTS_DEST = path.join(CLAUDE_DIR, "agents");
 const COMMANDS_DEST = path.join(CLAUDE_DIR, "commands");
 const TEMPLATES_DEST = path.join(PROJECT_DIR, "templates");
+const SHARDS_DEST = path.join(PROJECT_DIR, ".shards");
 
 const MANIFEST_NAME = ".shards-manifest.json";
+
+const SHARDS_HOOKS = {
+  SessionStart:     [{ matcher: "*", hooks: [{ type: "command", command: "node .shards/spawn-server.js" }] }],
+  UserPromptSubmit: [{ matcher: "*", hooks: [{ type: "command", command: "node .shards/relay.js user-prompt" }] }],
+  PostToolUse:      [{ matcher: "*", hooks: [{ type: "command", command: "node .shards/relay.js post-tool-use" }] }],
+  Stop:             [{ matcher: "*", hooks: [{ type: "command", command: "node .shards/relay.js stop" }] }],
+  SessionEnd:       [{ matcher: "*", hooks: [{ type: "command", command: "node .shards/relay.js session-end" }] }],
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -67,10 +77,93 @@ function listFiles(dir, prefix = "") {
   return results;
 }
 
+// ─── Hook injection ───────────────────────────────────────────────────────────
+
+function injectHooks() {
+  const settingsPath = path.join(CLAUDE_DIR, "settings.json");
+  let settings = {};
+
+  if (fs.existsSync(settingsPath)) {
+    try {
+      settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
+    } catch {
+      // Back up corrupt file and start fresh
+      fs.copyFileSync(settingsPath, settingsPath + ".backup");
+      settings = {};
+    }
+  }
+
+  if (!settings.hooks) settings.hooks = {};
+
+  let injected = 0;
+  for (const [eventName, newEntries] of Object.entries(SHARDS_HOOKS)) {
+    if (!settings.hooks[eventName]) settings.hooks[eventName] = [];
+    for (const entry of newEntries) {
+      const cmd = entry.hooks[0].command;
+      const already = settings.hooks[eventName].some(
+        (e) => e.hooks && e.hooks.some((h) => h.command === cmd)
+      );
+      if (!already) {
+        settings.hooks[eventName].push(entry);
+        injected++;
+      }
+    }
+  }
+
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  if (injected > 0) {
+    console.log(`\n🔗 Injected ${injected} hook(s) into .claude/settings.json`);
+  }
+}
+
+function removeHooks() {
+  const settingsPath = path.join(CLAUDE_DIR, "settings.json");
+  if (!fs.existsSync(settingsPath)) return;
+
+  let settings;
+  try {
+    settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
+  } catch {
+    return;
+  }
+
+  if (!settings.hooks) return;
+
+  const shardsPatterns = [".shards/relay", ".shards/spawn-server"];
+  let removed = 0;
+
+  for (const [eventName, entries] of Object.entries(settings.hooks)) {
+    const filtered = entries.filter(
+      (entry) =>
+        !entry.hooks ||
+        !entry.hooks.some((h) =>
+          shardsPatterns.some((p) => h.command && h.command.includes(p))
+        )
+    );
+    if (filtered.length !== entries.length) {
+      removed += entries.length - filtered.length;
+      settings.hooks[eventName] = filtered;
+    }
+  }
+
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  if (removed > 0) console.log(`  ✓ Removed ${removed} Shards hook(s) from .claude/settings.json`);
+}
+
 // ─── Uninstall ───────────────────────────────────────────────────────────────
 
+function removeDirRecursive(dirPath) {
+  if (!fs.existsSync(dirPath)) return;
+  for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+    const full = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) removeDirRecursive(full);
+    else fs.unlinkSync(full);
+  }
+  fs.rmdirSync(dirPath);
+}
+
 function uninstall() {
-  console.log("\n🗑  Uninstalling shards...\n");
+  console.log("\n  Uninstalling shards...\n");
 
   const manifestPath = path.join(CLAUDE_DIR, MANIFEST_NAME);
   if (!fs.existsSync(manifestPath)) {
@@ -90,8 +183,18 @@ function uninstall() {
     }
   }
 
+  // Remove .shards/ directory
+  if (fs.existsSync(SHARDS_DEST)) {
+    removeDirRecursive(SHARDS_DEST);
+    console.log("  ✓ Removed: .shards/");
+    removed++;
+  }
+
+  // Strip hooks from .claude/settings.json
+  removeHooks();
+
   fs.unlinkSync(manifestPath);
-  console.log(`\n✅ Uninstalled ${removed} files.\n`);
+  console.log(`\nUninstalled ${removed} items.\n`);
 }
 
 // ─── Install ─────────────────────────────────────────────────────────────────
@@ -134,6 +237,17 @@ function install() {
     console.log(`  ✓ templates/${f}`);
   }
 
+  // 4b. Copy UI files → .shards/
+  console.log("\n📦 Installing UI server...");
+  const uiCount = copyDir(UI_SRC, SHARDS_DEST);
+  const uiFiles = listFiles(UI_SRC);
+  for (const f of uiFiles) {
+    console.log(`  ✓ .shards/${f}`);
+  }
+
+  // 4c. Inject hooks into .claude/settings.json
+  injectHooks();
+
   // 5. Create output directories
   const outputDirs = ["analysis", "studies", "models", "services", "research", "dashboards", "brainstorm"];
   for (const dir of outputDirs) {
@@ -147,7 +261,7 @@ function install() {
   // 6. Add .gitignore entries
   const gitignorePath = path.join(PROJECT_DIR, ".gitignore");
   const gitignoreEntry =
-    "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# services/\n# research/\n# dashboards/\n# brainstorm/\n";
+    "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# services/\n# research/\n# dashboards/\n# brainstorm/\n\n# shards UI runtime files\n.shards/ui.port\n.shards/ui.pid\n.shards/ui-state.json\n";
   if (fs.existsSync(gitignorePath)) {
     const content = fs.readFileSync(gitignorePath, "utf8");
     if (!content.includes("shards")) {
@@ -163,6 +277,7 @@ function install() {
     ...agentFiles.map((f) => `.claude/agents/${f}`),
     ...cmdFiles.map((f) => `.claude/commands/${f}`),
     ...tplFiles.map((f) => `templates/${f}`),
+    ...uiFiles.map((f) => `.shards/${f}`),
   ];
   const manifest = {
     version: require(path.join(PACKAGE_ROOT, "package.json")).version,
@@ -248,7 +363,7 @@ This is the gate pattern — documentation IS the gate.
   }
 
   // Done
-  const total = agentCount + cmdCount + tplCount;
+  const total = agentCount + cmdCount + tplCount + uiCount;
   console.log(`
 ╔══════════════════════════════════════════╗
 ║  ✅ Installed ${String(total).padEnd(3)} files successfully      ║
@@ -256,6 +371,9 @@ This is the gate pattern — documentation IS the gate.
 ║                                          ║
 ║  Open Claude Code in this directory      ║
 ║  and run:  /shards                       ║
+║                                          ║
+║  Live web UI:  /shards-ui                ║
+║  (opens http://localhost:7842)           ║
 ║                                          ║
 ║  Or go directly to a specialist:         ║
 ║    /data-analyst                         ║
