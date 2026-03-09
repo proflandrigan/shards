@@ -115,23 +115,26 @@ Write `reviews/<system_name>/analytics-engineer-review.md` using this template e
 ### Strengths
 - {{STRENGTHS}}
 
-### Weaknesses / Risks
+### Weaknesses
 - {{WEAKNESSES}}
 
-### Key Concerns
-- {{CONCERNS}}
+### Gaps
+- {{GAPS — things missing entirely, not just broken}}
 
 ## Cross-Agent Input
 {{CROSS_AGENT_FINDINGS — or "Not consulted" if no Task calls were made}}
 
-## Recommendations
-1. {{RECOMMENDATION_1}}
+## Prioritized Fix List
+
+| # | Fix | Why | Priority |
+|---|-----|-----|----------|
+| 1 | {{FIX}} | {{RATIONALE}} | Critical / High / Medium / Low |
 
 ## Verdict
 
 **{{VERDICT}}** — {{ONE_LINE_SUMMARY}}
 
-_SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant rework required_
+_SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant rework_
 ```
 
 ---

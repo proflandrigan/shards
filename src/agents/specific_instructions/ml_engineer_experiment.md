@@ -9,8 +9,8 @@ transfer occurs.
 ## Setup — Context Loading (no gate)
 
 1. Locate `project-specs.md` in the project directory (check the path established in
-   Phase 0 — typically `services/<project_name>/project-specs.md` or
-   `models/<project_name>/project-specs.md`).
+   Phase 0 — typically `models/<project_name>/project-specs.md` or
+   `<existing_service_dir>/project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project context
      (problem statement, model type, current metrics, code location) before proceeding.
 2. Read `project-specs.md` in full.

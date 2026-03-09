@@ -135,7 +135,7 @@ function install() {
   }
 
   // 5. Create output directories
-  const outputDirs = ["analysis", "studies", "models", "services", "research", "dashboards", "brainstorm"];
+  const outputDirs = ["analysis", "studies", "models", "data_models", "services", "research", "dashboards", "brainstorm"];
   for (const dir of outputDirs) {
     const dirPath = path.join(PROJECT_DIR, dir);
     if (!fs.existsSync(dirPath)) {
@@ -147,7 +147,7 @@ function install() {
   // 6. Add .gitignore entries
   const gitignorePath = path.join(PROJECT_DIR, ".gitignore");
   const gitignoreEntry =
-    "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# services/\n# research/\n# dashboards/\n# brainstorm/\n";
+    "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# data_models/\n# services/\n# research/\n# dashboards/\n# brainstorm/\n";
   if (fs.existsSync(gitignorePath)) {
     const content = fs.readFileSync(gitignorePath, "utf8");
     if (!content.includes("shards")) {

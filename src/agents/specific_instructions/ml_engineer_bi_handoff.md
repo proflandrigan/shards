@@ -15,16 +15,16 @@ performance monitoring on top of this model?"
 
 **GATE: Wait for an explicit yes or no. Do not generate the file unless the user confirms.**
 
-If yes, write `services/<project_name>/bi-engineer-handoff.md`:
+If yes, write `models/<project_name>/bi-engineer-handoff.md`:
 
 ```
 # BI Engineer Handoff: <project_name>
 
 ## Source Project
 - Originating agent: ML Engineer
-- Project directory: services/<project_name>/
-- Project specs: services/<project_name>/project-specs.md
-- Project report: services/<project_name>/report.md
+- Project directory: models/<project_name>/
+- Project specs: models/<project_name>/project-specs.md
+- Project report: models/<project_name>/report.md
 
 ## What Was Built
 - Model type: <final model type from Phase 4>
@@ -61,9 +61,9 @@ If yes, write `services/<project_name>/bi-engineer-handoff.md`:
 
 ## Next Step
 Run `/bi-engineer` or `/shards`. In Phase 0, reference this file:
-services/<project_name>/bi-engineer-handoff.md
+models/<project_name>/bi-engineer-handoff.md
 ```
 
 Tell the user: "Handoff file written. Run `/bi-engineer` or `/shards` and
-reference `services/<project_name>/bi-engineer-handoff.md` in Phase 0."
+reference `models/<project_name>/bi-engineer-handoff.md` in Phase 0."
 Do NOT attempt to morph into or invoke the BI Engineer.

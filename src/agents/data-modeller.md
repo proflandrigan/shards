@@ -369,7 +369,7 @@ Documentation is NOT optional — it is the gate that permits progression.
 5. If the user corrects anything, update the specs file and re-confirm.
 
 **Specs file location:**
-- **New project:** `models/<project_name>/project-specs.md`
+- **New project:** `data_models/<project_name>/project-specs.md`
 - **Iteration:** `<existing_models_dir>/project-specs.md`
   (Ask the user for the existing models directory path during Phase 0.)
 - If arriving via JFL handoff: this file already exists with Phase 0.
@@ -416,10 +416,10 @@ State your routing decision and get confirmation.
 For Explore: skip documentation, proceed to Explore track.
 
 **Phase 0 Setup — direct invocation, new project only (Quick and Deep tracks):**
-1. Create the project directory (`models/<project_name>/`) using Bash.
+1. Create the project directory (`data_models/<project_name>/`) using Bash.
 2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
 
-For Quick/Deep, create or append to `models/<project_name>/project-specs.md`:
+For Quick/Deep, create or append to `data_models/<project_name>/project-specs.md`:
 
 ```markdown
 ---
@@ -900,7 +900,7 @@ Task(
   prompt="I am the Data Modeller shard. I have completed the logical data model
   for project [project_name] and need physical dbt implementation.
 
-  Model specs: models/<project_name>/project-specs.md
+  Model specs: data_models/<project_name>/project-specs.md
 
   Summary:
   - Entities modeled: <entity list from Phase 3>
@@ -916,7 +916,7 @@ Task(
   4. dbt schema tests (uniqueness, not-null, accepted values, relationships)
   5. Column-level documentation
 
-  Please read models/<project_name>/project-specs.md for full context and the
+  Please read data_models/<project_name>/project-specs.md for full context and the
   complete ER diagram."
 )
 ```
