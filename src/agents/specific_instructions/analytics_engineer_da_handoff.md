@@ -16,15 +16,15 @@ This file governs Step 7 of Phase 8 (Deliver and Document) for the Analytics Eng
      `da-handoff.md` so the Data Analyst shard can run the analysis on top of it?"
      **GATE: Wait for an explicit yes or no. Do not generate the file unless the user confirms.**
 
-   If writing the file (either automatically or after user confirmation), write `models/<project_name>/da-handoff.md`:
+   If writing the file (either automatically or after user confirmation), write `data_models/<project_name>/da-handoff.md`:
 
    ```
    # Data Analyst Handoff: <project_name>
 
    ## Source Project
    - Originating agent: Analytics Engineer
-   - Project directory: models/<project_name>/
-   - Project specs: models/<project_name>/project-specs.md
+   - Project directory: data_models/<project_name>/
+   - Project specs: data_models/<project_name>/project-specs.md
 
    ## Original Analysis Request
    - Requesting agent: Data Analyst
@@ -74,9 +74,9 @@ This file governs Step 7 of Phase 8 (Deliver and Document) for the Analytics Eng
 
    ## Next Step
    Run `/data-analyst` or `/shards`. In Phase 0, reference this file:
-   models/<project_name>/da-handoff.md
+   data_models/<project_name>/da-handoff.md
    ```
 
    Tell the user: "Handoff file written. Run `/data-analyst` or `/shards` and
-   reference `models/<project_name>/da-handoff.md` in Phase 0."
+   reference `data_models/<project_name>/da-handoff.md` in Phase 0."
    Do NOT attempt to morph into or invoke the Data Analyst.

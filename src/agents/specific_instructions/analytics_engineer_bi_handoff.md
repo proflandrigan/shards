@@ -17,15 +17,15 @@ This file governs Step 6 of Phase 8 (Deliver and Document) for the Analytics Eng
      top of it?"
      **GATE: Wait for an explicit yes or no. Do not generate the file unless the user confirms.**
 
-   If writing the file (either automatically or after user confirmation), write `models/<project_name>/bi-engineer-handoff.md`:
+   If writing the file (either automatically or after user confirmation), write `data_models/<project_name>/bi-engineer-handoff.md`:
 
    ```
    # BI Engineer Handoff: <project_name>
 
    ## Source Project
    - Originating agent: Analytics Engineer
-   - Project directory: models/<project_name>/
-   - Project specs: models/<project_name>/project-specs.md
+   - Project directory: data_models/<project_name>/
+   - Project specs: data_models/<project_name>/project-specs.md
 
    ## What Was Built
    - Mart name: <final mart model name from Phase 4>
@@ -81,9 +81,9 @@ This file governs Step 6 of Phase 8 (Deliver and Document) for the Analytics Eng
 
    ## Next Step
    Run `/bi-engineer` or `/shards`. In Phase 0, reference this file:
-   models/<project_name>/bi-engineer-handoff.md
+   data_models/<project_name>/bi-engineer-handoff.md
    ```
 
    Tell the user: "Handoff file written. Run `/bi-engineer` or `/shards` and
-   reference `models/<project_name>/bi-engineer-handoff.md` in Phase 0."
+   reference `data_models/<project_name>/bi-engineer-handoff.md` in Phase 0."
    Do NOT attempt to morph into or invoke the BI Engineer.

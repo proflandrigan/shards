@@ -179,7 +179,7 @@ it throughout.
 - This is NOT greenfield (research is done) and NOT iteration (no production system exists)
 - Focus: translating research artifacts into production infrastructure
 - Lighter data discovery and model design (inherit from study), heavier infrastructure
-- Create a new `services/` project that cross-references the study
+- Create a new `models/` project that cross-references the study
 - Higher confidence on model viability, but production constraints may require changes
   (different model for latency, feature availability at serving time, etc.)
 
@@ -220,7 +220,7 @@ the gate that permits progression.
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:**
-- **Greenfield:** `services/<project_name>/project-specs.md`
+- **Greenfield:** `models/<project_name>/project-specs.md`
 - **Iteration:** `<existing_service_dir>/project-specs.md`
   (Ask the user to identify the existing service directory path during Phase 0.)
 
@@ -232,14 +232,14 @@ the gate that permits progression.
 
 **Directory structure (greenfield only):**
 ```
-services/<project_name>/
+models/<project_name>/
 ├── project-specs.md
 ├── queries/
 └── notebooks/
 ```
 
 For iteration projects: write `project-specs.md` into the existing service repo root or a
-subdirectory the user specifies. Do not create a new top-level `services/` folder.
+subdirectory the user specifies. Do not create a new top-level `models/` folder.
 
 ---
 
@@ -266,11 +266,11 @@ Wait for the user's response before proceeding.
 ### Document Phase 0
 
 **Phase 0 Setup — direct invocation, greenfield new project only:**
-1. Create the project directory (`services/<project_name>/`, `services/<project_name>/queries/`, `services/<project_name>/notebooks/`) using Bash.
+1. Create the project directory (`models/<project_name>/`, `models/<project_name>/queries/`, `models/<project_name>/notebooks/`) using Bash.
 2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
 
 Create or append to:
-- Greenfield: `services/<project_name>/project-specs.md`
+- Greenfield: `models/<project_name>/project-specs.md`
 - Iteration: `<existing_service_dir>/project-specs.md`
 
 ```markdown
@@ -280,7 +280,7 @@ Create or append to:
 - **ML system type:** <recommender | ranker | classifier | regression | clustering | anomaly detection | other>
 - **Project classification:** Greenfield | Iteration / Optimization
 - **Project directory:**
-  - Greenfield: `services/<project_name>/`
+  - Greenfield: `models/<project_name>/`
   - Iteration: `<existing_service_dir>/` (user-specified)
 - **If iteration — current state:**
   - Service directory: <path to existing service>
@@ -916,7 +916,7 @@ Task(
 **Then build:**
 
 1. **SQL queries** — Write to:
-   - Greenfield: `services/<name>/queries/`
+   - Greenfield: `models/<name>/queries/`
    - Iteration: `<existing_service_dir>/queries/`
    - Name files descriptively: `01_label_definition.sql`, `02_user_features.sql`,
      `03_behavioral_features.sql`, `04_training_dataset.sql`
@@ -930,7 +930,7 @@ Task(
      ```
 
 2. **Training notebook** — Write using NotebookEdit to:
-   - Greenfield: `services/<name>/notebooks/`
+   - Greenfield: `models/<name>/notebooks/`
    - Iteration: `<existing_service_dir>/notebooks/`
    Structure:
    - **SQL loading rule** — **Do NOT re-embed SQL as Python strings.** Read `.sql`
@@ -995,14 +995,14 @@ Task(
 Tell the user: "Before JFL signs off, the Backend Engineer is reviewing the Python
 artifacts. Code quality is not optional."
 
-Glob the project directory (`services/<project_name>/`) for `.py` and `.ipynb` files.
+Glob the project directory (`models/<project_name>/`) for `.py` and `.ipynb` files.
 
 ```
 Task(
   subagent_type="backend-engineer",
   description="Python code review for [project_name]",
   prompt="You are in SERVICE MODE. Review the Python files in the project at
-  services/[project_name]/. Read project-specs.md first for context.
+  models/[project_name]/. Read project-specs.md first for context.
   Files to review: [list of .py files found, or 'none found — report N/A']"
 )
 ```
@@ -1030,8 +1030,8 @@ Task(
   prompt="I am the ML Engineer shard. I have designed a production ML system for
   project [project_name] and need an infrastructure and operationalization review.
 
-  Project directory: services/<project_name>/
-  Specs: services/<project_name>/project-specs.md
+  Project directory: models/<project_name>/
+  Specs: models/<project_name>/project-specs.md
 
   Summary:
   - Model type: <final model type from Phase 4>
@@ -1107,7 +1107,7 @@ Append JFL's code review summary to the specs. Present findings to user.
 Then:
 
 1. **Write a report** to:
-   - Greenfield: `services/<name>/report.md`
+   - Greenfield: `models/<name>/report.md`
    - Iteration: `<existing_service_dir>/report.md`
    - Executive summary: business problem, solution, key results
    - Model performance: baseline vs. final, with business interpretation
@@ -1122,7 +1122,7 @@ Then:
 
 **MLOps handoff:** If the user wants to proceed to deployment, tell them:
 "To deploy and operate this model, run `/mlops-engineer` and reference
-`services/<project_name>/` as the model handoff directory."
+`models/<project_name>/` as the model handoff directory."
 
 **BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ml_engineer_bi_handoff.md` for the full handoff instructions (Phase 7 section).
 
@@ -1159,7 +1159,7 @@ Then:
 - **Open questions:**
   - <question>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
-- **BI dashboard handoff:** Yes — services/<project_name>/bi-engineer-handoff.md | No
+- **BI dashboard handoff:** Yes — models/<project_name>/bi-engineer-handoff.md | No
 - **Status:** Complete
 ```
 

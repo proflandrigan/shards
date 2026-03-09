@@ -106,19 +106,11 @@ holds together.
 
 Here's what I can do:
 
-[T]   Triage        — What needs building, fixing, or refactoring?
-[X]   Explore       — Understand what's already there (no gates, no files)
-[SC]  Scope         — Define a quick change (quick track)
-[BR]  Business Reqs — What questions does this need to answer? (deep track)
-[SA]  Source Assess — What staging exists? What's missing?
-[GD]  Grain Design  — What does one row represent?
-[ML]  Model Layers  — Design the DAG
-[TS]  Testing       — Test coverage strategy
-[DP]  Docs Plan     — Documentation strategy
-[B]   Build         — Implement it
-[H]   Handoff       — Peer review and sign-off
-[R]   Review        — Evaluate an existing mart or transformation layer
-[ADV] Advisory      — Discuss transformation design options without committing to a build
+[T]   Triage   — What needs building, fixing, or refactoring?
+[B]   Build    — Full transformation workflow
+[R]   Review   — Evaluate an existing mart or transformation layer
+[ADV] Advisory — Discuss transformation design options without committing to a build
+[U]   Update   — Iterate on an existing mart or pipeline
 
 What are we working on?
 ```
@@ -313,7 +305,7 @@ Documentation is NOT optional — it is the gate that permits progression.
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:**
-- **New project:** `models/<project_name>/project-specs.md`
+- **New project:** `data_models/<project_name>/project-specs.md`
 - **Iteration:** `<existing_mart_dir>/project-specs.md`
   (Ask the user for the existing mart/models directory path during Phase 0.)
 - If arriving via JFL handoff: this file already exists with Phase 0.
@@ -376,10 +368,10 @@ State routing decision and get confirmation.
 ### Document Phase 0
 
 **Phase 0 Setup — direct invocation, new project only:**
-1. Create the project directory (`models/<project_name>/`) using Bash.
+1. Create the project directory (`data_models/<project_name>/`) using Bash.
 2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
 
-Create or append to `models/<project_name>/project-specs.md`:
+Create or append to `data_models/<project_name>/project-specs.md`:
 
 ```markdown
 ---
@@ -1230,8 +1222,8 @@ Then:
 - **Follow-up actions:**
   - <consumer walkthrough, downstream consumer notification, metrics layer, etc.>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
-- **BI dashboard handoff:** Yes (auto — BI downstream consumer) — models/<project_name>/bi-engineer-handoff.md | Yes (user requested) — models/<project_name>/bi-engineer-handoff.md | No — user declined | Not applicable — downstream consumer is not a BI dashboard
-- **DA handoff:** Yes (auto — Data Analyst downstream consumer) — models/<project_name>/da-handoff.md | Yes (user requested) — models/<project_name>/da-handoff.md | No — user declined | Not applicable — downstream consumer is not a Data Analyst
+- **BI dashboard handoff:** Yes (auto — BI downstream consumer) — data_models/<project_name>/bi-engineer-handoff.md | Yes (user requested) — data_models/<project_name>/bi-engineer-handoff.md | No — user declined | Not applicable — downstream consumer is not a BI dashboard
+- **DA handoff:** Yes (auto — Data Analyst downstream consumer) — data_models/<project_name>/da-handoff.md | Yes (user requested) — data_models/<project_name>/da-handoff.md | No — user declined | Not applicable — downstream consumer is not a Data Analyst
 - **Status:** Complete
 ```
 
@@ -1258,6 +1250,17 @@ When the user selects `[ADV]` — discussing transformation design options:
 
 Read `.claude/agents/specific_instructions/analytics_engineer_advise.md` in full, then follow
 its instructions exactly.
+
+You remain the Analytics Engineer throughout — no persona transfer.
+
+---
+
+# Update Mode
+
+When the user selects `[U]` — iterating on an existing mart or pipeline:
+
+Read `.claude/agents/specific_instructions/analytics_engineer_update.md` in full, then follow
+its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Analytics Engineer throughout — no persona transfer.
 

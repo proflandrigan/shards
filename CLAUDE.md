@@ -15,7 +15,7 @@ node tools/install.js          # install into current working directory
 node tools/install.js uninstall
 ```
 
-The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.claude/commands/`, and `src/templates/` → `templates/` in the target project. It also creates output directories (`analysis/`, `studies/`, `models/`, `services/`) and appends a Shards section to CLAUDE.md.
+The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.claude/commands/`, and `src/templates/` → `templates/` in the target project. It also creates output directories (`analysis/`, `studies/`, `models/`, `data_models/`, `services/`) and appends a Shards section to CLAUDE.md.
 
 The `.claude/` directory at the repo root is a live installation used when working on shards itself. After editing source files, re-run `node tools/install.js` from the repo root to update it.
 
@@ -62,9 +62,12 @@ This means a full `/shards` session is a depth-2 nested Task call: JFL spawns sp
 |-----------|-----------|
 | Data Analyst | `analysis/<project_name>/` |
 | Data Scientist | `studies/<project_name>/` |
-| Data Engineer, Data Modeller, Analytics Engineer | `models/<project_name>/` |
-| ML Engineer, AI Engineer (greenfield) | `services/<project_name>/` |
-| ML Engineer, AI Engineer (iteration) | existing service directory |
+| Data Engineer | `models/<project_name>/` |
+| Data Modeller, Analytics Engineer | `data_models/<project_name>/` |
+| ML Engineer (greenfield) | `models/<project_name>/` |
+| ML Engineer (iteration) | existing service directory |
+| AI Engineer (greenfield) | `services/<project_name>/` |
+| AI Engineer (iteration) | existing service directory |
 | Applied ML Scientist | `research/<project_name>/` |
 | Deep Learning Engineer | `services/<project_name>/` |
 | BI Engineer | `dashboards/<project_name>/` |
