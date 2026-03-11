@@ -25,7 +25,7 @@ The `.claude/` directory at the repo root is a live installation used when worki
 
 **`src/commands/*.md`** — slash command entry points. Each command file is short (~30 lines). It sets the agent's persona, references the corresponding agent file path (`.claude/agents/<name>.md`), and contains the startup instructions. When a user runs `/shards` or `/data-analyst`, Claude reads this file and enters the described character.
 
-**`src/agents/*.md`** — the full agent definitions. These are the authoritative source of truth for each agent's persona, phased workflow, gate rules, documentation templates, cross-agent consultation calls, and behavioral rules. Each agent file has YAML frontmatter specifying `name`, `description`, `tools`, and `model`.
+**`src/agents/*.md`** — the core agent definitions. These contain each agent's persona, activation menu, Phase 0 (triage), mode references, and behavioral rules. Phased workflow instructions (Phase 1+) are deferred to `specific_instructions/<name>_phases.md` files that load on-demand after Phase 0 completes. Each agent file has YAML frontmatter specifying `name`, `description`, `tools`, and `model`.
 
 **`src/templates/*.md`** — output document templates with `{{PLACEHOLDER}}` tokens. `project-specs.md` is the central one — every project produces a filled-in instance of it.
 
@@ -73,18 +73,35 @@ This means a full `/shards` session is a depth-2 nested Task call: JFL spawns sp
 | BI Engineer | `dashboards/<project_name>/` |
 | Backend Engineer | — (review only, no files produced) |
 
+### Deferred phase loading
+
+Each specialist agent is split into two files:
+
+1. **Core file** (`src/agents/<name>.md`, ~250-550 lines) — persona, activation menu, Phase 0, mode references, behavioral rules. Loaded immediately on invocation.
+2. **Phases file** (`src/agents/specific_instructions/<name>_phases.md`, ~350-870 lines) — Phase 1+ workflow instructions. Loaded on-demand after Phase 0 gate passes.
+
+The core file contains a "Phase Progression" section that instructs Claude to `Read .claude/agents/specific_instructions/<name>_phases.md in full` when it's time to advance past Phase 0. This uses the same proven pattern as Review, Advisory, and Explain mode references.
+
+Agents with Quick/Deep tracks (analytics-engineer, data-modeller, data-engineer) keep their Explore track in the core file (non-phased) and defer both Quick and Deep track phases. Agents with Create Mode (deep-learning-engineer, applied-ml-scientist) defer the Create Mode phases.
+
 ### Editing workflow
 
-When changing agent behavior: edit `src/agents/<name>.md` (the authoritative file). The command file in `src/commands/` only needs editing if the startup instructions or persona framing change. Templates in `src/templates/` only need editing if the output document structure changes.
+When changing agent behavior:
+
+- **Persona, activation, Phase 0, or behavioral rules:** edit `src/agents/<name>.md`
+- **Phased workflow (Phase 1+):** edit `src/agents/specific_instructions/<name>_phases.md`
+- **Command file** (`src/commands/`): only edit if startup instructions or persona framing change
+- **Templates** (`src/templates/`): only edit if output document structure changes
 
 After editing source files, re-run `node tools/install.js` in any target project to pick up the changes.
 
-**Experimental variants** live in `src/agents/specific_instructions/`. These are not copied by the installer and are not invoked as slash commands — they're standalone instruction files. Current variants:
+### Variant files in `specific_instructions/`
 
+Beyond the `_phases.md` files (core workflow), `specific_instructions/` also contains mode variants and experimental files:
+
+- **Mode variants** (copied by installer): `*_review.md`, `*_advise.md`, `*_explain.md`, `*_update.md` — referenced by core agent files for `[R]`, `[ADV]`, `[EX]`, `[U]` menu options
 - **Brainstorm:** `jfl_brainstorm.md` (also has a `/brainstorm` command entry point in `src/commands/brainstorm.md`)
 - **Experiment:** `ml_engineer_experiment.md`, `ai_engineer_experiment.md`
 - **BI handoffs:** `ai_engineer_bi_handoff.md`, `ml_engineer_bi_handoff.md`, `data_scientist_bi_handoff.md`, `analytics_engineer_bi_handoff.md` — specialist variants that hand off to the BI Engineer at the end of their workflow
 - **DA handoffs:** `analytics_engineer_da_handoff.md`, `bi_engineer_da_handoff.md` — variants that hand off to the Data Analyst
 - **Explain:** `data_analyst_explain.md`, `data_scientist_explain.md` — explanation-focused variants
-
-Edit these directly; no reinstall needed since they aren't distributed.
