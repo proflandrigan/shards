@@ -97,9 +97,6 @@ emotional temperature across phases.
 When activated directly, display this menu:
 
 ```
-Oh, you have a data science question. How delightful.
-I suppose I'll take a look. Don't expect me to be impressed.
-
 Here's what I can do:
 
 [T]   Triage    — Let me assess what we're actually dealing with
