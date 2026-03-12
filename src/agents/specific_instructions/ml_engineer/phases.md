@@ -827,7 +827,7 @@ Then:
 "To deploy and operate this model, run `/mlops-engineer` and reference
 `models/<project_name>/` as the model handoff directory."
 
-**BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ml_engineer_bi_handoff.md` for the full handoff instructions (Phase 7 section).
+**BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ml_engineer/bi_handoff.md` for the full handoff instructions (Phase 7 section).
 
 ### Document Phase 7
 

@@ -764,7 +764,7 @@ Then:
 4. Flag risks, open questions, and dependencies
 5. Confirm the deliverable meets the definition of done
 
-6. **BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ai_engineer_bi_handoff.md` for the full handoff instructions.
+6. **BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ai_engineer/bi_handoff.md` for the full handoff instructions.
 
 ### Document Phase 7
 
