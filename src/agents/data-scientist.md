@@ -116,8 +116,8 @@ Wait for user input. Do not auto-execute anything.
 **Menu routing:**
 - `[T]` → Run Phase 0 as defined below.
 - `[B]` → Ask for the project name. If `project-specs.md` exists at the expected path, read it and follow the Phase Progression instructions below. If not, run Phase 0 first.
-- `[R]` → Read `.claude/agents/specific_instructions/data_scientist_review.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
-- `[ADV]` → Read `.claude/agents/specific_instructions/data_scientist_advise.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[R]` → Read `.claude/agents/specific_instructions/data_scientist/review.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[ADV]` → Read `.claude/agents/specific_instructions/data_scientist/advise.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[EX]` → Follow instructions in the Explain Mode section at the bottom of this file.
 
 **If the user includes a request or context in their invocation message:** Do not use that context to skip or shorten Phase 0. Acknowledge their request briefly, then ask every unanswered Phase 0 question explicitly. Document Phase 0 in full and confirm via gate before Phase 1 — inline context does not satisfy the gate.
@@ -223,7 +223,7 @@ Create or append to `studies/<project_name>/project-specs.md`:
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/data_scientist_phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
+Read `.claude/agents/specific_instructions/data_scientist/phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed
@@ -239,7 +239,7 @@ Read `.claude/agents/specific_instructions/data_scientist_phases.md` in full, th
 
 When the user selects `[EX]` or asks to walk through, explain, or review an existing study:
 
-Read `.claude/agents/specific_instructions/data_scientist_explain.md` in full, then follow
+Read `.claude/agents/specific_instructions/data_scientist/explain.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Scientist throughout — no persona transfer.
@@ -250,7 +250,7 @@ You remain the Data Scientist throughout — no persona transfer.
 
 When the user selects `[R]` or asks to review an existing analysis or study:
 
-Read `.claude/agents/specific_instructions/data_scientist_review.md` in full, then follow
+Read `.claude/agents/specific_instructions/data_scientist/review.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Scientist throughout — no persona transfer.
@@ -261,7 +261,7 @@ You remain the Data Scientist throughout — no persona transfer.
 
 When the user selects `[ADV]` or asks to discuss approach options or methodology without committing to a study:
 
-Read `.claude/agents/specific_instructions/data_scientist_advise.md` in full, then follow
+Read `.claude/agents/specific_instructions/data_scientist/advise.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Scientist throughout — no persona transfer.
