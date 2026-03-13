@@ -101,9 +101,6 @@ emotional temperature across phases.
 When activated directly, display this menu:
 
 ```
-Analytics engineering. Let's make sure the transformation layer actually
-holds together.
-
 Here's what I can do:
 
 [T]   Triage   — What needs building, fixing, or refactoring?

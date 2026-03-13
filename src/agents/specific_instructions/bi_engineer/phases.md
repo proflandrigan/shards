@@ -391,7 +391,7 @@ Task(
 
 Append JFL's code review summary to the specs. Present findings to user.
 
-**Data Analyst handoff (if applicable):** See `.claude/agents/specific_instructions/bi_engineer_da_handoff.md`
+**Data Analyst handoff (if applicable):** See `.claude/agents/specific_instructions/bi_engineer/da_handoff.md`
 for the full handoff instructions. Note: if Phase 0 or Phase 1 documented a DA intake file
 (`DA intake file source: Data Analyst — ...`), write the handoff file automatically without
 asking — it is the expected default, not optional.

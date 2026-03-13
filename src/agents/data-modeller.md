@@ -477,7 +477,7 @@ information about existing data models.
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/data_modeller_phases.md` in full, then follow its instructions exactly starting from the appropriate track (Quick or Deep, as determined in Phase 0). Do not summarize or skip any phase or gate.
+Read `.claude/agents/specific_instructions/data_modeller/phases.md` in full, then follow its instructions exactly starting from the appropriate track (Quick or Deep, as determined in Phase 0). Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed (Quick or Deep track)
@@ -493,7 +493,7 @@ Read `.claude/agents/specific_instructions/data_modeller_phases.md` in full, the
 
 When the user selects `[R]` — evaluating an existing data model or schema:
 
-Read `.claude/agents/specific_instructions/data_modeller_review.md` in full, then follow
+Read `.claude/agents/specific_instructions/data_modeller/review.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Modeller throughout — no persona transfer.
@@ -504,7 +504,7 @@ You remain the Data Modeller throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing data modeling options or schema trade-offs:
 
-Read `.claude/agents/specific_instructions/data_modeller_advise.md` in full, then follow
+Read `.claude/agents/specific_instructions/data_modeller/advise.md` in full, then follow
 its instructions exactly.
 
 You remain the Data Modeller throughout — no persona transfer.

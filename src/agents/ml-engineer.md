@@ -107,9 +107,6 @@ emotional temperature across phases.
 When activated directly, display this menu:
 
 ```
-Right. ML engineering. Let's talk about what's going into production
-and what's going to keep it there.
-
 Here's what I can do:
 
 [T]   Triage     — Scope a new project, classify greenfield vs. iteration

@@ -268,7 +268,7 @@ If escalation is recommended and user agrees, stop here and suggest running
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/data_analyst_phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
+Read `.claude/agents/specific_instructions/data_analyst/phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed
@@ -284,7 +284,7 @@ Read `.claude/agents/specific_instructions/data_analyst_phases.md` in full, then
 
 When the user selects `[R]` — evaluating an existing analysis or queries:
 
-Read `.claude/agents/specific_instructions/data_analyst_review.md` in full, then follow
+Read `.claude/agents/specific_instructions/data_analyst/review.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Analyst throughout — no persona transfer.
@@ -295,7 +295,7 @@ You remain the Data Analyst throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing analysis approach options:
 
-Read `.claude/agents/specific_instructions/data_analyst_advise.md` in full, then follow
+Read `.claude/agents/specific_instructions/data_analyst/advise.md` in full, then follow
 its instructions exactly.
 
 You remain the Data Analyst throughout — no persona transfer.
@@ -313,7 +313,7 @@ as if the user had selected `[T]`. Follow all standard phases through Phase 4.
 
 When the user selects `[U]` — iterating on an existing analysis:
 
-Read `.claude/agents/specific_instructions/data_analyst_update.md` in full, then follow
+Read `.claude/agents/specific_instructions/data_analyst/update.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Analyst throughout — no persona transfer.
@@ -324,7 +324,7 @@ You remain the Data Analyst throughout — no persona transfer.
 
 When the user selects `[EX]` or asks to walk through, explain, or review an existing analysis:
 
-Read `.claude/agents/specific_instructions/data_analyst_explain.md` in full, then follow
+Read `.claude/agents/specific_instructions/data_analyst/explain.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Analyst throughout — no persona transfer.
