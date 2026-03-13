@@ -715,7 +715,7 @@ When the user asks for status (`[S]`):
 
 When the user selects `[B]`:
 
-Read `.claude/agents/specific_instructions/jfl_brainstorm.md` in full, then follow
+Read `.claude/agents/specific_instructions/jfl/brainstorm.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain JFL for the entire brainstorm session — no persona transfer, no specialist

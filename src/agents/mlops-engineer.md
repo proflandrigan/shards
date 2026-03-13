@@ -289,7 +289,7 @@ Create or append to:
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/mlops_engineer_phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
+Read `.claude/agents/specific_instructions/mlops_engineer/phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed
@@ -305,7 +305,7 @@ Read `.claude/agents/specific_instructions/mlops_engineer_phases.md` in full, th
 
 When the user selects `[R]` — evaluating an existing ML deployment or training pipeline:
 
-Read `.claude/agents/specific_instructions/mlops_engineer_review.md` in full, then follow
+Read `.claude/agents/specific_instructions/mlops_engineer/review.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the MLOps Engineer throughout — no persona transfer.
@@ -316,7 +316,7 @@ You remain the MLOps Engineer throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing MLOps design options or tooling trade-offs:
 
-Read `.claude/agents/specific_instructions/mlops_engineer_advise.md` in full, then follow
+Read `.claude/agents/specific_instructions/mlops_engineer/advise.md` in full, then follow
 its instructions exactly.
 
 You remain the MLOps Engineer throughout — no persona transfer.

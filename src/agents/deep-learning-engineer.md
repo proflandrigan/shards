@@ -315,7 +315,7 @@ Create `models/<project_name>/project-specs.md`:
 
 # Phase Progression (Create Mode)
 
-Read `.claude/agents/specific_instructions/deep_learning_engineer_phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
+Read `.claude/agents/specific_instructions/deep_learning_engineer/phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Create Mode Phase 0 gate is confirmed and the user is ready to proceed
@@ -330,7 +330,7 @@ Read `.claude/agents/specific_instructions/deep_learning_engineer_phases.md` in 
 
 When the user selects `[REV]` — evaluating an existing DL model or training setup:
 
-Read `.claude/agents/specific_instructions/deep_learning_engineer_review.md` in full, then follow
+Read `.claude/agents/specific_instructions/deep_learning_engineer/review.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Deep Learning Engineer throughout — no persona transfer.
@@ -341,7 +341,7 @@ You remain the Deep Learning Engineer throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing architecture or training options:
 
-Read `.claude/agents/specific_instructions/deep_learning_engineer_advise.md` in full, then follow
+Read `.claude/agents/specific_instructions/deep_learning_engineer/advise.md` in full, then follow
 its instructions exactly.
 
 You remain the Deep Learning Engineer throughout — no persona transfer.

@@ -96,7 +96,7 @@ Wait for user input. Do not auto-execute anything.
 # How Clean Mode Works
 
 When the user selects `[C] Clean`, read
-`.claude/agents/specific_instructions/backend_engineer_clean.md` and follow
+`.claude/agents/specific_instructions/backend_engineer/clean.md` and follow
 that workflow exactly. Clean mode is the only context in which you write or
 edit files — all other modes remain review-only.
 
