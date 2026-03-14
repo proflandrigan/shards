@@ -5,11 +5,14 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { randomUUID } = require('crypto');
+const { ChatSession, cleanupStaleChat } = require('./chat-session');
 
 const PROJECT_DIR = process.cwd();
 const SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
 const PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
 const PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
+const AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
 const INDEX_HTML = path.join(__dirname, 'index.html');
 
 const PORTS = [7842, 7843, 7844, 7845];
@@ -18,8 +21,9 @@ const OUTPUT_DIRS = ['analysis', 'studies', 'models', 'services', 'research', 'd
 // ─── State ───────────────────────────────────────────────────────────────────
 
 let clients = [];       // SSE response objects
-let transcript = [];    // { role, content, agent }
+let transcript = [];    // { role, content, agent, source }
 let files = {};         // relPath -> content
+let chatSession = null;
 
 // ─── Broadcast ───────────────────────────────────────────────────────────────
 
@@ -77,7 +81,7 @@ function pollFiles() {
   setTimeout(pollFiles, 3000);
 }
 
-// ─── Event handler ───────────────────────────────────────────────────────────
+// ─── Event handler (observer mode - relay) ──────────────────────────────────
 
 function handleEvent(body) {
   let payload;
@@ -91,11 +95,11 @@ function handleEvent(body) {
 
   switch (eventType) {
     case 'user-message':
-      transcript.push({ role: 'user', content: data.content, agent: data.agent });
+      transcript.push({ role: 'user', content: data.content, agent: data.agent, source: 'observer' });
       broadcast({ type: 'user-message', content: data.content, agent: data.agent });
       break;
     case 'agent-message':
-      transcript.push({ role: 'assistant', content: data.content, agent: data.agent });
+      transcript.push({ role: 'assistant', content: data.content, agent: data.agent, source: 'observer' });
       broadcast({ type: 'agent-message', content: data.content, agent: data.agent });
       break;
     case 'agent-activated':
@@ -116,10 +120,114 @@ function handleEvent(body) {
   }
 }
 
+// ─── Agent listing ──────────────────────────────────────────────────────────
+
+function listAgents() {
+  const agents = [];
+  try {
+    const entries = fs.readdirSync(AGENTS_DIR, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+      const name = entry.name.replace(/\.md$/, '');
+      const content = readFileSafe(path.join(AGENTS_DIR, entry.name));
+      if (!content) continue;
+
+      // Parse YAML frontmatter
+      let description = '';
+      const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+      if (fmMatch) {
+        const descMatch = fmMatch[1].match(/description:\s*["']?(.+?)["']?\s*$/m);
+        if (descMatch) description = descMatch[1];
+      }
+
+      agents.push({ name, description });
+    }
+  } catch {}
+  return agents;
+}
+
+// ─── Chat session management ────────────────────────────────────────────────
+
+function handleChatEvent(event) {
+  const { type, sessionId } = event;
+
+  switch (type) {
+    case 'chat-token':
+      broadcast({ type: 'chat-token', text: event.text, index: event.index, sessionId });
+      break;
+
+    case 'chat-tool-use':
+      broadcast({ type: 'chat-tool-use', tool: event.tool, id: event.id, index: event.index, sessionId });
+      break;
+
+    case 'chat-tool-input-delta':
+      broadcast({ type: 'chat-tool-input-delta', partial_json: event.partial_json, index: event.index, sessionId });
+      break;
+
+    case 'chat-block-stop':
+      broadcast({ type: 'chat-block-stop', index: event.index, sessionId });
+      break;
+
+    case 'chat-message': {
+      // Extract text from content blocks
+      const content = event.content;
+      let textContent = '';
+      if (Array.isArray(content)) {
+        textContent = content
+          .filter(b => b.type === 'text')
+          .map(b => b.text)
+          .join('\n');
+      } else if (typeof content === 'string') {
+        textContent = content;
+      }
+      const agent = chatSession ? chatSession.agent : 'unknown';
+      transcript.push({ role: 'assistant', content: textContent, agent, source: 'chat' });
+      broadcast({ type: 'chat-message', content: textContent, agent, sessionId });
+      break;
+    }
+
+    case 'chat-turn-end':
+      broadcast({ type: 'chat-turn-end', sessionId, cost: event.cost, duration: event.duration });
+      break;
+
+    case 'chat-init':
+      broadcast({ type: 'chat-init', sessionId });
+      break;
+
+    case 'chat-error':
+      broadcast({ type: 'chat-error', error: event.error, sessionId });
+      break;
+
+    case 'chat-stderr':
+      // Don't broadcast stderr noise, just log server-side
+      break;
+  }
+}
+
+function handleChatExit({ code, sessionId }) {
+  chatSession = null;
+  broadcast({ type: 'chat-ended', sessionId, code });
+}
+
+// ─── Request body parser ────────────────────────────────────────────────────
+
+function readBody(req) {
+  return new Promise((resolve) => {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => resolve(body));
+  });
+}
+
+function jsonResponse(res, cors, statusCode, data) {
+  res.writeHead(statusCode, { ...cors, 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(data));
+}
+
 // ─── Server ──────────────────────────────────────────────────────────────────
 
 function createHandler() {
-  return (req, res) => {
+  return async (req, res) => {
     const cors = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST',
@@ -172,13 +280,115 @@ function createHandler() {
     }
 
     if (req.method === 'POST' && req.url === '/event') {
-      let body = '';
-      req.on('data', (chunk) => { body += chunk; });
-      req.on('end', () => {
-        handleEvent(body);
-        res.writeHead(200, cors);
-        res.end('ok');
+      const body = await readBody(req);
+      handleEvent(body);
+      res.writeHead(200, cors);
+      res.end('ok');
+      return;
+    }
+
+    // ─── Chat endpoints ─────────────────────────────────────────────
+
+    if (req.method === 'GET' && req.url === '/agents') {
+      jsonResponse(res, cors, 200, listAgents());
+      return;
+    }
+
+    if (req.method === 'GET' && req.url === '/chat/status') {
+      if (chatSession && chatSession.isRunning) {
+        jsonResponse(res, cors, 200, { active: true, ...chatSession.info });
+      } else {
+        jsonResponse(res, cors, 200, { active: false });
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/chat/start') {
+      const body = await readBody(req);
+      let params;
+      try {
+        params = JSON.parse(body);
+      } catch {
+        jsonResponse(res, cors, 400, { error: 'Invalid JSON' });
+        return;
+      }
+
+      const { agent, permissionMode } = params;
+      if (!agent) {
+        jsonResponse(res, cors, 400, { error: 'Missing agent parameter' });
+        return;
+      }
+
+      // Validate agent exists
+      const agentFile = path.join(AGENTS_DIR, `${agent}.md`);
+      if (!fs.existsSync(agentFile)) {
+        jsonResponse(res, cors, 404, { error: `Agent "${agent}" not found` });
+        return;
+      }
+
+      // Kill existing session if running
+      if (chatSession && chatSession.isRunning) {
+        chatSession.stop();
+      }
+
+      const sessionId = randomUUID();
+
+      chatSession = new ChatSession({
+        agent,
+        sessionId,
+        cwd: PROJECT_DIR,
+        permissionMode: permissionMode || 'acceptEdits',
+        onEvent: handleChatEvent,
+        onExit: handleChatExit,
       });
+
+      chatSession.start();
+
+      broadcast({ type: 'chat-started', agent, sessionId });
+      jsonResponse(res, cors, 200, { sessionId, agent });
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/chat/send') {
+      if (!chatSession || !chatSession.isRunning) {
+        jsonResponse(res, cors, 400, { error: 'No active chat session' });
+        return;
+      }
+
+      const body = await readBody(req);
+      let params;
+      try {
+        params = JSON.parse(body);
+      } catch {
+        jsonResponse(res, cors, 400, { error: 'Invalid JSON' });
+        return;
+      }
+
+      const { message } = params;
+      if (!message) {
+        jsonResponse(res, cors, 400, { error: 'Missing message parameter' });
+        return;
+      }
+
+      try {
+        chatSession.send(message);
+        const agent = chatSession.agent;
+        transcript.push({ role: 'user', content: message, agent, source: 'chat' });
+        broadcast({ type: 'chat-user-message', content: message, agent, sessionId: chatSession.sessionId });
+        jsonResponse(res, cors, 200, { ok: true });
+      } catch (err) {
+        jsonResponse(res, cors, 500, { error: err.message });
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/chat/stop') {
+      if (chatSession && chatSession.isRunning) {
+        chatSession.stop();
+        jsonResponse(res, cors, 200, { ok: true });
+      } else {
+        jsonResponse(res, cors, 200, { ok: true, note: 'No active session' });
+      }
       return;
     }
 
@@ -214,6 +424,9 @@ function startServer(portIndex) {
 
     console.log(`Shards UI server running on http://localhost:${port}`);
 
+    // Clean up stale chat processes
+    cleanupStaleChat();
+
     // Initial file scan then poll
     pollFiles();
   });
@@ -221,6 +434,9 @@ function startServer(portIndex) {
 
 // Clean up on exit
 function cleanup() {
+  if (chatSession && chatSession.isRunning) {
+    chatSession.stop();
+  }
   try { fs.unlinkSync(PORT_FILE); } catch {}
   try { fs.unlinkSync(PID_FILE); } catch {}
 }

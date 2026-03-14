@@ -35,6 +35,11 @@ body {
   color: #FFD700;
   letter-spacing: 3px;
 }
+#header-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
 #active-agent-display {
   display: flex;
   align-items: center;
@@ -50,6 +55,27 @@ body {
   flex-shrink: 0;
   transition: background 0.4s;
 }
+#mode-toggle {
+  display: flex;
+  gap: 2px;
+  background: #0a0a16;
+  border: 1px solid #1a1a2c;
+  border-radius: 5px;
+  padding: 2px;
+}
+.mode-btn {
+  background: transparent;
+  border: none;
+  color: #3a3a54;
+  font-family: inherit;
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mode-btn:hover { color: #707090; }
+.mode-btn.active { background: #1a1a2c; color: #b0b0c8; }
 #conn-status-area {
   display: flex;
   align-items: center;
@@ -205,6 +231,17 @@ body {
   background: #141420;
 }
 
+/* Tool use indicator in chat */
+.tool-indicator {
+  font-size: 10px;
+  color: #4a4a68;
+  padding: 4px 10px;
+  margin: 2px 0;
+  border-left: 2px solid #2a2a40;
+  align-self: flex-start;
+}
+.tool-indicator .tool-name { color: #6a6a90; font-weight: 600; }
+
 /* Markdown in bubbles */
 .message-bubble h1 { font-size: 15px; color: #dde; margin: 10px 0 5px; }
 .message-bubble h2 { font-size: 14px; color: #dde; margin: 9px 0 4px; }
@@ -243,6 +280,104 @@ body {
 .message-bubble table { border-collapse: collapse; margin: 8px 0; font-size: 11px; }
 .message-bubble th, .message-bubble td { border: 1px solid #1e1e30; padding: 4px 8px; }
 .message-bubble th { background: #0f0f1e; color: #c0c0d0; }
+
+/* ─── Chat input bar ─────────────────────────────────────── */
+#chat-input-area {
+  display: none;
+  padding: 8px 16px;
+  border-top: 1px solid #1a1a2c;
+  background: #080810;
+  flex-shrink: 0;
+  gap: 8px;
+  align-items: center;
+}
+#chat-input-area.visible {
+  display: flex;
+}
+#chat-input {
+  flex: 1;
+  background: #0d0d1a;
+  border: 1px solid #1e1e32;
+  border-radius: 6px;
+  color: #c8c8d8;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+#chat-input:focus { border-color: #3860c0; }
+#chat-input:disabled { opacity: 0.4; }
+#chat-send-btn, #chat-stop-btn {
+  background: #1a1a2c;
+  border: 1px solid #2a2a40;
+  border-radius: 5px;
+  color: #808098;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#chat-send-btn:hover { background: #252540; color: #b0b0c8; }
+#chat-stop-btn { border-color: #5a2020; color: #c06060; }
+#chat-stop-btn:hover { background: #2a1010; color: #e08080; }
+#chat-send-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* ─── Agent picker grid ──────────────────────────────────── */
+#agent-picker {
+  display: none;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 20px;
+  justify-content: center;
+  align-content: flex-start;
+  overflow-y: auto;
+  flex: 1;
+}
+#agent-picker.visible {
+  display: flex;
+}
+.agent-card {
+  width: 180px;
+  padding: 12px;
+  background: #0a0a16;
+  border: 1px solid #1a1a2c;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.agent-card:hover {
+  background: #0f0f1e;
+  border-color: #2a2a44;
+  transform: translateY(-1px);
+}
+.agent-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.agent-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.agent-card-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b0b0c8;
+}
+.agent-card-desc {
+  font-size: 10px;
+  color: #4a4a68;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 /* ─── File panel ─────────────────────────────────────────── */
 #file-panel {
@@ -326,9 +461,15 @@ body {
 
 <header id="header">
   <span class="logo">SHARDS</span>
-  <div id="active-agent-display">
-    <span class="agent-dot" id="active-dot"></span>
-    <span id="active-agent-name" style="color:#333">Idle</span>
+  <div id="header-center">
+    <div id="active-agent-display">
+      <span class="agent-dot" id="active-dot"></span>
+      <span id="active-agent-name" style="color:#333">Idle</span>
+    </div>
+    <div id="mode-toggle">
+      <button id="btn-observer" class="mode-btn active" onclick="setMode('observer')">Observer</button>
+      <button id="btn-chat" class="mode-btn" onclick="setMode('chat')">Chat</button>
+    </div>
   </div>
   <div id="conn-status-area">
     <span class="conn-indicator" id="conn-indicator"></span>
@@ -347,8 +488,14 @@ body {
 
   <div id="conversation-panel">
     <div id="conv-header">Conversation</div>
+    <div id="agent-picker"></div>
     <div id="messages">
       <div class="empty-state">Waiting for conversation...</div>
+    </div>
+    <div id="chat-input-area">
+      <input type="text" id="chat-input" placeholder="Message the agent..." />
+      <button id="chat-send-btn" onclick="sendChatMessage()">Send</button>
+      <button id="chat-stop-btn" onclick="stopChat()">End</button>
     </div>
   </div>
 
@@ -858,12 +1005,281 @@ function buildFileElement(filePath, content) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Mode management (Observer / Chat)
+// ═══════════════════════════════════════════════════════════════
+
+let uiMode = 'observer';
+let chatSessionId = null;
+let chatAgent = null;
+let chatResponding = false;
+let observerMessages = [];  // saved observer transcript
+let chatMessages = [];      // saved chat transcript
+
+// Streaming state
+let pendingBubble = null;   // the DOM element for streaming text
+let tokenBuffer = '';       // accumulated tokens before flush
+let tokenFlushPending = false;
+
+function setMode(mode) {
+  if (mode === uiMode) return;
+  uiMode = mode;
+
+  document.getElementById('btn-observer').classList.toggle('active', mode === 'observer');
+  document.getElementById('btn-chat').classList.toggle('active', mode === 'chat');
+
+  const picker = document.getElementById('agent-picker');
+  const msgs = document.getElementById('messages');
+  const input = document.getElementById('chat-input-area');
+
+  if (mode === 'chat') {
+    if (chatSessionId) {
+      // Active chat session — show chat messages and input
+      picker.classList.remove('visible');
+      msgs.style.display = 'flex';
+      input.classList.add('visible');
+      rebuildMessages(chatMessages);
+    } else {
+      // No active session — show agent picker
+      msgs.style.display = 'none';
+      input.classList.remove('visible');
+      loadAgentPicker();
+    }
+  } else {
+    // Observer mode
+    picker.classList.remove('visible');
+    msgs.style.display = 'flex';
+    input.classList.remove('visible');
+    rebuildMessages(observerMessages);
+  }
+}
+
+function rebuildMessages(msgArray) {
+  const container = document.getElementById('messages');
+  container.innerHTML = '';
+  hasMessages = false;
+  if (msgArray.length === 0) {
+    container.innerHTML = '<div class="empty-state">Waiting for conversation...</div>';
+    return;
+  }
+  for (const msg of msgArray) {
+    addMessageDirect(msg.role, msg.content, msg.agent);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Agent picker
+// ═══════════════════════════════════════════════════════════════
+
+let agentList = null; // cached from server
+
+async function loadAgentPicker() {
+  const picker = document.getElementById('agent-picker');
+  picker.classList.add('visible');
+
+  if (!agentList) {
+    try {
+      const res = await fetch('/agents');
+      agentList = await res.json();
+    } catch {
+      picker.innerHTML = '<div class="empty-state">Failed to load agents</div>';
+      return;
+    }
+  }
+
+  picker.innerHTML = '';
+  for (const agent of agentList) {
+    const info = AGENTS[agent.name] || { color: '#666', label: agent.name };
+    const card = document.createElement('div');
+    card.className = 'agent-card';
+    card.innerHTML = `
+      <div class="agent-card-header">
+        <span class="agent-card-dot" style="background:${info.color}"></span>
+        <span class="agent-card-name">${esc(info.label)}</span>
+      </div>
+      <div class="agent-card-desc">${esc(agent.description || '')}</div>`;
+    card.addEventListener('click', () => startChat(agent.name));
+    picker.appendChild(card);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Chat session control
+// ═══════════════════════════════════════════════════════════════
+
+async function startChat(agentName) {
+  const picker = document.getElementById('agent-picker');
+  const msgs = document.getElementById('messages');
+  const input = document.getElementById('chat-input-area');
+
+  logEvent(`Starting chat with ${agentName}...`, true);
+
+  try {
+    const res = await fetch('/chat/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent: agentName }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      logEvent(`Error: ${data.error}`);
+      return;
+    }
+
+    chatSessionId = data.sessionId;
+    chatAgent = agentName;
+    chatMessages = [];
+    chatResponding = false;
+
+    // Switch UI
+    picker.classList.remove('visible');
+    msgs.style.display = 'flex';
+    msgs.innerHTML = '';
+    hasMessages = false;
+    input.classList.add('visible');
+
+    activateAgent(agentName);
+    logEvent(`Chat started: ${agentName}`, true);
+
+    document.getElementById('chat-input').focus();
+  } catch (err) {
+    logEvent(`Failed to start chat: ${err.message}`);
+  }
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const message = input.value.trim();
+  if (!message || chatResponding) return;
+
+  input.value = '';
+
+  try {
+    const res = await fetch('/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      logEvent(`Send error: ${data.error}`);
+    }
+  } catch (err) {
+    logEvent(`Send failed: ${err.message}`);
+  }
+}
+
+async function stopChat() {
+  try {
+    await fetch('/chat/stop', { method: 'POST' });
+  } catch {}
+  endChatSession();
+}
+
+function endChatSession() {
+  chatSessionId = null;
+  chatAgent = null;
+  chatResponding = false;
+  pendingBubble = null;
+  tokenBuffer = '';
+
+  setChatInputEnabled(true);
+
+  if (uiMode === 'chat') {
+    document.getElementById('chat-input-area').classList.remove('visible');
+    document.getElementById('messages').style.display = 'none';
+    loadAgentPicker();
+  }
+
+  logEvent('Chat session ended', true);
+}
+
+function setChatInputEnabled(enabled) {
+  const input = document.getElementById('chat-input');
+  const btn = document.getElementById('chat-send-btn');
+  input.disabled = !enabled;
+  btn.disabled = !enabled;
+  chatResponding = !enabled;
+}
+
+// Enter key to send
+document.getElementById('chat-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Streaming token display
+// ═══════════════════════════════════════════════════════════════
+
+function ensurePendingBubble() {
+  if (pendingBubble) return;
+
+  const container = document.getElementById('messages');
+  if (!hasMessages) { container.innerHTML = ''; hasMessages = true; }
+
+  const info = AGENTS[chatAgent] || { color: '#666', label: chatAgent || 'Agent' };
+  const div = document.createElement('div');
+  div.className = 'message assistant';
+  div.innerHTML = `
+    <div class="message-meta">
+      <span class="meta-dot" style="background:${info.color}"></span>
+      ${esc(info.label)}
+    </div>
+    <div class="message-bubble" style="border-left-color:${info.color}"></div>`;
+  container.appendChild(div);
+  pendingBubble = div.querySelector('.message-bubble');
+  container.scrollTop = container.scrollHeight;
+}
+
+function appendToken(text) {
+  tokenBuffer += text;
+  if (!tokenFlushPending) {
+    tokenFlushPending = true;
+    requestAnimationFrame(flushTokens);
+  }
+}
+
+function flushTokens() {
+  tokenFlushPending = false;
+  if (!pendingBubble || !tokenBuffer) return;
+  // Append as text nodes for performance during streaming
+  pendingBubble.appendChild(document.createTextNode(tokenBuffer));
+  tokenBuffer = '';
+  const container = document.getElementById('messages');
+  container.scrollTop = container.scrollHeight;
+}
+
+function finalizePendingBubble(markdownContent) {
+  flushTokens(); // flush any remaining
+  if (pendingBubble) {
+    pendingBubble.innerHTML = renderMarkdown(markdownContent);
+    pendingBubble = null;
+  }
+  tokenBuffer = '';
+  const container = document.getElementById('messages');
+  container.scrollTop = container.scrollHeight;
+}
+
+function addToolIndicator(toolName) {
+  if (uiMode !== 'chat') return;
+  const container = document.getElementById('messages');
+  if (!hasMessages) { container.innerHTML = ''; hasMessages = true; }
+  const div = document.createElement('div');
+  div.className = 'tool-indicator';
+  div.innerHTML = `<span class="tool-name">${esc(toolName)}</span>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Conversation panel
 // ═══════════════════════════════════════════════════════════════
 
 let hasMessages = false;
 
-function addMessage(role, content, agent) {
+function addMessageDirect(role, content, agent) {
   const container = document.getElementById('messages');
   if (!hasMessages) { container.innerHTML = ''; hasMessages = true; }
 
@@ -886,6 +1302,14 @@ function addMessage(role, content, agent) {
 
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
+}
+
+function addMessage(role, content, agent) {
+  // Route to correct transcript array based on source
+  if (uiMode === 'observer') {
+    observerMessages.push({ role, content, agent });
+    addMessageDirect(role, content, agent);
+  }
 }
 
 function addAgentDivider(from, to) {
@@ -911,24 +1335,35 @@ function handleSSEEvent(e) {
   switch (data.type) {
     case 'connected': break;
 
+    // ─── Observer events (from relay) ────────────────────────
     case 'user-message':
-      addMessage('user', data.content, data.agent);
-      if (data.agent && !currentAgent) activateAgent(data.agent);
+      if (uiMode === 'observer') {
+        addMessage('user', data.content, data.agent);
+        if (data.agent && !currentAgent) activateAgent(data.agent);
+      } else {
+        observerMessages.push({ role: 'user', content: data.content, agent: data.agent });
+      }
       break;
 
     case 'agent-message':
-      addMessage('assistant', data.content, data.agent);
-      if (data.agent) activateAgent(data.agent);
+      if (uiMode === 'observer') {
+        addMessage('assistant', data.content, data.agent);
+        if (data.agent) activateAgent(data.agent);
+      } else {
+        observerMessages.push({ role: 'assistant', content: data.content, agent: data.agent });
+      }
       break;
 
     case 'agent-activated':
-      activateAgent(data.agent);
+      if (uiMode === 'observer') activateAgent(data.agent);
       logEvent(`Agent: ${data.agent}`, true);
       break;
 
     case 'agent-changed':
-      activateAgent(data.to);
-      addAgentDivider(data.from, data.to);
+      if (uiMode === 'observer') {
+        activateAgent(data.to);
+        addAgentDivider(data.from, data.to);
+      }
       logEvent(`Transfer: ${data.from} -> ${data.to}`, true);
       break;
 
@@ -948,10 +1383,80 @@ function handleSSEEvent(e) {
 
     case 'session-end':
       logEvent('Session ended', true);
-      currentAgent = null;
-      document.getElementById('active-dot').style.background = '#2a2a3a';
-      document.getElementById('active-agent-name').textContent = 'Idle';
-      document.getElementById('active-agent-name').style.color = '#333';
+      if (uiMode === 'observer') {
+        currentAgent = null;
+        document.getElementById('active-dot').style.background = '#2a2a3a';
+        document.getElementById('active-agent-name').textContent = 'Idle';
+        document.getElementById('active-agent-name').style.color = '#333';
+      }
+      break;
+
+    // ─── Chat events ─────────────────────────────────────────
+    case 'chat-started':
+      logEvent(`Chat session started: ${data.agent}`, true);
+      break;
+
+    case 'chat-user-message':
+      chatMessages.push({ role: 'user', content: data.content, agent: data.agent });
+      if (uiMode === 'chat') {
+        addMessageDirect('user', data.content, data.agent);
+        setChatInputEnabled(false);
+      }
+      break;
+
+    case 'chat-token':
+      if (uiMode === 'chat') {
+        ensurePendingBubble();
+        appendToken(data.text);
+      }
+      break;
+
+    case 'chat-tool-use':
+      logEvent(`Tool: ${data.tool}`, false);
+      if (uiMode === 'chat') {
+        // Finalize any pending text bubble before tool use
+        if (pendingBubble && tokenBuffer) flushTokens();
+        addToolIndicator(data.tool);
+      }
+      break;
+
+    case 'chat-tool-input-delta':
+      // Tool input streaming — skip in UI for now
+      break;
+
+    case 'chat-block-stop':
+      // Content block ended — can ignore, chat-message handles finalization
+      break;
+
+    case 'chat-message':
+      chatMessages.push({ role: 'assistant', content: data.content, agent: data.agent });
+      if (uiMode === 'chat') {
+        if (pendingBubble) {
+          finalizePendingBubble(data.content);
+        } else {
+          addMessageDirect('assistant', data.content, data.agent);
+        }
+      }
+      break;
+
+    case 'chat-turn-end':
+      setChatInputEnabled(true);
+      if (uiMode === 'chat') {
+        document.getElementById('chat-input').focus();
+      }
+      if (data.cost) logEvent(`Cost: $${data.cost.toFixed(4)}`);
+      break;
+
+    case 'chat-init':
+      logEvent('Chat initialized');
+      break;
+
+    case 'chat-error':
+      logEvent(`Chat error: ${data.error}`);
+      break;
+
+    case 'chat-ended':
+      endChatSession();
       break;
   }
 }
@@ -981,17 +1486,36 @@ function connect() {
 
 async function loadInitial() {
   try {
-    const [tRes, fRes] = await Promise.all([fetch('/transcript'), fetch('/files')]);
+    const [tRes, fRes, cRes] = await Promise.all([
+      fetch('/transcript'),
+      fetch('/files'),
+      fetch('/chat/status'),
+    ]);
     const transcript = await tRes.json();
     const files = await fRes.json();
+    const chatStatus = await cRes.json();
 
+    // Separate observer and chat messages from transcript
     for (const msg of transcript) {
-      addMessage(msg.role, msg.content, msg.agent);
-      if (msg.agent) currentAgent = msg.agent;
+      if (msg.source === 'chat') {
+        chatMessages.push(msg);
+      } else {
+        observerMessages.push(msg);
+        addMessage(msg.role, msg.content, msg.agent);
+        if (msg.agent) currentAgent = msg.agent;
+      }
     }
     if (currentAgent) activateAgent(currentAgent);
 
     for (const [p, c] of Object.entries(files)) addOrUpdateFile(p, c);
+
+    // Restore active chat session if one is running
+    if (chatStatus.active) {
+      chatSessionId = chatStatus.sessionId;
+      chatAgent = chatStatus.agent;
+      activateAgent(chatAgent);
+      setMode('chat');
+    }
   } catch {}
 }
 
