@@ -15,10 +15,13 @@ const CLAUDE_DIR = path.join(PROJECT_DIR, ".claude");
 const AGENTS_SRC = path.join(SRC_DIR, "agents");
 const COMMANDS_SRC = path.join(SRC_DIR, "commands");
 const TEMPLATES_SRC = path.join(SRC_DIR, "templates");
+const UI_SRC = path.join(SRC_DIR, "ui");
 
 const AGENTS_DEST = path.join(CLAUDE_DIR, "agents");
 const COMMANDS_DEST = path.join(CLAUDE_DIR, "commands");
 const TEMPLATES_DEST = path.join(PROJECT_DIR, "templates");
+const SHARDS_DIR = path.join(PROJECT_DIR, ".shards");
+const UI_DEST = path.join(SHARDS_DIR, "ui");
 
 const MANIFEST_NAME = ".shards-manifest.json";
 
@@ -134,7 +137,15 @@ function install() {
     console.log(`  ✓ templates/${f}`);
   }
 
-  // 5. Create output directories
+  // 5. Copy UI files
+  console.log("\n📦 Installing UI...");
+  const uiCount = copyDir(UI_SRC, UI_DEST);
+  const uiFiles = listFiles(UI_SRC);
+  for (const f of uiFiles) {
+    console.log(`  ✓ .shards/ui/${f}`);
+  }
+
+  // 7. Create output directories
   const outputDirs = ["analysis", "studies", "models", "data_models", "services", "research", "dashboards", "brainstorm"];
   for (const dir of outputDirs) {
     const dirPath = path.join(PROJECT_DIR, dir);
@@ -144,7 +155,7 @@ function install() {
     }
   }
 
-  // 6. Add .gitignore entries
+  // 8. Add .gitignore entries
   const gitignorePath = path.join(PROJECT_DIR, ".gitignore");
   const gitignoreEntry =
     "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# data_models/\n# services/\n# research/\n# dashboards/\n# brainstorm/\n";
@@ -158,11 +169,12 @@ function install() {
     }
   }
 
-  // 7. Write manifest for uninstall tracking
+  // 9. Write manifest for uninstall tracking
   const allFiles = [
     ...agentFiles.map((f) => `.claude/agents/${f}`),
     ...cmdFiles.map((f) => `.claude/commands/${f}`),
     ...tplFiles.map((f) => `templates/${f}`),
+    ...uiFiles.map((f) => `.shards/ui/${f}`),
   ];
   const manifest = {
     version: require(path.join(PACKAGE_ROOT, "package.json")).version,
@@ -174,7 +186,7 @@ function install() {
     JSON.stringify(manifest, null, 2)
   );
 
-  // 8. Append to CLAUDE.md
+  // 10. Append to CLAUDE.md
   const claudeMdPath = path.join(PROJECT_DIR, "CLAUDE.md");
   const claudeBlock = `
 ## Shards — Agent Suite
@@ -248,7 +260,7 @@ This is the gate pattern — documentation IS the gate.
   }
 
   // Done
-  const total = agentCount + cmdCount + tplCount;
+  const total = agentCount + cmdCount + tplCount + uiCount;
   console.log(`
 ╔══════════════════════════════════════════╗
 ║  ✅ Installed ${String(total).padEnd(3)} files successfully      ║
@@ -271,6 +283,9 @@ This is the gate pattern — documentation IS the gate.
 ║    /applied-ml-scientist                 ║
 ║    /deep-learning-engineer               ║
 ║    /brainstorm                           ║
+║                                          ║
+║  Launch the web UI:                      ║
+║    shards-ui                             ║
 ║                                          ║
 ║  To uninstall:                           ║
 ║    npx shards uninstall                  ║

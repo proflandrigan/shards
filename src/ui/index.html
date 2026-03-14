@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shards UI</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0d0d14;
+  color: #c8c8d8;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Header ─────────────────────────────────────────────── */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: #080810;
+  border-bottom: 1px solid #1a1a2c;
+  flex-shrink: 0;
+  height: 42px;
+}
+.logo {
+  font-size: 13px;
+  font-weight: bold;
+  color: #FFD700;
+  letter-spacing: 3px;
+}
+#active-agent-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.agent-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2a2a3a;
+  display: inline-block;
+  flex-shrink: 0;
+  transition: background 0.4s;
+}
+#conn-status-area {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #444;
+}
+.conn-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2a2a3a;
+  transition: background 0.4s;
+}
+.conn-indicator.connected { background: #4CAF50; }
+.conn-indicator.disconnected { background: #F44336; }
+
+/* ─── Main layout ────────────────────────────────────────── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── Left panel ─────────────────────────────────────────── */
+#left-panel {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #1a1a2c;
+  background: #080810;
+}
+#network-canvas {
+  width: 280px;
+  height: 240px;
+  flex-shrink: 0;
+  display: block;
+}
+#event-log-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-top: 1px solid #1a1a2c;
+}
+.panel-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #333;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-bottom: 1px solid #141420;
+  flex-shrink: 0;
+}
+#event-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.event-item {
+  font-size: 10px;
+  padding: 2px 12px;
+  color: #3a3a50;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.event-item.hi { color: #606078; }
+.event-ts { color: #2a2a3a; margin-right: 5px; }
+
+/* ─── Conversation panel ─────────────────────────────────── */
+#conversation-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0d0d14;
+  min-width: 0;
+}
+#conv-header {
+  padding: 6px 16px;
+  border-bottom: 1px solid #1a1a2c;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #333;
+  flex-shrink: 0;
+}
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.empty-state {
+  color: #2a2a3a;
+  font-size: 11px;
+  text-align: center;
+  margin-top: 60px;
+}
+.message { max-width: 88%; line-height: 1.55; }
+.message.user { align-self: flex-end; }
+.message.assistant { align-self: flex-start; }
+.message-meta {
+  font-size: 10px;
+  color: #3a3a50;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.message.user .message-meta { justify-content: flex-end; }
+.meta-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.message-bubble {
+  padding: 9px 13px;
+  border-radius: 8px;
+  font-size: 12px;
+  word-break: break-word;
+}
+.message.user .message-bubble {
+  background: #131320;
+  color: #a0a0b8;
+  border: 1px solid #1e1e32;
+}
+.message.assistant .message-bubble {
+  background: #0b0b18;
+  border-left: 3px solid #2a2a40;
+  color: #c0c0d0;
+}
+.agent-divider {
+  text-align: center;
+  font-size: 10px;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+}
+.agent-divider::before, .agent-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #141420;
+}
+
+/* Markdown in bubbles */
+.message-bubble h1 { font-size: 15px; color: #dde; margin: 10px 0 5px; }
+.message-bubble h2 { font-size: 14px; color: #dde; margin: 9px 0 4px; }
+.message-bubble h3 { font-size: 13px; color: #dde; margin: 8px 0 4px; }
+.message-bubble h4, .message-bubble h5, .message-bubble h6 { font-size: 12px; color: #ccd; margin: 6px 0 3px; }
+.message-bubble p { margin: 5px 0; }
+.message-bubble code {
+  background: #141428;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11px;
+  color: #9ab4ff;
+  font-family: inherit;
+}
+.message-bubble pre {
+  background: #08080f;
+  border: 1px solid #1a1a2c;
+  border-radius: 6px;
+  padding: 10px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.message-bubble pre code { background: none; padding: 0; color: #c0c0d0; }
+.message-bubble ul, .message-bubble ol { padding-left: 18px; margin: 5px 0; }
+.message-bubble li { margin: 2px 0; }
+.message-bubble strong { color: #e0e0f0; font-weight: 600; }
+.message-bubble em { color: #9090b0; font-style: italic; }
+.message-bubble hr { border: none; border-top: 1px solid #1a1a2c; margin: 10px 0; }
+.message-bubble a { color: #5080e0; }
+.message-bubble blockquote {
+  border-left: 3px solid #1e1e30;
+  padding-left: 10px;
+  color: #666;
+  margin: 5px 0;
+}
+.message-bubble table { border-collapse: collapse; margin: 8px 0; font-size: 11px; }
+.message-bubble th, .message-bubble td { border: 1px solid #1e1e30; padding: 4px 8px; }
+.message-bubble th { background: #0f0f1e; color: #c0c0d0; }
+
+/* ─── File panel ─────────────────────────────────────────── */
+#file-panel {
+  width: 360px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #1a1a2c;
+  background: #080810;
+}
+#file-tabs-bar {
+  display: flex;
+  overflow-x: auto;
+  border-bottom: 1px solid #1a1a2c;
+  flex-shrink: 0;
+  min-height: 36px;
+  scrollbar-width: none;
+  align-items: stretch;
+}
+#file-tabs-bar::-webkit-scrollbar { display: none; }
+.file-tab {
+  padding: 0 13px;
+  font-size: 10px;
+  color: #3a3a54;
+  cursor: pointer;
+  white-space: nowrap;
+  border-right: 1px solid #141420;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+.file-tab:hover { color: #707090; background: #0c0c18; }
+.file-tab.active { color: #b0b0c8; background: #0d0d14; border-bottom: 2px solid #3860c0; }
+.tab-dot { width: 5px; height: 5px; border-radius: 50%; background: #4CAF50; display: none; }
+.file-tab.unread .tab-dot { display: block; }
+.close-btn { font-size: 13px; color: #333; cursor: pointer; margin-left: 2px; line-height: 1; }
+.close-btn:hover { color: #777; }
+.no-tab-msg { padding: 0 14px; color: #2a2a3a; font-size: 10px; display: flex; align-items: center; }
+#file-content-area { flex: 1; overflow: auto; padding: 12px 14px; }
+.no-content-msg { color: #2a2a3a; font-size: 11px; margin-top: 20px; }
+
+/* File rendering */
+.file-rendered { font-size: 11px; line-height: 1.6; color: #b0b0c4; }
+.file-rendered h1 { font-size: 14px; color: #dde; margin: 10px 0 5px; }
+.file-rendered h2 { font-size: 13px; color: #ccd; margin: 9px 0 4px; border-bottom: 1px solid #1a1a2c; padding-bottom: 3px; }
+.file-rendered h3 { font-size: 12px; color: #bbc; margin: 7px 0 3px; }
+.file-rendered h4, .file-rendered h5, .file-rendered h6 { font-size: 11px; color: #aab; margin: 5px 0 2px; }
+.file-rendered p { margin: 5px 0; }
+.file-rendered code { background: #0d0d1e; border-radius: 3px; padding: 1px 4px; font-size: 10px; color: #8aa4ff; font-family: inherit; }
+.file-rendered pre { background: #06060f; border: 1px solid #141420; border-radius: 5px; padding: 10px; overflow-x: auto; margin: 7px 0; }
+.file-rendered pre code { background: none; padding: 0; color: #b0b0c0; }
+.file-rendered ul, .file-rendered ol { padding-left: 16px; margin: 4px 0; }
+.file-rendered li { margin: 2px 0; }
+.file-rendered strong { color: #d0d0e0; }
+.file-rendered em { color: #8888a8; }
+.file-rendered hr { border: none; border-top: 1px solid #141420; margin: 8px 0; }
+.file-rendered blockquote { border-left: 2px solid #1e1e30; padding-left: 8px; color: #555; margin: 4px 0; }
+.file-rendered table { border-collapse: collapse; margin: 6px 0; font-size: 10px; }
+.file-rendered th, .file-rendered td { border: 1px solid #1a1a2c; padding: 3px 7px; }
+.file-rendered th { background: #0b0b16; color: #aab; }
+
+/* Syntax highlight */
+.kw  { color: #c678dd; }
+.str { color: #98c379; }
+.num { color: #d19a66; }
+.cmt { color: #4a5060; font-style: italic; }
+.fn  { color: #61afef; }
+.op  { color: #56b6c2; }
+.attr{ color: #e06c75; }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1a1a2c; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #252540; }
+</style>
+</head>
+<body>
+
+<header id="header">
+  <span class="logo">SHARDS</span>
+  <div id="active-agent-display">
+    <span class="agent-dot" id="active-dot"></span>
+    <span id="active-agent-name" style="color:#333">Idle</span>
+  </div>
+  <div id="conn-status-area">
+    <span class="conn-indicator" id="conn-indicator"></span>
+    <span id="conn-text">Connecting</span>
+  </div>
+</header>
+
+<main id="main">
+  <div id="left-panel">
+    <canvas id="network-canvas" width="280" height="240"></canvas>
+    <div id="event-log-panel">
+      <div class="panel-label">Event Log</div>
+      <div id="event-log"></div>
+    </div>
+  </div>
+
+  <div id="conversation-panel">
+    <div id="conv-header">Conversation</div>
+    <div id="messages">
+      <div class="empty-state">Waiting for conversation...</div>
+    </div>
+  </div>
+
+  <div id="file-panel">
+    <div id="file-tabs-bar"><div class="no-tab-msg">No files yet</div></div>
+    <div id="file-content-area"><div class="no-content-msg">Files will appear here as agents write them</div></div>
+  </div>
+</main>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════
+// Agent data — all 15 agents
+// ═══════════════════════════════════════════════════════════════
+
+const AGENTS = {
+  'jfl':                    { color: '#FFD700', label: 'JFL',                 ring: 0, type: 'orchestrator' },
+  'data-analyst':           { color: '#4CAF50', label: 'Data Analyst',        ring: 1, type: 'specialist' },
+  'data-scientist':         { color: '#2196F3', label: 'Data Scientist',      ring: 1, type: 'specialist' },
+  'ml-engineer':            { color: '#F44336', label: 'ML Engineer',         ring: 1, type: 'specialist' },
+  'ai-engineer':            { color: '#9C27B0', label: 'AI Engineer',         ring: 1, type: 'specialist' },
+  'data-engineer':          { color: '#FF9800', label: 'Data Engineer',       ring: 1, type: 'specialist' },
+  'data-modeller':          { color: '#00BCD4', label: 'Data Modeller',       ring: 1, type: 'specialist' },
+  'analytics-engineer':     { color: '#8BC34A', label: 'Analytics Eng',       ring: 1, type: 'specialist' },
+  'bi-engineer':            { color: '#E91E63', label: 'BI Engineer',         ring: 1, type: 'specialist' },
+  'applied-ml-scientist':   { color: '#673AB7', label: 'Applied ML Sci',     ring: 1, type: 'specialist' },
+  'deep-learning-engineer': { color: '#03A9F4', label: 'Deep Learning',      ring: 1, type: 'specialist' },
+  'mlops-engineer':         { color: '#FF5722', label: 'MLOps Eng',          ring: 1, type: 'specialist' },
+  'backend-engineer':       { color: '#9E9E9E', label: 'Backend Eng',        ring: 2, type: 'review' },
+  'researcher':             { color: '#795548', label: 'Researcher',          ring: 2, type: 'review' },
+  'academic':               { color: '#607D8B', label: 'Academic',            ring: 2, type: 'review' },
+};
+
+const EDGES = [
+  // JFL -> all agents
+  ['jfl','data-analyst'],['jfl','data-scientist'],['jfl','ml-engineer'],
+  ['jfl','ai-engineer'],['jfl','data-engineer'],['jfl','data-modeller'],
+  ['jfl','analytics-engineer'],['jfl','bi-engineer'],
+  ['jfl','applied-ml-scientist'],['jfl','deep-learning-engineer'],
+  ['jfl','mlops-engineer'],['jfl','researcher'],['jfl','academic'],
+  ['jfl','backend-engineer'],
+  // Cross-consultation edges
+  ['ai-engineer','ml-engineer'],['ai-engineer','researcher'],
+  ['researcher','data-analyst'],['researcher','data-scientist'],
+  ['ml-engineer','applied-ml-scientist'],
+  ['deep-learning-engineer','ml-engineer'],
+  ['deep-learning-engineer','applied-ml-scientist'],
+  ['mlops-engineer','ml-engineer'],['mlops-engineer','ai-engineer'],
+  ['bi-engineer','data-analyst'],['bi-engineer','data-scientist'],
+  ['bi-engineer','ml-engineer'],
+  ['data-modeller','data-engineer'],['data-modeller','analytics-engineer'],
+  ['analytics-engineer','data-analyst'],
+  ['data-scientist','ml-engineer'],
+  ['backend-engineer','data-scientist'],['backend-engineer','ai-engineer'],
+];
+
+// ═══════════════════════════════════════════════════════════════
+// Neural network visualization
+// ═══════════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('network-canvas');
+const ctx = canvas.getContext('2d');
+const W = 280, H = 240;
+const CX = W / 2, CY = H / 2;
+const RING_R = [0, 82, 108];
+
+const agentKeys = Object.keys(AGENTS);
+const ring1Keys = agentKeys.filter(k => AGENTS[k].ring === 1);
+const ring2Keys = agentKeys.filter(k => AGENTS[k].ring === 2);
+
+const nodes = {};
+
+// JFL at center
+nodes['jfl'] = {
+  x: CX, y: CY,
+  vx: (Math.random() - 0.5) * 0.15, vy: (Math.random() - 0.5) * 0.15,
+  baseX: CX, baseY: CY,
+  state: 'inactive', consultRings: [],
+};
+
+// Ring 1 — specialists
+ring1Keys.forEach((key, i) => {
+  const angle = (2 * Math.PI * i / ring1Keys.length) - Math.PI / 2;
+  const bx = CX + Math.cos(angle) * RING_R[1];
+  const by = CY + Math.sin(angle) * RING_R[1];
+  nodes[key] = {
+    x: bx, y: by,
+    vx: (Math.random() - 0.5) * 0.25, vy: (Math.random() - 0.5) * 0.25,
+    baseX: bx, baseY: by,
+    state: 'inactive', consultRings: [],
+  };
+});
+
+// Ring 2 — review-only agents
+ring2Keys.forEach((key, i) => {
+  const angle = (2 * Math.PI * i / ring2Keys.length) - Math.PI / 2 + Math.PI / ring2Keys.length;
+  const bx = CX + Math.cos(angle) * RING_R[2];
+  const by = CY + Math.sin(angle) * RING_R[2];
+  nodes[key] = {
+    x: bx, y: by,
+    vx: (Math.random() - 0.5) * 0.18, vy: (Math.random() - 0.5) * 0.18,
+    baseX: bx, baseY: by,
+    state: 'inactive', consultRings: [],
+  };
+});
+
+let breatheT = 0;
+let currentAgent = null;
+
+function hexRgb(hex) {
+  return {
+    r: parseInt(hex.slice(1, 3), 16),
+    g: parseInt(hex.slice(3, 5), 16),
+    b: parseInt(hex.slice(5, 7), 16),
+  };
+}
+
+function drawNetwork() {
+  ctx.clearRect(0, 0, W, H);
+  breatheT += 0.010;
+  const breathe = 0.97 + 0.03 * Math.sin(breatheT);
+
+  // Update positions (gentle drift)
+  for (const [key, n] of Object.entries(nodes)) {
+    n.x += n.vx;
+    n.y += n.vy;
+    const dx = n.x - n.baseX;
+    const dy = n.y - n.baseY;
+    const drift = Math.sqrt(dx * dx + dy * dy);
+    if (drift > 16) { n.vx *= -0.85; n.vy *= -0.85; }
+  }
+
+  // Draw edges
+  for (const [a, b] of EDGES) {
+    const na = nodes[a], nb = nodes[b];
+    if (!na || !nb) continue;
+    const isLit = (a === currentAgent || b === currentAgent);
+    const mx = (na.x + nb.x) / 2;
+    const my = (na.y + nb.y) / 2;
+    const cpx = mx + Math.sin(breatheT * 0.7 + a.length * 0.4) * 10;
+    const cpy = my + Math.cos(breatheT * 0.7 + b.length * 0.4) * 10;
+    ctx.beginPath();
+    ctx.moveTo(na.x, na.y);
+    ctx.quadraticCurveTo(cpx, cpy, nb.x, nb.y);
+    ctx.strokeStyle = isLit ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.025)';
+    ctx.lineWidth = 0.6;
+    ctx.stroke();
+  }
+
+  // Draw nodes
+  for (const [key, info] of Object.entries(AGENTS)) {
+    const n = nodes[key];
+    if (!n) continue;
+    const { r: cr, g: cg, b: cb } = hexRgb(info.color);
+    const isActive = key === currentAgent;
+
+    // Consulting rings animation
+    n.consultRings = n.consultRings.filter(ring => ring.alpha > 0.01);
+    for (const ring of n.consultRings) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, ring.r, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},${ring.alpha})`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ring.r += 0.45;
+      ring.alpha -= 0.010;
+    }
+
+    // Node size
+    let radius = isActive ? 8 + Math.sin(breatheT * 2.2) * 1.5 : 4.5;
+    radius *= breathe;
+
+    // Glow for active node
+    if (isActive) {
+      const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, radius * 4);
+      grad.addColorStop(0,   `rgba(${cr},${cg},${cb},0.75)`);
+      grad.addColorStop(0.3, `rgba(${cr},${cg},${cb},0.35)`);
+      grad.addColorStop(0.7, `rgba(${cr},${cg},${cb},0.08)`);
+      grad.addColorStop(1,   `rgba(${cr},${cg},${cb},0)`);
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, radius * 4, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    // Core circle
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${cr},${cg},${cb},${isActive ? 1 : 0.28})`;
+    ctx.fill();
+
+    // Label when active
+    if (isActive) {
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},0.85)`;
+      ctx.font = 'bold 7.5px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(info.label.toUpperCase(), n.x, n.y + radius + 9);
+    }
+  }
+
+  requestAnimationFrame(drawNetwork);
+}
+
+drawNetwork();
+
+function activateAgent(agentKey) {
+  currentAgent = agentKey;
+  const info = AGENTS[agentKey];
+  if (info) {
+    document.getElementById('active-dot').style.background = info.color;
+    document.getElementById('active-agent-name').textContent = info.label;
+    document.getElementById('active-agent-name').style.color = info.color;
+  }
+}
+
+function triggerConsult(agentKey) {
+  const n = nodes[agentKey];
+  if (n) n.consultRings.push({ r: 12, alpha: 0.75 });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Event log
+// ═══════════════════════════════════════════════════════════════
+
+function logEvent(text, highlight) {
+  const log = document.getElementById('event-log');
+  const ts = new Date().toTimeString().slice(0, 8);
+  const el = document.createElement('div');
+  el.className = 'event-item' + (highlight ? ' hi' : '');
+  el.innerHTML = `<span class="event-ts">${ts}</span>${esc(text)}`;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+  while (log.children.length > 200) log.removeChild(log.firstChild);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Utility
+// ═══════════════════════════════════════════════════════════════
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Markdown renderer
+// ═══════════════════════════════════════════════════════════════
+
+function renderMarkdown(md) {
+  if (!md) return '';
+  const lines = md.split('\n');
+  const out = [];
+  let inCode = false, codeLang = '', codeAcc = [];
+  let inList = false, listType = '';
+
+  function closeList() {
+    if (inList) { out.push(listType === 'ul' ? '</ul>' : '</ol>'); inList = false; }
+  }
+
+  for (const line of lines) {
+    if (line.startsWith('```')) {
+      if (inCode) {
+        const highlighted = highlightCode(esc(codeAcc.join('\n')), codeLang);
+        out.push(`<pre><code>${highlighted}</code></pre>`);
+        codeAcc = []; codeLang = ''; inCode = false;
+      } else {
+        closeList();
+        codeLang = line.slice(3).trim();
+        inCode = true;
+      }
+      continue;
+    }
+    if (inCode) { codeAcc.push(line); continue; }
+
+    const isListLine = /^[-*]\s/.test(line) || /^\d+\.\s/.test(line);
+    if (inList && !isListLine) closeList();
+
+    if (line.trim() === '') { closeList(); out.push('<br>'); continue; }
+
+    let m;
+    if ((m = line.match(/^(#{1,6})\s(.+)/))) {
+      closeList();
+      const lvl = m[1].length;
+      out.push(`<h${lvl}>${inlinemd(m[2])}</h${lvl}>`);
+      continue;
+    }
+    if (/^---+$/.test(line.trim())) { closeList(); out.push('<hr>'); continue; }
+    if (line.startsWith('> ')) { closeList(); out.push(`<blockquote>${inlinemd(line.slice(2))}</blockquote>`); continue; }
+
+    if ((m = line.match(/^[-*]\s(.+)/))) {
+      if (!inList || listType !== 'ul') { closeList(); out.push('<ul>'); inList = true; listType = 'ul'; }
+      out.push(`<li>${inlinemd(m[1])}</li>`);
+      continue;
+    }
+    if ((m = line.match(/^\d+\.\s(.+)/))) {
+      if (!inList || listType !== 'ol') { closeList(); out.push('<ol>'); inList = true; listType = 'ol'; }
+      out.push(`<li>${inlinemd(m[1])}</li>`);
+      continue;
+    }
+
+    out.push(`<p>${inlinemd(line)}</p>`);
+  }
+
+  closeList();
+  if (inCode) out.push(`<pre><code>${esc(codeAcc.join('\n'))}</code></pre>`);
+  return out.join('');
+}
+
+function inlinemd(text) {
+  text = esc(text);
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  return text;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Syntax highlighting
+// ═══════════════════════════════════════════════════════════════
+
+function highlightCode(escapedCode, lang) {
+  if (!lang) return escapedCode;
+  switch (lang.toLowerCase()) {
+    case 'python': case 'py': return hlPython(escapedCode);
+    case 'sql': return hlSQL(escapedCode);
+    case 'javascript': case 'js': case 'typescript': case 'ts': return hlJS(escapedCode);
+    case 'json': return hlJSON(escapedCode);
+    case 'yaml': case 'yml': return hlYAML(escapedCode);
+    default: return escapedCode;
+  }
+}
+
+function hlPython(code) {
+  const kws = 'def|class|import|from|return|if|elif|else|for|while|in|not|and|or|with|as|try|except|finally|raise|pass|break|continue|lambda|yield|global|nonlocal|del|assert|True|False|None|async|await|is|print';
+  return code
+    .replace(/(#[^\n]*)/g, '<span class="cmt">$1</span>')
+    .replace(/("""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'|"[^"\\]*(?:\\.[^"\\]*)*"|\'[^\'\\]*(?:\\.[^\'\\]*)*\')/g, '<span class="str">$1</span>')
+    .replace(new RegExp(`\\b(${kws})\\b`, 'g'), '<span class="kw">$1</span>')
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+}
+
+function hlSQL(code) {
+  const kws = 'SELECT|FROM|WHERE|JOIN|LEFT|RIGHT|INNER|OUTER|FULL|ON|GROUP|BY|ORDER|HAVING|LIMIT|OFFSET|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|DROP|ALTER|ADD|COLUMN|INDEX|VIEW|WITH|AS|AND|OR|NOT|IN|IS|NULL|LIKE|BETWEEN|EXISTS|DISTINCT|COUNT|SUM|AVG|MIN|MAX|CASE|WHEN|THEN|ELSE|END|UNION|ALL|OVER|PARTITION|ROW_NUMBER|RANK|DENSE_RANK|COALESCE|CAST|DATE|TIMESTAMP';
+  return code
+    .replace(/(--[^\n]*)/g, '<span class="cmt">$1</span>')
+    .replace(/('(?:[^'\\]|\\.)*')/g, '<span class="str">$1</span>')
+    .replace(new RegExp(`\\b(${kws})\\b`, 'gi'), m => `<span class="kw">${m.toUpperCase()}</span>`)
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+}
+
+function hlJS(code) {
+  const kws = 'const|let|var|function|return|if|else|for|while|do|class|extends|import|export|default|from|new|this|typeof|instanceof|in|of|try|catch|finally|throw|async|await|true|false|null|undefined|break|continue|switch|case|delete|void|yield|interface|type|enum|static|get|set';
+  return code
+    .replace(/(\/\/[^\n]*)/g, '<span class="cmt">$1</span>')
+    .replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)/g, '<span class="str">$1</span>')
+    .replace(new RegExp(`\\b(${kws})\\b`, 'g'), '<span class="kw">$1</span>')
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+}
+
+function hlJSON(code) {
+  return code
+    .replace(/("(?:[^"\\]|\\.)*")(\s*:)/g, '<span class="attr">$1</span>$2')
+    .replace(/:\s*("(?:[^"\\]|\\.)*")/g, ': <span class="str">$1</span>')
+    .replace(/:\s*(\d+\.?\d*(?:[eE][+-]?\d+)?)/g, ': <span class="num">$1</span>')
+    .replace(/:\s*(true|false|null)/g, ': <span class="kw">$1</span>');
+}
+
+function hlYAML(code) {
+  return code.split('\n').map(line => {
+    if (/^\s*#/.test(line)) return `<span class="cmt">${line}</span>`;
+    const m = line.match(/^(\s*\S[^:]*:)(.*)/);
+    if (m) return `<span class="attr">${m[1]}</span><span class="str">${m[2]}</span>`;
+    return line;
+  }).join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// File viewer
+// ═══════════════════════════════════════════════════════════════
+
+let fileData = {};
+let tabPaths = [];
+let activePath = null;
+
+function addOrUpdateFile(filePath, content) {
+  const isNew = !(filePath in fileData);
+  fileData[filePath] = content;
+
+  if (isNew) {
+    tabPaths.push(filePath);
+    tabPaths.sort((a, b) => {
+      const aS = a.endsWith('project-specs.md') ? 0 : 1;
+      const bS = b.endsWith('project-specs.md') ? 0 : 1;
+      if (aS !== bS) return aS - bS;
+      return a.localeCompare(b);
+    });
+    renderTabs();
+    if (!activePath) activePath = filePath;
+  }
+
+  if (filePath !== activePath) {
+    markUnread(filePath);
+  } else {
+    renderActiveFile();
+  }
+}
+
+function renderTabs() {
+  const bar = document.getElementById('file-tabs-bar');
+  bar.innerHTML = '';
+
+  if (tabPaths.length === 0) {
+    bar.innerHTML = '<div class="no-tab-msg">No files yet</div>';
+    return;
+  }
+
+  for (const p of tabPaths) {
+    const tab = document.createElement('div');
+    tab.className = 'file-tab' + (p === activePath ? ' active' : '');
+    tab.dataset.path = p;
+    const name = p.split('/').pop();
+    const isSpec = p.endsWith('project-specs.md');
+    tab.innerHTML = `<span class="tab-dot"></span>${esc(name)}${isSpec ? '' : ' <span class="close-btn" title="Close">x</span>'}`;
+    tab.addEventListener('click', (e) => {
+      if (e.target.classList.contains('close-btn')) { removeTab(p); return; }
+      setActiveTab(p);
+    });
+    bar.appendChild(tab);
+  }
+}
+
+function setActiveTab(p) {
+  activePath = p;
+  renderTabs();
+  renderActiveFile();
+  clearUnread(p);
+}
+
+function removeTab(p) {
+  tabPaths = tabPaths.filter(x => x !== p);
+  delete fileData[p];
+  if (activePath === p) activePath = tabPaths[0] || null;
+  renderTabs();
+  renderActiveFile();
+}
+
+function markUnread(p) {
+  const el = document.querySelector(`[data-path="${CSS.escape(p)}"]`);
+  if (el) el.classList.add('unread');
+}
+
+function clearUnread(p) {
+  const el = document.querySelector(`[data-path="${CSS.escape(p)}"]`);
+  if (el) el.classList.remove('unread');
+}
+
+function renderActiveFile() {
+  const area = document.getElementById('file-content-area');
+  if (!activePath || !(activePath in fileData)) {
+    area.innerHTML = '<div class="no-content-msg">No file selected</div>';
+    return;
+  }
+  area.innerHTML = '';
+  const el = buildFileElement(activePath, fileData[activePath]);
+  area.appendChild(el);
+  if (activePath.endsWith('project-specs.md')) area.scrollTop = area.scrollHeight;
+}
+
+function buildFileElement(filePath, content) {
+  const ext = filePath.split('.').pop().toLowerCase();
+  const wrap = document.createElement('div');
+  wrap.className = 'file-rendered';
+
+  if (ext === 'md') {
+    wrap.innerHTML = renderMarkdown(content);
+    return wrap;
+  }
+
+  if (ext === 'ipynb') {
+    try {
+      const nb = JSON.parse(content);
+      for (const cell of nb.cells || []) {
+        const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
+        if (cell.cell_type === 'markdown') {
+          wrap.innerHTML += renderMarkdown(src);
+        } else {
+          const pre = document.createElement('pre');
+          pre.innerHTML = `<code>${highlightCode(esc(src), 'python')}</code>`;
+          wrap.appendChild(pre);
+        }
+        wrap.innerHTML += '<hr>';
+      }
+      return wrap;
+    } catch {}
+  }
+
+  const langMap = { py: 'python', sql: 'sql', js: 'javascript', ts: 'typescript', json: 'json', yaml: 'yaml', yml: 'yaml' };
+  const pre = document.createElement('pre');
+  pre.innerHTML = `<code>${highlightCode(esc(content), langMap[ext] || '')}</code>`;
+  wrap.appendChild(pre);
+  return wrap;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Conversation panel
+// ═══════════════════════════════════════════════════════════════
+
+let hasMessages = false;
+
+function addMessage(role, content, agent) {
+  const container = document.getElementById('messages');
+  if (!hasMessages) { container.innerHTML = ''; hasMessages = true; }
+
+  const info = AGENTS[agent] || { color: '#666', label: agent || 'Unknown' };
+  const div = document.createElement('div');
+  div.className = `message ${role === 'user' ? 'user' : 'assistant'}`;
+
+  if (role === 'user') {
+    div.innerHTML = `
+      <div class="message-meta">You</div>
+      <div class="message-bubble">${esc(content)}</div>`;
+  } else {
+    div.innerHTML = `
+      <div class="message-meta">
+        <span class="meta-dot" style="background:${info.color}"></span>
+        ${esc(info.label)}
+      </div>
+      <div class="message-bubble" style="border-left-color:${info.color}">${renderMarkdown(content)}</div>`;
+  }
+
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function addAgentDivider(from, to) {
+  const container = document.getElementById('messages');
+  if (!hasMessages) { container.innerHTML = ''; hasMessages = true; }
+
+  const info = AGENTS[to] || { color: '#888', label: to };
+  const div = document.createElement('div');
+  div.className = 'agent-divider';
+  div.innerHTML = `<span style="color:${info.color}">— now: ${esc(info.label)} —</span>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SSE connection
+// ═══════════════════════════════════════════════════════════════
+
+function handleSSEEvent(e) {
+  let data;
+  try { data = JSON.parse(e.data); } catch { return; }
+
+  switch (data.type) {
+    case 'connected': break;
+
+    case 'user-message':
+      addMessage('user', data.content, data.agent);
+      if (data.agent && !currentAgent) activateAgent(data.agent);
+      break;
+
+    case 'agent-message':
+      addMessage('assistant', data.content, data.agent);
+      if (data.agent) activateAgent(data.agent);
+      break;
+
+    case 'agent-activated':
+      activateAgent(data.agent);
+      logEvent(`Agent: ${data.agent}`, true);
+      break;
+
+    case 'agent-changed':
+      activateAgent(data.to);
+      addAgentDivider(data.from, data.to);
+      logEvent(`Transfer: ${data.from} -> ${data.to}`, true);
+      break;
+
+    case 'agent-consulting':
+      triggerConsult(data.agent);
+      logEvent(`Consulting ${data.agent}...`);
+      break;
+
+    case 'artifact-updated':
+      addOrUpdateFile(data.path, data.content);
+      logEvent(`Updated: ${data.path.split('/').pop()}`);
+      break;
+
+    case 'event-log':
+      logEvent(data.text);
+      break;
+
+    case 'session-end':
+      logEvent('Session ended', true);
+      currentAgent = null;
+      document.getElementById('active-dot').style.background = '#2a2a3a';
+      document.getElementById('active-agent-name').textContent = 'Idle';
+      document.getElementById('active-agent-name').style.color = '#333';
+      break;
+  }
+}
+
+function connect() {
+  const indicator = document.getElementById('conn-indicator');
+  const text = document.getElementById('conn-text');
+  const es = new EventSource('/events');
+
+  es.onopen = () => {
+    indicator.className = 'conn-indicator connected';
+    text.textContent = 'Connected';
+    logEvent('Connected to Shards UI server', true);
+  };
+  es.onmessage = handleSSEEvent;
+  es.onerror = () => {
+    indicator.className = 'conn-indicator disconnected';
+    text.textContent = 'Reconnecting...';
+    es.close();
+    setTimeout(connect, 3000);
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Initial load
+// ═══════════════════════════════════════════════════════════════
+
+async function loadInitial() {
+  try {
+    const [tRes, fRes] = await Promise.all([fetch('/transcript'), fetch('/files')]);
+    const transcript = await tRes.json();
+    const files = await fRes.json();
+
+    for (const msg of transcript) {
+      addMessage(msg.role, msg.content, msg.agent);
+      if (msg.agent) currentAgent = msg.agent;
+    }
+    if (currentAgent) activateAgent(currentAgent);
+
+    for (const [p, c] of Object.entries(files)) addOrUpdateFile(p, c);
+  } catch {}
+}
+
+loadInitial();
+connect();
+</script>
+</body>
+</html>
