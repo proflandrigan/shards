@@ -79,8 +79,222 @@ body {
   overflow: hidden;
 }
 
-/* ─── Conversation panel ─────────────────────────────────── */
-#conversation-panel {
+/* ─── Explorer sidebar ───────────────────────────────────── */
+#explorer-sidebar {
+  width: 240px;
+  min-width: 140px;
+  max-width: 500px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #080810;
+  border-right: 1px solid #1a1a2c;
+  overflow: hidden;
+}
+#explorer-sidebar.collapsed {
+  width: 36px !important;
+  min-width: 36px;
+}
+#explorer-sidebar.collapsed #explorer-breadcrumb,
+#explorer-sidebar.collapsed #explorer-listing { display: none; }
+
+#explorer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  cursor: pointer;
+  user-select: none;
+  background: #0a0a14;
+  border-bottom: 1px solid #12121e;
+  flex-shrink: 0;
+}
+#explorer-header:hover { background: #0e0e1a; }
+#explorer-toggle {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #3a3a54;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#explorer-toggle .chevron {
+  display: inline-block;
+  transition: transform 0.2s;
+  font-size: 8px;
+  color: #3a3a54;
+}
+#explorer-sidebar.collapsed #explorer-toggle .chevron { transform: rotate(-90deg); }
+#explorer-sidebar.collapsed #explorer-toggle .label-text { display: none; }
+
+#explorer-breadcrumb {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #4a4a68;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #12121e;
+  background: #090912;
+  flex-shrink: 0;
+}
+.crumb {
+  cursor: pointer;
+  color: #5a5a78;
+  padding: 1px 3px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.crumb:hover { color: #9090b0; background: #141428; }
+.crumb-sep { color: #2a2a3a; font-size: 8px; }
+.crumb.current { color: #8888a8; cursor: default; }
+.crumb.current:hover { background: none; color: #8888a8; }
+
+#explorer-listing {
+  overflow-y: auto;
+  flex: 1;
+}
+.dir-entry {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #8888a8;
+  transition: background 0.15s;
+}
+.dir-entry:hover { background: #0f0f1e; }
+.dir-entry.is-dir { color: #9090b0; }
+.dir-entry.is-file { color: #6a6a88; }
+.dir-icon {
+  font-size: 10px;
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+  color: #4a4a68;
+}
+.dir-entry.is-dir .dir-icon { color: #5a7aaa; }
+.dir-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dir-size { font-size: 11px; color: #3a3a54; flex-shrink: 0; }
+.dir-entry.parent-entry { color: #5a5a78; font-style: italic; }
+.dir-entry.parent-entry .dir-icon { color: #5a5a78; }
+
+/* ─── Resize handles ─────────────────────────────────────── */
+.resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.resize-handle:hover,
+.resize-handle.dragging {
+  background: #3860c0;
+}
+
+/* ─── Workspace ──────────────────────────────────────────── */
+#workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ─── Workspace tab bar ──────────────────────────────────── */
+#ws-tab-bar {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #1a1a2c;
+  background: #080810;
+  flex-shrink: 0;
+  min-height: 34px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#ws-tab-bar::-webkit-scrollbar { display: none; }
+
+.ws-tab {
+  padding: 0 14px;
+  font-size: 12px;
+  color: #4a4a68;
+  cursor: pointer;
+  white-space: nowrap;
+  border-right: 1px solid #141420;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  transition: color 0.2s, background 0.2s;
+  user-select: none;
+}
+.ws-tab:hover { color: #707090; background: #0c0c18; }
+.ws-tab.active { color: #b0b0c8; background: #0d0d14; border-bottom: 2px solid #3860c0; }
+.ws-tab.pinned { color: #8888a8; }
+.ws-tab.pinned.active { color: #c8c8d8; }
+.ws-tab.in-split { border-bottom: 2px solid #2a6a2a; }
+.ws-tab .tab-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #4CAF50;
+  display: none;
+  flex-shrink: 0;
+}
+.ws-tab.unread .tab-dot { display: block; }
+.ws-tab .modified-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e0a040;
+  display: none;
+  flex-shrink: 0;
+}
+.ws-tab.modified .modified-dot { display: block; }
+.ws-tab .close-btn {
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  margin-left: 2px;
+  line-height: 1;
+}
+.ws-tab .close-btn:hover { color: #888; }
+
+#ws-tab-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+#split-btn {
+  background: #0f0f1e;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  color: #5a5a78;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#split-btn:hover { background: #1a1a30; color: #8080a0; }
+#split-btn.active { background: #1a2a1a; border-color: #2a6a2a; color: #60a060; }
+
+/* ─── Workspace content ──────────────────────────────────── */
+#ws-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ─── Chat pane ──────────────────────────────────────────── */
+#chat-pane {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -310,138 +524,121 @@ body {
   overflow: hidden;
 }
 
-/* ─── File panel ─────────────────────────────────────────── */
-#file-panel {
-  width: 360px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  border-left: 1px solid #1a1a2c;
-  background: #080810;
-}
-
-/* ─── Directory explorer ─────────────────────────────────── */
-#dir-explorer {
-  border-bottom: 1px solid #1a1a2c;
-  flex-shrink: 0;
-  max-height: 50%;
-  display: flex;
-  flex-direction: column;
-}
-#dir-explorer.collapsed #dir-listing,
-#dir-explorer.collapsed #dir-breadcrumb { display: none; }
-#dir-explorer.collapsed { max-height: none; }
-#dir-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 12px;
-  cursor: pointer;
-  user-select: none;
-  background: #0a0a14;
-}
-#dir-header:hover { background: #0e0e1a; }
-#dir-toggle {
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #3a3a54;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-#dir-toggle .chevron {
-  display: inline-block;
-  transition: transform 0.2s;
-  font-size: 8px;
-  color: #3a3a54;
-}
-#dir-explorer.collapsed #dir-toggle .chevron { transform: rotate(-90deg); }
-#dir-breadcrumb {
-  padding: 4px 12px;
-  font-size: 12px;
-  color: #4a4a68;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-wrap: wrap;
-  border-bottom: 1px solid #12121e;
-  background: #090912;
-}
-.crumb {
-  cursor: pointer;
-  color: #5a5a78;
-  padding: 1px 3px;
-  border-radius: 3px;
-  white-space: nowrap;
-}
-.crumb:hover { color: #9090b0; background: #141428; }
-.crumb-sep { color: #2a2a3a; font-size: 8px; }
-.crumb.current { color: #8888a8; cursor: default; }
-.crumb.current:hover { background: none; color: #8888a8; }
-#dir-listing {
-  overflow-y: auto;
+/* ─── File pane ──────────────────────────────────────────── */
+#file-pane {
   flex: 1;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0d0d14;
+  min-width: 0;
 }
-.dir-entry {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 4px 12px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #8888a8;
-  transition: background 0.15s;
-}
-.dir-entry:hover { background: #0f0f1e; }
-.dir-entry.is-dir { color: #9090b0; }
-.dir-entry.is-file { color: #6a6a88; }
-.dir-icon {
-  font-size: 10px;
-  width: 14px;
-  text-align: center;
-  flex-shrink: 0;
-  color: #4a4a68;
-}
-.dir-entry.is-dir .dir-icon { color: #5a7aaa; }
-.dir-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dir-size { font-size: 11px; color: #3a3a54; flex-shrink: 0; }
-.dir-entry.parent-entry { color: #5a5a78; font-style: italic; }
-.dir-entry.parent-entry .dir-icon { color: #5a5a78; }
-#file-tabs-bar {
-  display: flex;
-  overflow-x: auto;
-  border-bottom: 1px solid #1a1a2c;
-  flex-shrink: 0;
-  min-height: 36px;
-  scrollbar-width: none;
-  align-items: stretch;
-}
-#file-tabs-bar::-webkit-scrollbar { display: none; }
-.file-tab {
-  padding: 0 13px;
-  font-size: 12px;
-  color: #3a3a54;
-  cursor: pointer;
-  white-space: nowrap;
-  border-right: 1px solid #141420;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-  transition: color 0.2s;
-}
-.file-tab:hover { color: #707090; background: #0c0c18; }
-.file-tab.active { color: #b0b0c8; background: #0d0d14; border-bottom: 2px solid #3860c0; }
-.tab-dot { width: 5px; height: 5px; border-radius: 50%; background: #4CAF50; display: none; }
-.file-tab.unread .tab-dot { display: block; }
-.close-btn { font-size: 13px; color: #333; cursor: pointer; margin-left: 2px; line-height: 1; }
-.close-btn:hover { color: #777; }
-.no-tab-msg { padding: 0 14px; color: #2a2a3a; font-size: 12px; display: flex; align-items: center; }
-#file-content-area { flex: 1; overflow: auto; padding: 12px 14px; }
-.no-content-msg { color: #2a2a3a; font-size: 13px; margin-top: 20px; }
+#file-pane.visible { display: flex; }
 
-/* File rendering */
+#file-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-bottom: 1px solid #1a1a2c;
+  background: #0a0a14;
+  flex-shrink: 0;
+  gap: 8px;
+  min-height: 30px;
+}
+#file-path-display {
+  flex: 1;
+  font-size: 12px;
+  color: #5a5a78;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.toolbar-btn {
+  background: #0f0f1e;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  color: #6a6a88;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 2px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.toolbar-btn:hover { background: #1a1a30; color: #9090b0; }
+.toolbar-btn.active { background: #1a2a1a; border-color: #2a6a2a; color: #60a060; }
+.toolbar-btn.save { border-color: #2a4a6a; color: #6090c0; }
+.toolbar-btn.save:hover { background: #0a1a2a; color: #80b0e0; }
+
+/* ─── File editor ────────────────────────────────────────── */
+#file-editor {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+#line-gutter {
+  width: 52px;
+  overflow: hidden;
+  background: #060610;
+  color: #2a2a44;
+  text-align: right;
+  padding: 10px 8px 10px 0;
+  font-size: 13px;
+  line-height: 1.55;
+  user-select: none;
+  border-right: 1px solid #141420;
+  flex-shrink: 0;
+}
+#file-view-area {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+#code-view {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  background: none;
+  border: none;
+  color: #b0b0c4;
+  white-space: pre;
+  min-height: 100%;
+}
+#code-view code {
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+#code-edit {
+  display: none;
+  width: 100%;
+  min-height: 100%;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  background: #0a0a16;
+  color: #c0c0d0;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 10px 14px;
+  tab-size: 4;
+  white-space: pre;
+  overflow-wrap: normal;
+}
+#code-edit.visible { display: block; }
+
+/* File rendered view (markdown) */
+#file-rendered-view {
+  display: none;
+  flex: 1;
+  overflow: auto;
+  padding: 14px 18px;
+}
+#file-rendered-view.visible { display: block; }
+
 .file-rendered { font-size: 13px; line-height: 1.6; color: #b0b0c4; }
 .file-rendered h1 { font-size: 16px; color: #dde; margin: 10px 0 5px; }
 .file-rendered h2 { font-size: 15px; color: #ccd; margin: 9px 0 4px; border-bottom: 1px solid #1a1a2c; padding-bottom: 3px; }
@@ -461,7 +658,15 @@ body {
 .file-rendered th, .file-rendered td { border: 1px solid #1a1a2c; padding: 3px 7px; }
 .file-rendered th { background: #0b0b16; color: #aab; }
 
-/* Syntax highlight */
+/* ─── No-file placeholder ────────────────────────────────── */
+.no-file-msg {
+  color: #2a2a3a;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 60px;
+}
+
+/* ─── Syntax highlight ───────────────────────────────────── */
 .kw  { color: #c678dd; }
 .str { color: #98c379; }
 .num { color: #d19a66; }
@@ -470,7 +675,7 @@ body {
 .op  { color: #56b6c2; }
 .attr{ color: #e06c75; }
 
-/* Scrollbars */
+/* ─── Scrollbars ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #1a1a2c; border-radius: 3px; }
@@ -494,29 +699,61 @@ body {
 </header>
 
 <main id="main">
-  <div id="conversation-panel">
-    <div id="conv-header">Chat</div>
-    <div id="agent-picker"></div>
-    <div id="messages">
-      <div class="empty-state">Select an agent to start chatting</div>
+  <!-- Explorer sidebar -->
+  <aside id="explorer-sidebar">
+    <div id="explorer-header" onclick="toggleExplorer()">
+      <span id="explorer-toggle"><span class="chevron">&#9660;</span> <span class="label-text">Explorer</span></span>
     </div>
-    <div id="chat-input-area">
-      <input type="text" id="chat-input" placeholder="Message the agent..." />
-      <button id="chat-send-btn" onclick="sendChatMessage()">Send</button>
-      <button id="chat-stop-btn" onclick="stopChat()">End</button>
-    </div>
-  </div>
+    <div id="explorer-breadcrumb"></div>
+    <div id="explorer-listing"></div>
+  </aside>
+  <div class="resize-handle" id="explorer-resize"></div>
 
-  <div id="file-panel">
-    <div id="dir-explorer">
-      <div id="dir-header" onclick="toggleDirExplorer()">
-        <span id="dir-toggle"><span class="chevron">&#9660;</span> Explorer</span>
+  <!-- Workspace -->
+  <div id="workspace">
+    <div id="ws-tab-bar">
+      <!-- tabs rendered dynamically -->
+      <div id="ws-tab-actions">
+        <button id="split-btn" onclick="toggleSplit()" title="Toggle split view">Split</button>
       </div>
-      <div id="dir-breadcrumb"></div>
-      <div id="dir-listing"></div>
     </div>
-    <div id="file-tabs-bar"><div class="no-tab-msg">No files yet</div></div>
-    <div id="file-content-area"><div class="no-content-msg">Files will appear here as agents write them</div></div>
+    <div id="ws-content">
+      <!-- Chat pane -->
+      <div id="chat-pane">
+        <div id="conv-header">Chat</div>
+        <div id="agent-picker"></div>
+        <div id="messages">
+          <div class="empty-state">Select an agent to start chatting</div>
+        </div>
+        <div id="chat-input-area">
+          <input type="text" id="chat-input" placeholder="Message the agent..." />
+          <button id="chat-send-btn" onclick="sendChatMessage()">Send</button>
+          <button id="chat-stop-btn" onclick="stopChat()">End</button>
+        </div>
+      </div>
+
+      <!-- Split resize handle -->
+      <div class="resize-handle" id="split-resize" style="display:none"></div>
+
+      <!-- File pane -->
+      <div id="file-pane">
+        <div id="file-toolbar">
+          <span id="file-path-display"></span>
+          <button class="toolbar-btn" id="edit-btn" onclick="toggleEditMode()">Edit</button>
+          <button class="toolbar-btn save" id="save-btn" onclick="saveCurrentFile()" style="display:none">Save</button>
+        </div>
+        <!-- Rendered view (markdown/notebook) -->
+        <div id="file-rendered-view"></div>
+        <!-- Code editor view -->
+        <div id="file-editor">
+          <div id="line-gutter"></div>
+          <div id="file-view-area">
+            <pre id="code-view"><code id="code-view-code"></code></pre>
+            <textarea id="code-edit" spellcheck="false"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -524,7 +761,7 @@ body {
 'use strict';
 
 // ═══════════════════════════════════════════════════════════════
-// Agent data — all 15 agents
+// Agent data
 // ═══════════════════════════════════════════════════════════════
 
 const AGENTS = {
@@ -566,6 +803,28 @@ function esc(str) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+const LANG_MAP = {
+  py: 'python', python: 'python',
+  sql: 'sql',
+  js: 'javascript', javascript: 'javascript',
+  ts: 'typescript', typescript: 'typescript',
+  json: 'json',
+  yaml: 'yaml', yml: 'yaml',
+  sh: 'bash', bash: 'bash',
+  html: 'html', htm: 'html',
+  css: 'css',
+  rb: 'ruby', ruby: 'ruby',
+  go: 'go',
+  rs: 'rust', rust: 'rust',
+  java: 'java',
+  r: 'r',
+};
+
+function getLang(filePath) {
+  const ext = filePath.split('.').pop().toLowerCase();
+  return LANG_MAP[ext] || '';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -703,130 +962,584 @@ function hlYAML(code) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// File viewer
+// Explorer sidebar
 // ═══════════════════════════════════════════════════════════════
 
-let fileData = {};
-let tabPaths = [];
-let activePath = null;
+let currentBrowseDir = null;
 
-function addOrUpdateFile(filePath, content) {
-  const isNew = !(filePath in fileData);
-  fileData[filePath] = content;
+function toggleExplorer() {
+  document.getElementById('explorer-sidebar').classList.toggle('collapsed');
+}
 
-  if (isNew) {
-    tabPaths.push(filePath);
-    tabPaths.sort((a, b) => {
-      const aS = a.endsWith('project-specs.md') ? 0 : 1;
-      const bS = b.endsWith('project-specs.md') ? 0 : 1;
-      if (aS !== bS) return aS - bS;
-      return a.localeCompare(b);
-    });
-    renderTabs();
-    if (!activePath) activePath = filePath;
-  }
+async function browseDir(dir) {
+  try {
+    const url = dir ? `/browse?dir=${encodeURIComponent(dir)}` : '/browse';
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) return;
+    currentBrowseDir = data.path;
+    renderBreadcrumb(data.path);
+    renderDirListing(data);
+  } catch {}
+}
 
-  if (filePath !== activePath) {
-    markUnread(filePath);
-  } else {
-    renderActiveFile();
+function renderBreadcrumb(dirPath) {
+  const el = document.getElementById('explorer-breadcrumb');
+  el.innerHTML = '';
+  const parts = dirPath.split('/').filter(Boolean);
+
+  const root = document.createElement('span');
+  root.className = 'crumb';
+  root.textContent = '/';
+  root.addEventListener('click', () => browseDir('/'));
+  el.appendChild(root);
+
+  for (let i = 0; i < parts.length; i++) {
+    const cumPath = '/' + parts.slice(0, i + 1).join('/');
+    const isCurrent = i === parts.length - 1;
+
+    const sep = document.createElement('span');
+    sep.className = 'crumb-sep';
+    sep.textContent = '/';
+    el.appendChild(sep);
+
+    const crumb = document.createElement('span');
+    crumb.className = 'crumb' + (isCurrent ? ' current' : '');
+    crumb.textContent = parts[i];
+    if (!isCurrent) crumb.addEventListener('click', () => browseDir(cumPath));
+    el.appendChild(crumb);
   }
 }
 
-function renderTabs() {
-  const bar = document.getElementById('file-tabs-bar');
-  bar.innerHTML = '';
+function renderDirListing(data) {
+  const el = document.getElementById('explorer-listing');
+  el.innerHTML = '';
 
-  if (tabPaths.length === 0) {
-    bar.innerHTML = '<div class="no-tab-msg">No files yet</div>';
-    return;
+  if (data.parent) {
+    const parentEl = document.createElement('div');
+    parentEl.className = 'dir-entry parent-entry is-dir';
+    parentEl.innerHTML = '<span class="dir-icon">..</span><span class="dir-name">Parent directory</span>';
+    parentEl.addEventListener('click', () => browseDir(data.parent));
+    el.appendChild(parentEl);
   }
 
-  for (const p of tabPaths) {
+  for (const entry of data.entries) {
+    const fullPath = data.path + '/' + entry.name;
+    const row = document.createElement('div');
+
+    if (entry.type === 'dir') {
+      row.className = 'dir-entry is-dir';
+      row.innerHTML = `<span class="dir-icon">&#128193;</span><span class="dir-name">${esc(entry.name)}</span>`;
+      row.addEventListener('click', () => browseDir(fullPath));
+    } else {
+      row.className = 'dir-entry is-file';
+      row.innerHTML = `<span class="dir-icon">&#128196;</span><span class="dir-name">${esc(entry.name)}</span><span class="dir-size">${formatSize(entry.size)}</span>`;
+      row.addEventListener('click', () => openFileFromExplorer(fullPath));
+    }
+    el.appendChild(row);
+  }
+
+  if (data.entries.length === 0 && !data.parent) {
+    el.innerHTML = '<div style="padding:8px 12px;color:#3a3a54;font-size:10px">Empty directory</div>';
+  }
+}
+
+function formatSize(bytes) {
+  if (bytes === 0) return '0 B';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+async function openFileFromExplorer(filePath) {
+  try {
+    const res = await fetch(`/browse/file?path=${encodeURIComponent(filePath)}`);
+    const data = await res.json();
+    if (data.error) return;
+    const key = data.relPath || filePath;
+    openFileTab(key, data.content, data.path);
+  } catch {}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Explorer resize
+// ═══════════════════════════════════════════════════════════════
+
+function initExplorerResize() {
+  const handle = document.getElementById('explorer-resize');
+  const sidebar = document.getElementById('explorer-sidebar');
+  let startX, startW;
+
+  handle.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    startX = e.clientX;
+    startW = sidebar.offsetWidth;
+    handle.classList.add('dragging');
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  function onMove(e) {
+    const newW = Math.max(140, Math.min(500, startW + (e.clientX - startX)));
+    sidebar.style.width = newW + 'px';
+  }
+  function onUp() {
+    handle.classList.remove('dragging');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Workspace tabs & file state
+// ═══════════════════════════════════════════════════════════════
+
+// openFiles[relPath] = { content, absPath, originalContent, modified, editMode }
+let openFiles = {};
+let fileTabOrder = [];   // ordered relPaths
+let activeTabId = 'chat'; // 'chat' or a relPath
+let splitMode = false;
+
+function openFileTab(relPath, content, absPath) {
+  if (relPath in openFiles) {
+    // Update content if not modified by user
+    const f = openFiles[relPath];
+    if (!f.modified && !f.editMode) {
+      f.content = content;
+      f.originalContent = content;
+    }
+  } else {
+    openFiles[relPath] = {
+      content,
+      absPath: absPath || relPath,
+      originalContent: content,
+      modified: false,
+      editMode: false,
+    };
+    fileTabOrder.push(relPath);
+    sortFileTabs();
+  }
+
+  if (splitMode) {
+    // In split mode, file tabs show in file pane — switch to this file
+    renderWsTabs();
+    showFileInPane(relPath);
+  } else {
+    // In single mode, switch to this tab
+    activeTabId = relPath;
+    renderWsTabs();
+    showActiveContent();
+  }
+}
+
+function closeFileTab(relPath) {
+  // Save check
+  const f = openFiles[relPath];
+  if (f && f.modified) {
+    if (!confirm(`"${relPath.split('/').pop()}" has unsaved changes. Close anyway?`)) return;
+  }
+
+  delete openFiles[relPath];
+  fileTabOrder = fileTabOrder.filter(p => p !== relPath);
+
+  if (activeTabId === relPath) {
+    activeTabId = fileTabOrder.length > 0 ? fileTabOrder[0] : 'chat';
+  }
+  renderWsTabs();
+  showActiveContent();
+}
+
+function sortFileTabs() {
+  fileTabOrder.sort((a, b) => {
+    const aS = a.endsWith('project-specs.md') ? 0 : 1;
+    const bS = b.endsWith('project-specs.md') ? 0 : 1;
+    if (aS !== bS) return aS - bS;
+    return a.localeCompare(b);
+  });
+}
+
+function switchTab(id) {
+  if (splitMode && id !== 'chat') {
+    // In split mode, clicking a file tab switches the file pane
+    showFileInPane(id);
+    renderWsTabs();
+    return;
+  }
+  activeTabId = id;
+  renderWsTabs();
+  showActiveContent();
+}
+
+function renderWsTabs() {
+  const bar = document.getElementById('ws-tab-bar');
+  // Remove existing tabs (keep actions)
+  const actions = document.getElementById('ws-tab-actions');
+  bar.innerHTML = '';
+
+  // Chat tab (pinned)
+  const chatTab = document.createElement('div');
+  chatTab.className = 'ws-tab pinned' + (activeTabId === 'chat' && !splitMode ? ' active' : '') + (splitMode ? ' in-split' : '');
+  chatTab.textContent = 'Chat';
+  chatTab.addEventListener('click', () => switchTab('chat'));
+  bar.appendChild(chatTab);
+
+  // File tabs
+  for (const p of fileTabOrder) {
+    const f = openFiles[p];
+    if (!f) continue;
     const tab = document.createElement('div');
-    tab.className = 'file-tab' + (p === activePath ? ' active' : '');
+    const isActive = splitMode ? (p === currentFileInPane) : (p === activeTabId);
+    tab.className = 'ws-tab' + (isActive ? ' active' : '') + (f.modified ? ' modified' : '');
     tab.dataset.path = p;
+
     const name = p.split('/').pop();
-    const isSpec = p.endsWith('project-specs.md');
-    tab.innerHTML = `<span class="tab-dot"></span>${esc(name)}${isSpec ? '' : ' <span class="close-btn" title="Close">x</span>'}`;
+    tab.innerHTML =
+      `<span class="tab-dot"></span>` +
+      `<span class="modified-dot"></span>` +
+      `${esc(name)}` +
+      ` <span class="close-btn" title="Close">x</span>`;
+
     tab.addEventListener('click', (e) => {
-      if (e.target.classList.contains('close-btn')) { removeTab(p); return; }
-      setActiveTab(p);
+      if (e.target.classList.contains('close-btn')) { closeFileTab(p); return; }
+      switchTab(p);
     });
     bar.appendChild(tab);
   }
+
+  bar.appendChild(actions);
+
+  // Split button state
+  document.getElementById('split-btn').className = splitMode ? 'active' : '';
 }
 
-function setActiveTab(p) {
-  activePath = p;
-  renderTabs();
-  renderActiveFile();
-  clearUnread(p);
-}
+// Which file is shown in the file pane (used in split mode)
+let currentFileInPane = null;
 
-function removeTab(p) {
-  tabPaths = tabPaths.filter(x => x !== p);
-  delete fileData[p];
-  if (activePath === p) activePath = tabPaths[0] || null;
-  renderTabs();
-  renderActiveFile();
-}
+function showActiveContent() {
+  const chatPane = document.getElementById('chat-pane');
+  const filePane = document.getElementById('file-pane');
+  const splitResize = document.getElementById('split-resize');
 
-function markUnread(p) {
-  const el = document.querySelector(`[data-path="${CSS.escape(p)}"]`);
-  if (el) el.classList.add('unread');
-}
-
-function clearUnread(p) {
-  const el = document.querySelector(`[data-path="${CSS.escape(p)}"]`);
-  if (el) el.classList.remove('unread');
-}
-
-function renderActiveFile() {
-  const area = document.getElementById('file-content-area');
-  if (!activePath || !(activePath in fileData)) {
-    area.innerHTML = '<div class="no-content-msg">No file selected</div>';
+  if (splitMode) {
+    chatPane.style.display = 'flex';
+    splitResize.style.display = 'block';
+    filePane.classList.add('visible');
+    if (currentFileInPane && openFiles[currentFileInPane]) {
+      renderFilePane(currentFileInPane);
+    } else if (fileTabOrder.length > 0) {
+      showFileInPane(fileTabOrder[0]);
+    } else {
+      renderEmptyFilePane();
+    }
     return;
   }
-  area.innerHTML = '';
-  const el = buildFileElement(activePath, fileData[activePath]);
-  area.appendChild(el);
-  if (activePath.endsWith('project-specs.md')) area.scrollTop = area.scrollHeight;
+
+  // Single mode
+  splitResize.style.display = 'none';
+
+  if (activeTabId === 'chat') {
+    chatPane.style.display = 'flex';
+    filePane.classList.remove('visible');
+  } else {
+    chatPane.style.display = 'none';
+    filePane.classList.add('visible');
+    renderFilePane(activeTabId);
+  }
 }
 
-function buildFileElement(filePath, content) {
-  const ext = filePath.split('.').pop().toLowerCase();
-  const wrap = document.createElement('div');
-  wrap.className = 'file-rendered';
+function showFileInPane(relPath) {
+  currentFileInPane = relPath;
+  renderFilePane(relPath);
+  renderWsTabs();
+}
 
-  if (ext === 'md') {
-    wrap.innerHTML = renderMarkdown(content);
-    return wrap;
-  }
+function renderEmptyFilePane() {
+  document.getElementById('file-path-display').textContent = '';
+  document.getElementById('edit-btn').style.display = 'none';
+  document.getElementById('save-btn').style.display = 'none';
+  document.getElementById('file-rendered-view').classList.remove('visible');
+  document.getElementById('file-rendered-view').innerHTML = '';
+  const editor = document.getElementById('file-editor');
+  editor.style.display = 'none';
 
-  if (ext === 'ipynb') {
+  const rendered = document.getElementById('file-rendered-view');
+  rendered.classList.add('visible');
+  rendered.innerHTML = '<div class="no-file-msg">Open a file from the explorer</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// File pane rendering
+// ═══════════════════════════════════════════════════════════════
+
+function renderFilePane(relPath) {
+  const f = openFiles[relPath];
+  if (!f) { renderEmptyFilePane(); return; }
+
+  document.getElementById('file-path-display').textContent = relPath;
+  document.getElementById('edit-btn').style.display = '';
+  document.getElementById('edit-btn').textContent = f.editMode ? 'View' : 'Edit';
+  document.getElementById('save-btn').style.display = f.editMode ? '' : 'none';
+
+  const ext = relPath.split('.').pop().toLowerCase();
+  const isMarkdown = ext === 'md';
+  const isNotebook = ext === 'ipynb';
+
+  const renderedView = document.getElementById('file-rendered-view');
+  const editorEl = document.getElementById('file-editor');
+  const codeView = document.getElementById('code-view');
+  const codeEdit = document.getElementById('code-edit');
+  const gutter = document.getElementById('line-gutter');
+
+  if (f.editMode) {
+    // Edit mode — always show textarea with line numbers
+    renderedView.classList.remove('visible');
+    renderedView.innerHTML = '';
+    editorEl.style.display = 'flex';
+    codeView.style.display = 'none';
+    codeEdit.classList.add('visible');
+    codeEdit.value = f.content;
+    updateLineGutter(f.content);
+    codeEdit.focus();
+  } else if (isMarkdown) {
+    // Markdown rendered view
+    renderedView.classList.add('visible');
+    renderedView.innerHTML = `<div class="file-rendered">${renderMarkdown(f.content)}</div>`;
+    editorEl.style.display = 'none';
+  } else if (isNotebook) {
+    // Notebook rendered view
+    renderedView.classList.add('visible');
+    let html = '<div class="file-rendered">';
     try {
-      const nb = JSON.parse(content);
+      const nb = JSON.parse(f.content);
       for (const cell of nb.cells || []) {
         const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
         if (cell.cell_type === 'markdown') {
-          wrap.innerHTML += renderMarkdown(src);
+          html += renderMarkdown(src);
         } else {
-          const pre = document.createElement('pre');
-          pre.innerHTML = `<code>${highlightCode(esc(src), 'python')}</code>`;
-          wrap.appendChild(pre);
+          html += `<pre><code>${highlightCode(esc(src), 'python')}</code></pre>`;
         }
-        wrap.innerHTML += '<hr>';
+        html += '<hr>';
       }
-      return wrap;
-    } catch {}
+    } catch { html += `<pre>${esc(f.content)}</pre>`; }
+    html += '</div>';
+    renderedView.innerHTML = html;
+    editorEl.style.display = 'none';
+  } else {
+    // Code view with line numbers + syntax highlighting
+    renderedView.classList.remove('visible');
+    renderedView.innerHTML = '';
+    editorEl.style.display = 'flex';
+    codeView.style.display = 'block';
+    codeEdit.classList.remove('visible');
+    const lang = getLang(relPath);
+    document.getElementById('code-view-code').innerHTML = highlightCode(esc(f.content), lang);
+    updateLineGutter(f.content);
+  }
+}
+
+function updateLineGutter(content) {
+  const gutter = document.getElementById('line-gutter');
+  const lineCount = (content.match(/\n/g) || []).length + 1;
+  const lines = [];
+  for (let i = 1; i <= lineCount; i++) lines.push(i);
+  gutter.textContent = lines.join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Edit mode toggle & save
+// ═══════════════════════════════════════════════════════════════
+
+function getCurrentFileKey() {
+  return splitMode ? currentFileInPane : activeTabId;
+}
+
+function toggleEditMode() {
+  const key = getCurrentFileKey();
+  if (!key || key === 'chat' || !openFiles[key]) return;
+  const f = openFiles[key];
+  f.editMode = !f.editMode;
+  renderFilePane(key);
+}
+
+async function saveCurrentFile() {
+  const key = getCurrentFileKey();
+  if (!key || key === 'chat' || !openFiles[key]) return;
+  const f = openFiles[key];
+
+  try {
+    const res = await fetch('/browse/file/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: f.absPath, content: f.content }),
+    });
+    const data = await res.json();
+    if (data.error) { alert('Save failed: ' + data.error); return; }
+    f.originalContent = f.content;
+    f.modified = false;
+    renderWsTabs();
+  } catch (err) {
+    alert('Save failed: ' + err.message);
+  }
+}
+
+// Track edits in textarea
+document.getElementById('code-edit').addEventListener('input', (e) => {
+  const key = getCurrentFileKey();
+  if (!key || !openFiles[key]) return;
+  const f = openFiles[key];
+  f.content = e.target.value;
+  f.modified = f.content !== f.originalContent;
+  updateLineGutter(f.content);
+  renderWsTabs();
+});
+
+// Ctrl+S to save
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    const key = getCurrentFileKey();
+    if (key && key !== 'chat' && openFiles[key] && openFiles[key].editMode) {
+      e.preventDefault();
+      saveCurrentFile();
+    }
+  }
+});
+
+// Tab key in textarea inserts 4 spaces
+document.getElementById('code-edit').addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    ta.value = ta.value.substring(0, start) + '    ' + ta.value.substring(end);
+    ta.selectionStart = ta.selectionEnd = start + 4;
+    ta.dispatchEvent(new Event('input'));
+  }
+});
+
+// Sync scroll between gutter and content
+document.getElementById('file-view-area').addEventListener('scroll', function () {
+  document.getElementById('line-gutter').scrollTop = this.scrollTop;
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Split view
+// ═══════════════════════════════════════════════════════════════
+
+function toggleSplit() {
+  splitMode = !splitMode;
+  const chatPane = document.getElementById('chat-pane');
+
+  if (splitMode) {
+    // Enter split mode
+    activeTabId = 'chat'; // chat always active in split
+    if (!currentFileInPane && fileTabOrder.length > 0) {
+      currentFileInPane = fileTabOrder[0];
+    }
+    chatPane.style.flex = '1';
+    document.getElementById('file-pane').style.flex = '1';
+  } else {
+    // Exit split mode
+    chatPane.style.flex = '';
+    document.getElementById('file-pane').style.flex = '';
+    if (currentFileInPane && openFiles[currentFileInPane]) {
+      activeTabId = currentFileInPane;
+    } else {
+      activeTabId = 'chat';
+    }
   }
 
-  const langMap = { py: 'python', sql: 'sql', js: 'javascript', ts: 'typescript', json: 'json', yaml: 'yaml', yml: 'yaml' };
-  const pre = document.createElement('pre');
-  pre.innerHTML = `<code>${highlightCode(esc(content), langMap[ext] || '')}</code>`;
-  wrap.appendChild(pre);
-  return wrap;
+  renderWsTabs();
+  showActiveContent();
+}
+
+function initSplitResize() {
+  const handle = document.getElementById('split-resize');
+  const chatPane = document.getElementById('chat-pane');
+  const filePane = document.getElementById('file-pane');
+  let startX, chatStartW, fileStartW;
+
+  handle.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    startX = e.clientX;
+    chatStartW = chatPane.offsetWidth;
+    fileStartW = filePane.offsetWidth;
+    handle.classList.add('dragging');
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  function onMove(e) {
+    const delta = e.clientX - startX;
+    const totalW = chatStartW + fileStartW;
+    const newChatW = Math.max(200, Math.min(totalW - 200, chatStartW + delta));
+    const newFileW = totalW - newChatW;
+    chatPane.style.flex = 'none';
+    filePane.style.flex = 'none';
+    chatPane.style.width = newChatW + 'px';
+    filePane.style.width = newFileW + 'px';
+  }
+
+  function onUp() {
+    handle.classList.remove('dragging');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// File auto-refresh
+// ═══════════════════════════════════════════════════════════════
+
+function initFileAutoRefresh() {
+  setInterval(async () => {
+    for (const relPath of fileTabOrder) {
+      const f = openFiles[relPath];
+      if (!f || f.editMode || f.modified) continue;
+
+      try {
+        const res = await fetch(`/browse/file?path=${encodeURIComponent(f.absPath)}`);
+        const data = await res.json();
+        if (data.error) continue;
+        if (data.content !== f.content) {
+          f.content = data.content;
+          f.originalContent = data.content;
+          const currentKey = getCurrentFileKey();
+          if (relPath === currentKey) {
+            renderFilePane(relPath);
+          } else {
+            // Mark unread
+            const tabEl = document.querySelector(`[data-path="${CSS.escape(relPath)}"]`);
+            if (tabEl) tabEl.classList.add('unread');
+          }
+        }
+      } catch {}
+    }
+  }, 3000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Artifact updates (from agent output polling)
+// ═══════════════════════════════════════════════════════════════
+
+function handleArtifactUpdate(relPath, content) {
+  if (relPath in openFiles) {
+    const f = openFiles[relPath];
+    if (!f.modified && !f.editMode) {
+      f.content = content;
+      f.originalContent = content;
+      const currentKey = getCurrentFileKey();
+      if (relPath === currentKey) {
+        renderFilePane(relPath);
+      } else {
+        const tabEl = document.querySelector(`[data-path="${CSS.escape(relPath)}"]`);
+        if (tabEl) tabEl.classList.add('unread');
+      }
+    }
+  } else {
+    // Auto-open artifact files
+    openFileTab(relPath, content, relPath);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -915,6 +1628,14 @@ async function startChat(agentName) {
     hasMessages = false;
 
     activateAgent(agentName);
+
+    // Make sure chat pane is visible
+    if (!splitMode) {
+      activeTabId = 'chat';
+      renderWsTabs();
+      showActiveContent();
+    }
+
     document.getElementById('chat-input').focus();
   } catch (err) {}
 }
@@ -927,12 +1648,11 @@ async function sendChatMessage() {
   input.value = '';
 
   try {
-    const res = await fetch('/chat/send', {
+    await fetch('/chat/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message }),
     });
-    const data = await res.json();
   } catch (err) {}
 }
 
@@ -1077,113 +1797,6 @@ function rebuildMessages(msgArray) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Directory explorer
-// ═══════════════════════════════════════════════════════════════
-
-let currentBrowseDir = null;
-
-function toggleDirExplorer() {
-  document.getElementById('dir-explorer').classList.toggle('collapsed');
-}
-
-async function browseDir(dir) {
-  try {
-    const url = dir ? `/browse?dir=${encodeURIComponent(dir)}` : '/browse';
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.error) return;
-
-    currentBrowseDir = data.path;
-    renderBreadcrumb(data.path);
-    renderDirListing(data);
-  } catch {}
-}
-
-function renderBreadcrumb(dirPath) {
-  const el = document.getElementById('dir-breadcrumb');
-  el.innerHTML = '';
-
-  const parts = dirPath.split('/').filter(Boolean);
-
-  // Root
-  const root = document.createElement('span');
-  root.className = 'crumb';
-  root.textContent = '/';
-  root.addEventListener('click', () => browseDir('/'));
-  el.appendChild(root);
-
-  for (let i = 0; i < parts.length; i++) {
-    const cumPath = '/' + parts.slice(0, i + 1).join('/');
-    const isCurrent = i === parts.length - 1;
-
-    const sep = document.createElement('span');
-    sep.className = 'crumb-sep';
-    sep.textContent = '/';
-    el.appendChild(sep);
-
-    const crumb = document.createElement('span');
-    crumb.className = 'crumb' + (isCurrent ? ' current' : '');
-    crumb.textContent = parts[i];
-    if (!isCurrent) crumb.addEventListener('click', () => browseDir(cumPath));
-    el.appendChild(crumb);
-  }
-}
-
-function renderDirListing(data) {
-  const el = document.getElementById('dir-listing');
-  el.innerHTML = '';
-
-  // Parent directory entry
-  if (data.parent) {
-    const parentEl = document.createElement('div');
-    parentEl.className = 'dir-entry parent-entry is-dir';
-    parentEl.innerHTML = '<span class="dir-icon">..</span><span class="dir-name">Parent directory</span>';
-    parentEl.addEventListener('click', () => browseDir(data.parent));
-    el.appendChild(parentEl);
-  }
-
-  for (const entry of data.entries) {
-    const fullPath = data.path + '/' + entry.name;
-    const row = document.createElement('div');
-
-    if (entry.type === 'dir') {
-      row.className = 'dir-entry is-dir';
-      row.innerHTML = `<span class="dir-icon">&#128193;</span><span class="dir-name">${esc(entry.name)}</span>`;
-      row.addEventListener('click', () => browseDir(fullPath));
-    } else {
-      row.className = 'dir-entry is-file';
-      row.innerHTML = `<span class="dir-icon">&#128196;</span><span class="dir-name">${esc(entry.name)}</span><span class="dir-size">${formatSize(entry.size)}</span>`;
-      row.addEventListener('click', () => openBrowsedFile(fullPath));
-    }
-
-    el.appendChild(row);
-  }
-
-  if (data.entries.length === 0 && !data.parent) {
-    el.innerHTML = '<div style="padding:8px 12px;color:#3a3a54;font-size:10px">Empty directory</div>';
-  }
-}
-
-function formatSize(bytes) {
-  if (bytes === 0) return '0 B';
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-}
-
-async function openBrowsedFile(filePath) {
-  try {
-    const res = await fetch(`/browse/file?path=${encodeURIComponent(filePath)}`);
-    const data = await res.json();
-    if (data.error) return;
-
-    // Add to file viewer tabs
-    addOrUpdateFile(data.relPath || filePath, data.content);
-    setActiveTab(data.relPath || filePath);
-  } catch {}
-}
-
-// ═══════════════════════════════════════════════════════════════
 // SSE connection
 // ═══════════════════════════════════════════════════════════════
 
@@ -1194,7 +1807,6 @@ function handleSSEEvent(e) {
   switch (data.type) {
     case 'connected': break;
 
-    // ─── Observer events (from relay) — stored silently ──────
     case 'user-message':
     case 'agent-message':
       break;
@@ -1209,7 +1821,7 @@ function handleSSEEvent(e) {
       break;
 
     case 'artifact-updated':
-      addOrUpdateFile(data.path, data.content);
+      handleArtifactUpdate(data.path, data.content);
       break;
 
     case 'event-log':
@@ -1301,7 +1913,9 @@ async function loadInitial() {
     const files = await fRes.json();
     const chatStatus = await cRes.json();
 
-    for (const [p, c] of Object.entries(files)) addOrUpdateFile(p, c);
+    for (const [p, c] of Object.entries(files)) {
+      handleArtifactUpdate(p, c);
+    }
 
     // Restore active chat session if one is running
     if (chatStatus.active) {
@@ -1311,18 +1925,28 @@ async function loadInitial() {
       showChatView();
       rebuildMessages(chatMessages);
     } else {
-      // Default: show agent picker
       showAgentPicker();
     }
   } catch {
-    // Default: show agent picker
     showAgentPicker();
   }
+
+  // Ensure chat tab is active initially
+  activeTabId = 'chat';
+  renderWsTabs();
+  showActiveContent();
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════════════════
 
 loadInitial();
 connect();
 browseDir();
+initExplorerResize();
+initSplitResize();
+initFileAutoRefresh();
 </script>
 </body>
 </html>

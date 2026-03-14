@@ -345,6 +345,33 @@ function createHandler() {
       }
     }
 
+    // ─── File save endpoint ─────────────────────────────────────────
+    if (req.method === 'POST' && req.url === '/browse/file/save') {
+      const body = await readBody(req);
+      let params;
+      try {
+        params = JSON.parse(body);
+      } catch {
+        jsonResponse(res, cors, 400, { error: 'Invalid JSON' });
+        return;
+      }
+
+      const { path: filePath, content } = params;
+      if (!filePath || typeof content !== 'string') {
+        jsonResponse(res, cors, 400, { error: 'Missing path or content parameter' });
+        return;
+      }
+
+      const resolved = path.resolve(filePath);
+      try {
+        fs.writeFileSync(resolved, content, 'utf8');
+        jsonResponse(res, cors, 200, { ok: true, path: resolved });
+      } catch (err) {
+        jsonResponse(res, cors, 500, { error: `Cannot write file: ${err.message}` });
+      }
+      return;
+    }
+
     if (req.method === 'POST' && req.url === '/event') {
       const body = await readBody(req);
       handleEvent(body);
