@@ -280,6 +280,71 @@ function createHandler() {
       return;
     }
 
+    // ─── Directory browser endpoints ───────────────────────────────────
+
+    if (req.method === 'GET' && req.url.startsWith('/browse')) {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+
+      if (url.pathname === '/browse') {
+        // List directory contents
+        let dir = url.searchParams.get('dir') || PROJECT_DIR;
+        dir = path.resolve(dir);
+
+        try {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          const items = [];
+          for (const entry of entries) {
+            if (entry.name.startsWith('.') && entry.name !== '..') continue;
+            const fullPath = path.join(dir, entry.name);
+            const isDir = entry.isDirectory();
+            let size = 0;
+            if (!isDir) {
+              try { size = fs.statSync(fullPath).size; } catch {}
+            }
+            items.push({ name: entry.name, type: isDir ? 'dir' : 'file', size });
+          }
+          // Sort: dirs first, then alphabetical
+          items.sort((a, b) => {
+            if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+            return a.name.localeCompare(b.name);
+          });
+
+          const parent = path.dirname(dir);
+          jsonResponse(res, cors, 200, {
+            path: dir,
+            parent: parent !== dir ? parent : null,
+            entries: items,
+          });
+        } catch (err) {
+          jsonResponse(res, cors, 400, { error: `Cannot read directory: ${err.message}` });
+        }
+        return;
+      }
+
+      if (url.pathname === '/browse/file') {
+        // Read a single file
+        const filePath = url.searchParams.get('path');
+        if (!filePath) {
+          jsonResponse(res, cors, 400, { error: 'Missing path parameter' });
+          return;
+        }
+        const resolved = path.resolve(filePath);
+        try {
+          const stat = fs.statSync(resolved);
+          if (stat.size > 2 * 1024 * 1024) {
+            jsonResponse(res, cors, 400, { error: 'File too large (>2MB)' });
+            return;
+          }
+          const content = fs.readFileSync(resolved, 'utf8');
+          const relPath = path.relative(PROJECT_DIR, resolved);
+          jsonResponse(res, cors, 200, { path: resolved, relPath, content });
+        } catch (err) {
+          jsonResponse(res, cors, 400, { error: `Cannot read file: ${err.message}` });
+        }
+        return;
+      }
+    }
+
     if (req.method === 'POST' && req.url === '/event') {
       const body = await readBody(req);
       handleEvent(body);
