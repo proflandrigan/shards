@@ -1137,10 +1137,11 @@ async function startChat(agentName) {
     hasMessages = false;
     input.classList.add('visible');
 
+    // Disable input while agent greeting streams in
+    setChatInputEnabled(false);
+
     activateAgent(agentName);
     logEvent(`Chat started: ${agentName}`, true);
-
-    document.getElementById('chat-input').focus();
   } catch (err) {
     logEvent(`Failed to start chat: ${err.message}`);
   }

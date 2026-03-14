@@ -13,6 +13,7 @@ const SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
 const PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
 const PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
 const AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
+const COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
 const INDEX_HTML = path.join(__dirname, 'index.html');
 
 const PORTS = [7842, 7843, 7844, 7845];
@@ -344,7 +345,26 @@ function createHandler() {
 
       chatSession.start();
 
-      broadcast({ type: 'chat-started', agent, sessionId });
+      // Read the command file for this agent — it contains the exact
+      // activation prompt that slash commands use (persona, rules, greeting
+      // instructions). Falls back to a generic prompt if no command file exists.
+      const cmdFile = path.join(COMMANDS_DIR, `${agent}.md`);
+      let activationPrompt;
+      try {
+        const raw = fs.readFileSync(cmdFile, 'utf8');
+        // Strip YAML frontmatter — the model only needs the body
+        activationPrompt = raw.replace(/^---\n[\s\S]*?\n---\n*/, '').trim();
+      } catch {
+        activationPrompt = `You are now activated as the ${agent} agent. Greet the user and display your activation menu.`;
+      }
+
+      try {
+        chatSession.send(activationPrompt);
+      } catch (err) {
+        broadcast({ type: 'chat-error', error: `Activation failed: ${err.message}`, sessionId });
+      }
+
+      broadcast({ type: 'chat-started', agent, sessionId, autoActivated: true });
       jsonResponse(res, cors, 200, { sessionId, agent });
       return;
     }

@@ -146,8 +146,13 @@ class ChatSession {
     }
 
     if (type === 'assistant') {
-      this._responding = false;
       const content = data.message && data.message.content;
+      // With --include-partial-messages, intermediate assistant messages are
+      // emitted after each content block (e.g. thinking-only). Skip ones
+      // that have no text blocks to avoid empty bubbles in the UI.
+      const hasText = Array.isArray(content) && content.some(b => b.type === 'text');
+      if (!hasText) return;
+      this._responding = false;
       this.onEvent({
         type: 'chat-message',
         content,
