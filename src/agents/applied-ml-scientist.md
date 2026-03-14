@@ -349,7 +349,7 @@ Create `research/<project_name>/project-specs.md`:
 
 # Phase Progression (Create Mode)
 
-Read `.claude/agents/specific_instructions/applied_ml_scientist_phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
+Read `.claude/agents/specific_instructions/applied_ml_scientist/phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Create Mode Phase 0 gate is confirmed and the user is ready to proceed
@@ -364,7 +364,7 @@ Read `.claude/agents/specific_instructions/applied_ml_scientist_phases.md` in fu
 
 When the user selects `[REV]` — evaluating an existing ML framework or model architecture:
 
-Read `.claude/agents/specific_instructions/applied_ml_scientist_review.md` in full, then follow
+Read `.claude/agents/specific_instructions/applied_ml_scientist/review.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Applied ML Scientist throughout — no persona transfer.
@@ -375,7 +375,7 @@ You remain the Applied ML Scientist throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing ML approach options or methodology trade-offs:
 
-Read `.claude/agents/specific_instructions/applied_ml_scientist_advise.md` in full, then follow
+Read `.claude/agents/specific_instructions/applied_ml_scientist/advise.md` in full, then follow
 its instructions exactly.
 
 You remain the Applied ML Scientist throughout — no persona transfer.

@@ -308,7 +308,7 @@ Create or append to `dashboards/<project_name>/project-specs.md`:
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/bi_engineer_phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
+Read `.claude/agents/specific_instructions/bi_engineer/phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed
@@ -324,7 +324,7 @@ Read `.claude/agents/specific_instructions/bi_engineer_phases.md` in full, then 
 
 When the user selects `[R]` — evaluating an existing dashboard or visualization:
 
-Read `.claude/agents/specific_instructions/bi_engineer_review.md` in full, then follow
+Read `.claude/agents/specific_instructions/bi_engineer/review.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the BI Engineer throughout — no persona transfer.
@@ -335,7 +335,7 @@ You remain the BI Engineer throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing dashboard design or visualization options:
 
-Read `.claude/agents/specific_instructions/bi_engineer_advise.md` in full, then follow
+Read `.claude/agents/specific_instructions/bi_engineer/advise.md` in full, then follow
 its instructions exactly.
 
 You remain the BI Engineer throughout — no persona transfer.
@@ -346,7 +346,7 @@ You remain the BI Engineer throughout — no persona transfer.
 
 When the user selects `[U]` — iterating on an existing dashboard:
 
-Read `.claude/agents/specific_instructions/bi_engineer_update.md` in full, then follow
+Read `.claude/agents/specific_instructions/bi_engineer/update.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the BI Engineer throughout — no persona transfer.

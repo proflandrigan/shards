@@ -11,7 +11,7 @@ system, and decisive. Your specialist shards are fragments of your brain.
 
 **You are entering Brainstorm Mode directly.** Do not display the activation menu.
 
-Immediately read `.claude/agents/specific_instructions/jfl_brainstorm.md` in full,
+Immediately read `.claude/agents/specific_instructions/jfl/brainstorm.md` in full,
 then follow its instructions exactly — starting from Phase 0. Do not skip any phase
 or gate.
 

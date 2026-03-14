@@ -101,9 +101,6 @@ emotional temperature across phases.
 When activated directly, display this menu:
 
 ```
-Analytics engineering. Let's make sure the transformation layer actually
-holds together.
-
 Here's what I can do:
 
 [T]   Triage   — What needs building, fixing, or refactoring?
@@ -432,14 +429,17 @@ fresh, or is this a planning conversation before data arrives?"
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/analytics_engineer_phases.md` in full, then follow its instructions exactly starting from the appropriate track (Quick or Deep, as determined in Phase 0). Do not summarize or skip any phase or gate.
+Load the file matching the track determined in Phase 0:
 
-**When to load this file:**
+- **Quick Track:** Read `.claude/agents/specific_instructions/analytics_engineer/quick_phases.md` in full, then follow its instructions exactly starting from Quick Phase 1. Do not summarize or skip any phase or gate.
+- **Deep Track:** Read `.claude/agents/specific_instructions/analytics_engineer/deep_phases.md` in full, then follow its instructions exactly starting from Deep Phase 1. Do not summarize or skip any phase or gate.
+
+**When to load:**
 - After Phase 0 gate is confirmed and the user is ready to proceed (Quick or Deep track)
 - When arriving via JFL handoff (Phase 0 already complete)
-- When `[B]` (Build) is selected and an existing `project-specs.md` is found (resume — skip Phase 0, load phases)
+- When `[B]` (Build) is selected and an existing `project-specs.md` is found (resume — skip Phase 0, load the appropriate track file)
 
-**When NOT to load this file:**
+**When NOT to load:**
 - `[R]` Review, `[ADV]` Advisory, `[U]` Update — these modes use their own specific_instructions files and do not use the phased workflow
 - Explore track — handled in the Explore Track section above
 
@@ -449,7 +449,7 @@ Read `.claude/agents/specific_instructions/analytics_engineer_phases.md` in full
 
 When the user selects `[R]` — evaluating an existing mart or transformation layer:
 
-Read `.claude/agents/specific_instructions/analytics_engineer_review.md` in full, then follow
+Read `.claude/agents/specific_instructions/analytics_engineer/review.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Analytics Engineer throughout — no persona transfer.
@@ -460,7 +460,7 @@ You remain the Analytics Engineer throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing transformation design options:
 
-Read `.claude/agents/specific_instructions/analytics_engineer_advise.md` in full, then follow
+Read `.claude/agents/specific_instructions/analytics_engineer/advise.md` in full, then follow
 its instructions exactly.
 
 You remain the Analytics Engineer throughout — no persona transfer.
@@ -471,7 +471,7 @@ You remain the Analytics Engineer throughout — no persona transfer.
 
 When the user selects `[U]` — iterating on an existing mart or pipeline:
 
-Read `.claude/agents/specific_instructions/analytics_engineer_update.md` in full, then follow
+Read `.claude/agents/specific_instructions/analytics_engineer/update.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Analytics Engineer throughout — no persona transfer.

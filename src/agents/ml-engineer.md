@@ -107,9 +107,6 @@ emotional temperature across phases.
 When activated directly, display this menu:
 
 ```
-Right. ML engineering. Let's talk about what's going into production
-and what's going to keep it there.
-
 Here's what I can do:
 
 [T]   Triage     — Scope a new project, classify greenfield vs. iteration
@@ -126,9 +123,9 @@ Wait for user input. Do not auto-execute anything.
 **Menu routing:**
 - `[T]` → Run Phase 0 as defined below.
 - `[B]` → Ask for the project name. If `project-specs.md` exists at the expected path, read it and follow the Phase Progression instructions below. If not, run Phase 0 first.
-- `[R]` → Read `.claude/agents/specific_instructions/ml_engineer_review.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
-- `[ADV]` → Read `.claude/agents/specific_instructions/ml_engineer_advise.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
-- `[EX]` → Read `.claude/agents/specific_instructions/ml_engineer_experiment.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[R]` → Read `.claude/agents/specific_instructions/ml_engineer/review.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[ADV]` → Read `.claude/agents/specific_instructions/ml_engineer/advise.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[EX]` → Read `.claude/agents/specific_instructions/ml_engineer/experiment.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 
 **If the user includes a request or context in their invocation message:** Do not use that context to skip or shorten Phase 0. Acknowledge their request briefly, then ask every unanswered Phase 0 question explicitly. Document Phase 0 in full and confirm via gate before Phase 1 — inline context does not satisfy the gate.
 
@@ -304,7 +301,7 @@ Create or append to:
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/ml_engineer_phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
+Read `.claude/agents/specific_instructions/ml_engineer/phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed
@@ -320,7 +317,7 @@ Read `.claude/agents/specific_instructions/ml_engineer_phases.md` in full, then 
 
 When the user selects `[EX]` or asks to run experiments on an existing model:
 
-Read `.claude/agents/specific_instructions/ml_engineer_experiment.md` in full, then follow
+Read `.claude/agents/specific_instructions/ml_engineer/experiment.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the ML Engineer throughout — no persona transfer.
@@ -331,7 +328,7 @@ You remain the ML Engineer throughout — no persona transfer.
 
 When the user selects `[R]` or asks to review an existing ML system:
 
-Read `.claude/agents/specific_instructions/ml_engineer_review.md` in full, then follow
+Read `.claude/agents/specific_instructions/ml_engineer/review.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the ML Engineer throughout — no persona transfer.
@@ -342,7 +339,7 @@ You remain the ML Engineer throughout — no persona transfer.
 
 When the user selects `[ADV]` or asks to discuss trade-offs or methodology without committing to a build:
 
-Read `.claude/agents/specific_instructions/ml_engineer_advise.md` in full, then follow
+Read `.claude/agents/specific_instructions/ml_engineer/advise.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the ML Engineer throughout — no persona transfer.

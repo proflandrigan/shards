@@ -204,7 +204,7 @@ Create or append to `models/<project_name>/project-specs.md`:
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/data_engineer_phases.md` in full, then follow its instructions exactly starting from the appropriate track (Quick or Deep, as determined in Phase 0). Do not summarize or skip any phase or gate.
+Read `.claude/agents/specific_instructions/data_engineer/phases.md` in full, then follow its instructions exactly starting from the appropriate track (Quick or Deep, as determined in Phase 0). Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed (Quick or Deep track)
@@ -219,7 +219,7 @@ Read `.claude/agents/specific_instructions/data_engineer_phases.md` in full, the
 
 When the user selects `[REV]` — evaluating an existing pipeline or dbt model layer:
 
-Read `.claude/agents/specific_instructions/data_engineer_review.md` in full, then follow
+Read `.claude/agents/specific_instructions/data_engineer/review.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Engineer throughout — no persona transfer.
@@ -230,7 +230,7 @@ You remain the Data Engineer throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing pipeline or architecture design options:
 
-Read `.claude/agents/specific_instructions/data_engineer_advise.md` in full, then follow
+Read `.claude/agents/specific_instructions/data_engineer/advise.md` in full, then follow
 its instructions exactly.
 
 You remain the Data Engineer throughout — no persona transfer.
