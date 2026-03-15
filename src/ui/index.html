@@ -474,36 +474,32 @@ body {
 /* ─── Agent picker grid ──────────────────────────────────── */
 #agent-picker {
   display: none;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 20px;
-  justify-content: center;
-  align-content: flex-start;
+  flex-direction: column;
+  gap: 2px;
+  padding: 20px 40px;
   overflow-y: auto;
   flex: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
 }
 #agent-picker.visible {
   display: flex;
 }
 .agent-card {
-  width: 180px;
-  padding: 12px;
-  background: #0a0a16;
-  border: 1px solid #1a1a2c;
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
 }
 .agent-card:hover {
   background: #0f0f1e;
-  border-color: #2a2a44;
-  transform: translateY(-1px);
-}
-.agent-card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
+  border-color: #1a1a2c;
 }
 .agent-card-dot {
   width: 8px;
@@ -512,18 +508,19 @@ body {
   flex-shrink: 0;
 }
 .agent-card-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #b0b0c8;
+  white-space: nowrap;
+  min-width: 200px;
 }
 .agent-card-desc {
-  font-size: 12px;
+  font-size: 13px;
   color: #4a4a68;
   line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ─── File pane ──────────────────────────────────────────── */
@@ -874,21 +871,21 @@ body {
 // ═══════════════════════════════════════════════════════════════
 
 const AGENTS = {
-  'jfl':                    { color: '#FFD700', label: 'JFL',                 type: 'orchestrator' },
-  'data-analyst':           { color: '#4CAF50', label: 'Data Analyst',        type: 'specialist' },
-  'data-scientist':         { color: '#2196F3', label: 'Data Scientist',      type: 'specialist' },
-  'ml-engineer':            { color: '#F44336', label: 'ML Engineer',         type: 'specialist' },
-  'ai-engineer':            { color: '#9C27B0', label: 'AI Engineer',         type: 'specialist' },
-  'data-engineer':          { color: '#FF9800', label: 'Data Engineer',       type: 'specialist' },
-  'data-modeller':          { color: '#00BCD4', label: 'Data Modeller',       type: 'specialist' },
-  'analytics-engineer':     { color: '#8BC34A', label: 'Analytics Eng',       type: 'specialist' },
-  'bi-engineer':            { color: '#E91E63', label: 'BI Engineer',         type: 'specialist' },
-  'applied-ml-scientist':   { color: '#673AB7', label: 'Applied ML Sci',     type: 'specialist' },
-  'deep-learning-engineer': { color: '#03A9F4', label: 'Deep Learning',      type: 'specialist' },
-  'mlops-engineer':         { color: '#FF5722', label: 'MLOps Eng',          type: 'specialist' },
-  'backend-engineer':       { color: '#9E9E9E', label: 'Backend Eng',        type: 'review' },
-  'researcher':             { color: '#795548', label: 'Researcher',          type: 'review' },
-  'academic':               { color: '#607D8B', label: 'Academic',            type: 'review' },
+  'jfl':                    { color: '#FFD700', label: 'JFL (Orchestrator)',           desc: 'Triage, delegation, and final review',                          type: 'orchestrator' },
+  'data-analyst':           { color: '#4CAF50', label: 'Data Analyst',                desc: 'Quick adhoc queries and analyses',                              type: 'specialist' },
+  'data-scientist':         { color: '#2196F3', label: 'Data Scientist',              desc: 'EDA, feature engineering, and predictive modeling',              type: 'specialist' },
+  'ml-engineer':            { color: '#F44336', label: 'ML Engineer',                 desc: 'Recommenders, ranking, classification, production ML',           type: 'specialist' },
+  'ai-engineer':            { color: '#9C27B0', label: 'AI Engineer',                 desc: 'LLM workflows, RAG, prompt engineering, agentic systems',        type: 'specialist' },
+  'data-engineer':          { color: '#FF9800', label: 'Data Engineer',               desc: 'Pipelines, dbt models, warehouse infrastructure',                type: 'specialist' },
+  'data-modeller':          { color: '#00BCD4', label: 'Data Modeller',               desc: 'Entity-relationship design, grain, and conformance',             type: 'specialist' },
+  'analytics-engineer':     { color: '#8BC34A', label: 'Analytics Engineer',          desc: 'dbt transformation layers, staging to mart',                     type: 'specialist' },
+  'bi-engineer':            { color: '#E91E63', label: 'BI Engineer',                 desc: 'Streamlit, Plotly Dash, dashboards, chart design',               type: 'specialist' },
+  'applied-ml-scientist':   { color: '#673AB7', label: 'Applied ML Scientist',       desc: 'Novel framework design, cutting-edge methodology',               type: 'specialist' },
+  'deep-learning-engineer': { color: '#03A9F4', label: 'Deep Learning Engineer',     desc: 'Neural architecture design, training protocols, custom models',   type: 'specialist' },
+  'mlops-engineer':         { color: '#FF5722', label: 'MLOps Engineer',              desc: 'Model deployment, serving, monitoring, retraining',               type: 'specialist' },
+  'backend-engineer':       { color: '#9E9E9E', label: 'Backend Engineer',            desc: 'Python code review, FastAPI, Pydantic, performance',             type: 'review' },
+  'researcher':             { color: '#795548', label: 'Researcher',                  desc: 'Statistical methodology and assumption validation',              type: 'review' },
+  'academic':               { color: '#607D8B', label: 'Academic',                    desc: 'Safety, ethics, and efficacy review',                            type: 'review' },
 };
 
 let currentAgent = null;
@@ -2032,11 +2029,9 @@ async function loadAgentPicker() {
     const card = document.createElement('div');
     card.className = 'agent-card';
     card.innerHTML = `
-      <div class="agent-card-header">
-        <span class="agent-card-dot" style="background:${info.color}"></span>
-        <span class="agent-card-name">${esc(info.label)}</span>
-      </div>
-      <div class="agent-card-desc">${esc(agent.description || '')}</div>`;
+      <span class="agent-card-dot" style="background:${info.color}"></span>
+      <span class="agent-card-name">${esc(info.label)}</span>
+      <span class="agent-card-desc">${esc(info.desc || agent.description || '')}</span>`;
     card.addEventListener('click', () => startChat(agent.name));
     picker.appendChild(card);
   }
