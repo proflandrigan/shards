@@ -50,6 +50,80 @@ function readFileSafe(fullPath) {
   }
 }
 
+// ─── CSV/TSV parser (RFC 4180) ────────────────────────────────────────────
+
+function parseDelimited(text, delimiter) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < text.length) {
+    const ch = text[i];
+
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < text.length && text[i + 1] === '"') {
+          field += '"';
+          i += 2;
+        } else {
+          inQuotes = false;
+          i++;
+        }
+      } else {
+        field += ch;
+        i++;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+        i++;
+      } else if (ch === delimiter) {
+        row.push(field);
+        field = '';
+        i++;
+      } else if (ch === '\r') {
+        if (i + 1 < text.length && text[i + 1] === '\n') i++;
+        row.push(field);
+        field = '';
+        rows.push(row);
+        row = [];
+        i++;
+      } else if (ch === '\n') {
+        row.push(field);
+        field = '';
+        rows.push(row);
+        row = [];
+        i++;
+      } else {
+        field += ch;
+        i++;
+      }
+    }
+  }
+
+  // Last field/row
+  if (field || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  if (rows.length === 0) return { columns: [], data: [] };
+
+  const columns = rows[0];
+  const data = [];
+  for (let r = 1; r < rows.length; r++) {
+    const obj = {};
+    for (let c = 0; c < columns.length; c++) {
+      obj[columns[c]] = rows[r][c] !== undefined ? rows[r][c] : '';
+    }
+    data.push(obj);
+  }
+
+  return { columns, data };
+}
+
 function scanDir(dir, result) {
   try {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -368,6 +442,39 @@ function createHandler() {
         jsonResponse(res, cors, 200, { ok: true, path: resolved });
       } catch (err) {
         jsonResponse(res, cors, 500, { error: `Cannot write file: ${err.message}` });
+      }
+      return;
+    }
+
+    // ─── CSV/TSV parse endpoint ────────────────────────────────────
+    if (req.method === 'POST' && req.url === '/browse/file/parse-csv') {
+      const body = await readBody(req);
+      let params;
+      try {
+        params = JSON.parse(body);
+      } catch {
+        jsonResponse(res, cors, 400, { error: 'Invalid JSON' });
+        return;
+      }
+
+      const { path: filePath, delimiter } = params;
+      if (!filePath || (delimiter !== ',' && delimiter !== '\t')) {
+        jsonResponse(res, cors, 400, { error: 'Missing path or invalid delimiter (use "," or "\\t")' });
+        return;
+      }
+
+      const resolved = path.resolve(filePath);
+      try {
+        const stat = fs.statSync(resolved);
+        if (stat.size > 2 * 1024 * 1024) {
+          jsonResponse(res, cors, 400, { error: 'File too large (>2MB)' });
+          return;
+        }
+        const content = fs.readFileSync(resolved, 'utf8');
+        const result = parseDelimited(content, delimiter);
+        jsonResponse(res, cors, 200, result);
+      } catch (err) {
+        jsonResponse(res, cors, 400, { error: `Parse failed: ${err.message}` });
       }
       return;
     }

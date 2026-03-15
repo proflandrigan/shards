@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shards UI</title>
+<link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator_midnight.min.css">
+<script src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -658,6 +660,99 @@ body {
 .file-rendered th, .file-rendered td { border: 1px solid #1a1a2c; padding: 3px 7px; }
 .file-rendered th { background: #0b0b16; color: #aab; }
 
+/* ─── Table view (Tabulator) ─────────────────────────────── */
+#table-view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+#table-view.visible { display: flex; }
+#table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-bottom: 1px solid #1a1a2c;
+  background: #0a0a14;
+  flex-shrink: 0;
+}
+#table-search {
+  background: #0f0f1e;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  color: #b0b0c4;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 3px 8px;
+  width: 180px;
+  outline: none;
+}
+#table-search:focus { border-color: #3a3a5a; }
+#table-row-count {
+  font-size: 11px;
+  color: #5a5a78;
+  margin-left: auto;
+}
+#table-edit-btns { display: none; gap: 4px; }
+#table-edit-btns.visible { display: flex; }
+#table-container {
+  flex: 1;
+  overflow: hidden;
+}
+/* Tabulator midnight theme overrides for Shards palette */
+#table-container .tabulator {
+  background: #0d0d14;
+  border: none;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  font-size: 12px;
+  color: #b0b0c4;
+}
+#table-container .tabulator-header {
+  background: #080810;
+  border-bottom: 1px solid #1a1a2c;
+}
+#table-container .tabulator-col {
+  background: #080810;
+  border-right: 1px solid #1a1a2c;
+}
+#table-container .tabulator-col-title {
+  color: #8888a8;
+  font-weight: 600;
+}
+#table-container .tabulator-col .tabulator-header-filter input {
+  background: #0f0f1e;
+  border: 1px solid #1e1e32;
+  color: #b0b0c4;
+  font-family: inherit;
+  font-size: 11px;
+  border-radius: 3px;
+  padding: 2px 4px;
+}
+#table-container .tabulator-row {
+  border-bottom: 1px solid #111120;
+  min-height: 26px;
+}
+#table-container .tabulator-row:hover { background: #12122a; }
+#table-container .tabulator-row.tabulator-selected { background: #1a1a3a; }
+#table-container .tabulator-cell {
+  border-right: 1px solid #111120;
+  padding: 3px 6px;
+}
+#table-container .tabulator-cell.tabulator-editing input {
+  background: #0a0a16;
+  color: #c0c0d0;
+  border: 1px solid #3a3a5a;
+  font-family: inherit;
+  font-size: 12px;
+}
+#table-container .tabulator-tableholder {
+  background: #0d0d14;
+}
+#table-container .tabulator-placeholder {
+  color: #3a3a50;
+}
+
 /* ─── No-file placeholder ────────────────────────────────── */
 .no-file-msg {
   color: #2a2a3a;
@@ -744,6 +839,20 @@ body {
         </div>
         <!-- Rendered view (markdown/notebook) -->
         <div id="file-rendered-view"></div>
+        <!-- Table view (CSV/TSV/JSON/JSONL) -->
+        <div id="table-view">
+          <div id="table-toolbar">
+            <input type="text" id="table-search" placeholder="Search all columns…">
+            <div id="table-edit-btns">
+              <button class="toolbar-btn" onclick="tableAddRow()">+Row</button>
+              <button class="toolbar-btn" onclick="tableDeleteSelectedRows()">-Row</button>
+              <button class="toolbar-btn" onclick="tableAddColumn()">+Col</button>
+              <button class="toolbar-btn" onclick="tableDeleteColumn()">-Col</button>
+            </div>
+            <span id="table-row-count"></span>
+          </div>
+          <div id="table-container"></div>
+        </div>
         <!-- Code editor view -->
         <div id="file-editor">
           <div id="line-gutter"></div>
@@ -1091,10 +1200,274 @@ function initExplorerResize() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Tabular data viewer (CSV/TSV/JSON/JSONL)
+// ═══════════════════════════════════════════════════════════════
+
+const TABULAR_EXTS = ['csv', 'tsv', 'json', 'jsonl'];
+const EDITABLE_TABULAR_EXTS = ['csv', 'tsv'];
+
+function isTabularFile(relPath) {
+  const ext = relPath.split('.').pop().toLowerCase();
+  return TABULAR_EXTS.includes(ext);
+}
+
+function isEditableTabular(relPath) {
+  const ext = relPath.split('.').pop().toLowerCase();
+  return EDITABLE_TABULAR_EXTS.includes(ext);
+}
+
+function getTabularDelimiter(relPath) {
+  return relPath.split('.').pop().toLowerCase() === 'tsv' ? '\t' : ',';
+}
+
+function flattenObject(obj, prefix) {
+  const result = {};
+  for (const [key, val] of Object.entries(obj)) {
+    const newKey = prefix ? prefix + '.' + key : key;
+    if (val && typeof val === 'object' && !Array.isArray(val)) {
+      Object.assign(result, flattenObject(val, newKey));
+    } else if (Array.isArray(val)) {
+      result[newKey] = JSON.stringify(val);
+    } else {
+      result[newKey] = val;
+    }
+  }
+  return result;
+}
+
+function flattenToTable(arr) {
+  const flat = arr.map(item => flattenObject(item, ''));
+  const colSet = new Set();
+  for (const row of flat) {
+    for (const k of Object.keys(row)) colSet.add(k);
+  }
+  const columns = Array.from(colSet);
+  const data = flat.map(row => {
+    const out = {};
+    for (const col of columns) {
+      out[col] = row[col] !== undefined ? row[col] : '';
+    }
+    return out;
+  });
+  return { columns, data };
+}
+
+function serializeToDelimited(columns, data, delimiter) {
+  const escape = (val) => {
+    const s = val == null ? '' : String(val);
+    if (s.includes(delimiter) || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  };
+  const lines = [columns.map(escape).join(delimiter)];
+  for (const row of data) {
+    lines.push(columns.map(col => escape(row[col])).join(delimiter));
+  }
+  return lines.join('\n') + '\n';
+}
+
+async function loadTabularData(relPath, f) {
+  const ext = relPath.split('.').pop().toLowerCase();
+
+  if (ext === 'csv' || ext === 'tsv') {
+    const delimiter = ext === 'tsv' ? '\t' : ',';
+    const res = await fetch('/browse/file/parse-csv', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: f.absPath, delimiter }),
+    });
+    const result = await res.json();
+    if (result.error) throw new Error(result.error);
+    return result;
+  }
+
+  // JSON / JSONL — client-side parse + flatten
+  if (ext === 'jsonl') {
+    const lines = f.content.split('\n').filter(l => l.trim());
+    const arr = lines.map(l => JSON.parse(l));
+    return flattenToTable(arr);
+  }
+
+  // JSON
+  let parsed = JSON.parse(f.content);
+  if (!Array.isArray(parsed)) {
+    if (parsed && typeof parsed === 'object') {
+      parsed = [parsed];
+    } else {
+      throw new Error('JSON is not an object or array');
+    }
+  }
+  if (parsed.length > 0 && typeof parsed[0] !== 'object') {
+    throw new Error('JSON array does not contain objects');
+  }
+  return flattenToTable(parsed);
+}
+
+let activeTabulatorInstance = null;
+let activeTabularColumns = null;
+
+function destroyTabulator() {
+  if (activeTabulatorInstance) {
+    try { activeTabulatorInstance.destroy(); } catch {}
+    activeTabulatorInstance = null;
+    activeTabularColumns = null;
+  }
+}
+
+function initTabulator(relPath, tableData) {
+  destroyTabulator();
+
+  const f = openFiles[relPath];
+  const editable = isEditableTabular(relPath);
+
+  // Store columns for serialization
+  activeTabularColumns = tableData.columns;
+
+  const columns = tableData.columns.map(col => ({
+    title: col,
+    field: col,
+    headerFilter: 'input',
+    sorter: 'string',
+    resizable: true,
+    editor: editable ? 'input' : false,
+  }));
+
+  if (editable) {
+    columns.unshift({
+      formatter: 'rowSelection',
+      titleFormatter: 'rowSelection',
+      headerSort: false,
+      resizable: false,
+      width: 30,
+      cssClass: 'tabulator-row-select',
+    });
+  }
+
+  const container = document.getElementById('table-container');
+  container.innerHTML = '';
+
+  activeTabulatorInstance = new Tabulator(container, {
+    data: tableData.data,
+    columns,
+    layout: 'fitDataFill',
+    height: '100%',
+    virtualDom: true,
+    selectableRows: editable ? true : false,
+    placeholder: 'No data',
+    cellEdited: editable ? function(cell) {
+      if (f) {
+        f.modified = true;
+        renderWsTabs();
+      }
+    } : undefined,
+  });
+
+  // Update row count
+  activeTabulatorInstance.on('dataLoaded', (data) => {
+    document.getElementById('table-row-count').textContent = data.length + ' rows';
+  });
+  activeTabulatorInstance.on('dataFiltered', (filters, rows) => {
+    document.getElementById('table-row-count').textContent = rows.length + ' rows';
+  });
+
+  // Show/hide edit buttons
+  const editBtns = document.getElementById('table-edit-btns');
+  editBtns.className = editable ? 'visible' : '';
+
+  // Wire up global search
+  const searchInput = document.getElementById('table-search');
+  searchInput.value = '';
+  searchInput.oninput = () => {
+    const term = searchInput.value.toLowerCase();
+    if (!term) {
+      activeTabulatorInstance.clearFilter();
+    } else {
+      activeTabulatorInstance.setFilter((data) => {
+        return Object.values(data).some(v =>
+          v != null && String(v).toLowerCase().includes(term)
+        );
+      });
+    }
+  };
+
+  // Store tabular data on file state
+  f.tabularData = tableData;
+  f.tabulatorInstance = activeTabulatorInstance;
+}
+
+function tableAddRow() {
+  if (!activeTabulatorInstance || !activeTabularColumns) return;
+  const empty = {};
+  for (const col of activeTabularColumns) empty[col] = '';
+  activeTabulatorInstance.addRow(empty);
+  const key = getCurrentFileKey();
+  if (key && openFiles[key]) {
+    openFiles[key].modified = true;
+    renderWsTabs();
+  }
+}
+
+function tableDeleteSelectedRows() {
+  if (!activeTabulatorInstance) return;
+  const selected = activeTabulatorInstance.getSelectedRows();
+  if (selected.length === 0) { alert('Select rows first (click the checkbox column)'); return; }
+  selected.forEach(row => row.delete());
+  const key = getCurrentFileKey();
+  if (key && openFiles[key]) {
+    openFiles[key].modified = true;
+    renderWsTabs();
+  }
+}
+
+function tableAddColumn() {
+  if (!activeTabulatorInstance || !activeTabularColumns) return;
+  const name = prompt('Column name:');
+  if (!name || !name.trim()) return;
+  const colName = name.trim();
+  activeTabularColumns.push(colName);
+  activeTabulatorInstance.addColumn({
+    title: colName,
+    field: colName,
+    headerFilter: 'input',
+    sorter: 'string',
+    resizable: true,
+    editor: 'input',
+  });
+  const key = getCurrentFileKey();
+  if (key && openFiles[key]) {
+    openFiles[key].modified = true;
+    renderWsTabs();
+  }
+}
+
+function tableDeleteColumn() {
+  if (!activeTabulatorInstance || !activeTabularColumns) return;
+  const name = prompt('Column name to delete:');
+  if (!name || !name.trim()) return;
+  const colName = name.trim();
+  if (!activeTabularColumns.includes(colName)) { alert('Column not found: ' + colName); return; }
+  activeTabulatorInstance.deleteColumn(colName);
+  activeTabularColumns = activeTabularColumns.filter(c => c !== colName);
+  const key = getCurrentFileKey();
+  if (key && openFiles[key]) {
+    openFiles[key].modified = true;
+    renderWsTabs();
+  }
+}
+
+function getTabulatorSerializedContent(relPath) {
+  if (!activeTabulatorInstance || !activeTabularColumns) return null;
+  const data = activeTabulatorInstance.getData();
+  const delimiter = getTabularDelimiter(relPath);
+  return serializeToDelimited(activeTabularColumns, data, delimiter);
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Workspace tabs & file state
 // ═══════════════════════════════════════════════════════════════
 
-// openFiles[relPath] = { content, absPath, originalContent, modified, editMode }
+// openFiles[relPath] = { content, absPath, originalContent, modified, editMode, tabularData, tabulatorInstance }
 let openFiles = {};
 let fileTabOrder = [];   // ordered relPaths
 let activeTabId = 'chat'; // 'chat' or a relPath
@@ -1115,6 +1488,8 @@ function openFileTab(relPath, content, absPath) {
       originalContent: content,
       modified: false,
       editMode: false,
+      tabularData: null,
+      tabulatorInstance: null,
     };
     fileTabOrder.push(relPath);
     sortFileTabs();
@@ -1137,6 +1512,12 @@ function closeFileTab(relPath) {
   const f = openFiles[relPath];
   if (f && f.modified) {
     if (!confirm(`"${relPath.split('/').pop()}" has unsaved changes. Close anyway?`)) return;
+  }
+
+  // Destroy Tabulator if this file had one
+  if (f && f.tabulatorInstance) {
+    const currentKey = getCurrentFileKey();
+    if (relPath === currentKey) destroyTabulator();
   }
 
   delete openFiles[relPath];
@@ -1259,8 +1640,9 @@ function renderEmptyFilePane() {
   document.getElementById('save-btn').style.display = 'none';
   document.getElementById('file-rendered-view').classList.remove('visible');
   document.getElementById('file-rendered-view').innerHTML = '';
-  const editor = document.getElementById('file-editor');
-  editor.style.display = 'none';
+  document.getElementById('file-editor').style.display = 'none';
+  document.getElementById('table-view').classList.remove('visible');
+  destroyTabulator();
 
   const rendered = document.getElementById('file-rendered-view');
   rendered.classList.add('visible');
@@ -1277,36 +1659,78 @@ function renderFilePane(relPath) {
 
   document.getElementById('file-path-display').textContent = relPath;
   document.getElementById('edit-btn').style.display = '';
-  document.getElementById('edit-btn').textContent = f.editMode ? 'View' : 'Edit';
-  document.getElementById('save-btn').style.display = f.editMode ? '' : 'none';
 
   const ext = relPath.split('.').pop().toLowerCase();
   const isMarkdown = ext === 'md';
   const isNotebook = ext === 'ipynb';
+  const isTabular = isTabularFile(relPath) && typeof Tabulator !== 'undefined';
+
+  // Edit/Raw/Table button label
+  if (isTabular) {
+    document.getElementById('edit-btn').textContent = f.editMode ? 'Table' : 'Raw';
+    // Show save button when tabular is modified (even without editMode) or in raw edit mode
+    document.getElementById('save-btn').style.display = (f.modified || f.editMode) ? '' : 'none';
+  } else {
+    document.getElementById('edit-btn').textContent = f.editMode ? 'View' : 'Edit';
+    document.getElementById('save-btn').style.display = f.editMode ? '' : 'none';
+  }
 
   const renderedView = document.getElementById('file-rendered-view');
   const editorEl = document.getElementById('file-editor');
   const codeView = document.getElementById('code-view');
   const codeEdit = document.getElementById('code-edit');
   const gutter = document.getElementById('line-gutter');
+  const tableView = document.getElementById('table-view');
 
-  if (f.editMode) {
-    // Edit mode — always show textarea with line numbers
+  // Helper to hide all views
+  function hideAll() {
     renderedView.classList.remove('visible');
     renderedView.innerHTML = '';
+    editorEl.style.display = 'none';
+    tableView.classList.remove('visible');
+    destroyTabulator();
+  }
+
+  if (f.editMode) {
+    // Edit mode — always show textarea with line numbers (raw text for tabular too)
+    hideAll();
     editorEl.style.display = 'flex';
     codeView.style.display = 'none';
     codeEdit.classList.add('visible');
     codeEdit.value = f.content;
     updateLineGutter(f.content);
     codeEdit.focus();
+  } else if (isTabular) {
+    // Table view
+    hideAll();
+    tableView.classList.add('visible');
+    // Load and init Tabulator if not already loaded
+    if (!f.tabularData) {
+      loadTabularData(relPath, f).then(data => {
+        f.tabularData = data;
+        initTabulator(relPath, data);
+      }).catch(err => {
+        // Fall back to code view on parse error
+        console.warn('Tabular parse failed, falling back to code view:', err);
+        tableView.classList.remove('visible');
+        editorEl.style.display = 'flex';
+        codeView.style.display = 'block';
+        codeEdit.classList.remove('visible');
+        const lang = getLang(relPath);
+        document.getElementById('code-view-code').innerHTML = highlightCode(esc(f.content), lang);
+        updateLineGutter(f.content);
+      });
+    } else {
+      initTabulator(relPath, f.tabularData);
+    }
   } else if (isMarkdown) {
     // Markdown rendered view
+    hideAll();
     renderedView.classList.add('visible');
     renderedView.innerHTML = `<div class="file-rendered">${renderMarkdown(f.content)}</div>`;
-    editorEl.style.display = 'none';
   } else if (isNotebook) {
     // Notebook rendered view
+    hideAll();
     renderedView.classList.add('visible');
     let html = '<div class="file-rendered">';
     try {
@@ -1323,11 +1747,9 @@ function renderFilePane(relPath) {
     } catch { html += `<pre>${esc(f.content)}</pre>`; }
     html += '</div>';
     renderedView.innerHTML = html;
-    editorEl.style.display = 'none';
   } else {
     // Code view with line numbers + syntax highlighting
-    renderedView.classList.remove('visible');
-    renderedView.innerHTML = '';
+    hideAll();
     editorEl.style.display = 'flex';
     codeView.style.display = 'block';
     codeEdit.classList.remove('visible');
@@ -1357,6 +1779,22 @@ function toggleEditMode() {
   const key = getCurrentFileKey();
   if (!key || key === 'chat' || !openFiles[key]) return;
   const f = openFiles[key];
+
+  if (isTabularFile(key) && isEditableTabular(key)) {
+    if (!f.editMode) {
+      // Table → Raw: serialize current Tabulator data to text
+      const serialized = getTabulatorSerializedContent(key);
+      if (serialized !== null) {
+        f.content = serialized;
+      }
+      f.tabularData = null;
+      destroyTabulator();
+    } else {
+      // Raw → Table: clear tabular data so it re-parses
+      f.tabularData = null;
+    }
+  }
+
   f.editMode = !f.editMode;
   renderFilePane(key);
 }
@@ -1366,15 +1804,25 @@ async function saveCurrentFile() {
   if (!key || key === 'chat' || !openFiles[key]) return;
   const f = openFiles[key];
 
+  // If Tabulator is active (not in raw edit mode), serialize table data first
+  let contentToSave = f.content;
+  if (isTabularFile(key) && isEditableTabular(key) && !f.editMode && activeTabulatorInstance) {
+    const serialized = getTabulatorSerializedContent(key);
+    if (serialized !== null) {
+      contentToSave = serialized;
+      f.content = serialized;
+    }
+  }
+
   try {
     const res = await fetch('/browse/file/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: f.absPath, content: f.content }),
+      body: JSON.stringify({ path: f.absPath, content: contentToSave }),
     });
     const data = await res.json();
     if (data.error) { alert('Save failed: ' + data.error); return; }
-    f.originalContent = f.content;
+    f.originalContent = contentToSave;
     f.modified = false;
     renderWsTabs();
   } catch (err) {
@@ -1397,7 +1845,7 @@ document.getElementById('code-edit').addEventListener('input', (e) => {
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {
     const key = getCurrentFileKey();
-    if (key && key !== 'chat' && openFiles[key] && openFiles[key].editMode) {
+    if (key && key !== 'chat' && openFiles[key] && (openFiles[key].editMode || openFiles[key].modified)) {
       e.preventDefault();
       saveCurrentFile();
     }
@@ -1504,6 +1952,7 @@ function initFileAutoRefresh() {
         if (data.content !== f.content) {
           f.content = data.content;
           f.originalContent = data.content;
+          f.tabularData = null; // Force re-parse for tabular files
           const currentKey = getCurrentFileKey();
           if (relPath === currentKey) {
             renderFilePane(relPath);
@@ -1528,6 +1977,7 @@ function handleArtifactUpdate(relPath, content) {
     if (!f.modified && !f.editMode) {
       f.content = content;
       f.originalContent = content;
+      f.tabularData = null; // Force re-parse for tabular files
       const currentKey = getCurrentFileKey();
       if (relPath === currentKey) {
         renderFilePane(relPath);
