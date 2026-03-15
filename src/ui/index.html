@@ -772,6 +772,183 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #1a1a2c; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #252540; }
+
+/* ─── Notebook styles ───────────────────────────────────── */
+.notebook-container {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.nb-cell {
+  display: flex;
+  gap: 0;
+  border: 1px solid #1a1a2c;
+  border-radius: 6px;
+  background: #0a0a16;
+  margin-bottom: 4px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.nb-cell.nb-cell-active {
+  border-color: #3860c0;
+}
+.nb-cell-sidebar {
+  width: 44px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px;
+  gap: 4px;
+  background: #080812;
+  border-right: 1px solid #141420;
+}
+.nb-cell-badge {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+.nb-cell-badge.code { background: #1a1a3a; color: #5080e0; }
+.nb-cell-badge.markdown { background: #1a2a1a; color: #60a060; }
+.nb-exec-count {
+  font-size: 10px;
+  color: #3a3a54;
+}
+.nb-cell-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: auto;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.nb-cell:hover .nb-cell-actions { opacity: 1; }
+.nb-cell-action-btn {
+  background: none;
+  border: 1px solid #1e1e32;
+  border-radius: 3px;
+  color: #4a4a68;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 1px 3px;
+  font-family: inherit;
+  line-height: 1.2;
+}
+.nb-cell-action-btn:hover { color: #8080a0; border-color: #3a3a5a; }
+.nb-cell-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.nb-cell-input {
+  padding: 8px 10px;
+  cursor: pointer;
+  min-height: 28px;
+}
+.nb-cell-input pre {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #b0b0c4;
+}
+.nb-cell-input pre code {
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+.nb-cell-input .file-rendered {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #b0b0c4;
+}
+.nb-cell-input .monaco-container {
+  min-height: 40px;
+}
+.nb-cell-input textarea {
+  width: 100%;
+  min-height: 60px;
+  background: #0a0a16;
+  color: #c0c0d0;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  resize: vertical;
+  padding: 0;
+}
+.nb-cell-output {
+  border-top: 1px solid #141420;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+.nb-cell-output pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  color: #9090a8;
+}
+.nb-output-error pre {
+  color: #e06060;
+}
+.nb-output-html {
+  overflow: auto;
+  max-height: 400px;
+}
+.nb-output-html table { border-collapse: collapse; font-size: 12px; }
+.nb-output-html th, .nb-output-html td { border: 1px solid #1a1a2c; padding: 3px 7px; }
+.nb-output-html th { background: #0b0b16; color: #aab; }
+.nb-cell-output img {
+  max-width: 100%;
+  height: auto;
+}
+.nb-add-cell-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 2px 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.notebook-container:hover .nb-add-cell-row,
+.nb-add-cell-row:focus-within { opacity: 1; }
+.nb-add-cell-btn {
+  background: #0f0f1e;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  color: #4a4a68;
+  font-family: inherit;
+  font-size: 10px;
+  padding: 2px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.nb-add-cell-btn:hover { background: #1a1a30; color: #8080a0; }
+
+/* ─── Monaco container ──────────────────────────────────── */
+.monaco-container {
+  width: 100%;
+  min-height: 100px;
+}
+#monaco-file-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
 </style>
 </head>
 <body>
@@ -856,6 +1033,7 @@ body {
           <div id="file-view-area">
             <pre id="code-view"><code id="code-view-code"></code></pre>
             <textarea id="code-edit" spellcheck="false"></textarea>
+            <div id="monaco-file-container" style="display:none;width:100%;height:100%"></div>
           </div>
         </div>
       </div>
@@ -918,7 +1096,7 @@ const LANG_MAP = {
   ts: 'typescript', typescript: 'typescript',
   json: 'json',
   yaml: 'yaml', yml: 'yaml',
-  sh: 'bash', bash: 'bash',
+  sh: 'shell', bash: 'shell',
   html: 'html', htm: 'html',
   css: 'css',
   rb: 'ruby', ruby: 'ruby',
@@ -926,11 +1104,233 @@ const LANG_MAP = {
   rs: 'rust', rust: 'rust',
   java: 'java',
   r: 'r',
+  md: 'markdown', markdown: 'markdown',
 };
 
 function getLang(filePath) {
   const ext = filePath.split('.').pop().toLowerCase();
   return LANG_MAP[ext] || '';
+}
+
+// Monaco language ID for Monaco editor (slightly different from display lang)
+function getMonacoLang(filePath) {
+  const ext = filePath.split('.').pop().toLowerCase();
+  const map = {
+    py: 'python', js: 'javascript', ts: 'typescript', jsx: 'javascript', tsx: 'typescript',
+    sql: 'sql', json: 'json', yaml: 'yaml', yml: 'yaml',
+    md: 'markdown', html: 'html', htm: 'html', css: 'css',
+    rb: 'ruby', go: 'go', rs: 'rust', java: 'java', r: 'r',
+    sh: 'shell', bash: 'shell', xml: 'xml', c: 'c', cpp: 'cpp', h: 'c',
+    cs: 'csharp', php: 'php', swift: 'swift', kt: 'kotlin',
+  };
+  return map[ext] || 'plaintext';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Monaco Editor loader
+// ═══════════════════════════════════════════════════════════════
+
+let monacoLoaded = false;
+let monacoFailed = false;
+let monacoLoadPromise = null;
+let activeMonacoInstance = null;
+let activeNotebookCellMonaco = null;
+let activeNotebookCellIdx = null;
+let activeCellIdx = null;
+
+function loadMonaco() {
+  if (monacoLoadPromise) return monacoLoadPromise;
+  monacoLoadPromise = new Promise((resolve, reject) => {
+    if (monacoLoaded) { resolve(window.monaco); return; }
+    if (monacoFailed) { reject(new Error('Monaco load failed previously')); return; }
+
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js';
+    script.onload = () => {
+      window.require.config({
+        paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }
+      });
+      window.require(['vs/editor/editor.main'], () => {
+        monacoLoaded = true;
+        defineShardsDarkTheme();
+        resolve(window.monaco);
+      });
+    };
+    script.onerror = () => {
+      monacoFailed = true;
+      reject(new Error('Monaco CDN load failed'));
+    };
+    // Timeout fallback
+    setTimeout(() => {
+      if (!monacoLoaded) {
+        monacoFailed = true;
+        reject(new Error('Monaco load timeout'));
+      }
+    }, 15000);
+    document.head.appendChild(script);
+  });
+  return monacoLoadPromise;
+}
+
+function defineShardsDarkTheme() {
+  monaco.editor.defineTheme('shards-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'keyword', foreground: 'c678dd' },
+      { token: 'string', foreground: '98c379' },
+      { token: 'number', foreground: 'd19a66' },
+      { token: 'comment', foreground: '4a5060', fontStyle: 'italic' },
+      { token: 'type', foreground: '61afef' },
+      { token: 'function', foreground: '61afef' },
+      { token: 'variable', foreground: 'b0b0c4' },
+      { token: 'operator', foreground: '56b6c2' },
+      { token: 'delimiter', foreground: '808098' },
+      { token: 'tag', foreground: 'e06c75' },
+      { token: 'attribute.name', foreground: 'd19a66' },
+      { token: 'attribute.value', foreground: '98c379' },
+    ],
+    colors: {
+      'editor.background': '#0a0a16',
+      'editor.foreground': '#b0b0c4',
+      'editor.lineHighlightBackground': '#0e0e1e',
+      'editor.selectionBackground': '#1a1a3a',
+      'editorCursor.foreground': '#5080e0',
+      'editorLineNumber.foreground': '#2a2a44',
+      'editorLineNumber.activeForeground': '#4a4a68',
+      'editor.inactiveSelectionBackground': '#141428',
+      'editorIndentGuide.background': '#141420',
+      'editorWhitespace.foreground': '#1a1a2c',
+      'scrollbarSlider.background': '#1a1a2c80',
+      'scrollbarSlider.hoverBackground': '#25254080',
+    },
+  });
+}
+
+function disposeMonacoInstance() {
+  if (activeMonacoInstance) {
+    activeMonacoInstance.dispose();
+    activeMonacoInstance = null;
+  }
+}
+
+function disposeNotebookCellMonaco() {
+  if (activeNotebookCellMonaco) {
+    // Save current value before disposing
+    const key = getCurrentFileKey();
+    if (key && openFiles[key] && openFiles[key].notebookData && activeNotebookCellIdx !== null) {
+      const cell = openFiles[key].notebookData.cells[activeNotebookCellIdx];
+      if (cell) {
+        cell.source = activeNotebookCellMonaco.getValue();
+      }
+    }
+    activeNotebookCellMonaco.dispose();
+    activeNotebookCellMonaco = null;
+    activeNotebookCellIdx = null;
+  }
+}
+
+function createMonacoEditor(container, options) {
+  return monaco.editor.create(container, {
+    theme: 'shards-dark',
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+    fontSize: 13,
+    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
+    lineHeight: 20,
+    renderLineHighlight: 'line',
+    scrollbar: { verticalScrollbarSize: 5, horizontalScrollbarSize: 5 },
+    overviewRulerLanes: 0,
+    hideCursorInOverviewRuler: true,
+    overviewRulerBorder: false,
+    padding: { top: 8, bottom: 8 },
+    ...options,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Notebook data model
+// ═══════════════════════════════════════════════════════════════
+
+function parseNotebookData(jsonString) {
+  const nb = JSON.parse(jsonString);
+  const cells = (nb.cells || []).map((cell, i) => ({
+    id: 'cell-' + i + '-' + Date.now(),
+    cell_type: cell.cell_type || 'code',
+    source: Array.isArray(cell.source) ? cell.source.join('') : (cell.source || ''),
+    outputs: cell.outputs || [],
+    metadata: cell.metadata || {},
+    execution_count: cell.execution_count || null,
+    monacoInstance: null,
+    editing: false,
+  }));
+  return {
+    metadata: nb.metadata || {},
+    nbformat: nb.nbformat || 4,
+    nbformat_minor: nb.nbformat_minor || 0,
+    cells,
+  };
+}
+
+function serializeNotebook(notebookData) {
+  const nb = {
+    metadata: notebookData.metadata,
+    nbformat: notebookData.nbformat,
+    nbformat_minor: notebookData.nbformat_minor,
+    cells: notebookData.cells.map(cell => {
+      // Split source into lines with \n endings (Jupyter format)
+      const lines = cell.source.split('\n');
+      const sourceArr = lines.map((line, i) => i < lines.length - 1 ? line + '\n' : line);
+      // Remove trailing empty string if source ends with \n
+      if (sourceArr.length > 0 && sourceArr[sourceArr.length - 1] === '') {
+        sourceArr.pop();
+      }
+      const out = {
+        cell_type: cell.cell_type,
+        source: sourceArr,
+        metadata: cell.metadata || {},
+      };
+      if (cell.cell_type === 'code') {
+        out.outputs = cell.outputs || [];
+        out.execution_count = cell.execution_count;
+      }
+      return out;
+    }),
+  };
+  return JSON.stringify(nb, null, 1);
+}
+
+function renderCellOutputs(outputs) {
+  if (!outputs || outputs.length === 0) return '';
+  let html = '';
+  for (const output of outputs) {
+    if (output.output_type === 'stream') {
+      const text = Array.isArray(output.text) ? output.text.join('') : (output.text || '');
+      const cls = output.name === 'stderr' ? 'nb-output-error' : '';
+      html += `<div class="nb-cell-output ${cls}"><pre>${esc(text)}</pre></div>`;
+    } else if (output.output_type === 'execute_result' || output.output_type === 'display_data') {
+      const data = output.data || {};
+      if (data['text/html']) {
+        const raw = Array.isArray(data['text/html']) ? data['text/html'].join('') : data['text/html'];
+        html += `<div class="nb-cell-output nb-output-html">${raw}</div>`;
+      } else if (data['image/png']) {
+        html += `<div class="nb-cell-output"><img src="data:image/png;base64,${data['image/png']}"></div>`;
+      } else if (data['image/jpeg']) {
+        html += `<div class="nb-cell-output"><img src="data:image/jpeg;base64,${data['image/jpeg']}"></div>`;
+      } else if (data['image/svg+xml']) {
+        const svg = Array.isArray(data['image/svg+xml']) ? data['image/svg+xml'].join('') : data['image/svg+xml'];
+        html += `<div class="nb-cell-output">${svg}</div>`;
+      } else if (data['text/plain']) {
+        const text = Array.isArray(data['text/plain']) ? data['text/plain'].join('') : data['text/plain'];
+        html += `<div class="nb-cell-output"><pre>${esc(text)}</pre></div>`;
+      }
+    } else if (output.output_type === 'error') {
+      const tb = (output.traceback || []).join('\n').replace(/\x1b\[[0-9;]*m/g, '');
+      html += `<div class="nb-cell-output nb-output-error"><pre>${esc(tb)}</pre></div>`;
+    }
+  }
+  return html;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1464,7 +1864,7 @@ function getTabulatorSerializedContent(relPath) {
 // Workspace tabs & file state
 // ═══════════════════════════════════════════════════════════════
 
-// openFiles[relPath] = { content, absPath, originalContent, modified, editMode, tabularData, tabulatorInstance }
+// openFiles[relPath] = { content, absPath, originalContent, modified, editMode, tabularData, tabulatorInstance, notebookData }
 let openFiles = {};
 let fileTabOrder = [];   // ordered relPaths
 let activeTabId = 'chat'; // 'chat' or a relPath
@@ -1515,6 +1915,21 @@ function closeFileTab(relPath) {
   if (f && f.tabulatorInstance) {
     const currentKey = getCurrentFileKey();
     if (relPath === currentKey) destroyTabulator();
+  }
+
+  // Dispose Monaco instances
+  const currentKey2 = getCurrentFileKey();
+  if (relPath === currentKey2) {
+    disposeMonacoInstance();
+    disposeNotebookCellMonaco();
+  }
+  if (f && f.notebookData) {
+    f.notebookData.cells.forEach(cell => {
+      if (cell.monacoInstance) {
+        cell.monacoInstance.dispose();
+        cell.monacoInstance = null;
+      }
+    });
   }
 
   delete openFiles[relPath];
@@ -1640,6 +2055,8 @@ function renderEmptyFilePane() {
   document.getElementById('file-editor').style.display = 'none';
   document.getElementById('table-view').classList.remove('visible');
   destroyTabulator();
+  disposeMonacoInstance();
+  disposeNotebookCellMonaco();
 
   const rendered = document.getElementById('file-rendered-view');
   rendered.classList.add('visible');
@@ -1655,21 +2072,25 @@ function renderFilePane(relPath) {
   if (!f) { renderEmptyFilePane(); return; }
 
   document.getElementById('file-path-display').textContent = relPath;
-  document.getElementById('edit-btn').style.display = '';
 
   const ext = relPath.split('.').pop().toLowerCase();
   const isMarkdown = ext === 'md';
   const isNotebook = ext === 'ipynb';
   const isTabular = isTabularFile(relPath) && typeof Tabulator !== 'undefined';
 
-  // Edit/Raw/Table button label
-  if (isTabular) {
-    document.getElementById('edit-btn').textContent = f.editMode ? 'Table' : 'Raw';
-    // Show save button when tabular is modified (even without editMode) or in raw edit mode
-    document.getElementById('save-btn').style.display = (f.modified || f.editMode) ? '' : 'none';
+  // Hide edit/save buttons for notebooks (per-cell editing)
+  if (isNotebook) {
+    document.getElementById('edit-btn').style.display = 'none';
+    document.getElementById('save-btn').style.display = f.modified ? '' : 'none';
   } else {
-    document.getElementById('edit-btn').textContent = f.editMode ? 'View' : 'Edit';
-    document.getElementById('save-btn').style.display = f.editMode ? '' : 'none';
+    document.getElementById('edit-btn').style.display = '';
+    if (isTabular) {
+      document.getElementById('edit-btn').textContent = f.editMode ? 'Table' : 'Raw';
+      document.getElementById('save-btn').style.display = (f.modified || f.editMode) ? '' : 'none';
+    } else {
+      document.getElementById('edit-btn').textContent = f.editMode ? 'View' : 'Edit';
+      document.getElementById('save-btn').style.display = f.editMode ? '' : 'none';
+    }
   }
 
   const renderedView = document.getElementById('file-rendered-view');
@@ -1679,43 +2100,91 @@ function renderFilePane(relPath) {
   const gutter = document.getElementById('line-gutter');
   const tableView = document.getElementById('table-view');
 
-  // Helper to hide all views
+  const monacoFileContainer = document.getElementById('monaco-file-container');
+
+  // Helper to hide all views and dispose Monaco
   function hideAll() {
     renderedView.classList.remove('visible');
     renderedView.innerHTML = '';
     editorEl.style.display = 'none';
     tableView.classList.remove('visible');
     destroyTabulator();
+    disposeMonacoInstance();
+    monacoFileContainer.style.display = 'none';
+    monacoFileContainer.innerHTML = '';
+  }
+
+  if (isNotebook) {
+    // Notebook view with per-cell editing
+    hideAll();
+    renderedView.classList.add('visible');
+    if (!f.notebookData) {
+      try {
+        f.notebookData = parseNotebookData(f.content);
+      } catch {
+        renderedView.innerHTML = `<div class="file-rendered"><pre>${esc(f.content)}</pre></div>`;
+        return;
+      }
+    }
+    renderNotebookView(relPath);
+    return;
   }
 
   if (f.editMode) {
-    // Edit mode — always show textarea with line numbers (raw text for tabular too)
+    // Edit mode
     hideAll();
-    editorEl.style.display = 'flex';
-    codeView.style.display = 'none';
-    codeEdit.classList.add('visible');
-    codeEdit.value = f.content;
-    updateLineGutter(f.content);
-    codeEdit.focus();
+    if (!monacoFailed) {
+      editorEl.style.display = 'flex';
+      gutter.style.display = 'none';
+      codeView.style.display = 'none';
+      codeEdit.classList.remove('visible');
+      monacoFileContainer.style.display = 'block';
+      monacoFileContainer.innerHTML = '';
+      loadMonaco().then(() => {
+        const lang = getMonacoLang(relPath);
+        activeMonacoInstance = createMonacoEditor(monacoFileContainer, {
+          value: f.content,
+          language: lang,
+          readOnly: false,
+        });
+        activeMonacoInstance.onDidChangeModelContent(() => {
+          f.content = activeMonacoInstance.getValue();
+          f.modified = f.content !== f.originalContent;
+          renderWsTabs();
+        });
+        activeMonacoInstance.focus();
+      }).catch(() => {
+        // Fallback to textarea
+        monacoFileContainer.style.display = 'none';
+        gutter.style.display = '';
+        codeView.style.display = 'none';
+        codeEdit.classList.add('visible');
+        codeEdit.value = f.content;
+        updateLineGutter(f.content);
+        codeEdit.focus();
+      });
+    } else {
+      // Monaco failed — textarea fallback
+      editorEl.style.display = 'flex';
+      gutter.style.display = '';
+      codeView.style.display = 'none';
+      codeEdit.classList.add('visible');
+      codeEdit.value = f.content;
+      updateLineGutter(f.content);
+      codeEdit.focus();
+    }
   } else if (isTabular) {
     // Table view
     hideAll();
     tableView.classList.add('visible');
-    // Load and init Tabulator if not already loaded
     if (!f.tabularData) {
       loadTabularData(relPath, f).then(data => {
         f.tabularData = data;
         initTabulator(relPath, data);
       }).catch(err => {
-        // Fall back to code view on parse error
         console.warn('Tabular parse failed, falling back to code view:', err);
         tableView.classList.remove('visible');
-        editorEl.style.display = 'flex';
-        codeView.style.display = 'block';
-        codeEdit.classList.remove('visible');
-        const lang = getLang(relPath);
-        document.getElementById('code-view-code').innerHTML = highlightCode(esc(f.content), lang);
-        updateLineGutter(f.content);
+        renderCodeView(relPath, f);
       });
     } else {
       initTabulator(relPath, f.tabularData);
@@ -1725,35 +2194,325 @@ function renderFilePane(relPath) {
     hideAll();
     renderedView.classList.add('visible');
     renderedView.innerHTML = `<div class="file-rendered">${renderMarkdown(f.content)}</div>`;
-  } else if (isNotebook) {
-    // Notebook rendered view
-    hideAll();
-    renderedView.classList.add('visible');
-    let html = '<div class="file-rendered">';
-    try {
-      const nb = JSON.parse(f.content);
-      for (const cell of nb.cells || []) {
-        const src = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
-        if (cell.cell_type === 'markdown') {
-          html += renderMarkdown(src);
-        } else {
-          html += `<pre><code>${highlightCode(esc(src), 'python')}</code></pre>`;
-        }
-        html += '<hr>';
-      }
-    } catch { html += `<pre>${esc(f.content)}</pre>`; }
-    html += '</div>';
-    renderedView.innerHTML = html;
   } else {
-    // Code view with line numbers + syntax highlighting
+    // Code view — use Monaco read-only
     hideAll();
-    editorEl.style.display = 'flex';
-    codeView.style.display = 'block';
-    codeEdit.classList.remove('visible');
-    const lang = getLang(relPath);
-    document.getElementById('code-view-code').innerHTML = highlightCode(esc(f.content), lang);
-    updateLineGutter(f.content);
+    if (!monacoFailed) {
+      editorEl.style.display = 'flex';
+      gutter.style.display = 'none';
+      codeView.style.display = 'none';
+      codeEdit.classList.remove('visible');
+      monacoFileContainer.style.display = 'block';
+      monacoFileContainer.innerHTML = '';
+      loadMonaco().then(() => {
+        const lang = getMonacoLang(relPath);
+        activeMonacoInstance = createMonacoEditor(monacoFileContainer, {
+          value: f.content,
+          language: lang,
+          readOnly: true,
+        });
+      }).catch(() => {
+        monacoFileContainer.style.display = 'none';
+        renderCodeViewFallback(relPath, f);
+      });
+    } else {
+      renderCodeViewFallback(relPath, f);
+    }
   }
+}
+
+function renderCodeViewFallback(relPath, f) {
+  const editorEl = document.getElementById('file-editor');
+  const codeView = document.getElementById('code-view');
+  const codeEdit = document.getElementById('code-edit');
+  const gutter = document.getElementById('line-gutter');
+  editorEl.style.display = 'flex';
+  gutter.style.display = '';
+  codeView.style.display = 'block';
+  codeEdit.classList.remove('visible');
+  const lang = getLang(relPath);
+  document.getElementById('code-view-code').innerHTML = highlightCode(esc(f.content), lang);
+  updateLineGutter(f.content);
+}
+
+function renderCodeView(relPath, f) {
+  const editorEl = document.getElementById('file-editor');
+  const monacoFileContainer = document.getElementById('monaco-file-container');
+  editorEl.style.display = 'flex';
+  if (!monacoFailed) {
+    const gutter = document.getElementById('line-gutter');
+    const codeView = document.getElementById('code-view');
+    const codeEdit = document.getElementById('code-edit');
+    gutter.style.display = 'none';
+    codeView.style.display = 'none';
+    codeEdit.classList.remove('visible');
+    monacoFileContainer.style.display = 'block';
+    monacoFileContainer.innerHTML = '';
+    loadMonaco().then(() => {
+      const lang = getMonacoLang(relPath);
+      activeMonacoInstance = createMonacoEditor(monacoFileContainer, {
+        value: f.content,
+        language: lang,
+        readOnly: true,
+      });
+    }).catch(() => {
+      monacoFileContainer.style.display = 'none';
+      renderCodeViewFallback(relPath, f);
+    });
+  } else {
+    renderCodeViewFallback(relPath, f);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Notebook rendering and cell operations
+// ═══════════════════════════════════════════════════════════════
+
+function renderNotebookView(relPath) {
+  const f = openFiles[relPath];
+  if (!f || !f.notebookData) return;
+  const nb = f.notebookData;
+  const renderedView = document.getElementById('file-rendered-view');
+
+  let html = '<div class="notebook-container">';
+  html += renderAddCellRow(relPath, -1);
+
+  for (let i = 0; i < nb.cells.length; i++) {
+    const cell = nb.cells[i];
+    const isActive = i === activeCellIdx;
+    const badge = cell.cell_type === 'code'
+      ? '<span class="nb-cell-badge code">Code</span>'
+      : '<span class="nb-cell-badge markdown">Md</span>';
+    const execCount = cell.cell_type === 'code' && cell.execution_count != null
+      ? `<span class="nb-exec-count">[${cell.execution_count}]</span>` : '';
+
+    html += `<div class="nb-cell ${isActive ? 'nb-cell-active' : ''}" data-cell-idx="${i}">`;
+    html += `<div class="nb-cell-sidebar">${badge}${execCount}`;
+    html += `<div class="nb-cell-actions">`;
+    html += `<button class="nb-cell-action-btn" onclick="nbMoveCellUp('${esc(relPath)}',${i})" title="Move up">&uarr;</button>`;
+    html += `<button class="nb-cell-action-btn" onclick="nbMoveCellDown('${esc(relPath)}',${i})" title="Move down">&darr;</button>`;
+    html += `<button class="nb-cell-action-btn" onclick="nbToggleCellType('${esc(relPath)}',${i})" title="Toggle type">&harr;</button>`;
+    html += `<button class="nb-cell-action-btn" onclick="nbDeleteCell('${esc(relPath)}',${i})" title="Delete">&times;</button>`;
+    html += `</div></div>`;
+    html += `<div class="nb-cell-content">`;
+    html += `<div class="nb-cell-input" onclick="nbCellClick('${esc(relPath)}',${i})" data-cell-input="${i}">`;
+    if (cell.cell_type === 'markdown') {
+      if (cell.editing) {
+        html += `<textarea onblur="nbFinishMarkdownEdit('${esc(relPath)}',${i})" data-md-edit="${i}">${esc(cell.source)}</textarea>`;
+      } else {
+        html += `<div class="file-rendered">${renderMarkdown(cell.source)}</div>`;
+      }
+    } else {
+      // Code cell — static view (Monaco will be injected on click)
+      html += `<pre><code>${highlightCode(esc(cell.source), 'python')}</code></pre>`;
+    }
+    html += `</div>`;
+    // Outputs
+    html += renderCellOutputs(cell.outputs);
+    html += `</div></div>`;
+    html += renderAddCellRow(relPath, i);
+  }
+
+  html += '</div>';
+  renderedView.innerHTML = html;
+
+  // Focus markdown textarea if editing
+  const mdEdit = renderedView.querySelector('textarea[data-md-edit]');
+  if (mdEdit) mdEdit.focus();
+
+  // Eagerly load Monaco for notebook
+  loadMonaco().catch(() => {});
+}
+
+function renderAddCellRow(relPath, afterIdx) {
+  return `<div class="nb-add-cell-row">
+    <button class="nb-add-cell-btn" onclick="nbAddCell('${esc(relPath)}',${afterIdx},'code')">+ Code</button>
+    <button class="nb-add-cell-btn" onclick="nbAddCell('${esc(relPath)}',${afterIdx},'markdown')">+ Markdown</button>
+  </div>`;
+}
+
+function nbCellClick(relPath, cellIdx) {
+  const f = openFiles[relPath];
+  if (!f || !f.notebookData) return;
+  const cell = f.notebookData.cells[cellIdx];
+  if (!cell) return;
+
+  activeCellIdx = cellIdx;
+
+  if (cell.cell_type === 'markdown') {
+    // Toggle markdown editing
+    if (!cell.editing) {
+      disposeNotebookCellMonaco();
+      cell.editing = true;
+      renderNotebookView(relPath);
+    }
+    return;
+  }
+
+  // Code cell — open Monaco editor
+  if (activeNotebookCellIdx === cellIdx) return; // Already editing this cell
+  disposeNotebookCellMonaco();
+
+  const inputEl = document.querySelector(`[data-cell-input="${cellIdx}"]`);
+  if (!inputEl) return;
+
+  if (monacoFailed) {
+    // Fallback: textarea for code cell
+    cell.editing = true;
+    inputEl.innerHTML = `<textarea onblur="nbFinishCodeEdit('${esc(relPath)}',${cellIdx})" style="width:100%;min-height:80px;background:#0a0a16;color:#c0c0d0;border:none;outline:none;font-family:inherit;font-size:13px;line-height:1.55;resize:vertical;padding:0">${esc(cell.source)}</textarea>`;
+    inputEl.querySelector('textarea').focus();
+    return;
+  }
+
+  loadMonaco().then(() => {
+    // Re-check that we're still editing this cell
+    if (activeCellIdx !== cellIdx) return;
+    inputEl.innerHTML = '<div class="monaco-container"></div>';
+    const container = inputEl.querySelector('.monaco-container');
+    const editor = createMonacoEditor(container, {
+      value: cell.source,
+      language: 'python',
+      readOnly: false,
+      scrollBeyondLastLine: false,
+    });
+
+    // Auto-size
+    const updateHeight = () => {
+      const contentHeight = Math.min(500, Math.max(40, editor.getContentHeight()));
+      container.style.height = contentHeight + 'px';
+      editor.layout();
+    };
+    editor.onDidContentSizeChange(updateHeight);
+    updateHeight();
+
+    editor.onDidChangeModelContent(() => {
+      cell.source = editor.getValue();
+      f.modified = true;
+      renderWsTabs();
+    });
+
+    activeNotebookCellMonaco = editor;
+    activeNotebookCellIdx = cellIdx;
+    editor.focus();
+  }).catch(() => {
+    // Fallback
+    cell.editing = true;
+    renderNotebookView(relPath);
+  });
+}
+
+function nbFinishMarkdownEdit(relPath, cellIdx) {
+  const f = openFiles[relPath];
+  if (!f || !f.notebookData) return;
+  const cell = f.notebookData.cells[cellIdx];
+  if (!cell) return;
+  const textarea = document.querySelector(`textarea[data-md-edit="${cellIdx}"]`);
+  if (textarea) {
+    cell.source = textarea.value;
+    f.modified = true;
+    renderWsTabs();
+  }
+  cell.editing = false;
+  renderNotebookView(relPath);
+}
+
+function nbFinishCodeEdit(relPath, cellIdx) {
+  const f = openFiles[relPath];
+  if (!f || !f.notebookData) return;
+  const cell = f.notebookData.cells[cellIdx];
+  if (!cell) return;
+  const textarea = document.querySelector(`[data-cell-input="${cellIdx}"] textarea`);
+  if (textarea) {
+    cell.source = textarea.value;
+    f.modified = true;
+    renderWsTabs();
+  }
+  cell.editing = false;
+  disposeNotebookCellMonaco();
+  renderNotebookView(relPath);
+}
+
+function nbAddCell(relPath, afterIdx, cellType) {
+  const f = openFiles[relPath];
+  if (!f || !f.notebookData) return;
+  disposeNotebookCellMonaco();
+  const newCell = {
+    id: 'cell-new-' + Date.now(),
+    cell_type: cellType,
+    source: '',
+    outputs: [],
+    metadata: {},
+    execution_count: null,
+    monacoInstance: null,
+    editing: true,
+  };
+  f.notebookData.cells.splice(afterIdx + 1, 0, newCell);
+  f.modified = true;
+  activeCellIdx = afterIdx + 1;
+  renderWsTabs();
+  renderNotebookView(relPath);
+  // Scroll to new cell
+  setTimeout(() => {
+    const el = document.querySelector(`[data-cell-idx="${afterIdx + 1}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 50);
+}
+
+function nbDeleteCell(relPath, cellIdx) {
+  const f = openFiles[relPath];
+  if (!f || !f.notebookData) return;
+  const cell = f.notebookData.cells[cellIdx];
+  if (cell.source.trim() && !confirm('Delete this cell?')) return;
+  if (activeNotebookCellIdx === cellIdx) disposeNotebookCellMonaco();
+  f.notebookData.cells.splice(cellIdx, 1);
+  f.modified = true;
+  activeCellIdx = null;
+  renderWsTabs();
+  renderNotebookView(relPath);
+}
+
+function nbMoveCellUp(relPath, cellIdx) {
+  if (cellIdx === 0) return;
+  const f = openFiles[relPath];
+  if (!f || !f.notebookData) return;
+  disposeNotebookCellMonaco();
+  const cells = f.notebookData.cells;
+  [cells[cellIdx - 1], cells[cellIdx]] = [cells[cellIdx], cells[cellIdx - 1]];
+  f.modified = true;
+  activeCellIdx = cellIdx - 1;
+  renderWsTabs();
+  renderNotebookView(relPath);
+}
+
+function nbMoveCellDown(relPath, cellIdx) {
+  const f = openFiles[relPath];
+  if (!f || !f.notebookData) return;
+  if (cellIdx >= f.notebookData.cells.length - 1) return;
+  disposeNotebookCellMonaco();
+  const cells = f.notebookData.cells;
+  [cells[cellIdx], cells[cellIdx + 1]] = [cells[cellIdx + 1], cells[cellIdx]];
+  f.modified = true;
+  activeCellIdx = cellIdx + 1;
+  renderWsTabs();
+  renderNotebookView(relPath);
+}
+
+function nbToggleCellType(relPath, cellIdx) {
+  const f = openFiles[relPath];
+  if (!f || !f.notebookData) return;
+  disposeNotebookCellMonaco();
+  const cell = f.notebookData.cells[cellIdx];
+  if (cell.cell_type === 'code') {
+    cell.cell_type = 'markdown';
+    cell.outputs = [];
+    cell.execution_count = null;
+  } else {
+    cell.cell_type = 'code';
+  }
+  cell.editing = false;
+  f.modified = true;
+  renderWsTabs();
+  renderNotebookView(relPath);
 }
 
 function updateLineGutter(content) {
@@ -1777,6 +2536,10 @@ function toggleEditMode() {
   if (!key || key === 'chat' || !openFiles[key]) return;
   const f = openFiles[key];
 
+  // Notebooks use per-cell editing, no file-level toggle
+  const ext = key.split('.').pop().toLowerCase();
+  if (ext === 'ipynb') return;
+
   if (isTabularFile(key) && isEditableTabular(key)) {
     if (!f.editMode) {
       // Table → Raw: serialize current Tabulator data to text
@@ -1792,6 +2555,9 @@ function toggleEditMode() {
     }
   }
 
+  // Dispose Monaco when toggling
+  disposeMonacoInstance();
+
   f.editMode = !f.editMode;
   renderFilePane(key);
 }
@@ -1801,14 +2567,31 @@ async function saveCurrentFile() {
   if (!key || key === 'chat' || !openFiles[key]) return;
   const f = openFiles[key];
 
-  // If Tabulator is active (not in raw edit mode), serialize table data first
   let contentToSave = f.content;
+
+  // Notebook: flush active Monaco editor, serialize
+  if (f.notebookData) {
+    if (activeNotebookCellMonaco && activeNotebookCellIdx !== null) {
+      const cell = f.notebookData.cells[activeNotebookCellIdx];
+      if (cell) cell.source = activeNotebookCellMonaco.getValue();
+    }
+    contentToSave = serializeNotebook(f.notebookData);
+    f.content = contentToSave;
+  }
+
+  // If Tabulator is active (not in raw edit mode), serialize table data first
   if (isTabularFile(key) && isEditableTabular(key) && !f.editMode && activeTabulatorInstance) {
     const serialized = getTabulatorSerializedContent(key);
     if (serialized !== null) {
       contentToSave = serialized;
       f.content = serialized;
     }
+  }
+
+  // If Monaco is active for a code file, sync content
+  if (activeMonacoInstance && !f.notebookData) {
+    contentToSave = activeMonacoInstance.getValue();
+    f.content = contentToSave;
   }
 
   try {
@@ -1845,6 +2628,34 @@ document.addEventListener('keydown', (e) => {
     if (key && key !== 'chat' && openFiles[key] && (openFiles[key].editMode || openFiles[key].modified)) {
       e.preventDefault();
       saveCurrentFile();
+    }
+  }
+  // Escape — exit notebook cell edit
+  if (e.key === 'Escape') {
+    const key = getCurrentFileKey();
+    if (key && openFiles[key] && openFiles[key].notebookData) {
+      if (activeNotebookCellMonaco) {
+        const cellIdx = activeNotebookCellIdx;
+        disposeNotebookCellMonaco();
+        activeCellIdx = null;
+        renderNotebookView(key);
+      }
+    }
+  }
+  // Ctrl+Enter — finish editing, move to next cell
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    const key = getCurrentFileKey();
+    if (key && openFiles[key] && openFiles[key].notebookData && activeNotebookCellIdx !== null) {
+      e.preventDefault();
+      const nextIdx = activeNotebookCellIdx + 1;
+      disposeNotebookCellMonaco();
+      if (nextIdx < openFiles[key].notebookData.cells.length) {
+        renderNotebookView(key);
+        setTimeout(() => nbCellClick(key, nextIdx), 50);
+      } else {
+        activeCellIdx = null;
+        renderNotebookView(key);
+      }
     }
   }
 });
@@ -1950,8 +2761,10 @@ function initFileAutoRefresh() {
           f.content = data.content;
           f.originalContent = data.content;
           f.tabularData = null; // Force re-parse for tabular files
+          f.notebookData = null; // Force re-parse for notebooks
           const currentKey = getCurrentFileKey();
           if (relPath === currentKey) {
+            disposeNotebookCellMonaco();
             renderFilePane(relPath);
           } else {
             // Mark unread
@@ -1975,8 +2788,10 @@ function handleArtifactUpdate(relPath, content) {
       f.content = content;
       f.originalContent = content;
       f.tabularData = null; // Force re-parse for tabular files
+      f.notebookData = null; // Force re-parse for notebooks
       const currentKey = getCurrentFileKey();
       if (relPath === currentKey) {
+        disposeNotebookCellMonaco();
         renderFilePane(relPath);
       } else {
         const tabEl = document.querySelector(`[data-path="${CSS.escape(relPath)}"]`);

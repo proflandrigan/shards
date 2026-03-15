@@ -405,8 +405,10 @@ function createHandler() {
         const resolved = path.resolve(filePath);
         try {
           const stat = fs.statSync(resolved);
-          if (stat.size > 2 * 1024 * 1024) {
-            jsonResponse(res, cors, 400, { error: 'File too large (>2MB)' });
+          const isNotebook = resolved.endsWith('.ipynb');
+          const maxSize = isNotebook ? 10 * 1024 * 1024 : 2 * 1024 * 1024;
+          if (stat.size > maxSize) {
+            jsonResponse(res, cors, 400, { error: `File too large (>${isNotebook ? '10' : '2'}MB)` });
             return;
           }
           const content = fs.readFileSync(resolved, 'utf8');
