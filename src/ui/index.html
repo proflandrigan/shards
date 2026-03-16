@@ -1023,6 +1023,7 @@ body {
 [data-theme="light"] .message-meta { color: #999; }
 [data-theme="light"] .message.user .message-bubble { background: #e8eaf6; color: #333; border-color: #c5cae9; }
 [data-theme="light"] .message.assistant .message-bubble { background: #ffffff; border-left-color: #c0c0d0; color: #333; }
+[data-theme="light"] .system-notice .message-bubble { background: rgba(200,50,50,0.08) !important; color: #b03030 !important; }
 [data-theme="light"] .agent-divider::before, [data-theme="light"] .agent-divider::after { background: #ddd; }
 [data-theme="light"] .tool-indicator { color: #888; border-left-color: #ccc; }
 [data-theme="light"] .tool-indicator .tool-name { color: #555; }
@@ -3286,6 +3287,16 @@ function addToolIndicator(toolName) {
 
 let hasMessages = false;
 
+function addSystemNotice(text) {
+  const container = document.getElementById('messages');
+  if (!hasMessages) { container.innerHTML = ''; hasMessages = true; }
+  const div = document.createElement('div');
+  div.className = 'message system-notice';
+  div.innerHTML = `<div class="message-bubble" style="border-left: 3px solid #e05050; background: rgba(224,80,80,0.1); color: #e08080; font-size: 13px; padding: 8px 12px;">${esc(text)}</div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
 function addMessageDirect(role, content, agent) {
   const container = document.getElementById('messages');
   if (!hasMessages) { container.innerHTML = ''; hasMessages = true; }
@@ -3402,9 +3413,23 @@ function handleSSEEvent(e) {
       break;
 
     case 'chat-error':
+      addSystemNotice(data.error || 'An error occurred');
+      setChatInputEnabled(true);
       break;
 
+    case 'chat-stderr': {
+      // Check for auth/login related messages
+      const txt = (data.text || '').toLowerCase();
+      if (txt.includes('login') || txt.includes('auth') || txt.includes('api key') || txt.includes('not logged in') || txt.includes('credential')) {
+        addSystemNotice('Claude CLI is not authenticated. Run "claude login" in your terminal first, then try again.');
+      }
+      break;
+    }
+
     case 'chat-ended':
+      if (data.code && data.code !== 0) {
+        addSystemNotice(`Session ended unexpectedly (exit code ${data.code}). If Claude CLI is not logged in, run "claude login" in your terminal.`);
+      }
       endChatSession();
       break;
   }

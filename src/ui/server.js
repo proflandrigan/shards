@@ -274,14 +274,15 @@ function handleChatEvent(event) {
       break;
 
     case 'chat-stderr':
-      // Don't broadcast stderr noise, just log server-side
+      // Broadcast stderr so auth errors and other issues are visible in the UI
+      broadcast({ type: 'chat-stderr', text: event.text, sessionId });
       break;
   }
 }
 
 function handleChatExit({ code, sessionId }) {
   chatSession = null;
-  broadcast({ type: 'chat-ended', sessionId, code });
+  broadcast({ type: 'chat-ended', sessionId, code: code || 0 });
 }
 
 // ─── Request body parser ────────────────────────────────────────────────────
