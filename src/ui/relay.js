@@ -135,6 +135,7 @@ async function main() {
     } else if (toolName === 'Write' || toolName === 'Edit') {
       const fp = toolInput.file_path || toolInput.path || 'file';
       postEvent(port, { eventType: 'event-log', text: `${toolName}: ${fp}` });
+      postEvent(port, { eventType: 'file-touched', filePath: fp });
 
     } else if (toolName === 'Bash') {
       postEvent(port, { eventType: 'event-log', text: `Bash: ${(toolInput.command || '').slice(0, 60)}` });

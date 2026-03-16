@@ -24,6 +24,7 @@ const OUTPUT_DIRS = ['analysis', 'studies', 'models', 'services', 'research', 'd
 let clients = [];       // SSE response objects
 let transcript = [];    // { role, content, agent, source }
 let files = {};         // relPath -> content
+let sessionFiles = new Set();
 let chatSession = null;
 
 // ─── Broadcast ───────────────────────────────────────────────────────────────
@@ -149,7 +150,7 @@ function pollFiles() {
   for (const [relPath, content] of Object.entries(current)) {
     if (files[relPath] !== content) {
       files[relPath] = content;
-      broadcast({ type: 'artifact-updated', path: relPath, content });
+      broadcast({ type: 'artifact-updated', path: relPath, content, sessionFile: sessionFiles.has(relPath) });
     }
   }
 
@@ -189,8 +190,15 @@ function handleEvent(body) {
     case 'event-log':
       broadcast({ type: 'event-log', text: data.text });
       break;
+    case 'file-touched': {
+      const relPath = path.relative(PROJECT_DIR, data.filePath);
+      sessionFiles.add(relPath);
+      broadcast({ type: 'file-touched', path: relPath });
+      break;
+    }
     case 'session-end':
       broadcast({ type: 'session-end' });
+      sessionFiles = new Set();
       break;
   }
 }
@@ -351,7 +359,7 @@ function createHandler() {
 
     if (req.method === 'GET' && req.url === '/files') {
       res.writeHead(200, { ...cors, 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(files));
+      res.end(JSON.stringify({ files, sessionFiles: [...sessionFiles] }));
       return;
     }
 

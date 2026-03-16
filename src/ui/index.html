@@ -2135,6 +2135,7 @@ function getTabulatorSerializedContent(relPath) {
 
 // openFiles[relPath] = { content, absPath, originalContent, modified, editMode, tabularData, tabulatorInstance, notebookData }
 let openFiles = {};
+let sessionTouchedFiles = new Set();
 let fileTabOrder = [];   // ordered relPaths
 let activeTabId = 'chat'; // 'chat' or a relPath
 let splitMode = false;
@@ -3050,7 +3051,7 @@ function initFileAutoRefresh() {
 // Artifact updates (from agent output polling)
 // ═══════════════════════════════════════════════════════════════
 
-function handleArtifactUpdate(relPath, content) {
+function handleArtifactUpdate(relPath, content, isSessionFile) {
   if (relPath in openFiles) {
     const f = openFiles[relPath];
     if (!f.modified && !f.editMode) {
@@ -3067,10 +3068,11 @@ function handleArtifactUpdate(relPath, content) {
         if (tabEl) tabEl.classList.add('unread');
       }
     }
-  } else {
-    // Auto-open artifact files
+  } else if (isSessionFile || sessionTouchedFiles.has(relPath)) {
+    // Auto-open only session files
     openFileTab(relPath, content, relPath);
   }
+  // else: pre-existing file, don't auto-open
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -3360,13 +3362,18 @@ function handleSSEEvent(e) {
       break;
 
     case 'artifact-updated':
-      handleArtifactUpdate(data.path, data.content);
+      handleArtifactUpdate(data.path, data.content, data.sessionFile);
+      break;
+
+    case 'file-touched':
+      sessionTouchedFiles.add(data.path);
       break;
 
     case 'event-log':
       break;
 
     case 'session-end':
+      sessionTouchedFiles.clear();
       break;
 
     // ─── Chat events ─────────────────────────────────────────
@@ -3463,11 +3470,14 @@ async function loadInitial() {
       fetch('/files'),
       fetch('/chat/status'),
     ]);
-    const files = await fRes.json();
+    const result = await fRes.json();
     const chatStatus = await cRes.json();
 
-    for (const [p, c] of Object.entries(files)) {
-      handleArtifactUpdate(p, c);
+    const filesMap = result.files || result;
+    const serverSessionFiles = result.sessionFiles || [];
+    for (const sf of serverSessionFiles) sessionTouchedFiles.add(sf);
+    for (const [p, c] of Object.entries(filesMap)) {
+      handleArtifactUpdate(p, c, sessionTouchedFiles.has(p));
     }
 
     // Restore active chat session if one is running
