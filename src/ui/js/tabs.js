@@ -1,0 +1,196 @@
+// ═══════════════════════════════════════════════════════════════
+// Workspace tabs & file state
+// ═══════════════════════════════════════════════════════════════
+
+function openFileTab(relPath, content, absPath) {
+  if (relPath in openFiles) {
+    // Update content if not modified by user
+    var f = openFiles[relPath];
+    if (!f.modified && !f.editMode) {
+      f.content = content;
+      f.originalContent = content;
+    }
+  } else {
+    openFiles[relPath] = {
+      content: content,
+      absPath: absPath || relPath,
+      originalContent: content,
+      modified: false,
+      editMode: false,
+      tabularData: null,
+      tabulatorInstance: null,
+    };
+    fileTabOrder.push(relPath);
+    sortFileTabs();
+  }
+
+  if (splitMode) {
+    // In split mode, file tabs show in file pane — switch to this file
+    renderWsTabs();
+    showFileInPane(relPath);
+  } else {
+    // In single mode, switch to this tab
+    activeTabId = relPath;
+    renderWsTabs();
+    showActiveContent();
+  }
+}
+
+function closeFileTab(relPath) {
+  // Save check
+  var f = openFiles[relPath];
+  if (f && f.modified) {
+    if (!confirm('"' + relPath.split('/').pop() + '" has unsaved changes. Close anyway?')) return;
+  }
+
+  // Destroy Tabulator if this file had one
+  if (f && f.tabulatorInstance) {
+    var currentKey = getCurrentFileKey();
+    if (relPath === currentKey) destroyTabulator();
+  }
+
+  // Dispose Monaco instances
+  var currentKey2 = getCurrentFileKey();
+  if (relPath === currentKey2) {
+    disposeMonacoInstance();
+    disposeNotebookCellMonaco();
+  }
+  if (f && f.notebookData) {
+    f.notebookData.cells.forEach(function(cell) {
+      if (cell.monacoInstance) {
+        cell.monacoInstance.dispose();
+        cell.monacoInstance = null;
+      }
+    });
+  }
+
+  delete openFiles[relPath];
+  fileTabOrder = fileTabOrder.filter(function(p) { return p !== relPath; });
+
+  if (activeTabId === relPath) {
+    activeTabId = fileTabOrder.length > 0 ? fileTabOrder[0] : 'chat';
+  }
+  renderWsTabs();
+  showActiveContent();
+}
+
+function sortFileTabs() {
+  fileTabOrder.sort(function(a, b) {
+    var aS = a.endsWith('project-specs.md') ? 0 : 1;
+    var bS = b.endsWith('project-specs.md') ? 0 : 1;
+    if (aS !== bS) return aS - bS;
+    return a.localeCompare(b);
+  });
+}
+
+function switchTab(id) {
+  if (splitMode && id !== 'chat') {
+    // In split mode, clicking a file tab switches the file pane
+    showFileInPane(id);
+    renderWsTabs();
+    return;
+  }
+  activeTabId = id;
+  renderWsTabs();
+  showActiveContent();
+}
+
+function renderWsTabs() {
+  var bar = document.getElementById('ws-tab-bar');
+  // Remove existing tabs (keep actions)
+  var actions = document.getElementById('ws-tab-actions');
+  bar.innerHTML = '';
+
+  // Chat tab (pinned)
+  var chatTab = document.createElement('div');
+  chatTab.className = 'ws-tab pinned' + (activeTabId === 'chat' && !splitMode ? ' active' : '') + (splitMode ? ' in-split' : '');
+  chatTab.textContent = 'Chat';
+  chatTab.addEventListener('click', function() { switchTab('chat'); });
+  bar.appendChild(chatTab);
+
+  // File tabs
+  for (var i = 0; i < fileTabOrder.length; i++) {
+    var p = fileTabOrder[i];
+    var f = openFiles[p];
+    if (!f) continue;
+    var tab = document.createElement('div');
+    var isActive = splitMode ? (p === currentFileInPane) : (p === activeTabId);
+    tab.className = 'ws-tab' + (isActive ? ' active' : '') + (f.modified ? ' modified' : '');
+    tab.dataset.path = p;
+
+    var name = p.split('/').pop();
+    tab.innerHTML =
+      '<span class="tab-dot"></span>' +
+      '<span class="modified-dot"></span>' +
+      esc(name) +
+      ' <span class="close-btn" title="Close">x</span>';
+
+    tab.addEventListener('click', (function(path) {
+      return function(e) {
+        if (e.target.classList.contains('close-btn')) { closeFileTab(path); return; }
+        switchTab(path);
+      };
+    })(p));
+    bar.appendChild(tab);
+  }
+
+  bar.appendChild(actions);
+
+  // Split button state
+  document.getElementById('split-btn').className = splitMode ? 'active' : '';
+}
+
+function showActiveContent() {
+  var chatPane = document.getElementById('chat-pane');
+  var filePane = document.getElementById('file-pane');
+  var splitResize = document.getElementById('split-resize');
+
+  if (splitMode) {
+    chatPane.style.display = 'flex';
+    splitResize.style.display = 'block';
+    filePane.classList.add('visible');
+    if (currentFileInPane && openFiles[currentFileInPane]) {
+      renderFilePane(currentFileInPane);
+    } else if (fileTabOrder.length > 0) {
+      showFileInPane(fileTabOrder[0]);
+    } else {
+      renderEmptyFilePane();
+    }
+    return;
+  }
+
+  // Single mode
+  splitResize.style.display = 'none';
+
+  if (activeTabId === 'chat') {
+    chatPane.style.display = 'flex';
+    filePane.classList.remove('visible');
+  } else {
+    chatPane.style.display = 'none';
+    filePane.classList.add('visible');
+    renderFilePane(activeTabId);
+  }
+}
+
+function showFileInPane(relPath) {
+  currentFileInPane = relPath;
+  renderFilePane(relPath);
+  renderWsTabs();
+}
+
+function renderEmptyFilePane() {
+  document.getElementById('file-path-display').textContent = '';
+  document.getElementById('edit-btn').style.display = 'none';
+  document.getElementById('save-btn').style.display = 'none';
+  document.getElementById('file-rendered-view').classList.remove('visible');
+  document.getElementById('file-rendered-view').innerHTML = '';
+  document.getElementById('file-editor').style.display = 'none';
+  document.getElementById('table-view').classList.remove('visible');
+  destroyTabulator();
+  disposeMonacoInstance();
+  disposeNotebookCellMonaco();
+
+  var rendered = document.getElementById('file-rendered-view');
+  rendered.classList.add('visible');
+  rendered.innerHTML = '<div class="no-file-msg">Open a file from the explorer</div>';
+}

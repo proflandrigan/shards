@@ -622,6 +622,30 @@ function createHandler() {
       return;
     }
 
+    // ─── Static file serving (JS/CSS) ─────────────────────────
+    if (req.method === 'GET') {
+      const MIME = { '.js': 'application/javascript', '.css': 'text/css' };
+      const ext = path.extname(req.url);
+      if (MIME[ext]) {
+        const filePath = path.join(__dirname, decodeURIComponent(req.url));
+        const resolved = path.resolve(filePath);
+        if (!resolved.startsWith(__dirname)) {
+          res.writeHead(403);
+          res.end('Forbidden');
+          return;
+        }
+        try {
+          const content = fs.readFileSync(resolved, 'utf8');
+          res.writeHead(200, { ...cors, 'Content-Type': MIME[ext] });
+          res.end(content);
+        } catch {
+          res.writeHead(404);
+          res.end('Not found');
+        }
+        return;
+      }
+    }
+
     res.writeHead(404);
     res.end('Not found');
   };

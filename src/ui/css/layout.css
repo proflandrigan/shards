@@ -1,0 +1,187 @@
+/* ─── Header ─────────────────────────────────────────────── */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: #080810;
+  border-bottom: 1px solid #1a1a2c;
+  flex-shrink: 0;
+  height: 42px;
+}
+.logo {
+  font-size: 15px;
+  font-weight: bold;
+  color: #FFD700;
+  letter-spacing: 3px;
+}
+#header-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+#active-agent-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.agent-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2a2a3a;
+  display: inline-block;
+  flex-shrink: 0;
+  transition: background 0.4s;
+}
+#conn-status-area {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #444;
+}
+.conn-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2a2a3a;
+  transition: background 0.4s;
+}
+.conn-indicator.connected { background: #4CAF50; }
+.conn-indicator.disconnected { background: #F44336; }
+
+/* ─── Main layout ────────────────────────────────────────── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── Resize handles ─────────────────────────────────────── */
+.resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.resize-handle:hover,
+.resize-handle.dragging {
+  background: #3860c0;
+}
+
+/* ─── Workspace ──────────────────────────────────────────── */
+#workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ─── Workspace tab bar ──────────────────────────────────── */
+#ws-tab-bar {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #1a1a2c;
+  background: #080810;
+  flex-shrink: 0;
+  min-height: 34px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#ws-tab-bar::-webkit-scrollbar { display: none; }
+
+.ws-tab {
+  padding: 0 14px;
+  font-size: 12px;
+  color: #4a4a68;
+  cursor: pointer;
+  white-space: nowrap;
+  border-right: 1px solid #141420;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  transition: color 0.2s, background 0.2s;
+  user-select: none;
+}
+.ws-tab:hover { color: #707090; background: #0c0c18; }
+.ws-tab.active { color: #b0b0c8; background: #0d0d14; border-bottom: 2px solid #3860c0; }
+.ws-tab.pinned { color: #8888a8; }
+.ws-tab.pinned.active { color: #c8c8d8; }
+.ws-tab.in-split { border-bottom: 2px solid #2a6a2a; }
+.ws-tab .tab-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #4CAF50;
+  display: none;
+  flex-shrink: 0;
+}
+.ws-tab.unread .tab-dot { display: block; }
+.ws-tab .modified-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e0a040;
+  display: none;
+  flex-shrink: 0;
+}
+.ws-tab.modified .modified-dot { display: block; }
+.ws-tab .close-btn {
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  margin-left: 2px;
+  line-height: 1;
+}
+.ws-tab .close-btn:hover { color: #888; }
+
+#ws-tab-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+#split-btn {
+  background: #0f0f1e;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  color: #5a5a78;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#split-btn:hover { background: #1a1a30; color: #8080a0; }
+#split-btn.active { background: #1a2a1a; border-color: #2a6a2a; color: #60a060; }
+
+/* ─── Workspace content ──────────────────────────────────── */
+#ws-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ─── Theme toggle button ───────────────────────────────── */
+#theme-toggle {
+  background: none;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 2px 6px;
+  line-height: 1;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#theme-toggle:hover { background: #1a1a30; }
