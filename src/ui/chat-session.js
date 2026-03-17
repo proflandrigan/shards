@@ -5,9 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { randomUUID } = require('crypto');
 
-const SHARDS_DIR = path.join(process.cwd(), '.shards');
-const CHAT_PID_FILE = path.join(SHARDS_DIR, 'chat.pid');
-const LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
+const LOG_FILE = path.join(process.cwd(), '.shards', 'ui.log');
 
 function log(msg) {
   const ts = new Date().toISOString();
@@ -15,11 +13,12 @@ function log(msg) {
 }
 
 class ChatSession {
-  constructor({ agent, sessionId, resumeSessionId, cwd, permissionMode, onEvent, onExit }) {
+  constructor({ agent, sessionId, resumeSessionId, cwd, sessionsDir, permissionMode, onEvent, onExit }) {
     this.agent = agent;
     this.sessionId = sessionId || randomUUID();
     this.resumeSessionId = resumeSessionId || null;
     this.cwd = cwd || process.cwd();
+    this.sessionsDir = sessionsDir || path.join(this.cwd, '.shards', 'sessions');
     this.permissionMode = permissionMode || 'acceptEdits';
     this.onEvent = onEvent || (() => {});
     this.onExit = onExit || (() => {});
@@ -47,25 +46,68 @@ class ChatSession {
 
     log(`Spawning claude CLI for agent="${this.agent}" session="${this.sessionId}" permissionMode="${this.permissionMode}"${this.resumeSessionId ? ` resume="${this.resumeSessionId}"` : ''}`);
 
+    // P4: Spawn detached so process survives server restarts
     this.child = spawn('claude', args, {
       cwd: this.cwd,
+      detached: true,
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env },
     });
 
+    // Don't let the child keep the parent alive
+    this.child.unref();
+
     this.startedAt = new Date().toISOString();
     log(`claude process spawned, PID=${this.child.pid}`);
 
-    // Save PID for stale process cleanup
-    try {
-      fs.writeFileSync(CHAT_PID_FILE, String(this.child.pid));
-    } catch {}
+    // P4: Write session metadata for reconnection
+    this._writeMetadata();
 
+    this._attachStreams();
+  }
+
+  // P4: Reconnect to an existing detached process
+  reconnect(pid) {
+    log(`Attempting reconnect to PID=${pid} for session="${this.sessionId}"`);
+
+    // We can't reattach to stdio of a detached process without IPC.
+    // Instead, we verify the process is alive and mark it as connected.
+    // The process will eventually exit and we'll detect that via polling.
+    try {
+      process.kill(pid, 0); // throws if not alive
+    } catch {
+      log(`PID=${pid} is not alive, cannot reconnect`);
+      return false;
+    }
+
+    this.startedAt = this.startedAt || new Date().toISOString();
+    this._responding = false;
+
+    // Start a heartbeat poller to detect when the process dies
+    this._heartbeatInterval = setInterval(() => {
+      try {
+        process.kill(pid, 0);
+        this._updateMetadata();
+      } catch {
+        // Process died while server was down or between heartbeats
+        clearInterval(this._heartbeatInterval);
+        this._heartbeatInterval = null;
+        log(`Heartbeat: PID=${pid} is dead for session="${this.sessionId}"`);
+        this._removeMetadata();
+        this.onExit({ code: null, sessionId: this.sessionId });
+      }
+    }, 5000);
+
+    this._reconnectedPid = pid;
+    return true;
+  }
+
+  _attachStreams() {
     // Parse stdout line by line (JSONL)
     this.child.stdout.on('data', (chunk) => {
       this._buffer += chunk.toString();
       const lines = this._buffer.split('\n');
-      this._buffer = lines.pop(); // keep incomplete line in buffer
+      this._buffer = lines.pop();
       for (const line of lines) {
         if (line.trim()) this._parseLine(line.trim());
       }
@@ -83,7 +125,7 @@ class ChatSession {
       log(`claude process exited, code=${code}, agent="${this.agent}", session="${this.sessionId}"`);
       this.child = null;
       this._responding = false;
-      try { fs.unlinkSync(CHAT_PID_FILE); } catch {}
+      this._removeMetadata();
       this.onExit({ code, sessionId: this.sessionId });
     });
 
@@ -98,7 +140,7 @@ class ChatSession {
     try {
       data = JSON.parse(line);
     } catch {
-      return; // skip non-JSON lines
+      return;
     }
 
     const { type } = data;
@@ -155,7 +197,6 @@ class ChatSession {
       }
 
       if (evt.type === 'message_start' || evt.type === 'message_delta' || evt.type === 'message_stop') {
-        // message-level events, mostly ignore
         return;
       }
 
@@ -164,9 +205,6 @@ class ChatSession {
 
     if (type === 'assistant') {
       const content = data.message && data.message.content;
-      // With --include-partial-messages, intermediate assistant messages are
-      // emitted after each content block (e.g. thinking-only). Skip ones
-      // that have no text blocks to avoid empty bubbles in the UI.
       const hasText = Array.isArray(content) && content.some(b => b.type === 'text');
       if (!hasText) return;
       this._responding = false;
@@ -189,7 +227,6 @@ class ChatSession {
       return;
     }
 
-    // Unknown type — log but don't crash
     this.onEvent({ type: 'chat-unknown', raw: data, sessionId: this.sessionId });
   }
 
@@ -206,16 +243,25 @@ class ChatSession {
     };
     this.child.stdin.write(JSON.stringify(payload) + '\n');
     this._responding = true;
+    this._updateMetadata();
   }
 
   stop() {
+    if (this._heartbeatInterval) {
+      clearInterval(this._heartbeatInterval);
+      this._heartbeatInterval = null;
+    }
+    if (this._reconnectedPid) {
+      try { process.kill(this._reconnectedPid, 'SIGTERM'); } catch {}
+      this._reconnectedPid = null;
+    }
     if (this.child) {
       this.child.kill('SIGTERM');
     }
   }
 
   get isRunning() {
-    return this.child !== null;
+    return this.child !== null || this._reconnectedPid !== null;
   }
 
   get isResponding() {
@@ -231,18 +277,104 @@ class ChatSession {
       responding: this._responding,
     };
   }
+
+  // P4: Session metadata persistence
+
+  _metadataPath() {
+    return path.join(this.sessionsDir, `${this.sessionId}.json`);
+  }
+
+  _writeMetadata() {
+    try {
+      fs.mkdirSync(this.sessionsDir, { recursive: true });
+      fs.writeFileSync(this._metadataPath(), JSON.stringify({
+        sessionId: this.sessionId,
+        agent: this.agent,
+        pid: this.child ? this.child.pid : (this._reconnectedPid || null),
+        startedAt: this.startedAt,
+        lastActivityAt: new Date().toISOString(),
+      }));
+    } catch {}
+  }
+
+  _updateMetadata() {
+    try {
+      const meta = JSON.parse(fs.readFileSync(this._metadataPath(), 'utf8'));
+      meta.lastActivityAt = new Date().toISOString();
+      fs.writeFileSync(this._metadataPath(), JSON.stringify(meta));
+    } catch {}
+  }
+
+  _removeMetadata() {
+    try { fs.unlinkSync(this._metadataPath()); } catch {}
+  }
 }
 
-// Kill stale chat process on startup
-function cleanupStaleChat() {
-  if (!fs.existsSync(CHAT_PID_FILE)) return;
+// P4: Reconnect to orphaned sessions or clean up dead ones
+function reconnectOrCleanup(sessionsDir, sessionsMap, SessionStoreClass, onEvent, onExit, cwd) {
+  if (!fs.existsSync(sessionsDir)) return;
+
   try {
-    const pid = parseInt(fs.readFileSync(CHAT_PID_FILE, 'utf8').trim(), 10);
-    if (pid && pid > 0) {
-      process.kill(pid, 'SIGTERM');
+    const files = fs.readdirSync(sessionsDir);
+    for (const file of files) {
+      if (!file.endsWith('.json')) continue;
+
+      const metaPath = path.join(sessionsDir, file);
+      let meta;
+      try {
+        meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+      } catch {
+        try { fs.unlinkSync(metaPath); } catch {}
+        continue;
+      }
+
+      const { sessionId, agent, pid } = meta;
+      if (!pid || !sessionId) {
+        try { fs.unlinkSync(metaPath); } catch {}
+        continue;
+      }
+
+      // Check if the process is still alive
+      let alive = false;
+      try {
+        process.kill(pid, 0);
+        alive = true;
+      } catch {}
+
+      if (!alive) {
+        // Process died while server was down — clean up
+        log(`reconnectOrCleanup: session ${sessionId} (PID=${pid}) is dead, cleaning up`);
+        try { fs.unlinkSync(metaPath); } catch {}
+        continue;
+      }
+
+      // Process is alive — attempt reconnect
+      log(`reconnectOrCleanup: reconnecting to session ${sessionId} (PID=${pid}, agent=${agent})`);
+
+      const chatSess = new ChatSession({
+        agent,
+        sessionId,
+        cwd,
+        sessionsDir,
+        onEvent,
+        onExit,
+      });
+      chatSess.startedAt = meta.startedAt;
+
+      if (chatSess.reconnect(pid)) {
+        const store = new SessionStoreClass({ sessionId, agent });
+        store.chatSession = chatSess;
+        store.createdAt = new Date(meta.startedAt);
+        store.lastActivityAt = new Date(meta.lastActivityAt || meta.startedAt);
+        sessionsMap.set(sessionId, store);
+        log(`reconnectOrCleanup: successfully reconnected session ${sessionId}`);
+      } else {
+        try { fs.unlinkSync(metaPath); } catch {}
+      }
     }
-  } catch {}
-  try { fs.unlinkSync(CHAT_PID_FILE); } catch {}
+  } catch (err) {
+    log(`reconnectOrCleanup error: ${err.message}`);
+  }
 }
 
-module.exports = { ChatSession, cleanupStaleChat };
+module.exports = { ChatSession, reconnectOrCleanup };

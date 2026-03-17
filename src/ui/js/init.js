@@ -118,8 +118,8 @@ document.getElementById('chat-input').addEventListener('keydown', function(e) {
 async function loadInitial() {
   try {
     var results = await Promise.all([
-      fetch('/files'),
-      fetch('/chat/status'),
+      authFetch('/files'),
+      authFetch('/chat/status'),
     ]);
     var fRes = results[0], cRes = results[1];
     var result = await fRes.json();

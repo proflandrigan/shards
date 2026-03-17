@@ -139,7 +139,9 @@ function handleSSEEvent(e) {
 function connect() {
   var indicator = document.getElementById('conn-indicator');
   var text = document.getElementById('conn-text');
-  var es = new EventSource('/events');
+  // P1: Include auth token as query param (EventSource can't set headers)
+  var sseUrl = '/events?token=' + encodeURIComponent(SHARDS_TOKEN);
+  var es = new EventSource(sseUrl);
 
   es.onopen = function() {
     indicator.className = 'conn-indicator connected';

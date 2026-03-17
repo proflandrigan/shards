@@ -73,7 +73,7 @@ async function loadTabularData(relPath, f) {
 
   if (ext === 'csv' || ext === 'tsv') {
     var delimiter = ext === 'tsv' ? '\t' : ',';
-    var res = await fetch('/browse/file/parse-csv', {
+    var res = await authFetch('/browse/file/parse-csv', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: f.absPath, delimiter: delimiter }),

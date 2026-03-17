@@ -9,7 +9,7 @@ function toggleExplorer() {
 async function browseDir(dir) {
   try {
     var url = dir ? '/browse?dir=' + encodeURIComponent(dir) : '/browse';
-    var res = await fetch(url);
+    var res = await authFetch(url);
     var data = await res.json();
     if (data.error) return;
     currentBrowseDir = data.path;
@@ -82,7 +82,7 @@ function renderDirListing(data) {
 
 async function openFileFromExplorer(filePath) {
   try {
-    var res = await fetch('/browse/file?path=' + encodeURIComponent(filePath));
+    var res = await authFetch('/browse/file?path=' + encodeURIComponent(filePath));
     var data = await res.json();
     if (data.error) return;
     var key = data.relPath || filePath;

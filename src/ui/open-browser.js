@@ -11,7 +11,14 @@ const PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
 
 function getPort() {
   try {
-    return parseInt(fs.readFileSync(PORT_FILE, 'utf8').trim(), 10);
+    const raw = fs.readFileSync(PORT_FILE, 'utf8').trim();
+    // Support both JSON format (new) and plain number (old)
+    try {
+      const info = JSON.parse(raw);
+      return info.port;
+    } catch {
+      return parseInt(raw, 10);
+    }
   } catch {
     return 7842;
   }

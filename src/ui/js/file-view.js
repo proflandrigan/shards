@@ -271,7 +271,7 @@ async function saveCurrentFile() {
   }
 
   try {
-    var res = await fetch('/browse/file/save', {
+    var res = await authFetch('/browse/file/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: f.absPath, content: contentToSave }),
@@ -326,7 +326,7 @@ function initFileAutoRefresh() {
       if (!f || f.editMode || f.modified) continue;
 
       try {
-        var res = await fetch('/browse/file?path=' + encodeURIComponent(f.absPath));
+        var res = await authFetch('/browse/file?path=' + encodeURIComponent(f.absPath));
         var data = await res.json();
         if (data.error) continue;
         if (data.content !== f.content) {

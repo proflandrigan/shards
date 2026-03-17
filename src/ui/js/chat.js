@@ -8,7 +8,7 @@ async function loadAgentPicker() {
 
   if (!agentList) {
     try {
-      var res = await fetch('/agents');
+      var res = await authFetch('/agents');
       agentList = await res.json();
     } catch(e) {
       picker.innerHTML = '<div class="empty-state">Failed to load agents</div>';
@@ -49,7 +49,7 @@ function showChatView() {
 
 async function startChat(agentName) {
   try {
-    var res = await fetch('/chat/start', {
+    var res = await authFetch('/chat/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: agentName }),
@@ -98,10 +98,10 @@ async function sendChatMessage() {
   }
 
   try {
-    var res = await fetch('/chat/send', {
+    var res = await authFetch('/chat/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: message }),
+      body: JSON.stringify({ message: message, sessionId: chatSessionId }),
     });
     var data = await res.json();
 
@@ -118,7 +118,7 @@ async function sendChatMessage() {
 
 async function stopChat() {
   try {
-    await fetch('/chat/stop', { method: 'POST' });
+    await authFetch('/chat/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: chatSessionId }) });
   } catch(e) {}
   endChatSession();
 }
