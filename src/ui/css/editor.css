@@ -21,7 +21,7 @@
 }
 #file-path-display {
   flex: 1;
-  font-size: 12px;
+  font-size: 11px;
   color: #5a5a78;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -33,7 +33,7 @@
   border-radius: 4px;
   color: #6a6a88;
   font-family: inherit;
-  font-size: 11px;
+  font-size: 10px;
   padding: 2px 10px;
   cursor: pointer;
   transition: all 0.2s;
@@ -56,7 +56,7 @@
   color: #2a2a44;
   text-align: right;
   padding: 10px 8px 10px 0;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
   user-select: none;
   border-right: 1px solid #141420;
@@ -70,7 +70,7 @@
 #code-view {
   margin: 0;
   padding: 10px 14px;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
   background: none;
   border: none;
@@ -90,7 +90,7 @@
   width: 100%;
   min-height: 100%;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
   background: #0a0a16;
   color: #c0c0d0;
@@ -113,13 +113,13 @@
 }
 #file-rendered-view.visible { display: block; }
 
-.file-rendered { font-size: 13px; line-height: 1.6; color: #b0b0c4; }
-.file-rendered h1 { font-size: 16px; color: #dde; margin: 10px 0 5px; }
-.file-rendered h2 { font-size: 15px; color: #ccd; margin: 9px 0 4px; border-bottom: 1px solid #1a1a2c; padding-bottom: 3px; }
-.file-rendered h3 { font-size: 14px; color: #bbc; margin: 7px 0 3px; }
-.file-rendered h4, .file-rendered h5, .file-rendered h6 { font-size: 13px; color: #aab; margin: 5px 0 2px; }
+.file-rendered { font-size: 12px; line-height: 1.6; color: #b0b0c4; }
+.file-rendered h1 { font-size: 15px; color: #dde; margin: 10px 0 5px; }
+.file-rendered h2 { font-size: 14px; color: #ccd; margin: 9px 0 4px; border-bottom: 1px solid #1a1a2c; padding-bottom: 3px; }
+.file-rendered h3 { font-size: 13px; color: #bbc; margin: 7px 0 3px; }
+.file-rendered h4, .file-rendered h5, .file-rendered h6 { font-size: 12px; color: #aab; margin: 5px 0 2px; }
 .file-rendered p { margin: 5px 0; }
-.file-rendered code { background: #0d0d1e; border-radius: 3px; padding: 1px 4px; font-size: 12px; color: #8aa4ff; font-family: inherit; }
+.file-rendered code { background: #0d0d1e; border-radius: 3px; padding: 1px 4px; font-size: 11px; color: #8aa4ff; font-family: inherit; }
 .file-rendered pre { background: #06060f; border: 1px solid #141420; border-radius: 5px; padding: 10px; overflow-x: auto; margin: 7px 0; }
 .file-rendered pre code { background: none; padding: 0; color: #b0b0c0; }
 .file-rendered ul, .file-rendered ol { padding-left: 16px; margin: 4px 0; }
@@ -128,7 +128,7 @@
 .file-rendered em { color: #8888a8; }
 .file-rendered hr { border: none; border-top: 1px solid #141420; margin: 8px 0; }
 .file-rendered blockquote { border-left: 2px solid #1e1e30; padding-left: 8px; color: #555; margin: 4px 0; }
-.file-rendered table { border-collapse: collapse; margin: 6px 0; font-size: 12px; }
+.file-rendered table { border-collapse: collapse; margin: 6px 0; font-size: 11px; }
 .file-rendered th, .file-rendered td { border: 1px solid #1a1a2c; padding: 3px 7px; }
 .file-rendered th { background: #0b0b16; color: #aab; }
 
@@ -155,14 +155,14 @@
   border-radius: 4px;
   color: #b0b0c4;
   font-family: inherit;
-  font-size: 11px;
+  font-size: 10px;
   padding: 3px 8px;
   width: 180px;
   outline: none;
 }
 #table-search:focus { border-color: #3a3a5a; }
 #table-row-count {
-  font-size: 11px;
+  font-size: 10px;
   color: #5a5a78;
   margin-left: auto;
 }
@@ -177,7 +177,7 @@
   background: #0d0d14;
   border: none;
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
-  font-size: 12px;
+  font-size: 11px;
   color: #b0b0c4;
 }
 #table-container .tabulator-header {
@@ -197,7 +197,7 @@
   border: 1px solid #1e1e32;
   color: #b0b0c4;
   font-family: inherit;
-  font-size: 11px;
+  font-size: 10px;
   border-radius: 3px;
   padding: 2px 4px;
 }
@@ -216,7 +216,7 @@
   color: #c0c0d0;
   border: 1px solid #3a3a5a;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 11px;
 }
 #table-container .tabulator-tableholder {
   background: #0d0d14;
@@ -228,7 +228,7 @@
 /* ─── No-file placeholder ────────────────────────────────── */
 .no-file-msg {
   color: #2a2a3a;
-  font-size: 13px;
+  font-size: 12px;
   text-align: center;
   margin-top: 60px;
 }
@@ -274,7 +274,7 @@
   border-right: 1px solid #141420;
 }
 .nb-cell-badge {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 600;
   letter-spacing: 0.5px;
   padding: 1px 4px;
@@ -284,7 +284,7 @@
 .nb-cell-badge.code { background: #1a1a3a; color: #5080e0; }
 .nb-cell-badge.markdown { background: #1a2a1a; color: #60a060; }
 .nb-exec-count {
-  font-size: 10px;
+  font-size: 9px;
   color: #3a3a54;
 }
 .nb-cell-actions {
@@ -301,7 +301,7 @@
   border: 1px solid #1e1e32;
   border-radius: 3px;
   color: #4a4a68;
-  font-size: 10px;
+  font-size: 9px;
   cursor: pointer;
   padding: 1px 3px;
   font-family: inherit;
@@ -321,7 +321,7 @@
 }
 .nb-cell-input pre {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
@@ -335,7 +335,7 @@
   color: inherit;
 }
 .nb-cell-input .file-rendered {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.6;
   color: #b0b0c4;
 }
@@ -350,7 +350,7 @@
   border: none;
   outline: none;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
   resize: vertical;
   padding: 0;
@@ -358,7 +358,7 @@
 .nb-cell-output {
   border-top: 1px solid #141420;
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.5;
   overflow-x: auto;
 }
@@ -366,7 +366,7 @@
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
-  font-size: 12px;
+  font-size: 11px;
   color: #9090a8;
 }
 .nb-output-error pre {
@@ -376,7 +376,7 @@
   overflow: auto;
   max-height: 400px;
 }
-.nb-output-html table { border-collapse: collapse; font-size: 12px; }
+.nb-output-html table { border-collapse: collapse; font-size: 11px; }
 .nb-output-html th, .nb-output-html td { border: 1px solid #1a1a2c; padding: 3px 7px; }
 .nb-output-html th { background: #0b0b16; color: #aab; }
 .nb-cell-output img {
@@ -399,7 +399,7 @@
   border-radius: 4px;
   color: #4a4a68;
   font-family: inherit;
-  font-size: 10px;
+  font-size: 9px;
   padding: 2px 10px;
   cursor: pointer;
   transition: all 0.2s;

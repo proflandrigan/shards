@@ -10,7 +10,7 @@
   height: 42px;
 }
 .logo {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: bold;
   color: #FFD700;
   letter-spacing: 3px;
@@ -24,7 +24,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 12px;
 }
 .agent-dot {
   width: 8px;
@@ -39,7 +39,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 11px;
   color: #444;
 }
 .conn-indicator {
@@ -97,7 +97,7 @@
 
 .ws-tab {
   padding: 0 14px;
-  font-size: 12px;
+  font-size: 11px;
   color: #4a4a68;
   cursor: pointer;
   white-space: nowrap;
@@ -133,7 +133,7 @@
 }
 .ws-tab.modified .modified-dot { display: block; }
 .ws-tab .close-btn {
-  font-size: 13px;
+  font-size: 12px;
   color: #333;
   cursor: pointer;
   margin-left: 2px;
@@ -155,7 +155,7 @@
   border-radius: 4px;
   color: #5a5a78;
   font-family: inherit;
-  font-size: 11px;
+  font-size: 10px;
   padding: 3px 10px;
   cursor: pointer;
   transition: all 0.2s;
@@ -176,7 +176,7 @@
   border: 1px solid #1e1e32;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
   padding: 2px 6px;
   line-height: 1;
   transition: all 0.2s;

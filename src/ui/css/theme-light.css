@@ -123,7 +123,7 @@
 [data-theme="light"] .file-rendered em { color: #666; }
 [data-theme="light"] .file-rendered hr { border-top-color: #ddd; }
 [data-theme="light"] .file-rendered blockquote { border-left-color: #ccc; color: #777; }
-[data-theme="light"] .file-rendered table { font-size: 12px; }
+[data-theme="light"] .file-rendered table { font-size: 11px; }
 [data-theme="light"] .file-rendered th, [data-theme="light"] .file-rendered td { border-color: #ddd; }
 [data-theme="light"] .file-rendered th { background: #f0f0f5; color: #444; }
 
