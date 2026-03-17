@@ -153,15 +153,18 @@ function cmdStart() {
     return;
   }
 
-  // 5. Spawn server in background
+  // 5. Spawn server in background (redirect output to log file for diagnostics)
   console.log('  Starting server...');
   const serverScript = path.join(UI_DEST, 'server.js');
+  const serverLogPath = path.join(SHARDS_DIR, 'server.log');
+  const serverLogFd = fs.openSync(serverLogPath, 'a');
   const child = spawn(process.execPath, [serverScript], {
     detached: true,
-    stdio: 'ignore',
+    stdio: ['ignore', serverLogFd, serverLogFd],
     cwd: PROJECT_DIR,
   });
   child.unref();
+  fs.closeSync(serverLogFd);
 
   // 6. Wait for server to be ready then open browser
   waitForServer(20, (port) => {

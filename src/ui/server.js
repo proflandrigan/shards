@@ -12,9 +12,18 @@ const PROJECT_DIR = process.cwd();
 const SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
 const PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
 const PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
+const LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
 const AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
 const COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
 const INDEX_HTML = path.join(__dirname, 'index.html');
+
+// ─── Logging ─────────────────────────────────────────────────────────────────
+
+function log(msg) {
+  const ts = new Date().toISOString();
+  const line = `[${ts}] ${msg}\n`;
+  try { fs.appendFileSync(LOG_FILE, line); } catch {}
+}
 
 const PORTS = [7842, 7843, 7844, 7845];
 const OUTPUT_DIRS = ['analysis', 'studies', 'models', 'services', 'research', 'dashboards', 'brainstorm', 'data_models'];
@@ -293,6 +302,79 @@ function handleChatExit({ code, sessionId }) {
   broadcast({ type: 'chat-ended', sessionId, code: code || 0 });
 }
 
+// ─── Slash command parsing ──────────────────────────────────────────────────
+
+function parseSlashCommand(message) {
+  const trimmed = message.trim();
+  if (!trimmed.startsWith('/')) return null;
+
+  const cmd = trimmed.slice(1).split(/\s+/)[0].toLowerCase();
+  if (!cmd) return null;
+
+  // Utility commands
+  const utilities = ['compact', 'stop', 'clear', 'help'];
+  if (utilities.includes(cmd)) {
+    return { type: 'utility', command: cmd };
+  }
+
+  // Agent commands — check against installed agents
+  const agents = listAgents();
+  const agentNames = agents.map(a => a.name);
+  if (agentNames.includes(cmd)) {
+    return { type: 'agent', agent: cmd };
+  }
+
+  // Unknown slash command — pass through
+  return null;
+}
+
+// ─── Chat session creation helper ───────────────────────────────────────────
+
+function startNewChatSession(agent, options = {}) {
+  const { resumeSessionId, permissionMode } = options;
+
+  // Kill existing session if running
+  if (chatSession && chatSession.isRunning) {
+    chatSession.stop();
+  }
+
+  const sessionId = randomUUID();
+
+  chatSession = new ChatSession({
+    agent,
+    sessionId,
+    resumeSessionId,
+    cwd: PROJECT_DIR,
+    permissionMode: permissionMode || 'acceptEdits',
+    onEvent: handleChatEvent,
+    onExit: handleChatExit,
+  });
+
+  chatSession.start();
+
+  // Read the command file for this agent — it contains the exact
+  // activation prompt that slash commands use (persona, rules, greeting
+  // instructions). Falls back to a generic prompt if no command file exists.
+  const cmdFile = path.join(COMMANDS_DIR, `${agent}.md`);
+  let activationPrompt;
+  try {
+    const raw = fs.readFileSync(cmdFile, 'utf8');
+    // Strip YAML frontmatter — the model only needs the body
+    activationPrompt = raw.replace(/^---\n[\s\S]*?\n---\n*/, '').trim();
+  } catch {
+    activationPrompt = `You are now activated as the ${agent} agent. Greet the user and display your activation menu.`;
+  }
+
+  try {
+    chatSession.send(activationPrompt);
+  } catch (err) {
+    broadcast({ type: 'chat-error', error: `Activation failed: ${err.message}`, sessionId });
+  }
+
+  broadcast({ type: 'chat-started', agent, sessionId, autoActivated: true });
+  return { sessionId, agent };
+}
+
 // ─── Request body parser ────────────────────────────────────────────────────
 
 function readBody(req) {
@@ -537,54 +619,13 @@ function createHandler() {
         return;
       }
 
-      // Kill existing session if running
-      if (chatSession && chatSession.isRunning) {
-        chatSession.stop();
-      }
-
-      const sessionId = randomUUID();
-
-      chatSession = new ChatSession({
-        agent,
-        sessionId,
-        cwd: PROJECT_DIR,
-        permissionMode: permissionMode || 'acceptEdits',
-        onEvent: handleChatEvent,
-        onExit: handleChatExit,
-      });
-
-      chatSession.start();
-
-      // Read the command file for this agent — it contains the exact
-      // activation prompt that slash commands use (persona, rules, greeting
-      // instructions). Falls back to a generic prompt if no command file exists.
-      const cmdFile = path.join(COMMANDS_DIR, `${agent}.md`);
-      let activationPrompt;
-      try {
-        const raw = fs.readFileSync(cmdFile, 'utf8');
-        // Strip YAML frontmatter — the model only needs the body
-        activationPrompt = raw.replace(/^---\n[\s\S]*?\n---\n*/, '').trim();
-      } catch {
-        activationPrompt = `You are now activated as the ${agent} agent. Greet the user and display your activation menu.`;
-      }
-
-      try {
-        chatSession.send(activationPrompt);
-      } catch (err) {
-        broadcast({ type: 'chat-error', error: `Activation failed: ${err.message}`, sessionId });
-      }
-
-      broadcast({ type: 'chat-started', agent, sessionId, autoActivated: true });
-      jsonResponse(res, cors, 200, { sessionId, agent });
+      log(`/chat/start requested for agent="${agent}"`);
+      const result = startNewChatSession(agent, { permissionMode });
+      jsonResponse(res, cors, 200, result);
       return;
     }
 
     if (req.method === 'POST' && req.url === '/chat/send') {
-      if (!chatSession || !chatSession.isRunning) {
-        jsonResponse(res, cors, 400, { error: 'No active chat session' });
-        return;
-      }
-
       const body = await readBody(req);
       let params;
       try {
@@ -597,6 +638,79 @@ function createHandler() {
       const { message } = params;
       if (!message) {
         jsonResponse(res, cors, 400, { error: 'Missing message parameter' });
+        return;
+      }
+
+      // ─── Slash command interception ─────────────────────────
+      const slashCmd = parseSlashCommand(message);
+
+      if (slashCmd) {
+        if (slashCmd.type === 'agent') {
+          // Switch to a different agent
+          const fromAgent = chatSession ? chatSession.agent : null;
+          const toAgent = slashCmd.agent;
+
+          // Validate agent file exists
+          const agentFile = path.join(AGENTS_DIR, `${toAgent}.md`);
+          if (!fs.existsSync(agentFile)) {
+            jsonResponse(res, cors, 404, { error: `Agent "${toAgent}" not found` });
+            return;
+          }
+
+          broadcast({ type: 'chat-agent-switching', from: fromAgent, to: toAgent });
+          const result = startNewChatSession(toAgent);
+          jsonResponse(res, cors, 200, { ok: true, switched: true, agent: result.agent, sessionId: result.sessionId });
+          return;
+        }
+
+        if (slashCmd.command === 'compact') {
+          if (!chatSession || !chatSession.isRunning) {
+            jsonResponse(res, cors, 400, { error: 'No active chat session to compact' });
+            return;
+          }
+          const oldSessionId = chatSession.sessionId;
+          const agent = chatSession.agent;
+          broadcast({ type: 'chat-compacting', agent });
+          const result = startNewChatSession(agent, { resumeSessionId: oldSessionId });
+          jsonResponse(res, cors, 200, { ok: true, compacted: true, agent: result.agent, sessionId: result.sessionId });
+          return;
+        }
+
+        if (slashCmd.command === 'stop') {
+          if (chatSession && chatSession.isRunning) {
+            chatSession.stop();
+          }
+          jsonResponse(res, cors, 200, { ok: true, stopped: true });
+          return;
+        }
+
+        if (slashCmd.command === 'help') {
+          const agents = listAgents();
+          let helpText = '**Available Commands**\n\n';
+          helpText += '**Agents:**\n';
+          for (const a of agents) {
+            helpText += `  \`/${a.name}\` — ${a.description || 'Switch to ' + a.name}\n`;
+          }
+          helpText += '\n**Utility:**\n';
+          helpText += '  `/compact` — Restart session with fresh context\n';
+          helpText += '  `/stop` — Stop the current session\n';
+          helpText += '  `/clear` — Clear the messages panel\n';
+          helpText += '  `/help` — Show this help message\n';
+          broadcast({ type: 'chat-system-notice', text: helpText });
+          jsonResponse(res, cors, 200, { ok: true, help: true });
+          return;
+        }
+
+        if (slashCmd.command === 'clear') {
+          broadcast({ type: 'chat-clear-messages' });
+          jsonResponse(res, cors, 200, { ok: true, cleared: true });
+          return;
+        }
+      }
+
+      // ─── Regular message send ───────────────────────────────
+      if (!chatSession || !chatSession.isRunning) {
+        jsonResponse(res, cors, 400, { error: 'No active chat session' });
         return;
       }
 

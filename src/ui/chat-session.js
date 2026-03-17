@@ -7,11 +7,18 @@ const { randomUUID } = require('crypto');
 
 const SHARDS_DIR = path.join(process.cwd(), '.shards');
 const CHAT_PID_FILE = path.join(SHARDS_DIR, 'chat.pid');
+const LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
+
+function log(msg) {
+  const ts = new Date().toISOString();
+  try { fs.appendFileSync(LOG_FILE, `[${ts}] [chat-session] ${msg}\n`); } catch {}
+}
 
 class ChatSession {
-  constructor({ agent, sessionId, cwd, permissionMode, onEvent, onExit }) {
+  constructor({ agent, sessionId, resumeSessionId, cwd, permissionMode, onEvent, onExit }) {
     this.agent = agent;
     this.sessionId = sessionId || randomUUID();
+    this.resumeSessionId = resumeSessionId || null;
     this.cwd = cwd || process.cwd();
     this.permissionMode = permissionMode || 'acceptEdits';
     this.onEvent = onEvent || (() => {});
@@ -34,6 +41,12 @@ class ChatSession {
       '--permission-mode', this.permissionMode,
     ];
 
+    if (this.resumeSessionId) {
+      args.push('--resume', this.resumeSessionId);
+    }
+
+    log(`Spawning claude CLI for agent="${this.agent}" session="${this.sessionId}" permissionMode="${this.permissionMode}"${this.resumeSessionId ? ` resume="${this.resumeSessionId}"` : ''}`);
+
     this.child = spawn('claude', args, {
       cwd: this.cwd,
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -41,6 +54,7 @@ class ChatSession {
     });
 
     this.startedAt = new Date().toISOString();
+    log(`claude process spawned, PID=${this.child.pid}`);
 
     // Save PID for stale process cleanup
     try {
@@ -60,11 +74,13 @@ class ChatSession {
     this.child.stderr.on('data', (chunk) => {
       const text = chunk.toString().trim();
       if (text) {
+        log(`stderr: ${text}`);
         this.onEvent({ type: 'chat-stderr', text, sessionId: this.sessionId });
       }
     });
 
     this.child.on('close', (code) => {
+      log(`claude process exited, code=${code}, agent="${this.agent}", session="${this.sessionId}"`);
       this.child = null;
       this._responding = false;
       try { fs.unlinkSync(CHAT_PID_FILE); } catch {}
@@ -72,6 +88,7 @@ class ChatSession {
     });
 
     this.child.on('error', (err) => {
+      log(`claude process error: ${err.message}`);
       this.onEvent({ type: 'chat-error', error: err.message, sessionId: this.sessionId });
     });
   }

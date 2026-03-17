@@ -86,13 +86,46 @@ function handleSSEEvent(e) {
       break;
 
     case 'chat-stderr': {
-      // Check for auth/login related messages
+      // Check for auth/login related messages using specific phrases to avoid false positives
       var txt = (data.text || '').toLowerCase();
-      if (txt.includes('login') || txt.includes('auth') || txt.includes('api key') || txt.includes('not logged in') || txt.includes('credential')) {
-        addSystemNotice('Claude CLI is not authenticated. Run "claude login" in your terminal first, then try again.');
+      var authPhrases = ['not logged in', 'authentication required', 'invalid api key', 'api key expired', 'please login', 'please log in', 'run claude login', 'unauthorized', 'auth token'];
+      var isAuth = false;
+      for (var ap = 0; ap < authPhrases.length; ap++) {
+        if (txt.includes(authPhrases[ap])) { isAuth = true; break; }
+      }
+      if (isAuth) {
+        addSystemNotice('Claude CLI auth error: ' + (data.text || 'unknown') + '\n\nRun "claude login" in your terminal, then try again.');
       }
       break;
     }
+
+    case 'chat-agent-switching':
+      // Reset streaming state
+      pendingBubble = null;
+      tokenBuffer = '';
+      chatMessages = [];
+      hasMessages = false;
+      document.getElementById('messages').innerHTML = '';
+      addSystemNotice('Switching to ' + (AGENTS[data.to] ? AGENTS[data.to].label : data.to) + '...');
+      chatAgent = data.to;
+      activateAgent(data.to);
+      setChatInputEnabled(false);
+      break;
+
+    case 'chat-compacting':
+      addSystemNotice('Compacting context...');
+      setChatInputEnabled(false);
+      break;
+
+    case 'chat-system-notice':
+      addSystemNotice(data.text);
+      break;
+
+    case 'chat-clear-messages':
+      document.getElementById('messages').innerHTML = '';
+      chatMessages = [];
+      hasMessages = false;
+      break;
 
     case 'chat-ended':
       if (data.code && data.code !== 0) {

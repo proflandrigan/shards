@@ -55,7 +55,10 @@ async function startChat(agentName) {
       body: JSON.stringify({ agent: agentName }),
     });
     var data = await res.json();
-    if (data.error) return;
+    if (data.error) {
+      addSystemNotice(data.error);
+      return;
+    }
 
     chatSessionId = data.sessionId;
     chatAgent = agentName;
@@ -86,12 +89,30 @@ async function sendChatMessage() {
 
   input.value = '';
 
+  // Client-side /clear — no server round-trip needed
+  if (message.toLowerCase() === '/clear') {
+    document.getElementById('messages').innerHTML = '';
+    chatMessages = [];
+    hasMessages = false;
+    return;
+  }
+
   try {
-    await fetch('/chat/send', {
+    var res = await fetch('/chat/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: message }),
     });
+    var data = await res.json();
+
+    // Update client state for agent switches
+    if (data.switched && data.agent) {
+      chatSessionId = data.sessionId;
+      chatAgent = data.agent;
+      chatMessages = [];
+    } else if (data.compacted && data.sessionId) {
+      chatSessionId = data.sessionId;
+    }
   } catch (err) {}
 }
 
@@ -187,12 +208,18 @@ function addToolIndicator(toolName) {
 // Conversation panel
 // ═══════════════════════════════════════════════════════════════
 
-function addSystemNotice(text) {
+function addSystemNotice(text, opts) {
   var container = document.getElementById('messages');
   if (!hasMessages) { container.innerHTML = ''; hasMessages = true; }
   var div = document.createElement('div');
   div.className = 'message system-notice';
-  div.innerHTML = '<div class="message-bubble" style="border-left: 3px solid #e05050; background: rgba(224,80,80,0.1); color: #e08080; font-size: 13px; padding: 8px 12px;">' + esc(text) + '</div>';
+  // Use markdown rendering if text contains markdown-like formatting, otherwise escape
+  var isMarkdown = text.indexOf('**') !== -1 || text.indexOf('`') !== -1 || text.indexOf('\n') !== -1;
+  var rendered = isMarkdown ? renderMarkdown(text) : esc(text);
+  var color = (opts && opts.color) || '#e05050';
+  var bgColor = (opts && opts.bg) || 'rgba(224,80,80,0.1)';
+  var textColor = (opts && opts.textColor) || '#e08080';
+  div.innerHTML = '<div class="message-bubble" style="border-left: 3px solid ' + color + '; background: ' + bgColor + '; color: ' + textColor + '; font-size: 13px; padding: 8px 12px;">' + rendered + '</div>';
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
 }
