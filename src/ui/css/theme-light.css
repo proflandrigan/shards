@@ -15,6 +15,8 @@
 [data-theme="light"] #explorer-header:hover { background: #f0f0f4; }
 [data-theme="light"] #explorer-toggle { color: #999; }
 [data-theme="light"] #explorer-toggle .chevron { color: #999; }
+[data-theme="light"] #explorer-collapse-btn { color: #999; }
+[data-theme="light"] #explorer-collapse-btn:hover { color: #555; }
 [data-theme="light"] #explorer-breadcrumb { background: #fafafa; border-bottom-color: #eee; color: #888; }
 [data-theme="light"] .crumb { color: #666; }
 [data-theme="light"] .crumb:hover { color: #333; background: #eee; }
@@ -30,6 +32,15 @@
 [data-theme="light"] .dir-size { color: #aaa; }
 [data-theme="light"] .dir-entry.parent-entry { color: #888; }
 [data-theme="light"] .dir-entry.parent-entry .dir-icon { color: #888; }
+[data-theme="light"] #explorer-view-toggle { color: #aaa; border-color: #ddd; }
+[data-theme="light"] #explorer-view-toggle:hover { color: #555; border-color: #bbb; }
+[data-theme="light"] .tree-entry { color: #555; }
+[data-theme="light"] .tree-entry:hover { background: #f0f0f4; }
+[data-theme="light"] .tree-entry.is-dir { color: #444; }
+[data-theme="light"] .tree-entry.is-file { color: #666; }
+[data-theme="light"] .tree-toggle { color: #bbb; }
+[data-theme="light"] .tree-entry.is-dir .dir-icon { color: #4a7ab5; }
+[data-theme="light"] .tree-entry.is-file .dir-icon { color: #999; }
 
 /* Resize handle */
 [data-theme="light"] .resize-handle:hover,
@@ -59,6 +70,9 @@
 [data-theme="light"] .agent-divider::before, [data-theme="light"] .agent-divider::after { background: #ddd; }
 [data-theme="light"] .tool-indicator { color: #888; border-left-color: #ccc; }
 [data-theme="light"] .tool-indicator .tool-name { color: #555; }
+[data-theme="light"] .thinking-dot { opacity: 0.5; }
+[data-theme="light"] .consulting-indicator { color: #888; }
+[data-theme="light"] .consulting-label strong { color: #555; }
 
 /* Markdown in bubbles */
 [data-theme="light"] .message-bubble h1,

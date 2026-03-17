@@ -131,6 +131,9 @@
 .file-rendered table { border-collapse: collapse; margin: 6px 0; font-size: 11px; }
 .file-rendered th, .file-rendered td { border: 1px solid #1a1a2c; padding: 3px 7px; }
 .file-rendered th { background: #0b0b16; color: #aab; }
+.file-rendered del { opacity: 0.55; text-decoration: line-through; }
+.file-rendered input[type="checkbox"] { margin-right: 5px; vertical-align: middle; pointer-events: none; }
+.file-rendered li.task-list-item { list-style: none; margin-left: -16px; }
 
 /* ─── Table view (Tabulator) ─────────────────────────────── */
 #table-view {

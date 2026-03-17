@@ -103,12 +103,25 @@ document.getElementById('file-view-area').addEventListener('scroll', function() 
   document.getElementById('line-gutter').scrollTop = this.scrollTop;
 });
 
-// Enter key to send chat
+// Enter key to send chat; Shift+Enter inserts newline; arrow keys navigate suggestions
 document.getElementById('chat-input').addEventListener('keydown', function(e) {
+  if (slashSuggestionKeydown(e)) return;
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     sendChatMessage();
   }
+});
+
+// Auto-resize textarea as user types; update slash suggestions
+document.getElementById('chat-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+  updateSlashSuggestions();
+});
+
+// Hide suggestions when input loses focus (delay allows mousedown on item to fire first)
+document.getElementById('chat-input').addEventListener('blur', function() {
+  setTimeout(hideSlashSuggestions, 150);
 });
 
 // ═══════════════════════════════════════════════════════════════

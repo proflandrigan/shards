@@ -1,76 +1,25 @@
 // ═══════════════════════════════════════════════════════════════
-// Markdown renderer
+// Markdown renderer (marked.js v4 + custom code highlighting)
 // ═══════════════════════════════════════════════════════════════
+
+(function initMarked() {
+  var renderer = new marked.Renderer();
+
+  renderer.code = function(code, lang) {
+    var highlighted = highlightCode(esc(code), lang || '');
+    return '<pre><code>' + highlighted + '</code></pre>';
+  };
+
+  marked.setOptions({
+    gfm: true,
+    breaks: false,
+    renderer: renderer
+  });
+})();
 
 function renderMarkdown(md) {
   if (!md) return '';
-  var lines = md.split('\n');
-  var out = [];
-  var inCode = false, codeLang = '', codeAcc = [];
-  var inList = false, listType = '';
-
-  function closeList() {
-    if (inList) { out.push(listType === 'ul' ? '</ul>' : '</ol>'); inList = false; }
-  }
-
-  for (var li = 0; li < lines.length; li++) {
-    var line = lines[li];
-    if (line.startsWith('```')) {
-      if (inCode) {
-        var highlighted = highlightCode(esc(codeAcc.join('\n')), codeLang);
-        out.push('<pre><code>' + highlighted + '</code></pre>');
-        codeAcc = []; codeLang = ''; inCode = false;
-      } else {
-        closeList();
-        codeLang = line.slice(3).trim();
-        inCode = true;
-      }
-      continue;
-    }
-    if (inCode) { codeAcc.push(line); continue; }
-
-    var isListLine = /^[-*]\s/.test(line) || /^\d+\.\s/.test(line);
-    if (inList && !isListLine) closeList();
-
-    if (line.trim() === '') { closeList(); out.push('<br>'); continue; }
-
-    var m;
-    if ((m = line.match(/^(#{1,6})\s(.+)/))) {
-      closeList();
-      var lvl = m[1].length;
-      out.push('<h' + lvl + '>' + inlinemd(m[2]) + '</h' + lvl + '>');
-      continue;
-    }
-    if (/^---+$/.test(line.trim())) { closeList(); out.push('<hr>'); continue; }
-    if (line.startsWith('> ')) { closeList(); out.push('<blockquote>' + inlinemd(line.slice(2)) + '</blockquote>'); continue; }
-
-    if ((m = line.match(/^[-*]\s(.+)/))) {
-      if (!inList || listType !== 'ul') { closeList(); out.push('<ul>'); inList = true; listType = 'ul'; }
-      out.push('<li>' + inlinemd(m[1]) + '</li>');
-      continue;
-    }
-    if ((m = line.match(/^\d+\.\s(.+)/))) {
-      if (!inList || listType !== 'ol') { closeList(); out.push('<ol>'); inList = true; listType = 'ol'; }
-      out.push('<li>' + inlinemd(m[1]) + '</li>');
-      continue;
-    }
-
-    out.push('<p>' + inlinemd(line) + '</p>');
-  }
-
-  closeList();
-  if (inCode) out.push('<pre><code>' + esc(codeAcc.join('\n')) + '</code></pre>');
-  return out.join('');
-}
-
-function inlinemd(text) {
-  text = esc(text);
-  text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  text = text.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
-  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-  return text;
+  return marked.parse(md);
 }
 
 // ═══════════════════════════════════════════════════════════════

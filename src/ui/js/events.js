@@ -20,6 +20,7 @@ function handleSSEEvent(e) {
       break;
 
     case 'agent-consulting':
+      updateConsultingIndicator(data.agent);
       break;
 
     case 'artifact-updated':
@@ -45,15 +46,19 @@ function handleSSEEvent(e) {
       chatMessages.push({ role: 'user', content: data.content, agent: data.agent });
       addMessageDirect('user', data.content, data.agent);
       setChatInputEnabled(false);
+      showThinkingIndicator();
       break;
 
     case 'chat-token':
+      removeThinkingIndicator();
       ensurePendingBubble();
       appendToken(data.text);
       break;
 
     case 'chat-tool-use':
+      removeThinkingIndicator();
       if (pendingBubble && tokenBuffer) flushTokens();
+      if (data.tool === 'Task') showConsultingIndicator();
       addToolIndicator(data.tool);
       break;
 
@@ -73,6 +78,7 @@ function handleSSEEvent(e) {
       break;
 
     case 'chat-turn-end':
+      removeThinkingIndicator();
       setChatInputEnabled(true);
       document.getElementById('chat-input').focus();
       break;
@@ -81,6 +87,7 @@ function handleSSEEvent(e) {
       break;
 
     case 'chat-error':
+      removeThinkingIndicator();
       addSystemNotice(data.error || 'An error occurred');
       setChatInputEnabled(true);
       break;

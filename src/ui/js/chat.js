@@ -88,6 +88,7 @@ async function sendChatMessage() {
   if (!message || chatResponding) return;
 
   input.value = '';
+  input.style.height = 'auto';
 
   // Client-side /clear — no server round-trip needed
   if (message.toLowerCase() === '/clear') {
@@ -129,6 +130,8 @@ function endChatSession() {
   chatResponding = false;
   pendingBubble = null;
   tokenBuffer = '';
+  thinkingIndicatorEl = null;
+  consultingIndicatorEl = null;
 
   setChatInputEnabled(true);
   showAgentPicker();
@@ -204,6 +207,62 @@ function addToolIndicator(toolName) {
   container.scrollTop = container.scrollHeight;
 }
 
+function showThinkingIndicator() {
+  removeThinkingIndicator();
+  var container = document.getElementById('messages');
+  if (!hasMessages) { container.innerHTML = ''; hasMessages = true; }
+  var info = AGENTS[chatAgent] || { color: '#4a4a80' };
+  var div = document.createElement('div');
+  div.className = 'thinking-indicator';
+  div.innerHTML =
+    '<div class="thinking-dot" style="background:' + info.color + '"></div>' +
+    '<div class="thinking-dot" style="background:' + info.color + '"></div>' +
+    '<div class="thinking-dot" style="background:' + info.color + '"></div>';
+  container.appendChild(div);
+  thinkingIndicatorEl = div;
+  container.scrollTop = container.scrollHeight;
+}
+
+function removeThinkingIndicator() {
+  if (thinkingIndicatorEl) {
+    thinkingIndicatorEl.remove();
+    thinkingIndicatorEl = null;
+  }
+}
+
+function showConsultingIndicator() {
+  var container = document.getElementById('messages');
+  if (!hasMessages) { container.innerHTML = ''; hasMessages = true; }
+  var div = document.createElement('div');
+  div.className = 'consulting-indicator';
+  div.innerHTML =
+    '<span class="consulting-glow-dot" style="background:#5050a0"></span>' +
+    '<span class="consulting-label">Consulting agent...</span>';
+  container.appendChild(div);
+  consultingIndicatorEl = div;
+  container.scrollTop = container.scrollHeight;
+}
+
+function updateConsultingIndicator(agentKey) {
+  var info = AGENTS[agentKey] || { color: '#6060a0', label: agentKey };
+  if (consultingIndicatorEl) {
+    consultingIndicatorEl.innerHTML =
+      '<span class="consulting-glow-dot consulting-glow-dot--done" style="background:' + info.color + '"></span>' +
+      '<span class="consulting-label"><strong style="color:' + info.color + '">' + esc(info.label) + '</strong> consulted</span>';
+    consultingIndicatorEl = null;
+  } else {
+    var container = document.getElementById('messages');
+    if (!hasMessages) { container.innerHTML = ''; hasMessages = true; }
+    var div = document.createElement('div');
+    div.className = 'consulting-indicator';
+    div.innerHTML =
+      '<span class="consulting-glow-dot consulting-glow-dot--done" style="background:' + info.color + '"></span>' +
+      '<span class="consulting-label"><strong style="color:' + info.color + '">' + esc(info.label) + '</strong> consulted</span>';
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // Conversation panel
 // ═══════════════════════════════════════════════════════════════
@@ -247,6 +306,135 @@ function addMessageDirect(role, content, agent) {
 
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Slash command autocomplete
+// ═══════════════════════════════════════════════════════════════
+
+var slashSuggestionItems = [];
+var slashSuggestionIdx = -1;
+
+var SLASH_UTILITY_CMDS = [
+  { cmd: 'compact', desc: 'Restart session with fresh context' },
+  { cmd: 'clear',   desc: 'Clear the messages panel' },
+  { cmd: 'help',    desc: 'Show available commands' },
+  { cmd: 'stop',    desc: 'Stop the current session' },
+];
+
+function buildSlashCommands(prefix) {
+  var all = SLASH_UTILITY_CMDS.slice();
+  if (agentList) {
+    for (var i = 0; i < agentList.length; i++) {
+      var info = AGENTS[agentList[i].name] || {};
+      all.push({ cmd: agentList[i].name, desc: info.label ? 'Switch to ' + info.label : (agentList[i].description || '') });
+    }
+  }
+  if (prefix) {
+    all = all.filter(function(c) { return c.cmd.indexOf(prefix) === 0; });
+  }
+  return all;
+}
+
+function updateSlashSuggestions() {
+  var input = document.getElementById('chat-input');
+  var val = input.value;
+  var suggestions = document.getElementById('slash-suggestions');
+  if (!val.startsWith('/') || val.indexOf(' ') !== -1) {
+    hideSlashSuggestions();
+    return;
+  }
+  var prefix = val.slice(1).toLowerCase();
+  slashSuggestionItems = buildSlashCommands(prefix);
+  if (slashSuggestionItems.length === 0) {
+    hideSlashSuggestions();
+    return;
+  }
+  slashSuggestionIdx = -1;
+  renderSlashSuggestions(suggestions);
+}
+
+function renderSlashSuggestions(container) {
+  container.innerHTML = '';
+  for (var i = 0; i < slashSuggestionItems.length; i++) {
+    var item = slashSuggestionItems[i];
+    var div = document.createElement('div');
+    div.className = 'slash-suggestion' + (i === slashSuggestionIdx ? ' active' : '');
+    div.innerHTML =
+      '<span class="slash-suggestion-cmd">/' + esc(item.cmd) + '</span>' +
+      '<span class="slash-suggestion-desc">' + esc(item.desc) + '</span>';
+    div.addEventListener('mousedown', (function(cmd) {
+      return function(e) {
+        e.preventDefault();
+        applySlashSuggestion(cmd);
+      };
+    })(item.cmd));
+    container.appendChild(div);
+  }
+  container.classList.add('visible');
+}
+
+function hideSlashSuggestions() {
+  var suggestions = document.getElementById('slash-suggestions');
+  if (suggestions) {
+    suggestions.classList.remove('visible');
+    suggestions.innerHTML = '';
+  }
+  slashSuggestionItems = [];
+  slashSuggestionIdx = -1;
+}
+
+function applySlashSuggestion(cmd) {
+  var input = document.getElementById('chat-input');
+  // Commands that take no args — send immediately
+  var noArgCmds = ['compact', 'clear', 'stop', 'help'];
+  var isAgent = agentList && agentList.some(function(a) { return a.name === cmd; });
+  if (noArgCmds.indexOf(cmd) !== -1 || isAgent) {
+    input.value = '/' + cmd;
+  } else {
+    input.value = '/' + cmd + ' ';
+  }
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+  input.focus();
+  hideSlashSuggestions();
+}
+
+function slashSuggestionKeydown(e) {
+  var suggestions = document.getElementById('slash-suggestions');
+  if (!suggestions || !suggestions.classList.contains('visible')) return false;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    slashSuggestionIdx = Math.min(slashSuggestionIdx + 1, slashSuggestionItems.length - 1);
+    renderSlashSuggestions(suggestions);
+    return true;
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    slashSuggestionIdx = Math.max(slashSuggestionIdx - 1, -1);
+    renderSlashSuggestions(suggestions);
+    return true;
+  }
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    if (slashSuggestionIdx >= 0 && slashSuggestionItems[slashSuggestionIdx]) {
+      applySlashSuggestion(slashSuggestionItems[slashSuggestionIdx].cmd);
+    } else if (slashSuggestionItems.length === 1) {
+      applySlashSuggestion(slashSuggestionItems[0].cmd);
+    }
+    return true;
+  }
+  if (e.key === 'Enter' && slashSuggestionIdx >= 0) {
+    e.preventDefault();
+    applySlashSuggestion(slashSuggestionItems[slashSuggestionIdx].cmd);
+    return true;
+  }
+  if (e.key === 'Escape') {
+    hideSlashSuggestions();
+    return true;
+  }
+  return false;
 }
 
 function rebuildMessages(msgArray) {

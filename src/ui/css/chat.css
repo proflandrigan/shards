@@ -59,6 +59,7 @@
   background: #131320;
   color: #a0a0b8;
   border: 1px solid #1e1e32;
+  white-space: pre-wrap;
 }
 .message.assistant .message-bubble {
   background: #0b0b18;
@@ -91,6 +92,55 @@
   align-self: flex-start;
 }
 .tool-indicator .tool-name { color: #6a6a90; font-weight: 600; }
+
+/* ─── Thinking indicator (pre-first-token) ───────────────── */
+.thinking-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 12px;
+  align-self: flex-start;
+}
+.thinking-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: thinking-bounce 1.3s ease-in-out infinite;
+}
+.thinking-dot:nth-child(2) { animation-delay: 0.18s; }
+.thinking-dot:nth-child(3) { animation-delay: 0.36s; }
+@keyframes thinking-bounce {
+  0%, 70%, 100% { opacity: 0.2; transform: scale(0.75); }
+  35% { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Consulting agent indicator ─────────────────────────── */
+.consulting-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  margin: 2px 0;
+  align-self: flex-start;
+  font-size: 11px;
+  color: #5a5a80;
+}
+.consulting-glow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: consulting-glow 1.6s ease-in-out infinite;
+}
+.consulting-glow-dot--done {
+  animation: none;
+  opacity: 0.6;
+}
+@keyframes consulting-glow {
+  0%, 100% { opacity: 0.5; transform: scale(0.85); box-shadow: none; }
+  50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 8px currentColor; }
+}
+.consulting-label strong { font-weight: 600; }
 
 /* Markdown in bubbles */
 .message-bubble h1 { font-size: 16px; color: #dde; margin: 10px 0 5px; }
@@ -130,6 +180,9 @@
 .message-bubble table { border-collapse: collapse; margin: 8px 0; font-size: 12px; }
 .message-bubble th, .message-bubble td { border: 1px solid #1e1e30; padding: 4px 8px; }
 .message-bubble th { background: #0f0f1e; color: #c0c0d0; }
+.message-bubble del { opacity: 0.55; text-decoration: line-through; }
+.message-bubble input[type="checkbox"] { margin-right: 5px; vertical-align: middle; pointer-events: none; }
+.message-bubble li.task-list-item { list-style: none; margin-left: -16px; }
 
 /* ─── Chat input bar ─────────────────────────────────────── */
 #chat-input-area {
@@ -139,7 +192,51 @@
   background: #080810;
   flex-shrink: 0;
   gap: 8px;
+  align-items: flex-end;
+  position: relative;
+}
+
+/* ─── Slash command suggestions ──────────────────────────── */
+#slash-suggestions {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 16px;
+  right: 16px;
+  background: #0d0d1a;
+  border: 1px solid #2a2a40;
+  border-radius: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 100;
+  margin-bottom: 4px;
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.4);
+}
+#slash-suggestions.visible { display: block; }
+.slash-suggestion {
+  display: flex;
   align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.slash-suggestion:hover, .slash-suggestion.active {
+  background: #151528;
+}
+.slash-suggestion-cmd {
+  color: #7090e0;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+  min-width: 120px;
+}
+.slash-suggestion-desc {
+  color: #4a4a68;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 #chat-input-area.visible {
   display: flex;
@@ -155,6 +252,12 @@
   padding: 8px 12px;
   outline: none;
   transition: border-color 0.2s;
+  resize: none;
+  overflow-y: auto;
+  max-height: 160px;
+  min-height: 34px;
+  line-height: 1.5;
+  box-sizing: border-box;
 }
 #chat-input:focus { border-color: #3860c0; }
 #chat-input:disabled { opacity: 0.4; }
@@ -183,7 +286,7 @@
   overflow-y: auto;
   flex: 1;
   max-width: 680px;
-  margin: 0 auto;
+  margin: 0;
   width: 100%;
 }
 #agent-picker.visible {

@@ -35,8 +35,10 @@
 <main id="main">
   <!-- Explorer sidebar -->
   <aside id="explorer-sidebar">
-    <div id="explorer-header" onclick="toggleExplorer()">
-      <span id="explorer-toggle"><span class="chevron">&#9660;</span> <span class="label-text">Explorer</span></span>
+    <div id="explorer-header">
+      <span id="explorer-toggle" onclick="toggleExplorer()"><span class="chevron">&#9660;</span> <span class="label-text">Explorer</span></span>
+      <button id="explorer-view-toggle" onclick="switchExplorerView(explorerViewMode === 'tree' ? 'list' : 'tree')" title="Switch to list view">List</button>
+      <button id="explorer-collapse-btn" onclick="toggleExplorer()" title="Collapse explorer">&#8249;&#8249;</button>
     </div>
     <div id="explorer-breadcrumb"></div>
     <div id="explorer-listing"></div>
@@ -60,7 +62,8 @@
           <div class="empty-state">Select an agent to start chatting</div>
         </div>
         <div id="chat-input-area">
-          <input type="text" id="chat-input" placeholder="Message the agent..." />
+          <div id="slash-suggestions"></div>
+          <textarea id="chat-input" placeholder="Message the agent... (type / for commands)" rows="1"></textarea>
           <button id="chat-send-btn" onclick="sendChatMessage()">Send</button>
           <button id="chat-stop-btn" onclick="stopChat()">End</button>
         </div>
@@ -106,6 +109,7 @@
   </div>
 </main>
 
+<script src="https://unpkg.com/marked@4.3.0/marked.min.js"></script>
 <script src="js/state.js"></script>
 <script src="js/agents.js"></script>
 <script src="js/utils.js"></script>

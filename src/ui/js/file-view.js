@@ -311,11 +311,11 @@ function handleArtifactUpdate(relPath, content, isSessionFile) {
         if (tabEl) tabEl.classList.add('unread');
       }
     }
-  } else if (isSessionFile || sessionTouchedFiles.has(relPath)) {
-    // Auto-open only session files
+  } else if ((isSessionFile || sessionTouchedFiles.has(relPath)) && relPath.endsWith('project-specs.md')) {
+    // Auto-open only project-specs.md
     openFileTab(relPath, content, relPath);
   }
-  // else: pre-existing file, don't auto-open
+  // else: don't auto-open
 }
 
 function initFileAutoRefresh() {
