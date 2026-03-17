@@ -122,6 +122,14 @@ function disposeNotebookCellMonaco() {
       var cell = openFiles[key].notebookData.cells[activeNotebookCellIdx];
       if (cell) {
         cell.source = activeNotebookCellMonaco.getValue();
+        if (cell.cell_type === 'markdown') {
+          cell.editing = false;
+          // Update DOM directly to show rendered markdown without a full re-render
+          var inputEl = document.querySelector('[data-cell-input="' + activeNotebookCellIdx + '"]');
+          if (inputEl) {
+            inputEl.innerHTML = '<div class="file-rendered">' + renderMarkdown(cell.source) + '</div>';
+          }
+        }
       }
     }
     activeNotebookCellMonaco.dispose();

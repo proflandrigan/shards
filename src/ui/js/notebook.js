@@ -119,7 +119,7 @@ function renderNotebookView(relPath) {
     html += '<div class="nb-cell-input" onclick="nbCellClick(\'' + esc(relPath) + '\',' + i + ')" data-cell-input="' + i + '">';
     if (cell.cell_type === 'markdown') {
       if (cell.editing) {
-        html += '<textarea onblur="nbFinishMarkdownEdit(\'' + esc(relPath) + '\',' + i + ')" data-md-edit="' + i + '">' + esc(cell.source) + '</textarea>';
+        html += '<div class="monaco-container" data-md-monaco="' + i + '"></div>';
       } else {
         html += '<div class="file-rendered">' + renderMarkdown(cell.source) + '</div>';
       }
@@ -137,12 +137,19 @@ function renderNotebookView(relPath) {
   html += '</div>';
   renderedView.innerHTML = html;
 
-  // Focus markdown textarea if editing
-  var mdEdit = renderedView.querySelector('textarea[data-md-edit]');
-  if (mdEdit) mdEdit.focus();
-
-  // Eagerly load Monaco for notebook
-  loadMonaco().catch(function() {});
+  // Mount Monaco for editing markdown cell (if any), otherwise eagerly load Monaco
+  var editingMdIdx = null;
+  for (var ci = 0; ci < nb.cells.length; ci++) {
+    if (nb.cells[ci].cell_type === 'markdown' && nb.cells[ci].editing) {
+      editingMdIdx = ci;
+      break;
+    }
+  }
+  if (editingMdIdx !== null) {
+    mountMarkdownMonacoInView(relPath, editingMdIdx);
+  } else {
+    loadMonaco().catch(function() {});
+  }
 }
 
 function renderAddCellRow(relPath, afterIdx) {
@@ -161,12 +168,11 @@ function nbCellClick(relPath, cellIdx) {
   activeCellIdx = cellIdx;
 
   if (cell.cell_type === 'markdown') {
-    // Toggle markdown editing
-    if (!cell.editing) {
-      disposeNotebookCellMonaco();
-      cell.editing = true;
-      renderNotebookView(relPath);
-    }
+    if (activeNotebookCellIdx === cellIdx) return; // Already editing this cell
+    disposeNotebookCellMonaco();
+    activeCellIdx = cellIdx;
+    cell.editing = true;
+    renderNotebookView(relPath);
     return;
   }
 
@@ -276,6 +282,9 @@ function nbAddCell(relPath, afterIdx, cellType) {
   setTimeout(function() {
     var el = document.querySelector('[data-cell-idx="' + (afterIdx + 1) + '"]');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (newCell.cell_type === 'code') {
+      nbCellClick(relPath, afterIdx + 1);
+    }
   }, 50);
 }
 
@@ -320,6 +329,62 @@ function nbMoveCellDown(relPath, cellIdx) {
   activeCellIdx = cellIdx + 1;
   renderWsTabs();
   renderNotebookView(relPath);
+}
+
+function mountMarkdownMonacoInView(relPath, cellIdx) {
+  var f = openFiles[relPath];
+  if (!f || !f.notebookData) return;
+  var cell = f.notebookData.cells[cellIdx];
+  if (!cell) return;
+  var container = document.querySelector('[data-md-monaco="' + cellIdx + '"]');
+  if (!container) return;
+
+  if (monacoFailed) {
+    // Fallback: textarea
+    var ta = document.createElement('textarea');
+    ta.setAttribute('data-md-edit', cellIdx);
+    ta.value = cell.source;
+    ta.addEventListener('blur', function() { nbFinishMarkdownEdit(relPath, cellIdx); });
+    container.parentNode.replaceChild(ta, container);
+    ta.focus();
+    return;
+  }
+
+  loadMonaco().then(function() {
+    if (activeCellIdx !== cellIdx) return;
+    var cont = document.querySelector('[data-md-monaco="' + cellIdx + '"]');
+    if (!cont) return;
+    var editor = createMonacoEditor(cont, {
+      value: cell.source,
+      language: 'markdown',
+      wordWrap: 'on',
+      scrollBeyondLastLine: false,
+    });
+    var updateHeight = function() {
+      var contentHeight = Math.min(500, Math.max(40, editor.getContentHeight()));
+      cont.style.height = contentHeight + 'px';
+      editor.layout();
+    };
+    editor.onDidContentSizeChange(updateHeight);
+    updateHeight();
+    editor.onDidChangeModelContent(function() {
+      cell.source = editor.getValue();
+      f.modified = true;
+      renderWsTabs();
+    });
+    activeNotebookCellMonaco = editor;
+    activeNotebookCellIdx = cellIdx;
+    editor.focus();
+  }).catch(function() {
+    var cont = document.querySelector('[data-md-monaco="' + cellIdx + '"]');
+    if (!cont) return;
+    var ta = document.createElement('textarea');
+    ta.setAttribute('data-md-edit', cellIdx);
+    ta.value = cell.source;
+    ta.addEventListener('blur', function() { nbFinishMarkdownEdit(relPath, cellIdx); });
+    cont.parentNode.replaceChild(ta, cont);
+    ta.focus();
+  });
 }
 
 function nbToggleCellType(relPath, cellIdx) {
