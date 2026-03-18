@@ -87,6 +87,7 @@ setInterval(expireSessions, 60_000);
 
 let clients = [];       // SSE response objects: { res, sessionId (optional filter) }
 let files = {};         // relPath -> content
+let panelSources = {};  // panelId -> { filePath, panel, title, agent, lastContent }
 
 // ─── Broadcast ───────────────────────────────────────────────────────────────
 
@@ -225,7 +226,41 @@ function pollFiles() {
     }
   }
 
+  // ─── Panel source file watching ──────────────────────────────────────────
+  for (const [panelId, info] of Object.entries(panelSources)) {
+    const content = readFileSafe(info.filePath);
+    if (content === null) continue;
+    if (content !== info.lastContent) {
+      panelSources[panelId] = { ...info, lastContent: content };
+      const parsedData = parsePanelFileContent(info.filePath, content);
+      broadcast({
+        type: 'ui-panel-update',
+        panelId,
+        panel: info.panel,
+        title: info.title,
+        agent: info.agent,
+        data: parsedData,
+      });
+    }
+  }
+
   setTimeout(pollFiles, 3000);
+}
+
+// ─── Panel file content parser ────────────────────────────────────────────────
+
+function parsePanelFileContent(filePath, content) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.json') {
+    try { return JSON.parse(content); } catch { return content; }
+  }
+  if (ext === '.csv') {
+    return parseDelimited(content, ',');
+  }
+  if (ext === '.tsv') {
+    return parseDelimited(content, '\t');
+  }
+  return content;
 }
 
 // ─── Event handler (observer mode - relay) ──────────────────────────────────
@@ -283,6 +318,51 @@ function handleEvent(body) {
       broadcast({ type: 'session-end', sessionId: activeSessionId });
       if (activeStore) activeStore.sessionFiles = new Set();
       break;
+
+    // ─── ui-panel: agent pushes an interactive panel to the browser ─────
+    case 'ui-panel': {
+      const { panel, panelId, title, data, source, type: panelType, agent: panelAgent } = data;
+      if (!panel || !panelId) break;
+
+      let resolvedData = data.data !== undefined ? data.data : null;
+
+      // If source file path provided, read it and watch for changes
+      if (source) {
+        const content = readFileSafe(source);
+        if (content !== null) {
+          resolvedData = parsePanelFileContent(source, content);
+          panelSources[panelId] = {
+            filePath: source,
+            panel,
+            title: title || panel,
+            agent: panelAgent || null,
+            lastContent: content,
+          };
+        }
+      }
+
+      broadcast({
+        type: 'ui-panel',
+        panel,
+        panelId,
+        title: title || panel,
+        data: resolvedData,
+        source: source || null,
+        panelType: panelType || null,
+        agent: panelAgent || null,
+      });
+      break;
+    }
+
+    // ─── ui-panel-close: agent or server closes a panel ─────────────────
+    case 'ui-panel-close': {
+      const { panelId } = data;
+      if (panelId && panelSources[panelId]) {
+        delete panelSources[panelId];
+      }
+      broadcast({ type: 'ui-panel-close', panelId: panelId || null });
+      break;
+    }
   }
 
   return { ack: true, seq: seq || null };
