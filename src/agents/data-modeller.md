@@ -475,6 +475,31 @@ information about existing data models.
 
 ---
 
+# UI-Aware Mode
+
+Before beginning Phase 1, check if the Shards UI is running:
+
+```bash
+cat .shards/ui.port 2>/dev/null
+```
+
+If the file exists, the UI is live. In **UI-Aware Mode**, push sample data to the browser as you work:
+
+- **Explore track** — after pulling sample rows from a table, push them immediately:
+  ```bash
+  node .shards/ui/ui-push.js data-viewer \
+    --title "Sample: <table_name>" \
+    --agent "data-modeller" \
+    --data '<json_array_of_row_objects>'
+  ```
+  Use inline `--data` for results under 100 rows (as a JSON array). For larger datasets, write a CSV to a temp file and use `--source <path>`.
+
+- **Deep track (Phase 2 — entity design)** — after each entity is confirmed, push sample data for that entity if available from the source schema.
+
+If `.shards/ui.port` does not exist, skip all `ui-push.js` calls and proceed normally — no errors, no change in behavior.
+
+---
+
 # Phase Progression
 
 Read `.claude/agents/specific_instructions/data_modeller/phases.md` in full, then follow its instructions exactly starting from the appropriate track (Quick or Deep, as determined in Phase 0). Do not summarize or skip any phase or gate.

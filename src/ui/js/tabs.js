@@ -85,9 +85,15 @@ function sortFileTabs() {
 
 function switchTab(id) {
   if (splitMode && id !== 'chat') {
-    // In split mode, clicking a file tab switches the file pane
-    showFileInPane(id);
-    renderWsTabs();
+    // Both file tabs and panel tabs show in the file pane in split mode
+    if (openPanels[id]) {
+      currentFileInPane = id;
+      renderWsTabs();
+      renderPanelPane(id);
+    } else {
+      showFileInPane(id);
+      renderWsTabs();
+    }
     return;
   }
   activeTabId = id;
@@ -134,6 +140,32 @@ function renderWsTabs() {
     bar.appendChild(tab);
   }
 
+  // Panel tabs
+  var PANEL_ICONS = { 'data-viewer': '⊞', 'dag': '⬡', 'diagram': '◈', 'chart': '▦', 'diff': '⊟', 'model-card': '▣' };
+  for (var pi = 0; pi < panelTabOrder.length; pi++) {
+    var pid = panelTabOrder[pi];
+    var panel = openPanels[pid];
+    if (!panel) continue;
+    var ptab = document.createElement('div');
+    var isPanelActive = splitMode ? (pid === currentFileInPane) : (pid === activeTabId);
+    ptab.className = 'ws-tab panel-tab' + (isPanelActive ? ' active' : '');
+    ptab.dataset.panelId = pid;
+
+    var icon = PANEL_ICONS[panel.panel] || '▪';
+    ptab.innerHTML =
+      '<span class="panel-tab-icon">' + icon + '</span>' +
+      esc(panel.title) +
+      ' <span class="close-btn" title="Close panel">x</span>';
+
+    ptab.addEventListener('click', (function(panelId) {
+      return function(e) {
+        if (e.target.classList.contains('close-btn')) { closePanelTab(panelId); return; }
+        switchTab(panelId);
+      };
+    })(pid));
+    bar.appendChild(ptab);
+  }
+
   bar.appendChild(actions);
 
   // Split button state
@@ -149,10 +181,15 @@ function showActiveContent() {
     chatPane.style.display = 'flex';
     splitResize.style.display = 'block';
     filePane.classList.add('visible');
-    if (currentFileInPane && openFiles[currentFileInPane]) {
+    if (currentFileInPane && openPanels[currentFileInPane]) {
+      renderPanelPane(currentFileInPane);
+    } else if (currentFileInPane && openFiles[currentFileInPane]) {
       renderFilePane(currentFileInPane);
     } else if (fileTabOrder.length > 0) {
       showFileInPane(fileTabOrder[0]);
+    } else if (panelTabOrder.length > 0) {
+      currentFileInPane = panelTabOrder[0];
+      renderPanelPane(panelTabOrder[0]);
     } else {
       renderEmptyFilePane();
     }
@@ -165,6 +202,10 @@ function showActiveContent() {
   if (activeTabId === 'chat') {
     chatPane.style.display = 'flex';
     filePane.classList.remove('visible');
+  } else if (openPanels[activeTabId]) {
+    chatPane.style.display = 'none';
+    filePane.classList.add('visible');
+    renderPanelPane(activeTabId);
   } else {
     chatPane.style.display = 'none';
     filePane.classList.add('visible');

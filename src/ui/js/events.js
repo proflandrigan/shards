@@ -140,6 +140,19 @@ function handleSSEEvent(e) {
       }
       endChatSession();
       break;
+
+    // ─── Agent-pushed panel events ────────────────────────────────────
+    case 'ui-panel':
+      openPanelTab(data.panelId, data);
+      break;
+
+    case 'ui-panel-close':
+      if (data.panelId) closePanelTab(data.panelId);
+      break;
+
+    case 'ui-panel-update':
+      updatePanelData(data.panelId, data.data);
+      break;
   }
 }
 
