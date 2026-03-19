@@ -52,10 +52,39 @@ class SessionStore {
     this.chatSession = null;
     this.createdAt = new Date();
     this.lastActivityAt = new Date();
+
+    // Attempt to load existing session data from disk
+    try {
+      const filePath = path.join(SESSIONS_DIR, `${sessionId}-transcript.json`);
+      if (fs.existsSync(filePath)) {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        if (data.transcript) this.transcript = data.transcript;
+        if (data.createdAt) this.createdAt = new Date(data.createdAt);
+        if (data.lastActivityAt) this.lastActivityAt = new Date(data.lastActivityAt);
+      }
+    } catch (e) {
+      // Ignore errors loading session data — starts fresh
+    }
   }
 
   touch() {
     this.lastActivityAt = new Date();
+  }
+
+  save() {
+    try {
+      if (!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true });
+      const filePath = path.join(SESSIONS_DIR, `${this.sessionId}-transcript.json`);
+      fs.writeFileSync(filePath, JSON.stringify({
+        sessionId: this.sessionId,
+        agent: this.agent,
+        transcript: this.transcript,
+        createdAt: this.createdAt,
+        lastActivityAt: this.lastActivityAt,
+      }, null, 2));
+    } catch (err) {
+      log(`Error saving session ${this.sessionId}: ${err.message}`);
+    }
   }
 }
 
@@ -88,6 +117,7 @@ setInterval(expireSessions, 60_000);
 let clients = [];       // SSE response objects: { res, sessionId (optional filter) }
 let files = {};         // relPath -> content
 let panelSources = {};  // panelId -> { filePath, panel, title, agent, lastContent }
+let panelWatchers = {}; // panelId -> fs.FSWatcher
 
 // ─── Broadcast ───────────────────────────────────────────────────────────────
 
@@ -105,6 +135,45 @@ function broadcast(event) {
       return false;
     }
   });
+}
+
+function stopPanelWatcher(panelId) {
+  if (panelWatchers[panelId]) {
+    try { panelWatchers[panelId].close(); } catch {}
+    delete panelWatchers[panelId];
+  }
+}
+
+function startPanelWatcher(panelId, info) {
+  stopPanelWatcher(panelId); // ensure clean start
+
+  try {
+    const watcher = fs.watch(info.filePath, (event) => {
+      if (event === 'change') {
+        // debounce slightly to ensure file is written
+        setTimeout(() => {
+          const currentInfo = panelSources[panelId];
+          if (!currentInfo) return; // panel was closed
+          const content = readFileSafe(currentInfo.filePath);
+          if (content !== null && content !== currentInfo.lastContent) {
+            panelSources[panelId] = { ...currentInfo, lastContent: content };
+            const parsedData = parsePanelFileContent(currentInfo.filePath, content);
+            broadcast({
+              type: 'ui-panel-update',
+              panelId,
+              panel: currentInfo.panel,
+              title: currentInfo.title,
+              agent: currentInfo.agent,
+              data: parsedData,
+            });
+          }
+        }, 100);
+      }
+    });
+    panelWatchers[panelId] = watcher;
+  } catch (err) {
+    log(`Failed to start watcher for ${info.filePath}: ${err.message}`);
+  }
 }
 
 // ─── File scanning (polling) ──────────────────────────────────────────────────
@@ -226,24 +295,6 @@ function pollFiles() {
     }
   }
 
-  // ─── Panel source file watching ──────────────────────────────────────────
-  for (const [panelId, info] of Object.entries(panelSources)) {
-    const content = readFileSafe(info.filePath);
-    if (content === null) continue;
-    if (content !== info.lastContent) {
-      panelSources[panelId] = { ...info, lastContent: content };
-      const parsedData = parsePanelFileContent(info.filePath, content);
-      broadcast({
-        type: 'ui-panel-update',
-        panelId,
-        panel: info.panel,
-        title: info.title,
-        agent: info.agent,
-        data: parsedData,
-      });
-    }
-  }
-
   setTimeout(pollFiles, 3000);
 }
 
@@ -331,13 +382,15 @@ function handleEvent(body) {
         const content = readFileSafe(source);
         if (content !== null) {
           resolvedData = parsePanelFileContent(source, content);
-          panelSources[panelId] = {
+          const info = {
             filePath: source,
             panel,
             title: title || panel,
             agent: panelAgent || null,
             lastContent: content,
           };
+          panelSources[panelId] = info;
+          startPanelWatcher(panelId, info);
         }
       }
 
@@ -357,8 +410,9 @@ function handleEvent(body) {
     // ─── ui-panel-close: agent or server closes a panel ─────────────────
     case 'ui-panel-close': {
       const { panelId } = data;
-      if (panelId && panelSources[panelId]) {
-        delete panelSources[panelId];
+      if (panelId) {
+        if (panelSources[panelId]) delete panelSources[panelId];
+        stopPanelWatcher(panelId);
       }
       broadcast({ type: 'ui-panel-close', panelId: panelId || null });
       break;
@@ -429,7 +483,10 @@ function handleChatEvent(event) {
         textContent = content;
       }
       const agent = store ? store.agent : 'unknown';
-      if (store) store.transcript.push({ role: 'assistant', content: textContent, agent, source: 'chat' });
+      if (store) {
+        store.transcript.push({ role: 'assistant', content: textContent, agent, source: 'chat' });
+        store.save();
+      }
       broadcast({ type: 'chat-message', content: textContent, agent, sessionId });
       break;
     }
@@ -899,9 +956,8 @@ function createHandler() {
         }
       }
       if (activeStore) {
-        jsonResponse(res, cors, 200, { active: true, ...activeStore.chatSession.info });
-      } else {
-        jsonResponse(res, cors, 200, { active: false });
+        jsonResponse(res, cors, 200, { active: true, ...activeStore.chatSession.info, transcript: activeStore.transcript });
+      } else {        jsonResponse(res, cors, 200, { active: false });
       }
       return;
     }
@@ -1039,6 +1095,7 @@ function createHandler() {
         store.chatSession.send(message);
         const agent = store.agent;
         store.transcript.push({ role: 'user', content: message, agent, source: 'chat' });
+        store.save();
         broadcast({ type: 'chat-user-message', content: message, agent, sessionId: store.sessionId });
         jsonResponse(res, cors, 200, { ok: true });
       } catch (err) {

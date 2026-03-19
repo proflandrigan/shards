@@ -55,8 +55,8 @@
 [data-theme="light"] .ws-tab.pinned.active { color: #222; }
 [data-theme="light"] .ws-tab .close-btn { color: #bbb; }
 [data-theme="light"] .ws-tab .close-btn:hover { color: #666; }
-[data-theme="light"] #split-btn { background: #f0f0f4; border-color: #ddd; color: #777; }
-[data-theme="light"] #split-btn:hover { background: #e8e8ee; color: #444; }
+[data-theme="light"] #split-btn, [data-theme="light"] #close-all-btn, [data-theme="light"] #close-others-btn { background: #f0f0f4; border-color: #ddd; color: #777; }
+[data-theme="light"] #split-btn:hover, [data-theme="light"] #close-all-btn:hover, [data-theme="light"] #close-others-btn:hover { background: #e8e8ee; color: #444; }
 [data-theme="light"] #split-btn.active { background: #e8f5e9; border-color: #66bb6a; color: #388e3c; }
 
 /* Chat pane */

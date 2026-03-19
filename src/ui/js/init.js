@@ -151,6 +151,7 @@ async function loadInitial() {
     if (chatStatus.active) {
       chatSessionId = chatStatus.sessionId;
       chatAgent = chatStatus.agent;
+      chatMessages = chatStatus.transcript || [];
       activateAgent(chatAgent);
       showChatView();
       rebuildMessages(chatMessages);

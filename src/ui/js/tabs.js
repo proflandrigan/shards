@@ -77,6 +77,33 @@ function closeFileTab(relPath) {
   showActiveContent();
 }
 
+function closeAllTabs() {
+  // Close all file tabs
+  var filesToClose = fileTabOrder.slice();
+  for (var i = 0; i < filesToClose.length; i++) {
+    closeFileTab(filesToClose[i]);
+  }
+  // Close all panel tabs
+  var panelsToClose = panelTabOrder.slice();
+  for (var j = 0; j < panelsToClose.length; j++) {
+    closePanelTab(panelsToClose[j]);
+  }
+}
+
+function closeOtherTabs() {
+  var activeKey = getCurrentFileKey();
+  // Close other file tabs
+  var filesToClose = fileTabOrder.filter(function(p) { return p !== activeKey; });
+  for (var i = 0; i < filesToClose.length; i++) {
+    closeFileTab(filesToClose[i]);
+  }
+  // Close other panel tabs
+  var panelsToClose = panelTabOrder.filter(function(pid) { return pid !== activeKey; });
+  for (var j = 0; j < panelsToClose.length; j++) {
+    closePanelTab(panelsToClose[j]);
+  }
+}
+
 function sortFileTabs() {
   fileTabOrder.sort(function(a, b) {
     var aS = a.endsWith('project-specs.md') ? 0 : 1;

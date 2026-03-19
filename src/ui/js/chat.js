@@ -192,12 +192,35 @@ function flushTokens() {
 function finalizePendingBubble(markdownContent) {
   flushTokens();
   if (pendingBubble) {
-    pendingBubble.innerHTML = renderMarkdown(markdownContent);
+    var rendered = renderMarkdown(markdownContent);
+    pendingBubble.innerHTML = linkifyFilePaths(rendered);
     pendingBubble = null;
   }
   tokenBuffer = '';
   var container = document.getElementById('messages');
   container.scrollTop = container.scrollHeight;
+}
+
+// ─── File path auto-linking ──────────────────────────────────────────────────
+
+function linkifyFilePaths(html) {
+  // Regex for common file extensions in data projects
+  var pathRegex = /\b([a-zA-Z0-9_\-\./]+\.(?:md|sql|py|ipynb|json|jsonl|csv|tsv|yml|yaml|txt|js|ts|html|css|png|jpg|pdf))\b/g;
+
+  return html.replace(pathRegex, function(match) {
+    // Avoid linking if it's already inside an <a>, <code>, or <pre> tag (basic heuristic)
+    // This is hard in regex on HTML, but we can check if it looks like a URL or is very short
+    if (match.startsWith('http') || match.length < 4) return match;
+
+    return '<span class="file-link" onclick="openFile(\'' + match + '\')" title="Open ' + match + '">' + match + '</span>';
+  });
+}
+
+function openFile(path) {
+  // We call the explorer's open function which handles fetching and rendering
+  if (typeof openFileFromExplorer === 'function') {
+    openFileFromExplorer(path);
+  }
 }
 
 function addToolIndicator(toolName) {
@@ -297,14 +320,14 @@ function addMessageDirect(role, content, agent) {
   if (role === 'user') {
     div.innerHTML =
       '<div class="message-meta">You</div>' +
-      '<div class="message-bubble">' + esc(content) + '</div>';
+      '<div class="message-bubble">' + linkifyFilePaths(esc(content)) + '</div>';
   } else {
     div.innerHTML =
       '<div class="message-meta">' +
       '<span class="meta-dot" style="background:' + info.color + '"></span>' +
       esc(info.label) +
       '</div>' +
-      '<div class="message-bubble" style="border-left-color:' + info.color + '">' + renderMarkdown(content) + '</div>';
+      '<div class="message-bubble" style="border-left-color:' + info.color + '">' + linkifyFilePaths(renderMarkdown(content)) + '</div>';
   }
 
   container.appendChild(div);

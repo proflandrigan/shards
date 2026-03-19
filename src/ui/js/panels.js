@@ -141,6 +141,7 @@ function renderPanelPane(panelId) {
 
   if (p.panel === 'data-viewer') {
     tableView.classList.add('visible');
+    document.getElementById('table-download-csv').style.display = 'inline-block';
 
     // Always destroy stale instance — container DOM may have been overwritten
     // by a file tab's initTabulator since we last rendered this panel
@@ -155,11 +156,85 @@ function renderPanelPane(panelId) {
 
     var tableData = normalizePanelData(p.rawData);
     initPanelTabulator(p, tableData);
+  } else if (p.panel === 'chart') {
+    tableView.classList.remove('visible');
+    renderedView.classList.add('visible');
+    renderChartPanel(renderedView, p);
+  } else if (p.panel === 'diagram' || p.panel === 'dag') {
+    tableView.classList.remove('visible');
+    renderedView.classList.add('visible');
+    renderDiagramPanel(renderedView, p);
   } else {
     tableView.classList.remove('visible');
     renderedView.classList.add('visible');
     renderedView.innerHTML =
       '<div class="no-file-msg">Panel type <strong>' + esc(p.panel) + '</strong> is not yet supported in this version.</div>';
+  }
+}
+
+// ─── Chart Panel (Plotly.js) ──────────────────────────────────────────────────
+
+function renderChartPanel(container, panel) {
+  var data = panel.rawData;
+  if (!data) {
+    container.innerHTML = '<div class="no-file-msg">No chart data provided.</div>';
+    return;
+  }
+
+  // Ensure container has a div for Plotly
+  var chartId = 'chart-' + panel.panelId;
+  container.innerHTML = '<div id="' + chartId + '" style="width:100%;height:100%"></div>';
+
+  if (typeof Plotly === 'undefined') {
+    container.innerHTML = '<div class="no-file-msg">Plotly.js not loaded. Cannot render chart.</div>';
+    return;
+  }
+
+  // Support both full Plotly spec { data, layout } and just the data array
+  var plotlyData = Array.isArray(data) ? data : (data.data || []);
+  var plotlyLayout = data.layout || {
+    title: panel.title,
+    paper_bgcolor: 'transparent',
+    plot_bgcolor: 'transparent',
+    font: { color: isDarkMode ? '#b0b0c8' : '#333' },
+    margin: { t: 40, r: 20, b: 40, l: 60 }
+  };
+
+  try {
+    Plotly.newPlot(chartId, plotlyData, plotlyLayout, { responsive: true, displayModeBar: false });
+  } catch(e) {
+    container.innerHTML = '<div class="no-file-msg">Failed to render Plotly chart: ' + esc(e.message) + '</div>';
+  }
+}
+
+// ─── Diagram Panel (Mermaid.js) ────────────────────────────────────────────────
+
+function renderDiagramPanel(container, panel) {
+  var data = panel.rawData;
+  if (!data) {
+    container.innerHTML = '<div class="no-file-msg">No diagram data provided.</div>';
+    return;
+  }
+
+  var content = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+
+  if (typeof mermaid === 'undefined') {
+    container.innerHTML = '<div class="no-file-msg">Mermaid.js not loaded. Cannot render diagram.</div>';
+    return;
+  }
+
+  var diagramId = 'mermaid-' + panel.panelId;
+  container.innerHTML = '<div class="mermaid" id="' + diagramId + '">' + esc(content) + '</div>';
+
+  try {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: isDarkMode ? 'dark' : 'default',
+      securityLevel: 'loose',
+    });
+    mermaid.run({ nodes: [document.getElementById(diagramId)] });
+  } catch(e) {
+    container.innerHTML = '<div class="no-file-msg">Failed to render Mermaid diagram: ' + esc(e.message) + '</div>';
   }
 }
 

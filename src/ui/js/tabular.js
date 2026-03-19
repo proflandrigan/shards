@@ -68,6 +68,25 @@ function serializeToDelimited(columns, data, delimiter) {
   return lines.join('\n') + '\n';
 }
 
+function downloadTableCSV() {
+  if (!activeTabulatorInstance) return;
+  var data = activeTabulatorInstance.getData();
+  if (!data || data.length === 0) return;
+  var columns = activeTabulatorInstance.getColumns().map(function(col) { return col.getField(); });
+  var csv = serializeToDelimited(columns, data, ',');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var link = document.createElement('a');
+  var url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  var activeTab = openPanels[activeTabId] || { title: activeTabId };
+  var fileName = (activeTab.title || 'export').replace(/[^a-z0-9_-]/gi, '_').toLowerCase() + '.csv';
+  link.setAttribute('download', fileName);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 async function loadTabularData(relPath, f) {
   var ext = relPath.split('.').pop().toLowerCase();
 

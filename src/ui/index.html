@@ -6,6 +6,8 @@
 <title>Shards UI</title>
 <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator_midnight.min.css">
 <script src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/layout.css">
 <link rel="stylesheet" href="css/sidebar.css">
@@ -50,6 +52,8 @@
     <div id="ws-tab-bar">
       <!-- tabs rendered dynamically -->
       <div id="ws-tab-actions">
+        <button id="close-others-btn" onclick="closeOtherTabs()" title="Close other tabs">Others</button>
+        <button id="close-all-btn" onclick="closeAllTabs()" title="Close all tabs">All</button>
         <button id="split-btn" onclick="toggleSplit()" title="Toggle split view">Split</button>
       </div>
     </div>
@@ -88,6 +92,7 @@
         <div id="table-view">
           <div id="table-toolbar">
             <input type="text" id="table-search" placeholder="Search all columns…">
+            <button class="toolbar-btn" id="table-download-csv" onclick="downloadTableCSV()" title="Download as CSV">CSV</button>
             <div id="table-edit-btns">
               <button class="toolbar-btn" onclick="tableAddRow()">+Row</button>
               <button class="toolbar-btn" onclick="tableDeleteSelectedRows()">-Row</button>

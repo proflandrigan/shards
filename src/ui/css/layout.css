@@ -154,7 +154,7 @@
   gap: 4px;
   flex-shrink: 0;
 }
-#split-btn {
+#split-btn, #close-all-btn, #close-others-btn {
   background: #0f0f1e;
   border: 1px solid #1e1e32;
   border-radius: 4px;
@@ -165,7 +165,7 @@
   cursor: pointer;
   transition: all 0.2s;
 }
-#split-btn:hover { background: #1a1a30; color: #8080a0; }
+#split-btn:hover, #close-all-btn:hover, #close-others-btn:hover { background: #1a1a30; color: #8080a0; }
 #split-btn.active { background: #1a2a1a; border-color: #2a6a2a; color: #60a060; }
 
 /* ─── Workspace content ──────────────────────────────────── */

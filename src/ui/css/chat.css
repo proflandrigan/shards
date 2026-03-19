@@ -229,6 +229,53 @@
 .message-bubble input[type="checkbox"] { margin-right: 5px; vertical-align: middle; pointer-events: none; }
 .message-bubble li.task-list-item { list-style: none; margin-left: -16px; }
 
+/* File links */
+.file-link {
+  color: #70a0ff;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: 3px;
+  transition: background 0.2s, color 0.2s;
+}
+.file-link:hover {
+  background: rgba(112, 160, 255, 0.15);
+  color: #a0c4ff;
+  text-decoration-style: solid;
+}
+
+/* Enhanced Markdown Tables */
+.message-bubble table {
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 12px;
+  width: 100%;
+  border: 1px solid #1a1a2c;
+  background: #08080f;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.message-bubble th, .message-bubble td {
+  border: 1px solid #1a1a2c;
+  padding: 8px 12px;
+  text-align: left;
+}
+.message-bubble th {
+  background: #0f0f1e;
+  color: #e0e0f0;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+.message-bubble tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+.message-bubble tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 /* ─── Chat input bar ─────────────────────────────────────── */
 #chat-input-area {
   display: none;
