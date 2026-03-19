@@ -53,3 +53,4 @@ var hasMessages = false;
 var agentList = null;
 var thinkingIndicatorEl = null;
 var consultingIndicatorEl = null;
+var chatTransitioning = false; // true during compact or agent switch

@@ -46,6 +46,27 @@ function getMonacoLang(filePath) {
   return map[ext] || 'plaintext';
 }
 
+var IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+var PDF_EXTS = ['pdf'];
+
+function isImageFile(filePath) {
+  var ext = filePath.split('.').pop().toLowerCase();
+  return IMAGE_EXTS.indexOf(ext) !== -1;
+}
+
+function isPdfFile(filePath) {
+  var ext = filePath.split('.').pop().toLowerCase();
+  return PDF_EXTS.indexOf(ext) !== -1;
+}
+
+function isMediaFile(filePath) {
+  return isImageFile(filePath) || isPdfFile(filePath);
+}
+
+function getRawFileUrl(absPath) {
+  return '/browse/file/raw?path=' + encodeURIComponent(absPath) + '&token=' + encodeURIComponent(SHARDS_TOKEN);
+}
+
 function formatSize(bytes) {
   if (bytes === 0) return '0 B';
   if (bytes < 1024) return bytes + ' B';

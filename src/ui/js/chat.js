@@ -111,8 +111,10 @@ async function sendChatMessage() {
       chatSessionId = data.sessionId;
       chatAgent = data.agent;
       chatMessages = [];
+      chatTransitioning = false;
     } else if (data.compacted && data.sessionId) {
       chatSessionId = data.sessionId;
+      chatTransitioning = false;
     }
   } catch (err) {}
 }
@@ -128,6 +130,7 @@ function endChatSession() {
   chatSessionId = null;
   chatAgent = null;
   chatResponding = false;
+  chatTransitioning = false;
   pendingBubble = null;
   tokenBuffer = '';
   thinkingIndicatorEl = null;

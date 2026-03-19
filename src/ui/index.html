@@ -56,7 +56,10 @@
     <div id="ws-content">
       <!-- Chat pane -->
       <div id="chat-pane">
-        <div id="conv-header">Chat</div>
+        <div id="conv-header">
+          <span>Chat</span>
+          <button id="chat-collapse-btn" onclick="toggleChatCollapse()" title="Collapse chat">&#8249;&#8249;</button>
+        </div>
         <div id="agent-picker"></div>
         <div id="messages">
           <div class="empty-state">Select an agent to start chatting</div>

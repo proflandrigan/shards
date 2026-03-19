@@ -12,11 +12,14 @@ function toggleSplit() {
     if (!currentFileInPane && fileTabOrder.length > 0) {
       currentFileInPane = fileTabOrder[0];
     }
+    chatPane.classList.add('split-visible');
     chatPane.style.flex = '1';
     document.getElementById('file-pane').style.flex = '1';
   } else {
-    // Exit split mode
+    // Exit split mode — also uncollapse
+    chatPane.classList.remove('split-visible', 'collapsed');
     chatPane.style.flex = '';
+    chatPane.style.width = '';
     document.getElementById('file-pane').style.flex = '';
     if (currentFileInPane && openFiles[currentFileInPane]) {
       activeTabId = currentFileInPane;
@@ -27,6 +30,19 @@ function toggleSplit() {
 
   renderWsTabs();
   showActiveContent();
+}
+
+function toggleChatCollapse() {
+  var chatPane = document.getElementById('chat-pane');
+  if (!splitMode) return; // only works in split mode
+
+  chatPane.classList.toggle('collapsed');
+
+  // When expanding, restore flex layout
+  if (!chatPane.classList.contains('collapsed')) {
+    chatPane.style.width = '';
+    chatPane.style.flex = '1';
+  }
 }
 
 function initSplitResize() {

@@ -228,6 +228,34 @@
   color: #3a3a50;
 }
 
+/* ─── Media preview (images, PDFs) ────────────────────────── */
+.media-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+}
+.image-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  background: repeating-conic-gradient(#1a1a2c 0% 25%, #0d0d14 0% 50%) 0 0 / 16px 16px;
+}
+.pdf-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 4px;
+  background: #0d0d14;
+}
+.pdf-preview {
+  width: 100%;
+  height: 100%;
+}
+
 /* ─── No-file placeholder ────────────────────────────────── */
 .no-file-msg {
   color: #2a2a3a;

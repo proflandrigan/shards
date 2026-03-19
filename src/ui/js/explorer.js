@@ -97,7 +97,9 @@ function renderTreeNodes(container, dirPath, depth) {
         }
       }
     } else {
-      row.className = 'tree-entry is-file';
+      var relFromRoot = treeRootPath ? fullPath.replace(treeRootPath + '/', '') : fullPath;
+      var touchClass = sessionTouchedFiles.has(fullPath) || sessionTouchedFiles.has(relFromRoot) ? ' touched' : '';
+      row.className = 'tree-entry is-file' + touchClass;
       row.style.paddingLeft = (8 + depth * 14 + 18) + 'px';
       row.innerHTML =
         '<span class="dir-icon file-icon">&#128196;</span>' +
@@ -191,7 +193,9 @@ function renderDirListing(data) {
       row.innerHTML = '<span class="dir-icon">&#128193;</span><span class="dir-name">' + esc(entry.name) + '</span>';
       row.addEventListener('click', (function(fp) { return function() { browseDir(fp); }; })(fullPath));
     } else {
-      row.className = 'dir-entry is-file';
+      var relFromRoot = treeRootPath ? fullPath.replace(treeRootPath + '/', '') : fullPath;
+      var touchClass = sessionTouchedFiles.has(fullPath) || sessionTouchedFiles.has(relFromRoot) ? ' touched' : '';
+      row.className = 'dir-entry is-file' + touchClass;
       row.innerHTML = '<span class="dir-icon">&#128196;</span><span class="dir-name">' + esc(entry.name) + '</span><span class="dir-size">' + formatSize(entry.size) + '</span>';
       row.addEventListener('click', (function(fp) { return function() { openFileFromExplorer(fp); }; })(fullPath));
     }
@@ -204,6 +208,16 @@ function renderDirListing(data) {
 }
 
 async function openFileFromExplorer(filePath) {
+  if (isMediaFile(filePath)) {
+    // For images/PDFs, open with absPath — no text content needed
+    var relPath = filePath;
+    // Try to get relative path from the project
+    if (treeRootPath && filePath.indexOf(treeRootPath) === 0) {
+      relPath = filePath.slice(treeRootPath.length + 1);
+    }
+    openFileTab(relPath, '', filePath, { media: true });
+    return;
+  }
   try {
     var res = await authFetch('/browse/file?path=' + encodeURIComponent(filePath));
     var data = await res.json();

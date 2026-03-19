@@ -2,7 +2,8 @@
 // Workspace tabs & file state
 // ═══════════════════════════════════════════════════════════════
 
-function openFileTab(relPath, content, absPath) {
+function openFileTab(relPath, content, absPath, opts) {
+  opts = opts || {};
   if (relPath in openFiles) {
     // Update content if not modified by user
     var f = openFiles[relPath];
@@ -10,6 +11,7 @@ function openFileTab(relPath, content, absPath) {
       f.content = content;
       f.originalContent = content;
     }
+    if (opts.media) f.media = true;
   } else {
     openFiles[relPath] = {
       content: content,
@@ -19,6 +21,7 @@ function openFileTab(relPath, content, absPath) {
       editMode: false,
       tabularData: null,
       tabulatorInstance: null,
+      media: opts.media || false,
     };
     fileTabOrder.push(relPath);
     sortFileTabs();

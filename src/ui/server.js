@@ -635,6 +635,53 @@ function createHandler() {
       }
     }
 
+    // Raw file serving (images, PDFs) — auth via query param
+    if (req.method === 'GET' && parsedUrl.pathname === '/browse/file/raw') {
+      if (!checkAuth(req, parsedUrl)) {
+        rejectAuth(res, cors);
+        return;
+      }
+      const filePath = parsedUrl.searchParams.get('path');
+      if (!filePath) {
+        res.writeHead(400);
+        res.end('Missing path');
+        return;
+      }
+      const resolved = path.resolve(filePath);
+      const RAW_MIME = {
+        '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+        '.bmp': 'image/bmp', '.ico': 'image/x-icon',
+        '.pdf': 'application/pdf',
+      };
+      const rawExt = path.extname(resolved).toLowerCase();
+      const mimeType = RAW_MIME[rawExt];
+      if (!mimeType) {
+        res.writeHead(415);
+        res.end('Unsupported file type');
+        return;
+      }
+      try {
+        const stat = fs.statSync(resolved);
+        if (stat.size > 50 * 1024 * 1024) {
+          res.writeHead(413);
+          res.end('File too large (>50MB)');
+          return;
+        }
+        const data = fs.readFileSync(resolved);
+        res.writeHead(200, {
+          ...cors,
+          'Content-Type': mimeType,
+          'Content-Length': data.length,
+        });
+        res.end(data);
+      } catch (err) {
+        res.writeHead(404);
+        res.end('File not found');
+      }
+      return;
+    }
+
     // ─── P1: All remaining endpoints require auth ───────────────
 
     if (!checkAuth(req, parsedUrl)) {
@@ -932,10 +979,9 @@ function createHandler() {
             jsonResponse(res, cors, 400, { error: 'No active chat session to compact' });
             return;
           }
-          const oldSessionId = store.chatSession.sessionId;
           const agent = store.agent;
           broadcast({ type: 'chat-compacting', agent });
-          const result = startNewChatSession(agent, { resumeSessionId: oldSessionId, callerSessionId: targetSessionId });
+          const result = startNewChatSession(agent, { callerSessionId: targetSessionId });
           jsonResponse(res, cors, 200, { ok: true, compacted: true, agent: result.agent, sessionId: result.sessionId });
           return;
         }

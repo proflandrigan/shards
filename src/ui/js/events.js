@@ -29,6 +29,8 @@ function handleSSEEvent(e) {
 
     case 'file-touched':
       sessionTouchedFiles.add(data.path);
+      if (explorerViewMode === 'tree') renderTree();
+      else if (currentBrowseDir) browseDir(currentBrowseDir);
       break;
 
     case 'event-log':
@@ -107,6 +109,7 @@ function handleSSEEvent(e) {
     }
 
     case 'chat-agent-switching':
+      chatTransitioning = true;
       // Reset streaming state
       pendingBubble = null;
       tokenBuffer = '';
@@ -120,6 +123,7 @@ function handleSSEEvent(e) {
       break;
 
     case 'chat-compacting':
+      chatTransitioning = true;
       addSystemNotice('Compacting context...');
       setChatInputEnabled(false);
       break;
@@ -135,6 +139,13 @@ function handleSSEEvent(e) {
       break;
 
     case 'chat-ended':
+      // Ignore chat-ended for old sessions during compact or agent switch
+      if (chatTransitioning) {
+        break;
+      }
+      if (data.sessionId && chatSessionId && data.sessionId !== chatSessionId) {
+        break;
+      }
       if (data.code && data.code !== 0) {
         addSystemNotice('Session ended unexpectedly (exit code ' + data.code + '). If Claude CLI is not logged in, run "claude login" in your terminal.');
       }

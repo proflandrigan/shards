@@ -15,6 +15,51 @@
   text-transform: uppercase;
   color: #333;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#chat-collapse-btn {
+  background: none;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  color: #4a4a68;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0 6px;
+  line-height: 1.4;
+  transition: all 0.2s;
+  display: none;
+}
+#chat-collapse-btn:hover { background: #1a1a30; color: #8080a0; }
+#chat-pane.split-visible #chat-collapse-btn { display: block; }
+
+/* ─── Collapsed chat state ────────────────────────────────── */
+#chat-pane.collapsed {
+  flex: none !important;
+  width: 36px !important;
+  min-width: 36px;
+  overflow: hidden;
+}
+#chat-pane.collapsed #conv-header {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 12px 6px;
+  justify-content: flex-start;
+  gap: 10px;
+  height: 100%;
+  border-bottom: none;
+  border-right: 1px solid #1a1a2c;
+}
+#chat-pane.collapsed #chat-collapse-btn {
+  display: block;
+  writing-mode: horizontal-tb;
+  transform: rotate(180deg);
+}
+#chat-pane.collapsed #agent-picker,
+#chat-pane.collapsed #messages,
+#chat-pane.collapsed #chat-input-area {
+  display: none !important;
 }
 #messages {
   flex: 1;

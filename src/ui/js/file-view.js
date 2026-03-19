@@ -9,9 +9,45 @@ function renderFilePane(relPath) {
   document.getElementById('file-path-display').textContent = relPath;
 
   var ext = relPath.split('.').pop().toLowerCase();
+  var isImage = isImageFile(relPath);
+  var isPdf = isPdfFile(relPath);
   var isMarkdown = ext === 'md';
   var isNotebook = ext === 'ipynb';
   var isTabular = isTabularFile(relPath) && typeof Tabulator !== 'undefined';
+
+  // Media files — no edit/save
+  if (isImage || isPdf) {
+    document.getElementById('edit-btn').style.display = 'none';
+    document.getElementById('save-btn').style.display = 'none';
+    var renderedView = document.getElementById('file-rendered-view');
+    var editorEl = document.getElementById('file-editor');
+    var tableView = document.getElementById('table-view');
+    var monacoFileContainer = document.getElementById('monaco-file-container');
+    renderedView.classList.remove('visible');
+    renderedView.innerHTML = '';
+    editorEl.style.display = 'none';
+    tableView.classList.remove('visible');
+    destroyTabulator();
+    disposeMonacoInstance();
+    monacoFileContainer.style.display = 'none';
+    monacoFileContainer.innerHTML = '';
+
+    renderedView.classList.add('visible');
+    var rawUrl = getRawFileUrl(f.absPath);
+
+    if (isImage) {
+      renderedView.innerHTML =
+        '<div class="media-preview image-preview">' +
+          '<img src="' + esc(rawUrl) + '" alt="' + esc(relPath.split('/').pop()) + '" />' +
+        '</div>';
+    } else {
+      renderedView.innerHTML =
+        '<div class="media-preview pdf-preview">' +
+          '<iframe src="' + esc(rawUrl) + '" title="' + esc(relPath.split('/').pop()) + '"></iframe>' +
+        '</div>';
+    }
+    return;
+  }
 
   // Hide edit/save buttons for notebooks (per-cell editing)
   if (isNotebook) {
@@ -312,7 +348,8 @@ function handleArtifactUpdate(relPath, content, isSessionFile) {
       }
     }
   } else if ((isSessionFile || sessionTouchedFiles.has(relPath)) && relPath.endsWith('project-specs.md')) {
-    // Auto-open only project-specs.md
+    // Auto-open project-specs.md in split view
+    if (!splitMode) toggleSplit();
     openFileTab(relPath, content, relPath);
   }
   // else: don't auto-open

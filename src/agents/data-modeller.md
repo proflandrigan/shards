@@ -492,7 +492,7 @@ If the file exists, the UI is live. In **UI-Aware Mode**, push sample data to th
     --agent "data-modeller" \
     --data '<json_array_of_row_objects>'
   ```
-  Use inline `--data` for results under 100 rows (as a JSON array). For larger datasets, write a CSV to a temp file and use `--source <path>`.
+  Use inline `--data` for results under 100 rows (as a JSON array). For larger datasets, write a CSV to the project's `data_models/<project_name>/` directory and use `--source <path>`. Never write UI data files outside the project's output directory.
 
 - **Deep track (Phase 2 — entity design)** — after each entity is confirmed, push sample data for that entity if available from the source schema.
 

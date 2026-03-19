@@ -162,3 +162,9 @@
 }
 .tree-entry.is-dir .dir-icon { color: #5a7aaa; }
 .tree-entry.is-file .dir-icon { color: #4a4a68; }
+
+/* Highlight agent-edited files */
+.tree-entry.is-file.touched .dir-name,
+.dir-entry.is-file.touched .dir-name { color: #e8b84a; }
+.tree-entry.is-file.touched .file-icon,
+.dir-entry.is-file.touched .dir-icon { color: #e8b84a; }
