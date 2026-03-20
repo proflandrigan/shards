@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shards UI</title>
+<link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator_midnight.min.css">
+<script src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/sidebar.css">
+<link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/editor.css">
+<link rel="stylesheet" href="css/theme-light.css">
+</head>
+<body>
+
+<header id="header">
+  <span class="logo">SHARDS</span>
+  <div id="header-center">
+    <div id="header-session-bar">
+      <button id="new-session-btn" title="New chat">+ New Chat</button>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">&#9790;</button>
+    <div id="conn-status-area">
+      <span class="conn-indicator" id="conn-indicator"></span>
+      <span id="conn-text">Connecting</span>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <!-- Explorer sidebar -->
+  <aside id="explorer-sidebar">
+    <div id="explorer-header">
+      <span id="explorer-toggle" onclick="toggleExplorer()"><span class="chevron">&#9660;</span> <span class="label-text">Explorer</span></span>
+      <button id="explorer-view-toggle" onclick="switchExplorerView(explorerViewMode === 'tree' ? 'list' : 'tree')" title="Switch to list view">List</button>
+      <button id="explorer-collapse-btn" onclick="toggleExplorer()" title="Collapse explorer">&#8249;&#8249;</button>
+    </div>
+    <div id="explorer-search-wrap">
+      <input type="text" id="explorer-search-input" placeholder="Search files...">
+    </div>
+    <div id="session-files">
+      <div id="session-files-header" onclick="document.getElementById('session-files').classList.toggle('collapsed')">
+        <span><span class="chevron">&#9660;</span> Session Files</span>
+      </div>
+      <div id="session-files-list"></div>
+    </div>
+    <div id="explorer-breadcrumb"></div>
+    <div id="explorer-listing"></div>
+  </aside>
+  <div class="resize-handle" id="explorer-resize"></div>
+
+  <!-- Workspace -->
+  <div id="workspace">
+    <div id="ws-tab-bar">
+      <!-- tabs rendered dynamically -->
+      <div id="ws-tab-actions">
+        <button id="close-all-btn" onclick="closeAllTabs()" title="Close all tabs">Close All</button>
+        <button id="split-btn" onclick="toggleSplit()" title="Toggle split view">Split</button>
+      </div>
+    </div>
+    <div id="ws-content">
+      <!-- Chat pane -->
+      <div id="chat-pane">
+        <div id="conv-header">
+          <span>Chat</span>
+          <button id="chat-collapse-btn" onclick="toggleChatCollapse()" title="Collapse chat">&#8249;&#8249;</button>
+        </div>
+        <div id="chat-search-bar">
+          <input type="text" id="chat-search-input" placeholder="Search messages...">
+          <span id="chat-search-count"></span>
+          <button class="chat-search-nav-btn" onclick="chatSearchNav(-1)" title="Previous">&#9650;</button>
+          <button class="chat-search-nav-btn" onclick="chatSearchNav(1)" title="Next">&#9660;</button>
+        </div>
+        <div id="agent-picker"></div>
+        <div id="messages">
+          <div class="empty-state">Select an agent to start chatting</div>
+        </div>
+        <div id="chat-input-area">
+          <div id="slash-suggestions"></div>
+          <textarea id="chat-input" placeholder="Message the agent... (type / for commands)" rows="1"></textarea>
+          <button id="chat-send-btn" onclick="sendChatMessage()">Send</button>
+          <button id="chat-stop-btn" onclick="stopChat()">End</button>
+        </div>
+      </div>
+
+      <!-- Split resize handle -->
+      <div class="resize-handle" id="split-resize" style="display:none"></div>
+
+      <!-- File pane -->
+      <div id="file-pane">
+        <div id="file-toolbar">
+          <span id="file-path-display"></span>
+          <button class="toolbar-btn copy-path-btn" id="copy-path-btn" onclick="copyCurrentFilePath()" title="Copy relative path">&#x2398;</button>
+          <button class="toolbar-btn" id="edit-btn" onclick="toggleEditMode()">Edit</button>
+          <button class="toolbar-btn save" id="save-btn" onclick="saveCurrentFile()" style="display:none">Save</button>
+        </div>
+        <!-- Rendered view (markdown/notebook) -->
+        <div id="file-rendered-view"></div>
+        <!-- Table view (CSV/TSV/JSON/JSONL) -->
+        <div id="table-view">
+          <div id="table-toolbar">
+            <input type="text" id="table-search" placeholder="Search all columns…">
+            <button class="toolbar-btn" id="table-download-csv" onclick="downloadTableCSV()" title="Download as CSV">CSV</button>
+            <div id="table-edit-btns">
+              <button class="toolbar-btn" onclick="tableAddRow()">+Row</button>
+              <button class="toolbar-btn" onclick="tableDeleteSelectedRows()">-Row</button>
+              <button class="toolbar-btn" onclick="tableAddColumn()">+Col</button>
+              <button class="toolbar-btn" onclick="tableDeleteColumn()">-Col</button>
+            </div>
+            <span id="table-row-count"></span>
+          </div>
+          <div id="table-container"></div>
+        </div>
+        <!-- Code editor view -->
+        <div id="file-editor">
+          <div id="line-gutter"></div>
+          <div id="file-view-area">
+            <pre id="code-view"><code id="code-view-code"></code></pre>
+            <textarea id="code-edit" spellcheck="false"></textarea>
+            <div id="monaco-file-container" style="display:none;width:100%;height:100%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Context menu (shared) -->
+<div id="ctx-menu" class="ctx-menu">
+  <div class="ctx-item" id="ctx-copy-path">Copy Path</div>
+</div>
+
+<!-- Quick open overlay (Cmd+P) -->
+<div id="quick-open-overlay" class="overlay-backdrop" onclick="if(event.target===this)this.classList.remove('visible')">
+  <div class="overlay-panel">
+    <input type="text" id="quick-open-input" class="overlay-input" placeholder="Open file...">
+    <div id="quick-open-results" class="overlay-results"></div>
+  </div>
+</div>
+
+<!-- Command palette overlay (Cmd+K) -->
+<div id="command-palette-overlay" class="overlay-backdrop" onclick="if(event.target===this)this.classList.remove('visible')">
+  <div class="overlay-panel">
+    <input type="text" id="command-palette-input" class="overlay-input" placeholder="Type a command...">
+    <div id="command-palette-results" class="overlay-results"></div>
+  </div>
+</div>
+
+<!-- Settings overlay (Cmd+,) -->
+<div id="settings-overlay" class="overlay-backdrop" onclick="if(event.target===this)this.classList.remove('visible')">
+  <div class="overlay-panel settings-panel">
+    <div style="padding:12px 16px;border-bottom:1px solid #1e1e32;font-size:13px;font-weight:600;color:#b0b0c8">Settings</div>
+    <div class="settings-section">
+      <span class="settings-label">Theme</span>
+      <select class="settings-select" id="settings-theme" onchange="applySettingsTheme(this.value)">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+    </div>
+    <div class="settings-section">
+      <span class="settings-label">UI Font Size</span>
+      <input type="number" class="settings-input" id="settings-font-size" min="10" max="20" value="13" onchange="applySettingsFontSize(this.value)">
+    </div>
+    <div class="settings-section">
+      <span class="settings-label">Editor Font Size</span>
+      <input type="number" class="settings-input" id="settings-editor-font-size" min="10" max="24" value="13" onchange="applySettingsEditorFontSize(this.value)">
+    </div>
+    <div class="settings-section">
+      <span class="settings-label">Reset Layout</span>
+      <button class="settings-btn" onclick="resetLayout()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/marked@4.3.0/marked.min.js"></script>
+<script src="js/state.js"></script>
+<script src="js/agents.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/monaco.js"></script>
+<script src="js/markdown.js"></script>
+<script src="js/explorer.js"></script>
+<script src="js/tabular.js"></script>
+<script src="js/table.js"></script>
+<script src="js/notebook.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/tabs.js"></script>
+<script src="js/file-view.js"></script>
+<script src="js/split-view.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/quick-open.js"></script>
+<script src="js/command-palette.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/events.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>
