@@ -115,6 +115,63 @@ function expireSessions() {
 
 setInterval(expireSessions, 60_000);
 
+// ─── Permission request store ────────────────────────────────────────────────
+
+const permissionRequests = new Map();
+// id → { id, tool, command, sessionId, decision: null|'allow'|'deny', createdAt }
+
+setInterval(() => {
+  const cutoff = Date.now() - 5 * 60 * 1000;
+  for (const [id, req] of permissionRequests) {
+    if (req.createdAt < cutoff) permissionRequests.delete(id);
+  }
+}, 60_000);
+
+// ─── Settings cache for permission fast paths ───────────────────────────────
+
+let settingsCache = { allow: [], deny: [] };
+
+function loadSettingsCache() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(
+      path.join(PROJECT_DIR, '.claude', 'settings.json'), 'utf8'
+    ));
+    settingsCache.allow = (raw.permissions && raw.permissions.allow) || [];
+    settingsCache.deny  = (raw.permissions && raw.permissions.deny)  || [];
+  } catch {
+    settingsCache = { allow: [], deny: [] };
+  }
+}
+loadSettingsCache();
+
+function matchesPermission(command, patterns) {
+  for (const pattern of patterns) {
+    const m = pattern.match(/^Bash\((.+)\)$/);
+    if (!m) continue;
+    const glob = m[1];
+    const regex = new RegExp('^' + glob.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$');
+    if (regex.test(command)) return true;
+  }
+  return false;
+}
+
+function persistPermission(command, decision) {
+  const settingsPath = path.join(PROJECT_DIR, '.claude', 'settings.json');
+  let settings = {};
+  try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8')); } catch {}
+
+  if (!settings.permissions) settings.permissions = {};
+  const key = decision === 'allow' ? 'allow' : 'deny';
+  if (!settings.permissions[key]) settings.permissions[key] = [];
+
+  const entry = `Bash(${command})`;
+  if (!settings.permissions[key].includes(entry)) {
+    settings.permissions[key].push(entry);
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    loadSettingsCache();
+  }
+}
+
 // ─── State ───────────────────────────────────────────────────────────────────
 
 let clients = [];       // SSE response objects: { res, sessionId (optional filter) }
@@ -965,6 +1022,112 @@ function createHandler() {
       } catch (err) {
         jsonResponse(res, cors, 400, { error: `Parse failed: ${err.message}` });
       }
+      return;
+    }
+
+    // ─── Permission approval endpoints ─────────────────────────
+
+    // POST /pre-tool-use — relay posts permission request
+    if (req.method === 'POST' && parsedUrl.pathname === '/pre-tool-use') {
+      const body = await readBody(req);
+      let params;
+      try { params = JSON.parse(body); } catch {
+        jsonResponse(res, cors, 400, { error: 'Invalid JSON' });
+        return;
+      }
+
+      const { tool, command, sessionId: claudeSessionId } = params;
+
+      // Fast path: check settings cache
+      if (matchesPermission(command, settingsCache.allow)) {
+        jsonResponse(res, cors, 200, { id: randomUUID(), status: 'allowed' });
+        return;
+      }
+      if (matchesPermission(command, settingsCache.deny)) {
+        jsonResponse(res, cors, 200, { id: randomUUID(), status: 'denied' });
+        return;
+      }
+
+      // Pending — store and broadcast
+      const id = randomUUID();
+      permissionRequests.set(id, {
+        id, tool, command, sessionId: claudeSessionId, decision: null, createdAt: Date.now(),
+      });
+
+      // Find most-recently-active running session for routing
+      let activeStore = null;
+      let activeSessionId = null;
+      for (const [sid, store] of sessions) {
+        if (store.chatSession && store.chatSession.isRunning) {
+          if (!activeStore || store.lastActivityAt > activeStore.lastActivityAt) {
+            activeStore = store;
+            activeSessionId = sid;
+          }
+        }
+      }
+
+      broadcast({
+        type: 'permission-request',
+        id,
+        tool: tool || 'Bash',
+        command: command || '',
+        sessionId: activeSessionId,
+      });
+
+      jsonResponse(res, cors, 200, { id, status: 'pending' });
+      return;
+    }
+
+    // GET /chat/permission/:id — relay polls for decision
+    if (req.method === 'GET' && parsedUrl.pathname.startsWith('/chat/permission/')) {
+      const id = parsedUrl.pathname.split('/').pop();
+      const entry = permissionRequests.get(id);
+
+      if (!entry) {
+        jsonResponse(res, cors, 200, { status: 'not_found' });
+        return;
+      }
+      if (entry.decision === null) {
+        jsonResponse(res, cors, 200, { status: 'pending' });
+        return;
+      }
+
+      const decision = entry.decision;
+      permissionRequests.delete(id);
+
+      broadcast({
+        type: 'permission-resolved',
+        id,
+        decision,
+      });
+
+      jsonResponse(res, cors, 200, { status: decision });
+      return;
+    }
+
+    // POST /chat/permission — browser submits decision
+    if (req.method === 'POST' && parsedUrl.pathname === '/chat/permission') {
+      const body = await readBody(req);
+      let params;
+      try { params = JSON.parse(body); } catch {
+        jsonResponse(res, cors, 400, { error: 'Invalid JSON' });
+        return;
+      }
+
+      const { id, decision, persist, command } = params;
+      const entry = permissionRequests.get(id);
+      if (!entry) {
+        jsonResponse(res, cors, 404, { error: 'Permission request not found' });
+        return;
+      }
+
+      entry.decision = decision;
+
+      if (persist && command) {
+        persistPermission(command, decision);
+      }
+
+      jsonResponse(res, cors, 200, { ok: true });
       return;
     }
 

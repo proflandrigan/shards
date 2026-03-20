@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 function isChatEvent(type) {
-  return type && (type.indexOf('chat-') === 0 || type === 'agent-consulting');
+  return type && (type.indexOf('chat-') === 0 || type === 'agent-consulting' || type === 'permission-request' || type === 'permission-resolved');
 }
 
 function handleSSEEvent(e) {
@@ -237,6 +237,18 @@ function handleChatEventForSession(data, session, isActive) {
     case 'agent-consulting':
       if (isActive) {
         updateConsultingIndicator(data.agent);
+      }
+      break;
+
+    case 'permission-request':
+      if (isActive) {
+        renderPermissionCard(data.id, data.tool, data.command, data.sessionId);
+      }
+      break;
+
+    case 'permission-resolved':
+      if (isActive) {
+        resolvePermissionCard(data.id, data.decision);
       }
       break;
   }

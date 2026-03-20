@@ -295,3 +295,16 @@
 [data-theme="light"] .session-tab-rename-input { background: #fff; border-color: #4a80e0; color: #333; }
 [data-theme="light"] #new-session-btn { border-color: #ccc; color: #888; }
 [data-theme="light"] #new-session-btn:hover { background: #eee; color: #555; border-color: #bbb; }
+
+/* Permission cards */
+[data-theme="light"] .permission-card { background: #ffffff; border-color: #ddd; }
+[data-theme="light"] .permission-title { color: #333; }
+[data-theme="light"] .permission-countdown { color: #888; }
+[data-theme="light"] .permission-tool { color: #888; }
+[data-theme="light"] .permission-command { background: #f5f5f8; border-color: #ddd; }
+[data-theme="light"] .permission-command-text { color: #333; }
+[data-theme="light"] .permission-btn { background: #f0f0f4; border-color: #ccc; color: #555; }
+[data-theme="light"] .permission-btn-allow { background: #e8f5e8; border-color: #a0d0a0; color: #2a7a2a; }
+[data-theme="light"] .permission-btn-always { background: #e8f5e8; border-color: #a0d0a0; color: #2a6a2a; }
+[data-theme="light"] .permission-btn-deny { background: #f5e8e8; border-color: #d0a0a0; color: #7a2a2a; }
+[data-theme="light"] .permission-btn-always-deny { background: #f5e8e8; border-color: #d0a0a0; color: #6a2a2a; }
