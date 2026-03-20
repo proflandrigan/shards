@@ -111,7 +111,7 @@ What's the question?
 Wait for user input. Do not auto-execute anything.
 
 **Menu routing:**
-- `[R]` → Read `src/agents/specific_instructions/academic/report.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[R]` → Read `.claude/agents/specific_instructions/academic/report.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 
 ---
 
