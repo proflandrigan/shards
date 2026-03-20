@@ -37,6 +37,7 @@ function openFileTab(relPath, content, absPath, opts) {
     renderWsTabs();
     showActiveContent();
   }
+  if (typeof saveLayout === 'function') saveLayout();
 }
 
 function closeFileTab(relPath) {
@@ -68,13 +69,15 @@ function closeFileTab(relPath) {
   }
 
   delete openFiles[relPath];
-  fileTabOrder = fileTabOrder.filter(function(p) { return p !== relPath; });
+  var ftIdx = fileTabOrder.indexOf(relPath);
+  if (ftIdx !== -1) fileTabOrder.splice(ftIdx, 1);
 
   if (activeTabId === relPath) {
     activeTabId = fileTabOrder.length > 0 ? fileTabOrder[0] : 'chat';
   }
   renderWsTabs();
   showActiveContent();
+  if (typeof saveLayout === 'function') saveLayout();
 }
 
 function closeAllTabs() {
@@ -85,20 +88,6 @@ function closeAllTabs() {
   }
   // Close all panel tabs
   var panelsToClose = panelTabOrder.slice();
-  for (var j = 0; j < panelsToClose.length; j++) {
-    closePanelTab(panelsToClose[j]);
-  }
-}
-
-function closeOtherTabs() {
-  var activeKey = getCurrentFileKey();
-  // Close other file tabs
-  var filesToClose = fileTabOrder.filter(function(p) { return p !== activeKey; });
-  for (var i = 0; i < filesToClose.length; i++) {
-    closeFileTab(filesToClose[i]);
-  }
-  // Close other panel tabs
-  var panelsToClose = panelTabOrder.filter(function(pid) { return pid !== activeKey; });
   for (var j = 0; j < panelsToClose.length; j++) {
     closePanelTab(panelsToClose[j]);
   }
@@ -124,11 +113,13 @@ function switchTab(id) {
       showFileInPane(id);
       renderWsTabs();
     }
+    if (typeof saveLayout === 'function') saveLayout();
     return;
   }
   activeTabId = id;
   renderWsTabs();
   showActiveContent();
+  if (typeof saveLayout === 'function') saveLayout();
 }
 
 function renderWsTabs() {
@@ -166,6 +157,9 @@ function renderWsTabs() {
         if (e.target.classList.contains('close-btn')) { closeFileTab(path); return; }
         switchTab(path);
       };
+    })(p));
+    tab.addEventListener('contextmenu', (function(path) {
+      return function(e) { showCtxMenu(e, path); };
     })(p));
     bar.appendChild(tab);
   }
@@ -251,6 +245,7 @@ function showFileInPane(relPath) {
 
 function renderEmptyFilePane() {
   document.getElementById('file-path-display').textContent = '';
+  document.getElementById('copy-path-btn').style.display = 'none';
   document.getElementById('edit-btn').style.display = 'none';
   document.getElementById('save-btn').style.display = 'none';
   document.getElementById('file-rendered-view').classList.remove('visible');

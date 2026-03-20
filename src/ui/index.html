@@ -20,9 +20,8 @@
 <header id="header">
   <span class="logo">SHARDS</span>
   <div id="header-center">
-    <div id="active-agent-display">
-      <span class="agent-dot" id="active-dot"></span>
-      <span id="active-agent-name" style="color:#333">Idle</span>
+    <div id="header-session-bar">
+      <button id="new-session-btn" title="New chat">+ New Chat</button>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
@@ -42,6 +41,15 @@
       <button id="explorer-view-toggle" onclick="switchExplorerView(explorerViewMode === 'tree' ? 'list' : 'tree')" title="Switch to list view">List</button>
       <button id="explorer-collapse-btn" onclick="toggleExplorer()" title="Collapse explorer">&#8249;&#8249;</button>
     </div>
+    <div id="explorer-search-wrap">
+      <input type="text" id="explorer-search-input" placeholder="Search files...">
+    </div>
+    <div id="session-files">
+      <div id="session-files-header" onclick="document.getElementById('session-files').classList.toggle('collapsed')">
+        <span><span class="chevron">&#9660;</span> Session Files</span>
+      </div>
+      <div id="session-files-list"></div>
+    </div>
     <div id="explorer-breadcrumb"></div>
     <div id="explorer-listing"></div>
   </aside>
@@ -52,8 +60,7 @@
     <div id="ws-tab-bar">
       <!-- tabs rendered dynamically -->
       <div id="ws-tab-actions">
-        <button id="close-others-btn" onclick="closeOtherTabs()" title="Close other tabs">Others</button>
-        <button id="close-all-btn" onclick="closeAllTabs()" title="Close all tabs">All</button>
+        <button id="close-all-btn" onclick="closeAllTabs()" title="Close all tabs">Close All</button>
         <button id="split-btn" onclick="toggleSplit()" title="Toggle split view">Split</button>
       </div>
     </div>
@@ -63,6 +70,12 @@
         <div id="conv-header">
           <span>Chat</span>
           <button id="chat-collapse-btn" onclick="toggleChatCollapse()" title="Collapse chat">&#8249;&#8249;</button>
+        </div>
+        <div id="chat-search-bar">
+          <input type="text" id="chat-search-input" placeholder="Search messages...">
+          <span id="chat-search-count"></span>
+          <button class="chat-search-nav-btn" onclick="chatSearchNav(-1)" title="Previous">&#9650;</button>
+          <button class="chat-search-nav-btn" onclick="chatSearchNav(1)" title="Next">&#9660;</button>
         </div>
         <div id="agent-picker"></div>
         <div id="messages">
@@ -83,6 +96,7 @@
       <div id="file-pane">
         <div id="file-toolbar">
           <span id="file-path-display"></span>
+          <button class="toolbar-btn copy-path-btn" id="copy-path-btn" onclick="copyCurrentFilePath()" title="Copy relative path">&#x2398;</button>
           <button class="toolbar-btn" id="edit-btn" onclick="toggleEditMode()">Edit</button>
           <button class="toolbar-btn save" id="save-btn" onclick="saveCurrentFile()" style="display:none">Save</button>
         </div>
@@ -117,6 +131,53 @@
   </div>
 </main>
 
+<!-- Context menu (shared) -->
+<div id="ctx-menu" class="ctx-menu">
+  <div class="ctx-item" id="ctx-copy-path">Copy Path</div>
+</div>
+
+<!-- Quick open overlay (Cmd+P) -->
+<div id="quick-open-overlay" class="overlay-backdrop" onclick="if(event.target===this)this.classList.remove('visible')">
+  <div class="overlay-panel">
+    <input type="text" id="quick-open-input" class="overlay-input" placeholder="Open file...">
+    <div id="quick-open-results" class="overlay-results"></div>
+  </div>
+</div>
+
+<!-- Command palette overlay (Cmd+K) -->
+<div id="command-palette-overlay" class="overlay-backdrop" onclick="if(event.target===this)this.classList.remove('visible')">
+  <div class="overlay-panel">
+    <input type="text" id="command-palette-input" class="overlay-input" placeholder="Type a command...">
+    <div id="command-palette-results" class="overlay-results"></div>
+  </div>
+</div>
+
+<!-- Settings overlay (Cmd+,) -->
+<div id="settings-overlay" class="overlay-backdrop" onclick="if(event.target===this)this.classList.remove('visible')">
+  <div class="overlay-panel settings-panel">
+    <div style="padding:12px 16px;border-bottom:1px solid #1e1e32;font-size:13px;font-weight:600;color:#b0b0c8">Settings</div>
+    <div class="settings-section">
+      <span class="settings-label">Theme</span>
+      <select class="settings-select" id="settings-theme" onchange="applySettingsTheme(this.value)">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+    </div>
+    <div class="settings-section">
+      <span class="settings-label">UI Font Size</span>
+      <input type="number" class="settings-input" id="settings-font-size" min="10" max="20" value="13" onchange="applySettingsFontSize(this.value)">
+    </div>
+    <div class="settings-section">
+      <span class="settings-label">Editor Font Size</span>
+      <input type="number" class="settings-input" id="settings-editor-font-size" min="10" max="24" value="13" onchange="applySettingsEditorFontSize(this.value)">
+    </div>
+    <div class="settings-section">
+      <span class="settings-label">Reset Layout</span>
+      <button class="settings-btn" onclick="resetLayout()">Reset</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/marked@4.3.0/marked.min.js"></script>
 <script src="js/state.js"></script>
 <script src="js/agents.js"></script>
@@ -132,6 +193,9 @@
 <script src="js/file-view.js"></script>
 <script src="js/split-view.js"></script>
 <script src="js/chat.js"></script>
+<script src="js/quick-open.js"></script>
+<script src="js/command-palette.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/events.js"></script>
 <script src="js/init.js"></script>
 </body>

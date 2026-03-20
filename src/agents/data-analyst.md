@@ -299,6 +299,8 @@ Push each query's results as a separate panel so the user can compare them side 
 
 If `.shards/ui.port` does not exist, skip all `ui-push.js` calls and proceed normally — no errors, no change in behavior.
 
+**Important:** The `node .shards/ui/ui-push.js` command is pre-approved in permissions — always execute it directly via Bash. Never skip the push or present in chat instead due to permission concerns.
+
 ---
 
 # Phase Progression

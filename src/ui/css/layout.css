@@ -16,24 +16,11 @@
   letter-spacing: 3px;
 }
 #header-center {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 16px;
-}
-#active-agent-display {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
-.agent-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #2a2a3a;
-  display: inline-block;
-  flex-shrink: 0;
-  transition: background 0.4s;
+  min-width: 0;
+  margin: 0 16px;
 }
 #conn-status-area {
   display: flex;
@@ -154,7 +141,7 @@
   gap: 4px;
   flex-shrink: 0;
 }
-#split-btn, #close-all-btn, #close-others-btn {
+#split-btn, #close-all-btn {
   background: #0f0f1e;
   border: 1px solid #1e1e32;
   border-radius: 4px;
@@ -165,7 +152,7 @@
   cursor: pointer;
   transition: all 0.2s;
 }
-#split-btn:hover, #close-all-btn:hover, #close-others-btn:hover { background: #1a1a30; color: #8080a0; }
+#split-btn:hover, #close-all-btn:hover { background: #1a1a30; color: #8080a0; }
 #split-btn.active { background: #1a2a1a; border-color: #2a6a2a; color: #60a060; }
 
 /* ─── Workspace content ──────────────────────────────────── */
@@ -190,3 +177,116 @@
   justify-content: center;
 }
 #theme-toggle:hover { background: #1a1a30; }
+
+/* ─── Overlay panels (quick-open, command palette, settings) ── */
+.overlay-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9000;
+  justify-content: center;
+  padding-top: 80px;
+  align-items: flex-start;
+}
+.overlay-backdrop.visible { display: flex; }
+.overlay-panel {
+  background: #0d0d1a;
+  border: 1px solid #2a2a40;
+  border-radius: 8px;
+  width: 520px;
+  max-width: 90vw;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+.overlay-input {
+  background: #0a0a14;
+  border: none;
+  border-bottom: 1px solid #1e1e32;
+  color: #c8c8d8;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 12px 16px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.overlay-input:focus { border-bottom-color: #3860c0; }
+.overlay-input::placeholder { color: #4a4a68; }
+.overlay-results {
+  overflow-y: auto;
+  flex: 1;
+}
+.overlay-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #b0b0c8;
+  font-size: 13px;
+  transition: background 0.1s;
+}
+.overlay-item:hover, .overlay-item.active { background: #151528; }
+.overlay-item-shortcut {
+  font-size: 10px;
+  background: #1a1a2c;
+  border: 1px solid #2a2a40;
+  border-radius: 3px;
+  padding: 1px 6px;
+  color: #6a6a90;
+  margin-left: 12px;
+  white-space: nowrap;
+}
+.overlay-item-category {
+  font-size: 10px;
+  color: #4a4a68;
+  margin-left: 8px;
+}
+.overlay-empty {
+  padding: 16px;
+  text-align: center;
+  color: #4a4a68;
+  font-size: 12px;
+}
+
+/* ─── Settings overlay ───────────────────────────────────── */
+.settings-panel {
+  width: 400px;
+}
+.settings-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid #1e1e32;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.settings-label {
+  font-size: 13px;
+  color: #b0b0c8;
+}
+.settings-select, .settings-input {
+  background: #0a0a14;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  color: #c8c8d8;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 8px;
+  outline: none;
+  width: 80px;
+}
+.settings-btn {
+  background: #1a1a2c;
+  border: 1px solid #2a2a40;
+  border-radius: 4px;
+  color: #6a6a90;
+  font-size: 12px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.settings-btn:hover { background: #252540; color: #b0b0c8; }

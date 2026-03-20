@@ -47,7 +47,7 @@ document.getElementById('code-edit').addEventListener('input', function(e) {
   renderWsTabs();
 });
 
-// Ctrl+S to save, Escape, Ctrl+Enter
+// Ctrl+S to save, Escape, Ctrl+Enter, and additional keyboard shortcuts
 document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {
     var key = getCurrentFileKey();
@@ -56,8 +56,95 @@ document.addEventListener('keydown', function(e) {
       saveCurrentFile();
     }
   }
-  // Escape — exit notebook cell edit
+  // Cmd+B — toggle explorer sidebar
+  if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+    e.preventDefault();
+    toggleExplorer();
+  }
+  // Cmd+W — close current file tab
+  if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
+    e.preventDefault();
+    var closeKey = getCurrentFileKey();
+    if (closeKey && closeKey !== 'chat') closeFileTab(closeKey);
+  }
+  // Cmd+\ — toggle split view
+  if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
+    e.preventDefault();
+    toggleSplit();
+  }
+  // Cmd+1/2/3 — switch tabs
+  if ((e.ctrlKey || e.metaKey) && e.key === '1') {
+    e.preventDefault();
+    switchTab('chat');
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === '2') {
+    e.preventDefault();
+    if (fileTabOrder.length > 0) switchTab(fileTabOrder[0]);
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === '3') {
+    e.preventDefault();
+    if (fileTabOrder.length > 1) switchTab(fileTabOrder[1]);
+  }
+  // Cmd+P — quick file picker
+  if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+    e.preventDefault();
+    toggleQuickOpen();
+  }
+  // Cmd+K — command palette
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    toggleCommandPalette();
+  }
+  // Cmd+G — go to line (Monaco)
+  if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+    if (activeMonacoInstance) {
+      e.preventDefault();
+      activeMonacoInstance.getAction('editor.action.gotoLine').run();
+    }
+  }
+  // Cmd+F — chat search when chat is focused
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    var chatPane = document.getElementById('chat-pane');
+    var isInChat = chatPane && (chatPane.contains(document.activeElement) || (!splitMode && activeTabId === 'chat'));
+    if (isInChat && !activeMonacoInstance) {
+      e.preventDefault();
+      toggleChatSearch();
+    }
+  }
+  // Cmd+, — settings
+  if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+    e.preventDefault();
+    toggleSettings();
+  }
+  // Ctrl+Shift+[ / ] — cycle session tabs
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === '[') {
+    e.preventDefault();
+    cycleSessionTab(-1);
+  }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === ']') {
+    e.preventDefault();
+    cycleSessionTab(1);
+  }
+  // Escape — exit notebook cell edit, close overlays
   if (e.key === 'Escape') {
+    // Close overlays first
+    if (document.getElementById('quick-open-overlay').classList.contains('visible')) {
+      document.getElementById('quick-open-overlay').classList.remove('visible');
+      return;
+    }
+    if (document.getElementById('command-palette-overlay').classList.contains('visible')) {
+      document.getElementById('command-palette-overlay').classList.remove('visible');
+      return;
+    }
+    if (document.getElementById('settings-overlay').classList.contains('visible')) {
+      document.getElementById('settings-overlay').classList.remove('visible');
+      return;
+    }
+    var chatSearchBar = document.getElementById('chat-search-bar');
+    if (chatSearchBar && chatSearchBar.classList.contains('visible')) {
+      chatSearchBar.classList.remove('visible');
+      return;
+    }
     var key2 = getCurrentFileKey();
     if (key2 && openFiles[key2] && openFiles[key2].notebookData) {
       if (activeNotebookCellMonaco) {
@@ -138,6 +225,30 @@ async function loadInitial() {
     var result = await fRes.json();
     var chatStatus = await cRes.json();
 
+    // Restore sessions FIRST so artifacts open in the active session's workspace
+    var activeSessions = chatStatus.sessions || [];
+    if (activeSessions.length > 0) {
+      for (var si = 0; si < activeSessions.length; si++) {
+        var s = activeSessions[si];
+        var sess = createSessionState(s.sessionId, s.agent);
+        sess.title = s.title || null;
+        sess.messages = s.transcript || [];
+        sess.hasMessages = sess.messages.length > 0;
+      }
+      // Activate the last (most recent) session and load its workspace
+      var lastSession = activeSessions[activeSessions.length - 1];
+      activeSessionId = lastSession.sessionId;
+      loadSessionWorkspace(chatSessions[activeSessionId]);
+      activateAgent(lastSession.agent);
+      showChatView();
+      rebuildMessages(chatSessions[activeSessionId].messages);
+      renderSessionTabs();
+    } else {
+      showAgentPicker();
+      renderSessionTabs();
+    }
+
+    // Now process artifacts (they open in the active session's workspace)
     var filesMap = result.files || result;
     var serverSessionFiles = result.sessionFiles || [];
     for (var i = 0; i < serverSessionFiles.length; i++) sessionTouchedFiles.add(serverSessionFiles[i]);
@@ -146,24 +257,11 @@ async function loadInitial() {
         handleArtifactUpdate(p, filesMap[p], sessionTouchedFiles.has(p));
       }
     }
-
-    // Restore active chat session if one is running
-    if (chatStatus.active) {
-      chatSessionId = chatStatus.sessionId;
-      chatAgent = chatStatus.agent;
-      chatMessages = chatStatus.transcript || [];
-      activateAgent(chatAgent);
-      showChatView();
-      rebuildMessages(chatMessages);
-    } else {
-      showAgentPicker();
-    }
   } catch(e) {
     showAgentPicker();
+    renderSessionTabs();
   }
 
-  // Ensure chat tab is active initially
-  activeTabId = 'chat';
   renderWsTabs();
   showActiveContent();
 }
@@ -172,9 +270,13 @@ async function loadInitial() {
 // Init
 // ═══════════════════════════════════════════════════════════════
 
-loadInitial();
+loadInitial().then(function() {
+  if (typeof restoreLayout === 'function') restoreLayout();
+  if (typeof renderSessionFiles === 'function') renderSessionFiles();
+});
 connect();
 browseDir();
 initExplorerResize();
 initSplitResize();
 initFileAutoRefresh();
+initCtxMenu();

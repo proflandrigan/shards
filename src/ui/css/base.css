@@ -16,3 +16,46 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #1a1a2c; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #252540; }
+
+/* ─── Context menu ──────────────────────────────────────── */
+.ctx-menu {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  background: #0e0e1a;
+  border: 1px solid #1e1e32;
+  border-radius: 5px;
+  padding: 4px 0;
+  min-width: 140px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.ctx-menu.visible { display: block; }
+.ctx-item {
+  padding: 5px 14px;
+  font-size: 11px;
+  color: #8888a8;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ctx-item:hover { background: #161628; color: #c0c0d8; }
+
+/* ─── Copy toast ────────────────────────────────────────── */
+.copy-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a2a1a;
+  border: 1px solid #2a6a2a;
+  color: #60a060;
+  font-size: 11px;
+  padding: 5px 14px;
+  border-radius: 5px;
+  z-index: 10000;
+  pointer-events: none;
+  animation: toast-fade 1.2s ease forwards;
+}
+@keyframes toast-fade {
+  0%, 60% { opacity: 1; }
+  100% { opacity: 0; }
+}

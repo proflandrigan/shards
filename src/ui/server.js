@@ -47,6 +47,7 @@ class SessionStore {
   constructor({ sessionId, agent }) {
     this.sessionId = sessionId;
     this.agent = agent;
+    this.title = null;
     this.transcript = [];
     this.sessionFiles = new Set();
     this.chatSession = null;
@@ -59,6 +60,7 @@ class SessionStore {
       if (fs.existsSync(filePath)) {
         const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         if (data.transcript) this.transcript = data.transcript;
+        if (data.title) this.title = data.title;
         if (data.createdAt) this.createdAt = new Date(data.createdAt);
         if (data.lastActivityAt) this.lastActivityAt = new Date(data.lastActivityAt);
       }
@@ -78,6 +80,7 @@ class SessionStore {
       fs.writeFileSync(filePath, JSON.stringify({
         sessionId: this.sessionId,
         agent: this.agent,
+        title: this.title,
         transcript: this.transcript,
         createdAt: this.createdAt,
         lastActivityAt: this.lastActivityAt,
@@ -797,6 +800,7 @@ function createHandler() {
         list.push({
           sessionId: id,
           agent: store.agent,
+          title: store.title,
           active: !!(store.chatSession && store.chatSession.isRunning),
           createdAt: store.createdAt.toISOString(),
           lastActivityAt: store.lastActivityAt.toISOString(),
@@ -810,6 +814,40 @@ function createHandler() {
     // ─── Directory browser endpoints ───────────────────────────────────
 
     if (req.method === 'GET' && parsedUrl.pathname.startsWith('/browse')) {
+
+      // ─── File search endpoint ──────────────────────────────────
+      if (parsedUrl.pathname === '/browse/search') {
+        const query = (parsedUrl.searchParams.get('q') || '').toLowerCase();
+        if (!query) {
+          jsonResponse(res, cors, 200, { results: [] });
+          return;
+        }
+        const results = [];
+        const skip = new Set(['.git', 'node_modules', '__pycache__', '.shards', '.venv', 'venv']);
+        function walkSearch(dir, depth) {
+          if (depth > 8 || results.length >= 50) return;
+          try {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+              if (results.length >= 50) break;
+              if (entry.name.startsWith('.') && skip.has(entry.name)) continue;
+              if (skip.has(entry.name)) continue;
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) {
+                walkSearch(full, depth + 1);
+              } else {
+                const rel = path.relative(PROJECT_DIR, full);
+                if (rel.toLowerCase().indexOf(query) !== -1) {
+                  results.push(rel);
+                }
+              }
+            }
+          } catch {}
+        }
+        walkSearch(PROJECT_DIR, 0);
+        jsonResponse(res, cors, 200, { results });
+        return;
+      }
 
       if (parsedUrl.pathname === '/browse') {
         let dir = parsedUrl.searchParams.get('dir') || PROJECT_DIR;
@@ -946,19 +984,19 @@ function createHandler() {
     }
 
     if (req.method === 'GET' && parsedUrl.pathname === '/chat/status') {
-      // Find the most recently active session
-      let activeStore = null;
-      for (const store of sessions.values()) {
+      const activeSessions = [];
+      for (const [id, store] of sessions) {
         if (store.chatSession && store.chatSession.isRunning) {
-          if (!activeStore || store.lastActivityAt > activeStore.lastActivityAt) {
-            activeStore = store;
-          }
+          activeSessions.push({
+            sessionId: id,
+            agent: store.agent,
+            title: store.title,
+            transcript: store.transcript,
+            startedAt: store.createdAt.toISOString(),
+          });
         }
       }
-      if (activeStore) {
-        jsonResponse(res, cors, 200, { active: true, ...activeStore.chatSession.info, transcript: activeStore.transcript });
-      } else {        jsonResponse(res, cors, 200, { active: false });
-      }
+      jsonResponse(res, cors, 200, { sessions: activeSessions });
       return;
     }
 
@@ -1022,7 +1060,7 @@ function createHandler() {
           const callerStore = targetSessionId ? getSession(targetSessionId) : null;
           const fromAgent = callerStore ? callerStore.agent : null;
 
-          broadcast({ type: 'chat-agent-switching', from: fromAgent, to: toAgent });
+          broadcast({ type: 'chat-agent-switching', from: fromAgent, to: toAgent, sessionId: targetSessionId });
           const result = startNewChatSession(toAgent, { callerSessionId: targetSessionId });
           jsonResponse(res, cors, 200, { ok: true, switched: true, agent: result.agent, sessionId: result.sessionId });
           return;
@@ -1036,7 +1074,7 @@ function createHandler() {
             return;
           }
           const agent = store.agent;
-          broadcast({ type: 'chat-compacting', agent });
+          broadcast({ type: 'chat-compacting', agent, sessionId: targetSessionId });
           const result = startNewChatSession(agent, { callerSessionId: targetSessionId });
           jsonResponse(res, cors, 200, { ok: true, compacted: true, agent: result.agent, sessionId: result.sessionId });
           return;
@@ -1063,13 +1101,13 @@ function createHandler() {
           helpText += '  `/stop` — Stop the current session\n';
           helpText += '  `/clear` — Clear the messages panel\n';
           helpText += '  `/help` — Show this help message\n';
-          broadcast({ type: 'chat-system-notice', text: helpText });
+          broadcast({ type: 'chat-system-notice', text: helpText, sessionId: targetSessionId });
           jsonResponse(res, cors, 200, { ok: true, help: true });
           return;
         }
 
         if (slashCmd.command === 'clear') {
-          broadcast({ type: 'chat-clear-messages' });
+          broadcast({ type: 'chat-clear-messages', sessionId: targetSessionId });
           jsonResponse(res, cors, 200, { ok: true, cleared: true });
           return;
         }
@@ -1101,6 +1139,32 @@ function createHandler() {
       } catch (err) {
         jsonResponse(res, cors, 500, { error: err.message });
       }
+      return;
+    }
+
+    if (req.method === 'POST' && parsedUrl.pathname === '/chat/rename') {
+      const body = await readBody(req);
+      let params;
+      try {
+        params = JSON.parse(body);
+      } catch {
+        jsonResponse(res, cors, 400, { error: 'Invalid JSON' });
+        return;
+      }
+
+      const { sessionId: renameSessionId, title } = params;
+      if (!renameSessionId) {
+        jsonResponse(res, cors, 400, { error: 'Missing sessionId' });
+        return;
+      }
+
+      const renameStore = getSession(renameSessionId);
+      if (renameStore) {
+        renameStore.title = title || null;
+        renameStore.save();
+      }
+
+      jsonResponse(res, cors, 200, { ok: true });
       return;
     }
 

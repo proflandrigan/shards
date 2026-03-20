@@ -5,7 +5,6 @@
 [data-theme="light"] .logo { color: #b8960a; }
 [data-theme="light"] #conn-status-area { color: #999; }
 [data-theme="light"] .conn-indicator { background: #ccc; }
-[data-theme="light"] .agent-dot { background: #ccc; }
 [data-theme="light"] #theme-toggle { border-color: #ccc; color: #666; }
 [data-theme="light"] #theme-toggle:hover { background: #eee; }
 
@@ -55,8 +54,8 @@
 [data-theme="light"] .ws-tab.pinned.active { color: #222; }
 [data-theme="light"] .ws-tab .close-btn { color: #bbb; }
 [data-theme="light"] .ws-tab .close-btn:hover { color: #666; }
-[data-theme="light"] #split-btn, [data-theme="light"] #close-all-btn, [data-theme="light"] #close-others-btn { background: #f0f0f4; border-color: #ddd; color: #777; }
-[data-theme="light"] #split-btn:hover, [data-theme="light"] #close-all-btn:hover, [data-theme="light"] #close-others-btn:hover { background: #e8e8ee; color: #444; }
+[data-theme="light"] #split-btn, [data-theme="light"] #close-all-btn { background: #f0f0f4; border-color: #ddd; color: #777; }
+[data-theme="light"] #split-btn:hover, [data-theme="light"] #close-all-btn:hover { background: #e8e8ee; color: #444; }
 [data-theme="light"] #split-btn.active { background: #e8f5e9; border-color: #66bb6a; color: #388e3c; }
 
 /* Chat pane */
@@ -92,8 +91,17 @@
 [data-theme="light"] .message-bubble hr { border-top-color: #ddd; }
 [data-theme="light"] .message-bubble a { color: #3060c0; }
 [data-theme="light"] .message-bubble blockquote { border-left-color: #ccc; color: #777; }
+[data-theme="light"] .message-bubble table { background: #ffffff; border-color: #ddd; }
 [data-theme="light"] .message-bubble th { background: #f0f0f5; color: #333; }
-[data-theme="light"] .message-bubble th, [data-theme="light"] .message-bubble td { border-color: #ddd; }
+[data-theme="light"] .message-bubble th, [data-theme="light"] .message-bubble td { border-color: #ddd; color: #333; }
+[data-theme="light"] .message-bubble tr:nth-child(even) { background: #f8f8fc; }
+[data-theme="light"] .message-bubble tr:hover { background: #f0f0f8; }
+[data-theme="light"] .message-bubble td code,
+[data-theme="light"] .message-bubble th code {
+  background: rgba(48, 80, 160, 0.07);
+  color: #3a5aa0;
+  border: 1px solid rgba(48, 80, 160, 0.14);
+}
 
 /* Chat input */
 [data-theme="light"] #chat-input-area { background: #ffffff; border-top-color: #ddd; }
@@ -198,3 +206,92 @@
 [data-theme="light"] .nb-output-html th { background: #f0f0f5; color: #444; }
 [data-theme="light"] .nb-add-cell-btn { background: #f0f0f4; border-color: #ccc; color: #888; }
 [data-theme="light"] .nb-add-cell-btn:hover { background: #e0e0e8; color: #444; }
+
+/* Context menu */
+[data-theme="light"] .ctx-menu { background: #ffffff; border-color: #ddd; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+[data-theme="light"] .ctx-item { color: #555; }
+[data-theme="light"] .ctx-item:hover { background: #f0f0f4; color: #222; }
+
+/* Copy toast */
+[data-theme="light"] .copy-toast { background: #e8f5e9; border-color: #66bb6a; color: #388e3c; }
+
+/* Copy button */
+[data-theme="light"] #file-path-display:hover { color: #555; }
+[data-theme="light"] .copy-path-btn.copied { border-color: #66bb6a !important; color: #388e3c !important; }
+
+/* File links */
+[data-theme="light"] .file-link { color: #3060c0; }
+[data-theme="light"] .file-link:hover { background: rgba(48, 96, 192, 0.1); color: #2050b0; }
+
+/* Slash suggestions */
+[data-theme="light"] #slash-suggestions { background: #ffffff; border-color: #ddd; box-shadow: 0 -4px 16px rgba(0,0,0,0.1); }
+[data-theme="light"] .slash-suggestion:hover, [data-theme="light"] .slash-suggestion.active { background: #f0f0f4; }
+[data-theme="light"] .slash-suggestion-cmd { color: #3060c0; }
+[data-theme="light"] .slash-suggestion-desc { color: #888; }
+
+/* Split/panel tab overrides */
+[data-theme="light"] .ws-tab.in-split { border-bottom-color: #66bb6a; }
+[data-theme="light"] .ws-tab.panel-tab { border-bottom-color: #8060d0; }
+[data-theme="light"] .ws-tab.panel-tab.active { border-bottom-color: #6040b0; color: #5030a0; }
+
+/* Code block copy button */
+[data-theme="light"] .copy-code-btn { background: #f0f0f5; border-color: #ddd; color: #888; }
+[data-theme="light"] .copy-code-btn:hover { background: #e0e0e8; color: #333; }
+
+/* Tool groups */
+[data-theme="light"] .tool-group-header { color: #888; border-left-color: #ccc; }
+[data-theme="light"] .tool-group-header:hover { color: #555; }
+
+/* Message copy button */
+[data-theme="light"] .msg-copy-btn { background: #f0f0f5; border-color: #ddd; color: #888; }
+[data-theme="light"] .msg-copy-btn:hover { background: #e0e0e8; color: #333; }
+
+/* Collapsible messages */
+[data-theme="light"] .show-more-btn { border-color: #ccc; color: #888; }
+[data-theme="light"] .show-more-btn:hover { background: #f0f0f4; color: #333; }
+
+/* Chat search */
+[data-theme="light"] #chat-search-bar { background: #fafafa; border-bottom-color: #ddd; }
+[data-theme="light"] #chat-search-input { background: #fff; border-color: #ccc; color: #333; }
+[data-theme="light"] #chat-search-input:focus { border-color: #4a80e0; }
+[data-theme="light"] #chat-search-count { color: #888; }
+[data-theme="light"] .chat-search-nav-btn { border-color: #ccc; color: #666; }
+[data-theme="light"] .chat-search-nav-btn:hover { background: #eee; color: #333; }
+[data-theme="light"] .message.search-highlight .message-bubble { box-shadow: 0 0 0 2px #4a80e0; }
+
+/* Quick open & command palette overlays */
+[data-theme="light"] .overlay-backdrop { background: rgba(0,0,0,0.2); }
+[data-theme="light"] .overlay-panel { background: #ffffff; border-color: #ddd; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+[data-theme="light"] .overlay-input { background: #f5f5f8; border-color: #ccc; color: #333; }
+[data-theme="light"] .overlay-input:focus { border-color: #4a80e0; }
+[data-theme="light"] .overlay-item { color: #555; }
+[data-theme="light"] .overlay-item:hover, [data-theme="light"] .overlay-item.active { background: #f0f0f4; color: #222; }
+[data-theme="light"] .overlay-item-shortcut { background: #f0f0f4; border-color: #ddd; color: #888; }
+[data-theme="light"] .overlay-item-category { color: #aaa; }
+[data-theme="light"] .overlay-empty { color: #aaa; }
+
+/* Session files section */
+[data-theme="light"] #session-files-header { background: #fafafa; border-bottom-color: #eee; color: #888; }
+[data-theme="light"] #session-files-header:hover { background: #f0f0f4; }
+[data-theme="light"] .session-file-entry { color: #555; }
+[data-theme="light"] .session-file-entry:hover { background: #f0f0f4; }
+
+/* Settings overlay */
+[data-theme="light"] .settings-section { border-bottom-color: #eee; }
+[data-theme="light"] .settings-label { color: #555; }
+[data-theme="light"] .settings-select, [data-theme="light"] .settings-input { background: #f5f5f8; border-color: #ccc; color: #333; }
+[data-theme="light"] .settings-btn { background: #f0f0f4; border-color: #ccc; color: #555; }
+[data-theme="light"] .settings-btn:hover { background: #e0e0e8; color: #333; }
+
+/* Explorer search */
+[data-theme="light"] #explorer-search-input { background: #fff; border-color: #ccc; color: #333; }
+[data-theme="light"] #explorer-search-input:focus { border-color: #4a80e0; }
+
+/* Session tab bar (in header) */
+[data-theme="light"] .session-tab { color: #888; }
+[data-theme="light"] .session-tab:hover { background: #f0f0f4; color: #555; }
+[data-theme="light"] .session-tab.active { color: #333; background: #f0f0f4; border-color: var(--tab-color, #4a80e0); }
+[data-theme="light"] .session-tab-close:hover { color: #c04040; }
+[data-theme="light"] .session-tab-rename-input { background: #fff; border-color: #4a80e0; color: #333; }
+[data-theme="light"] #new-session-btn { border-color: #ccc; color: #888; }
+[data-theme="light"] #new-session-btn:hover { background: #eee; color: #555; border-color: #bbb; }

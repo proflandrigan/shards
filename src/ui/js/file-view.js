@@ -7,6 +7,7 @@ function renderFilePane(relPath) {
   if (!f) { renderEmptyFilePane(); return; }
 
   document.getElementById('file-path-display').textContent = relPath;
+  document.getElementById('copy-path-btn').style.display = '';
 
   var ext = relPath.split('.').pop().toLowerCase();
   var isImage = isImageFile(relPath);

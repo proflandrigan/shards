@@ -7,7 +7,7 @@
 
   renderer.code = function(code, lang) {
     var highlighted = highlightCode(esc(code), lang || '');
-    return '<pre><code>' + highlighted + '</code></pre>';
+    return '<div class="code-block-wrapper"><button class="copy-code-btn" onclick="copyCodeBlock(this)">Copy</button><pre><code>' + highlighted + '</code></pre></div>';
   };
 
   marked.setOptions({

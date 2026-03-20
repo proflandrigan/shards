@@ -22,10 +22,4 @@ var AGENTS = {
 
 function activateAgent(agentKey) {
   currentAgent = agentKey;
-  var info = AGENTS[agentKey];
-  if (info) {
-    document.getElementById('active-dot').style.background = info.color;
-    document.getElementById('active-agent-name').textContent = info.label;
-    document.getElementById('active-agent-name').style.color = info.color;
-  }
 }

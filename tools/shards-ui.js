@@ -228,6 +228,16 @@ function setupHooks() {
     }
   }
 
+  // Add Bash permission for ui-push.js so agents can push panels without approval prompts
+  if (!settings.permissions) settings.permissions = {};
+  if (!settings.permissions.allow) settings.permissions.allow = [];
+
+  const uiPushPermission = 'Bash(node .shards/ui/ui-push.js:*)';
+  if (!settings.permissions.allow.includes(uiPushPermission)) {
+    settings.permissions.allow.push(uiPushPermission);
+    updated = true;
+  }
+
   if (updated) {
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
     console.log('  Configured Claude Code hooks for UI relay.');

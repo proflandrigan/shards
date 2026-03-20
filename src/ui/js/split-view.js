@@ -30,6 +30,7 @@ function toggleSplit() {
 
   renderWsTabs();
   showActiveContent();
+  if (typeof saveLayout === 'function') saveLayout();
 }
 
 function toggleChatCollapse() {
@@ -76,5 +77,6 @@ function initSplitResize() {
     handle.classList.remove('dragging');
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('mouseup', onUp);
+    if (typeof saveLayout === 'function') saveLayout();
   }
 }

@@ -76,7 +76,8 @@ function closePanelTab(panelId) {
   }
 
   delete openPanels[panelId];
-  panelTabOrder = panelTabOrder.filter(function(id) { return id !== panelId; });
+  var ptIdx = panelTabOrder.indexOf(panelId);
+  if (ptIdx !== -1) panelTabOrder.splice(ptIdx, 1);
 
   // Switch away if this panel was active
   var activeKey = splitMode ? currentFileInPane : activeTabId;
@@ -196,7 +197,7 @@ function renderChartPanel(container, panel) {
     title: panel.title,
     paper_bgcolor: 'transparent',
     plot_bgcolor: 'transparent',
-    font: { color: isDarkMode ? '#b0b0c8' : '#333' },
+    font: { color: document.documentElement.getAttribute('data-theme') !== 'light' ? '#b0b0c8' : '#333' },
     margin: { t: 40, r: 20, b: 40, l: 60 }
   };
 
@@ -229,7 +230,7 @@ function renderDiagramPanel(container, panel) {
   try {
     mermaid.initialize({
       startOnLoad: false,
-      theme: isDarkMode ? 'dark' : 'default',
+      theme: document.documentElement.getAttribute('data-theme') !== 'light' ? 'dark' : 'default',
       securityLevel: 'loose',
     });
     mermaid.run({ nodes: [document.getElementById(diagramId)] });

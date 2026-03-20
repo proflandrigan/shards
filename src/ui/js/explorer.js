@@ -4,6 +4,7 @@
 
 function toggleExplorer() {
   document.getElementById('explorer-sidebar').classList.toggle('collapsed');
+  if (typeof saveLayout === 'function') saveLayout();
 }
 
 function switchExplorerView(mode) {
@@ -87,6 +88,9 @@ function renderTreeNodes(container, dirPath, depth) {
       row.addEventListener('click', (function(fp) {
         return function() { toggleTreeDir(fp); };
       })(fullPath));
+      row.addEventListener('contextmenu', (function(fp) {
+        return function(e) { showCtxMenu(e, toRelPath(fp)); };
+      })(fullPath));
       container.appendChild(row);
 
       if (isExpanded) {
@@ -107,6 +111,9 @@ function renderTreeNodes(container, dirPath, depth) {
         '<span class="dir-size">' + formatSize(entry.size) + '</span>';
       row.addEventListener('click', (function(fp) {
         return function() { openFileFromExplorer(fp); };
+      })(fullPath));
+      row.addEventListener('contextmenu', (function(fp) {
+        return function(e) { showCtxMenu(e, toRelPath(fp)); };
       })(fullPath));
       container.appendChild(row);
     }
@@ -192,12 +199,14 @@ function renderDirListing(data) {
       row.className = 'dir-entry is-dir';
       row.innerHTML = '<span class="dir-icon">&#128193;</span><span class="dir-name">' + esc(entry.name) + '</span>';
       row.addEventListener('click', (function(fp) { return function() { browseDir(fp); }; })(fullPath));
+      row.addEventListener('contextmenu', (function(fp) { return function(e) { showCtxMenu(e, toRelPath(fp)); }; })(fullPath));
     } else {
       var relFromRoot = treeRootPath ? fullPath.replace(treeRootPath + '/', '') : fullPath;
       var touchClass = sessionTouchedFiles.has(fullPath) || sessionTouchedFiles.has(relFromRoot) ? ' touched' : '';
       row.className = 'dir-entry is-file' + touchClass;
       row.innerHTML = '<span class="dir-icon">&#128196;</span><span class="dir-name">' + esc(entry.name) + '</span><span class="dir-size">' + formatSize(entry.size) + '</span>';
       row.addEventListener('click', (function(fp) { return function() { openFileFromExplorer(fp); }; })(fullPath));
+      row.addEventListener('contextmenu', (function(fp) { return function(e) { showCtxMenu(e, toRelPath(fp)); }; })(fullPath));
     }
     el.appendChild(row);
   }
@@ -253,5 +262,6 @@ function initExplorerResize() {
     handle.classList.remove('dragging');
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('mouseup', onUp);
+    if (typeof saveLayout === 'function') saveLayout();
   }
 }

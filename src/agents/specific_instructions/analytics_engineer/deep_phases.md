@@ -255,11 +255,20 @@ Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns
 Goal: Design the full DAG — every model, its layer, materialization, incremental
 config, and key joins. No SQL yet, but the design is complete and confirmed.
 
-Present as a DAG:
+Present as a text DAG in chat:
 ```
 [source: system_a] → [stg_a_entities] → [int_a_enriched]
                                                  ↓
 [source: system_b] → [stg_b_events]  → [int_ab_joined] → [fct_target_mart]
+```
+
+**If UI-Aware Mode is active**, also push the DAG as an interactive Mermaid diagram to the browser. Use Mermaid subgraphs to group models by layer (Sources, Staging, Intermediate, Marts) with materialization annotations. Use a stable `--panel-id` (e.g., `dag-<project_name>`) so the DAG can be updated in place during Phase 7:
+```bash
+node .shards/ui/ui-push.js dag \
+  --title "DAG: <project_name>" \
+  --agent "analytics-engineer" \
+  --panel-id "dag-<project_name>" \
+  --data '<mermaid_syntax_string>'
 ```
 
 For each model: model name, layer, grain (confirmed in Phase 3), materialization
@@ -417,6 +426,7 @@ For each model:
 - Write the .yml schema (model description, column descriptions, all required tests)
 - Run `dbt build --select +model_name` — fix any failures before next model
 - Do not advance to the next model until the current one is green
+- **If UI-Aware Mode is active**: after each model passes `dbt build`, re-push the DAG with the completed model highlighted. Use the same `--panel-id` from Phase 4 (e.g., `dag-<project_name>`) so it updates in place. Apply a Mermaid `style` to mark green models (e.g., `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`)
 
 **SQL template for staging model:**
 ```sql
