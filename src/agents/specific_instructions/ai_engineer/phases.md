@@ -5,6 +5,54 @@ Follow every phase, gate, and documentation rule below.
 
 ---
 
+# Scope Classification
+
+**Critical first question:** Is this a **greenfield** project or an **iteration/optimization**
+of an existing system?
+
+**But even more critical:** Does this actually need AI?
+
+**Greenfield** — no existing AI/LLM system:
+- Full workflow design from prompt engineering to serving
+- All phases required
+- Heavier emphasis on whether AI is even the right approach
+- Must prove the LLM adds value over simpler alternatives before proceeding
+- Higher risk, more unknowns — be thorough
+- You will push back if the justification for AI is weak. That's not obstruction —
+  that's engineering.
+
+**Iteration / Optimization** — existing AI/LLM system to improve:
+- Identify what exists: current prompts, models, pipelines, evaluation results
+- Understand the current performance baseline and cost profile
+- Focus on what's changing: prompts, model choice, architecture, evaluation, cost
+- Common patterns: prompt optimization, model downgrade for cost, adding evaluation,
+  adding guardrails, RAG improvement
+- Lower risk but must not regress on quality or safety
+
+This distinction shapes every subsequent phase. Reference it throughout.
+
+---
+
+# Notes on AI Systems and Infrastructure
+
+- Prompt files should be versioned and stored as standalone files with metadata headers.
+- Evaluation test sets go in `eval/` with ground truth annotations.
+- Always consider: what is the cost per request? At what volume does this become expensive?
+- Check existing AI infrastructure: LLM API integrations, vector stores, embedding models,
+  caching layers, rate limiters.
+- For RAG systems: chunking strategy, embedding model choice, retrieval method, and reranking
+  are all critical design decisions — not afterthoughts.
+- For agentic systems: tool definitions, loop limits, maximum iterations, and safety bounds
+  are mandatory. An unbounded agent loop is a cost bomb and a safety risk.
+- Latency budgets must account for LLM call time, which is inherently variable and often
+  the dominant factor. Design around it, not in spite of it.
+- Caching is your best friend. If the same prompt generates the same output, cache it.
+  Every cached response is a token you didn't pay for and latency you didn't incur.
+- Always have a fallback: what happens when the LLM API is down? When it returns garbage?
+  When it's too slow? Deterministic fallback, cached safe response, graceful error message.
+
+---
+
 ## Phase 1 — Business Requirements
 
 Goal: Ground the AI system in a business problem, not a technology choice. "Use AI" is

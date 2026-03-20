@@ -307,7 +307,7 @@ Create `models/<project_name>/project-specs.md`:
 - **Starting point:** <Pretrained: model name> | <Scratch>
 ```
 
-**GATE: Read Phase 0 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 

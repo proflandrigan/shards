@@ -254,7 +254,7 @@ information about the existing transformation layer.
                                     ↓
    [source_b] → [stg_b] → [int_ab_joined] → [fct_output]
    ```
-   If UI-Aware Mode is active (see below), also push the DAG as an interactive Mermaid diagram to the browser.
+   If UI-Aware Mode is active, also push the DAG as an interactive Mermaid diagram to the browser (see `ui_mode.md`).
 
 ## Greenfield Handling (Explore Track)
 
@@ -274,57 +274,7 @@ fresh, or is this a planning conversation before data arrives?"
 
 # UI-Aware Mode
 
-Before beginning Phase 1, check if the Shards UI is running:
-
-```bash
-cat .shards/ui.port 2>/dev/null
-```
-
-If the file exists, the UI is live. In **UI-Aware Mode**, push interactive DAGs to the browser as you work:
-
-- **Explore track — DAG visualization** — when tracing ref() chains and presenting a DAG, push it as an interactive Mermaid diagram in addition to the text diagram in chat:
-  ```bash
-  node .shards/ui/ui-push.js dag \
-    --title "<descriptive_title>" \
-    --agent "analytics-engineer" \
-    --data '<mermaid_syntax_string>'
-  ```
-  The `--data` payload is a Mermaid graph definition string (e.g., `"graph LR\n  source_a --> stg_a --> int_enriched"`). Use `graph LR` for left-to-right flow. Use Mermaid subgraphs to group models by layer (sources, staging, intermediate, marts) for visual clarity.
-
-- **Deep track (Phase 4 — Model Layer Architecture)** — after designing the full DAG and before the gate, push the architecture DAG so the user can see and interact with it in the browser:
-  ```bash
-  node .shards/ui/ui-push.js dag \
-    --title "DAG: <project_name>" \
-    --agent "analytics-engineer" \
-    --data '<mermaid_syntax_string>'
-  ```
-  Use Mermaid subgraphs to group models by layer. Include materialization annotations where useful (e.g., `stg_orders[stg_orders\nview]`). Example:
-  ```
-  graph LR
-    subgraph Sources
-      src_a[source: system_a]
-      src_b[source: system_b]
-    end
-    subgraph Staging
-      stg_a[stg_a_entities\nview]
-      stg_b[stg_b_events\nview]
-    end
-    subgraph Intermediate
-      int_enriched[int_a_enriched\nview]
-      int_joined[int_ab_joined\nview]
-    end
-    subgraph Marts
-      fct_mart[fct_target_mart\ntable]
-    end
-    src_a --> stg_a --> int_enriched --> int_joined
-    src_b --> stg_b --> int_joined --> fct_mart
-  ```
-
-- **Deep track (Phase 7 — Build)** — after each model is green, update the DAG panel to reflect build progress. Re-push the same DAG with completed models styled distinctly (e.g., Mermaid `style` or `:::done` class). Use the same `--panel-id` to update in place rather than opening new panels.
-
-If `.shards/ui.port` does not exist, skip all `ui-push.js` calls and proceed normally — no errors, no change in behavior.
-
-**Important:** The `node .shards/ui/ui-push.js` command is pre-approved in permissions — always execute it directly via Bash. Never skip the push or present in chat instead due to permission concerns.
+Before beginning Phase 1, run `cat .shards/ui.port 2>/dev/null`. If the file exists, the UI is live — read `.claude/agents/specific_instructions/analytics_engineer/ui_mode.md` in full and follow its instructions. If the file does not exist, skip all `ui-push.js` calls and proceed normally.
 
 ---
 
