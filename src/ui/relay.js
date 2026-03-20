@@ -124,6 +124,138 @@ function postEvent(port, token, payload) {
   });
 }
 
+// ─── Pre-tool-use helpers ────────────────────────────────────────────────────
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+function postPermissionRequest(port, token, payload) {
+  return new Promise((resolve) => {
+    if (!port) { resolve(null); return; }
+    const body = JSON.stringify(payload);
+    const headers = {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body),
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const req = http.request({
+      hostname: '127.0.0.1',
+      port,
+      path: '/pre-tool-use',
+      method: 'POST',
+      headers,
+      timeout: 5000,
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.on('timeout', () => { req.destroy(); resolve(null); });
+    req.write(body);
+    req.end();
+  });
+}
+
+function pollDecision(port, token, id) {
+  return new Promise((resolve) => {
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const req = http.request({
+      hostname: '127.0.0.1',
+      port,
+      path: `/chat/permission/${id}`,
+      method: 'GET',
+      headers,
+      timeout: 5000,
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          resolve(result.status || 'pending');
+        } catch {
+          resolve('pending');
+        }
+      });
+    });
+    req.on('error', () => resolve('pending'));
+    req.on('timeout', () => { req.destroy(); resolve('pending'); });
+    req.end();
+  });
+}
+
+async function handlePreToolUse(port, token, payload) {
+  const toolName = payload.tool_name || '';
+  const command = (payload.tool_input && payload.tool_input.command) || '';
+  const sessionId = payload.session_id || '';
+
+  // POST to server
+  const response = await postPermissionRequest(port, token, {
+    tool: toolName,
+    command: command,
+    sessionId: sessionId,
+  });
+
+  // Server unreachable — fail open
+  if (!response) {
+    process.stderr.write('shards-ui: server unreachable, allowing command\n');
+    process.exit(0);
+  }
+
+  // Fast paths
+  if (response.status === 'allowed') {
+    process.exit(0);
+  }
+  if (response.status === 'denied') {
+    process.stdout.write(JSON.stringify({
+      decision: 'block',
+      reason: 'Denied by permission rules',
+    }));
+    process.exit(2);
+  }
+
+  // Pending — poll loop
+  const POLL_MS = 200;
+  const TIMEOUT_MS = 60_000;
+  const start = Date.now();
+
+  while (Date.now() - start < TIMEOUT_MS) {
+    await sleep(POLL_MS);
+    const decision = await pollDecision(port, token, response.id);
+    if (decision === 'allow') {
+      process.exit(0);
+    }
+    if (decision === 'deny' || decision === 'not_found') {
+      process.stdout.write(JSON.stringify({
+        decision: 'block',
+        reason: 'Denied by user in Shards UI',
+      }));
+      process.exit(2);
+    }
+    // 'pending' — keep looping
+  }
+
+  // Timed out
+  process.stdout.write(JSON.stringify({
+    decision: 'block',
+    reason: 'Permission request timed out after 60s',
+  }));
+  process.exit(2);
+}
+
 function extractTextContent(content) {
   if (typeof content === 'string') return content;
   if (Array.isArray(content)) {
@@ -137,7 +269,11 @@ function extractTextContent(content) {
 
 async function main() {
   const serverInfo = getServerInfo();
-  if (!serverInfo || !serverInfo.port) return;
+  if (!serverInfo || !serverInfo.port) {
+    // For pre-tool-use, fail open if server info unavailable
+    if (eventType === 'pre-tool-use') process.exit(0);
+    return;
+  }
 
   const { port, token } = serverInfo;
 
@@ -151,7 +287,14 @@ async function main() {
   try {
     payload = JSON.parse(rawData);
   } catch {
+    if (eventType === 'pre-tool-use') process.exit(0);
     return;
+  }
+
+  // Pre-tool-use: blocking mode — handle separately and exit
+  if (eventType === 'pre-tool-use') {
+    await handlePreToolUse(port, token, payload);
+    return; // handlePreToolUse always calls process.exit
   }
 
   const state = getState();

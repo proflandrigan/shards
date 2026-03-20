@@ -208,6 +208,7 @@ function setupHooks() {
     UserPromptSubmit: { matcher: '', hooks: [{ type: 'command', command: `node ${relayScript} user-prompt` }] },
     Stop: { matcher: '', hooks: [{ type: 'command', command: `node ${relayScript} stop` }] },
     PostToolUse: { matcher: '', hooks: [{ type: 'command', command: `node ${relayScript} post-tool-use` }] },
+    PreToolUse: { matcher: 'Bash', hooks: [{ type: 'command', command: `node ${relayScript} pre-tool-use` }] },
   };
 
   if (!settings.hooks) settings.hooks = {};
@@ -235,6 +236,12 @@ function setupHooks() {
   const uiPushPermission = 'Bash(node .shards/ui/ui-push.js:*)';
   if (!settings.permissions.allow.includes(uiPushPermission)) {
     settings.permissions.allow.push(uiPushPermission);
+    updated = true;
+  }
+
+  const relayPreToolPermission = 'Bash(node .shards/ui/relay.js pre-tool-use*)';
+  if (!settings.permissions.allow.includes(relayPreToolPermission)) {
+    settings.permissions.allow.push(relayPreToolPermission);
     updated = true;
   }
 

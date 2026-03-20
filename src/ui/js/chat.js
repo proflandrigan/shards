@@ -885,6 +885,135 @@ function applySplitLayout() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Permission approval cards
+// ═══════════════════════════════════════════════════════════════
+
+var permissionTimers = {};
+
+function renderPermissionCard(id, tool, command, sessionId) {
+  var session = getActiveSession();
+  var container = document.getElementById('messages');
+  if (session && !session.hasMessages) { container.innerHTML = ''; session.hasMessages = true; }
+
+  var card = document.createElement('div');
+  card.className = 'permission-card';
+  card.setAttribute('data-permission-id', id);
+
+  var displayCmd = esc(command || '');
+  var isLong = command && command.length > 120;
+  var truncated = isLong ? esc(command.slice(0, 120)) + '...' : displayCmd;
+
+  card.innerHTML =
+    '<div class="permission-header">' +
+      '<span class="permission-lock">&#128274;</span>' +
+      '<span class="permission-title">Permission Required</span>' +
+      '<span class="permission-countdown" data-permission-id="' + id + '">60s</span>' +
+    '</div>' +
+    '<div class="permission-tool">' + esc(tool || 'Bash') + '</div>' +
+    '<div class="permission-command">' +
+      '<code class="permission-command-text">' + (isLong ? truncated : displayCmd) + '</code>' +
+      (isLong ? '<button class="permission-show-more" onclick="this.previousElementSibling.textContent=this.parentElement.getAttribute(\'data-full-cmd\');this.remove()">show more</button>' : '') +
+    '</div>' +
+    '<div class="permission-actions">' +
+      '<button class="permission-btn permission-btn-allow" onclick="submitPermission(\'' + id + '\',\'allow\',false,\'' + esc(command).replace(/'/g, "\\'") + '\')">Allow Once</button>' +
+      '<button class="permission-btn permission-btn-always" onclick="submitPermission(\'' + id + '\',\'allow\',true,\'' + esc(command).replace(/'/g, "\\'") + '\')">Always Allow</button>' +
+      '<button class="permission-btn permission-btn-deny" onclick="submitPermission(\'' + id + '\',\'deny\',false,\'' + esc(command).replace(/'/g, "\\'") + '\')">Deny</button>' +
+      '<button class="permission-btn permission-btn-always-deny" onclick="submitPermission(\'' + id + '\',\'deny\',true,\'' + esc(command).replace(/'/g, "\\'") + '\')">Always Deny</button>' +
+    '</div>';
+
+  if (isLong) {
+    card.querySelector('.permission-command').setAttribute('data-full-cmd', esc(command));
+  }
+
+  container.appendChild(card);
+  container.scrollTop = container.scrollHeight;
+
+  // Start countdown timer
+  var remaining = 60;
+  var countdownEl = card.querySelector('.permission-countdown');
+  permissionTimers[id] = setInterval(function() {
+    remaining--;
+    if (countdownEl) countdownEl.textContent = remaining + 's';
+    if (remaining <= 0) {
+      clearInterval(permissionTimers[id]);
+      delete permissionTimers[id];
+      disablePermissionCard(id);
+      if (countdownEl) {
+        countdownEl.textContent = 'Auto-denied (timeout)';
+        countdownEl.classList.add('timed-out');
+      }
+    }
+  }, 1000);
+}
+
+function disablePermissionCard(id) {
+  var card = document.querySelector('[data-permission-id="' + id + '"].permission-card');
+  if (!card) return;
+  var btns = card.querySelectorAll('.permission-btn');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].disabled = true;
+  }
+}
+
+function enablePermissionCard(id) {
+  var card = document.querySelector('[data-permission-id="' + id + '"].permission-card');
+  if (!card) return;
+  var btns = card.querySelectorAll('.permission-btn');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].disabled = false;
+  }
+}
+
+async function submitPermission(id, decision, persist, command) {
+  disablePermissionCard(id);
+  try {
+    await authFetch('/chat/permission', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, decision: decision, persist: persist, command: command }),
+    });
+  } catch (err) {
+    showPermissionCardError(id, 'Failed to submit. Try again.');
+    enablePermissionCard(id);
+  }
+}
+
+function showPermissionCardError(id, msg) {
+  var card = document.querySelector('[data-permission-id="' + id + '"].permission-card');
+  if (!card) return;
+  var existing = card.querySelector('.permission-error');
+  if (existing) existing.remove();
+  var errDiv = document.createElement('div');
+  errDiv.className = 'permission-error';
+  errDiv.textContent = msg;
+  card.appendChild(errDiv);
+}
+
+function resolvePermissionCard(id, decision) {
+  // Stop timer
+  if (permissionTimers[id]) {
+    clearInterval(permissionTimers[id]);
+    delete permissionTimers[id];
+  }
+
+  var card = document.querySelector('[data-permission-id="' + id + '"].permission-card');
+  if (!card) return;
+
+  // Replace card content with resolved state
+  var isAllow = decision === 'allow';
+  card.innerHTML =
+    '<div class="permission-resolved ' + (isAllow ? 'allowed' : 'denied') + '">' +
+      (isAllow ? '&#10003; Allowed' : '&#10007; Denied') +
+    '</div>';
+
+  // Fade out after 2s
+  setTimeout(function() {
+    card.classList.add('fade-out');
+    setTimeout(function() { card.remove(); }, 500);
+  }, 2000);
+}
+
 function rebuildMessages(msgArray) {
   var session = getActiveSession();
   var container = document.getElementById('messages');
