@@ -17,18 +17,112 @@ async function loadAgentPicker() {
   }
 
   picker.innerHTML = '';
+
+  // Search input
+  var searchWrap = document.createElement('div');
+  searchWrap.className = 'agent-picker-search-wrap';
+  var searchInput = document.createElement('input');
+  searchInput.type = 'text';
+  searchInput.className = 'agent-picker-search';
+  searchInput.placeholder = 'What do you need to do?';
+  searchWrap.appendChild(searchInput);
+  picker.appendChild(searchWrap);
+
+  // JFL hero card (pinned, unaffected by search)
+  var jflAgent = agentList.find(function(a) { return a.name === 'jfl'; });
+  if (jflAgent) {
+    var jflInfo = AGENTS['jfl'] || { color: '#FFD700', label: 'JFL (Orchestrator)' };
+    var hero = document.createElement('div');
+    hero.className = 'agent-card agent-card-hero';
+    hero.innerHTML =
+      '<span class="agent-card-dot" style="background:' + jflInfo.color + '"></span>' +
+      '<div class="agent-card-hero-body">' +
+        '<span class="agent-card-name">' + esc(jflInfo.label) + '</span>' +
+        '<span class="agent-card-hero-tagline">Not sure which agent to use? JFL will ask a few questions and route you to the right specialist.</span>' +
+      '</div>';
+    hero.addEventListener('click', function() { startNewSession('jfl'); });
+    picker.appendChild(hero);
+  }
+
+  // Non-JFL agents grouped by category
+  var CATEGORY_ORDER = ['data', 'mlai', 'review'];
+  var CATEGORY_LABELS = { data: 'DATA', mlai: 'ML / AI', review: 'REVIEW' };
+
+  var grouped = {};
+  CATEGORY_ORDER.forEach(function(cat) { grouped[cat] = []; });
   for (var i = 0; i < agentList.length; i++) {
     var agent = agentList[i];
-    var info = AGENTS[agent.name] || { color: '#666', label: agent.name };
-    var card = document.createElement('div');
-    card.className = 'agent-card';
-    card.innerHTML =
-      '<span class="agent-card-dot" style="background:' + info.color + '"></span>' +
-      '<span class="agent-card-name">' + esc(info.label) + '</span>' +
-      '<span class="agent-card-desc">' + esc(info.desc || agent.description || '') + '</span>';
-    card.addEventListener('click', (function(name) { return function() { startNewSession(name); }; })(agent.name));
-    picker.appendChild(card);
+    if (agent.name === 'jfl') continue;
+    var info = AGENTS[agent.name];
+    if (!info) continue;
+    var cat = info.category || 'review';
+    if (grouped[cat]) grouped[cat].push(agent);
   }
+
+  var sections = {};
+  var allCards = [];
+
+  CATEGORY_ORDER.forEach(function(cat) {
+    var agents = grouped[cat];
+    if (!agents || !agents.length) return;
+
+    var header = document.createElement('div');
+    header.className = 'agent-picker-section-header';
+    header.textContent = CATEGORY_LABELS[cat];
+    picker.appendChild(header);
+    sections[cat] = { header: header, cards: [] };
+
+    agents.forEach(function(agent) {
+      var agentInfo = AGENTS[agent.name] || { color: '#666', label: agent.name };
+      var card = document.createElement('div');
+      card.className = 'agent-card';
+      card.innerHTML =
+        '<span class="agent-card-dot" style="background:' + agentInfo.color + '"></span>' +
+        '<span class="agent-card-name">' + esc(agentInfo.label) + '</span>' +
+        '<span class="agent-card-desc">' + esc(agentInfo.desc || agent.description || '') + '</span>';
+      card.addEventListener('click', (function(name) { return function() { startNewSession(name); }; })(agent.name));
+      picker.appendChild(card);
+      sections[cat].cards.push(card);
+      allCards.push({ card: card, info: agentInfo, cat: cat });
+    });
+  });
+
+  // Search filtering
+  searchInput.addEventListener('input', function() {
+    var q = searchInput.value.trim().toLowerCase();
+    if (!q) {
+      allCards.forEach(function(item) { item.card.classList.remove('dimmed'); });
+      CATEGORY_ORDER.forEach(function(cat) {
+        if (sections[cat]) sections[cat].header.classList.remove('dimmed');
+      });
+      return;
+    }
+
+    allCards.forEach(function(item) {
+      var keywords = item.info.keywords || [];
+      var score = 0;
+      keywords.forEach(function(kw) {
+        if (q.indexOf(kw) !== -1 || kw.indexOf(q) !== -1) score += 2;
+      });
+      var label = (item.info.label || '').toLowerCase();
+      var desc = (item.info.desc || '').toLowerCase();
+      if (label.indexOf(q) !== -1) score += 1;
+      if (desc.indexOf(q) !== -1) score += 1;
+      if (score === 0) {
+        item.card.classList.add('dimmed');
+      } else {
+        item.card.classList.remove('dimmed');
+      }
+    });
+
+    CATEGORY_ORDER.forEach(function(cat) {
+      if (!sections[cat]) return;
+      var allDimmed = sections[cat].cards.every(function(c) { return c.classList.contains('dimmed'); });
+      sections[cat].header.classList.toggle('dimmed', allDimmed);
+    });
+  });
+
+  setTimeout(function() { searchInput.focus(); }, 50);
 }
 
 function showAgentPicker() {
