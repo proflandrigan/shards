@@ -43,7 +43,7 @@ testable claim: "If we [architectural choice], then the model will [behavior]
 because [inductive bias reasoning].">
 ```
 
-**GATE: Read Phase 1 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -99,7 +99,7 @@ Compared to <closest prior work>, this framework differs in:
 3. <What this enables that prior work cannot do>
 ```
 
-**GATE: Read Phase 2 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -158,7 +158,7 @@ src/
 capture the essential properties needed to test the hypothesis?>
 ```
 
-**GATE: Read Phase 3 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -212,7 +212,7 @@ Append to `project-specs.md`:
 - **Ablation results (if run):** <summary>
 ```
 
-**GATE: Read the Phase 4 build log back to the user. Stop here — do not begin Phase 5 or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 

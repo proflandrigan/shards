@@ -66,7 +66,7 @@ Append to `project-specs.md`:
 **Parameter estimate:** ~<N>M total (backbone: ~<X>M, head: ~<Y>M)
 ```
 
-**GATE: Read Phase 1 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -154,7 +154,7 @@ Append to `project-specs.md`:
 <best val metric | every N epochs | both — rationale>
 ```
 
-**GATE: Read Phase 2 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -218,7 +218,7 @@ Append to `project-specs.md`:
 - **Expected inference latency:** ~<X>ms per sample on <hardware>
 ```
 
-**GATE: Read Phase 3 back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
@@ -296,7 +296,7 @@ Append to `project-specs.md`:
 - **Known implementation limitations:** <what prototype doesn't handle>
 ```
 
-**GATE: Read the Phase 4 build log back to the user. Stop here — do not begin Phase 5 or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---
 
