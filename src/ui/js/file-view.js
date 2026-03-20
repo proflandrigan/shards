@@ -348,7 +348,7 @@ function handleArtifactUpdate(relPath, content, isSessionFile) {
         if (tabEl) tabEl.classList.add('unread');
       }
     }
-  } else if ((isSessionFile || sessionTouchedFiles.has(relPath)) && relPath.endsWith('project-specs.md')) {
+  } else if (sessionTouchedFiles.has(relPath) && relPath.endsWith('project-specs.md')) {
     // Auto-open project-specs.md in split view
     if (!splitMode) toggleSplit();
     openFileTab(relPath, content, relPath);
