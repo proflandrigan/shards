@@ -34,7 +34,7 @@ var treeLoading = {};
 var treeRootPath = null;
 var activeTabulatorInstance = null;
 var activeTabularColumns = null;
-var sessionTouchedFiles = new Set();
+var sessionTouchedFiles = new Set(); // pointer to active session's set
 var agentList = null;
 
 // Per-session workspace state — globals act as pointers to active session's data.
@@ -75,6 +75,7 @@ function createSessionState(sid, agent) {
     unread: false,
     createdAt: Date.now(),
     // Workspace state (each session owns its own file tabs, panels, split mode)
+    sessionTouchedFiles: new Set(),
     openFiles: {},
     fileTabOrder: [],
     activeTabId: 'chat',
@@ -105,6 +106,7 @@ function getSessionState(sid) {
 // Save current workspace globals into the given session object
 function saveSessionWorkspace(session) {
   if (!session) return;
+  session.sessionTouchedFiles = sessionTouchedFiles;
   session.openFiles = openFiles;
   session.fileTabOrder = fileTabOrder;
   session.activeTabId = activeTabId;
@@ -117,6 +119,7 @@ function saveSessionWorkspace(session) {
 // Load workspace globals from the given session object
 function loadSessionWorkspace(session) {
   if (!session) {
+    sessionTouchedFiles = new Set();
     openFiles = {};
     fileTabOrder = [];
     activeTabId = 'chat';
@@ -126,6 +129,7 @@ function loadSessionWorkspace(session) {
     panelTabOrder = [];
     return;
   }
+  sessionTouchedFiles = session.sessionTouchedFiles;
   openFiles = session.openFiles;
   fileTabOrder = session.fileTabOrder;
   activeTabId = session.activeTabId;

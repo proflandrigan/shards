@@ -60,16 +60,34 @@ function handleGlobalEvent(data) {
       }
       break;
 
-    case 'file-touched':
-      sessionTouchedFiles.add(data.path);
-      if (explorerViewMode === 'tree') renderTree();
-      else if (currentBrowseDir) browseDir(currentBrowseDir);
-      if (typeof renderSessionFiles === 'function') renderSessionFiles();
+    case 'file-touched': {
+      // Route to the correct session's touched-files set
+      var ftSess = data.sessionId ? getSessionState(data.sessionId) : getActiveSession();
+      if (ftSess) {
+        ftSess.sessionTouchedFiles.add(data.path);
+      } else {
+        sessionTouchedFiles.add(data.path);
+      }
+      // Only refresh explorer UI when it's the active session's file
+      if (!data.sessionId || data.sessionId === activeSessionId) {
+        if (explorerViewMode === 'tree') renderTree();
+        else if (currentBrowseDir) browseDir(currentBrowseDir);
+        if (typeof renderSessionFiles === 'function') renderSessionFiles();
+      }
       break;
+    }
 
-    case 'session-end':
-      sessionTouchedFiles.clear();
+    case 'session-end': {
+      // Clear only the ending session's touched-files set
+      var seSess = data.sessionId ? getSessionState(data.sessionId) : getActiveSession();
+      if (seSess) {
+        seSess.sessionTouchedFiles = new Set();
+        if (seSess.sessionId === activeSessionId) sessionTouchedFiles = seSess.sessionTouchedFiles;
+      } else {
+        sessionTouchedFiles.clear();
+      }
       break;
+    }
 
     // ─── Agent-pushed panel events ────────────────────────────────────
     case 'ui-panel':
