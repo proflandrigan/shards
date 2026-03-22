@@ -518,6 +518,63 @@
 #agent-picker.visible {
   display: flex;
 }
+
+/* Search input */
+.agent-picker-search-wrap {
+  margin-bottom: 12px;
+}
+.agent-picker-search {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #1a1a2c;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  color: #6a6a90;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, color 0.15s;
+}
+.agent-picker-search::placeholder { color: #3a3a58; }
+.agent-picker-search:focus {
+  border-color: #2a2a40;
+  color: #b0b0c8;
+}
+
+/* JFL hero card */
+.agent-card-hero {
+  border-left: 3px solid #FFD700 !important;
+  padding: 12px 14px;
+  margin-bottom: 4px;
+  align-items: flex-start !important;
+}
+.agent-card-hero-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.agent-card-hero-tagline {
+  font-size: 11px;
+  color: #3a3a58;
+  line-height: 1.4;
+}
+.agent-card-hero:hover .agent-card-hero-tagline { color: #4a4a68; }
+
+/* Section headers */
+.agent-picker-section-header {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #252538;
+  padding: 10px 14px 2px;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.agent-picker-section-header.dimmed { opacity: 0.3; }
+
+/* Agent cards */
 .agent-card {
   display: flex;
   align-items: center;
@@ -532,6 +589,10 @@
 .agent-card:hover {
   background: #0f0f1e;
   border-color: #1a1a2c;
+}
+.agent-card.dimmed {
+  opacity: 0.25;
+  pointer-events: none;
 }
 .agent-card-dot {
   width: 8px;

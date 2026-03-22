@@ -116,6 +116,9 @@
 [data-theme="light"] .agent-card:hover { background: #f0f0f4; border-color: #ddd; }
 [data-theme="light"] .agent-card-name { color: #333; }
 [data-theme="light"] .agent-card-desc { color: #888; }
+[data-theme="light"] .agent-picker-search { background: #ffffff; border-color: #ccc; color: #222; }
+[data-theme="light"] .agent-picker-search::placeholder { color: #888; }
+[data-theme="light"] .agent-picker-search:focus { border-color: #4a80e0; color: #222; }
 
 /* File pane */
 [data-theme="light"] #file-pane { background: #f5f5f8; }

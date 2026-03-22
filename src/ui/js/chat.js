@@ -17,18 +17,79 @@ async function loadAgentPicker() {
   }
 
   picker.innerHTML = '';
+
+  // Search input
+  var searchWrap = document.createElement('div');
+  searchWrap.className = 'agent-picker-search-wrap';
+  var searchInput = document.createElement('input');
+  searchInput.type = 'text';
+  searchInput.className = 'agent-picker-search';
+  searchInput.placeholder = 'What do you need help with?';
+  searchWrap.appendChild(searchInput);
+  picker.appendChild(searchWrap);
+
+  // JFL hero card (pinned, unaffected by search)
+  var jflAgent = agentList.find(function(a) { return a.name === 'jfl'; });
+  if (jflAgent) {
+    var jflInfo = AGENTS['jfl'] || { color: '#FFD700', label: 'JFL (Orchestrator)' };
+    var hero = document.createElement('div');
+    hero.className = 'agent-card agent-card-hero';
+    hero.innerHTML =
+      '<span class="agent-card-dot" style="background:' + jflInfo.color + '"></span>' +
+      '<div class="agent-card-hero-body">' +
+        '<span class="agent-card-name">' + esc(jflInfo.label) + '</span>' +
+        '<span class="agent-card-hero-tagline">Describe what you need above and press Enter — JFL will route you to the right specialist.</span>' +
+      '</div>';
+    hero.addEventListener('click', function() { startNewSession('jfl'); });
+    picker.appendChild(hero);
+  }
+
+  // Non-JFL agents grouped by category
+  var CATEGORY_ORDER = ['data', 'mlai', 'review'];
+  var CATEGORY_LABELS = { data: 'DATA', mlai: 'ML / AI', review: 'REVIEW' };
+
+  var grouped = {};
+  CATEGORY_ORDER.forEach(function(cat) { grouped[cat] = []; });
   for (var i = 0; i < agentList.length; i++) {
     var agent = agentList[i];
-    var info = AGENTS[agent.name] || { color: '#666', label: agent.name };
-    var card = document.createElement('div');
-    card.className = 'agent-card';
-    card.innerHTML =
-      '<span class="agent-card-dot" style="background:' + info.color + '"></span>' +
-      '<span class="agent-card-name">' + esc(info.label) + '</span>' +
-      '<span class="agent-card-desc">' + esc(info.desc || agent.description || '') + '</span>';
-    card.addEventListener('click', (function(name) { return function() { startNewSession(name); }; })(agent.name));
-    picker.appendChild(card);
+    if (agent.name === 'jfl') continue;
+    var info = AGENTS[agent.name];
+    if (!info) continue;
+    var cat = info.category || 'review';
+    if (grouped[cat]) grouped[cat].push(agent);
   }
+
+  CATEGORY_ORDER.forEach(function(cat) {
+    var agents = grouped[cat];
+    if (!agents || !agents.length) return;
+
+    var header = document.createElement('div');
+    header.className = 'agent-picker-section-header';
+    header.textContent = CATEGORY_LABELS[cat];
+    picker.appendChild(header);
+
+    agents.forEach(function(agent) {
+      var agentInfo = AGENTS[agent.name] || { color: '#666', label: agent.name };
+      var card = document.createElement('div');
+      card.className = 'agent-card';
+      card.innerHTML =
+        '<span class="agent-card-dot" style="background:' + agentInfo.color + '"></span>' +
+        '<span class="agent-card-name">' + esc(agentInfo.label) + '</span>' +
+        '<span class="agent-card-desc">' + esc(agentInfo.desc || agent.description || '') + '</span>';
+      card.addEventListener('click', (function(name) { return function() { startNewSession(name); }; })(agent.name));
+      picker.appendChild(card);
+    });
+  });
+
+  // Prompt → JFL auto-start
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      var q = searchInput.value.trim();
+      startNewSession('jfl', q || undefined);
+    }
+  });
+
+  setTimeout(function() { searchInput.focus(); }, 50);
 }
 
 function showAgentPicker() {
@@ -47,12 +108,14 @@ function showChatView() {
 // Chat session control
 // ═══════════════════════════════════════════════════════════════
 
-async function startNewSession(agentName) {
+async function startNewSession(agentName, initialMessage) {
   try {
+    var body = { agent: agentName };
+    if (initialMessage) body.initialMessage = initialMessage;
     var res = await authFetch('/chat/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent: agentName }),
+      body: JSON.stringify(body),
     });
     var data = await res.json();
     if (data.error) {
@@ -93,7 +156,8 @@ async function startNewSession(agentName) {
     renderWsTabs();
     showActiveContent();
 
-    document.getElementById('chat-input').focus();
+    var chatInput = document.getElementById('chat-input');
+    chatInput.focus();
   } catch (err) {}
 }
 

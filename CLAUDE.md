@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-The **shards** source repository — a suite of data-focused Claude Code agents published as an npm package. Users install it into their own projects with `npx github:USERNAME/shards install`, which copies files from `src/` into their project's `.claude/` directory.
+The **shards** source repository — a suite of data-focused Claude Code agents published as an npm package. Users install it into their own projects with `npx github:proflandrigan/shards install`, which copies files from `src/` into their project's `.claude/` directory.
 
 There are no build steps, no compiled output, and no tests. The executables are `tools/install.js` and `tools/shards-ui.js` (Node.js v18+). Both are registered as bin commands in `package.json` (`shards` and `shards-ui`).
 
@@ -33,7 +33,14 @@ The `.claude/` directory at the repo root is a live installation used when worki
 
 **`src/templates/*.md`** — output document templates with `{{PLACEHOLDER}}` tokens. `project-specs.md` is the central one — every project produces a filled-in instance of it.
 
-**`src/ui/*.js` + `src/ui/index.html`** — the Shards web UI. A local HTTP server (`server.js`) with WebSocket relay (`relay.js`) that displays real-time agent session activity in a browser. Installed to `.shards/ui/` in target projects. The UI hooks into Claude Code via `UserPromptSubmit`, `Stop`, and `PostToolUse` hooks configured in `.claude/settings.json`.
+**`src/ui/*.js` + `src/ui/index.html`** — the Shards web UI. Installed to `.shards/ui/` in target projects. The UI hooks into Claude Code via `UserPromptSubmit`, `Stop`, and `PostToolUse` hooks configured in `.claude/settings.json`. Key files:
+
+- `server.js` — HTTP/HTTPS server (ports 7842–7845, localhost-bound). Serves `index.html`, handles session storage under `.shards/sessions/`, exposes a REST API for the browser client. Uses a per-process auth token.
+- `chat-session.js` — tracks a single Claude Code session: buffers tool calls, user prompts, and stop events into a session JSON file.
+- `relay.js` — WebSocket relay that pushes live hook events from Claude Code to the browser.
+- `ui-push.js` — thin client run by hooks; POSTs events to the relay.
+- `spawn-server.js` / `open-browser.js` — called by the `/shards-ui` slash command to start the server and open the browser.
+- `js/` — browser-side ES modules: `state.js`, `events.js`, `chat.js`, `agents.js`, `panels.js`, `tabs.js`, `explorer.js`, `file-view.js`, `table.js`, `tabular.js`, `notebook.js`, `monaco.js`, `markdown.js`, `split-view.js`, `command-palette.js`, `quick-open.js`, `settings.js`, `init.js`, `utils.js`.
 
 ### Agent taxonomy
 
@@ -101,14 +108,26 @@ When changing agent behavior:
 
 After editing source files, re-run `node tools/install.js` in any target project to pick up the changes.
 
+### Shared behavioral files
+
+`specific_instructions/shared/` contains two cross-cutting files referenced by all agents:
+
+- **`behavioral_rules.md`** — the four rules every specialist must follow: document before advancing, one phase at a time, announce cross-agent reviews, facilitate don't generate. Referenced from each agent's Behavioral Rules section to avoid duplication.
+- **`reviewer_verdict_protocol.md`** — the three-tier verdict system (APPROVED / NEEDS REVISION / BLOCKED) used by JFL and all reviewer agents when returning sign-off decisions.
+
 ### Variant files in `specific_instructions/`
 
-Each agent has a subdirectory under `specific_instructions/` (e.g., `specific_instructions/data_analyst/`). Beyond the `phases.md` files (core workflow), these subdirectories contain mode variants and experimental files:
+Each agent has a subdirectory under `specific_instructions/` (e.g., `specific_instructions/data_analyst/`). Beyond the `phases.md` files (core workflow), these subdirectories contain mode variants and other files:
 
 - **Mode variants:** `review.md`, `advise.md`, `explain.md`, `update.md`, `clean.md` — referenced by core agent files for `[R]`, `[ADV]`, `[EX]`, `[U]`, `[C]` menu options
+- **UI mode:** `data_analyst/ui_mode.md`, `analytics_engineer/ui_mode.md` — variant invoked by the Shards UI to push structured output for the browser client
+- **Service mode:** `analytics_engineer/service_mode.md`, `data_modeller/service_mode.md` — stripped-down mode used when these agents are consulted as reviewers via Task by other specialists
 - **Brainstorm:** `jfl/brainstorm.md` (also has a `/brainstorm` command entry point in `src/commands/brainstorm.md`)
 - **Experiment:** `ml_engineer/experiment.md`, `ai_engineer/experiment.md`
 - **BI handoffs:** `ai_engineer/bi_handoff.md`, `ml_engineer/bi_handoff.md`, `data_scientist/bi_handoff.md`, `analytics_engineer/bi_handoff.md` — specialist variants that hand off to the BI Engineer
 - **DA handoffs:** `analytics_engineer/da_handoff.md`, `bi_engineer/da_handoff.md` — variants that hand off to the Data Analyst
+- **Handoff receivers:** `bi_engineer/handoff.md`, `data_analyst/handoff.md` — receiver-side instructions for agents accepting a structured handoff brief from another specialist
 - **Explain:** `data_analyst/explain.md`, `data_scientist/explain.md` — explanation-focused variants
 - **DS handoffs:** `data_scientist/greenfield_data.md`, `data_scientist/ml_engineer_handoff.md` — Data Scientist variants for greenfield data work and ML Engineer handoff
+- **Checklists:** `backend_engineer/checklist.md`, `researcher/checklist.md` — review checklists used during service-mode consultations
+- **Report:** `academic/report.md` — Academic shard variant for producing full literature review / research report documents
