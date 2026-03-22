@@ -13,8 +13,8 @@ Ask the user:
 
 Once the user responds, read all relevant files:
 - `data_models/<project_name>/project-specs.md` (if it exists)
-- dbt model SQL files in the relevant directory
-- Schema `.yml` files (column descriptions, tests)
+- Transformation model SQL files in the relevant directory
+- Schema files (column descriptions, tests)
 - Source definitions if relevant
 
 Do not ask follow-up questions yet — just read and summarize what you find.
