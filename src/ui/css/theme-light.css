@@ -2,7 +2,6 @@
 [data-theme="light"] { color-scheme: light; }
 [data-theme="light"] body { background: #f5f5f8; color: #2a2a3a; }
 [data-theme="light"] #header { background: #ffffff; border-bottom-color: #ddd; }
-[data-theme="light"] .logo { color: #b8960a; }
 [data-theme="light"] #conn-status-area { color: #999; }
 [data-theme="light"] .conn-indicator { background: #ccc; }
 [data-theme="light"] #theme-toggle { border-color: #ccc; color: #666; }

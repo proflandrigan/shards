@@ -83,10 +83,10 @@ Ask about:
 - Existing intermediate models relevant to this work?
 - Incremental strategies already in use?
 
-Inspect the dbt project:
-- Glob: `**/models/staging/**/*.sql`, `**/models/intermediate/**/*.sql`
-- Grep for existing `{{ source() }}` references to find defined sources
-- Check `**/sources.yml` for freshness configs
+Inspect the transformation project:
+- Glob: `**/*.sql` filtered to staging and intermediate paths; look for project config files
+- Grep for existing source reference calls to find defined sources
+- Check for source definition files (e.g., `sources.yml` or equivalent) for freshness configs
 
 **Consult Data Engineer as the first step of source assessment:**
 
@@ -151,7 +151,7 @@ If it does:
 - **Existing intermediate models relevant to this work:**
   - <int_model>: <what it contains>
   - (or "none")
-- **Source definitions in sources.yml:** Present | Missing — <details>
+- **Source definitions:** Present | Missing — <details>
 - **Freshness configs:** Defined | Missing — <details>
 - **Known data quality issues:**
   - <issue or "none identified">
@@ -422,16 +422,17 @@ Build in this order:
 7. Singular test files
 
 For each model:
-- Write the SQL (CTEs from source to final; `{{ ref() }}` and `{{ source() }}` always)
-- Write the .yml schema (model description, column descriptions, all required tests)
-- Run `dbt build --select +model_name` — fix any failures before next model
+- Write the SQL (CTEs from source to final; use parameterized model references — never hardcoded table names)
+- Write the schema file (model description, column descriptions, all required tests)
+- Run the stack's build/validate command (e.g., `dbt build --select +model_name`) — fix any failures before next model
 - Do not advance to the next model until the current one is green
-- **If UI-Aware Mode is active**: after each model passes `dbt build`, re-push the DAG with the completed model highlighted. Use the same `--panel-id` from Phase 4 (e.g., `dag-<project_name>`) so it updates in place. Apply a Mermaid `style` to mark green models (e.g., `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`)
+- **If UI-Aware Mode is active**: after each model passes validation, re-push the DAG with the completed model highlighted. Use the same `--panel-id` from Phase 4 (e.g., `dag-<project_name>`) so it updates in place. Apply a Mermaid `style` to mark green models (e.g., `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`)
 
-**SQL template for staging model:**
+**SQL template for staging model** (adapt reference syntax to your stack):
 ```sql
 with source as (
-    select * from {{ source('<schema>', '<table>') }}
+    select * from <source_ref('schema', 'table')>
+    -- e.g., {{ source('schema', 'table') }} in dbt
 ),
 
 renamed as (
@@ -451,20 +452,22 @@ renamed as (
 select * from renamed
 ```
 
-**SQL template for intermediate model:**
+**SQL template for intermediate model** (adapt reference syntax to your stack):
 ```sql
 with <left_model> as (
-    select * from {{ ref('<stg_or_int_model>') }}
+    select * from <model_ref('stg_or_int_model')>
+    -- e.g., {{ ref('model') }} in dbt
 ),
 
 <right_model> as (
-    select * from {{ ref('<stg_or_int_model>') }}
+    select * from <model_ref('stg_or_int_model')>
 ),
 
 joined as (
     select
         -- grain: one row per <statement>
-        {{ dbt_utils.generate_surrogate_key(['<col_a>', '<col_b>']) }} as <model>_id,
+        <surrogate_key(col_a, col_b)> as <model>_id,
+        -- e.g., {{ dbt_utils.generate_surrogate_key(['col_a', 'col_b']) }} in dbt
 
         -- dimensions
         l.<col>,
@@ -484,14 +487,14 @@ final as (
 select * from final
 ```
 
-**SQL template for mart model:**
+**SQL template for mart model** (adapt reference syntax to your stack):
 ```sql
 with <source_model> as (
-    select * from {{ ref('<int_model>') }}
+    select * from <model_ref('int_model')>
 ),
 
 <dimension_model> as (
-    select * from {{ ref('<dim_model>') }}
+    select * from <model_ref('dim_model')>
 ),
 
 -- <add any other CTEs needed>
@@ -499,7 +502,7 @@ with <source_model> as (
 final as (
     select
         -- grain: one row per <statement>
-        {{ dbt_utils.generate_surrogate_key(['<col_a>', '<col_b>']) }} as <mart>_id,
+        <surrogate_key(col_a, col_b)> as <mart>_id,
 
         -- dimensions
         s.<dim_col>,
@@ -509,7 +512,7 @@ final as (
         s.<measure_col>,
 
         -- metadata
-        current_timestamp as _dbt_updated_at
+        current_timestamp as _updated_at
     from <source_model> as s
     left join <dimension_model> as d
         on s.<fk_col> = d.<pk_col>
@@ -529,7 +532,7 @@ select * from final
 - **Files modified:**
   - <file path>: <what changed>
 - **Build validation:**
-  - `dbt build` result: Pass | Fail — <details>
+  - Build result: Pass | Fail — <details>
   - Tests passing: <N> / <N>
 - **Deviations from design:** <changes from Phases 4-6 and why, or "none">
 - **Performance notes:** <run time, row counts, anything notable>
@@ -673,7 +676,7 @@ Task(
 Append JFL's code review summary to the specs. Present findings to user.
 
 Then:
-1. Run full DAG: `dbt build --select +mart_name`
+1. Run the full DAG using the stack's build command
 2. Spot-check final mart output (row count, spot-check key metrics)
 3. Summarize in 3-5 bullet points
 4. List all files created/modified

@@ -1,6 +1,6 @@
 # Analytics Engineer Review Mode
 
-This file governs `[R]` — the review mode for evaluating an existing dbt
+This file governs `[R]` — the review mode for evaluating an existing
 transformation layer, mart, or analytics pipeline without committing to a full
 build. You are the Analytics Engineer throughout. No persona transfer occurs.
 No project directory is created.
@@ -11,7 +11,7 @@ No project directory is created.
 
 Ask the user:
 1. What are we reviewing? (a mart model, an intermediate layer, a staging model,
-   a full dbt DAG, or a specific transformation)
+   a full transformation DAG, or a specific transformation)
 2. What is the review scope? (e.g., grain correctness, SQL quality, test coverage,
    documentation, business logic correctness, or the full work)
 3. Where is the relevant code / config? (repo path, model directory, or ask them
@@ -26,8 +26,8 @@ Summarise what you're reviewing and what you'll assess. Wait for explicit confir
 ## Phase 2 — Evidence Gathering (no gate)
 
 Read the relevant files using Glob, Grep, and Read:
-- dbt model SQL files (staging, intermediate, mart layers)
-- Schema .yml files (column descriptions, tests)
+- Transformation model SQL files (staging, intermediate, mart layers)
+- Schema files (column descriptions, tests)
 - Source definitions
 - project-specs.md if it exists
 - Any existing documentation or README files

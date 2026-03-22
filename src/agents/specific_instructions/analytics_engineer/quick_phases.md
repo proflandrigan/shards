@@ -49,9 +49,9 @@ you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-1. Implement the change in the model SQL and .yml schema
+1. Implement the change in the model SQL and schema file
 2. Update downstream models if column names or types changed
-3. Run `dbt build --select +model_name` to validate
+3. Run the stack's build/validate command to validate
 4. Summarize what changed
 
 ### Document Quick Phase 2

@@ -1,6 +1,8 @@
-<img src="shards_logo.png" alt="Shards" width="200" />
-
-# Shards
+<img 
+  src="shards_logo.png" 
+  alt="Shards" 
+  style="display: block; margin-left: auto; margin-right: auto; width: 400px;" 
+/>
 
 **Shards of JFL's brain** — a suite of data-focused agents for Claude Code.
 
