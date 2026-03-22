@@ -735,10 +735,15 @@ function createHandler() {
       return;
     }
 
-    // Static file serving (JS/CSS) — no auth (public assets)
+    // Static file serving (JS/CSS/images) — no auth (public assets)
     if (req.method === 'GET') {
-      const MIME = { '.js': 'application/javascript', '.css': 'text/css' };
-      const ext = path.extname(parsedUrl.pathname);
+      const MIME = {
+        '.js': 'application/javascript', '.css': 'text/css',
+        '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif', '.svg': 'image/svg+xml', '.webp': 'image/webp',
+        '.ico': 'image/x-icon',
+      };
+      const ext = path.extname(parsedUrl.pathname).toLowerCase();
       if (MIME[ext]) {
         const filePath = path.join(__dirname, decodeURIComponent(parsedUrl.pathname));
         const resolved = path.resolve(filePath);
@@ -747,8 +752,9 @@ function createHandler() {
           res.end('Forbidden');
           return;
         }
+        const isBinary = !['.js', '.css', '.svg'].includes(ext);
         try {
-          const content = fs.readFileSync(resolved, 'utf8');
+          const content = fs.readFileSync(resolved, isBinary ? null : 'utf8');
           res.writeHead(200, { ...cors, 'Content-Type': MIME[ext] });
           res.end(content);
         } catch {

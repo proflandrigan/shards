@@ -10,10 +10,9 @@
   height: 42px;
 }
 .logo {
-  font-size: 14px;
-  font-weight: bold;
-  color: #FFD700;
-  letter-spacing: 3px;
+  height: 28px;
+  width: auto;
+  display: block;
 }
 #header-center {
   flex: 1;
