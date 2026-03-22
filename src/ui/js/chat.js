@@ -24,7 +24,7 @@ async function loadAgentPicker() {
   var searchInput = document.createElement('input');
   searchInput.type = 'text';
   searchInput.className = 'agent-picker-search';
-  searchInput.placeholder = 'What do you need to do?';
+  searchInput.placeholder = 'What do you need help with?';
   searchWrap.appendChild(searchInput);
   picker.appendChild(searchWrap);
 
@@ -38,7 +38,7 @@ async function loadAgentPicker() {
       '<span class="agent-card-dot" style="background:' + jflInfo.color + '"></span>' +
       '<div class="agent-card-hero-body">' +
         '<span class="agent-card-name">' + esc(jflInfo.label) + '</span>' +
-        '<span class="agent-card-hero-tagline">Not sure which agent to use? JFL will ask a few questions and route you to the right specialist.</span>' +
+        '<span class="agent-card-hero-tagline">Describe what you need above and press Enter — JFL will route you to the right specialist.</span>' +
       '</div>';
     hero.addEventListener('click', function() { startNewSession('jfl'); });
     picker.appendChild(hero);
@@ -59,9 +59,6 @@ async function loadAgentPicker() {
     if (grouped[cat]) grouped[cat].push(agent);
   }
 
-  var sections = {};
-  var allCards = [];
-
   CATEGORY_ORDER.forEach(function(cat) {
     var agents = grouped[cat];
     if (!agents || !agents.length) return;
@@ -70,7 +67,6 @@ async function loadAgentPicker() {
     header.className = 'agent-picker-section-header';
     header.textContent = CATEGORY_LABELS[cat];
     picker.appendChild(header);
-    sections[cat] = { header: header, cards: [] };
 
     agents.forEach(function(agent) {
       var agentInfo = AGENTS[agent.name] || { color: '#666', label: agent.name };
@@ -82,44 +78,15 @@ async function loadAgentPicker() {
         '<span class="agent-card-desc">' + esc(agentInfo.desc || agent.description || '') + '</span>';
       card.addEventListener('click', (function(name) { return function() { startNewSession(name); }; })(agent.name));
       picker.appendChild(card);
-      sections[cat].cards.push(card);
-      allCards.push({ card: card, info: agentInfo, cat: cat });
     });
   });
 
-  // Search filtering
-  searchInput.addEventListener('input', function() {
-    var q = searchInput.value.trim().toLowerCase();
-    if (!q) {
-      allCards.forEach(function(item) { item.card.classList.remove('dimmed'); });
-      CATEGORY_ORDER.forEach(function(cat) {
-        if (sections[cat]) sections[cat].header.classList.remove('dimmed');
-      });
-      return;
+  // Prompt → JFL auto-start
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      var q = searchInput.value.trim();
+      startNewSession('jfl', q || undefined);
     }
-
-    allCards.forEach(function(item) {
-      var keywords = item.info.keywords || [];
-      var score = 0;
-      keywords.forEach(function(kw) {
-        if (q.indexOf(kw) !== -1 || kw.indexOf(q) !== -1) score += 2;
-      });
-      var label = (item.info.label || '').toLowerCase();
-      var desc = (item.info.desc || '').toLowerCase();
-      if (label.indexOf(q) !== -1) score += 1;
-      if (desc.indexOf(q) !== -1) score += 1;
-      if (score === 0) {
-        item.card.classList.add('dimmed');
-      } else {
-        item.card.classList.remove('dimmed');
-      }
-    });
-
-    CATEGORY_ORDER.forEach(function(cat) {
-      if (!sections[cat]) return;
-      var allDimmed = sections[cat].cards.every(function(c) { return c.classList.contains('dimmed'); });
-      sections[cat].header.classList.toggle('dimmed', allDimmed);
-    });
   });
 
   setTimeout(function() { searchInput.focus(); }, 50);
@@ -141,7 +108,7 @@ function showChatView() {
 // Chat session control
 // ═══════════════════════════════════════════════════════════════
 
-async function startNewSession(agentName) {
+async function startNewSession(agentName, initialMessage) {
   try {
     var res = await authFetch('/chat/start', {
       method: 'POST',
@@ -187,7 +154,12 @@ async function startNewSession(agentName) {
     renderWsTabs();
     showActiveContent();
 
-    document.getElementById('chat-input').focus();
+    var chatInput = document.getElementById('chat-input');
+    chatInput.focus();
+    if (initialMessage) {
+      chatInput.value = initialMessage;
+      sendChatMessage();
+    }
   } catch (err) {}
 }
 
