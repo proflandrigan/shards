@@ -110,10 +110,12 @@ function showChatView() {
 
 async function startNewSession(agentName, initialMessage) {
   try {
+    var body = { agent: agentName };
+    if (initialMessage) body.initialMessage = initialMessage;
     var res = await authFetch('/chat/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent: agentName }),
+      body: JSON.stringify(body),
     });
     var data = await res.json();
     if (data.error) {
@@ -156,10 +158,6 @@ async function startNewSession(agentName, initialMessage) {
 
     var chatInput = document.getElementById('chat-input');
     chatInput.focus();
-    if (initialMessage) {
-      chatInput.value = initialMessage;
-      sendChatMessage();
-    }
   } catch (err) {}
 }
 

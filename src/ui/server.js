@@ -608,7 +608,7 @@ function parseSlashCommand(message) {
 // ─── Chat session creation helper ───────────────────────────────────────────
 
 function startNewChatSession(agent, options = {}) {
-  const { resumeSessionId, permissionMode, callerSessionId } = options;
+  const { resumeSessionId, permissionMode, callerSessionId, initialMessage } = options;
 
   // Kill existing session for the caller if running
   if (callerSessionId) {
@@ -645,6 +645,13 @@ function startNewChatSession(agent, options = {}) {
     activationPrompt = raw.replace(/^---\n[\s\S]*?\n---\n*/, '').trim();
   } catch {
     activationPrompt = `You are now activated as the ${agent} agent. Greet the user and display your activation menu.`;
+  }
+
+  // When a prompt is pre-supplied, skip the greeting and go straight to triage
+  if (initialMessage) {
+    activationPrompt = activationPrompt +
+      '\n\nThe user has already provided their request upfront. **Skip the greeting and activation menu entirely.** Go directly to Phase 0 triage.' +
+      '\n\nUser request:\n\n' + initialMessage;
   }
 
   try {
@@ -1173,7 +1180,7 @@ function createHandler() {
         return;
       }
 
-      const { agent, permissionMode, sessionId: callerSessionId } = params;
+      const { agent, permissionMode, sessionId: callerSessionId, initialMessage } = params;
       if (!agent) {
         jsonResponse(res, cors, 400, { error: 'Missing agent parameter' });
         return;
@@ -1186,7 +1193,7 @@ function createHandler() {
       }
 
       log(`/chat/start requested for agent="${agent}"`);
-      const result = startNewChatSession(agent, { permissionMode, callerSessionId });
+      const result = startNewChatSession(agent, { permissionMode, callerSessionId, initialMessage });
       jsonResponse(res, cors, 200, result);
       return;
     }
