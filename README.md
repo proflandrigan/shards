@@ -1,3 +1,5 @@
+<img src="shards_logo.png" alt="Shards" width="200" />
+
 # Shards
 
 **Shards of JFL's brain** — a suite of data-focused agents for Claude Code.
@@ -28,7 +30,7 @@ happening — nothing is hidden.
 
 ```bash
 cd your-project
-npx github:YOUR_USERNAME/shards install
+npx github:proflandrigan/shards install
 ```
 
 Then open Claude Code and run:
@@ -44,6 +46,7 @@ JFL will greet you, figure out what you need, and summon the right shard.
 | Shard | Command | Personality | Speciality |
 |-------|---------|-------------|------------|
 | **JFL** | `/shards` | Friendly, structured | Triage, delegation, final review |
+| **JFL (Brainstorm)** | `/brainstorm` | Friendly, structured | Multi-agent ideation, exploration |
 | **Data Analyst** | `/data-analyst` | Helpful | Adhoc queries, quick analyses |
 | **Data Scientist** | `/data-scientist` | Condescending | EDA, feature engineering, modeling |
 | **ML Engineer** | `/ml-engineer` | Intense | Recommenders, ranking, production ML systems |
@@ -58,6 +61,7 @@ JFL will greet you, figure out what you need, and summon the right shard.
 | **Data Modeller** | `/data-modeller` | Sarcastic | Entities, relationships, grain |
 | **Researcher** | `/researcher` | Nerdy | Statistical review, methodology validation |
 | **Academic** | `/academic` | Cool professor | Safety, ethics, cognitive science, behavioral research |
+| **Shards UI** | `/shards-ui` | — | Open the local web UI in your browser |
 
 ## What Gets Installed
 
@@ -79,31 +83,25 @@ your-project/
 │   │   ├── data-engineer.md
 │   │   ├── data-modeller.md
 │   │   ├── researcher.md
-│   │   └── academic.md
+│   │   ├── academic.md
+│   │   └── specific_instructions/  # Deferred phase files per agent
 │   └── commands/               # Slash commands
 │       ├── shards.md
 │       ├── brainstorm.md
+│       ├── shards-ui.md
 │       ├── data-analyst.md
-│       ├── data-scientist.md
-│       ├── ml-engineer.md
-│       ├── ai-engineer.md
-│       ├── applied-ml-scientist.md
-│       ├── deep-learning-engineer.md
-│       ├── mlops-engineer.md
-│       ├── analytics-engineer.md
-│       ├── bi-engineer.md
-│       ├── backend-engineer.md
-│       ├── data-engineer.md
-│       ├── data-modeller.md
-│       ├── researcher.md
-│       └── academic.md
+│       └── ...
+├── .shards/
+│   └── ui/                     # Shards web UI (local server + browser client)
 ├── templates/                  # Output templates
 ├── analysis/                   # Adhoc analyses (Data Analyst)
 ├── studies/                    # Deep studies (Data Scientist)
-├── models/                     # Model work (Engineer + Modeller + Analytics Engineer)
+├── models/                     # ML Engineer and Data Engineer work
+├── data_models/                # Data Modeller and Analytics Engineer work
 ├── services/                   # ML / AI / Deep Learning / MLOps greenfield projects
 ├── dashboards/                 # BI Engineer dashboards
 ├── research/                   # Applied ML Scientist novel frameworks
+├── brainstorm/                 # JFL brainstorm sessions
 └── CLAUDE.md                   # Updated with Shards docs
 ```
 
@@ -171,6 +169,13 @@ without committing to a full project workflow.
 You can also invoke any specialist directly with their slash command
 if you already know what you need.
 
+### Shards UI
+
+Run `/shards-ui` inside Claude Code (or `shards-ui` from your terminal) to open
+a local web dashboard that shows real-time agent session activity. It hooks into
+Claude Code via `UserPromptSubmit`, `Stop`, and `PostToolUse` hooks and displays
+the live feed of agent work in the browser.
+
 ### BI Handoffs
 
 After completing their final phase, the AI Engineer, ML Engineer, Data Scientist,
@@ -194,21 +199,21 @@ Additionally:
 |-------|-----------------|-----------|
 | Data Analyst | `analysis/<name>/` | `project-specs.md`, `queries/*.sql` |
 | Data Scientist | `studies/<name>/` | `project-specs.md`, `queries/*.sql`, `notebooks/*.ipynb`, `report.md` |
-| ML Engineer | `services/<name>/` (greenfield) or existing service dir (iteration) | `project-specs.md`, `queries/*.sql`, `notebooks/*.ipynb`, `report.md` |
+| ML Engineer | `models/<name>/` (greenfield) or existing service dir (iteration) | `project-specs.md`, `queries/*.sql`, `notebooks/*.ipynb`, `report.md` |
 | AI Engineer | `services/<name>/` (greenfield) or existing service dir (iteration) | `project-specs.md`, `prompts/`, `eval/`, `notebooks/*.ipynb`, `report.md` |
 | Applied ML Scientist | `research/<name>/` | `project-specs.md`, `notebooks/*.ipynb`, `report.md` |
 | Deep Learning Engineer | `services/<name>/` | `project-specs.md`, `notebooks/*.ipynb`, `report.md` |
 | MLOps Engineer | `services/<name>/mlops/` (greenfield or handoff) | `project-specs.md` |
-| Analytics Engineer | `models/<name>/` | `project-specs.md` |
+| Analytics Engineer | `data_models/<name>/` | `project-specs.md` |
 | BI Engineer | `dashboards/<name>/` | `project-specs.md` |
 | Backend Engineer | — (review only, no files produced) | — |
 | Data Engineer | `models/<name>/` | `project-specs.md` |
-| Data Modeller | `models/<name>/` | `project-specs.md` |
+| Data Modeller | `data_models/<name>/` | `project-specs.md` |
 
 ## Uninstall
 
 ```bash
-npx github:YOUR_USERNAME/shards uninstall
+npx github:proflandrigan/shards uninstall
 ```
 
 ## License
