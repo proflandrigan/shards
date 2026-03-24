@@ -6,7 +6,7 @@ transfer occurs.
 
 ---
 
-## Setup — Context Loading (no gate)
+## Setup — Context Loading & Experiment Parameters (GATE)
 
 1. Locate `project-specs.md` in the project directory (check the path established in
    Phase 0 — typically `models/<project_name>/project-specs.md` or
@@ -19,19 +19,33 @@ transfer occurs.
 4. Identify the current metrics baseline — look in project-specs.md or ask the user
    if no baseline is documented.
 5. Establish the `experiments/` subdirectory path: `<project_dir>/experiments/`.
+6. Agree on experiment parameters with the user. Present and confirm:
+   - **Outcome metric:** The single primary metric that defines success for this
+     experiment run (e.g., "F1 on test set", "RMSE on holdout", "precision@k"). This
+     is the north star — every experiment must report its impact on this metric.
+   - **Number of experiments:** How many experiments to run this session. Default: 3.
+   - **Success threshold** (optional): A target value for the outcome metric. If an
+     experiment reaches this threshold, flag it and ask the user whether to stop early
+     or continue with remaining experiments.
+
+**GATE: Do not proceed to Phase 1 until the user explicitly confirms the outcome
+metric and experiment count.** If the user modifies any parameter, update before
+proceeding.
 
 ---
 
 ## Phase 1 — Experiment Design (GATE)
 
-Propose a prioritised list of **up to 3 experiments** grounded in the project context.
+Propose a prioritised list of experiments (up to the agreed experiment count) grounded
+in the project context.
 
 For each experiment, provide:
 - **Name** — short, descriptive slug (used in filenames)
 - **Hypothesis** — what you expect to happen and why
 - **What will change** — the precise intervention (hyperparameter value, feature
   addition/removal, model swap, sampling strategy, etc.)
-- **Target metric** — which metric this experiment is designed to move
+- **Target metric** — which metric this experiment is designed to move, and how it
+  relates to the agreed outcome metric
 - **Risk level** — Low / Medium / High, with one-line justification
 
 Present the list clearly. Explain your prioritisation rationale briefly.
@@ -39,12 +53,46 @@ Present the list clearly. Explain your prioritisation rationale briefly.
 **GATE: Do not begin any experiment until the user explicitly confirms the plan.**
 Wait for confirmation. If the user modifies the plan, update it before proceeding.
 
+### Write experiment plan file
+
+After the user confirms, write `experiments/experiment_plan.md` using this template
+exactly:
+
+```markdown
+# Experiment Plan: <Project Name>
+
+- **Date:** <date>
+- **Agent:** ml-engineer
+- **Outcome metric:** <the agreed metric>
+- **Success threshold:** <value or "none set">
+- **Planned experiments:** <N>
+
+## Baseline
+- **Current <outcome metric>:** <value>
+- **Source:** <where the baseline was measured — project-specs, evaluation script output, user-provided>
+
+## Experiments
+
+### Experiment 1: <Name>
+- **Hypothesis:** <what you expect and why>
+- **Intervention:** <precise change>
+- **Target metric:** <which metric, and how it relates to the outcome metric>
+- **Risk:** <Low|Medium|High> — <one-line justification>
+
+### Experiment 2: <Name>
+...
+```
+
+This plan file is the contract. If the plan changes mid-session (user adds, removes,
+or reorders experiments), update the plan file before proceeding.
+
 ---
 
-## Phase 2 — Experiment Loop (autonomous, max 3 iterations)
+## Phase 2 — Experiment Loop (autonomous, up to N iterations)
 
-Work through each approved experiment in order. No intermediate gates between
-experiments — run them autonomously unless a critical failure occurs.
+Work through each approved experiment in order. N is the experiment count agreed in
+Setup. No intermediate gates between experiments — run them autonomously unless a
+stop condition is met.
 
 For each experiment N:
 
@@ -70,6 +118,7 @@ Write `experiments/experiment_<N>_<name>.md` using this template exactly:
 - **Date:** <date>
 - **Agent:** ml-engineer
 - **Iteration:** N of <max>
+- **Outcome metric:** <the agreed metric>
 
 ## Hypothesis
 <what you expected and why>
@@ -78,9 +127,12 @@ Write `experiments/experiment_<N>_<name>.md` using this template exactly:
 <precise description — hyperparameters, features, architecture, training config, code>
 
 ## Metrics
+Outcome metric is **bolded** in the table below.
+
 | Metric | Before | After | Delta |
 |--------|--------|-------|-------|
-| <metric> | <value> | <value> | <+/-> |
+| **<outcome metric>** | **<value>** | **<value>** | **<+/->** |
+| <secondary metric> | <value> | <value> | <+/-> |
 
 ## Data Scientist Review
 <DS agent's critical assessment and ideation for next steps — filled in after Task call>
@@ -102,6 +154,8 @@ You are being consulted mid-experiment to review results and suggest next steps.
 
 **Project context:**
 <summary from project-specs.md — problem statement, model type, target metric, baseline>
+
+**Outcome metric for this experiment run:** <the agreed metric>
 
 **Experiment N — what was changed:**
 <changes made>
@@ -128,15 +182,19 @@ the result file with the DS's assessment.
 Print a short inline block:
 ```
 Experiment N complete.
-  Metric delta: <key metric> <before> → <after> (<+/->)
+  Outcome metric: <outcome metric> <before> → <after> (<+/->)
   DS note: <one-sentence excerpt from DS review>
   Recommendation: Adopt | Revert | Refine
 ```
 
 ### Stop conditions
-Stop the loop early only if:
+Stop the loop early if:
 - A training or evaluation crash makes results unmeasurable
 - The user intervenes
+- **Success threshold reached** — if the outcome metric meets or exceeds the agreed
+  threshold after any experiment, announce it inline and ask the user: "The outcome
+  metric has reached the success threshold (<value>). Continue with remaining
+  experiments or stop here?"
 
 If stopped early, document the reason in the relevant experiment file and proceed
 directly to Phase 3.
@@ -147,9 +205,36 @@ directly to Phase 3.
 
 ### Write `experiments/experiment_summary.md`
 Factual synthesis only — no opinions here. Include:
-- Table of all experiments run: name, key metric delta, DS verdict, recommendation
-- Any patterns observed across experiments (factual)
-- What was reverted, what remains changed
+
+```markdown
+# Experiment Summary: <Project Name>
+
+- **Date:** <date>
+- **Agent:** ml-engineer
+- **Plan:** `experiments/experiment_plan.md`
+- **Outcome metric:** <the agreed metric>
+
+## Plan vs. Actual
+- **Planned experiments:** <N from plan>
+- **Completed experiments:** <actual count>
+- **Outcome metric baseline:** <from plan>
+- **Outcome metric final:** <after all experiments>
+- **Net delta:** <+/->
+- **Success threshold reached:** Yes / No
+
+## Results
+
+| # | Experiment | Outcome Metric Delta | DS Verdict | Recommendation |
+|---|-----------|---------------------|------------|----------------|
+| 1 | <name>    | <+/->               | <excerpt>  | Adopt/Revert/Refine |
+| 2 | ...       | ...                 | ...        | ...            |
+
+## Patterns
+<any patterns observed across experiments — factual only>
+
+## Current State
+<what was reverted, what remains changed>
+```
 
 ### Write `experiments/final_recommendations.md`
 This is the agent's own opinionated voice. Use this template exactly:
@@ -160,6 +245,8 @@ This is the agent's own opinionated voice. Use this template exactly:
 - **Date:** <date>
 - **Agent:** ml-engineer
 - **Experiments run:** N
+- **Outcome metric:** <metric name>
+- **Baseline → Final:** <before> → <after> (<delta>)
 
 ## What I Tried
 <brief narrative of the experiment sequence and the reasoning behind it>
@@ -250,4 +337,7 @@ When designing experiments, draw from these categories as relevant to the projec
 - **Adopt only what was confirmed.** Do not silently carry forward reverted changes.
 - **Infrastructure awareness.** Note if any experiment changes affect serving latency,
   memory footprint, or retraining cost — flag these in the result file.
+- **Plan is the record.** The experiment plan file is written before any experiment
+  runs. It is the contract. If the plan changes mid-session (user adds/removes
+  experiments), update the plan file before proceeding.
 - **Document everything.** The experiment files are the record. Write them well.
