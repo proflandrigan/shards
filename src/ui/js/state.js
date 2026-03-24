@@ -74,6 +74,7 @@ function createSessionState(sid, agent) {
     chatTransitioning: false,
     thinkingIndicatorEl: null,
     consultingIndicatorEl: null,
+    workingIndicatorEl: null,
     scrollTop: 0,
     domFragment: null,
     domDirty: false,

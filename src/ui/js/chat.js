@@ -345,6 +345,11 @@ function setChatInputEnabled(enabled) {
   btn.disabled = !enabled;
   var session = getActiveSession();
   if (session) session.chatResponding = !enabled;
+  if (enabled) {
+    removeWorkingIndicator();
+  } else {
+    showWorkingIndicator();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -724,6 +729,28 @@ function removeThinkingIndicator() {
   if (session && session.thinkingIndicatorEl) {
     session.thinkingIndicatorEl.remove();
     session.thinkingIndicatorEl = null;
+  }
+}
+
+function showWorkingIndicator() {
+  removeWorkingIndicator();
+  var session = getActiveSession();
+  var info = AGENTS[session ? session.agent : null] || { color: '#4a4a80' };
+  var inputArea = document.getElementById('chat-input-area');
+  var div = document.createElement('div');
+  div.className = 'working-indicator';
+  div.innerHTML =
+    '<span class="working-indicator-dot" style="background:' + info.color + '"></span>' +
+    '<span class="working-indicator-text">Working...</span>';
+  inputArea.appendChild(div);
+  if (session) session.workingIndicatorEl = div;
+}
+
+function removeWorkingIndicator() {
+  var session = getActiveSession();
+  if (session && session.workingIndicatorEl) {
+    session.workingIndicatorEl.remove();
+    session.workingIndicatorEl = null;
   }
 }
 

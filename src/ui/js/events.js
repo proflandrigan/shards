@@ -143,6 +143,9 @@ function handleChatEventForSession(data, session, isActive) {
       break;
 
     case 'chat-block-stop':
+      if (isActive && session.chatResponding && !session.thinkingIndicatorEl) {
+        showThinkingIndicator();
+      }
       break;
 
     case 'chat-message':
