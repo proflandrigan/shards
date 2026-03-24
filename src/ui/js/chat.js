@@ -359,7 +359,11 @@ function renderSessionTabs() {
 
     var info = AGENTS[session.agent] || { color: '#666', label: session.agent };
     var tab = document.createElement('div');
-    tab.className = 'session-tab' + (sid === activeSessionId ? ' active' : '') + (session.unread ? ' unread' : '');
+    var tabClass = 'session-tab';
+    if (sid === activeSessionId) tabClass += ' active';
+    if (session.needsAttention) tabClass += ' needs-attention';
+    else if (session.unread) tabClass += ' unread';
+    tab.className = tabClass;
     tab.style.setProperty('--tab-color', info.color);
 
     var titleText = session.title || info.label;
@@ -473,6 +477,20 @@ function switchSession(sessionId) {
   activateAgent(newSession.agent);
   setChatInputEnabled(!newSession.chatResponding);
   newSession.unread = false;
+  newSession.needsAttention = false;
+  newSession.attentionReason = null;
+
+  // Render any queued permission cards
+  var queued = newSession.pendingPermissions;
+  if (queued.length > 0) {
+    for (var qi = 0; qi < queued.length; qi++) {
+      var perm = queued[qi];
+      renderPermissionCard(perm.id, perm.tool, perm.command, perm.sessionId);
+    }
+    newSession.pendingPermissions = [];
+  }
+
+  updateTitleNotification();
   renderSessionTabs();
 
   // Rebuild workspace layout for this session

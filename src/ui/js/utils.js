@@ -124,6 +124,72 @@ function copyCurrentFilePath() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Session notification helpers
+// ═══════════════════════════════════════════════════════════════
+
+function showNotificationToast(session, reason) {
+  var existing = document.querySelector('.notification-toast');
+  if (existing) existing.remove();
+
+  var info = AGENTS[session.agent] || { color: '#666', label: session.agent };
+  var title = session.title || info.label;
+
+  var toast = document.createElement('div');
+  toast.className = 'notification-toast';
+  toast.style.setProperty('--toast-color', info.color);
+  toast.innerHTML =
+    '<span class="notification-toast-dot" style="background:' + info.color + '"></span>' +
+    '<span class="notification-toast-title">' + esc(title) + '</span>' +
+    '<span class="notification-toast-reason">' + esc(reason) + '</span>';
+
+  toast.addEventListener('click', function() {
+    toast.remove();
+    switchSession(session.sessionId);
+  });
+
+  document.body.appendChild(toast);
+
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.classList.add('toast-exit');
+      setTimeout(function() { toast.remove(); }, 400);
+    }
+  }, 4000);
+}
+
+function updateTitleNotification() {
+  var attentionCount = 0;
+  var unreadCount = 0;
+  for (var sid in chatSessions) {
+    var s = chatSessions[sid];
+    if (s.needsAttention) attentionCount++;
+    else if (s.unread) unreadCount++;
+  }
+
+  if (_titleFlashInterval) {
+    clearInterval(_titleFlashInterval);
+    _titleFlashInterval = null;
+  }
+
+  if (attentionCount > 0) {
+    var showAlert = true;
+    _titleFlashInterval = setInterval(function() {
+      if (showAlert) {
+        document.title = '(' + attentionCount + ') Action needed \u2014 Shards UI';
+      } else {
+        document.title = _originalTitle;
+      }
+      showAlert = !showAlert;
+    }, 1500);
+    document.title = '(' + attentionCount + ') Action needed \u2014 Shards UI';
+  } else if (unreadCount > 0) {
+    document.title = '(' + unreadCount + ') Shards UI';
+  } else {
+    document.title = _originalTitle;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Code block & message copy helpers
 // ═══════════════════════════════════════════════════════════════
 

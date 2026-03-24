@@ -664,6 +664,26 @@
   0%, 100% { opacity: 0.5; transform: scale(0.8); }
   50% { opacity: 1; transform: scale(1.2); }
 }
+/* ─── Needs-attention indicator (stronger than unread) ─────── */
+.session-tab.needs-attention {
+  border-color: #e0a030;
+}
+.session-tab.needs-attention::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e0a030;
+  animation: attention-pulse 1s ease-in-out infinite;
+  box-shadow: 0 0 4px rgba(224, 160, 48, 0.6);
+}
+@keyframes attention-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
 .session-tab-dot {
   width: 6px;
   height: 6px;

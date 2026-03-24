@@ -55,6 +55,10 @@ var chatSessions = {};       // sessionId -> ChatSessionState
 var activeSessionId = null;  // currently viewed session tab
 var sessionOrder = [];       // ordered array of session IDs
 
+// Browser tab title notification state
+var _titleFlashInterval = null;
+var _originalTitle = 'Shards UI';
+
 function createSessionState(sid, agent) {
   var state = {
     sessionId: sid,
@@ -73,6 +77,9 @@ function createSessionState(sid, agent) {
     domFragment: null,
     domDirty: false,
     unread: false,
+    needsAttention: false,
+    pendingPermissions: [],
+    attentionReason: null,
     createdAt: Date.now(),
     // Workspace state (each session owns its own file tabs, panels, split mode)
     sessionTouchedFiles: new Set(),

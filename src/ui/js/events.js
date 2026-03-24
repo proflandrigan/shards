@@ -157,6 +157,7 @@ function handleChatEventForSession(data, session, isActive) {
         session.domDirty = true;
         session.unread = true;
         renderSessionTabs();
+        updateTitleNotification();
       }
       break;
 
@@ -166,6 +167,12 @@ function handleChatEventForSession(data, session, isActive) {
         removeThinkingIndicator();
         setChatInputEnabled(true);
         document.getElementById('chat-input').focus();
+      } else {
+        session.needsAttention = true;
+        session.attentionReason = 'turn-end';
+        renderSessionTabs();
+        showNotificationToast(session, 'Waiting for input');
+        updateTitleNotification();
       }
       break;
 
@@ -178,6 +185,13 @@ function handleChatEventForSession(data, session, isActive) {
         removeThinkingIndicator();
         addSystemNotice(data.error || 'An error occurred');
         setChatInputEnabled(true);
+      } else {
+        session.needsAttention = true;
+        session.attentionReason = 'error';
+        session.domDirty = true;
+        renderSessionTabs();
+        showNotificationToast(session, 'Error occurred');
+        updateTitleNotification();
       }
       break;
 
@@ -253,12 +267,39 @@ function handleChatEventForSession(data, session, isActive) {
     case 'permission-request':
       if (isActive) {
         renderPermissionCard(data.id, data.tool, data.command, data.sessionId);
+      } else {
+        session.pendingPermissions.push({
+          id: data.id,
+          tool: data.tool,
+          command: data.command,
+          sessionId: data.sessionId
+        });
+        session.needsAttention = true;
+        session.attentionReason = 'permission';
+        renderSessionTabs();
+        showNotificationToast(session, 'Permission required');
+        updateTitleNotification();
       }
       break;
 
     case 'permission-resolved':
       if (isActive) {
         resolvePermissionCard(data.id, data.decision);
+      } else {
+        // Remove from pending queue (resolved externally, e.g. via CLI)
+        var pq = session.pendingPermissions;
+        for (var pi = pq.length - 1; pi >= 0; pi--) {
+          if (pq[pi].id === data.id) {
+            pq.splice(pi, 1);
+            break;
+          }
+        }
+        if (pq.length === 0 && session.chatResponding) {
+          session.needsAttention = false;
+          session.attentionReason = null;
+          renderSessionTabs();
+          updateTitleNotification();
+        }
       }
       break;
   }
