@@ -301,7 +301,6 @@
 /* Permission cards */
 [data-theme="light"] .permission-card { background: #ffffff; border-color: #ddd; }
 [data-theme="light"] .permission-title { color: #333; }
-[data-theme="light"] .permission-countdown { color: #888; }
 [data-theme="light"] .permission-tool { color: #888; }
 [data-theme="light"] .permission-command { background: #f5f5f8; border-color: #ddd; }
 [data-theme="light"] .permission-command-text { color: #333; }

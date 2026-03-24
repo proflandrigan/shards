@@ -747,14 +747,6 @@
   color: #e0e0f0;
   flex: 1;
 }
-.permission-countdown {
-  font-size: 11px;
-  color: #6a6a90;
-  font-variant-numeric: tabular-nums;
-}
-.permission-countdown.timed-out {
-  color: #e05050;
-}
 .permission-tool {
   font-size: 11px;
   color: #6a6a90;

@@ -953,7 +953,6 @@ function applySplitLayout() {
 // Permission approval cards
 // ═══════════════════════════════════════════════════════════════
 
-var permissionTimers = {};
 
 function renderPermissionCard(id, tool, command, sessionId) {
   var session = getActiveSession();
@@ -972,7 +971,6 @@ function renderPermissionCard(id, tool, command, sessionId) {
     '<div class="permission-header">' +
       '<span class="permission-lock">&#128274;</span>' +
       '<span class="permission-title">Permission Required</span>' +
-      '<span class="permission-countdown" data-permission-id="' + id + '">60s</span>' +
     '</div>' +
     '<div class="permission-tool">' + esc(tool || 'Bash') + '</div>' +
     '<div class="permission-command">' +
@@ -1009,22 +1007,6 @@ function renderPermissionCard(id, tool, command, sessionId) {
   container.appendChild(card);
   container.scrollTop = container.scrollHeight;
 
-  // Start countdown timer
-  var remaining = 60;
-  var countdownEl = card.querySelector('.permission-countdown');
-  permissionTimers[id] = setInterval(function() {
-    remaining--;
-    if (countdownEl) countdownEl.textContent = remaining + 's';
-    if (remaining <= 0) {
-      clearInterval(permissionTimers[id]);
-      delete permissionTimers[id];
-      disablePermissionCard(id);
-      if (countdownEl) {
-        countdownEl.textContent = 'Auto-denied (timeout)';
-        countdownEl.classList.add('timed-out');
-      }
-    }
-  }, 1000);
 }
 
 function disablePermissionCard(id) {
@@ -1071,12 +1053,6 @@ function showPermissionCardError(id, msg) {
 }
 
 function resolvePermissionCard(id, decision) {
-  // Stop timer
-  if (permissionTimers[id]) {
-    clearInterval(permissionTimers[id]);
-    delete permissionTimers[id];
-  }
-
   var card = document.querySelector('[data-permission-id="' + id + '"].permission-card');
   if (!card) return;
 
