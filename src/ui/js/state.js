@@ -46,6 +46,7 @@ var panelTabOrder = [];
 var activeTabId = 'chat';
 var splitMode = false;
 var currentFileInPane = null;
+var selectionContext = null;
 
 // ═══════════════════════════════════════════════════════════════
 // Multi-session state

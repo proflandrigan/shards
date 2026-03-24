@@ -175,14 +175,19 @@ async function sendChatMessage() {
     document.getElementById('messages').innerHTML = '';
     session.messages = [];
     session.hasMessages = false;
+    clearSelectionContext();
     return;
   }
+
+  // Augment message with selection context if present
+  var fullMessage = formatSelectionContextForMessage(message);
+  clearSelectionContext();
 
   try {
     var res = await authFetch('/chat/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: message, sessionId: activeSessionId }),
+      body: JSON.stringify({ message: fullMessage, sessionId: activeSessionId }),
     });
     var data = await res.json();
 
@@ -439,7 +444,8 @@ function switchSession(sessionId) {
     saveSessionWorkspace(oldSession);
   }
 
-  // Dispose DOM-bound instances before swapping workspace
+  // Clear selection context and dispose DOM-bound instances before swapping workspace
+  clearSelectionContext();
   disposeMonacoInstance();
   disposeNotebookCellMonaco();
   destroyTabulator();

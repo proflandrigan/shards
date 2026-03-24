@@ -82,6 +82,7 @@
           <div class="empty-state">Select an agent to start chatting</div>
         </div>
         <div id="chat-input-area">
+          <div id="selection-context-indicator"></div>
           <div id="slash-suggestions"></div>
           <textarea id="chat-input" placeholder="Message the agent... (type / for commands)" rows="1"></textarea>
           <button id="chat-send-btn" onclick="sendChatMessage()">Send</button>
@@ -192,6 +193,7 @@
 <script src="js/tabs.js"></script>
 <script src="js/file-view.js"></script>
 <script src="js/split-view.js"></script>
+<script src="js/selection-context.js"></script>
 <script src="js/chat.js"></script>
 <script src="js/quick-open.js"></script>
 <script src="js/command-palette.js"></script>

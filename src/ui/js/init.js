@@ -211,6 +211,16 @@ document.getElementById('chat-input').addEventListener('blur', function() {
   setTimeout(hideSlashSuggestions, 150);
 });
 
+// Capture selection context when user finishes selecting in file pane
+document.getElementById('file-pane').addEventListener('mouseup', function() {
+  setTimeout(function() {
+    var ctx = captureSelectionContext();
+    if (ctx) {
+      setSelectionContext(ctx);
+    }
+  }, 10);
+});
+
 // ═══════════════════════════════════════════════════════════════
 // Initial load
 // ═══════════════════════════════════════════════════════════════
