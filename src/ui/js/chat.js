@@ -977,17 +977,33 @@ function renderPermissionCard(id, tool, command, sessionId) {
     '<div class="permission-tool">' + esc(tool || 'Bash') + '</div>' +
     '<div class="permission-command">' +
       '<code class="permission-command-text">' + (isLong ? truncated : displayCmd) + '</code>' +
-      (isLong ? '<button class="permission-show-more" onclick="this.previousElementSibling.textContent=this.parentElement.getAttribute(\'data-full-cmd\');this.remove()">show more</button>' : '') +
+      (isLong ? '<button class="permission-show-more">show more</button>' : '') +
     '</div>' +
     '<div class="permission-actions">' +
-      '<button class="permission-btn permission-btn-allow" onclick="submitPermission(\'' + id + '\',\'allow\',false,\'' + esc(command).replace(/'/g, "\\'") + '\')">Allow Once</button>' +
-      '<button class="permission-btn permission-btn-always" onclick="submitPermission(\'' + id + '\',\'allow\',true,\'' + esc(command).replace(/'/g, "\\'") + '\')">Always Allow</button>' +
-      '<button class="permission-btn permission-btn-deny" onclick="submitPermission(\'' + id + '\',\'deny\',false,\'' + esc(command).replace(/'/g, "\\'") + '\')">Deny</button>' +
-      '<button class="permission-btn permission-btn-always-deny" onclick="submitPermission(\'' + id + '\',\'deny\',true,\'' + esc(command).replace(/'/g, "\\'") + '\')">Always Deny</button>' +
+      '<button class="permission-btn permission-btn-allow" data-action="allow">Allow Once</button>' +
+      '<button class="permission-btn permission-btn-always" data-action="allow" data-persist="true">Always Allow</button>' +
+      '<button class="permission-btn permission-btn-deny" data-action="deny">Deny</button>' +
+      '<button class="permission-btn permission-btn-always-deny" data-action="deny" data-persist="true">Always Deny</button>' +
     '</div>';
 
   if (isLong) {
-    card.querySelector('.permission-command').setAttribute('data-full-cmd', esc(command));
+    var cmdEl = card.querySelector('.permission-command');
+    cmdEl.setAttribute('data-full-cmd', command);
+    card.querySelector('.permission-show-more').addEventListener('click', function() {
+      cmdEl.querySelector('.permission-command-text').textContent = command;
+      this.remove();
+    });
+  }
+
+  // Use addEventListener instead of inline onclick to avoid escaping issues
+  // with double quotes, backslashes, and newlines in command strings
+  var btns = card.querySelectorAll('.permission-btn');
+  for (var i = 0; i < btns.length; i++) {
+    (function(btn) {
+      btn.addEventListener('click', function() {
+        submitPermission(id, btn.getAttribute('data-action'), btn.getAttribute('data-persist') === 'true', command);
+      });
+    })(btns[i]);
   }
 
   container.appendChild(card);
