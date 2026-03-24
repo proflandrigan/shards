@@ -189,8 +189,6 @@ async function sendChatMessage() {
     // Update client state for agent switches
     if (data.switched && data.agent) {
       replaceSessionInTab(activeSessionId, data.sessionId, data.agent);
-    } else if (data.compacted && data.sessionId) {
-      replaceSessionInTab(activeSessionId, data.sessionId, session.agent);
     }
   } catch (err) {}
 }
@@ -813,7 +811,7 @@ var slashSuggestionItems = [];
 var slashSuggestionIdx = -1;
 
 var SLASH_UTILITY_CMDS = [
-  { cmd: 'compact', desc: 'Restart session with fresh context' },
+  { cmd: 'compact', desc: 'Summarize conversation to free up context' },
   { cmd: 'clear',   desc: 'Clear the messages panel' },
   { cmd: 'help',    desc: 'Show available commands' },
   { cmd: 'stop',    desc: 'Stop the current session' },

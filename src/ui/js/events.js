@@ -216,14 +216,6 @@ function handleChatEventForSession(data, session, isActive) {
       }
       break;
 
-    case 'chat-compacting':
-      session.chatTransitioning = true;
-      if (isActive) {
-        addSystemNotice('Compacting context...');
-        setChatInputEnabled(false);
-      }
-      break;
-
     case 'chat-system-notice':
       if (isActive) {
         addSystemNotice(data.text);

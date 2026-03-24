@@ -589,7 +589,7 @@ function parseSlashCommand(message) {
   if (!cmd) return null;
 
   // Utility commands
-  const utilities = ['compact', 'stop', 'clear', 'help'];
+  const utilities = ['stop', 'clear', 'help'];
   if (utilities.includes(cmd)) {
     return { type: 'utility', command: cmd };
   }
@@ -1242,20 +1242,6 @@ function createHandler() {
           return;
         }
 
-        if (slashCmd.command === 'compact') {
-          // Find the active session to compact
-          const store = targetSessionId ? getSession(targetSessionId) : null;
-          if (!store || !store.chatSession || !store.chatSession.isRunning) {
-            jsonResponse(res, cors, 400, { error: 'No active chat session to compact' });
-            return;
-          }
-          const agent = store.agent;
-          broadcast({ type: 'chat-compacting', agent, sessionId: targetSessionId });
-          const result = startNewChatSession(agent, { callerSessionId: targetSessionId });
-          jsonResponse(res, cors, 200, { ok: true, compacted: true, agent: result.agent, sessionId: result.sessionId });
-          return;
-        }
-
         if (slashCmd.command === 'stop') {
           const store = targetSessionId ? getSession(targetSessionId) : null;
           if (store && store.chatSession && store.chatSession.isRunning) {
@@ -1273,7 +1259,7 @@ function createHandler() {
             helpText += `  \`/${a.name}\` — ${a.description || 'Switch to ' + a.name}\n`;
           }
           helpText += '\n**Utility:**\n';
-          helpText += '  `/compact` — Restart session with fresh context\n';
+          helpText += '  `/compact` — Summarize conversation to free up context (handled by Claude Code)\n';
           helpText += '  `/stop` — Stop the current session\n';
           helpText += '  `/clear` — Clear the messages panel\n';
           helpText += '  `/help` — Show this help message\n';
