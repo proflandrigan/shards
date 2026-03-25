@@ -166,6 +166,10 @@ function renderFilePane(relPath) {
     hideAll();
     renderedView.classList.add('visible');
     renderedView.innerHTML = '<div class="file-rendered">' + renderMarkdown(f.content) + '</div>';
+    // Highlight latest section in project-specs.md
+    if (relPath.endsWith('project-specs.md')) {
+      highlightLatestSpecsSection(renderedView);
+    }
   } else {
     // Code view — use Monaco read-only
     hideAll();
@@ -329,6 +333,27 @@ function updateLineGutter(content) {
   var lines = [];
   for (var i = 1; i <= lineCount; i++) lines.push(i);
   gutter.textContent = lines.join('\n');
+}
+
+function highlightLatestSpecsSection(container) {
+  // Find all h2 headings in the rendered markdown
+  var headings = container.querySelectorAll('.file-rendered h2, .file-rendered h3');
+  if (headings.length === 0) return;
+
+  // Remove any previous highlights
+  var prev = container.querySelectorAll('.specs-latest-section');
+  for (var i = 0; i < prev.length; i++) {
+    prev[i].classList.remove('specs-latest-section');
+  }
+
+  // Highlight the last heading
+  var lastHeading = headings[headings.length - 1];
+  lastHeading.classList.add('specs-latest-section');
+
+  // Scroll the heading into view within the rendered view container
+  setTimeout(function() {
+    lastHeading.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
 }
 
 function handleArtifactUpdate(relPath, content, isSessionFile) {

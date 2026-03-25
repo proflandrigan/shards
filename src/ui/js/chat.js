@@ -653,11 +653,67 @@ function finalizePendingBubble(markdownContent) {
       };
       session.pendingBubble.parentElement.insertBefore(showMore, actions);
     }
+    // Detect gate pattern and inject confirmation buttons
+    if (isGateMessage(markdownContent)) {
+      injectGateButtons(session.pendingBubble.parentElement);
+    }
     session.pendingBubble = null;
   }
   session.tokenBuffer = '';
   var container = document.getElementById('messages');
   container.scrollTop = container.scrollHeight;
+}
+
+// ─── Gate confirmation detection and buttons ────────────────────────────────
+
+function isGateMessage(content) {
+  if (!content) return false;
+  // Check the tail of the message for confirmation request patterns
+  var tail = content.slice(-400).toLowerCase();
+  var confirmPhrases = [
+    'confirm', 'proceed', 'look correct', 'look good', 'approve',
+    'any changes', 'any corrections', 'ready to move', 'shall we',
+    'want to adjust', 'good to go', 'move forward', 'does this capture',
+    'anything you\'d like to change', 'before i move on', 'before moving on',
+    'want me to continue', 'satisfied with', 'aligned on this',
+    'ready for phase', 'sound right', 'on the right track'
+  ];
+  for (var i = 0; i < confirmPhrases.length; i++) {
+    if (tail.includes(confirmPhrases[i])) return true;
+  }
+  return false;
+}
+
+function injectGateButtons(messageEl) {
+  if (!messageEl) return;
+  // Don't double-inject
+  if (messageEl.querySelector('.gate-actions')) return;
+
+  var actions = document.createElement('div');
+  actions.className = 'gate-actions';
+  actions.innerHTML =
+    '<span class="gate-label">Gate confirmation</span>' +
+    '<button class="gate-btn gate-btn-confirm">Confirm</button>' +
+    '<button class="gate-btn gate-btn-changes">Request Changes</button>';
+
+  actions.querySelector('.gate-btn-confirm').addEventListener('click', function() {
+    var input = document.getElementById('chat-input');
+    input.value = 'Confirmed. Proceed.';
+    sendChatMessage();
+    actions.classList.add('gate-resolved');
+    setTimeout(function() { actions.remove(); }, 500);
+  });
+
+  actions.querySelector('.gate-btn-changes').addEventListener('click', function() {
+    var input = document.getElementById('chat-input');
+    input.value = 'I\'d like to change: ';
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+    actions.classList.add('gate-resolved');
+    setTimeout(function() { actions.remove(); }, 300);
+  });
+
+  messageEl.appendChild(actions);
 }
 
 // ─── File path auto-linking ──────────────────────────────────────────────────
@@ -862,6 +918,10 @@ function addMessageDirect(role, content, agent) {
         showMore.remove();
       };
       div.querySelector('.message-actions').before(showMore);
+    }
+    // Inject gate buttons if this is the last message and agent is waiting
+    if (isGateMessage(content) && session && !session.chatResponding) {
+      injectGateButtons(div);
     }
   }
 

@@ -319,6 +319,22 @@
 [data-theme="light"] .permission-btn-deny { background: #f5e8e8; border-color: #d0a0a0; color: #7a2a2a; }
 [data-theme="light"] .permission-btn-always-deny { background: #f5e8e8; border-color: #d0a0a0; color: #6a2a2a; }
 
+/* Gate confirmation buttons */
+[data-theme="light"] .gate-actions { background: #f8f8fc; border-color: #d0d0dc; }
+[data-theme="light"] .gate-label { color: #888; }
+[data-theme="light"] .gate-btn { background: #f0f0f4; border-color: #ccc; color: #555; }
+[data-theme="light"] .gate-btn:hover { background: #e8e8f0; }
+[data-theme="light"] .gate-btn-confirm { background: #e8f5e8; border-color: #a0d0a0; color: #2a7a2a; }
+[data-theme="light"] .gate-btn-confirm:hover { background: #d8ecd8; color: #1a6a1a; }
+[data-theme="light"] .gate-btn-changes { background: #f0f0f4; border-color: #ccc; color: #666; }
+[data-theme="light"] .gate-btn-changes:hover { background: #e8e8f0; color: #444; }
+
+/* Project-specs latest section highlight (light) */
+[data-theme="light"] .specs-latest-section {
+  background: rgba(56, 96, 192, 0.06);
+  border-left-color: #4070d0;
+}
+
 /* Selection context indicator */
 [data-theme="light"] #selection-context-indicator { background: #f0f0f4; border-color: #d0d0d8; }
 [data-theme="light"] .sel-ctx-label { color: #3060c0; }
