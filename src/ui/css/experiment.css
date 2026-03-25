@@ -1,0 +1,149 @@
+/* ─── Experiment Dashboard Panel ─────────────────────────── */
+.experiment-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+  color: #b0b0c8;
+}
+
+/* Progress bar */
+.exp-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.exp-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #6a6a88;
+}
+.exp-progress-bar {
+  display: flex;
+  gap: 3px;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #1a1a2c;
+}
+.exp-progress-segment {
+  flex: 1;
+  border-radius: 3px;
+  background: #1a1a2c;
+  transition: background 0.4s ease;
+}
+.exp-progress-segment.completed { background: #4a9; }
+.exp-progress-segment.active {
+  background: #4a9;
+  animation: exp-pulse 1.2s ease-in-out infinite;
+}
+.exp-progress-segment.pending { background: #1e1e32; }
+@keyframes exp-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.exp-status-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: #1e1e32;
+  color: #6a6a88;
+}
+.exp-status-badge.setup { background: #1e1e32; color: #6a8ac8; }
+.exp-status-badge.running { background: #1a2a1a; color: #4a9; }
+.exp-status-badge.reviewing { background: #2a2a1a; color: #c8a84a; }
+.exp-status-badge.complete { background: #1a2a1a; color: #4a9; }
+
+/* Charts area */
+.exp-charts {
+  display: flex;
+  gap: 16px;
+  min-height: 280px;
+}
+.exp-charts > div { flex: 1; min-width: 0; }
+
+/* Results table */
+.exp-results-table { flex: 1; min-height: 200px; }
+
+/* Recommendation badges */
+.exp-rec-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.exp-rec-badge.adopt { background: #1a2a1a; color: #4a9; }
+.exp-rec-badge.revert { background: #2a1a1a; color: #c84a4a; }
+.exp-rec-badge.refine { background: #2a2a1a; color: #c8a84a; }
+
+/* Outcome badges */
+.exp-outcome-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.exp-outcome-badge.improvement { color: #4a9; }
+.exp-outcome-badge.regression { color: #c84a4a; }
+.exp-outcome-badge.neutral { color: #6a6a88; }
+
+/* Comparison view */
+.exp-compare-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+.exp-compare-bar button {
+  background: #0f0f1e;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  color: #6a6a88;
+  font-family: inherit;
+  font-size: 10px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.exp-compare-bar button:hover { border-color: #4a9; color: #4a9; }
+.exp-compare-bar button:disabled { opacity: 0.3; cursor: default; }
+.exp-compare-split {
+  display: flex;
+  gap: 16px;
+  min-height: 200px;
+}
+.exp-compare-split > div {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  padding: 12px;
+  overflow: auto;
+}
+.exp-compare-split h4 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #b0b0c8;
+}
+.exp-compare-split table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.exp-compare-split th,
+.exp-compare-split td {
+  padding: 4px 8px;
+  text-align: left;
+  border-bottom: 1px solid #1e1e32;
+}
+.exp-compare-split th { color: #6a6a88; }
+.exp-delta-positive { color: #4a9; }
+.exp-delta-negative { color: #c84a4a; }

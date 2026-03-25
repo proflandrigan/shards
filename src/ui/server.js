@@ -28,7 +28,7 @@ function log(msg) {
 }
 
 const PORTS = [7842, 7843, 7844, 7845];
-const OUTPUT_DIRS = ['analysis', 'studies', 'models', 'services', 'research', 'dashboards', 'brainstorm', 'data_models'];
+const OUTPUT_DIRS = ['analysis', 'studies', 'models', 'services', 'research', 'dashboards', 'brainstorm', 'data_models', 'experiments'];
 
 // ─── P1: Auth token ──────────────────────────────────────────────────────────
 

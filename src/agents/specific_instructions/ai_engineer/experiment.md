@@ -27,6 +27,11 @@ an existing AI system. You are the AI Engineer throughout. No persona transfer o
      experiment reaches this threshold, flag it and ask the user whether to stop early
      or continue with remaining experiments.
 
+7. **UI detection:** Check if `.shards/ui.port` exists. If it does, Read
+   `.claude/agents/specific_instructions/ai_engineer/experiment_ui_mode.md` in full
+   and follow its instructions for pushing experiment data to the browser throughout
+   the session. This is the same pattern used by the Data Analyst's UI mode.
+
 **GATE: Do not proceed to Phase 1 until the user explicitly confirms the outcome
 metric and experiment count.** If the user modifies any parameter, update before
 proceeding.
@@ -85,6 +90,34 @@ exactly:
 This plan file is the contract. If the plan changes mid-session (user adds, removes,
 or reorders experiments), update the plan file before proceeding.
 
+### Write `experiments/results.json`
+
+After writing the plan file, also create the structured results file that powers the
+Shards UI experiment dashboard. Write `experiments/results.json` with this initial state:
+
+```json
+{
+  "projectName": "<project name>",
+  "agent": "ai-engineer",
+  "outcomeMetric": "<the agreed metric>",
+  "successThreshold": <number or null>,
+  "baseline": {
+    "value": <number>,
+    "source": "<source>"
+  },
+  "plannedCount": <N>,
+  "status": "setup",
+  "currentExperiment": null,
+  "experiments": [],
+  "finalOutcomeMetric": null,
+  "netDelta": null,
+  "thresholdReached": null
+}
+```
+
+Update this file at every stage — it is the machine-readable companion to the markdown
+files. The UI reads it automatically.
+
 ---
 
 ## Phase 2 — Experiment Loop (autonomous, up to N iterations)
@@ -142,7 +175,33 @@ Improvement | Regression | Neutral — <one-sentence reasoning>
 Adopt | Revert | Refine in next iteration
 ```
 
-### Step 5 — Consult Data Scientist
+### Step 5 — Update `experiments/results.json`
+
+Before the DS consultation, update `experiments/results.json`:
+- Set `"status": "running"` and `"currentExperiment": N`
+- Append a new entry to the `experiments` array:
+  ```json
+  {
+    "index": N,
+    "name": "<name>",
+    "hypothesis": "<hypothesis>",
+    "intervention": "<intervention>",
+    "risk": "<Low|Medium|High>",
+    "metrics": {
+      "outcome": { "before": <num>, "after": <num>, "delta": <num> },
+      "secondary": [
+        { "name": "<metric>", "before": <num>, "after": <num>, "delta": <num> }
+      ]
+    },
+    "dsVerdict": "",
+    "outcome": "<Improvement|Regression|Neutral>",
+    "recommendation": "<Adopt|Revert|Refine>"
+  }
+  ```
+
+After the DS consultation, update the experiment entry's `dsVerdict` field.
+
+### Step 6 — Consult Data Scientist
 Call:
 ```
 Task(
@@ -174,9 +233,10 @@ Keep your response concise and actionable.
 ```
 
 After receiving the DS response, fill in the `## Data Scientist Review` section of
-the result file with the DS's assessment.
+the result file with the DS's assessment. Also update the `dsVerdict` field in
+`experiments/results.json` for this experiment entry.
 
-### Step 6 — Inline summary
+### Step 7 — Inline summary
 Print a short inline block:
 ```
 Experiment N complete.
@@ -200,6 +260,14 @@ directly to Phase 3.
 ---
 
 ## Phase 3 — Final Summary (GATE)
+
+### Finalize `experiments/results.json`
+
+Update the structured results file with final state:
+- Set `"status": "complete"` and `"currentExperiment": null`
+- Set `"finalOutcomeMetric"` to the outcome metric value after all experiments
+- Set `"netDelta"` to the total change from baseline
+- Set `"thresholdReached"` to `true` or `false`
 
 ### Write `experiments/experiment_summary.md`
 Factual synthesis only — no opinions here. Include:
