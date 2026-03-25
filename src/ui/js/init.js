@@ -283,6 +283,7 @@ async function loadInitial() {
 loadInitial().then(function() {
   if (typeof restoreLayout === 'function') restoreLayout();
   if (typeof renderSessionFiles === 'function') renderSessionFiles();
+  if (typeof initBookmarks === 'function') initBookmarks();
 });
 connect();
 browseDir();

@@ -45,6 +45,12 @@
     <div id="explorer-search-wrap">
       <input type="text" id="explorer-search-input" placeholder="Search files...">
     </div>
+    <div id="bookmarks-section">
+      <div id="bookmarks-header" onclick="document.getElementById('bookmarks-section').classList.toggle('collapsed')">
+        <span><span class="chevron">&#9660;</span> Bookmarks</span>
+      </div>
+      <div id="bookmarks-list"></div>
+    </div>
     <div id="session-files">
       <div id="session-files-header" onclick="document.getElementById('session-files').classList.toggle('collapsed')">
         <span><span class="chevron">&#9660;</span> Session Files</span>
@@ -184,6 +190,7 @@
 <script src="js/state.js"></script>
 <script src="js/agents.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/bookmarks.js"></script>
 <script src="js/monaco.js"></script>
 <script src="js/markdown.js"></script>
 <script src="js/explorer.js"></script>

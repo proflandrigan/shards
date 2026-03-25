@@ -230,6 +230,90 @@
 .session-file-entry:hover { background: #0f0f1e; }
 .session-file-entry .dir-icon { font-size: 9px; color: #e8b84a; flex-shrink: 0; }
 
+/* ─── Bookmarks section ─────────────────────────────────── */
+#bookmarks-section { display: none; }
+#bookmarks-section.visible { display: block; }
+#bookmarks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #4a4a68;
+  cursor: pointer;
+  user-select: none;
+  background: #0a0a14;
+  border-bottom: 1px solid #12121e;
+}
+#bookmarks-header:hover { color: #7070a0; }
+#bookmarks-header .chevron {
+  font-size: 7px;
+  display: inline-block;
+  transition: transform 0.2s;
+}
+#bookmarks-section.collapsed #bookmarks-header .chevron { transform: rotate(-90deg); }
+#bookmarks-list { padding: 2px 0; }
+#bookmarks-section.collapsed #bookmarks-list { display: none; }
+.bookmark-entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 16px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #8888a8;
+  transition: background 0.15s;
+  overflow: hidden;
+}
+.bookmark-entry:hover { background: #0f0f1e; }
+.bookmark-entry-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.bookmark-entry-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.bookmark-entry-session {
+  font-size: 9px;
+  color: #4a4a68;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bookmark-entry-preview {
+  font-size: 11px;
+  color: #7a7a98;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bookmark-entry:hover .bookmark-entry-preview { color: #a0a0b8; }
+.bookmark-entry-remove {
+  background: none;
+  border: none;
+  color: #3a3a54;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+.bookmark-entry:hover .bookmark-entry-remove { opacity: 0.6; }
+.bookmark-entry-remove:hover { opacity: 1 !important; color: #e05050; }
+
+/* Hide bookmarks section when explorer collapsed */
+#explorer-sidebar.collapsed #bookmarks-section { display: none; }
+
 /* Highlight agent-edited files */
 .tree-entry.is-file.touched .dir-name,
 .dir-entry.is-file.touched .dir-name { color: #e8b84a; }

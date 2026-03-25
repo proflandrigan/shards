@@ -635,11 +635,17 @@ function finalizePendingBubble(markdownContent) {
     var rendered = renderMarkdown(markdownContent);
     session.pendingBubble.innerHTML = linkifyFilePaths(rendered);
     session.pendingBubble.setAttribute('data-raw-md', markdownContent);
-    // Add message-level copy button
+    // Assign message index for bookmarking
+    var msgEl = session.pendingBubble.parentElement;
+    var msgIdx = session.messages.length - 1;
+    if (msgIdx < 0) msgIdx = 0;
+    msgEl.setAttribute('data-msg-idx', msgIdx);
+    // Add message-level actions (bookmark + copy)
+    var starHtml = typeof bookmarkStarHtml === 'function' ? bookmarkStarHtml(msgIdx) : '';
     var actions = document.createElement('div');
     actions.className = 'message-actions';
-    actions.innerHTML = '<button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button>';
-    session.pendingBubble.parentElement.appendChild(actions);
+    actions.innerHTML = starHtml + '<button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button>';
+    msgEl.appendChild(actions);
     // Auto-collapse long messages
     if (session.pendingBubble.scrollHeight > 500) {
       session.pendingBubble.classList.add('collapsed');
@@ -885,14 +891,22 @@ function addMessageDirect(role, content, agent) {
   var container = document.getElementById('messages');
   if (session && !session.hasMessages) { container.innerHTML = ''; session.hasMessages = true; }
 
+  // Determine message index for bookmarking (count of .message elements already in container)
+  var msgIdx = container.querySelectorAll('.message').length;
+
   var info = AGENTS[agent] || { color: '#666', label: agent || 'Unknown' };
   var div = document.createElement('div');
   div.className = 'message ' + (role === 'user' ? 'user' : 'assistant');
+  div.setAttribute('data-msg-idx', msgIdx);
+
+  var starHtml = typeof bookmarkStarHtml === 'function' ? bookmarkStarHtml(msgIdx) : '';
+  var bookmarkedClass = (activeSessionId && typeof isBookmarked === 'function' && isBookmarked(activeSessionId, msgIdx)) ? ' bookmarked' : '';
 
   if (role === 'user') {
     div.innerHTML =
       '<div class="message-meta">You</div>' +
-      '<div class="message-bubble">' + linkifyFilePaths(esc(content)) + '</div>';
+      '<div class="message-bubble">' + linkifyFilePaths(esc(content)) + '</div>' +
+      '<div class="message-actions">' + starHtml + '</div>';
   } else {
     div.innerHTML =
       '<div class="message-meta">' +
@@ -900,7 +914,13 @@ function addMessageDirect(role, content, agent) {
       esc(info.label) +
       '</div>' +
       '<div class="message-bubble" data-raw-md="' + esc(content).replace(/"/g, '&quot;') + '" style="border-left-color:' + info.color + '">' + linkifyFilePaths(renderMarkdown(content)) + '</div>' +
-      '<div class="message-actions"><button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button></div>';
+      '<div class="message-actions">' + starHtml + '<button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button></div>';
+  }
+
+  // Apply bookmarked state to star
+  if (bookmarkedClass) {
+    var star = div.querySelector('.bookmark-star');
+    if (star) star.classList.add('bookmarked');
   }
 
   container.appendChild(div);
