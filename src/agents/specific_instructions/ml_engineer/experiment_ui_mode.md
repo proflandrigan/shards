@@ -7,7 +7,7 @@ The Shards UI is live. Push experiment data to the browser as a live dashboard.
 Push the experiment dashboard at three points:
 
 1. **After Setup (Phase 1 plan confirmed)** — create the dashboard with initial state
-2. **After each experiment completes (Phase 2 Step 5)** — update with new results
+2. **After each experiment result is written (Phase 2 Step 5)** — update with new results
 3. **After Phase 3 finalization** — final update with complete status
 
 ## How to push

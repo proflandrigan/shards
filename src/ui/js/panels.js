@@ -108,6 +108,7 @@ function updatePanelData(panelId, newData) {
   if (activeKey !== panelId) return;
 
   if (p.panel === 'experiment-dashboard') {
+    cleanupExperimentDashboard(p);
     renderExperimentDashboard(document.getElementById('file-rendered-view'), p);
     return;
   }
@@ -317,6 +318,19 @@ function initPanelTabulator(panel, tableData) {
 
 // ─── Experiment Dashboard ────────────────────────────────────────────────────
 
+function cleanupExperimentDashboard(panel) {
+  if (panel._expTabulator) {
+    try { panel._expTabulator.destroy(); } catch(e) {}
+    panel._expTabulator = null;
+  }
+  var barEl = document.getElementById('exp-bar-' + panel.panelId);
+  var lineEl = document.getElementById('exp-line-' + panel.panelId);
+  if (typeof Plotly !== 'undefined') {
+    if (barEl) try { Plotly.purge(barEl); } catch(e) {}
+    if (lineEl) try { Plotly.purge(lineEl); } catch(e) {}
+  }
+}
+
 function renderExperimentDashboard(container, panel) {
   var d = panel.rawData;
   if (!d) {
@@ -325,7 +339,6 @@ function renderExperimentDashboard(container, panel) {
   }
 
   // Preserve comparison state across re-renders
-  var prev = panel._expState || {};
   panel._expState = panel._expState || { selectedRows: [] };
 
   var html = '<div class="experiment-dashboard">';
@@ -362,7 +375,7 @@ function renderExperimentDashboard(container, panel) {
   // ── Comparison controls ──
   html += '<div class="exp-compare-bar">';
   html += '<button id="exp-compare-btn-' + panel.panelId + '" disabled onclick="expCompare(\'' + esc(panel.panelId) + '\')">Compare Selected</button>';
-  html += '<span id="exp-compare-count-' + panel.panelId + '" style="font-size:11px;color:#6a6a88">Select 2 rows to compare</span>';
+  html += '<span id="exp-compare-count-' + panel.panelId + '" class="exp-compare-hint">Select 2 rows to compare</span>';
   html += '</div>';
   html += '<div id="exp-compare-view-' + panel.panelId + '"></div>';
 

@@ -6,7 +6,6 @@
   padding: 16px;
   height: 100%;
   overflow-y: auto;
-  color: #b0b0c8;
 }
 
 /* Progress bar */
@@ -113,8 +112,9 @@
   padding: 3px 10px;
   cursor: pointer;
 }
-.exp-compare-bar button:hover { border-color: #4a9; color: #4a9; }
+.exp-compare-bar button:hover:not(:disabled) { border-color: #4a9; color: #4a9; }
 .exp-compare-bar button:disabled { opacity: 0.3; cursor: default; }
+.exp-compare-hint { font-size: 11px; color: #6a6a88; }
 .exp-compare-split {
   display: flex;
   gap: 16px;
