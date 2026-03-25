@@ -291,3 +291,10 @@ initExplorerResize();
 initSplitResize();
 initFileAutoRefresh();
 initCtxMenu();
+
+// Request notification permission on first interaction or load
+if (window.Notification && Notification.permission === 'default') {
+  document.addEventListener('click', function() {
+    Notification.requestPermission();
+  }, { once: true });
+}

@@ -144,7 +144,8 @@ function showNotificationToast(session, reason) {
 
   toast.addEventListener('click', function() {
     toast.remove();
-    switchSession(session.sessionId);
+    if (typeof switchSession === 'function') switchSession(session.sessionId);
+    window.focus();
   });
 
   document.body.appendChild(toast);
@@ -155,6 +156,25 @@ function showNotificationToast(session, reason) {
       setTimeout(function() { toast.remove(); }, 400);
     }
   }, 4000);
+
+  // Desktop OS notification
+  if (window.Notification && Notification.permission === 'granted') {
+    // Only show if session is background OR tab itself is hidden
+    var isSessBackground = (typeof activeSessionId !== 'undefined' && session.sessionId !== activeSessionId);
+    var isTabHidden = (document.visibilityState !== 'visible');
+
+    if (isSessBackground || isTabHidden) {
+      var n = new Notification(title, {
+        body: reason,
+        icon: '/shards_logo.png'
+      });
+      n.onclick = function() {
+        window.focus();
+        if (typeof switchSession === 'function') switchSession(session.sessionId);
+        n.close();
+      };
+    }
+  }
 }
 
 function updateTitleNotification() {

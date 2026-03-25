@@ -159,6 +159,10 @@ function handleChatEventForSession(data, session, isActive) {
       } else {
         session.domDirty = true;
         session.unread = true;
+        // Check for gate pattern to provide better notification later
+        if (typeof isGateMessage === 'function' && isGateMessage(data.content)) {
+          session.attentionReason = 'gate';
+        }
         renderSessionTabs();
         updateTitleNotification();
       }
@@ -170,11 +174,26 @@ function handleChatEventForSession(data, session, isActive) {
         removeThinkingIndicator();
         setChatInputEnabled(true);
         document.getElementById('chat-input').focus();
+        // If tab is hidden, still show a notification for the active session
+        if (document.visibilityState !== 'visible') {
+          var reason = 'Ready for input';
+          if (session.messages.length > 0) {
+            var last = session.messages[session.messages.length - 1];
+            if (last.role === 'assistant' && typeof isGateMessage === 'function' && isGateMessage(last.content)) {
+              reason = 'Gate reached';
+            }
+          }
+          showNotificationToast(session, reason);
+        }
       } else {
         session.needsAttention = true;
+        var reason = 'Waiting for input';
+        if (session.attentionReason === 'gate') {
+          reason = 'Gate reached';
+        }
         session.attentionReason = 'turn-end';
         renderSessionTabs();
-        showNotificationToast(session, 'Waiting for input');
+        showNotificationToast(session, reason);
         updateTitleNotification();
       }
       break;
@@ -270,6 +289,10 @@ function handleChatEventForSession(data, session, isActive) {
     case 'permission-request':
       if (isActive) {
         renderPermissionCard(data.id, data.tool, data.command, data.sessionId);
+        // Also notify if tab hidden
+        if (document.visibilityState !== 'visible') {
+          showNotificationToast(session, 'Permission required');
+        }
       } else {
         session.pendingPermissions.push({
           id: data.id,
