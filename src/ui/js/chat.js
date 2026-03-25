@@ -179,6 +179,20 @@ async function sendChatMessage() {
     return;
   }
 
+  // Client-side /config — open settings panel, no server round-trip
+  if (message.toLowerCase() === '/config') {
+    toggleSettings();
+    return;
+  }
+
+  // Client-side /exit — stop session and close tab
+  if (message.toLowerCase() === '/exit') {
+    if (session && activeSessionId) {
+      closeSessionTab(activeSessionId);
+    }
+    return;
+  }
+
   // Augment message with selection context if present
   var fullMessage = formatSelectionContextForMessage(message);
   clearSelectionContext();
@@ -866,6 +880,13 @@ var SLASH_UTILITY_CMDS = [
   { cmd: 'clear',   desc: 'Clear the messages panel' },
   { cmd: 'help',    desc: 'Show available commands' },
   { cmd: 'stop',    desc: 'Stop the current session' },
+  { cmd: 'init',    desc: 'Initialize a CLAUDE.md file' },
+  { cmd: 'exit',    desc: 'End the current session' },
+  { cmd: 'context', desc: 'Show current token usage' },
+  { cmd: 'rewind',  desc: 'Restore to a previous point' },
+  { cmd: 'config',  desc: 'Open settings panel' },
+  { cmd: 'model',   desc: 'Change the active LLM model' },
+  { cmd: 'effort',  desc: 'Set compute intensity (low/medium/high)' },
 ];
 
 function buildSlashCommands(prefix) {
@@ -933,7 +954,7 @@ function hideSlashSuggestions() {
 function applySlashSuggestion(cmd) {
   var input = document.getElementById('chat-input');
   // Commands that take no args — send immediately
-  var noArgCmds = ['compact', 'clear', 'stop', 'help'];
+  var noArgCmds = ['compact', 'clear', 'stop', 'help', 'init', 'exit', 'context', 'rewind', 'config'];
   var isAgent = agentList && agentList.some(function(a) { return a.name === cmd; });
   if (noArgCmds.indexOf(cmd) !== -1 || isAgent) {
     input.value = '/' + cmd;
