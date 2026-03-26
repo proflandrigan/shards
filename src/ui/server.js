@@ -93,28 +93,12 @@ class SessionStore {
 }
 
 const sessions = new Map(); // sessionId -> SessionStore
-const SESSION_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
 
 function getSession(sessionId) {
   const s = sessions.get(sessionId);
   if (s) s.touch();
   return s || null;
 }
-
-function expireSessions() {
-  const now = Date.now();
-  for (const [id, store] of sessions) {
-    if (now - store.lastActivityAt.getTime() > SESSION_EXPIRY_MS) {
-      log(`Expiring session ${id} (agent=${store.agent})`);
-      if (store.chatSession && store.chatSession.isRunning) {
-        store.chatSession.stop();
-      }
-      sessions.delete(id);
-    }
-  }
-}
-
-setInterval(expireSessions, 60_000);
 
 // ─── Permission request store ────────────────────────────────────────────────
 
