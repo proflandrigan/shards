@@ -289,6 +289,24 @@
 [data-theme="light"] .session-file-entry { color: #555; }
 [data-theme="light"] .session-file-entry:hover { background: #f0f0f4; }
 
+/* Git changes section */
+[data-theme="light"] #git-changes-header { background: #fafafa; border-bottom-color: #eee; color: #888; }
+[data-theme="light"] #git-changes-header:hover { background: #f0f0f4; }
+[data-theme="light"] #git-branch-label { color: #3060c0; }
+[data-theme="light"] .git-change-entry { color: #555; }
+[data-theme="light"] .git-change-entry:hover { background: #f0f0f4; }
+[data-theme="light"] .git-status-badge.modified { color: #b08000; }
+[data-theme="light"] .git-status-badge.added { color: #2a7a2a; }
+[data-theme="light"] .git-status-badge.deleted { color: #c04040; }
+[data-theme="light"] .git-status-badge.untracked { color: #3060c0; }
+[data-theme="light"] .git-status-badge.renamed { color: #7040b0; }
+[data-theme="light"] .git-change-entry .git-dir { color: #aaa; }
+[data-theme="light"] .ws-tab .git-diff-badge.modified { color: #b08000; }
+[data-theme="light"] .ws-tab .git-diff-badge.added { color: #2a7a2a; }
+[data-theme="light"] .ws-tab .git-diff-badge.deleted { color: #c04040; }
+[data-theme="light"] .ws-tab .git-diff-badge.untracked { color: #3060c0; }
+[data-theme="light"] .ws-tab .git-diff-badge.renamed { color: #7040b0; }
+
 /* Settings overlay */
 [data-theme="light"] .settings-section { border-bottom-color: #eee; }
 [data-theme="light"] .settings-label { color: #555; }

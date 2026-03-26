@@ -74,6 +74,8 @@ function handleGlobalEvent(data) {
         else if (currentBrowseDir) browseDir(currentBrowseDir);
         if (typeof renderSessionFiles === 'function') renderSessionFiles();
       }
+      // Debounced git status refresh
+      if (typeof scheduleGitRefresh === 'function') scheduleGitRefresh();
       break;
     }
 

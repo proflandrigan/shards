@@ -53,6 +53,12 @@ function closeFileTab(relPath) {
     if (relPath === currentKey) destroyTabulator();
   }
 
+  // Dispose git diff editor if this is a diff tab
+  if (f && f.gitDiff && typeof disposeGitDiffEditor === 'function') {
+    var currentKey0 = getCurrentFileKey();
+    if (relPath === currentKey0) hideGitDiffContainer();
+  }
+
   // Dispose Monaco instances
   var currentKey2 = getCurrentFileKey();
   if (relPath === currentKey2) {
@@ -146,10 +152,23 @@ function renderWsTabs() {
     tab.dataset.path = p;
 
     var name = p.split('/').pop();
+    // Check if this is a git diff tab
+    var isDiffTab = p.indexOf('diff:') === 0;
+    var displayName = isDiffTab ? p.substring(5).split('/').pop() : name;
+    // Git diff badge
+    var gitBadge = '';
+    if (typeof getGitStatusForFile === 'function') {
+      var gitPath = isDiffTab ? p.substring(5) : p;
+      var gs = getGitStatusForFile(gitPath);
+      if (gs) {
+        var gl = gs.status === 'modified' ? 'M' : gs.status === 'added' ? 'A' : gs.status === 'deleted' ? 'D' : gs.status === 'untracked' ? 'U' : gs.status === 'renamed' ? 'R' : '';
+        if (gl) gitBadge = '<span class="git-diff-badge ' + gs.status + '">' + gl + '</span>';
+      }
+    }
     tab.innerHTML =
       '<span class="tab-dot"></span>' +
       '<span class="modified-dot"></span>' +
-      esc(name) +
+      esc(displayName) + gitBadge +
       ' <span class="close-btn" title="Close">x</span>';
 
     tab.addEventListener('click', (function(path) {
@@ -252,6 +271,7 @@ function renderEmptyFilePane() {
   document.getElementById('file-rendered-view').innerHTML = '';
   document.getElementById('file-editor').style.display = 'none';
   document.getElementById('table-view').classList.remove('visible');
+  if (typeof hideGitDiffContainer === 'function') hideGitDiffContainer();
   destroyTabulator();
   disposeMonacoInstance();
   disposeNotebookCellMonaco();

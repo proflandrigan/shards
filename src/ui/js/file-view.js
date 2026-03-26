@@ -6,6 +6,15 @@ function renderFilePane(relPath) {
   var f = openFiles[relPath];
   if (!f) { renderEmptyFilePane(); return; }
 
+  // Git diff tabs get special rendering
+  if (f.gitDiff && typeof renderGitDiffPane === 'function') {
+    hideGitDiffContainer(); // clean up first
+    renderGitDiffPane(relPath);
+    return;
+  }
+  // Hide diff container when showing a normal file
+  if (typeof hideGitDiffContainer === 'function') hideGitDiffContainer();
+
   document.getElementById('file-path-display').textContent = relPath;
   document.getElementById('copy-path-btn').style.display = '';
 
