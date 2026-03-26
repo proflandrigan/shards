@@ -233,12 +233,15 @@ function copyMessageContent(btn) {
 
 var ctxMenuTarget = null;
 
-function showCtxMenu(e, relPath) {
+function showCtxMenu(e, relPath, opts) {
   e.preventDefault();
   e.stopPropagation();
   ctxMenuTarget = relPath;
   var menu = document.getElementById('ctx-menu');
   menu.classList.add('visible');
+  // Hide "Pin to Context" for directories
+  var pinItem = document.getElementById('ctx-pin-file');
+  if (pinItem) pinItem.style.display = (opts && opts.isDir) ? 'none' : '';
   // Position, keeping on screen
   var x = e.clientX;
   var y = e.clientY;
@@ -269,6 +272,10 @@ function initCtxMenu() {
   });
   document.getElementById('ctx-copy-path').addEventListener('click', function() {
     if (ctxMenuTarget) copyToClipboard(ctxMenuTarget);
+    hideCtxMenu();
+  });
+  document.getElementById('ctx-pin-file').addEventListener('click', function() {
+    if (ctxMenuTarget && typeof pinFileByPath === 'function') pinFileByPath(ctxMenuTarget);
     hideCtxMenu();
   });
 

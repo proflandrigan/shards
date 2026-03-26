@@ -292,6 +292,7 @@ initExplorerResize();
 initSplitResize();
 initFileAutoRefresh();
 initCtxMenu();
+if (typeof initPinboardDropZone === 'function') initPinboardDropZone();
 
 // Request notification permission on first interaction or load
 if (window.Notification && Notification.permission === 'default') {

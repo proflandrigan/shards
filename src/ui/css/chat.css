@@ -1023,3 +1023,129 @@
   transition: color 0.15s;
 }
 .sel-ctx-dismiss:hover { color: #e05050; }
+
+/* ─── Pinboard (context shelf) ──────────────────────────── */
+#pinboard {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  background: #0a0a16;
+  border: 1px solid #1e1e32;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  order: -2;
+  transition: border-color 0.2s, background 0.2s;
+}
+#pinboard.visible { display: flex; }
+
+/* Drop zone feedback */
+#pinboard.drop-target {
+  border-color: #3860c0;
+  border-style: dashed;
+}
+#pinboard.drag-over {
+  border-color: #5080e0;
+  background: rgba(56, 96, 192, 0.08);
+  border-style: dashed;
+}
+/* Show a placeholder pinboard when dragging and no pins exist */
+#pinboard.drop-target:not(.visible) {
+  display: flex;
+  border-color: #3860c0;
+  border-style: dashed;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+}
+#pinboard.drop-target:not(.visible)::after {
+  content: 'Drop here to pin as context';
+  color: #4a4a80;
+  font-size: 11px;
+}
+#pinboard.drag-over:not(.visible) {
+  display: flex;
+  border-color: #5080e0;
+  background: rgba(56, 96, 192, 0.08);
+  border-style: dashed;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+}
+
+.pinboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.pinboard-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #4a4a68;
+}
+.pinboard-clear {
+  background: none;
+  border: none;
+  color: #4a4a68;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0 4px;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+.pinboard-clear:hover { color: #e05050; }
+
+.pinboard-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.pin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 3px 8px;
+  background: #131320;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #b0b0c8;
+  max-width: 220px;
+  cursor: default;
+  transition: border-color 0.15s;
+}
+.pin-chip:hover { border-color: #3a3a5a; }
+.pin-chip-icon {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.pin-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.pin-chip-remove {
+  background: none;
+  border: none;
+  color: #4a4a68;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.pin-chip-remove:hover { color: #e05050; }
+
+/* Dragging state for explorer entries */
+.tree-entry.dragging,
+.dir-entry.dragging,
+.session-file-entry.dragging,
+.git-change-entry.dragging {
+  opacity: 0.4;
+}

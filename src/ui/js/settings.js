@@ -245,6 +245,7 @@ function renderSessionFiles() {
     entry.addEventListener('click', (function(fp) {
       return function() { openFileFromExplorer(fp); };
     })(files[i]));
+    if (typeof makeExplorerEntryDraggable === 'function') makeExplorerEntryDraggable(entry, files[i]);
     list.appendChild(entry);
   }
 }

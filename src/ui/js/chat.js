@@ -197,6 +197,9 @@ async function sendChatMessage() {
   var fullMessage = formatSelectionContextForMessage(message);
   clearSelectionContext();
 
+  // Prepend pinned context (fetches file contents for pinned files)
+  fullMessage = await formatPinnedContextForMessage(fullMessage);
+
   try {
     var res = await authFetch('/chat/send', {
       method: 'POST',
