@@ -57,6 +57,13 @@
       </div>
       <div id="session-files-list"></div>
     </div>
+    <div id="git-changes">
+      <div id="git-changes-header" onclick="document.getElementById('git-changes').classList.toggle('collapsed')">
+        <span><span class="chevron">&#9660;</span> Git Changes</span>
+        <span id="git-branch-label"></span>
+      </div>
+      <div id="git-changes-list"></div>
+    </div>
     <div id="explorer-breadcrumb"></div>
     <div id="explorer-listing"></div>
   </aside>
@@ -134,6 +141,8 @@
             <div id="monaco-file-container" style="display:none;width:100%;height:100%"></div>
           </div>
         </div>
+        <!-- Git diff view (Monaco diff editor) -->
+        <div id="git-diff-container"></div>
       </div>
     </div>
   </div>
@@ -206,6 +215,7 @@
 <script src="js/quick-open.js"></script>
 <script src="js/command-palette.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/git.js"></script>
 <script src="js/events.js"></script>
 <script src="js/init.js"></script>
 </body>

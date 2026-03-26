@@ -6,6 +6,7 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 const { randomUUID } = require('crypto');
 const { ChatSession, reconnectOrCleanup } = require('./chat-session');
 
@@ -1042,6 +1043,79 @@ function createHandler() {
         jsonResponse(res, cors, 200, result);
       } catch (err) {
         jsonResponse(res, cors, 400, { error: `Parse failed: ${err.message}` });
+      }
+      return;
+    }
+
+    // ─── Git endpoints ─────────────────────────────────────────────
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/git/status') {
+      try {
+        const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: PROJECT_DIR, encoding: 'utf8', timeout: 5000 }).trim();
+        const statusRaw = execSync('git status --porcelain', { cwd: PROJECT_DIR, encoding: 'utf8', timeout: 5000 });
+        const changes = [];
+        for (const line of statusRaw.split('\n')) {
+          if (!line) continue;
+          const xy = line.substring(0, 2);
+          const filePath = line.substring(3).trim();
+          // Skip renamed file arrow notation — use destination
+          const actualPath = filePath.includes(' -> ') ? filePath.split(' -> ')[1] : filePath;
+          let status = 'modified';
+          if (xy[0] === '?' || xy[1] === '?') status = 'untracked';
+          else if (xy[0] === 'A' || xy[1] === 'A') status = 'added';
+          else if (xy[0] === 'D' || xy[1] === 'D') status = 'deleted';
+          else if (xy[0] === 'R' || xy[1] === 'R') status = 'renamed';
+          const staged = xy[0] !== ' ' && xy[0] !== '?';
+          changes.push({ path: actualPath, status, staged });
+        }
+        jsonResponse(res, cors, 200, { branch, changes });
+      } catch (err) {
+        // Not a git repo or git not available
+        jsonResponse(res, cors, 200, { branch: null, changes: [], error: err.message });
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/git/diff') {
+      const filePath = parsedUrl.searchParams.get('path');
+      if (!filePath) {
+        jsonResponse(res, cors, 400, { error: 'Missing path parameter' });
+        return;
+      }
+      try {
+        // Try staged diff first, then unstaged
+        let diff = '';
+        try {
+          diff = execSync(`git diff -- ${JSON.stringify(filePath)}`, { cwd: PROJECT_DIR, encoding: 'utf8', timeout: 10000 });
+        } catch {}
+        if (!diff) {
+          try {
+            diff = execSync(`git diff --cached -- ${JSON.stringify(filePath)}`, { cwd: PROJECT_DIR, encoding: 'utf8', timeout: 10000 });
+          } catch {}
+        }
+        // For untracked files, show full content as "added"
+        if (!diff) {
+          const resolved = path.resolve(PROJECT_DIR, filePath);
+          try {
+            const content = fs.readFileSync(resolved, 'utf8');
+            diff = '--- /dev/null\n+++ b/' + filePath + '\n@@ -0,0 +1,' + content.split('\n').length + ' @@\n' +
+              content.split('\n').map(l => '+' + l).join('\n');
+          } catch {}
+        }
+        // Get original (HEAD) content for side-by-side diff
+        let original = '';
+        try {
+          original = execSync(`git show HEAD:${JSON.stringify(filePath)}`, { cwd: PROJECT_DIR, encoding: 'utf8', timeout: 5000 });
+        } catch {}
+        // Get current working copy
+        let modified = '';
+        try {
+          const resolved = path.resolve(PROJECT_DIR, filePath);
+          modified = fs.readFileSync(resolved, 'utf8');
+        } catch {}
+        jsonResponse(res, cors, 200, { diff, original, modified, path: filePath });
+      } catch (err) {
+        jsonResponse(res, cors, 400, { error: err.message });
       }
       return;
     }
