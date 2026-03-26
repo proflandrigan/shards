@@ -13,13 +13,14 @@ function log(msg) {
 }
 
 class ChatSession {
-  constructor({ agent, sessionId, resumeSessionId, cwd, sessionsDir, permissionMode, onEvent, onExit }) {
+  constructor({ agent, sessionId, resumeSessionId, cwd, sessionsDir, permissionMode, model, onEvent, onExit }) {
     this.agent = agent;
     this.sessionId = sessionId || randomUUID();
     this.resumeSessionId = resumeSessionId || null;
     this.cwd = cwd || process.cwd();
     this.sessionsDir = sessionsDir || path.join(this.cwd, '.shards', 'sessions');
     this.permissionMode = permissionMode || 'acceptEdits';
+    this.model = model || null;
     this.onEvent = onEvent || (() => {});
     this.onExit = onExit || (() => {});
     this.child = null;
@@ -42,6 +43,10 @@ class ChatSession {
 
     if (this.resumeSessionId) {
       args.push('--resume', this.resumeSessionId);
+    }
+
+    if (this.model) {
+      args.push('--model', this.model);
     }
 
     log(`Spawning claude CLI for agent="${this.agent}" session="${this.sessionId}" permissionMode="${this.permissionMode}"${this.resumeSessionId ? ` resume="${this.resumeSessionId}"` : ''}`);

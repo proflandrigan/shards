@@ -143,6 +143,9 @@ function handleChatEventForSession(data, session, isActive) {
       break;
 
     case 'chat-block-stop':
+      if (isActive && session.chatResponding && !session.thinkingIndicatorEl && !session.workingIndicatorEl) {
+        showThinkingIndicator();
+      }
       break;
 
     case 'chat-message':
@@ -156,7 +159,12 @@ function handleChatEventForSession(data, session, isActive) {
       } else {
         session.domDirty = true;
         session.unread = true;
+        // Check for gate pattern to provide better notification later
+        if (typeof isGateMessage === 'function' && isGateMessage(data.content)) {
+          session.attentionReason = 'gate';
+        }
         renderSessionTabs();
+        updateTitleNotification();
       }
       break;
 
@@ -166,6 +174,27 @@ function handleChatEventForSession(data, session, isActive) {
         removeThinkingIndicator();
         setChatInputEnabled(true);
         document.getElementById('chat-input').focus();
+        // If tab is hidden, still show a notification for the active session
+        if (document.visibilityState !== 'visible') {
+          var reason = 'Ready for input';
+          if (session.messages.length > 0) {
+            var last = session.messages[session.messages.length - 1];
+            if (last.role === 'assistant' && typeof isGateMessage === 'function' && isGateMessage(last.content)) {
+              reason = 'Gate reached';
+            }
+          }
+          showNotificationToast(session, reason);
+        }
+      } else {
+        session.needsAttention = true;
+        var reason = 'Waiting for input';
+        if (session.attentionReason === 'gate') {
+          reason = 'Gate reached';
+        }
+        session.attentionReason = 'turn-end';
+        renderSessionTabs();
+        showNotificationToast(session, reason);
+        updateTitleNotification();
       }
       break;
 
@@ -178,6 +207,13 @@ function handleChatEventForSession(data, session, isActive) {
         removeThinkingIndicator();
         addSystemNotice(data.error || 'An error occurred');
         setChatInputEnabled(true);
+      } else {
+        session.needsAttention = true;
+        session.attentionReason = 'error';
+        session.domDirty = true;
+        renderSessionTabs();
+        showNotificationToast(session, 'Error occurred');
+        updateTitleNotification();
       }
       break;
 
@@ -213,14 +249,6 @@ function handleChatEventForSession(data, session, isActive) {
         session.messages = [];
         session.agent = data.to;
         session.domDirty = true;
-      }
-      break;
-
-    case 'chat-compacting':
-      session.chatTransitioning = true;
-      if (isActive) {
-        addSystemNotice('Compacting context...');
-        setChatInputEnabled(false);
       }
       break;
 
@@ -261,12 +289,43 @@ function handleChatEventForSession(data, session, isActive) {
     case 'permission-request':
       if (isActive) {
         renderPermissionCard(data.id, data.tool, data.command, data.sessionId);
+        // Also notify if tab hidden
+        if (document.visibilityState !== 'visible') {
+          showNotificationToast(session, 'Permission required');
+        }
+      } else {
+        session.pendingPermissions.push({
+          id: data.id,
+          tool: data.tool,
+          command: data.command,
+          sessionId: data.sessionId
+        });
+        session.needsAttention = true;
+        session.attentionReason = 'permission';
+        renderSessionTabs();
+        showNotificationToast(session, 'Permission required');
+        updateTitleNotification();
       }
       break;
 
     case 'permission-resolved':
       if (isActive) {
         resolvePermissionCard(data.id, data.decision);
+      } else {
+        // Remove from pending queue (resolved externally, e.g. via CLI)
+        var pq = session.pendingPermissions;
+        for (var pi = pq.length - 1; pi >= 0; pi--) {
+          if (pq[pi].id === data.id) {
+            pq.splice(pi, 1);
+            break;
+          }
+        }
+        if (pq.length === 0 && session.chatResponding) {
+          session.needsAttention = false;
+          session.attentionReason = null;
+          renderSessionTabs();
+          updateTitleNotification();
+        }
       }
       break;
   }

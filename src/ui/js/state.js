@@ -46,6 +46,7 @@ var panelTabOrder = [];
 var activeTabId = 'chat';
 var splitMode = false;
 var currentFileInPane = null;
+var selectionContext = null;
 
 // ═══════════════════════════════════════════════════════════════
 // Multi-session state
@@ -54,6 +55,10 @@ var currentFileInPane = null;
 var chatSessions = {};       // sessionId -> ChatSessionState
 var activeSessionId = null;  // currently viewed session tab
 var sessionOrder = [];       // ordered array of session IDs
+
+// Browser tab title notification state
+var _titleFlashInterval = null;
+var _originalTitle = 'Shards UI';
 
 function createSessionState(sid, agent) {
   var state = {
@@ -69,10 +74,14 @@ function createSessionState(sid, agent) {
     chatTransitioning: false,
     thinkingIndicatorEl: null,
     consultingIndicatorEl: null,
+    workingIndicatorEl: null,
     scrollTop: 0,
     domFragment: null,
     domDirty: false,
     unread: false,
+    needsAttention: false,
+    pendingPermissions: [],
+    attentionReason: null,
     createdAt: Date.now(),
     // Workspace state (each session owns its own file tabs, panels, split mode)
     sessionTouchedFiles: new Set(),

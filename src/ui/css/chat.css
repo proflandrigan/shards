@@ -353,6 +353,40 @@
 }
 .msg-copy-btn:hover { background: #252540; color: #b0b0c8; }
 
+/* ─── Bookmark star button ───────────────────────────────── */
+.bookmark-star {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #3a3a54;
+  font-size: 14px;
+  padding: 1px 4px;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+  transition: color 0.15s, border-color 0.15s;
+}
+.bookmark-star:hover { color: #e8b84a; border-color: #2a2a40; }
+.bookmark-star.bookmarked {
+  color: #e8b84a;
+  font-size: 0;
+}
+.bookmark-star.bookmarked::before {
+  content: '\2605';
+  font-size: 14px;
+}
+
+/* Flash highlight when navigating to a bookmarked message */
+.message.bookmark-highlight .message-bubble {
+  box-shadow: 0 0 0 2px #e8b84a;
+  transition: box-shadow 0.3s;
+}
+.message.bookmark-highlight { animation: bookmarkFlash 1.5s ease-out; }
+@keyframes bookmarkFlash {
+  0% { background: rgba(232, 184, 74, 0.1); }
+  100% { background: transparent; }
+}
+
 /* ─── Collapsible long messages ──────────────────────────── */
 .message-bubble.collapsed {
   max-height: 300px;
@@ -372,6 +406,59 @@
   font-family: inherit;
 }
 .show-more-btn:hover { background: #1a1a2c; color: #b0b0c8; }
+
+/* ─── Gate confirmation buttons ──────────────────────────── */
+.gate-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #0d0d1e;
+  border: 1px solid #1e1e36;
+  border-radius: 6px;
+  animation: gateSlideIn 0.25s ease-out;
+}
+@keyframes gateSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.gate-actions.gate-resolved {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.gate-label {
+  font-size: 10px;
+  color: #4a4a68;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+.gate-btn {
+  font-size: 12px;
+  font-family: inherit;
+  padding: 5px 14px;
+  border-radius: 4px;
+  border: 1px solid #2a2a50;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #1a1a30;
+  color: #b0b0d0;
+}
+.gate-btn:hover { background: #252545; }
+.gate-btn-confirm {
+  background: #1a2e1a;
+  border-color: #2a5a2a;
+  color: #80c080;
+}
+.gate-btn-confirm:hover { background: #254025; color: #a0e0a0; }
+.gate-btn-changes {
+  background: #1a1a30;
+  border-color: #2a2a50;
+  color: #9090b0;
+}
+.gate-btn-changes:hover { background: #252540; color: #b0b0d0; }
 
 /* ─── Chat search bar ────────────────────────────────────── */
 #chat-search-bar {
@@ -420,6 +507,7 @@
   gap: 8px;
   align-items: flex-end;
   position: relative;
+  flex-wrap: wrap;
 }
 
 /* ─── Slash command suggestions ──────────────────────────── */
@@ -487,6 +575,35 @@
 }
 #chat-input:focus { border-color: #3860c0; }
 #chat-input:disabled { opacity: 0.4; }
+
+/* ─── Working indicator (input area, persistent while agent responds) ── */
+.working-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 0 2px;
+  font-size: 11px;
+  color: #4a4a68;
+  order: -1;
+}
+.working-indicator-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  animation: working-pulse 2s ease-in-out infinite;
+}
+.working-indicator-text {
+  animation: working-text-pulse 2s ease-in-out infinite;
+}
+@keyframes working-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+@keyframes working-text-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
 #chat-send-btn, #chat-stop-btn {
   background: #1a1a2c;
   border: 1px solid #2a2a40;
@@ -664,6 +781,26 @@
   0%, 100% { opacity: 0.5; transform: scale(0.8); }
   50% { opacity: 1; transform: scale(1.2); }
 }
+/* ─── Needs-attention indicator (stronger than unread) ─────── */
+.session-tab.needs-attention {
+  border-color: #e0a030;
+}
+.session-tab.needs-attention::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e0a030;
+  animation: attention-pulse 1s ease-in-out infinite;
+  box-shadow: 0 0 4px rgba(224, 160, 48, 0.6);
+}
+@keyframes attention-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
 .session-tab-dot {
   width: 6px;
   height: 6px;
@@ -746,14 +883,6 @@
   font-weight: 600;
   color: #e0e0f0;
   flex: 1;
-}
-.permission-countdown {
-  font-size: 11px;
-  color: #6a6a90;
-  font-variant-numeric: tabular-nums;
-}
-.permission-countdown.timed-out {
-  color: #e05050;
 }
 .permission-tool {
   font-size: 11px;
@@ -845,3 +974,52 @@
 }
 .permission-resolved.allowed { color: #60c060; }
 .permission-resolved.denied { color: #e06060; }
+
+/* ─── Selection context indicator ────────────────────────── */
+#selection-context-indicator {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background: #0d0d1a;
+  border: 1px solid #1e1e32;
+  border-radius: 5px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  width: 100%;
+  box-sizing: border-box;
+}
+#selection-context-indicator.visible { display: flex; }
+.sel-ctx-label {
+  color: #5080e0;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.sel-ctx-file {
+  color: #b0b0c8;
+  font-weight: 500;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.sel-ctx-preview {
+  color: #4a4a68;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 10px;
+}
+.sel-ctx-dismiss {
+  background: none;
+  border: none;
+  color: #4a4a68;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.sel-ctx-dismiss:hover { color: #e05050; }

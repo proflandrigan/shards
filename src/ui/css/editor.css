@@ -146,6 +146,21 @@
 .file-rendered input[type="checkbox"] { margin-right: 5px; vertical-align: middle; pointer-events: none; }
 .file-rendered li.task-list-item { list-style: none; margin-left: -16px; }
 
+/* ─── Project-specs latest section highlight ─────────────── */
+.specs-latest-section {
+  position: relative;
+  background: rgba(56, 96, 192, 0.08);
+  border-left: 3px solid #3860c0;
+  padding-left: 8px;
+  margin-left: -11px;
+  border-radius: 0 4px 4px 0;
+  animation: specsHighlightPulse 2s ease-out;
+}
+@keyframes specsHighlightPulse {
+  0% { background: rgba(56, 96, 192, 0.2); }
+  100% { background: rgba(56, 96, 192, 0.08); }
+}
+
 /* ─── Table view (Tabulator) ─────────────────────────────── */
 #table-view {
   display: none;

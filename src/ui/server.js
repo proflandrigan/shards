@@ -28,7 +28,7 @@ function log(msg) {
 }
 
 const PORTS = [7842, 7843, 7844, 7845];
-const OUTPUT_DIRS = ['analysis', 'studies', 'models', 'services', 'research', 'dashboards', 'brainstorm', 'data_models'];
+const OUTPUT_DIRS = ['analysis', 'studies', 'models', 'services', 'research', 'dashboards', 'brainstorm', 'data_models', 'experiments'];
 
 // ─── P1: Auth token ──────────────────────────────────────────────────────────
 
@@ -589,9 +589,16 @@ function parseSlashCommand(message) {
   if (!cmd) return null;
 
   // Utility commands
-  const utilities = ['compact', 'stop', 'clear', 'help'];
+  const utilities = ['stop', 'clear', 'help'];
   if (utilities.includes(cmd)) {
     return { type: 'utility', command: cmd };
+  }
+
+  // Claude Code built-in commands handled by the UI
+  const builtins = ['context', 'rewind', 'exit', 'model'];
+  if (builtins.includes(cmd)) {
+    const rest = trimmed.slice(1 + cmd.length).trim();
+    return { type: 'builtin', command: cmd, args: rest || null };
   }
 
   // Agent commands — check against installed agents
@@ -608,7 +615,7 @@ function parseSlashCommand(message) {
 // ─── Chat session creation helper ───────────────────────────────────────────
 
 function startNewChatSession(agent, options = {}) {
-  const { resumeSessionId, permissionMode, callerSessionId, initialMessage } = options;
+  const { resumeSessionId, permissionMode, callerSessionId, initialMessage, model } = options;
 
   // Kill existing session for the caller if running
   if (callerSessionId) {
@@ -630,6 +637,7 @@ function startNewChatSession(agent, options = {}) {
     cwd: PROJECT_DIR,
     sessionsDir: SESSIONS_DIR,
     permissionMode: permissionMode || 'acceptEdits',
+    model,
     onEvent: handleChatEvent,
     onExit: handleChatExit,
   });
@@ -1242,20 +1250,6 @@ function createHandler() {
           return;
         }
 
-        if (slashCmd.command === 'compact') {
-          // Find the active session to compact
-          const store = targetSessionId ? getSession(targetSessionId) : null;
-          if (!store || !store.chatSession || !store.chatSession.isRunning) {
-            jsonResponse(res, cors, 400, { error: 'No active chat session to compact' });
-            return;
-          }
-          const agent = store.agent;
-          broadcast({ type: 'chat-compacting', agent, sessionId: targetSessionId });
-          const result = startNewChatSession(agent, { callerSessionId: targetSessionId });
-          jsonResponse(res, cors, 200, { ok: true, compacted: true, agent: result.agent, sessionId: result.sessionId });
-          return;
-        }
-
         if (slashCmd.command === 'stop') {
           const store = targetSessionId ? getSession(targetSessionId) : null;
           if (store && store.chatSession && store.chatSession.isRunning) {
@@ -1273,10 +1267,18 @@ function createHandler() {
             helpText += `  \`/${a.name}\` — ${a.description || 'Switch to ' + a.name}\n`;
           }
           helpText += '\n**Utility:**\n';
-          helpText += '  `/compact` — Restart session with fresh context\n';
+          helpText += '  `/compact` — Summarize conversation to free up context\n';
           helpText += '  `/stop` — Stop the current session\n';
           helpText += '  `/clear` — Clear the messages panel\n';
           helpText += '  `/help` — Show this help message\n';
+          helpText += '\n**Claude Code:**\n';
+          helpText += '  `/init` — Initialize a CLAUDE.md file\n';
+          helpText += '  `/exit` — End the current session\n';
+          helpText += '  `/context` — Show token usage (terminal only)\n';
+          helpText += '  `/rewind` — Restore to previous point (terminal only)\n';
+          helpText += '  `/config` — Open settings panel\n';
+          helpText += '  `/model <name>` — Change the active LLM model\n';
+          helpText += '  `/effort <level>` — Set compute intensity (low/medium/high)\n';
           broadcast({ type: 'chat-system-notice', text: helpText, sessionId: targetSessionId });
           jsonResponse(res, cors, 200, { ok: true, help: true });
           return;
@@ -1285,6 +1287,49 @@ function createHandler() {
         if (slashCmd.command === 'clear') {
           broadcast({ type: 'chat-clear-messages', sessionId: targetSessionId });
           jsonResponse(res, cors, 200, { ok: true, cleared: true });
+          return;
+        }
+      }
+
+      // ─── Claude Code built-in command handling ─────────────
+      if (slashCmd && slashCmd.type === 'builtin') {
+        if (slashCmd.command === 'context') {
+          broadcast({ type: 'chat-system-notice', text: '`/context` is not available in the Shards UI. Use the terminal for token usage.', sessionId: targetSessionId });
+          jsonResponse(res, cors, 200, { ok: true });
+          return;
+        }
+
+        if (slashCmd.command === 'rewind') {
+          broadcast({ type: 'chat-system-notice', text: '`/rewind` is not available in the Shards UI. Use the terminal for rewind support.', sessionId: targetSessionId });
+          jsonResponse(res, cors, 200, { ok: true });
+          return;
+        }
+
+        if (slashCmd.command === 'exit') {
+          const store = targetSessionId ? getSession(targetSessionId) : null;
+          if (store && store.chatSession && store.chatSession.isRunning) {
+            store.chatSession.stop();
+          }
+          jsonResponse(res, cors, 200, { ok: true, stopped: true });
+          return;
+        }
+
+        if (slashCmd.command === 'model') {
+          if (!slashCmd.args) {
+            broadcast({ type: 'chat-system-notice', text: 'Usage: `/model <model-name>` — e.g., `/model claude-sonnet-4-6`', sessionId: targetSessionId });
+            jsonResponse(res, cors, 200, { ok: true });
+            return;
+          }
+          const store = targetSessionId ? getSession(targetSessionId) : null;
+          if (store && store.chatSession && store.chatSession.isRunning) {
+            const agent = store.agent;
+            broadcast({ type: 'chat-system-notice', text: 'Switching model to `' + slashCmd.args + '`…', sessionId: targetSessionId });
+            const result = startNewChatSession(agent, { callerSessionId: targetSessionId, model: slashCmd.args });
+            jsonResponse(res, cors, 200, { ok: true, switched: true, agent: result.agent, sessionId: result.sessionId });
+          } else {
+            broadcast({ type: 'chat-system-notice', text: 'No active session. Start a session first.', sessionId: targetSessionId });
+            jsonResponse(res, cors, 200, { ok: true });
+          }
           return;
         }
       }

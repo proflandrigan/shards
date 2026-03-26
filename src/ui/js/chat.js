@@ -175,22 +175,39 @@ async function sendChatMessage() {
     document.getElementById('messages').innerHTML = '';
     session.messages = [];
     session.hasMessages = false;
+    clearSelectionContext();
     return;
   }
+
+  // Client-side /config — open settings panel, no server round-trip
+  if (message.toLowerCase() === '/config') {
+    toggleSettings();
+    return;
+  }
+
+  // Client-side /exit — stop session and close tab
+  if (message.toLowerCase() === '/exit') {
+    if (session && activeSessionId) {
+      closeSessionTab(activeSessionId);
+    }
+    return;
+  }
+
+  // Augment message with selection context if present
+  var fullMessage = formatSelectionContextForMessage(message);
+  clearSelectionContext();
 
   try {
     var res = await authFetch('/chat/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: message, sessionId: activeSessionId }),
+      body: JSON.stringify({ message: fullMessage, sessionId: activeSessionId }),
     });
     var data = await res.json();
 
     // Update client state for agent switches
     if (data.switched && data.agent) {
       replaceSessionInTab(activeSessionId, data.sessionId, data.agent);
-    } else if (data.compacted && data.sessionId) {
-      replaceSessionInTab(activeSessionId, data.sessionId, session.agent);
     }
   } catch (err) {}
 }
@@ -342,6 +359,11 @@ function setChatInputEnabled(enabled) {
   btn.disabled = !enabled;
   var session = getActiveSession();
   if (session) session.chatResponding = !enabled;
+  if (enabled) {
+    removeWorkingIndicator();
+  } else {
+    showWorkingIndicator();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -361,7 +383,11 @@ function renderSessionTabs() {
 
     var info = AGENTS[session.agent] || { color: '#666', label: session.agent };
     var tab = document.createElement('div');
-    tab.className = 'session-tab' + (sid === activeSessionId ? ' active' : '') + (session.unread ? ' unread' : '');
+    var tabClass = 'session-tab';
+    if (sid === activeSessionId) tabClass += ' active';
+    if (session.needsAttention) tabClass += ' needs-attention';
+    else if (session.unread) tabClass += ' unread';
+    tab.className = tabClass;
     tab.style.setProperty('--tab-color', info.color);
 
     var titleText = session.title || info.label;
@@ -437,7 +463,8 @@ function switchSession(sessionId) {
     saveSessionWorkspace(oldSession);
   }
 
-  // Dispose DOM-bound instances before swapping workspace
+  // Clear selection context and dispose DOM-bound instances before swapping workspace
+  clearSelectionContext();
   disposeMonacoInstance();
   disposeNotebookCellMonaco();
   destroyTabulator();
@@ -475,6 +502,20 @@ function switchSession(sessionId) {
   activateAgent(newSession.agent);
   setChatInputEnabled(!newSession.chatResponding);
   newSession.unread = false;
+  newSession.needsAttention = false;
+  newSession.attentionReason = null;
+
+  // Render any queued permission cards
+  var queued = newSession.pendingPermissions;
+  if (queued.length > 0) {
+    for (var qi = 0; qi < queued.length; qi++) {
+      var perm = queued[qi];
+      renderPermissionCard(perm.id, perm.tool, perm.command, perm.sessionId);
+    }
+    newSession.pendingPermissions = [];
+  }
+
+  updateTitleNotification();
   renderSessionTabs();
 
   // Rebuild workspace layout for this session
@@ -594,11 +635,17 @@ function finalizePendingBubble(markdownContent) {
     var rendered = renderMarkdown(markdownContent);
     session.pendingBubble.innerHTML = linkifyFilePaths(rendered);
     session.pendingBubble.setAttribute('data-raw-md', markdownContent);
-    // Add message-level copy button
+    // Assign message index for bookmarking
+    var msgEl = session.pendingBubble.parentElement;
+    var msgIdx = session.messages.length - 1;
+    if (msgIdx < 0) msgIdx = 0;
+    msgEl.setAttribute('data-msg-idx', msgIdx);
+    // Add message-level actions (bookmark + copy)
+    var starHtml = typeof bookmarkStarHtml === 'function' ? bookmarkStarHtml(msgIdx) : '';
     var actions = document.createElement('div');
     actions.className = 'message-actions';
-    actions.innerHTML = '<button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button>';
-    session.pendingBubble.parentElement.appendChild(actions);
+    actions.innerHTML = starHtml + '<button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button>';
+    msgEl.appendChild(actions);
     // Auto-collapse long messages
     if (session.pendingBubble.scrollHeight > 500) {
       session.pendingBubble.classList.add('collapsed');
@@ -612,11 +659,67 @@ function finalizePendingBubble(markdownContent) {
       };
       session.pendingBubble.parentElement.insertBefore(showMore, actions);
     }
+    // Detect gate pattern and inject confirmation buttons
+    if (isGateMessage(markdownContent)) {
+      injectGateButtons(session.pendingBubble.parentElement);
+    }
     session.pendingBubble = null;
   }
   session.tokenBuffer = '';
   var container = document.getElementById('messages');
   container.scrollTop = container.scrollHeight;
+}
+
+// ─── Gate confirmation detection and buttons ────────────────────────────────
+
+function isGateMessage(content) {
+  if (!content) return false;
+  // Check the tail of the message for confirmation request patterns
+  var tail = content.slice(-400).toLowerCase();
+  var confirmPhrases = [
+    'confirm', 'proceed', 'look correct', 'look good', 'approve',
+    'any changes', 'any corrections', 'ready to move', 'shall we',
+    'want to adjust', 'good to go', 'move forward', 'does this capture',
+    'anything you\'d like to change', 'before i move on', 'before moving on',
+    'want me to continue', 'satisfied with', 'aligned on this',
+    'ready for phase', 'sound right', 'on the right track'
+  ];
+  for (var i = 0; i < confirmPhrases.length; i++) {
+    if (tail.includes(confirmPhrases[i])) return true;
+  }
+  return false;
+}
+
+function injectGateButtons(messageEl) {
+  if (!messageEl) return;
+  // Don't double-inject
+  if (messageEl.querySelector('.gate-actions')) return;
+
+  var actions = document.createElement('div');
+  actions.className = 'gate-actions';
+  actions.innerHTML =
+    '<span class="gate-label">Gate confirmation</span>' +
+    '<button class="gate-btn gate-btn-confirm">Confirm</button>' +
+    '<button class="gate-btn gate-btn-changes">Request Changes</button>';
+
+  actions.querySelector('.gate-btn-confirm').addEventListener('click', function() {
+    var input = document.getElementById('chat-input');
+    input.value = 'Confirmed. Proceed.';
+    sendChatMessage();
+    actions.classList.add('gate-resolved');
+    setTimeout(function() { actions.remove(); }, 500);
+  });
+
+  actions.querySelector('.gate-btn-changes').addEventListener('click', function() {
+    var input = document.getElementById('chat-input');
+    input.value = 'I\'d like to change: ';
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+    actions.classList.add('gate-resolved');
+    setTimeout(function() { actions.remove(); }, 300);
+  });
+
+  messageEl.appendChild(actions);
 }
 
 // ─── File path auto-linking ──────────────────────────────────────────────────
@@ -705,6 +808,28 @@ function removeThinkingIndicator() {
   }
 }
 
+function showWorkingIndicator() {
+  removeWorkingIndicator();
+  var session = getActiveSession();
+  var info = AGENTS[session ? session.agent : null] || { color: '#4a4a80' };
+  var inputArea = document.getElementById('chat-input-area');
+  var div = document.createElement('div');
+  div.className = 'working-indicator';
+  div.innerHTML =
+    '<span class="working-indicator-dot" style="background:' + info.color + '"></span>' +
+    '<span class="working-indicator-text">Working...</span>';
+  inputArea.appendChild(div);
+  if (session) session.workingIndicatorEl = div;
+}
+
+function removeWorkingIndicator() {
+  var session = getActiveSession();
+  if (session && session.workingIndicatorEl) {
+    session.workingIndicatorEl.remove();
+    session.workingIndicatorEl = null;
+  }
+}
+
 function showConsultingIndicator() {
   var session = getActiveSession();
   var container = document.getElementById('messages');
@@ -766,14 +891,22 @@ function addMessageDirect(role, content, agent) {
   var container = document.getElementById('messages');
   if (session && !session.hasMessages) { container.innerHTML = ''; session.hasMessages = true; }
 
+  // Determine message index for bookmarking (count of .message elements already in container)
+  var msgIdx = container.querySelectorAll('.message').length;
+
   var info = AGENTS[agent] || { color: '#666', label: agent || 'Unknown' };
   var div = document.createElement('div');
   div.className = 'message ' + (role === 'user' ? 'user' : 'assistant');
+  div.setAttribute('data-msg-idx', msgIdx);
+
+  var starHtml = typeof bookmarkStarHtml === 'function' ? bookmarkStarHtml(msgIdx) : '';
+  var bookmarkedClass = (activeSessionId && typeof isBookmarked === 'function' && isBookmarked(activeSessionId, msgIdx)) ? ' bookmarked' : '';
 
   if (role === 'user') {
     div.innerHTML =
       '<div class="message-meta">You</div>' +
-      '<div class="message-bubble">' + linkifyFilePaths(esc(content)) + '</div>';
+      '<div class="message-bubble">' + linkifyFilePaths(esc(content)) + '</div>' +
+      '<div class="message-actions">' + starHtml + '</div>';
   } else {
     div.innerHTML =
       '<div class="message-meta">' +
@@ -781,7 +914,13 @@ function addMessageDirect(role, content, agent) {
       esc(info.label) +
       '</div>' +
       '<div class="message-bubble" data-raw-md="' + esc(content).replace(/"/g, '&quot;') + '" style="border-left-color:' + info.color + '">' + linkifyFilePaths(renderMarkdown(content)) + '</div>' +
-      '<div class="message-actions"><button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button></div>';
+      '<div class="message-actions">' + starHtml + '<button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button></div>';
+  }
+
+  // Apply bookmarked state to star
+  if (bookmarkedClass) {
+    var star = div.querySelector('.bookmark-star');
+    if (star) star.classList.add('bookmarked');
   }
 
   container.appendChild(div);
@@ -800,6 +939,10 @@ function addMessageDirect(role, content, agent) {
       };
       div.querySelector('.message-actions').before(showMore);
     }
+    // Inject gate buttons if this is the last message and agent is waiting
+    if (isGateMessage(content) && session && !session.chatResponding) {
+      injectGateButtons(div);
+    }
   }
 
   container.scrollTop = container.scrollHeight;
@@ -813,10 +956,17 @@ var slashSuggestionItems = [];
 var slashSuggestionIdx = -1;
 
 var SLASH_UTILITY_CMDS = [
-  { cmd: 'compact', desc: 'Restart session with fresh context' },
+  { cmd: 'compact', desc: 'Summarize conversation to free up context' },
   { cmd: 'clear',   desc: 'Clear the messages panel' },
   { cmd: 'help',    desc: 'Show available commands' },
   { cmd: 'stop',    desc: 'Stop the current session' },
+  { cmd: 'init',    desc: 'Initialize a CLAUDE.md file' },
+  { cmd: 'exit',    desc: 'End the current session' },
+  { cmd: 'context', desc: 'Show current token usage' },
+  { cmd: 'rewind',  desc: 'Restore to a previous point' },
+  { cmd: 'config',  desc: 'Open settings panel' },
+  { cmd: 'model',   desc: 'Change the active LLM model' },
+  { cmd: 'effort',  desc: 'Set compute intensity (low/medium/high)' },
 ];
 
 function buildSlashCommands(prefix) {
@@ -884,7 +1034,7 @@ function hideSlashSuggestions() {
 function applySlashSuggestion(cmd) {
   var input = document.getElementById('chat-input');
   // Commands that take no args — send immediately
-  var noArgCmds = ['compact', 'clear', 'stop', 'help'];
+  var noArgCmds = ['compact', 'clear', 'stop', 'help', 'init', 'exit', 'context', 'rewind', 'config'];
   var isAgent = agentList && agentList.some(function(a) { return a.name === cmd; });
   if (noArgCmds.indexOf(cmd) !== -1 || isAgent) {
     input.value = '/' + cmd;
@@ -953,7 +1103,6 @@ function applySplitLayout() {
 // Permission approval cards
 // ═══════════════════════════════════════════════════════════════
 
-var permissionTimers = {};
 
 function renderPermissionCard(id, tool, command, sessionId) {
   var session = getActiveSession();
@@ -972,43 +1121,42 @@ function renderPermissionCard(id, tool, command, sessionId) {
     '<div class="permission-header">' +
       '<span class="permission-lock">&#128274;</span>' +
       '<span class="permission-title">Permission Required</span>' +
-      '<span class="permission-countdown" data-permission-id="' + id + '">60s</span>' +
     '</div>' +
     '<div class="permission-tool">' + esc(tool || 'Bash') + '</div>' +
     '<div class="permission-command">' +
       '<code class="permission-command-text">' + (isLong ? truncated : displayCmd) + '</code>' +
-      (isLong ? '<button class="permission-show-more" onclick="this.previousElementSibling.textContent=this.parentElement.getAttribute(\'data-full-cmd\');this.remove()">show more</button>' : '') +
+      (isLong ? '<button class="permission-show-more">show more</button>' : '') +
     '</div>' +
     '<div class="permission-actions">' +
-      '<button class="permission-btn permission-btn-allow" onclick="submitPermission(\'' + id + '\',\'allow\',false,\'' + esc(command).replace(/'/g, "\\'") + '\')">Allow Once</button>' +
-      '<button class="permission-btn permission-btn-always" onclick="submitPermission(\'' + id + '\',\'allow\',true,\'' + esc(command).replace(/'/g, "\\'") + '\')">Always Allow</button>' +
-      '<button class="permission-btn permission-btn-deny" onclick="submitPermission(\'' + id + '\',\'deny\',false,\'' + esc(command).replace(/'/g, "\\'") + '\')">Deny</button>' +
-      '<button class="permission-btn permission-btn-always-deny" onclick="submitPermission(\'' + id + '\',\'deny\',true,\'' + esc(command).replace(/'/g, "\\'") + '\')">Always Deny</button>' +
+      '<button class="permission-btn permission-btn-allow" data-action="allow">Allow Once</button>' +
+      '<button class="permission-btn permission-btn-always" data-action="allow" data-persist="true">Always Allow</button>' +
+      '<button class="permission-btn permission-btn-deny" data-action="deny">Deny</button>' +
+      '<button class="permission-btn permission-btn-always-deny" data-action="deny" data-persist="true">Always Deny</button>' +
     '</div>';
 
   if (isLong) {
-    card.querySelector('.permission-command').setAttribute('data-full-cmd', esc(command));
+    var cmdEl = card.querySelector('.permission-command');
+    cmdEl.setAttribute('data-full-cmd', command);
+    card.querySelector('.permission-show-more').addEventListener('click', function() {
+      cmdEl.querySelector('.permission-command-text').textContent = command;
+      this.remove();
+    });
+  }
+
+  // Use addEventListener instead of inline onclick to avoid escaping issues
+  // with double quotes, backslashes, and newlines in command strings
+  var btns = card.querySelectorAll('.permission-btn');
+  for (var i = 0; i < btns.length; i++) {
+    (function(btn) {
+      btn.addEventListener('click', function() {
+        submitPermission(id, btn.getAttribute('data-action'), btn.getAttribute('data-persist') === 'true', command);
+      });
+    })(btns[i]);
   }
 
   container.appendChild(card);
   container.scrollTop = container.scrollHeight;
 
-  // Start countdown timer
-  var remaining = 60;
-  var countdownEl = card.querySelector('.permission-countdown');
-  permissionTimers[id] = setInterval(function() {
-    remaining--;
-    if (countdownEl) countdownEl.textContent = remaining + 's';
-    if (remaining <= 0) {
-      clearInterval(permissionTimers[id]);
-      delete permissionTimers[id];
-      disablePermissionCard(id);
-      if (countdownEl) {
-        countdownEl.textContent = 'Auto-denied (timeout)';
-        countdownEl.classList.add('timed-out');
-      }
-    }
-  }, 1000);
 }
 
 function disablePermissionCard(id) {
@@ -1055,12 +1203,6 @@ function showPermissionCardError(id, msg) {
 }
 
 function resolvePermissionCard(id, decision) {
-  // Stop timer
-  if (permissionTimers[id]) {
-    clearInterval(permissionTimers[id]);
-    delete permissionTimers[id];
-  }
-
   var card = document.querySelector('[data-permission-id="' + id + '"].permission-card');
   if (!card) return;
 

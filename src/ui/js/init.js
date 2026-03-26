@@ -211,6 +211,16 @@ document.getElementById('chat-input').addEventListener('blur', function() {
   setTimeout(hideSlashSuggestions, 150);
 });
 
+// Capture selection context when user finishes selecting in file pane
+document.getElementById('file-pane').addEventListener('mouseup', function() {
+  setTimeout(function() {
+    var ctx = captureSelectionContext();
+    if (ctx) {
+      setSelectionContext(ctx);
+    }
+  }, 10);
+});
+
 // ═══════════════════════════════════════════════════════════════
 // Initial load
 // ═══════════════════════════════════════════════════════════════
@@ -273,6 +283,7 @@ async function loadInitial() {
 loadInitial().then(function() {
   if (typeof restoreLayout === 'function') restoreLayout();
   if (typeof renderSessionFiles === 'function') renderSessionFiles();
+  if (typeof initBookmarks === 'function') initBookmarks();
 });
 connect();
 browseDir();
@@ -280,3 +291,10 @@ initExplorerResize();
 initSplitResize();
 initFileAutoRefresh();
 initCtxMenu();
+
+// Request notification permission on first interaction or load
+if (window.Notification && Notification.permission === 'default') {
+  document.addEventListener('click', function() {
+    Notification.requestPermission();
+  }, { once: true });
+}
