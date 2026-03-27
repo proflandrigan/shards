@@ -80,11 +80,13 @@
 [data-theme="light"] #chat-pane.collapsed #conv-header { border-right-color: #ddd; }
 [data-theme="light"] .empty-state { color: #bbb; }
 [data-theme="light"] .message-meta { color: #999; }
+[data-theme="light"] .message.assistant .message-meta {
+  color: var(--current-accent);
+}
 [data-theme="light"] .message.assistant .message-bubble {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
   border-color: rgba(0,0,0,0.08);
-  border-left-color: #c0c0d0;
   color: #333;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
 }

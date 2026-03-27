@@ -600,10 +600,10 @@ function ensurePendingBubble() {
   div.className = 'message assistant gathering';
   div.innerHTML =
     '<div class="message-meta">' +
-    '<span class="meta-dot" style="background:' + info.color + '"></span>' +
+    '<span class="meta-dot" style="background:' + info.color + '; color:' + info.color + '"></span>' +
     esc(info.label) +
     '</div>' +
-    '<div class="message-bubble" style="border-left-color:' + info.color + '"></div>';
+    '<div class="message-bubble"></div>';
   container.appendChild(div);
 
   // Remove gathering class after animation completes
@@ -916,10 +916,10 @@ function addMessageDirect(role, content, agent, skipAnimation) {
   } else {
     div.innerHTML =
       '<div class="message-meta">' +
-      '<span class="meta-dot" style="background:' + info.color + '"></span>' +
+      '<span class="meta-dot" style="background:' + info.color + '; color:' + info.color + '"></span>' +
       esc(info.label) +
       '</div>' +
-      '<div class="message-bubble" data-raw-md="' + esc(content).replace(/"/g, '&quot;') + '" style="border-left-color:' + info.color + '">' + linkifyFilePaths(renderMarkdown(content)) + '</div>' +
+      '<div class="message-bubble" data-raw-md="' + esc(content).replace(/"/g, '&quot;') + '">' + linkifyFilePaths(renderMarkdown(content)) + '</div>' +
       '<div class="message-actions">' + starHtml + '<button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button></div>';
   }
 

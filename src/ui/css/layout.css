@@ -4,8 +4,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  background: #080810;
-  border-bottom: 1px solid #1a1a2c;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid var(--glass-border);
   flex-shrink: 0;
   height: 42px;
 }
@@ -72,8 +72,8 @@
 #ws-tab-bar {
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid #1a1a2c;
-  background: #080810;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
   min-height: 34px;
   overflow-x: auto;
@@ -96,7 +96,7 @@
   user-select: none;
 }
 .ws-tab:hover { color: #707090; background: #0c0c18; }
-.ws-tab.active { color: #b0b0c8; background: #0d0d14; border-bottom: 2px solid #3860c0; }
+.ws-tab.active { color: #b0b0c8; background: rgba(255, 255, 255, 0.05); border-bottom: 2px solid var(--current-accent); }
 .ws-tab.pinned { color: #8888a8; }
 .ws-tab.pinned.active { color: #c8c8d8; }
 .ws-tab.in-split { border-bottom: 2px solid #2a6a2a; }
@@ -253,7 +253,7 @@
 }
 .overlay-item-shortcut {
   font-size: 10px;
-  background: #1a1a2c;
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid #2a2a40;
   border-radius: 3px;
   padding: 1px 6px;
@@ -320,7 +320,7 @@
   width: 80px;
 }
 .settings-btn {
-  background: #1a1a2c;
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid #2a2a40;
   border-radius: 4px;
   color: #6a6a90;
