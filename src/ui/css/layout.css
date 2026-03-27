@@ -4,8 +4,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  background: #080810;
-  border-bottom: 1px solid #1a1a2c;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid var(--glass-border);
   flex-shrink: 0;
   height: 42px;
 }
@@ -72,8 +72,8 @@
 #ws-tab-bar {
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid #1a1a2c;
-  background: #080810;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
   min-height: 34px;
   overflow-x: auto;
@@ -96,7 +96,7 @@
   user-select: none;
 }
 .ws-tab:hover { color: #707090; background: #0c0c18; }
-.ws-tab.active { color: #b0b0c8; background: #0d0d14; border-bottom: 2px solid #3860c0; }
+.ws-tab.active { color: #b0b0c8; background: rgba(255, 255, 255, 0.05); border-bottom: 2px solid var(--current-accent); }
 .ws-tab.pinned { color: #8888a8; }
 .ws-tab.pinned.active { color: #c8c8d8; }
 .ws-tab.in-split { border-bottom: 2px solid #2a6a2a; }
@@ -182,7 +182,9 @@
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 9000;
   justify-content: center;
   padding-top: 80px;
@@ -190,21 +192,35 @@
 }
 .overlay-backdrop.visible { display: flex; }
 .overlay-panel {
-  background: #0d0d1a;
-  border: 1px solid #2a2a40;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   width: 520px;
   max-width: 90vw;
   max-height: 400px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+  clip-path: var(--shard-clip);
   overflow: hidden;
+  position: relative;
+}
+.overlay-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 40%, rgba(255,215,0, var(--shimmer-opacity)) 50%, transparent 60%);
+  background-size: 200% 100%;
+  animation: shimmer 8s infinite linear;
+  pointer-events: none;
+  z-index: 1;
 }
 .overlay-input {
-  background: #0a0a14;
+  background: rgba(10, 10, 20, 0.4);
   border: none;
-  border-bottom: 1px solid #1e1e32;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
   color: #c8c8d8;
   font-family: inherit;
   font-size: 14px;
@@ -213,7 +229,7 @@
   width: 100%;
   box-sizing: border-box;
 }
-.overlay-input:focus { border-bottom-color: #3860c0; }
+.overlay-input:focus { border-bottom-color: var(--current-accent); }
 .overlay-input::placeholder { color: #4a4a68; }
 .overlay-results {
   overflow-y: auto;
@@ -221,18 +237,23 @@
 }
 .overlay-item {
   padding: 8px 16px;
+  padding-left: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
   color: #b0b0c8;
   font-size: 13px;
-  transition: background 0.1s;
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
 }
-.overlay-item:hover, .overlay-item.active { background: #151528; }
+.overlay-item:hover, .overlay-item.active {
+  background: rgba(255, 215, 0, 0.08);
+  border-left: 2px solid var(--current-accent);
+}
 .overlay-item-shortcut {
   font-size: 10px;
-  background: #1a1a2c;
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid #2a2a40;
   border-radius: 3px;
   padding: 1px 6px;
@@ -299,7 +320,7 @@
   width: 80px;
 }
 .settings-btn {
-  background: #1a1a2c;
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid #2a2a40;
   border-radius: 4px;
   color: #6a6a90;

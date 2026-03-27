@@ -22,4 +22,7 @@ var AGENTS = {
 
 function activateAgent(agentKey) {
   currentAgent = agentKey;
+  var info = AGENTS[agentKey] || { color: '#3860c0' };
+  document.documentElement.style.setProperty('--current-accent', info.color);
+  document.documentElement.setAttribute('data-agent', agentKey || '');
 }

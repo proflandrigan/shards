@@ -485,7 +485,7 @@ function switchSession(sessionId) {
       messagesEl.innerHTML = '<div class="empty-state">Waiting for response...</div>';
     } else {
       for (var i = 0; i < newSession.messages.length; i++) {
-        addMessageDirect(newSession.messages[i].role, newSession.messages[i].content, newSession.messages[i].agent);
+        addMessageDirect(newSession.messages[i].role, newSession.messages[i].content, newSession.messages[i].agent, true);
       }
     }
     newSession.domDirty = false;
@@ -597,14 +597,17 @@ function ensurePendingBubble() {
 
   var info = AGENTS[session.agent] || { color: '#666', label: session.agent || 'Agent' };
   var div = document.createElement('div');
-  div.className = 'message assistant';
+  div.className = 'message assistant gathering';
   div.innerHTML =
     '<div class="message-meta">' +
-    '<span class="meta-dot" style="background:' + info.color + '"></span>' +
+    '<span class="meta-dot" style="background:' + info.color + '; color:' + info.color + '"></span>' +
     esc(info.label) +
     '</div>' +
-    '<div class="message-bubble" style="border-left-color:' + info.color + '"></div>';
+    '<div class="message-bubble"></div>';
   container.appendChild(div);
+
+  // Remove gathering class after animation completes
+  setTimeout(function() { div.classList.remove('gathering'); }, 600);
   session.pendingBubble = div.querySelector('.message-bubble');
   container.scrollTop = container.scrollHeight;
 }
@@ -889,7 +892,7 @@ function addSystemNotice(text, opts) {
   container.scrollTop = container.scrollHeight;
 }
 
-function addMessageDirect(role, content, agent) {
+function addMessageDirect(role, content, agent, skipAnimation) {
   var session = getActiveSession();
   var container = document.getElementById('messages');
   if (session && !session.hasMessages) { container.innerHTML = ''; session.hasMessages = true; }
@@ -899,7 +902,7 @@ function addMessageDirect(role, content, agent) {
 
   var info = AGENTS[agent] || { color: '#666', label: agent || 'Unknown' };
   var div = document.createElement('div');
-  div.className = 'message ' + (role === 'user' ? 'user' : 'assistant');
+  div.className = 'message ' + (role === 'user' ? 'user' : ('assistant' + (skipAnimation ? '' : ' gathering')));
   div.setAttribute('data-msg-idx', msgIdx);
 
   var starHtml = typeof bookmarkStarHtml === 'function' ? bookmarkStarHtml(msgIdx) : '';
@@ -913,10 +916,10 @@ function addMessageDirect(role, content, agent) {
   } else {
     div.innerHTML =
       '<div class="message-meta">' +
-      '<span class="meta-dot" style="background:' + info.color + '"></span>' +
+      '<span class="meta-dot" style="background:' + info.color + '; color:' + info.color + '"></span>' +
       esc(info.label) +
       '</div>' +
-      '<div class="message-bubble" data-raw-md="' + esc(content).replace(/"/g, '&quot;') + '" style="border-left-color:' + info.color + '">' + linkifyFilePaths(renderMarkdown(content)) + '</div>' +
+      '<div class="message-bubble" data-raw-md="' + esc(content).replace(/"/g, '&quot;') + '">' + linkifyFilePaths(renderMarkdown(content)) + '</div>' +
       '<div class="message-actions">' + starHtml + '<button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button></div>';
   }
 
@@ -927,6 +930,21 @@ function addMessageDirect(role, content, agent) {
   }
 
   container.appendChild(div);
+
+  // Remove gathering class after animation completes
+  if (role !== 'user' && !skipAnimation) {
+    setTimeout(function() { div.classList.remove('gathering'); }, 600);
+    // AI Engineer micro-glitch
+    if (currentAgent === 'ai-engineer' && Math.random() < 0.3) {
+      var bubble = div.querySelector('.message-bubble');
+      if (bubble) {
+        setTimeout(function() {
+          bubble.classList.add('glitch-active');
+          setTimeout(function() { bubble.classList.remove('glitch-active'); }, 300);
+        }, 800 + Math.random() * 2000);
+      }
+    }
+  }
 
   // Auto-collapse long assistant messages
   if (role !== 'user') {
@@ -1233,6 +1251,6 @@ function rebuildMessages(msgArray) {
     return;
   }
   for (var i = 0; i < msgArray.length; i++) {
-    addMessageDirect(msgArray[i].role, msgArray[i].content, msgArray[i].agent);
+    addMessageDirect(msgArray[i].role, msgArray[i].content, msgArray[i].agent, true);
   }
 }
