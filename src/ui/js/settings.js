@@ -173,6 +173,7 @@ function saveLayout() {
       currentFileInPane: currentFileInPane,
       explorerCollapsed: sidebar.classList.contains('collapsed'),
       explorerWidth: sidebar.style.width || null,
+      activeSidebarView: activeSidebarView,
     };
     localStorage.setItem('shards-layout', JSON.stringify(layout));
   }, 100);
@@ -188,6 +189,11 @@ function restoreLayout() {
     var sidebar = document.getElementById('explorer-sidebar');
     if (layout.explorerCollapsed) sidebar.classList.add('collapsed');
     if (layout.explorerWidth) sidebar.style.width = layout.explorerWidth;
+
+    // Restore active sidebar view
+    if (layout.activeSidebarView && typeof switchSidebarView === 'function') {
+      switchSidebarView(layout.activeSidebarView);
+    }
 
     // Restore split mode
     if (layout.splitMode && !splitMode) toggleSplit();
@@ -215,26 +221,28 @@ function restoreLayout() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Session files section in explorer
+// Session files view (activity bar panel)
 // ═══════════════════════════════════════════════════════════════
 
 function renderSessionFiles() {
-  var section = document.getElementById('session-files');
   var list = document.getElementById('session-files-list');
-  if (!section || !list) return;
+  var countEl = document.getElementById('session-file-count');
+  if (!list) return;
 
-  if (sessionTouchedFiles.size === 0) {
-    section.classList.remove('visible');
-    return;
-  }
-
-  section.classList.add('visible');
   list.innerHTML = '';
 
   // Convert to array and show most recent first (reverse order of Set iteration)
   var files = [];
   sessionTouchedFiles.forEach(function(f) { files.push(f); });
   files.reverse();
+
+  // Update count display
+  if (countEl) {
+    countEl.textContent = files.length > 0 ? files.length + ' file' + (files.length !== 1 ? 's' : '') : '';
+  }
+
+  // Update badge on activity bar button
+  updateSessionBadge(files.length);
 
   for (var i = 0; i < files.length; i++) {
     var entry = document.createElement('div');
@@ -247,6 +255,22 @@ function renderSessionFiles() {
     })(files[i]));
     if (typeof makeExplorerEntryDraggable === 'function') makeExplorerEntryDraggable(entry, files[i]);
     list.appendChild(entry);
+  }
+}
+
+function updateSessionBadge(count) {
+  var btn = document.getElementById('activity-session');
+  if (!btn) return;
+  var existing = btn.querySelector('.badge');
+  if (count > 0) {
+    if (!existing) {
+      existing = document.createElement('span');
+      existing.className = 'badge';
+      btn.appendChild(existing);
+    }
+    existing.textContent = count;
+  } else if (existing) {
+    existing.remove();
   }
 }
 

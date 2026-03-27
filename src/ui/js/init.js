@@ -285,6 +285,7 @@ loadInitial().then(function() {
   if (typeof renderSessionFiles === 'function') renderSessionFiles();
   if (typeof initBookmarks === 'function') initBookmarks();
   if (typeof fetchGitStatus === 'function') fetchGitStatus();
+  if (typeof switchSidebarView === 'function') switchSidebarView(activeSidebarView);
 });
 connect();
 browseDir();

@@ -28,6 +28,7 @@ var activeNotebookCellIdx = null;
 var activeCellIdx = null;
 var currentBrowseDir = null;
 var explorerViewMode = localStorage.getItem('shards-explorer-view') || 'tree';
+var activeSidebarView = localStorage.getItem('shards-sidebar-view') || 'explorer';
 var treeExpanded = {};
 var treeChildren = {};
 var treeLoading = {};

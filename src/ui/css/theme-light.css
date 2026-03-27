@@ -7,6 +7,15 @@
 [data-theme="light"] #theme-toggle { border-color: #ccc; color: #666; }
 [data-theme="light"] #theme-toggle:hover { background: #eee; }
 
+/* Activity bar */
+[data-theme="light"] #activity-bar { background: #f0f0f4; border-right-color: #ddd; }
+[data-theme="light"] .activity-btn { color: #999; }
+[data-theme="light"] .activity-btn:hover { color: #555; }
+[data-theme="light"] .activity-btn.active { color: #333; border-left-color: #3860c0; }
+[data-theme="light"] .activity-btn .badge { background: #d4a030; color: #fff; }
+[data-theme="light"] #session-view-header { background: #fafafa; border-bottom-color: #eee; color: #888; }
+[data-theme="light"] #session-file-count { color: #aaa; }
+
 /* Explorer sidebar */
 [data-theme="light"] #explorer-sidebar { background: #ffffff; border-right-color: #ddd; }
 [data-theme="light"] #explorer-header { background: #fafafa; border-bottom-color: #eee; }
@@ -283,9 +292,7 @@
 [data-theme="light"] .bookmark-star:hover { color: #d4a017; }
 [data-theme="light"] .bookmark-star.bookmarked { color: #d4a017; }
 
-/* Session files section */
-[data-theme="light"] #session-files-header { background: #fafafa; border-bottom-color: #eee; color: #888; }
-[data-theme="light"] #session-files-header:hover { background: #f0f0f4; }
+/* Session file entries */
 [data-theme="light"] .session-file-entry { color: #555; }
 [data-theme="light"] .session-file-entry:hover { background: #f0f0f4; }
 

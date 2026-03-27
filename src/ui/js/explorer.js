@@ -7,6 +7,33 @@ function toggleExplorer() {
   if (typeof saveLayout === 'function') saveLayout();
 }
 
+// ─── Activity bar view switching ────────────────────────────
+function switchSidebarView(view) {
+  activeSidebarView = view;
+  localStorage.setItem('shards-sidebar-view', view);
+
+  var btns = document.querySelectorAll('.activity-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  var activeBtn = document.getElementById('activity-' + view);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  var views = document.querySelectorAll('.sidebar-view');
+  for (var j = 0; j < views.length; j++) views[j].classList.remove('active');
+  var activeView = document.getElementById('sidebar-view-' + view);
+  if (activeView) activeView.classList.add('active');
+
+  if (view === 'session' && typeof renderSessionFiles === 'function') renderSessionFiles();
+}
+
+function onActivityClick(view) {
+  var sidebar = document.getElementById('explorer-sidebar');
+  if (sidebar.classList.contains('collapsed')) {
+    sidebar.classList.remove('collapsed');
+    if (typeof saveLayout === 'function') saveLayout();
+  }
+  switchSidebarView(view);
+}
+
 function switchExplorerView(mode) {
   explorerViewMode = mode;
   localStorage.setItem('shards-explorer-view', mode);
