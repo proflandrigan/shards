@@ -37,35 +37,50 @@
 <main id="main">
   <!-- Explorer sidebar -->
   <aside id="explorer-sidebar">
-    <div id="explorer-header">
-      <span id="explorer-toggle" onclick="toggleExplorer()"><span class="chevron">&#9660;</span> <span class="label-text">Explorer</span></span>
-      <button id="explorer-view-toggle" onclick="switchExplorerView(explorerViewMode === 'tree' ? 'list' : 'tree')" title="Switch to list view">List</button>
-      <button id="explorer-collapse-btn" onclick="toggleExplorer()" title="Collapse explorer">&#8249;&#8249;</button>
+    <div id="activity-bar">
+      <button class="activity-btn active" id="activity-explorer" onclick="onActivityClick('explorer')" title="File Explorer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </button>
+      <button class="activity-btn" id="activity-session" onclick="onActivityClick('session')" title="Session Files">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </button>
     </div>
-    <div id="explorer-search-wrap">
-      <input type="text" id="explorer-search-input" placeholder="Search files...">
-    </div>
-    <div id="bookmarks-section">
-      <div id="bookmarks-header" onclick="document.getElementById('bookmarks-section').classList.toggle('collapsed')">
-        <span><span class="chevron">&#9660;</span> Bookmarks</span>
+    <div id="sidebar-content">
+      <!-- Explorer view -->
+      <div id="sidebar-view-explorer" class="sidebar-view active">
+        <div id="explorer-header">
+          <span id="explorer-toggle" onclick="toggleExplorer()"><span class="chevron">&#9660;</span> <span class="label-text">Explorer</span></span>
+          <button id="explorer-view-toggle" onclick="switchExplorerView(explorerViewMode === 'tree' ? 'list' : 'tree')" title="Switch to list view">List</button>
+          <button id="explorer-collapse-btn" onclick="toggleExplorer()" title="Collapse explorer">&#8249;&#8249;</button>
+        </div>
+        <div id="explorer-search-wrap">
+          <input type="text" id="explorer-search-input" placeholder="Search files...">
+        </div>
+        <div id="bookmarks-section">
+          <div id="bookmarks-header" onclick="document.getElementById('bookmarks-section').classList.toggle('collapsed')">
+            <span><span class="chevron">&#9660;</span> Bookmarks</span>
+          </div>
+          <div id="bookmarks-list"></div>
+        </div>
+        <div id="git-changes">
+          <div id="git-changes-header" onclick="document.getElementById('git-changes').classList.toggle('collapsed')">
+            <span><span class="chevron">&#9660;</span> Git Changes</span>
+            <span id="git-branch-label"></span>
+          </div>
+          <div id="git-changes-list"></div>
+        </div>
+        <div id="explorer-breadcrumb"></div>
+        <div id="explorer-listing"></div>
       </div>
-      <div id="bookmarks-list"></div>
-    </div>
-    <div id="session-files">
-      <div id="session-files-header" onclick="document.getElementById('session-files').classList.toggle('collapsed')">
-        <span><span class="chevron">&#9660;</span> Session Files</span>
+      <!-- Session files view -->
+      <div id="sidebar-view-session" class="sidebar-view">
+        <div id="session-view-header">
+          <span>Session Files</span>
+          <span id="session-file-count"></span>
+        </div>
+        <div id="session-files-list"></div>
       </div>
-      <div id="session-files-list"></div>
     </div>
-    <div id="git-changes">
-      <div id="git-changes-header" onclick="document.getElementById('git-changes').classList.toggle('collapsed')">
-        <span><span class="chevron">&#9660;</span> Git Changes</span>
-        <span id="git-branch-label"></span>
-      </div>
-      <div id="git-changes-list"></div>
-    </div>
-    <div id="explorer-breadcrumb"></div>
-    <div id="explorer-listing"></div>
   </aside>
   <div class="resize-handle" id="explorer-resize"></div>
 
@@ -114,6 +129,7 @@
           <span id="file-path-display"></span>
           <button class="toolbar-btn copy-path-btn" id="copy-path-btn" onclick="copyCurrentFilePath()" title="Copy relative path">&#x2398;</button>
           <button class="toolbar-btn" id="edit-btn" onclick="toggleEditMode()">Edit</button>
+          <button class="toolbar-btn" id="diff-btn" onclick="toggleDiffMode()" style="display:none" title="Toggle git diff view">Diff</button>
           <button class="toolbar-btn save" id="save-btn" onclick="saveCurrentFile()" style="display:none">Save</button>
         </div>
         <!-- Rendered view (markdown/notebook) -->

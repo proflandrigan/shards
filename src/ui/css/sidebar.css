@@ -1,11 +1,11 @@
 /* ─── Explorer sidebar ───────────────────────────────────── */
 #explorer-sidebar {
   width: 240px;
-  min-width: 140px;
+  min-width: 176px;
   max-width: 500px;
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   background: #080810;
   border-right: 1px solid #1a1a2c;
   overflow: hidden;
@@ -14,11 +14,95 @@
   width: 36px !important;
   min-width: 36px;
 }
-#explorer-sidebar.collapsed #explorer-search-wrap,
-#explorer-sidebar.collapsed #session-files,
-#explorer-sidebar.collapsed #git-changes,
-#explorer-sidebar.collapsed #explorer-breadcrumb,
-#explorer-sidebar.collapsed #explorer-listing { display: none; }
+#explorer-sidebar.collapsed #sidebar-content { display: none; }
+
+/* ─── Activity bar ───────────────────────────────────────── */
+#activity-bar {
+  width: 36px;
+  min-width: 36px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 6px;
+  gap: 2px;
+  background: #060610;
+  border-right: 1px solid #12121e;
+}
+.activity-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  color: #3a3a54;
+  font-size: 14px;
+  transition: color 0.15s, border-color 0.15s;
+  padding: 0;
+}
+.activity-btn:hover { color: #7070a0; }
+.activity-btn.active { color: #b0b0c8; border-left-color: #3860c0; }
+.activity-btn .badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 8px;
+  background: #e8b84a;
+  color: #080810;
+  border-radius: 6px;
+  padding: 0 3px;
+  line-height: 13px;
+  min-width: 13px;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* ─── Sidebar content area ───────────────────────────────── */
+#sidebar-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+.sidebar-view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+.sidebar-view.active { display: flex; }
+
+/* ─── Session files view ─────────────────────────────────── */
+#session-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #3a3a54;
+  background: #0a0a14;
+  border-bottom: 1px solid #12121e;
+  flex-shrink: 0;
+}
+#session-file-count {
+  font-size: 9px;
+  color: #4a4a68;
+  letter-spacing: 0;
+  text-transform: none;
+}
+#sidebar-view-session #session-files-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 0;
+}
 
 #explorer-header {
   display: flex;
@@ -189,32 +273,7 @@
 #explorer-search-input:focus { border-color: #3860c0; }
 #explorer-search-results { max-height: 200px; overflow-y: auto; }
 
-/* ─── Session files section ──────────────────────────────── */
-#session-files { display: none; }
-#session-files.visible { display: block; }
-#session-files-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 10px;
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: #4a4a68;
-  cursor: pointer;
-  user-select: none;
-  background: #0a0a14;
-  border-bottom: 1px solid #12121e;
-}
-#session-files-header:hover { color: #7070a0; }
-#session-files-header .chevron {
-  font-size: 7px;
-  display: inline-block;
-  transition: transform 0.2s;
-}
-#session-files.collapsed #session-files-header .chevron { transform: rotate(-90deg); }
-#session-files-list { padding: 2px 0; }
-#session-files.collapsed #session-files-list { display: none; }
+/* ─── Session file entries ────────────────────────────────── */
 .session-file-entry {
   display: flex;
   align-items: center;
@@ -312,8 +371,7 @@
 .bookmark-entry:hover .bookmark-entry-remove { opacity: 0.6; }
 .bookmark-entry-remove:hover { opacity: 1 !important; color: #e05050; }
 
-/* Hide bookmarks section when explorer collapsed */
-#explorer-sidebar.collapsed #bookmarks-section { display: none; }
+/* Bookmarks hidden when sidebar collapsed (via #sidebar-content hiding) */
 
 /* Highlight agent-edited files */
 .tree-entry.is-file.touched .dir-name,
