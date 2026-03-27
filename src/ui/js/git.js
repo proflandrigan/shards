@@ -25,6 +25,18 @@ async function fetchGitStatus() {
       }
     }
     renderGitChanges();
+    // Invalidate diff cache for files no longer changed
+    for (var p in openFiles) {
+      if (openFiles[p].cachedDiffData && !gitChangesMap[p]) {
+        openFiles[p].cachedDiffData = false;
+        if (openFiles[p].diffMode) {
+          openFiles[p].diffMode = false;
+        }
+      }
+    }
+    // Update diff button for current file
+    var curKey = typeof getCurrentFileKey === 'function' ? getCurrentFileKey() : null;
+    if (curKey && typeof updateDiffButtonState === 'function') updateDiffButtonState(curKey);
     // Refresh tab badges
     if (typeof renderWsTabs === 'function') renderWsTabs();
   } catch (e) {
@@ -194,6 +206,132 @@ function hideGitDiffContainer() {
 
 function getGitStatusForFile(relPath) {
   return gitChangesMap[relPath] || null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Inline diff toggle (in-place diff for normal file tabs)
+// ═══════════════════════════════════════════════════════════════
+
+async function toggleDiffMode() {
+  var key = typeof getCurrentFileKey === 'function' ? getCurrentFileKey() : null;
+  if (!key || !openFiles[key]) return;
+  var f = openFiles[key];
+
+  if (f.diffMode) {
+    // Toggle OFF — return to normal file view
+    f.diffMode = false;
+    hideGitDiffContainer();
+    renderFilePane(key);
+    return;
+  }
+
+  // Toggle ON
+  f.diffMode = true;
+  updateDiffButtonState(key);
+
+  // Use cached diff data if available
+  if (f.cachedDiffData) {
+    renderInlineDiff(key);
+    return;
+  }
+
+  // Fetch diff data from server
+  try {
+    var res = await authFetch('/git/diff?path=' + encodeURIComponent(key));
+    var data = await res.json();
+    if (data.error) { f.diffMode = false; updateDiffButtonState(key); return; }
+
+    // Cache on the file object
+    f.gitOriginal = data.original || '';
+    f.gitModified = data.modified || '';
+    f.cachedDiffData = true;
+
+    // Guard against rapid toggle — user may have toggled off during fetch
+    if (f.diffMode) {
+      renderInlineDiff(key);
+    }
+  } catch (e) {
+    f.diffMode = false;
+    updateDiffButtonState(key);
+  }
+}
+
+function renderInlineDiff(relPath) {
+  var f = openFiles[relPath];
+  if (!f || !f.diffMode) return;
+
+  // Update toolbar
+  document.getElementById('file-path-display').textContent = relPath + ' (diff)';
+  document.getElementById('edit-btn').style.display = 'none';
+  document.getElementById('save-btn').style.display = 'none';
+
+  // Hide normal file views
+  document.getElementById('file-rendered-view').classList.remove('visible');
+  document.getElementById('file-rendered-view').innerHTML = '';
+  document.getElementById('file-editor').style.display = 'none';
+  document.getElementById('table-view').classList.remove('visible');
+  if (typeof destroyTabulator === 'function') destroyTabulator();
+  disposeMonacoInstance();
+  var monacoFileContainer = document.getElementById('monaco-file-container');
+  monacoFileContainer.style.display = 'none';
+  monacoFileContainer.innerHTML = '';
+
+  // Show diff container
+  var diffContainer = document.getElementById('git-diff-container');
+  diffContainer.classList.add('visible');
+  diffContainer.innerHTML = '';
+  disposeGitDiffEditor();
+
+  loadMonaco().then(function() {
+    var originalModel = monaco.editor.createModel(f.gitOriginal, getMonacoLang(relPath));
+    var modifiedModel = monaco.editor.createModel(f.gitModified, getMonacoLang(relPath));
+
+    gitDiffInstance = monaco.editor.createDiffEditor(diffContainer, {
+      theme: currentMonacoTheme(),
+      automaticLayout: true,
+      readOnly: true,
+      renderSideBySide: true,
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      fontSize: 13,
+      fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
+      lineHeight: 20,
+      scrollbar: { verticalScrollbarSize: 5, horizontalScrollbarSize: 5 },
+      overviewRulerLanes: 0,
+      padding: { top: 8, bottom: 8 },
+    });
+
+    gitDiffInstance.setModel({ original: originalModel, modified: modifiedModel });
+  }).catch(function() {
+    diffContainer.innerHTML = '<pre style="padding:12px;color:#b0b0c4;font-size:12px;white-space:pre-wrap;overflow:auto;height:100%">' +
+      esc('Diff view unavailable') + '</pre>';
+  });
+
+  updateDiffButtonState(relPath);
+}
+
+function updateDiffButtonState(relPath) {
+  var diffBtn = document.getElementById('diff-btn');
+  if (!diffBtn) return;
+
+  var f = openFiles[relPath];
+  if (!f) { diffBtn.style.display = 'none'; return; }
+
+  // Determine if file is diffable
+  var ext = relPath.split('.').pop().toLowerCase();
+  var isMedia = f.media || isImageFile(relPath) || isPdfFile(relPath);
+  var isNotebook = ext === 'ipynb';
+  var isDiffTab = f.gitDiff;
+  var hasGitChanges = !!gitChangesMap[relPath];
+
+  // Hide for: edit mode, media, notebooks, diff: tabs, no git changes
+  if (f.editMode || isMedia || isNotebook || isDiffTab || !hasGitChanges) {
+    diffBtn.style.display = 'none';
+    return;
+  }
+
+  diffBtn.style.display = '';
+  diffBtn.className = f.diffMode ? 'toolbar-btn active' : 'toolbar-btn';
 }
 
 function scheduleGitRefresh() {

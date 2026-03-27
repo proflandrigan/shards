@@ -12,6 +12,11 @@ function renderFilePane(relPath) {
     renderGitDiffPane(relPath);
     return;
   }
+  // If file is in inline diff mode, render diff and return
+  if (f.diffMode && typeof renderInlineDiff === 'function') {
+    renderInlineDiff(relPath);
+    return;
+  }
   // Hide diff container when showing a normal file
   if (typeof hideGitDiffContainer === 'function') hideGitDiffContainer();
 
@@ -25,10 +30,11 @@ function renderFilePane(relPath) {
   var isNotebook = ext === 'ipynb';
   var isTabular = isTabularFile(relPath) && typeof Tabulator !== 'undefined';
 
-  // Media files — no edit/save
+  // Media files — no edit/save/diff
   if (isImage || isPdf) {
     document.getElementById('edit-btn').style.display = 'none';
     document.getElementById('save-btn').style.display = 'none';
+    document.getElementById('diff-btn').style.display = 'none';
     var renderedView = document.getElementById('file-rendered-view');
     var editorEl = document.getElementById('file-editor');
     var tableView = document.getElementById('table-view');
@@ -73,6 +79,9 @@ function renderFilePane(relPath) {
       document.getElementById('save-btn').style.display = f.editMode ? '' : 'none';
     }
   }
+
+  // Update diff toggle button visibility
+  if (typeof updateDiffButtonState === 'function') updateDiffButtonState(relPath);
 
   var renderedView = document.getElementById('file-rendered-view');
   var editorEl = document.getElementById('file-editor');
@@ -258,6 +267,12 @@ function toggleEditMode() {
   if (!key || key === 'chat' || !openFiles[key]) return;
   var f = openFiles[key];
 
+  // Exit diff mode first if active
+  if (f.diffMode) {
+    f.diffMode = false;
+    if (typeof hideGitDiffContainer === 'function') hideGitDiffContainer();
+  }
+
   // Notebooks use per-cell editing, no file-level toggle
   var ext = key.split('.').pop().toLowerCase();
   if (ext === 'ipynb') return;
@@ -330,6 +345,14 @@ async function saveCurrentFile() {
     if (data.error) { alert('Save failed: ' + data.error); return; }
     f.originalContent = contentToSave;
     f.modified = false;
+    // Invalidate diff cache after save
+    f.cachedDiffData = false;
+    f.gitOriginal = null;
+    f.gitModified = null;
+    if (f.diffMode) {
+      f.diffMode = false;
+      if (typeof hideGitDiffContainer === 'function') hideGitDiffContainer();
+    }
     renderWsTabs();
   } catch (err) {
     alert('Save failed: ' + err.message);
@@ -373,6 +396,7 @@ function handleArtifactUpdate(relPath, content, isSessionFile) {
       f.originalContent = content;
       f.tabularData = null; // Force re-parse for tabular files
       f.notebookData = null; // Force re-parse for notebooks
+      f.cachedDiffData = false; // Invalidate diff cache
       var currentKey = getCurrentFileKey();
       if (relPath === currentKey) {
         disposeNotebookCellMonaco();
@@ -406,6 +430,7 @@ function initFileAutoRefresh() {
           f.originalContent = data.content;
           f.tabularData = null; // Force re-parse for tabular files
           f.notebookData = null; // Force re-parse for notebooks
+          f.cachedDiffData = false; // Invalidate diff cache
           var currentKey = getCurrentFileKey();
           if (relPath === currentKey) {
             disposeNotebookCellMonaco();
