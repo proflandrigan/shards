@@ -1,5 +1,26 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+:root {
+  --glass-bg: rgba(15, 15, 30, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: 20px;
+  --glass-gradient-border: linear-gradient(135deg, rgba(255,255,255,0.12), transparent 50%, rgba(255,255,255,0.12));
+  --shard-clip: polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%);
+  --shimmer-opacity: 0.04;
+  --current-accent: #3860c0;
+}
+
+@property --current-accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #3860c0;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 body {
   background: #0d0d14;
   color: #c8c8d8;
@@ -22,12 +43,15 @@ body {
   display: none;
   position: fixed;
   z-index: 9999;
-  background: #0e0e1a;
-  border: 1px solid #1e1e32;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
   border-radius: 5px;
   padding: 4px 0;
   min-width: 140px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  clip-path: var(--shard-clip);
 }
 .ctx-menu.visible { display: block; }
 .ctx-item {
@@ -37,7 +61,7 @@ body {
   cursor: pointer;
   white-space: nowrap;
 }
-.ctx-item:hover { background: #161628; color: #c0c0d8; }
+.ctx-item:hover { background: rgba(255, 215, 0, 0.08); color: #c0c0d8; }
 
 /* ─── Copy toast ────────────────────────────────────────── */
 .copy-toast {
