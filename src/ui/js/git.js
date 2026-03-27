@@ -72,6 +72,7 @@ function renderGitChanges() {
     entry.addEventListener('click', (function(fp, st) {
       return function() { openGitDiff(fp, st); };
     })(change.path, change.status));
+    if (typeof makeExplorerEntryDraggable === 'function') makeExplorerEntryDraggable(entry, change.path);
 
     list.appendChild(entry);
   }

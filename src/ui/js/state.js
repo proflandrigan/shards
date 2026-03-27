@@ -47,6 +47,7 @@ var activeTabId = 'chat';
 var splitMode = false;
 var currentFileInPane = null;
 var selectionContext = null;
+var pinnedItems = [];  // pointer to active session's pinned items
 
 // ═══════════════════════════════════════════════════════════════
 // Multi-session state
@@ -92,6 +93,7 @@ function createSessionState(sid, agent) {
     currentFileInPane: null,
     openPanels: {},
     panelTabOrder: [],
+    pinnedItems: [],  // Pinboard: array of { type, path, name, text?, startLine?, endLine? }
   };
   chatSessions[sid] = state;
   sessionOrder.push(sid);
@@ -123,6 +125,7 @@ function saveSessionWorkspace(session) {
   session.currentFileInPane = currentFileInPane;
   session.openPanels = openPanels;
   session.panelTabOrder = panelTabOrder;
+  session.pinnedItems = pinnedItems;
 }
 
 // Load workspace globals from the given session object
@@ -136,6 +139,8 @@ function loadSessionWorkspace(session) {
     currentFileInPane = null;
     openPanels = {};
     panelTabOrder = [];
+    pinnedItems = [];
+    if (typeof renderPinboard === 'function') renderPinboard();
     return;
   }
   sessionTouchedFiles = session.sessionTouchedFiles;
@@ -146,4 +151,6 @@ function loadSessionWorkspace(session) {
   currentFileInPane = session.currentFileInPane;
   openPanels = session.openPanels;
   panelTabOrder = session.panelTabOrder;
+  pinnedItems = session.pinnedItems || [];
+  if (typeof renderPinboard === 'function') renderPinboard();
 }

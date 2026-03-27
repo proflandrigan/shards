@@ -805,6 +805,41 @@ function createHandler() {
       return;
     }
 
+    // Text file serving (for pinboard context)
+    if (req.method === 'GET' && parsedUrl.pathname === '/browse/file/text') {
+      if (!checkAuth(req, parsedUrl)) {
+        rejectAuth(res, cors);
+        return;
+      }
+      const filePath = parsedUrl.searchParams.get('path');
+      if (!filePath) {
+        res.writeHead(400, { ...cors, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing path' }));
+        return;
+      }
+      const resolved = path.resolve(filePath);
+      try {
+        const stat = fs.statSync(resolved);
+        if (!stat.isFile()) {
+          res.writeHead(400, { ...cors, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Not a file' }));
+          return;
+        }
+        if (stat.size > 1024 * 1024) {
+          res.writeHead(413, { ...cors, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'File too large (>1MB)' }));
+          return;
+        }
+        const content = fs.readFileSync(resolved, 'utf-8');
+        res.writeHead(200, { ...cors, 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end(content);
+      } catch (err) {
+        res.writeHead(404, { ...cors, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'File not found' }));
+      }
+      return;
+    }
+
     // ─── P1: All remaining endpoints require auth ───────────────
 
     if (!checkAuth(req, parsedUrl)) {

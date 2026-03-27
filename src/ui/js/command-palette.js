@@ -15,6 +15,9 @@ var commandRegistry = [
   { label: 'Settings', shortcut: 'Cmd+,', action: function() { toggleSettings(); }, category: 'View' },
   { label: 'Save Current File', shortcut: 'Cmd+S', action: function() { saveCurrentFile(); }, category: 'Editor' },
   { label: 'Copy File Path', shortcut: '', action: function() { copyCurrentFilePath(); }, category: 'Editor' },
+  { label: 'Pin Selection to Context', shortcut: '', action: function() { if (typeof pinCurrentSelection === 'function') pinCurrentSelection(); }, category: 'Chat' },
+  { label: 'Pin Current File to Context', shortcut: '', action: function() { var k = getCurrentFileKey(); if (k && k !== 'chat' && typeof pinFileByPath === 'function') pinFileByPath(k); }, category: 'Chat' },
+  { label: 'Clear All Pins', shortcut: '', action: function() { if (typeof clearAllPins === 'function') clearAllPins(); }, category: 'Chat' },
 ];
 
 var cmdPaletteIdx = -1;

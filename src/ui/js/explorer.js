@@ -89,7 +89,7 @@ function renderTreeNodes(container, dirPath, depth) {
         return function() { toggleTreeDir(fp); };
       })(fullPath));
       row.addEventListener('contextmenu', (function(fp) {
-        return function(e) { showCtxMenu(e, toRelPath(fp)); };
+        return function(e) { showCtxMenu(e, toRelPath(fp), { isDir: true }); };
       })(fullPath));
       container.appendChild(row);
 
@@ -115,6 +115,7 @@ function renderTreeNodes(container, dirPath, depth) {
       row.addEventListener('contextmenu', (function(fp) {
         return function(e) { showCtxMenu(e, toRelPath(fp)); };
       })(fullPath));
+      if (typeof makeExplorerEntryDraggable === 'function') makeExplorerEntryDraggable(row, fullPath);
       container.appendChild(row);
     }
   }
@@ -199,7 +200,7 @@ function renderDirListing(data) {
       row.className = 'dir-entry is-dir';
       row.innerHTML = '<span class="dir-icon">&#128193;</span><span class="dir-name">' + esc(entry.name) + '</span>';
       row.addEventListener('click', (function(fp) { return function() { browseDir(fp); }; })(fullPath));
-      row.addEventListener('contextmenu', (function(fp) { return function(e) { showCtxMenu(e, toRelPath(fp)); }; })(fullPath));
+      row.addEventListener('contextmenu', (function(fp) { return function(e) { showCtxMenu(e, toRelPath(fp), { isDir: true }); }; })(fullPath));
     } else {
       var relFromRoot = treeRootPath ? fullPath.replace(treeRootPath + '/', '') : fullPath;
       var touchClass = sessionTouchedFiles.has(fullPath) || sessionTouchedFiles.has(relFromRoot) ? ' touched' : '';
@@ -207,6 +208,7 @@ function renderDirListing(data) {
       row.innerHTML = '<span class="dir-icon">&#128196;</span><span class="dir-name">' + esc(entry.name) + '</span><span class="dir-size">' + formatSize(entry.size) + '</span>';
       row.addEventListener('click', (function(fp) { return function() { openFileFromExplorer(fp); }; })(fullPath));
       row.addEventListener('contextmenu', (function(fp) { return function(e) { showCtxMenu(e, toRelPath(fp)); }; })(fullPath));
+      if (typeof makeExplorerEntryDraggable === 'function') makeExplorerEntryDraggable(row, fullPath);
     }
     el.appendChild(row);
   }

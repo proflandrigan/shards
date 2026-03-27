@@ -96,6 +96,7 @@
           <div class="empty-state">Select an agent to start chatting</div>
         </div>
         <div id="chat-input-area">
+          <div id="pinboard"></div>
           <div id="selection-context-indicator"></div>
           <div id="slash-suggestions"></div>
           <textarea id="chat-input" placeholder="Message the agent... (type / for commands)" rows="1"></textarea>
@@ -151,6 +152,7 @@
 <!-- Context menu (shared) -->
 <div id="ctx-menu" class="ctx-menu">
   <div class="ctx-item" id="ctx-copy-path">Copy Path</div>
+  <div class="ctx-item" id="ctx-pin-file">Pin to Context</div>
 </div>
 
 <!-- Quick open overlay (Cmd+P) -->
@@ -211,6 +213,7 @@
 <script src="js/file-view.js"></script>
 <script src="js/split-view.js"></script>
 <script src="js/selection-context.js"></script>
+<script src="js/pinboard.js"></script>
 <script src="js/chat.js"></script>
 <script src="js/quick-open.js"></script>
 <script src="js/command-palette.js"></script>
