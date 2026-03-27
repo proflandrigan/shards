@@ -158,8 +158,7 @@ function createMonacoEditor(container, options) {
     padding: { top: 8, bottom: 8 },
     quickSuggestions: true,
     parameterHints: { enabled: true },
-    'editor.gotoLocation.multipleDefinitions': 'peek',
-    'editor.gotoLocation.multipleReferences': 'peek',
+    gotoLocation: { multiple: 'peek', multipleDefinitions: 'peek', multipleReferences: 'peek' },
     ...options,
   });
 }

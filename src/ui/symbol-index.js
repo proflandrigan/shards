@@ -351,8 +351,11 @@ function getDefinitions(name, contextFile) {
   const contextDir = contextFile ? path.dirname(contextFile) : '';
   const contextExt = contextFile ? path.extname(contextFile) : '';
 
-  return entries
-    .filter(e => e.kind !== 'variable' || entries.length === 1) // prefer non-variable defs unless it's the only one
+  // Prefer non-variable definitions, but fall back to variables if that's all we have
+  const nonVariables = entries.filter(e => e.kind !== 'variable');
+  const candidates = nonVariables.length > 0 ? nonVariables : entries;
+
+  return candidates
     .sort((a, b) => {
       // Same file first
       const aFile = a.file === contextFile ? 0 : 1;
@@ -388,10 +391,11 @@ function getReferences(name, dir) {
   }
 
   try {
-    const output = execSync(
-      `grep -rn ${includeFlags.join(' ')} --max-count=200 "\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b" .`,
-      { cwd: dir, encoding: 'utf8', timeout: 5000, maxBuffer: 5 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'] }
-    );
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const args = ['-rn', ...includeFlags, '--max-count=200', `\\b${escapedName}\\b`, '.'];
+    const output = execFileSync('grep', args, {
+      cwd: dir, encoding: 'utf8', timeout: 5000, maxBuffer: 5 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'],
+    });
 
     const results = [];
     for (const line of output.split('\n')) {
@@ -420,8 +424,8 @@ function getCompletions(prefix, contextFile) {
 
   for (const [name, entries] of symbolsByName) {
     if (name.toLowerCase().startsWith(lowerPrefix)) {
-      // Pick the best entry for this name
-      const best = entries.sort((a, b) => {
+      // Pick the best entry for this name (slice to avoid mutating the index)
+      const best = entries.slice().sort((a, b) => {
         if (a.file === contextFile && b.file !== contextFile) return -1;
         if (b.file === contextFile && a.file !== contextFile) return 1;
         if (path.dirname(a.file) === contextDir) return -1;

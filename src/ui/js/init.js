@@ -117,7 +117,7 @@ document.addEventListener('keydown', function(e) {
     toggleSettings();
   }
   // Cmd+Shift+O — go to symbol
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'o') {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'o' || e.key === 'O')) {
     e.preventDefault();
     if (typeof openSymbolSearch === 'function') openSymbolSearch();
   }
