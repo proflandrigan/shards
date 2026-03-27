@@ -50,6 +50,18 @@ function fuzzyMatch(query, str) {
 
 function renderQuickOpenResults(query) {
   var container = document.getElementById('quick-open-results');
+
+  // Symbol search mode: @ prefix
+  if (query.startsWith('@')) {
+    var symbolQuery = query.substring(1);
+    if (symbolQuery.length < 1) {
+      container.innerHTML = '<div class="overlay-empty">Type a symbol name to search...</div>';
+      return;
+    }
+    renderSymbolSearchResults(container, symbolQuery);
+    return;
+  }
+
   var candidates = getQuickOpenCandidates();
   var filtered = candidates.filter(function(f) { return fuzzyMatch(query, f); });
 
@@ -71,6 +83,46 @@ function renderQuickOpenResults(query) {
     })(filtered[i]));
     container.appendChild(item);
   }
+}
+
+var symbolSearchDebounce = null;
+
+function renderSymbolSearchResults(container, prefix) {
+  // Debounce server calls
+  if (symbolSearchDebounce) clearTimeout(symbolSearchDebounce);
+  symbolSearchDebounce = setTimeout(function() {
+    var currentFile = (typeof getCurrentFileKey === 'function' ? getCurrentFileKey() : '') || '';
+    authFetch('/symbols/completions?prefix=' + encodeURIComponent(prefix) + '&file=' + encodeURIComponent(currentFile))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.completions || data.completions.length === 0) {
+          container.innerHTML = '<div class="overlay-empty">No symbols matching "' + esc(prefix) + '"</div>';
+          return;
+        }
+        container.innerHTML = '';
+        for (var i = 0; i < data.completions.length; i++) {
+          var comp = data.completions[i];
+          var item = document.createElement('div');
+          item.className = 'overlay-item' + (i === quickOpenIdx ? ' active' : '');
+          var badge = typeof kindBadge === 'function' ? kindBadge(comp.kind) : comp.kind;
+          var badgeClass = typeof kindBadgeClass === 'function' ? kindBadgeClass(comp.kind) : 'ci-badge-other';
+          item.innerHTML = '<span class="ci-badge ' + badgeClass + '">' + esc(badge) + '</span> ' +
+            '<span class="ci-symbol-name">' + esc(comp.name) + '</span>' +
+            (comp.detail ? '<span class="ci-symbol-sig">' + esc(comp.detail) + '</span>' : '') +
+            '<span class="ci-symbol-file">' + esc(comp.file) + ':' + comp.line + '</span>';
+          item.addEventListener('click', (function(file, line) {
+            return function() {
+              document.getElementById('quick-open-overlay').classList.remove('visible');
+              navigateToDefinition(file, line);
+            };
+          })(comp.file, comp.line));
+          container.appendChild(item);
+        }
+      })
+      .catch(function() {
+        container.innerHTML = '<div class="overlay-empty">Symbol search unavailable</div>';
+      });
+  }, 150);
 }
 
 document.getElementById('quick-open-input').addEventListener('input', function() {

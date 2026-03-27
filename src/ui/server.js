@@ -9,6 +9,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { randomUUID } = require('crypto');
 const { ChatSession, reconnectOrCleanup } = require('./chat-session');
+const symbolIndex = require('./symbol-index');
 
 const PROJECT_DIR = process.cwd();
 const SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
@@ -1006,6 +1007,86 @@ function createHandler() {
       }
     }
 
+    // ─── Symbol / Code Intelligence endpoints ─────────────────────
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/symbols/status') {
+      jsonResponse(res, cors, 200, symbolIndex.getStatus());
+      return;
+    }
+
+    if (req.method === 'POST' && parsedUrl.pathname === '/symbols/reindex') {
+      try {
+        symbolIndex.buildIndex(PROJECT_DIR, log);
+        jsonResponse(res, cors, 200, { ok: true, ...symbolIndex.getStatus() });
+      } catch (err) {
+        jsonResponse(res, cors, 500, { error: `Reindex failed: ${err.message}` });
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/symbols/definition') {
+      const name = parsedUrl.searchParams.get('name');
+      const file = parsedUrl.searchParams.get('file') || '';
+      if (!name) {
+        jsonResponse(res, cors, 400, { error: 'Missing name parameter' });
+        return;
+      }
+      const definitions = symbolIndex.getDefinitions(name, file);
+      // Add preview line from disk
+      for (const def of definitions) {
+        try {
+          const absPath = path.join(PROJECT_DIR, def.file);
+          const lines = fs.readFileSync(absPath, 'utf8').split('\n');
+          def.preview = lines[def.line - 1] || def.pattern || '';
+        } catch {
+          def.preview = def.pattern || '';
+        }
+      }
+      jsonResponse(res, cors, 200, { definitions });
+      return;
+    }
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/symbols/references') {
+      const name = parsedUrl.searchParams.get('name');
+      const file = parsedUrl.searchParams.get('file') || '';
+      if (!name) {
+        jsonResponse(res, cors, 400, { error: 'Missing name parameter' });
+        return;
+      }
+      const references = symbolIndex.getReferences(name, PROJECT_DIR);
+      jsonResponse(res, cors, 200, { references });
+      return;
+    }
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/symbols/hover') {
+      const name = parsedUrl.searchParams.get('name');
+      const file = parsedUrl.searchParams.get('file') || '';
+      const line = parseInt(parsedUrl.searchParams.get('line') || '0', 10);
+      if (!name) {
+        jsonResponse(res, cors, 400, { error: 'Missing name parameter' });
+        return;
+      }
+      const info = symbolIndex.getHoverInfo(name, file, line);
+      if (info) {
+        jsonResponse(res, cors, 200, info);
+      } else {
+        jsonResponse(res, cors, 200, { found: false });
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/symbols/completions') {
+      const prefix = parsedUrl.searchParams.get('prefix') || '';
+      const file = parsedUrl.searchParams.get('file') || '';
+      if (!prefix) {
+        jsonResponse(res, cors, 200, { completions: [] });
+        return;
+      }
+      const completions = symbolIndex.getCompletions(prefix, file);
+      jsonResponse(res, cors, 200, { completions });
+      return;
+    }
+
     // ─── File save endpoint ─────────────────────────────────────────
     if (req.method === 'POST' && parsedUrl.pathname === '/browse/file/save') {
       const body = await readBody(req);
@@ -1026,6 +1107,11 @@ function createHandler() {
       const resolved = path.resolve(filePath);
       try {
         fs.writeFileSync(resolved, content, 'utf8');
+        // Update symbol index for saved file
+        try {
+          const relPath = path.relative(PROJECT_DIR, resolved);
+          symbolIndex.updateFileIndex(PROJECT_DIR, relPath);
+        } catch {}
         jsonResponse(res, cors, 200, { ok: true, path: resolved });
       } catch (err) {
         jsonResponse(res, cors, 500, { error: `Cannot write file: ${err.message}` });
@@ -1575,11 +1661,23 @@ function startServer(portIndex) {
 
     // Initial file scan then poll
     pollFiles();
+
+    // Build symbol index asynchronously
+    setTimeout(() => {
+      try {
+        symbolIndex.buildIndex(PROJECT_DIR, log);
+        symbolIndex.startWatcher(PROJECT_DIR, log);
+        log(`Symbol index ready: ${symbolIndex.getStatus().symbolCount} symbols from ${symbolIndex.getStatus().fileCount} files`);
+      } catch (err) {
+        log(`Symbol index build failed: ${err.message}`);
+      }
+    }, 100);
   });
 }
 
 // Clean up on exit — don't kill detached chat processes, they survive restarts
 function cleanup() {
+  symbolIndex.stopWatcher();
   try { fs.unlinkSync(PORT_FILE); } catch {}
   try { fs.unlinkSync(PID_FILE); } catch {}
 }

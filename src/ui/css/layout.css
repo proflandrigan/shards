@@ -252,6 +252,26 @@
   font-size: 12px;
 }
 
+/* ─── Code Intelligence badges ───────────────────────────── */
+.ci-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+}
+.ci-badge-fn { background: #1a3a5c; color: #61afef; }
+.ci-badge-cls { background: #3a2a1a; color: #d19a66; }
+.ci-badge-var { background: #1a2a1a; color: #98c379; }
+.ci-badge-other { background: #2a2a3a; color: #b0b0c4; }
+.ci-symbol-name { font-weight: 500; }
+.ci-symbol-sig { color: #4a4a68; margin-left: 4px; font-size: 11px; }
+.ci-symbol-file { float: right; color: #3a3a58; font-size: 11px; }
+
 /* ─── Settings overlay ───────────────────────────────────── */
 .settings-panel {
   width: 400px;

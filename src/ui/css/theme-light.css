@@ -280,6 +280,12 @@
 [data-theme="light"] .overlay-item-shortcut { background: #f0f0f4; border-color: #ddd; color: #888; }
 [data-theme="light"] .overlay-item-category { color: #aaa; }
 [data-theme="light"] .overlay-empty { color: #aaa; }
+[data-theme="light"] .ci-badge-fn { background: #e3f0ff; color: #2560c4; }
+[data-theme="light"] .ci-badge-cls { background: #fff3e0; color: #b05000; }
+[data-theme="light"] .ci-badge-var { background: #e8f5e9; color: #248a3d; }
+[data-theme="light"] .ci-badge-other { background: #f0f0f4; color: #666; }
+[data-theme="light"] .ci-symbol-sig { color: #999; }
+[data-theme="light"] .ci-symbol-file { color: #bbb; }
 
 /* Bookmarks section */
 [data-theme="light"] #bookmarks-header { background: #fafafa; border-bottom-color: #eee; color: #888; }

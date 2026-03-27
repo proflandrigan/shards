@@ -17,6 +17,9 @@ function loadMonaco() {
       window.require(['vs/editor/editor.main'], function() {
         monacoLoaded = true;
         defineShardsDarkTheme();
+        if (typeof registerCodeIntelProviders === 'function') {
+          registerCodeIntelProviders();
+        }
         resolve(window.monaco);
       });
     };
@@ -153,6 +156,10 @@ function createMonacoEditor(container, options) {
     hideCursorInOverviewRuler: true,
     overviewRulerBorder: false,
     padding: { top: 8, bottom: 8 },
+    quickSuggestions: true,
+    parameterHints: { enabled: true },
+    'editor.gotoLocation.multipleDefinitions': 'peek',
+    'editor.gotoLocation.multipleReferences': 'peek',
     ...options,
   });
 }
