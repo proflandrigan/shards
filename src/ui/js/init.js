@@ -116,6 +116,11 @@ document.addEventListener('keydown', function(e) {
     e.preventDefault();
     toggleSettings();
   }
+  // Cmd+Shift+O — go to symbol
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'o' || e.key === 'O')) {
+    e.preventDefault();
+    if (typeof openSymbolSearch === 'function') openSymbolSearch();
+  }
   // Ctrl+Shift+[ / ] — cycle session tabs
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === '[') {
     e.preventDefault();
