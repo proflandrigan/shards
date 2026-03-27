@@ -597,7 +597,7 @@ function ensurePendingBubble() {
 
   var info = AGENTS[session.agent] || { color: '#666', label: session.agent || 'Agent' };
   var div = document.createElement('div');
-  div.className = 'message assistant';
+  div.className = 'message assistant gathering';
   div.innerHTML =
     '<div class="message-meta">' +
     '<span class="meta-dot" style="background:' + info.color + '"></span>' +
@@ -605,6 +605,9 @@ function ensurePendingBubble() {
     '</div>' +
     '<div class="message-bubble" style="border-left-color:' + info.color + '"></div>';
   container.appendChild(div);
+
+  // Remove gathering class after animation completes
+  setTimeout(function() { div.classList.remove('gathering'); }, 600);
   session.pendingBubble = div.querySelector('.message-bubble');
   container.scrollTop = container.scrollHeight;
 }
@@ -899,7 +902,7 @@ function addMessageDirect(role, content, agent) {
 
   var info = AGENTS[agent] || { color: '#666', label: agent || 'Unknown' };
   var div = document.createElement('div');
-  div.className = 'message ' + (role === 'user' ? 'user' : 'assistant');
+  div.className = 'message ' + (role === 'user' ? 'user' : 'assistant gathering');
   div.setAttribute('data-msg-idx', msgIdx);
 
   var starHtml = typeof bookmarkStarHtml === 'function' ? bookmarkStarHtml(msgIdx) : '';
@@ -927,6 +930,21 @@ function addMessageDirect(role, content, agent) {
   }
 
   container.appendChild(div);
+
+  // Remove gathering class after animation completes
+  if (role !== 'user') {
+    setTimeout(function() { div.classList.remove('gathering'); }, 600);
+    // AI Engineer micro-glitch
+    if (currentAgent === 'ai-engineer' && Math.random() < 0.3) {
+      var bubble = div.querySelector('.message-bubble');
+      if (bubble) {
+        setTimeout(function() {
+          bubble.classList.add('glitch-active');
+          setTimeout(function() { bubble.classList.remove('glitch-active'); }, 300);
+        }, 800 + Math.random() * 2000);
+      }
+    }
+  }
 
   // Auto-collapse long assistant messages
   if (role !== 'user') {

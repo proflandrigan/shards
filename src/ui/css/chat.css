@@ -101,15 +101,22 @@
   word-break: break-word;
 }
 .message.user .message-bubble {
-  background: #131320;
+  background: rgba(19, 19, 32, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   color: #a0a0b8;
-  border: 1px solid #1e1e32;
+  border: 1px solid rgba(255,255,255,0.06);
   white-space: pre-wrap;
 }
 .message.assistant .message-bubble {
-  background: #0b0b18;
-  border-left: 3px solid #2a2a40;
+  background: rgba(20, 20, 35, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid #2a2a40; /* overridden inline by JS with agent color */
   color: #c0c0d0;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  position: relative;
 }
 .agent-divider {
   text-align: center;
@@ -157,6 +164,15 @@
 @keyframes thinking-bounce {
   0%, 70%, 100% { opacity: 0.2; transform: scale(0.75); }
   35% { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Gathering animation for new messages ─────────────── */
+@keyframes gather-msg {
+  0%   { transform: translateX(-30px) scale(0.95); opacity: 0; filter: blur(8px); }
+  100% { transform: translateX(0) scale(1); opacity: 1; filter: blur(0); }
+}
+.message.assistant.gathering .message-bubble {
+  animation: gather-msg 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* ─── Consulting agent indicator ─────────────────────────── */
@@ -1032,8 +1048,10 @@
   width: 100%;
   box-sizing: border-box;
   padding: 8px 10px;
-  background: #0a0a16;
-  border: 1px solid #1e1e32;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 6px;
   margin-bottom: 4px;
   order: -2;
@@ -1109,14 +1127,15 @@
   align-items: center;
   gap: 4px;
   padding: 3px 6px 3px 8px;
-  background: #131320;
-  border: 1px solid #1e1e32;
+  background: rgba(19, 19, 32, 0.6);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 4px;
   font-size: 11px;
   color: #b0b0c8;
   max-width: 220px;
   cursor: default;
   transition: border-color 0.15s;
+  clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%);
 }
 .pin-chip:hover { border-color: #3a3a5a; }
 .pin-chip-icon {

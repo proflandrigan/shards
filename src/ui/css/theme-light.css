@@ -80,8 +80,20 @@
 [data-theme="light"] #chat-pane.collapsed #conv-header { border-right-color: #ddd; }
 [data-theme="light"] .empty-state { color: #bbb; }
 [data-theme="light"] .message-meta { color: #999; }
-[data-theme="light"] .message.user .message-bubble { background: #e8eaf6; color: #333; border-color: #c5cae9; }
-[data-theme="light"] .message.assistant .message-bubble { background: #ffffff; border-left-color: #c0c0d0; color: #333; }
+[data-theme="light"] .message.assistant .message-bubble {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border-color: rgba(0,0,0,0.08);
+  border-left-color: #c0c0d0;
+  color: #333;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+[data-theme="light"] .message.user .message-bubble {
+  background: rgba(232, 234, 246, 0.6);
+  backdrop-filter: blur(6px);
+  color: #333;
+  border-color: rgba(0,0,0,0.06);
+}
 [data-theme="light"] .system-notice .message-bubble { background: rgba(200,50,50,0.08) !important; color: #b03030 !important; }
 [data-theme="light"] .agent-divider::before, [data-theme="light"] .agent-divider::after { background: #ddd; }
 [data-theme="light"] .tool-indicator { color: #888; border-left-color: #ccc; }
@@ -392,14 +404,22 @@
 [data-theme="light"] .sel-ctx-dismiss:hover { color: #c03030; }
 
 /* Pinboard */
-[data-theme="light"] #pinboard { background: #f5f5f8; border-color: #d0d0d8; }
+[data-theme="light"] #pinboard {
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(10px);
+  border-color: rgba(0,0,0,0.08);
+}
 [data-theme="light"] #pinboard.drag-over { background: rgba(56, 96, 192, 0.06); border-color: #3860c0; }
 [data-theme="light"] #pinboard.drop-target { border-color: #5080e0; }
 [data-theme="light"] #pinboard.drop-target:not(.visible)::after { color: #999; }
 [data-theme="light"] .pinboard-label { color: #888; }
 [data-theme="light"] .pinboard-clear { color: #999; }
 [data-theme="light"] .pinboard-clear:hover { color: #c03030; }
-[data-theme="light"] .pin-chip { background: #fff; border-color: #d0d0d8; color: #333; }
+[data-theme="light"] .pin-chip {
+  background: rgba(255,255,255,0.7);
+  border-color: rgba(0,0,0,0.1);
+  color: #333;
+}
 [data-theme="light"] .pin-chip:hover { border-color: #aaa; }
 [data-theme="light"] .pin-chip-remove { color: #999; }
 [data-theme="light"] .pin-chip-remove:hover { color: #c03030; }
