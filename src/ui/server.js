@@ -1017,7 +1017,6 @@ function createHandler() {
     if (req.method === 'POST' && parsedUrl.pathname === '/symbols/reindex') {
       try {
         symbolIndex.buildIndex(PROJECT_DIR, log);
-        symbolIndex.buildCacheAsync(PROJECT_DIR, log);
         jsonResponse(res, cors, 200, { ok: true, ...symbolIndex.getStatus() });
       } catch (err) {
         jsonResponse(res, cors, 500, { error: `Reindex failed: ${err.message}` });
@@ -1663,14 +1662,12 @@ function startServer(portIndex) {
     // Initial file scan then poll
     pollFiles();
 
-    // Build symbol index asynchronously
+    // Build symbol index asynchronously (reference cache is built lazily on hover)
     setTimeout(() => {
       try {
         symbolIndex.buildIndex(PROJECT_DIR, log);
         symbolIndex.startWatcher(PROJECT_DIR, log);
         log(`Symbol index ready: ${symbolIndex.getStatus().symbolCount} symbols from ${symbolIndex.getStatus().fileCount} files`);
-        // Build reference cache in the background for enriched hover
-        symbolIndex.buildCacheAsync(PROJECT_DIR, log);
       } catch (err) {
         log(`Symbol index build failed: ${err.message}`);
       }

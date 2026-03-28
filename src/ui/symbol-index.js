@@ -771,7 +771,17 @@ function getHoverEnriched(name, contextFile, line) {
   const info = getHoverInfo(name, contextFile, line);
   if (!info) return null;
 
-  const cached = referenceCache.get(name);
+  let cached = referenceCache.get(name);
+
+  // Lazily build cache entry on first hover
+  if (!cached && projectDir) {
+    try {
+      cached = buildRefEntry(name, projectDir);
+    } catch {
+      // skip — will just return without enrichment
+    }
+  }
+
   if (cached) {
     return {
       ...info,

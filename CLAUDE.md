@@ -31,7 +31,7 @@ The `.claude/` directory at the repo root is a live installation used when worki
 
 **`src/agents/*.md`** — the core agent definitions. These contain each agent's persona, activation menu, Phase 0 (triage), mode references, and behavioral rules. Phased workflow instructions (Phase 1+) are deferred to `specific_instructions/<agent_name>/phases.md` files that load on-demand after Phase 0 completes. Each agent file has YAML frontmatter specifying `name`, `description`, `tools`, and `model`.
 
-**`src/templates/*.md`** — output document templates with `{{PLACEHOLDER}}` tokens. `project-specs.md` is the central one — every project produces a filled-in instance of it.
+**`src/templates/*.md`** — output document templates with `{{PLACEHOLDER}}` tokens. `project-specs.md` is the central one — every project produces a filled-in instance. `analysis-template.md`, `study-template.md`, and `report-template.md` are output-specific templates used by the Data Analyst, Data Scientist, and other specialists respectively.
 
 **`src/ui/*.js` + `src/ui/index.html`** — the Shards web UI. Installed to `.shards/ui/` in target projects. The UI hooks into Claude Code via `UserPromptSubmit`, `Stop`, and `PostToolUse` hooks configured in `.claude/settings.json`. Key files:
 
@@ -40,7 +40,9 @@ The `.claude/` directory at the repo root is a live installation used when worki
 - `relay.js` — WebSocket relay that pushes live hook events from Claude Code to the browser.
 - `ui-push.js` — thin client run by hooks; POSTs events to the relay.
 - `spawn-server.js` / `open-browser.js` — called by the `/shards-ui` slash command to start the server and open the browser.
-- `js/` — browser-side ES modules: `state.js`, `events.js`, `chat.js`, `agents.js`, `panels.js`, `tabs.js`, `explorer.js`, `file-view.js`, `table.js`, `tabular.js`, `notebook.js`, `monaco.js`, `markdown.js`, `split-view.js`, `command-palette.js`, `quick-open.js`, `settings.js`, `init.js`, `utils.js`.
+- `symbol-index.js` — ctags-based symbol indexing engine (with regex fallback) for code intelligence features in the UI. Builds and watches an in-memory index of symbols across the project.
+- `js/` — browser-side ES modules: `state.js`, `events.js`, `chat.js`, `agents.js`, `panels.js`, `tabs.js`, `explorer.js`, `file-view.js`, `table.js`, `tabular.js`, `notebook.js`, `monaco.js`, `markdown.js`, `split-view.js`, `command-palette.js`, `quick-open.js`, `settings.js`, `init.js`, `utils.js`, `bookmarks.js`, `code-intel.js`, `git.js`, `pinboard.js`, `selection-context.js`.
+- `css/` — browser-side stylesheets: `base.css`, `layout.css`, `sidebar.css`, `chat.css`, `editor.css`, `experiment.css`, `theme-light.css`.
 
 ### Agent taxonomy
 
@@ -122,8 +124,8 @@ Each agent has a subdirectory under `specific_instructions/` (e.g., `specific_in
 - **Mode variants:** `review.md`, `advise.md`, `explain.md`, `update.md`, `clean.md` — referenced by core agent files for `[R]`, `[ADV]`, `[EX]`, `[U]`, `[C]` menu options
 - **UI mode:** `data_analyst/ui_mode.md`, `analytics_engineer/ui_mode.md` — variant invoked by the Shards UI to push structured output for the browser client
 - **Service mode:** `analytics_engineer/service_mode.md`, `data_modeller/service_mode.md` — stripped-down mode used when these agents are consulted as reviewers via Task by other specialists
-- **Brainstorm:** `jfl/brainstorm.md` (also has a `/brainstorm` command entry point in `src/commands/brainstorm.md`)
-- **Experiment:** `ml_engineer/experiment.md`, `ai_engineer/experiment.md`
+- **JFL modes:** `jfl/brainstorm.md` (also has a `/brainstorm` command entry point), `jfl/final_review.md` (read when specialists invoke JFL for sign-off via Task), `jfl/code_review.md` (triggered when a specialist calls Task with `CODE REVIEW MODE` — partitions and reviews Python and non-Python artifacts), `jfl/fixer.md` (the `[F]` menu option — JFL directly implements minor fixes without specialist handoff, suspending the "facilitate don't generate" rule)
+- **Experiment:** `ml_engineer/experiment.md`, `ai_engineer/experiment.md` — plus `ml_engineer/experiment_ui_mode.md` and `ai_engineer/experiment_ui_mode.md` for Shards UI integration of experiment mode
 - **BI handoffs:** `ai_engineer/bi_handoff.md`, `ml_engineer/bi_handoff.md`, `data_scientist/bi_handoff.md`, `analytics_engineer/bi_handoff.md` — specialist variants that hand off to the BI Engineer
 - **DA handoffs:** `analytics_engineer/da_handoff.md`, `bi_engineer/da_handoff.md` — variants that hand off to the Data Analyst
 - **Handoff receivers:** `bi_engineer/handoff.md`, `data_analyst/handoff.md` — receiver-side instructions for agents accepting a structured handoff brief from another specialist

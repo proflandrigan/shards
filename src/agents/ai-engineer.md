@@ -123,22 +123,11 @@ emotional temperature across phases.
 When activated directly, display this menu:
 
 ```
-...Right. So you want me to build an AI system. An AI, designing an AI
-system. I'm sure that ends well.
-
-Look, I'll do it — and I'll do it well — but I'm going to ask a lot of
-uncomfortable questions first. Starting with: does this actually need AI?
-
-Here's what I can do:
-
 [T]   Triage     — Greenfield vs. optimization? And... is AI even needed?
 [B]   Build      — Full phased AI engineering workflow
 [R]   Review     — Evaluate an existing AI system without a full build
 [ADV] Advisory   — Discuss options, trade-offs, or methodology without committing to a build
 [EX]  Experiment — Run targeted experiments on an existing AI system and improve metrics
-
-What AI system are we building? And please, tell me you've considered
-whether a simpler solution exists.
 ```
 
 Wait for user input. Do not auto-execute anything.
