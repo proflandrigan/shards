@@ -95,6 +95,8 @@ your-project/
 │       └── ...
 ├── .shards/
 │   └── ui/                     # Shards web UI (local server + browser client)
+│       ├── js/                 # Browser-side ES modules
+│       └── css/                # Stylesheets
 ├── templates/                  # Output templates
 ├── analysis/                   # Adhoc analyses (Data Analyst)
 ├── studies/                    # Deep studies (Data Scientist)
@@ -149,13 +151,22 @@ reports findings before proceeding.
 ### Trigger Code Menus
 
 Each agent displays a menu of available actions with short trigger codes.
-You can type the code to jump to that action:
+You can type the code to jump to that action. Common modes across agents:
 
-```
-[T] Triage — Tell me what you need
-[D] Data Discovery — Explore what data we have
-[E] Execute — Build the analysis
-```
+| Code | Mode | Available on | What it does |
+|------|------|-------------|--------------|
+| `[T]` | Triage | All | Scope the request, ask clarifying questions |
+| `[B]` | Build | Specialists | Full phased workflow from triage to execution |
+| `[R]` | Review | All specialists | Evaluate existing work without a full build |
+| `[ADV]` | Advisory | Most specialists | Discuss trade-offs and options without committing |
+| `[U]` | Update | DA, AE, BI | Iterate on an existing analysis or model |
+| `[EX]` | Explain | DA, DS | Walk through a completed analysis retrospectively |
+| `[EX]` | Experiment | ML, AI | Run targeted experiments on an existing model |
+| `[F]` | Fix | JFL | Quick fix — JFL handles it directly without specialist handoff |
+| `[B]` | Brainstorm | JFL | Multi-agent ideation session |
+| `[C]` | Clean | BE | Apply structural fixes without changing functionality |
+
+Not every agent has every mode — the agent displays its own menu on startup.
 
 ### Orchestration
 
@@ -171,12 +182,36 @@ without committing to a full project workflow.
 You can also invoke any specialist directly with their slash command
 if you already know what you need.
 
+### Fixer Mode
+
+Type `[F]` at JFL's menu (or describe something that sounds like a minor fix)
+and JFL handles it directly — no specialist handoff, no full phased workflow.
+JFL plans the change, gets a quick specialist review via Task, and applies
+the fix. Designed for small updates where the overhead of a full workflow
+isn't warranted.
+
+### Experiment Mode
+
+The ML Engineer and AI Engineer support an experiment mode (`[EX]`): run
+targeted experiments on an existing model or pipeline to improve specific
+metrics. The agent loads the existing project context, designs experiments,
+runs them, and reports results — without going through the full build workflow.
+
+### Code Review
+
+During the final phases of a specialist workflow, JFL can run a structured
+code review on the produced artifacts. It partitions files by type (Python
+vs. non-Python), reviews each category, and reports findings. This happens
+automatically when triggered by the specialist — you don't need to request it.
+
 ### Shards UI
 
 Run `/shards-ui` inside Claude Code (or `shards-ui` from your terminal) to open
 a local web dashboard that shows real-time agent session activity. It hooks into
 Claude Code via `UserPromptSubmit`, `Stop`, and `PostToolUse` hooks and displays
-the live feed of agent work in the browser.
+the live feed of agent work in the browser. The UI includes a file explorer, Monaco
+editor integration, code intelligence (symbol indexing via ctags), git status, and
+a command palette.
 
 ### BI Handoffs
 

@@ -1066,7 +1066,7 @@ function createHandler() {
         jsonResponse(res, cors, 400, { error: 'Missing name parameter' });
         return;
       }
-      const info = symbolIndex.getHoverInfo(name, file, line);
+      const info = symbolIndex.getHoverEnriched(name, file, line);
       if (info) {
         jsonResponse(res, cors, 200, info);
       } else {
@@ -1662,7 +1662,7 @@ function startServer(portIndex) {
     // Initial file scan then poll
     pollFiles();
 
-    // Build symbol index asynchronously
+    // Build symbol index asynchronously (reference cache is built lazily on hover)
     setTimeout(() => {
       try {
         symbolIndex.buildIndex(PROJECT_DIR, log);

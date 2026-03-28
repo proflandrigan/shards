@@ -177,6 +177,41 @@ function registerCodeIntelProviders() {
                 });
               }
 
+              // References summary
+              if (data.references && data.references.count > 0) {
+                var refLines = ['---', '**References** (' + data.references.count + ')'];
+                for (var ri = 0; ri < data.references.byFile.length; ri++) {
+                  var rf = data.references.byFile[ri];
+                  var lineStr = rf.lines.slice(0, 3).join(', ');
+                  if (rf.lines.length > 3) lineStr += ' +' + (rf.lines.length - 3) + ' more';
+                  refLines.push('- `' + rf.file + '` : L' + lineStr);
+                }
+                if (data.references.truncated) {
+                  refLines.push('- *... and more (Shift+F12)*');
+                }
+                contents.push({ value: refLines.join('\n') });
+              }
+
+              // Callers (called by)
+              if (data.callers && data.callers.length > 0) {
+                var callerLines = ['---', '**Called by**'];
+                for (var ci = 0; ci < data.callers.length; ci++) {
+                  var c = data.callers[ci];
+                  callerLines.push('- `' + c.name + '` *' + c.file + ':' + c.line + '*');
+                }
+                contents.push({ value: callerLines.join('\n') });
+              }
+
+              // Callees (calls)
+              if (data.callees && data.callees.length > 0) {
+                var calleeLines = ['---', '**Calls**'];
+                for (var ei = 0; ei < data.callees.length; ei++) {
+                  var ce = data.callees[ei];
+                  calleeLines.push('- `' + ce.name + '` *' + ce.file + ':' + ce.line + '*');
+                }
+                contents.push({ value: calleeLines.join('\n') });
+              }
+
               return {
                 range: new monaco.Range(
                   position.lineNumber, word.startColumn,

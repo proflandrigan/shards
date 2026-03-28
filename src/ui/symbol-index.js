@@ -18,6 +18,12 @@ let projectDir = null;
 let watcher = null;
 let watchDebounce = new Map();   // relPath -> timeout
 
+// ─── Reference cache for hover enrichment ───────────────────────────────────
+let referenceCache = new Map();  // name -> { refs: {count, byFile}, callers, callees, builtAt }
+let fileToRefNames = new Map();  // file -> Set<name> — reverse map for cache invalidation
+let cacheBuilding = false;
+let cacheQueue = [];             // names queued for background cache build
+
 // ─── Ctags detection ─────────────────────────────────────────────────────────
 
 function detectCtags() {
@@ -326,6 +332,9 @@ function buildIndex(dir, logFn) {
 function updateFileIndex(dir, relPath) {
   if (!SUPPORTED_EXTS.has(path.extname(relPath).toLowerCase())) return;
 
+  // Invalidate reference cache entries affected by this file change
+  invalidateCacheForFile(relPath, dir);
+
   removeFileEntries(relPath);
 
   let entries;
@@ -542,6 +551,250 @@ function stopWatcher() {
   watchDebounce.clear();
 }
 
+// ─── Reference cache & lineage ───────────────────────────────────────────────
+
+const CALLABLE_KINDS = new Set(['function', 'method', 'class', 'struct', 'interface', 'macro']);
+
+function getCallersFromRefs(refs) {
+  // For each reference, find the enclosing function/method in that file
+  const callers = new Map(); // key -> caller entry (deduplicated)
+  for (const ref of refs) {
+    const fileSymbols = symbolsByFile.get(ref.file);
+    if (!fileSymbols) continue;
+
+    // Find the closest symbol defined before this reference line
+    let enclosing = null;
+    for (const sym of fileSymbols) {
+      if (!CALLABLE_KINDS.has(sym.kind)) continue;
+      if (sym.line <= ref.line) {
+        if (!enclosing || sym.line > enclosing.line) {
+          enclosing = sym;
+        }
+      }
+    }
+    if (enclosing) {
+      const key = `${enclosing.name}:${enclosing.file}:${enclosing.line}`;
+      if (!callers.has(key)) {
+        callers.set(key, { name: enclosing.name, kind: enclosing.kind, file: enclosing.file, line: enclosing.line });
+      }
+    }
+  }
+  return Array.from(callers.values());
+}
+
+function getCalleesFromBody(entry) {
+  if (!projectDir) return [];
+  const fileSymbols = symbolsByFile.get(entry.file);
+  if (!fileSymbols) return [];
+
+  // Find the function body boundaries: from entry.line to next symbol's line in same file
+  const sortedSyms = fileSymbols.slice().sort((a, b) => a.line - b.line);
+  let bodyEnd = Infinity;
+  for (const sym of sortedSyms) {
+    if (sym.line > entry.line && sym !== entry) {
+      bodyEnd = sym.line - 1;
+      break;
+    }
+  }
+
+  // Read the function body from disk
+  let bodyText;
+  try {
+    const absPath = path.join(projectDir, entry.file);
+    const content = fs.readFileSync(absPath, 'utf8');
+    const lines = content.split('\n');
+    const startLine = entry.line; // 1-indexed; skip the def line itself
+    const endLine = Math.min(bodyEnd, lines.length);
+    bodyText = lines.slice(startLine, endLine).join(' ');
+  } catch {
+    return [];
+  }
+
+  if (!bodyText) return [];
+
+  // Tokenize body into words and intersect with known symbols
+  const words = new Set(bodyText.match(/\b[a-zA-Z_]\w{2,}\b/g) || []);
+  const callees = [];
+  const seen = new Set();
+
+  for (const word of words) {
+    if (word === entry.name) continue; // skip self-references
+    if (seen.has(word)) continue;
+
+    const candidates = symbolsByName.get(word);
+    if (!candidates) continue;
+
+    // Only include callable kinds
+    const callable = candidates.find(c => CALLABLE_KINDS.has(c.kind));
+    if (callable) {
+      seen.add(word);
+      callees.push({ name: callable.name, kind: callable.kind, file: callable.file, line: callable.line });
+    }
+  }
+
+  return callees.slice(0, 10);
+}
+
+function buildRefEntry(name, dir) {
+  const refs = getReferences(name, dir);
+
+  // Summarize references by file
+  const byFileMap = new Map();
+  for (const ref of refs) {
+    if (!byFileMap.has(ref.file)) byFileMap.set(ref.file, []);
+    byFileMap.get(ref.file).push(ref.line);
+  }
+  const byFile = Array.from(byFileMap.entries())
+    .map(([file, lines]) => ({ file, lines }))
+    .sort((a, b) => b.lines.length - a.lines.length);
+
+  // Track reverse mapping for cache invalidation
+  for (const ref of refs) {
+    if (!fileToRefNames.has(ref.file)) fileToRefNames.set(ref.file, new Set());
+    fileToRefNames.get(ref.file).add(name);
+  }
+
+  // Find callers from reference locations
+  const callers = getCallersFromRefs(refs);
+
+  // Find callees from function body
+  const entries = symbolsByName.get(name) || [];
+  const defEntry = entries.find(e => CALLABLE_KINDS.has(e.kind)) || entries[0];
+  const callees = defEntry ? getCalleesFromBody(defEntry) : [];
+
+  const cacheEntry = {
+    refs: {
+      count: refs.length,
+      byFile: byFile.slice(0, 5),
+      truncated: byFile.length > 5,
+    },
+    callers: callers.slice(0, 5),
+    callees: callees.slice(0, 5),
+    builtAt: Date.now(),
+  };
+
+  referenceCache.set(name, cacheEntry);
+  return cacheEntry;
+}
+
+function buildCacheAsync(dir, logFn) {
+  const log = logFn || (() => {});
+  if (cacheBuilding) return;
+
+  referenceCache.clear();
+  fileToRefNames.clear();
+  cacheBuilding = true;
+
+  // Queue all callable symbols for background cache build
+  cacheQueue = [];
+  for (const [name, entries] of symbolsByName) {
+    if (entries.some(e => CALLABLE_KINDS.has(e.kind))) {
+      cacheQueue.push(name);
+    }
+  }
+
+  const total = cacheQueue.length;
+  log(`Building reference cache for ${total} symbols...`);
+
+  function processBatch() {
+    const batchSize = 10;
+    let processed = 0;
+    while (processed < batchSize && cacheQueue.length > 0) {
+      const name = cacheQueue.shift();
+      try {
+        buildRefEntry(name, dir);
+      } catch {
+        // skip failures
+      }
+      processed++;
+    }
+
+    if (cacheQueue.length > 0) {
+      setImmediate(processBatch);
+    } else {
+      cacheBuilding = false;
+      log(`Reference cache built: ${referenceCache.size} entries`);
+    }
+  }
+
+  setImmediate(processBatch);
+}
+
+function invalidateCacheForFile(relPath, dir) {
+  // Invalidate symbols defined in this file
+  const fileSymbols = symbolsByFile.get(relPath) || [];
+  const toRebuild = new Set();
+  for (const sym of fileSymbols) {
+    if (referenceCache.has(sym.name)) {
+      referenceCache.delete(sym.name);
+      toRebuild.add(sym.name);
+    }
+  }
+
+  // Invalidate symbols that had references in this file
+  const refNames = fileToRefNames.get(relPath);
+  if (refNames) {
+    for (const name of refNames) {
+      if (referenceCache.has(name)) {
+        referenceCache.delete(name);
+        toRebuild.add(name);
+      }
+    }
+    fileToRefNames.delete(relPath);
+  }
+
+  // Queue invalidated symbols for background rebuild
+  if (toRebuild.size > 0 && dir) {
+    for (const name of toRebuild) {
+      cacheQueue.push(name);
+    }
+    if (!cacheBuilding) {
+      cacheBuilding = true;
+      setImmediate(function rebuildBatch() {
+        let processed = 0;
+        while (processed < 10 && cacheQueue.length > 0) {
+          const name = cacheQueue.shift();
+          try { buildRefEntry(name, dir); } catch { /* skip */ }
+          processed++;
+        }
+        if (cacheQueue.length > 0) {
+          setImmediate(rebuildBatch);
+        } else {
+          cacheBuilding = false;
+        }
+      });
+    }
+  }
+}
+
+function getHoverEnriched(name, contextFile, line) {
+  const info = getHoverInfo(name, contextFile, line);
+  if (!info) return null;
+
+  let cached = referenceCache.get(name);
+
+  // Lazily build cache entry on first hover
+  if (!cached && projectDir) {
+    try {
+      cached = buildRefEntry(name, projectDir);
+    } catch {
+      // skip — will just return without enrichment
+    }
+  }
+
+  if (cached) {
+    return {
+      ...info,
+      references: cached.refs,
+      callers: cached.callers,
+      callees: cached.callees,
+      enrichAvailable: true,
+    };
+  }
+
+  return { ...info, enrichAvailable: false };
+}
+
 // ─── Exports ─────────────────────────────────────────────────────────────────
 
 module.exports = {
@@ -551,6 +804,8 @@ module.exports = {
   getReferences,
   getCompletions,
   getHoverInfo,
+  getHoverEnriched,
+  buildCacheAsync,
   getStatus,
   startWatcher,
   stopWatcher,
