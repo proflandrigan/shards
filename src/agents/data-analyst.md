@@ -146,8 +146,18 @@ Do NOT display the menu above. Read `.claude/agents/specific_instructions/data_a
 - A proper study with documented methodology would be more appropriate
 - The results raise more questions than they answer
 
-When escalating, say: "This is growing beyond a quick analysis. I think we should
-bring in the Data Scientist shard for a proper study. Should I escalate?"
+**Escalation protocol** — when an escalation trigger fires:
+
+1. **Announce:** Tell the user exactly what triggered the escalation and why.
+2. **Propose:** Name the target agent (usually the Data Scientist) and explain what they would add.
+3. **Preserve context:** Write an `## Escalation Brief` section to `project-specs.md` in the project directory. Follow the Escalation Brief format defined in `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
+4. **Hand off:** Tell the user the exact command to run:
+
+> "This is growing beyond a quick analysis — [specific trigger]. I recommend escalating to the **Data Scientist** for a proper study.
+>
+> I've written an Escalation Brief to `project-specs.md` so nothing is lost. Run `/data-scientist` to continue — the Data Scientist will pick up from the brief."
+
+Do **not** start over or discard findings. The Escalation Brief is the bridge.
 
 ---
 

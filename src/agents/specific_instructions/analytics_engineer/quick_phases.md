@@ -74,3 +74,20 @@ Update specs header status to `Complete`.
 **GATE: Read this section back to the user. Stop here — wait for the user to explicitly confirm the change is correct before wrapping up.**
 
 ---
+
+## Quick-to-Deep Escalation
+
+If during Quick Phase 1 or Quick Phase 2 the scope grows beyond a quick change (e.g., blast radius is Significant, new models are needed, or the change requires a full redesign), escalate to the Deep track:
+
+1. **Announce:** Tell the user exactly what triggered the escalation and why the Quick track can't handle it.
+2. **Propose:** Recommend switching to the Deep track within the same Analytics Engineer session.
+3. **Preserve context:** Write an `## Escalation Brief` section to `project-specs.md` following the format defined in `.claude/agents/specific_instructions/shared/behavioral_rules.md`. Set the **Target agent** to `Analytics Engineer (Deep Track)`.
+4. **Hand off:** Tell the user:
+
+> "This has grown beyond a quick change — [specific trigger]. I recommend switching to the **Deep track** for a full pipeline design.
+>
+> I've written an Escalation Brief to `project-specs.md` so nothing is lost. I'll load the Deep track phases now and pick up from the brief."
+
+After the user confirms, read `.claude/agents/specific_instructions/analytics_engineer/deep_phases.md` in full and resume from Deep Phase 1, treating the Escalation Brief as prior context.
+
+---
