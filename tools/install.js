@@ -200,6 +200,7 @@ phased workflow.
 | Command | Agent | Personality | Speciality |
 |---------|-------|-------------|------------|
 | \`/shards\` | JFL (Orchestrator) | Friendly, structured | Triage, delegation, final review |
+| \`/gambini\` | Gambini (Skeptic) | Moody, skeptical | Adversarial reviews, security, edge cases |
 | \`/brainstorm\` | JFL (Brainstorm) | Friendly, structured | Multi-agent ideation, hack day exploration |
 | \`/data-analyst\` | Data Analyst | Helpful | Adhoc queries, quick analyses |
 | \`/data-scientist\` | Data Scientist | Condescending | EDA, modeling, deep studies |
@@ -218,8 +219,10 @@ phased workflow.
 
 - Run \`/shards\` to start — JFL triages your request and delegates to the right shard
 - Or run a specialist command directly if you know what you need
+- Run \`/gambini\` for an adversarial review of a plan, code, or concept
 - Every phase produces documented decisions in \`project-specs.md\`
 - Agents consult each other automatically (visible to you)
+- Any agent can consult Gambini for an adversarial review of a proposed design
 - The AI Engineer consults the ML Engineer for production infrastructure and the Researcher for evaluation rigor
 - The Researcher reviews statistical methodology for the Data Analyst, Data Scientist, and AI Engineer
 - The Backend Engineer reviews Python code (.py and .ipynb) consulted automatically by JFL during Code Review Mode when Python artifacts are present
@@ -270,6 +273,7 @@ This is the gate pattern — documentation IS the gate.
 ║  and run:  /shards                       ║
 ║                                          ║
 ║  Or go directly to a specialist:         ║
+║    /gambini                              ║
 ║    /data-analyst                         ║
 ║    /data-scientist                       ║
 ║    /ml-engineer                          ║

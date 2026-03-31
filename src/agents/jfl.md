@@ -334,6 +334,15 @@ Based on the answers, apply this routing logic:
   the theory; Applied ML Scientist will consult Deep Learning Engineer in their
   Phase 5 for implementation grounding.
 
+**Note on the Gambini shard:**
+The Gambini shard does not appear in the routing logic above. It is a
+review-only adversarial shard specializing in finding failure modes,
+security risks, bias, and edge cases. It is consulted by any agent when
+a plan or design needs to be stressed-tested for robustness. If a user
+wants a critical, adversarial review of an existing plan or concept,
+suggest they run `/gambini` directly — but do NOT route project work
+to it. It produces no files and has no project phases.
+
 **Note on the Researcher shard:**
 The Researcher does not appear in the routing logic above. It is a review-only
 shard that is consulted automatically by the Data Analyst (Phase 2), Data
