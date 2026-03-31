@@ -371,6 +371,38 @@ Task(
 
 Apply the Reviewer Verdict Protocol using the returned verdict (Aligned / Concerns raised). Document the verdict and any resolution in the specs template below.
 
+**If the evaluation involves statistical inference** — A/B testing, confidence
+intervals, power analysis, significance testing, or experiment design for
+online evaluation — consult the Researcher:
+
+Tell the user: "The evaluation plan involves statistical inference — I'm asking
+the Researcher shard to validate the methodology before we commit to it."
+
+```
+Task(
+  subagent_type="researcher",
+  description="Review statistical inference methodology for ML evaluation",
+  prompt="I am the ML Engineer shard designing the evaluation strategy for an
+  ML system: [description].
+  Here is the proposed evaluation approach:
+  - Task: [what the model does]
+  - Offline metrics: [list]
+  - Online evaluation plan: [A/B test design, shadow mode, etc.]
+  - Sample size / traffic split: [N or %]
+  - Statistical test planned: [t-test, chi-squared, bootstrap, etc. or 'TBD']
+  - Confidence level: [95%, 99%, etc. or 'TBD']
+  Please review from a statistical methodology perspective:
+  1. Is the proposed statistical test appropriate for this metric type?
+  2. Is the sample size / traffic split adequate for the expected effect size?
+  3. Is the experiment design sound (randomization, control, duration)?
+  4. Are there multiple comparison issues or other statistical pitfalls?
+  5. What power analysis would you recommend?
+  Keep the review focused on statistical inference methodology."
+)
+```
+
+Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns / Revise). Document the verdict and any resolution in the specs template below.
+
 Define:
 - **Baseline model:** Simple, fast, interpretable. The floor to beat.
   (logistic regression, decision tree, popularity-based, rule-based)
@@ -405,6 +437,10 @@ Define:
   - Verdict: Aligned | Concerns raised
   - Tier: Proceed | Proceed with caveats
   - Reviewer resolution: Approved | User override — <rationale>
+- **Researcher review:** N/A — no statistical inference in evaluation | <summary if consulted>
+  - Verdict: Sound | Concerns | Revise
+  - Tier: Proceed | Proceed with caveats | Halt
+  - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Baseline model:**
   - Type: <model type>
   - Rationale: <why this baseline>
