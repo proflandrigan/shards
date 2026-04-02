@@ -126,10 +126,10 @@ Each agent has a subdirectory under `specific_instructions/` (e.g., `specific_in
 - **Service mode:** `analytics_engineer/service_mode.md`, `data_modeller/service_mode.md` — stripped-down mode used when these agents are consulted as reviewers via Task by other specialists
 - **JFL modes:** `jfl/brainstorm.md` (also has a `/brainstorm` command entry point), `jfl/final_review.md` (read when specialists invoke JFL for sign-off via Task), `jfl/code_review.md` (triggered when a specialist calls Task with `CODE REVIEW MODE` — partitions and reviews Python and non-Python artifacts), `jfl/fixer.md` (the `[F]` menu option — JFL directly implements minor fixes without specialist handoff, suspending the "facilitate don't generate" rule)
 - **Experiment:** `ml_engineer/experiment.md`, `ai_engineer/experiment.md` — plus `ml_engineer/experiment_ui_mode.md` and `ai_engineer/experiment_ui_mode.md` for Shards UI integration of experiment mode
-- **BI handoffs:** `ai_engineer/bi_handoff.md`, `ml_engineer/bi_handoff.md`, `data_scientist/bi_handoff.md`, `analytics_engineer/bi_handoff.md` — specialist variants that hand off to the BI Engineer
-- **DA handoffs:** `analytics_engineer/da_handoff.md`, `bi_engineer/da_handoff.md` — variants that hand off to the Data Analyst
-- **Handoff receivers:** `bi_engineer/handoff.md`, `data_analyst/handoff.md` — receiver-side instructions for agents accepting a structured handoff brief from another specialist
+- **BI handoffs:** `ai_engineer/bi_engineer_handoff.md`, `ml_engineer/bi_engineer_handoff.md`, `data_scientist/bi_engineer_handoff.md`, `analytics_engineer/bi_engineer_handoff.md` — specialist variants that hand off to the BI Engineer
+- **DA handoffs:** `analytics_engineer/data_analyst_handoff.md`, `bi_engineer/data_analyst_handoff.md` — variants that hand off to the Data Analyst
+- **Handoff receivers:** `bi_engineer/incoming_handoff.md`, `data_analyst/incoming_handoff.md` — receiver-side instructions for agents accepting a structured handoff brief from another specialist
 - **Explain:** `data_analyst/explain.md`, `data_scientist/explain.md` — explanation-focused variants
 - **DS handoffs:** `data_scientist/greenfield_data.md`, `data_scientist/ml_engineer_handoff.md` — Data Scientist variants for greenfield data work and ML Engineer handoff
-- **Checklists:** `backend_engineer/checklist.md`, `researcher/checklist.md` — review checklists used during service-mode consultations
+- **Review checklists:** `backend_engineer/review_checklist.md`, `researcher/review_checklist.md` — review checklists used during service-mode consultations
 - **Report:** `academic/report.md` — Academic shard variant for producing full literature review / research report documents
