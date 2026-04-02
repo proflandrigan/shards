@@ -584,7 +584,7 @@ Then:
 
 6. **If Deployment intent was "Productionized"** see `.claude/agents/specific_instructions/data_scientist/ml_engineer_handoff.md` for the full handoff instructions (Phase 7, Step 6 section).
 
-7. **BI dashboard handoff (recurring visualizations):** See `.claude/agents/specific_instructions/data_scientist/bi_handoff.md` for the full handoff instructions (Phase 7, Step 7 section).
+7. **BI dashboard handoff (recurring visualizations):** See `.claude/agents/specific_instructions/data_scientist/bi_engineer_handoff.md` for the full handoff instructions (Phase 7, Step 7 section).
 
 ### Document Phase 7
 
@@ -608,8 +608,8 @@ Then:
   - <question or follow-up>
 - **Original question answered:** Yes | Partially | No — <explanation>
 - **Productionization handoff:** Yes — ML Engineer | No — one-off study
-- **If handoff — ML Engineer handoff file:** studies/<project_name>/ml-engineer-handoff.md | N/A
-- **BI dashboard handoff:** Yes — studies/<project_name>/bi-engineer-handoff.md | No
+- **If handoff — ML Engineer handoff file:** studies/<project_name>/ml_engineer_handoff.md | N/A
+- **BI dashboard handoff:** Yes — studies/<project_name>/bi_engineer_handoff.md | No
 - **Status:** Complete
 ```
 

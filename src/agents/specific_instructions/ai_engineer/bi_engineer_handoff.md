@@ -1,6 +1,6 @@
 # AI Engineer — BI Monitoring Dashboard Handoff
 
-This file governs Step 6 of Phase 7 (Deliver and Document) for the AI Engineer shard. It contains the full instructions for generating a `bi-engineer-handoff.md` file for operational monitoring of a deployed AI system.
+This file governs Step 6 of Phase 7 (Deliver and Document) for the AI Engineer shard. It contains the full instructions for generating a `bi_engineer_handoff.md` file for operational monitoring of a deployed AI system.
 
 ---
 
@@ -8,7 +8,7 @@ This file governs Step 6 of Phase 7 (Deliver and Document) for the AI Engineer s
 
    Ask the user: "This system produces observable metrics — latency, quality
    scores, cost per request, safety pass rates. Do you want a
-   `bi-engineer-handoff.md` so the BI Engineer shard can build an operational
+   `bi_engineer_handoff.md` so the BI Engineer shard can build an operational
    monitoring dashboard?"
 
    For iteration projects where a monitoring dashboard already exists, only
@@ -16,7 +16,7 @@ This file governs Step 6 of Phase 7 (Deliver and Document) for the AI Engineer s
 
    **GATE: Wait for an explicit yes or no. Do not generate the file unless the user confirms.**
 
-   If yes, write `services/<project_name>/bi-engineer-handoff.md`:
+   If yes, write `services/<project_name>/bi_engineer_handoff.md`:
 
    ```
    # BI Engineer Handoff: <project_name>
@@ -76,9 +76,9 @@ This file governs Step 6 of Phase 7 (Deliver and Document) for the AI Engineer s
 
    ## Next Step
    Run `/bi-engineer` or `/shards`. In Phase 0, reference this file:
-   services/<project_name>/bi-engineer-handoff.md
+   services/<project_name>/bi_engineer_handoff.md
    ```
 
    Tell the user: "Handoff file written. Run `/bi-engineer` or `/shards` and
-   reference `services/<project_name>/bi-engineer-handoff.md` in Phase 0."
+   reference `services/<project_name>/bi_engineer_handoff.md` in Phase 0."
    Do NOT attempt to morph into or invoke the BI Engineer.

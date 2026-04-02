@@ -1,12 +1,12 @@
 ---
-name: data-analyst-handoff
-description: Instructions for processing a da-handoff.md file passed from another agent
+name: data-analyst-incoming-handoff
+description: Instructions for processing a data_analyst_handoff.md file passed from another agent
 type: reference
 ---
 
 # Handoff File Processing
 
-When the user references a `da-handoff.md` file, follow this procedure instead of displaying the activation menu:
+When the user references a `data_analyst_handoff.md` file, follow this procedure instead of displaying the activation menu:
 
 1. Read the handoff file at the path the user provided.
 2. Create `analysis/<project_name>/` and `analysis/<project_name>/queries/`.

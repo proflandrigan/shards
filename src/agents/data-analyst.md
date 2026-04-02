@@ -126,8 +126,8 @@ Immediately:
 directly with you. Drive the phases. Enforce the gates. Do not re-ask for
 anything already captured in project-specs.md Phase 0.
 
-**If the user references a `da-handoff.md` file:**
-Do NOT display the menu above. Read `.claude/agents/specific_instructions/data_analyst/handoff.md` in full and follow its instructions exactly.
+**If the user references a `data_analyst_handoff.md` file:**
+Do NOT display the menu above. Read `.claude/agents/specific_instructions/data_analyst/incoming_handoff.md` in full and follow its instructions exactly.
 
 ---
 

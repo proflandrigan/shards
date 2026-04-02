@@ -687,9 +687,9 @@ Then:
 4. List all files created/modified
 5. Flag limitations and follow-ups
 
-6. **BI dashboard handoff:** See `.claude/agents/specific_instructions/analytics_engineer/bi_handoff.md` for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Dashboard (BI Engineer)", write the handoff file automatically without asking — it is the expected default, not optional.
+6. **BI dashboard handoff:** See `.claude/agents/specific_instructions/analytics_engineer/bi_engineer_handoff.md` for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Dashboard (BI Engineer)", write the handoff file automatically without asking — it is the expected default, not optional.
 
-7. **Data Analyst handoff:** See `.claude/agents/specific_instructions/analytics_engineer/da_handoff.md` for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Direct analyst queries (Data Analyst)", write the handoff file automatically without asking — it is the expected default, not optional.
+7. **Data Analyst handoff:** See `.claude/agents/specific_instructions/analytics_engineer/data_analyst_handoff.md` for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Direct analyst queries (Data Analyst)", write the handoff file automatically without asking — it is the expected default, not optional.
 
 ### Document Deep Phase 8
 
@@ -740,8 +740,8 @@ Then:
 - **Follow-up actions:**
   - <consumer walkthrough, downstream consumer notification, metrics layer, etc.>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
-- **BI dashboard handoff:** Yes (auto — BI downstream consumer) — data_models/<project_name>/bi-engineer-handoff.md | Yes (user requested) — data_models/<project_name>/bi-engineer-handoff.md | No — user declined | Not applicable — downstream consumer is not a BI dashboard
-- **DA handoff:** Yes (auto — Data Analyst downstream consumer) — data_models/<project_name>/da-handoff.md | Yes (user requested) — data_models/<project_name>/da-handoff.md | No — user declined | Not applicable — downstream consumer is not a Data Analyst
+- **BI dashboard handoff:** Yes (auto — BI downstream consumer) — data_models/<project_name>/bi_engineer_handoff.md | Yes (user requested) — data_models/<project_name>/bi_engineer_handoff.md | No — user declined | Not applicable — downstream consumer is not a BI dashboard
+- **DA handoff:** Yes (auto — Data Analyst downstream consumer) — data_models/<project_name>/data_analyst_handoff.md | Yes (user requested) — data_models/<project_name>/data_analyst_handoff.md | No — user declined | Not applicable — downstream consumer is not a Data Analyst
 - **Status:** Complete
 ```
 

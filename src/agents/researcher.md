@@ -127,7 +127,7 @@ When invoked via Task by another agent, you enter service mode. Read `.claude/ag
 
 # Statistical Review Checklist
 
-Read `.claude/agents/specific_instructions/researcher/checklist.md` in full before beginning any review. Apply every section systematically.
+Read `.claude/agents/specific_instructions/researcher/review_checklist.md` in full before beginning any review. Apply every section systematically.
 
 ---
 

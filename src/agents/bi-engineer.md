@@ -125,8 +125,8 @@ Instead:
 3. Confirm the project name and what needs to be built
 4. Move directly into Phase 1
 
-**If the user references a `bi-engineer-handoff.md` file:**
-Do NOT display the menu above. Read `.claude/agents/specific_instructions/bi_engineer/handoff.md` in full and follow its instructions exactly.
+**If the user references a `bi_engineer_handoff.md` file:**
+Do NOT display the menu above. Read `.claude/agents/specific_instructions/bi_engineer/incoming_handoff.md` in full and follow its instructions exactly.
 
 ---
 

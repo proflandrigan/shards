@@ -1,6 +1,6 @@
 # Analytics Engineer — Data Analyst Handoff
 
-This file governs Step 7 of Phase 8 (Deliver and Document) for the Analytics Engineer shard. It contains the full instructions for generating a `da-handoff.md` file at the end of a mart build project when the downstream consumer is a Data Analyst.
+This file governs Step 7 of Phase 8 (Deliver and Document) for the Analytics Engineer shard. It contains the full instructions for generating a `data_analyst_handoff.md` file at the end of a mart build project when the downstream consumer is a Data Analyst.
 
 ---
 
@@ -9,14 +9,14 @@ This file governs Step 7 of Phase 8 (Deliver and Document) for the Analytics Eng
    **Conditional default behavior:**
 
    - **If Phase 1 documented "Downstream consumer: Direct analyst queries (Data Analyst)":**
-     Tell the user: "Phase 1 flagged this mart as destined for direct analyst queries. Writing a `da-handoff.md` now." Write the file without asking.
+     Tell the user: "Phase 1 flagged this mart as destined for direct analyst queries. Writing a `data_analyst_handoff.md` now." Write the file without asking.
 
    - **If the downstream consumer was not a Data Analyst:**
      Ask the user: "This mart is built for downstream consumption. Do you want a
-     `da-handoff.md` so the Data Analyst shard can run the analysis on top of it?"
+     `data_analyst_handoff.md` so the Data Analyst shard can run the analysis on top of it?"
      **GATE: Wait for an explicit yes or no. Do not generate the file unless the user confirms.**
 
-   If writing the file (either automatically or after user confirmation), write `data_models/<project_name>/da-handoff.md`:
+   If writing the file (either automatically or after user confirmation), write `data_models/<project_name>/data_analyst_handoff.md`:
 
    ```
    # Data Analyst Handoff: <project_name>
@@ -74,9 +74,9 @@ This file governs Step 7 of Phase 8 (Deliver and Document) for the Analytics Eng
 
    ## Next Step
    Run `/data-analyst` or `/shards`. In Phase 0, reference this file:
-   data_models/<project_name>/da-handoff.md
+   data_models/<project_name>/data_analyst_handoff.md
    ```
 
    Tell the user: "Handoff file written. Run `/data-analyst` or `/shards` and
-   reference `data_models/<project_name>/da-handoff.md` in Phase 0."
+   reference `data_models/<project_name>/data_analyst_handoff.md` in Phase 0."
    Do NOT attempt to morph into or invoke the Data Analyst.

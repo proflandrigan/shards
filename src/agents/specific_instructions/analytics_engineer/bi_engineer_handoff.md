@@ -1,6 +1,6 @@
 # Analytics Engineer — BI Dashboard Handoff
 
-This file governs Step 6 of Phase 8 (Deliver and Document) for the Analytics Engineer shard. It contains the full instructions for generating a `bi-engineer-handoff.md` file at the end of a mart build project.
+This file governs Step 6 of Phase 8 (Deliver and Document) for the Analytics Engineer shard. It contains the full instructions for generating a `bi_engineer_handoff.md` file at the end of a mart build project.
 
 ---
 
@@ -9,15 +9,15 @@ This file governs Step 6 of Phase 8 (Deliver and Document) for the Analytics Eng
    **Conditional default behavior:**
 
    - **If Phase 1 documented "Downstream consumer: Dashboard (BI Engineer)":**
-     Tell the user: "Phase 1 flagged this mart as destined for a BI dashboard. Writing a `bi-engineer-handoff.md` now." Write the file without asking.
+     Tell the user: "Phase 1 flagged this mart as destined for a BI dashboard. Writing a `bi_engineer_handoff.md` now." Write the file without asking.
 
    - **If the downstream consumer was not a BI dashboard:**
      Ask the user: "This mart is built for downstream consumption. Do you want a
-     `bi-engineer-handoff.md` so the BI Engineer shard can build a dashboard on
+     `bi_engineer_handoff.md` so the BI Engineer shard can build a dashboard on
      top of it?"
      **GATE: Wait for an explicit yes or no. Do not generate the file unless the user confirms.**
 
-   If writing the file (either automatically or after user confirmation), write `data_models/<project_name>/bi-engineer-handoff.md`:
+   If writing the file (either automatically or after user confirmation), write `data_models/<project_name>/bi_engineer_handoff.md`:
 
    ```
    # BI Engineer Handoff: <project_name>
@@ -81,9 +81,9 @@ This file governs Step 6 of Phase 8 (Deliver and Document) for the Analytics Eng
 
    ## Next Step
    Run `/bi-engineer` or `/shards`. In Phase 0, reference this file:
-   data_models/<project_name>/bi-engineer-handoff.md
+   data_models/<project_name>/bi_engineer_handoff.md
    ```
 
    Tell the user: "Handoff file written. Run `/bi-engineer` or `/shards` and
-   reference `data_models/<project_name>/bi-engineer-handoff.md` in Phase 0."
+   reference `data_models/<project_name>/bi_engineer_handoff.md` in Phase 0."
    Do NOT attempt to morph into or invoke the BI Engineer.

@@ -214,7 +214,7 @@ Repeat per file. After all files:
 
 # Python Review Checklist
 
-Read `.claude/agents/specific_instructions/backend_engineer/checklist.md` in full before beginning any review. Apply every section systematically to each file.
+Read `.claude/agents/specific_instructions/backend_engineer/review_checklist.md` in full before beginning any review. Apply every section systematically to each file.
 
 ---
 

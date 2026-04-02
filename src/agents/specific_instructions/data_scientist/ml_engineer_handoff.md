@@ -12,7 +12,7 @@ you flagged this for productionization, the next step is handing off to the ML E
 shard. They handle the production side — serving infrastructure, retraining pipelines,
 monitoring, and deployment. I'm writing a handoff file they can read directly."
 
-Write the file `studies/<project_name>/ml-engineer-handoff.md`:
+Write the file `studies/<project_name>/ml_engineer_handoff.md`:
 
 ```
 # ML Engineer Handoff: <project_name>

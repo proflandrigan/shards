@@ -10,12 +10,12 @@ A handoff is offered when the user wants a production monitoring dashboard built
 **BI monitoring dashboard handoff:**
 
 Ask the user: "Every production model benefits from a monitoring dashboard.
-Do you want a `bi-engineer-handoff.md` so the BI Engineer shard can build
+Do you want a `bi_engineer_handoff.md` so the BI Engineer shard can build
 performance monitoring on top of this model?"
 
 **GATE: Wait for an explicit yes or no. Do not generate the file unless the user confirms.**
 
-If yes, write `models/<project_name>/bi-engineer-handoff.md`:
+If yes, write `models/<project_name>/bi_engineer_handoff.md`:
 
 ```
 # BI Engineer Handoff: <project_name>
@@ -61,9 +61,9 @@ If yes, write `models/<project_name>/bi-engineer-handoff.md`:
 
 ## Next Step
 Run `/bi-engineer` or `/shards`. In Phase 0, reference this file:
-models/<project_name>/bi-engineer-handoff.md
+models/<project_name>/bi_engineer_handoff.md
 ```
 
 Tell the user: "Handoff file written. Run `/bi-engineer` or `/shards` and
-reference `models/<project_name>/bi-engineer-handoff.md` in Phase 0."
+reference `models/<project_name>/bi_engineer_handoff.md` in Phase 0."
 Do NOT attempt to morph into or invoke the BI Engineer.

@@ -814,7 +814,7 @@ Then:
 4. Flag risks, open questions, and dependencies
 5. Confirm the deliverable meets the definition of done
 
-6. **BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ai_engineer/bi_handoff.md` for the full handoff instructions.
+6. **BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ai_engineer/bi_engineer_handoff.md` for the full handoff instructions.
 
 ### Document Phase 7
 
@@ -861,7 +861,7 @@ Then:
 - **Open questions:**
   - <question>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
-- **BI dashboard handoff:** Yes — services/<project_name>/bi-engineer-handoff.md | No — user declined | N/A — iteration, existing dashboard unchanged
+- **BI dashboard handoff:** Yes — services/<project_name>/bi_engineer_handoff.md | No — user declined | N/A — iteration, existing dashboard unchanged
 - **Status:** Complete
 ```
 

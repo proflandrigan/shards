@@ -1,12 +1,12 @@
 ---
-name: bi-engineer-handoff
-description: Instructions for processing a bi-engineer-handoff.md file passed from another agent
+name: bi-engineer-incoming-handoff
+description: Instructions for processing a bi_engineer_handoff.md file passed from another agent
 type: reference
 ---
 
 # Handoff File Processing
 
-When the user references a `bi-engineer-handoff.md` file, follow this procedure instead of displaying the activation menu:
+When the user references a `bi_engineer_handoff.md` file, follow this procedure instead of displaying the activation menu:
 
 1. Read the handoff file at the path the user provided.
 2. Create `dashboards/<project_name>/` using the project name from the handoff file.

@@ -10,11 +10,11 @@ A handoff is offered when the user wants a live dashboard built from the study's
 7. **BI dashboard handoff:**
 
    Ask: "If you want a live dashboard to track these metrics or findings on an ongoing basis,
-   I can write a handoff file for the BI Engineer. Do you want a `bi-engineer-handoff.md`?"
+   I can write a handoff file for the BI Engineer. Do you want a `bi_engineer_handoff.md`?"
 
    **GATE: Wait for an explicit yes or no. Do not generate the file unless the user confirms.**
 
-   If yes, write `studies/<project_name>/bi-engineer-handoff.md`:
+   If yes, write `studies/<project_name>/bi_engineer_handoff.md`:
 
    ```
    # BI Engineer Handoff: <project_name>
@@ -53,9 +53,9 @@ A handoff is offered when the user wants a live dashboard built from the study's
 
    ## Next Step
    Run `/bi-engineer` or `/shards`. In Phase 0, reference this file:
-   studies/<project_name>/bi-engineer-handoff.md
+   studies/<project_name>/bi_engineer_handoff.md
    ```
 
    Tell the user: "Handoff file written. Run `/bi-engineer` or `/shards` and
-   reference `studies/<project_name>/bi-engineer-handoff.md` in Phase 0."
+   reference `studies/<project_name>/bi_engineer_handoff.md` in Phase 0."
    Do NOT attempt to morph into or invoke the BI Engineer.
