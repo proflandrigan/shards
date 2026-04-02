@@ -70,8 +70,10 @@ function handleGlobalEvent(data) {
       }
       // Only refresh explorer UI when it's the active session's file
       if (!data.sessionId || data.sessionId === activeSessionId) {
-        if (explorerViewMode === 'tree') renderTree();
-        else if (currentBrowseDir) browseDir(currentBrowseDir);
+        if (explorerViewMode === 'tree') {
+          invalidateTreeAncestors(data.path);
+          renderTree();
+        } else if (currentBrowseDir) browseDir(currentBrowseDir);
         if (typeof renderSessionFiles === 'function') renderSessionFiles();
       }
       // Debounced git status refresh

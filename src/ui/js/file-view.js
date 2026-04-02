@@ -5,6 +5,7 @@
 function renderFilePane(relPath) {
   var f = openFiles[relPath];
   if (!f) { renderEmptyFilePane(); return; }
+  var thisGen = ++fileRenderGen;
 
   // Git diff tabs get special rendering
   if (f.gitDiff && typeof renderGitDiffPane === 'function') {
@@ -131,6 +132,7 @@ function renderFilePane(relPath) {
       monacoFileContainer.style.display = 'block';
       monacoFileContainer.innerHTML = '';
       loadMonaco().then(function() {
+        if (thisGen !== fileRenderGen) return;
         var lang = getMonacoLang(relPath);
         activeMonacoInstance = createMonacoEditor(monacoFileContainer, {
           value: f.content,
@@ -172,6 +174,7 @@ function renderFilePane(relPath) {
         f.tabularData = data;
         initTabulator(relPath, data);
       }).catch(function(err) {
+        if (thisGen !== fileRenderGen) return;
         console.warn('Tabular parse failed, falling back to code view:', err);
         tableView.classList.remove('visible');
         renderCodeView(relPath, f);
@@ -199,6 +202,7 @@ function renderFilePane(relPath) {
       monacoFileContainer.style.display = 'block';
       monacoFileContainer.innerHTML = '';
       loadMonaco().then(function() {
+        if (thisGen !== fileRenderGen) return;
         var lang = getMonacoLang(relPath);
         activeMonacoInstance = createMonacoEditor(monacoFileContainer, {
           value: f.content,
@@ -230,6 +234,7 @@ function renderCodeViewFallback(relPath, f) {
 }
 
 function renderCodeView(relPath, f) {
+  var thisGen = fileRenderGen;
   var editorEl = document.getElementById('file-editor');
   var monacoFileContainer = document.getElementById('monaco-file-container');
   editorEl.style.display = 'flex';
@@ -243,6 +248,7 @@ function renderCodeView(relPath, f) {
     monacoFileContainer.style.display = 'block';
     monacoFileContainer.innerHTML = '';
     loadMonaco().then(function() {
+      if (thisGen !== fileRenderGen) return;
       var lang = getMonacoLang(relPath);
       activeMonacoInstance = createMonacoEditor(monacoFileContainer, {
         value: f.content,
@@ -407,8 +413,7 @@ function handleArtifactUpdate(relPath, content, isSessionFile) {
       }
     }
   } else if (sessionTouchedFiles.has(relPath) && relPath.endsWith('project-specs.md')) {
-    // Auto-open project-specs.md in split view
-    if (!splitMode) toggleSplit();
+    // Auto-open project-specs.md as a tab
     openFileTab(relPath, content, relPath);
   }
   // else: don't auto-open

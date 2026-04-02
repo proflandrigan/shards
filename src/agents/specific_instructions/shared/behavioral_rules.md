@@ -26,3 +26,5 @@ These rules apply to all specialist agents. They are referenced from each agent'
 ```
 
 The target agent should check for an Escalation Brief in `project-specs.md` on startup and treat it as prior context — skip re-asking questions that are already answered.
+
+- **Trace join paths before writing SQL.** Before writing or running any query that joins tables, trace the join path: state each table's grain, each join's relationship type, and the predicted output grain. Scale the trace to query complexity. Read `.claude/agents/specific_instructions/shared/join_path_protocol.md` for the full protocol.

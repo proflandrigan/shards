@@ -422,6 +422,11 @@ Build in this order:
 7. Singular test files
 
 For each model:
+- **Join path trace (models with joins):** Before writing SQL for any model that
+  joins tables, trace the join path following
+  `.claude/agents/specific_instructions/shared/join_path_protocol.md`. Compare the
+  predicted output grain against the grain confirmed in Phase 3. If they diverge,
+  fix the design before writing SQL.
 - Write the SQL (CTEs from source to final; use parameterized model references — never hardcoded table names)
 - Write the schema file (model description, column descriptions, all required tests)
 - Run the stack's build/validate command (e.g., `dbt build --select +model_name`) — fix any failures before next model

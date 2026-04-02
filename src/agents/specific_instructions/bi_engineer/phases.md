@@ -256,6 +256,11 @@ Write the dashboard application to `dashboards/<project_name>/`.
 - Altair: `charts.py` or named by chart function
 - Standalone: `<descriptive_name>.py`
 
+**Join path trace:** Before writing dashboard queries that join tables, trace the
+join path following `.claude/agents/specific_instructions/shared/join_path_protocol.md`.
+Present the trace to the user. Fan-out in a dashboard query means every chart
+built on that query shows inflated numbers — flag it explicitly.
+
 **SQL files** — Write all SQL queries to `dashboards/<project_name>/queries/`
 before writing any Python. Name files descriptively: `01_revenue_by_region.sql`.
 Include a header comment in each file:
@@ -264,6 +269,7 @@ Include a header comment in each file:
 -- Query: <description>
 -- Date: <date>
 -- Data sources: <key tables or marts used>
+-- Output grain: one row per <entity>
 ```
 
 **SQL loading rule** — **Do NOT embed SQL as Python strings.** Read `.sql` files

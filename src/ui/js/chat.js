@@ -1,4 +1,57 @@
 // ═══════════════════════════════════════════════════════════════
+// Permission mode cycling (Shift+Tab)
+// ═══════════════════════════════════════════════════════════════
+
+var PERMISSION_MODES = [
+  { key: 'acceptEdits', label: 'Accept Edits', shortLabel: 'Edits', color: '#4CAF50', desc: 'Read and edit files' },
+  { key: 'plan',        label: 'Plan',         shortLabel: 'Plan',  color: '#2196F3', desc: 'Explore and plan, no edits' },
+];
+
+var currentPermissionMode = 'acceptEdits';
+
+function cyclePermissionMode(direction) {
+  var idx = PERMISSION_MODES.findIndex(function(m) { return m.key === currentPermissionMode; });
+  if (idx === -1) idx = 0;
+  idx = (idx + (direction || 1) + PERMISSION_MODES.length) % PERMISSION_MODES.length;
+  var newMode = PERMISSION_MODES[idx].key;
+  if (newMode === currentPermissionMode) return;
+  currentPermissionMode = newMode;
+  renderModeIndicator();
+  applyModeToSession();
+}
+
+function renderModeIndicator() {
+  var btn = document.getElementById('mode-indicator');
+  if (!btn) return;
+  var mode = PERMISSION_MODES.find(function(m) { return m.key === currentPermissionMode; });
+  if (!mode) return;
+  btn.textContent = mode.label;
+  btn.style.borderColor = mode.color;
+  btn.style.color = mode.color;
+  btn.title = mode.desc + ' (Shift+Tab to cycle)';
+  btn.className = 'mode-' + mode.key;
+  // Pulse animation on change
+  btn.classList.remove('mode-flash');
+  void btn.offsetWidth; // reflow
+  btn.classList.add('mode-flash');
+}
+
+function applyModeToSession() {
+  var session = getActiveSession();
+  if (!session || !activeSessionId) return;
+  // Post mode change to server — restarts session with new permission mode
+  authFetch('/chat/mode', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId: activeSessionId, mode: currentPermissionMode }),
+  }).then(function(res) { return res.json(); }).then(function(data) {
+    if (data.switched && data.sessionId) {
+      replaceSessionInTab(activeSessionId, data.sessionId, data.agent);
+    }
+  }).catch(function() {});
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Agent picker
 // ═══════════════════════════════════════════════════════════════
 
@@ -110,7 +163,7 @@ function showChatView() {
 
 async function startNewSession(agentName, initialMessage) {
   try {
-    var body = { agent: agentName };
+    var body = { agent: agentName, permissionMode: currentPermissionMode };
     if (initialMessage) body.initialMessage = initialMessage;
     var res = await authFetch('/chat/start', {
       method: 'POST',
@@ -182,6 +235,12 @@ async function sendChatMessage() {
   // Client-side /config — open settings panel, no server round-trip
   if (message.toLowerCase() === '/config') {
     toggleSettings();
+    return;
+  }
+
+  // Client-side /mode — cycle permission mode
+  if (message.toLowerCase() === '/mode') {
+    cyclePermissionMode(1);
     return;
   }
 
@@ -988,6 +1047,7 @@ var SLASH_UTILITY_CMDS = [
   { cmd: 'config',  desc: 'Open settings panel' },
   { cmd: 'model',   desc: 'Change the active LLM model' },
   { cmd: 'effort',  desc: 'Set compute intensity (low/medium/high)' },
+  { cmd: 'mode',    desc: 'Cycle permission mode (Shift+Tab)' },
 ];
 
 function buildSlashCommands(prefix) {
@@ -1055,7 +1115,7 @@ function hideSlashSuggestions() {
 function applySlashSuggestion(cmd) {
   var input = document.getElementById('chat-input');
   // Commands that take no args — send immediately
-  var noArgCmds = ['compact', 'clear', 'stop', 'help', 'init', 'exit', 'context', 'rewind', 'config'];
+  var noArgCmds = ['compact', 'clear', 'stop', 'help', 'init', 'exit', 'context', 'rewind', 'config', 'mode'];
   var isAgent = agentList && agentList.some(function(a) { return a.name === cmd; });
   if (noArgCmds.indexOf(cmd) !== -1 || isAgent) {
     input.value = '/' + cmd;

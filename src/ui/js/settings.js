@@ -46,6 +46,7 @@ function applySettingsTheme(value) {
   if (typeof monaco !== 'undefined') {
     monaco.editor.setTheme(currentMonacoTheme());
   }
+  rerenderActiveDiagramPanel();
   var prefs = loadPreferences();
   prefs.theme = value;
   savePreferences(prefs);
@@ -195,8 +196,7 @@ function restoreLayout() {
       switchSidebarView(layout.activeSidebarView);
     }
 
-    // Restore split mode
-    if (layout.splitMode && !splitMode) toggleSplit();
+    // Split mode is not restored — user toggles manually (Cmd+\)
 
     // Re-open tabs (fetch content from server)
     if (layout.openTabs && layout.openTabs.length > 0) {

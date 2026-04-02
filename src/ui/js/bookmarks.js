@@ -95,17 +95,26 @@ function updateAllBookmarkStars() {
 }
 
 function renderBookmarksSidebar() {
-  var section = document.getElementById('bookmarks-section');
   var list = document.getElementById('bookmarks-list');
-  if (!section || !list) return;
+  var emptyEl = document.getElementById('bookmarks-empty');
+  var countEl = document.getElementById('bookmarks-count');
+  if (!list) return;
 
   var bookmarks = loadBookmarks();
+
+  // Update badge on activity bar button
+  updateBookmarksBadge(bookmarks.length);
+
+  // Update count in header
+  if (countEl) countEl.textContent = bookmarks.length > 0 ? bookmarks.length : '';
+
   if (bookmarks.length === 0) {
-    section.classList.remove('visible');
+    list.innerHTML = '';
+    if (emptyEl) emptyEl.classList.add('visible');
     return;
   }
 
-  section.classList.add('visible');
+  if (emptyEl) emptyEl.classList.remove('visible');
   list.innerHTML = '';
 
   // Show newest first
@@ -141,6 +150,22 @@ function renderBookmarksSidebar() {
     })(bm));
 
     list.appendChild(entry);
+  }
+}
+
+function updateBookmarksBadge(count) {
+  var btn = document.getElementById('activity-bookmarks');
+  if (!btn) return;
+  var badge = btn.querySelector('.badge');
+  if (count > 0) {
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'badge';
+      btn.appendChild(badge);
+    }
+    badge.textContent = count;
+  } else if (badge) {
+    badge.remove();
   }
 }
 

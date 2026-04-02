@@ -520,6 +520,12 @@ Task(
 )
 ```
 
+**Join path self-check (pipeline design):** Before requesting the Data Modeller
+review, trace the join path for each join in the feature pipeline following
+`.claude/agents/specific_instructions/shared/join_path_protocol.md`. Present the
+trace to the user. Include it in the DM prompt below. Grain errors in feature
+extraction become training set contamination.
+
 **Consult the Data Modeller** for pipeline data correctness review with validation:
 
 Tell the user: "Pulling in the Data Modeller to verify the pipeline design against the actual data model. Grain errors here become training errors later."
@@ -620,7 +626,12 @@ Wait for any signal from the user before beginning build steps.
 
 Goal: Build the feature queries, training notebook, and pipeline artifacts.
 
-**Before executing, request Data Modeller query review with validation:**
+**Join path self-check (feature queries):** Before requesting the Data Modeller
+review, trace the join path for each feature query following
+`.claude/agents/specific_instructions/shared/join_path_protocol.md`. Present the
+trace to the user. Include it in the DM prompt below.
+
+**Then request Data Modeller query review with validation:**
 
 Tell the user: "Pulling in the Data Modeller to verify the feature extraction queries. Feature pipeline built on bad grain assumptions is a training set problem. I'm not building until this is confirmed."
 
@@ -666,6 +677,7 @@ Task(
      -- Date: <date>
      -- Feature group: <label | user | behavioral | contextual | interaction>
      -- Dependencies: <upstream tables>
+     -- Output grain: one row per <entity>
      ```
 
 2. **Training notebook** — Write using NotebookEdit to:

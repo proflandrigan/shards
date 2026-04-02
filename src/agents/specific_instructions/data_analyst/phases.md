@@ -268,6 +268,11 @@ Wait for any signal from the user before beginning build steps.
 
 Goal: Write and run the queries.
 
+**Join path trace:** Before writing any query that joins tables, trace the join
+path following `.claude/agents/specific_instructions/shared/join_path_protocol.md`.
+Present the trace to the user. If the trace reveals fan-out risk or uncertain
+grain, invoke the Data Modeller for validation before writing the query.
+
 1. Write each query to a `.sql` file in `analysis/<project_name>/queries/`
    - Name files descriptively: `01_conversion_by_cohort.sql`, `02_revenue_trend.sql`
    - Include a header comment in each file:
@@ -276,6 +281,7 @@ Goal: Write and run the queries.
      -- Query: <description>
      -- Date: <date>
      -- Filters: <key filters applied>
+     -- Output grain: one row per <entity>
      ```
    - **SQL loading rule** — **Do NOT embed SQL as Python strings.** If Python
      (e.g., pandas, SQLAlchemy) is used to execute queries, read `.sql` files

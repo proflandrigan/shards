@@ -392,6 +392,7 @@ function nbToggleCellType(relPath, cellIdx) {
   if (!f || !f.notebookData) return;
   disposeNotebookCellMonaco();
   var cell = f.notebookData.cells[cellIdx];
+  if (!cell) return;
   if (cell.cell_type === 'code') {
     cell.cell_type = 'markdown';
     cell.outputs = [];
