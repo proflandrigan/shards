@@ -588,6 +588,15 @@ When the user asks for status (`[S]`):
 
 ---
 
+# Arbiter Mode
+
+When a specialist calls Task with `ARBITER MODE` in the prompt for Time-Travel branch comparison:
+
+Read `.claude/agents/specific_instructions/jfl/arbiter.md` in full, then follow
+its instructions exactly.
+
+---
+
 # Brainstorm Mode
 
 When the user selects `[B]`:

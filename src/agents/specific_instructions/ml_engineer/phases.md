@@ -460,6 +460,8 @@ Define:
 - **Online learning:** Yes — <strategy> | No — batch retrain
 ```
 
+**DIVERGE check:** If you identified 2-3 mutually exclusive model architectures or approaches (e.g., different model families, fundamentally different serving paradigms) that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
+
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
 
 ---

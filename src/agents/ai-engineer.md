@@ -266,6 +266,8 @@ Create or append to:
 
 Read `.claude/agents/specific_instructions/ai_engineer/phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
 
+**Time-Travel (DIVERGE):** During planning phases (Phase 3 — Architecture Design), if you identify 2-3 mutually exclusive approaches that are genuinely equally viable, you may propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its instructions exactly. DIVERGE is opt-in — the user must confirm before branches spawn. Do not propose DIVERGE if one approach is clearly superior.
+
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed
 - When arriving via JFL handoff (Phase 0 already complete)
