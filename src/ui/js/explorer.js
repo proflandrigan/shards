@@ -162,6 +162,19 @@ async function fetchTreeDir(dirPath) {
   renderTree();
 }
 
+function invalidateTreeAncestors(relPath) {
+  if (!treeRootPath) return;
+  var abs = treeRootPath + '/' + relPath;
+  // Walk from parent directory up to root, clearing cached entries
+  var dir = abs.substring(0, abs.lastIndexOf('/'));
+  while (dir.length >= treeRootPath.length) {
+    delete treeChildren[dir];
+    var parent = dir.substring(0, dir.lastIndexOf('/'));
+    if (parent === dir) break;
+    dir = parent;
+  }
+}
+
 function toggleTreeDir(dirPath) {
   if (treeExpanded[dirPath]) {
     treeExpanded[dirPath] = false;

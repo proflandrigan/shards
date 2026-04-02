@@ -227,7 +227,7 @@ Present as a DAG:
   - Unique key: <column(s)>
   - Strategy: append | delete+insert | merge
   - On schema change: append_new_columns | fail | sync_all_columns
-- **Join logic:** <key joins described>
+- **Join logic:** <trace each join using `.claude/agents/specific_instructions/shared/join_path_protocol.md` format — grain per table, relationship type, predicted output grain>
 - **Edge case handling:**
   - <edge case>: <how handled>
 - **Backfill approach:** full refresh | date-bounded | N/A
@@ -322,6 +322,11 @@ Build in order:
 6. Custom data tests
 
 For each model: write SQL → write .yml → run `dbt build --select +model_name` → fix failures.
+
+**Post-build join verification:** After each model that includes joins builds
+successfully, run the Tier 2+ verification queries from the join path protocol
+(row count before/after join). If actual fan-out diverges from the predicted
+fan-out in Phase 3, halt and diagnose before advancing to the next model.
 
 **SQL loading rule (Python scripts only)** — dbt model files are `.sql` by nature.
 If any Python scripts are produced (e.g., data loaders, custom macros, orchestration

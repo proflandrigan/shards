@@ -408,4 +408,4 @@ async function main() {
   writeQueue(stillPending);
 }
 
-main().catch(() => {});
+main().catch(function(err) { process.stderr.write('shards-ui relay: ' + (err && err.message || err) + '\n'); });

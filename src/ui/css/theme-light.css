@@ -307,9 +307,10 @@
 [data-theme="light"] .ci-symbol-sig { color: #999; }
 [data-theme="light"] .ci-symbol-file { color: #bbb; }
 
-/* Bookmarks section */
-[data-theme="light"] #bookmarks-header { background: #fafafa; border-bottom-color: #eee; color: #888; }
-[data-theme="light"] #bookmarks-header:hover { background: #f0f0f4; }
+/* Bookmarks view */
+[data-theme="light"] #bookmarks-view-header { background: #fafafa; border-bottom-color: #eee; color: #888; }
+[data-theme="light"] #bookmarks-count { color: #999; }
+[data-theme="light"] #bookmarks-empty { color: #aaa; }
 [data-theme="light"] .bookmark-entry { color: #555; }
 [data-theme="light"] .bookmark-entry:hover { background: #f0f0f4; }
 [data-theme="light"] .bookmark-entry-session { color: #999; }
@@ -462,3 +463,21 @@
 [data-theme="light"] .exp-results-table .tabulator-row:hover { background: #eef0f8; }
 [data-theme="light"] .exp-results-table .tabulator-row.tabulator-selected { background: #dde4f4; }
 [data-theme="light"] .exp-results-table .tabulator-cell { border-right-color: #eee; }
+
+/* ─── Diagram controls ─────────────────────────────────── */
+[data-theme="light"] .diagram-controls {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #ddd;
+}
+[data-theme="light"] .diagram-ctrl-btn {
+  border-color: #ddd;
+  color: #666;
+}
+[data-theme="light"] .diagram-ctrl-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+  border-color: #bbb;
+}
+[data-theme="light"] .diagram-zoom-label {
+  color: #888;
+}

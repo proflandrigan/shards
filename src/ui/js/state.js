@@ -23,6 +23,7 @@ var monacoLoaded = false;
 var monacoFailed = false;
 var monacoLoadPromise = null;
 var activeMonacoInstance = null;
+var fileRenderGen = 0;
 var activeNotebookCellMonaco = null;
 var activeNotebookCellIdx = null;
 var activeCellIdx = null;

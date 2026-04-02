@@ -418,10 +418,10 @@ function handleEvent(body) {
 
     // ─── ui-panel: agent pushes an interactive panel to the browser ─────
     case 'ui-panel': {
-      const { panel, panelId, title, data, source, type: panelType, agent: panelAgent } = data;
+      const { panel, panelId, title, data: panelData, source, type: panelType, agent: panelAgent } = data;
       if (!panel || !panelId) break;
 
-      let resolvedData = data.data !== undefined ? data.data : null;
+      let resolvedData = panelData !== undefined ? panelData : null;
 
       // If source file path provided, read it and watch for changes
       if (source) {
@@ -651,6 +651,8 @@ function startNewChatSession(agent, options = {}) {
   try {
     chatSess.send(activationPrompt);
   } catch (err) {
+    chatSess.stop();
+    sessions.delete(sessionId);
     broadcast({ type: 'chat-error', error: `Activation failed: ${err.message}`, sessionId });
   }
 
@@ -1391,6 +1393,37 @@ function createHandler() {
       return;
     }
 
+    // ─── Permission mode switch ─────────────────────────────────────────────
+    if (req.method === 'POST' && parsedUrl.pathname === '/chat/mode') {
+      const body = await readBody(req);
+      let params;
+      try {
+        params = JSON.parse(body);
+      } catch {
+        jsonResponse(res, cors, 400, { error: 'Invalid JSON' });
+        return;
+      }
+
+      const { sessionId: targetSessionId, mode } = params;
+      const validModes = ['default', 'acceptEdits', 'plan'];
+      if (!mode || !validModes.includes(mode)) {
+        jsonResponse(res, cors, 400, { error: `Invalid mode. Use one of: ${validModes.join(', ')}` });
+        return;
+      }
+
+      const store = targetSessionId ? getSession(targetSessionId) : null;
+      if (store && store.chatSession && store.chatSession.isRunning) {
+        const agent = store.agent;
+        broadcast({ type: 'chat-system-notice', text: 'Switching to **' + mode + '** mode…', sessionId: targetSessionId });
+        const result = startNewChatSession(agent, { callerSessionId: targetSessionId, permissionMode: mode });
+        jsonResponse(res, cors, 200, { ok: true, switched: true, agent: result.agent, sessionId: result.sessionId });
+      } else {
+        // No active session — mode will be applied on next session start
+        jsonResponse(res, cors, 200, { ok: true, deferred: true });
+      }
+      return;
+    }
+
     if (req.method === 'POST' && parsedUrl.pathname === '/chat/send') {
       const body = await readBody(req);
       let params;
@@ -1458,6 +1491,7 @@ function createHandler() {
           helpText += '  `/config` — Open settings panel\n';
           helpText += '  `/model <name>` — Change the active LLM model\n';
           helpText += '  `/effort <level>` — Set compute intensity (low/medium/high)\n';
+          helpText += '  `/mode` — Cycle permission mode (Shift+Tab)\n';
           broadcast({ type: 'chat-system-notice', text: helpText, sessionId: targetSessionId });
           jsonResponse(res, cors, 200, { ok: true, help: true });
           return;

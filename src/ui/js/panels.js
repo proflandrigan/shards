@@ -2,6 +2,17 @@
 // Agent-pushed panel tabs (data-viewer, dag, diagram, chart, etc.)
 // ═══════════════════════════════════════════════════════════════
 
+// ─── Theme re-render helper (called from init.js / settings.js) ──────────────
+
+function rerenderActiveDiagramPanel() {
+  var activeKey = splitMode ? currentFileInPane : activeTabId;
+  if (!activeKey) return;
+  var p = openPanels[activeKey];
+  if (!p || (p.panel !== 'diagram' && p.panel !== 'dag')) return;
+  if (p._diagramState) p._diagramState.lastContent = null; // force Mermaid re-init with new theme
+  renderPanelPane(activeKey);
+}
+
 // ─── Data normalization ────────────────────────────────────────────────────────
 // Accepts any data shape the server or agent may send; returns { columns, data }
 
@@ -101,11 +112,23 @@ function closePanelTab(panelId) {
 function updatePanelData(panelId, newData) {
   var p = openPanels[panelId];
   if (!p) return;
+  var oldRawData = p.rawData;
   p.rawData = newData;
 
-  // Only do a live Tabulator update if this panel is currently visible
+  // Only do a live update if this panel is currently visible
   var activeKey = splitMode ? currentFileInPane : activeTabId;
   if (activeKey !== panelId) return;
+
+  if (p.panel === 'diagram' || p.panel === 'dag') {
+    var oldContent = typeof oldRawData === 'string' ? oldRawData : JSON.stringify(oldRawData, null, 2);
+    var newContent = typeof newData === 'string' ? newData : JSON.stringify(newData, null, 2);
+    if (oldContent === newContent) return;
+    if (p._diagramState) {
+      p._diagramState.lastContent = null; // force re-fit on changed content
+    }
+    renderPanelPane(panelId);
+    return;
+  }
 
   if (p.panel === 'experiment-dashboard') {
     cleanupExperimentDashboard(p);
@@ -142,6 +165,7 @@ function renderPanelPane(panelId) {
   var tableView = document.getElementById('table-view');
 
   renderedView.classList.remove('visible');
+  renderedView.classList.remove('diagram-active');
   renderedView.innerHTML = '';
   editorEl.style.display = 'none';
   disposeMonacoInstance();
@@ -218,7 +242,7 @@ function renderChartPanel(container, panel) {
   }
 }
 
-// ─── Diagram Panel (Mermaid.js) ────────────────────────────────────────────────
+// ─── Diagram Panel (Mermaid.js) — pan / zoom ──────────────────────────────────
 
 function renderDiagramPanel(container, panel) {
   var data = panel.rawData;
@@ -234,19 +258,187 @@ function renderDiagramPanel(container, panel) {
     return;
   }
 
+  // Decide whether to restore viewport or fit-to-view
+  var isRestore = panel._diagramState && panel._diagramState.lastContent === content;
+  if (!panel._diagramState) {
+    panel._diagramState = { panX: 0, panY: 0, scale: 1, lastContent: content };
+  }
+  panel._diagramState.lastContent = content;
+
   var diagramId = 'mermaid-' + panel.panelId;
-  container.innerHTML = '<div class="mermaid" id="' + diagramId + '">' + esc(content) + '</div>';
+
+  // Build DOM: viewport > canvas > mermaid + controls
+  container.innerHTML = '';
+  container.classList.add('diagram-active');
+
+  var viewport = document.createElement('div');
+  viewport.className = 'diagram-viewport';
+
+  var canvas = document.createElement('div');
+  canvas.className = 'diagram-canvas';
+
+  var mermaidDiv = document.createElement('div');
+  mermaidDiv.className = 'mermaid';
+  mermaidDiv.id = diagramId;
+  mermaidDiv.textContent = content;
+
+  canvas.appendChild(mermaidDiv);
+  viewport.appendChild(canvas);
+
+  var controls = document.createElement('div');
+  controls.className = 'diagram-controls';
+  controls.innerHTML =
+    '<button class="diagram-ctrl-btn" title="Zoom in" data-action="zoom-in">+</button>' +
+    '<span class="diagram-zoom-label">100%</span>' +
+    '<button class="diagram-ctrl-btn" title="Zoom out" data-action="zoom-out">&minus;</button>' +
+    '<button class="diagram-ctrl-btn" title="Fit to view" data-action="fit">&#9638;</button>';
+  viewport.appendChild(controls);
+  container.appendChild(viewport);
+
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: document.documentElement.getAttribute('data-theme') !== 'light' ? 'dark' : 'default',
+    securityLevel: 'loose',
+  });
 
   try {
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: document.documentElement.getAttribute('data-theme') !== 'light' ? 'dark' : 'default',
-      securityLevel: 'loose',
-    });
-    mermaid.run({ nodes: [document.getElementById(diagramId)] });
+    var result = mermaid.run({ nodes: [document.getElementById(diagramId)] });
+    // mermaid.run returns a promise in v11+
+    if (result && typeof result.then === 'function') {
+      result.then(function() {
+        if (isRestore) {
+          applyDiagramTransform(canvas, panel._diagramState, controls);
+        } else {
+          fitDiagramToView(viewport, canvas, panel._diagramState, controls);
+        }
+      });
+    } else {
+      // Fallback: run synchronously completed
+      if (isRestore) {
+        applyDiagramTransform(canvas, panel._diagramState, controls);
+      } else {
+        fitDiagramToView(viewport, canvas, panel._diagramState, controls);
+      }
+    }
   } catch(e) {
     container.innerHTML = '<div class="no-file-msg">Failed to render Mermaid diagram: ' + esc(e.message) + '</div>';
+    return;
   }
+
+  initDiagramPanZoom(viewport, canvas, panel._diagramState, controls);
+}
+
+function applyDiagramTransform(canvas, state, controls) {
+  canvas.style.transform = 'translate(' + state.panX + 'px, ' + state.panY + 'px) scale(' + state.scale + ')';
+  var label = controls.querySelector('.diagram-zoom-label');
+  if (label) label.textContent = Math.round(state.scale * 100) + '%';
+}
+
+function fitDiagramToView(viewport, canvas, state, controls) {
+  canvas.style.transform = 'none';
+  var svg = canvas.querySelector('svg');
+  if (!svg) return;
+
+  var svgRect = svg.getBoundingClientRect();
+  var vpRect = viewport.getBoundingClientRect();
+  var pad = 40;
+
+  if (svgRect.width === 0 || svgRect.height === 0) return;
+
+  var scaleX = (vpRect.width - pad * 2) / svgRect.width;
+  var scaleY = (vpRect.height - pad * 2) / svgRect.height;
+  var scale = Math.min(scaleX, scaleY, 1.5);
+  scale = Math.max(scale, 0.1);
+
+  var scaledW = svgRect.width * scale;
+  var scaledH = svgRect.height * scale;
+  state.panX = (vpRect.width - scaledW) / 2;
+  state.panY = (vpRect.height - scaledH) / 2;
+  state.scale = scale;
+
+  applyDiagramTransform(canvas, state, controls);
+}
+
+function initDiagramPanZoom(viewport, canvas, state, controls) {
+  var MIN_SCALE = 0.1;
+  var MAX_SCALE = 5;
+  var isPanning = false;
+  var startX, startY, startPanX, startPanY;
+
+  viewport.addEventListener('pointerdown', function(e) {
+    if (e.button !== 0) return;
+    if (e.target.closest('.diagram-controls')) return;
+    isPanning = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startPanX = state.panX;
+    startPanY = state.panY;
+    viewport.style.cursor = 'grabbing';
+    viewport.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  viewport.addEventListener('pointermove', function(e) {
+    if (!isPanning) return;
+    state.panX = startPanX + (e.clientX - startX);
+    state.panY = startPanY + (e.clientY - startY);
+    applyDiagramTransform(canvas, state, controls);
+  });
+
+  viewport.addEventListener('pointerup', function(e) {
+    if (!isPanning) return;
+    isPanning = false;
+    viewport.style.cursor = '';
+  });
+
+  viewport.addEventListener('pointercancel', function() {
+    isPanning = false;
+    viewport.style.cursor = '';
+  });
+
+  viewport.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var rect = viewport.getBoundingClientRect();
+    var mouseX = e.clientX - rect.left;
+    var mouseY = e.clientY - rect.top;
+
+    var zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+    var newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, state.scale * zoomFactor));
+
+    var scaleChange = newScale / state.scale;
+    state.panX = mouseX - scaleChange * (mouseX - state.panX);
+    state.panY = mouseY - scaleChange * (mouseY - state.panY);
+    state.scale = newScale;
+
+    applyDiagramTransform(canvas, state, controls);
+  }, { passive: false });
+
+  controls.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var action = btn.dataset.action;
+    var rect = viewport.getBoundingClientRect();
+    var cx = rect.width / 2;
+    var cy = rect.height / 2;
+
+    if (action === 'zoom-in') {
+      var ns = Math.min(MAX_SCALE, state.scale * 1.25);
+      var sc = ns / state.scale;
+      state.panX = cx - sc * (cx - state.panX);
+      state.panY = cy - sc * (cy - state.panY);
+      state.scale = ns;
+      applyDiagramTransform(canvas, state, controls);
+    } else if (action === 'zoom-out') {
+      var ns2 = Math.max(MIN_SCALE, state.scale * 0.8);
+      var sc2 = ns2 / state.scale;
+      state.panX = cx - sc2 * (cx - state.panX);
+      state.panY = cy - sc2 * (cy - state.panY);
+      state.scale = ns2;
+      applyDiagramTransform(canvas, state, controls);
+    } else if (action === 'fit') {
+      fitDiagramToView(viewport, canvas, state, controls);
+    }
+  });
 }
 
 // ─── Panel Tabulator init ─────────────────────────────────────────────────────

@@ -123,6 +123,73 @@
   padding: 14px 18px;
 }
 #file-rendered-view.visible { display: block; }
+#file-rendered-view.diagram-active {
+  overflow: hidden;
+  padding: 0;
+}
+
+/* ─── Diagram pan/zoom viewport ─────────────────────────── */
+.diagram-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.diagram-viewport:active {
+  cursor: grabbing;
+}
+.diagram-canvas {
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.diagram-canvas svg {
+  display: block;
+}
+.diagram-controls {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(10, 10, 20, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid #1e1e32;
+  border-radius: 6px;
+  padding: 4px 6px;
+  z-index: 10;
+}
+.diagram-ctrl-btn {
+  background: none;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  color: #6a6a88;
+  font-family: inherit;
+  font-size: 12px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.diagram-ctrl-btn:hover {
+  background: #1a1a30;
+  color: #b0b0c8;
+  border-color: #3a3a5a;
+}
+.diagram-zoom-label {
+  font-size: 10px;
+  color: #5a5a78;
+  min-width: 36px;
+  text-align: center;
+  pointer-events: none;
+}
 
 .file-rendered { font-size: 11px; line-height: 1.6; color: #b0b0c4; }
 .file-rendered h1 { font-size: 14px; color: #dde; margin: 10px 0 5px; }

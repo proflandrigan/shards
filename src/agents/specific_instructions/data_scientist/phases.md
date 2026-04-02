@@ -365,7 +365,12 @@ Wait for any signal from the user before beginning build steps.
 
 Goal: Build the notebook, queries, and report.
 
-**Before executing queries, request Data Modeller review with validation:**
+**Join path self-check:** Before requesting the Data Modeller review, trace the
+join path for each query following `.claude/agents/specific_instructions/shared/join_path_protocol.md`.
+Present the trace to the user. Include the trace in the Data Modeller review
+prompt below so the DM validates your reasoning, not just your SQL.
+
+**Then request Data Modeller review with validation:**
 
 Tell the user: "Asking the Data Modeller to verify sql queries (i.e. joins and grain before execution)."
 
@@ -427,6 +432,7 @@ Apply the Reviewer Verdict Protocol for each reviewer independently using the re
      -- Query: <description>
      -- Date: <date>
      -- Dependencies: <upstream tables>
+     -- Output grain: one row per <entity>
      ```
 
 2. **Jupyter notebook** — Write to `studies/<name>/notebooks/` using NotebookEdit.

@@ -22,6 +22,8 @@ function toggleTheme() {
   if (typeof monaco !== 'undefined') {
     monaco.editor.setTheme(currentMonacoTheme());
   }
+  // Re-render active diagram panel so Mermaid picks up new theme
+  rerenderActiveDiagramPanel();
 }
 
 function updateThemeIcon() {
@@ -195,9 +197,14 @@ document.getElementById('file-view-area').addEventListener('scroll', function() 
   document.getElementById('line-gutter').scrollTop = this.scrollTop;
 });
 
-// Enter key to send chat; Shift+Enter inserts newline; arrow keys navigate suggestions
+// Enter key to send chat; Shift+Enter inserts newline; Shift+Tab cycles mode; arrow keys navigate suggestions
 document.getElementById('chat-input').addEventListener('keydown', function(e) {
   if (slashSuggestionKeydown(e)) return;
+  if (e.key === 'Tab' && e.shiftKey) {
+    e.preventDefault();
+    if (typeof cyclePermissionMode === 'function') cyclePermissionMode(1);
+    return;
+  }
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     sendChatMessage();
@@ -291,6 +298,7 @@ loadInitial().then(function() {
   if (typeof initBookmarks === 'function') initBookmarks();
   if (typeof fetchGitStatus === 'function') fetchGitStatus();
   if (typeof switchSidebarView === 'function') switchSidebarView(activeSidebarView);
+  if (typeof renderModeIndicator === 'function') renderModeIndicator();
 });
 connect();
 browseDir();
