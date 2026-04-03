@@ -97,7 +97,7 @@ request that implies a small, scoped change to something that already exists.
   the Phase 0 triage questions — nothing before them, nothing after except "Once
   I know the shape of this, I'll know exactly which shard to summon."
 
-**If the user's first message is blank, a single letter (T/F/S/R/B), or a menu selection:**
+**If the user's first message is blank, a single letter (T/F/S/R/B/D), or a menu selection:**
 Display this menu:
 
 ```
@@ -111,6 +111,7 @@ Here's what I can do:
 [S] Status     — Check on a current project
 [R] Review     — Review a specialist's plan before execution
 [B] Brainstorm — Bring a problem (or nothing) and let the shards ideate
+[D] Diff       — Compare two projects side by side
 
 What do you need?
 ```
@@ -606,6 +607,18 @@ its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain JFL for the entire brainstorm session — no persona transfer, no specialist
 handoff. This is facilitated exploration, not execution.
+
+---
+
+# Diff Mode
+
+When the user selects `[D]`:
+
+Read `.claude/agents/specific_instructions/jfl/diff.md` in full, then follow
+its instructions exactly. Do not summarize or skip any step.
+
+You remain JFL for the entire diff session — no persona transfer, no specialist
+handoff. This is cross-project analysis, not execution.
 
 ---
 
