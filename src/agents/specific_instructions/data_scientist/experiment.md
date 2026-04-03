@@ -18,7 +18,11 @@ transfer occurs.
 4. Identify the current metrics baseline — look in project-specs.md or ask the user
    if no baseline is documented.
 5. Establish the `experiments/` subdirectory path: `<project_dir>/experiments/`.
-6. Agree on experiment parameters with the user. Present and confirm:
+6. **Versioning detection:** Read
+   `.claude/agents/specific_instructions/shared/experiment_versioning.md` in full
+   and follow **Section A (Detection)** to determine whether DVC, git, or no
+   versioning is available. Announce the result to the user.
+7. Agree on experiment parameters with the user. Present and confirm:
    - **Outcome metric:** The single primary metric that defines success for this
      experiment run (e.g., "AUC on holdout", "RMSE on test set", "precision@10",
      "R-squared on validation", "mean absolute percentage error"). This is the
@@ -28,7 +32,7 @@ transfer occurs.
      experiment reaches this threshold, flag it and ask the user whether to stop early
      or continue with remaining experiments.
 
-7. **UI detection:** Check if `.shards/ui.port` exists. If it does, Read
+8. **UI detection:** Check if `.shards/ui.port` exists. If it does, Read
    `.claude/agents/specific_instructions/data_scientist/experiment_ui_mode.md` in full
    and follow its instructions for pushing experiment data to the browser throughout
    the session. This is the same pattern used by the Data Analyst's UI mode.
@@ -107,6 +111,7 @@ Shards UI experiment dashboard. Write `experiments/results.json` with this initi
     "source": "<source>"
   },
   "plannedCount": <N>,
+  "versioningMode": "<dvc|git|none — from Section A detection>",
   "status": "setup",
   "currentExperiment": null,
   "experiments": [],
@@ -196,6 +201,11 @@ Before the Researcher consultation, update `experiments/results.json`:
         { "name": "<metric>", "before": <num>, "after": <num>, "delta": <num> }
       ]
     },
+    "checkpoint": {
+      "type": "<git|dvc|null>",
+      "tag": "<exp/project/N-name or null>",
+      "commit": "<sha or null>"
+    },
     "researcherVerdict": "",
     "outcome": "<Improvement|Regression|Neutral>",
     "recommendation": "<Adopt|Revert|Refine>"
@@ -203,6 +213,14 @@ Before the Researcher consultation, update `experiments/results.json`:
   ```
 
 After the Researcher consultation, update the experiment entry's `researcherVerdict` field.
+
+### Step 5.5 — Checkpoint (if versioning enabled)
+
+Follow **Section B** of
+`.claude/agents/specific_instructions/shared/experiment_versioning.md` to create
+a versioned checkpoint of this experiment's results. If versioning mode is
+`none`, skip this step silently. After a successful checkpoint, update the
+`checkpoint` field in the experiment entry you just wrote to `results.json`.
 
 ### Step 6 — Consult Researcher
 Call:
@@ -304,6 +322,12 @@ Factual synthesis only — no opinions here. Include:
 ## Current State
 <what was reverted, what remains changed>
 ```
+
+### Append versioning summary
+
+If versioning mode is not `none`, append the versioning section from **Section E**
+of `.claude/agents/specific_instructions/shared/experiment_versioning.md` to
+`experiments/experiment_summary.md`.
 
 ### Write `experiments/final_recommendations.md`
 This is the agent's own opinionated voice. Use this template exactly:
