@@ -589,6 +589,66 @@ Goal: Build the prompts, evaluation harness, integration code, and safety layer.
 
 6. **Requirements file** — `requirements.txt` with all dependencies
 
+7. **Eval results JSON** — After running the evaluation notebook, write structured
+   results to the project's `eval-results.json`:
+   - Greenfield: `services/<name>/eval-results.json`
+   - Iteration: `<existing_service_dir>/eval-results.json`
+
+   The JSON must follow this schema:
+   ```json
+   {
+     "variant": "ai-engineer",
+     "projectName": "<project_name>",
+     "status": "running",
+     "timestamp": "<ISO-8601>",
+     "summary": {
+       "totalDimensions": 6,
+       "passed": 0,
+       "failed": 0,
+       "overallVerdict": "PENDING"
+     },
+     "dimensions": [
+       { "dimension": "Correctness", "metric": "<metric>", "target": 0.95, "actual": null, "unit": "ratio", "verdict": null }
+     ],
+     "cost": {
+       "perRequest": null,
+       "per1kTokens": null,
+       "monthlyProjected": null,
+       "budget": null,
+       "currency": "USD"
+     },
+     "prompts": [
+       {
+         "name": "<prompt_name>", "version": "<version>", "model": "<model>",
+         "dimensions": [
+           { "dimension": "Correctness", "metric": "<metric>", "target": 0.95, "actual": null, "verdict": null }
+         ],
+         "costPerCall": null, "costPer1kTokens": null, "latencyP95ms": null
+       }
+     ],
+     "safety": {
+       "promptInjection": { "passRate": null, "total": 0 },
+       "adversarialInputs": { "passRate": null, "total": 0 }
+     }
+   }
+   ```
+
+   Write the file initially with `status: "running"` and null values. Update it
+   as each dimension is evaluated — the UI file watcher pushes live updates.
+   When all dimensions are complete, set `status: "complete"`, compute
+   `summary.passed`, `summary.failed`, and `summary.overallVerdict`
+   (PASS if all pass, FAIL if any fail, PARTIAL if mixed).
+
+   If the Shards UI is active (`.shards/ui.port` file exists), push the eval
+   dashboard panel:
+   ```bash
+   node .shards/ui/ui-push.js eval-dashboard \
+     --title "Eval: <project_name>" \
+     --agent "ai-engineer" \
+     --panel-id "eval-<project_name>" \
+     --source "<path_to>/eval-results.json"
+   ```
+
 ### Document Phase 6
 
 ```markdown
@@ -799,7 +859,122 @@ Append JFL's code review summary to the specs. Present findings to user.
 
 Then:
 
-1. **Write a report** to:
+1. **Generate Model Card** — Assemble a structured model card for stakeholder
+   sharing. Read `project-specs.md` to extract: system type and description
+   (Phase 1), architecture decisions (Phase 3), evaluation framework (Phase 4),
+   build results (Phase 6), review verdicts (Phase 7). Read `eval-results.json`
+   for quantitative metrics.
+
+   Consult the Academic shard for ethical considerations:
+
+   ```
+   Task(
+     subagent_type="academic",
+     description="Ethical considerations for model card",
+     prompt="I am the AI Engineer shard generating a model card for project
+     [project_name]. The system is: [1-2 sentence description from Phase 1].
+     End users: [from Phase 1]. Output sensitivity: [from Phase 2].
+     Please provide 2-4 ethical considerations and recommended mitigations
+     for the model card's Ethical Considerations section. Be specific to
+     this system's use case. Keep it concise — bullet points preferred."
+   )
+   ```
+
+   If the Academic shard is unavailable, populate ethical considerations from the
+   output sensitivity assessment in Phase 2 and note that a formal ethics review
+   was not completed.
+
+   Write `model-card.json` to:
+   - Greenfield: `services/<name>/model-card.json`
+   - Iteration: `<existing_service_dir>/model-card.json`
+
+   The JSON must follow this schema:
+   ```json
+   {
+     "schemaVersion": "1.0",
+     "generatedAt": "<ISO-8601>",
+     "generatedBy": "ai-engineer",
+     "projectName": "<project_name>",
+     "modelDetails": {
+       "name": "<model/system name>",
+       "version": "<version>",
+       "type": "<LLM prompt chain | RAG pipeline | AI agent | etc.>",
+       "owner": "<owner>",
+       "date": "<YYYY-MM-DD>",
+       "framework": "<framework>",
+       "license": "<license or N/A>",
+       "references": ["<urls or citations>"]
+     },
+     "intendedUse": {
+       "primaryUse": "<description>",
+       "primaryUsers": "<who>",
+       "outOfScopeUses": ["<uses this system should NOT be used for>"]
+     },
+     "factors": {
+       "relevantFactors": ["<groups, instruments, environments>"],
+       "evaluationFactors": ["<factors evaluated>"]
+     },
+     "metrics": {
+       "performanceMeasures": [
+         { "name": "<metric>", "value": "<value>", "description": "<what it measures>", "rationale": "<why chosen>" }
+       ],
+       "decisionThresholds": [
+         { "name": "<threshold>", "threshold": "<value>", "rationale": "<why>" }
+       ]
+     },
+     "evaluationData": {
+       "datasets": ["<eval set description>"],
+       "preprocessing": "<how prepared>",
+       "size": "<N examples>",
+       "motivation": "<why this eval set>"
+     },
+     "trainingData": {
+       "datasets": ["<training data description or N/A for prompt-based>"],
+       "preprocessing": "<how prepared or N/A>",
+       "size": "<N examples or N/A>",
+       "motivation": "<why this data>"
+     },
+     "quantitativeAnalyses": {
+       "unitaryResults": [
+         { "metric": "<metric>", "value": "<value>", "subset": "<subset>" }
+       ],
+       "intersectionalResults": []
+     },
+     "ethicalConsiderations": {
+       "risks": ["<from Academic shard>"],
+       "mitigations": ["<from Academic shard>"],
+       "academicReview": "<Academic shard's full response>"
+     },
+     "caveatsAndRecommendations": {
+       "caveats": ["<limitations>"],
+       "recommendations": ["<deployment recommendations>"]
+     },
+     "evalSummary": {
+       "overallVerdict": "<PASS | FAIL | PARTIAL>",
+       "dimensions": [
+         { "dimension": "<name>", "metric": "<metric>", "target": "<target>", "actual": "<actual>", "verdict": "<pass | fail>" }
+       ],
+       "cost": {
+         "perRequest": "<$X>",
+         "per1kTokens": "<$X>",
+         "monthlyProjected": "<$X>",
+         "budget": "<$X>"
+       }
+     }
+   }
+   ```
+
+   If the Shards UI is active (`.shards/ui.port` file exists), push the model
+   card panel:
+   ```bash
+   node .shards/ui/ui-push.js model-card \
+     --title "Model Card: <project_name>" \
+     --agent "ai-engineer" \
+     --panel-id "mc-<project_name>" \
+     --source "<path_to>/model-card.json"
+   ```
+
+2. **Write a report** to:
    - Greenfield: `services/<name>/report.md`
    - Iteration: `<existing_service_dir>/report.md`
    - Executive summary: business problem, AI approach, key results
@@ -837,6 +1012,7 @@ Then:
   - Notes: <summary>
   - Recommendation: <proceed | revise phase X | discuss with user>
 - **JFL review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
+- **Model card:** <file path to model-card.json>
 - **Report location:** <file path>
 - **System summary:**
   - Architecture: <simplicity ladder position and description>

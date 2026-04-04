@@ -1,0 +1,157 @@
+/* ─── Eval Dashboard Panel ─────────────────────────────── */
+.eval-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Summary header */
+.eval-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.eval-verdict-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 14px;
+  border-radius: 4px;
+}
+.eval-verdict-badge.pass { background: #1a2a1a; color: #4a9; }
+.eval-verdict-badge.fail { background: #2a1a1a; color: #c84a4a; }
+.eval-verdict-badge.partial { background: #2a2a1a; color: #c8a84a; }
+.eval-summary-stat {
+  font-size: 12px;
+  color: #6a6a88;
+}
+.eval-summary-stat strong { color: #b0b0c8; }
+.eval-status-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.eval-status-badge.running { background: #1a2a1a; color: #4a9; animation: eval-pulse 1.2s ease-in-out infinite; }
+.eval-status-badge.complete { background: #1a2a1a; color: #4a9; }
+@keyframes eval-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Section labels */
+.eval-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6a6a88;
+  margin: 0;
+}
+
+/* Dimensions table */
+.eval-dimensions-table { min-height: 150px; }
+
+/* Prompt comparison (AI Engineer) */
+.eval-prompt-compare { min-height: 180px; }
+
+/* Safety cards */
+.eval-safety-cards {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.eval-safety-card {
+  flex: 1;
+  min-width: 140px;
+  background: #0f0f1e;
+  border: 1px solid #1e1e32;
+  border-radius: 6px;
+  padding: 12px;
+}
+.eval-safety-card-label {
+  font-size: 10px;
+  color: #6a6a88;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+.eval-safety-card-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+.eval-safety-card-value.high { color: #4a9; }
+.eval-safety-card-value.medium { color: #c8a84a; }
+.eval-safety-card-value.low { color: #c84a4a; }
+.eval-safety-card-count {
+  font-size: 10px;
+  color: #6a6a88;
+  margin-top: 2px;
+}
+
+/* Cost cards */
+.eval-cost-cards {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.eval-cost-card {
+  flex: 1;
+  min-width: 120px;
+  background: #0f0f1e;
+  border: 1px solid #1e1e32;
+  border-radius: 6px;
+  padding: 12px;
+}
+.eval-cost-card-label {
+  font-size: 10px;
+  color: #6a6a88;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+.eval-cost-card-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #b0b0c8;
+}
+
+/* Charts (ML Engineer baseline vs candidate) */
+.eval-charts {
+  display: flex;
+  gap: 16px;
+  min-height: 280px;
+}
+.eval-charts > div { flex: 1; min-width: 0; }
+
+/* Infrastructure table (ML Engineer) */
+.eval-infra-table { min-height: 120px; }
+
+/* Verdict badges in tables */
+.eval-cell-pass { color: #4a9; font-weight: 600; }
+.eval-cell-fail { color: #c84a4a; font-weight: 600; }
+
+/* ─── Light theme ─────────────────────────────────────────── */
+[data-theme="light"] .eval-summary-stat { color: #666; }
+[data-theme="light"] .eval-summary-stat strong { color: #333; }
+[data-theme="light"] .eval-section-label { color: #666; }
+[data-theme="light"] .eval-safety-card,
+[data-theme="light"] .eval-cost-card { background: #f8f8f8; border-color: #e0e0e0; }
+[data-theme="light"] .eval-safety-card-label,
+[data-theme="light"] .eval-safety-card-count,
+[data-theme="light"] .eval-cost-card-label { color: #666; }
+[data-theme="light"] .eval-cost-card-value { color: #333; }
+[data-theme="light"] .eval-status-badge.running { background: #e8f5e9; }
+[data-theme="light"] .eval-status-badge.complete { background: #e8f5e9; }
+[data-theme="light"] .eval-verdict-badge.pass { background: #e8f5e9; }
+[data-theme="light"] .eval-verdict-badge.fail { background: #fde8e8; }
+[data-theme="light"] .eval-verdict-badge.partial { background: #fef3e0; }
