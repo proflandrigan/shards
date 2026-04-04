@@ -184,7 +184,7 @@ function renderWsTabs() {
   }
 
   // Panel tabs
-  var PANEL_ICONS = { 'data-viewer': '⊞', 'dag': '⬡', 'diagram': '◈', 'chart': '▦', 'diff': '⊟', 'model-card': '▣' };
+  var PANEL_ICONS = { 'data-viewer': '⊞', 'dag': '⬡', 'diagram': '◈', 'chart': '▦', 'diff': '⊟', 'model-card': '▣', 'eval-dashboard': '◉' };
   for (var pi = 0; pi < panelTabOrder.length; pi++) {
     var pid = panelTabOrder[pi];
     var panel = openPanels[pid];

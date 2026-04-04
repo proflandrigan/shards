@@ -142,6 +142,18 @@ function updatePanelData(panelId, newData) {
     return;
   }
 
+  if (p.panel === 'eval-dashboard') {
+    cleanupEvalDashboard(p);
+    renderEvalDashboard(document.getElementById('file-rendered-view'), p);
+    return;
+  }
+
+  if (p.panel === 'model-card') {
+    cleanupModelCard(p);
+    renderModelCard(document.getElementById('file-rendered-view'), p);
+    return;
+  }
+
   if (p.panel === 'data-viewer' && p.tabulatorInstance) {
     var sorters = [];
     try { sorters = p.tabulatorInstance.getSorters() || []; } catch(e) {}
@@ -201,6 +213,14 @@ function renderPanelPane(panelId) {
     tableView.classList.remove('visible');
     renderedView.classList.add('visible');
     renderPromptLab(renderedView, p);
+  } else if (p.panel === 'eval-dashboard') {
+    tableView.classList.remove('visible');
+    renderedView.classList.add('visible');
+    renderEvalDashboard(renderedView, p);
+  } else if (p.panel === 'model-card') {
+    tableView.classList.remove('visible');
+    renderedView.classList.add('visible');
+    renderModelCard(renderedView, p);
   } else if (p.panel === 'chart') {
     tableView.classList.remove('visible');
     renderedView.classList.add('visible');
@@ -769,6 +789,765 @@ function expCompareColumn(exp) {
   html += '<div style="margin-top:8px;font-size:11px"><strong>Recommendation:</strong> ' + esc(exp.recommendation || '-') + '</div>';
   html += '</div>';
   return html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Eval Dashboard panel
+// ═══════════════════════════════════════════════════════════════
+
+function cleanupEvalDashboard(panel) {
+  if (panel._evalTabulator) {
+    try { panel._evalTabulator.destroy(); } catch(e) {}
+    panel._evalTabulator = null;
+  }
+  if (panel._evalPromptTabulator) {
+    try { panel._evalPromptTabulator.destroy(); } catch(e) {}
+    panel._evalPromptTabulator = null;
+  }
+  if (panel._evalInfraTabulator) {
+    try { panel._evalInfraTabulator.destroy(); } catch(e) {}
+    panel._evalInfraTabulator = null;
+  }
+  var chartEl = document.getElementById('eval-chart-' + panel.panelId);
+  if (typeof Plotly !== 'undefined' && chartEl) {
+    try { Plotly.purge(chartEl); } catch(e) {}
+  }
+}
+
+function renderEvalDashboard(container, panel) {
+  var d = panel.rawData;
+  if (!d) {
+    container.innerHTML = '<div class="no-file-msg">No evaluation data provided.</div>';
+    return;
+  }
+
+  var summary = d.summary || {};
+  var dims = d.dimensions || [];
+  var cost = d.cost || {};
+  var variant = d.variant || 'ai-engineer';
+  var status = d.status || 'running';
+
+  var html = '<div class="eval-dashboard">';
+
+  // ── Summary header ──
+  var verdict = (summary.overallVerdict || 'PARTIAL').toLowerCase();
+  html += '<div class="eval-summary-header">';
+  html += '<span class="eval-verdict-badge ' + verdict + '">' + esc(summary.overallVerdict || 'PENDING') + '</span>';
+  html += '<span class="eval-summary-stat"><strong>' + (summary.passed || 0) + '</strong> passed</span>';
+  html += '<span class="eval-summary-stat"><strong>' + (summary.failed || 0) + '</strong> failed</span>';
+  html += '<span class="eval-status-badge ' + esc(status) + '">' + esc(status) + '</span>';
+  html += '</div>';
+
+  // ── Dimensions table ──
+  html += '<p class="eval-section-label">Evaluation Dimensions</p>';
+  html += '<div class="eval-dimensions-table" id="eval-dims-' + panel.panelId + '"></div>';
+
+  // ── Variant-specific sections ──
+  if (variant === 'ai-engineer') {
+    // Prompt comparison
+    var prompts = d.prompts || [];
+    if (prompts.length > 0) {
+      html += '<p class="eval-section-label">Prompt Comparison</p>';
+      html += '<div class="eval-prompt-compare" id="eval-prompts-' + panel.panelId + '"></div>';
+    }
+
+    // Safety cards
+    var safety = d.safety || {};
+    var safetyKeys = Object.keys(safety);
+    if (safetyKeys.length > 0) {
+      html += '<p class="eval-section-label">Safety</p>';
+      html += '<div class="eval-safety-cards">';
+      for (var si = 0; si < safetyKeys.length; si++) {
+        var sk = safetyKeys[si];
+        var sv = safety[sk];
+        var rate = sv.passRate != null ? sv.passRate : 0;
+        var rateStr = (rate * 100).toFixed(1) + '%';
+        var rateCls = rate >= 0.95 ? 'high' : rate >= 0.8 ? 'medium' : 'low';
+        html += '<div class="eval-safety-card">';
+        html += '<div class="eval-safety-card-label">' + esc(sk.replace(/([A-Z])/g, ' $1').trim()) + '</div>';
+        html += '<div class="eval-safety-card-value ' + rateCls + '">' + rateStr + '</div>';
+        html += '<div class="eval-safety-card-count">' + (sv.total || 0) + ' tests</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+  } else if (variant === 'ml-engineer') {
+    // Baseline vs Candidate chart
+    var baseline = d.baseline;
+    var bestCandidate = d.bestCandidate;
+    if (baseline && bestCandidate) {
+      html += '<p class="eval-section-label">Baseline vs Best Candidate</p>';
+      html += '<div class="eval-charts"><div id="eval-chart-' + panel.panelId + '"></div></div>';
+    }
+
+    // Infrastructure readiness
+    var infra = d.infrastructure || [];
+    if (infra.length > 0) {
+      html += '<p class="eval-section-label">Infrastructure Readiness</p>';
+      html += '<div class="eval-infra-table" id="eval-infra-' + panel.panelId + '"></div>';
+    }
+  }
+
+  // ── Cost cards ──
+  if (cost.perRequest != null || cost.per1kTokens != null || cost.monthlyProjected != null) {
+    html += '<p class="eval-section-label">Cost</p>';
+    html += '<div class="eval-cost-cards">';
+    if (cost.perRequest != null) {
+      html += '<div class="eval-cost-card"><div class="eval-cost-card-label">Per Request</div>';
+      html += '<div class="eval-cost-card-value">$' + cost.perRequest.toFixed(4) + '</div></div>';
+    }
+    if (cost.per1kTokens != null) {
+      html += '<div class="eval-cost-card"><div class="eval-cost-card-label">Per 1k Tokens</div>';
+      html += '<div class="eval-cost-card-value">$' + cost.per1kTokens.toFixed(4) + '</div></div>';
+    }
+    if (cost.monthlyProjected != null) {
+      html += '<div class="eval-cost-card"><div class="eval-cost-card-label">Monthly Projection</div>';
+      html += '<div class="eval-cost-card-value">$' + cost.monthlyProjected.toLocaleString() + '</div></div>';
+    }
+    if (cost.budget != null) {
+      html += '<div class="eval-cost-card"><div class="eval-cost-card-label">Budget</div>';
+      html += '<div class="eval-cost-card-value">$' + cost.budget.toLocaleString() + '</div></div>';
+    }
+    html += '</div>';
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+
+  // ── Render dimensions Tabulator ──
+  if (typeof Tabulator !== 'undefined' && dims.length > 0) {
+    var dimsEl = document.getElementById('eval-dims-' + panel.panelId);
+    if (dimsEl) {
+      panel._evalTabulator = new Tabulator(dimsEl, {
+        data: dims,
+        layout: 'fitDataFill',
+        height: '100%',
+        columns: [
+          { title: 'Dimension', field: 'dimension', minWidth: 120 },
+          { title: 'Metric', field: 'metric', minWidth: 100 },
+          { title: 'Target', field: 'target', hozAlign: 'right', width: 90 },
+          { title: 'Actual', field: 'actual', hozAlign: 'right', width: 90 },
+          { title: 'Unit', field: 'unit', width: 80 },
+          { title: 'Verdict', field: 'verdict', width: 80, hozAlign: 'center',
+            formatter: function(cell) {
+              var v = (cell.getValue() || '').toLowerCase();
+              return '<span class="eval-cell-' + (v === 'pass' ? 'pass' : 'fail') + '">' + esc(v.toUpperCase()) + '</span>';
+            }
+          }
+        ]
+      });
+    }
+  }
+
+  // ── AI Engineer: Prompt comparison Tabulator ──
+  if (variant === 'ai-engineer' && typeof Tabulator !== 'undefined') {
+    var prompts = d.prompts || [];
+    var promptsEl = document.getElementById('eval-prompts-' + panel.panelId);
+    if (promptsEl && prompts.length > 0) {
+      // Build columns: fixed cols + one col per unique dimension
+      var dimNames = [];
+      for (var pi = 0; pi < prompts.length; pi++) {
+        var pDims = prompts[pi].dimensions || [];
+        for (var di = 0; di < pDims.length; di++) {
+          if (dimNames.indexOf(pDims[di].dimension) === -1) dimNames.push(pDims[di].dimension);
+        }
+      }
+
+      var promptRows = prompts.map(function(p) {
+        var row = {
+          name: p.name || '',
+          version: p.version || '',
+          model: p.model || '',
+          costPerCall: p.costPerCall != null ? '$' + p.costPerCall.toFixed(4) : '',
+          costPer1kTokens: p.costPer1kTokens != null ? '$' + p.costPer1kTokens.toFixed(4) : '',
+          latencyP95: p.latencyP95ms != null ? p.latencyP95ms + 'ms' : ''
+        };
+        var pDims = p.dimensions || [];
+        for (var di = 0; di < dimNames.length; di++) {
+          var match = pDims.find(function(dd) { return dd.dimension === dimNames[di]; });
+          if (match) {
+            row['dim_' + di] = (match.actual != null ? match.actual : '') + ' ' + (match.verdict || '');
+            row['dim_' + di + '_verdict'] = match.verdict || '';
+          } else {
+            row['dim_' + di] = '';
+            row['dim_' + di + '_verdict'] = '';
+          }
+        }
+        return row;
+      });
+
+      var promptCols = [
+        { title: 'Prompt', field: 'name', minWidth: 120 },
+        { title: 'Version', field: 'version', width: 70 },
+        { title: 'Model', field: 'model', minWidth: 100 },
+        { title: 'Cost/Call', field: 'costPerCall', hozAlign: 'right', width: 90 },
+        { title: 'Cost/1k Tokens', field: 'costPer1kTokens', hozAlign: 'right', width: 110 },
+        { title: 'Latency P95', field: 'latencyP95', hozAlign: 'right', width: 90 }
+      ];
+      for (var di = 0; di < dimNames.length; di++) {
+        (function(idx, name) {
+          promptCols.push({
+            title: name, field: 'dim_' + idx, hozAlign: 'center', minWidth: 90,
+            formatter: function(cell) {
+              var row = cell.getRow().getData();
+              var v = (row['dim_' + idx + '_verdict'] || '').toLowerCase();
+              var cls = v === 'pass' ? 'eval-cell-pass' : v === 'fail' ? 'eval-cell-fail' : '';
+              return '<span class="' + cls + '">' + esc(cell.getValue()) + '</span>';
+            }
+          });
+        })(di, dimNames[di]);
+      }
+
+      panel._evalPromptTabulator = new Tabulator(promptsEl, {
+        data: promptRows,
+        layout: 'fitDataFill',
+        height: '100%',
+        columns: promptCols
+      });
+    }
+  }
+
+  // ── ML Engineer: Baseline vs Candidate Plotly chart ──
+  if (variant === 'ml-engineer' && typeof Plotly !== 'undefined') {
+    var baseline = d.baseline;
+    var bestCandidate = d.bestCandidate;
+    var chartEl = document.getElementById('eval-chart-' + panel.panelId);
+    if (baseline && bestCandidate && chartEl) {
+      var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+      var fontColor = isDark ? '#b0b0c8' : '#333';
+      var gridColor = isDark ? '#1e1e32' : '#e0e0e0';
+
+      var bMetrics = baseline.metrics || {};
+      var cMetrics = bestCandidate.metrics || {};
+      var metricKeys = Object.keys(cMetrics);
+
+      Plotly.newPlot(chartEl, [
+        {
+          x: metricKeys, y: metricKeys.map(function(k) { return bMetrics[k] || 0; }),
+          type: 'bar', name: esc(baseline.model || 'Baseline'),
+          marker: { color: '#6a6a88' }
+        },
+        {
+          x: metricKeys, y: metricKeys.map(function(k) { return cMetrics[k] || 0; }),
+          type: 'bar', name: esc(bestCandidate.model || 'Best Candidate'),
+          marker: { color: '#4a9' }
+        }
+      ], {
+        barmode: 'group',
+        title: { text: baseline.model + ' vs ' + bestCandidate.model, font: { size: 13, color: fontColor } },
+        paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+        font: { color: fontColor }, margin: { t: 36, r: 16, b: 40, l: 50 },
+        xaxis: { gridcolor: gridColor }, yaxis: { gridcolor: gridColor },
+        legend: { orientation: 'h', y: -0.15 }
+      }, { responsive: true, displayModeBar: false });
+    }
+  }
+
+  // ── ML Engineer: Infrastructure Tabulator ──
+  if (variant === 'ml-engineer' && typeof Tabulator !== 'undefined') {
+    var infra = d.infrastructure || [];
+    var infraEl = document.getElementById('eval-infra-' + panel.panelId);
+    if (infraEl && infra.length > 0) {
+      panel._evalInfraTabulator = new Tabulator(infraEl, {
+        data: infra,
+        layout: 'fitDataFill',
+        height: '100%',
+        columns: [
+          { title: 'Dimension', field: 'dimension', minWidth: 120 },
+          { title: 'Actual', field: 'actual', hozAlign: 'right', width: 100 },
+          { title: 'Budget', field: 'budget', hozAlign: 'right', width: 100 },
+          { title: 'Verdict', field: 'verdict', width: 80, hozAlign: 'center',
+            formatter: function(cell) {
+              var v = (cell.getValue() || '').toLowerCase();
+              return '<span class="eval-cell-' + (v === 'pass' ? 'pass' : 'fail') + '">' + esc(v.toUpperCase()) + '</span>';
+            }
+          }
+        ]
+      });
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Model Card panel
+// ═══════════════════════════════════════════════════════════════
+
+function cleanupModelCard(panel) {
+  if (panel._mcMetricsTabulator) {
+    try { panel._mcMetricsTabulator.destroy(); } catch(e) {}
+    panel._mcMetricsTabulator = null;
+  }
+  if (panel._mcQuantTabulator) {
+    try { panel._mcQuantTabulator.destroy(); } catch(e) {}
+    panel._mcQuantTabulator = null;
+  }
+}
+
+function renderModelCard(container, panel) {
+  var d = panel.rawData;
+  if (!d) {
+    container.innerHTML = '<div class="no-file-msg">No model card data provided.</div>';
+    return;
+  }
+
+  var md = d.modelDetails || {};
+  var iu = d.intendedUse || {};
+  var fac = d.factors || {};
+  var met = d.metrics || {};
+  var evData = d.evaluationData || {};
+  var trData = d.trainingData || {};
+  var qa = d.quantitativeAnalyses || {};
+  var eth = d.ethicalConsiderations || {};
+  var cav = d.caveatsAndRecommendations || {};
+  var evalSum = d.evalSummary || {};
+
+  var html = '<div class="model-card-panel">';
+
+  // ── Header ──
+  html += '<div class="model-card-header">';
+  html += '<h2 class="model-card-title">' + esc(md.name || d.projectName || 'Untitled Model') + '</h2>';
+  html += '<div class="model-card-meta">';
+  if (md.version) html += '<span class="model-card-version-badge">' + esc(md.version) + '</span>';
+  if (md.type) html += '<span class="model-card-meta-item"><strong>Type:</strong> ' + esc(md.type) + '</span>';
+  if (md.date) html += '<span class="model-card-meta-item"><strong>Date:</strong> ' + esc(md.date) + '</span>';
+  if (md.owner) html += '<span class="model-card-meta-item"><strong>Owner:</strong> ' + esc(md.owner) + '</span>';
+  if (md.framework) html += '<span class="model-card-meta-item"><strong>Framework:</strong> ' + esc(md.framework) + '</span>';
+  html += '</div></div>';
+
+  // ── Sections ──
+
+  // 1. Model Details
+  html += mcSection('Model Details', false, function() {
+    var body = '';
+    if (md.license) body += '<p><strong>License:</strong> ' + esc(md.license) + '</p>';
+    var refs = md.references || [];
+    if (refs.length > 0) {
+      body += '<p><strong>References:</strong></p><ul>';
+      for (var i = 0; i < refs.length; i++) body += '<li>' + esc(refs[i]) + '</li>';
+      body += '</ul>';
+    }
+    return body || '<p>No additional details.</p>';
+  });
+
+  // 2. Intended Use
+  html += mcSection('Intended Use', false, function() {
+    var body = '';
+    if (iu.primaryUse) body += '<p><strong>Primary use:</strong> ' + esc(iu.primaryUse) + '</p>';
+    if (iu.primaryUsers) body += '<p><strong>Primary users:</strong> ' + esc(iu.primaryUsers) + '</p>';
+    var oos = iu.outOfScopeUses || [];
+    if (oos.length > 0) {
+      body += '<p><strong>Out-of-scope uses:</strong></p><ul>';
+      for (var i = 0; i < oos.length; i++) body += '<li>' + esc(oos[i]) + '</li>';
+      body += '</ul>';
+    }
+    return body || '<p>Not specified.</p>';
+  });
+
+  // 3. Factors
+  html += mcSection('Factors', false, function() {
+    var body = '';
+    var rf = fac.relevantFactors || [];
+    var ef = fac.evaluationFactors || [];
+    if (rf.length > 0) {
+      body += '<p><strong>Relevant factors:</strong></p><ul>';
+      for (var i = 0; i < rf.length; i++) body += '<li>' + esc(rf[i]) + '</li>';
+      body += '</ul>';
+    }
+    if (ef.length > 0) {
+      body += '<p><strong>Evaluation factors:</strong></p><ul>';
+      for (var i = 0; i < ef.length; i++) body += '<li>' + esc(ef[i]) + '</li>';
+      body += '</ul>';
+    }
+    return body || '<p>Not specified.</p>';
+  });
+
+  // 4. Metrics (rendered as inline table + optional Tabulator)
+  html += mcSection('Metrics', false, function() {
+    var body = '';
+    var pm = met.performanceMeasures || [];
+    if (pm.length > 0) {
+      body += '<table class="model-card-table"><tr><th>Measure</th><th>Value</th><th>Description</th><th>Rationale</th></tr>';
+      for (var i = 0; i < pm.length; i++) {
+        body += '<tr><td>' + esc(pm[i].name || '') + '</td><td>' + esc(String(pm[i].value || '')) + '</td>';
+        body += '<td>' + esc(pm[i].description || '') + '</td><td>' + esc(pm[i].rationale || '') + '</td></tr>';
+      }
+      body += '</table>';
+    }
+    var dt = met.decisionThresholds || [];
+    if (dt.length > 0) {
+      body += '<p><strong>Decision Thresholds:</strong></p>';
+      body += '<table class="model-card-table"><tr><th>Threshold</th><th>Value</th><th>Rationale</th></tr>';
+      for (var i = 0; i < dt.length; i++) {
+        body += '<tr><td>' + esc(dt[i].name || '') + '</td><td>' + esc(String(dt[i].threshold || '')) + '</td>';
+        body += '<td>' + esc(dt[i].rationale || '') + '</td></tr>';
+      }
+      body += '</table>';
+    }
+    return body || '<p>No metrics defined.</p>';
+  });
+
+  // 5. Evaluation Data
+  html += mcSection('Evaluation Data', false, function() {
+    return mcDataSection(evData);
+  });
+
+  // 6. Training Data
+  html += mcSection('Training Data', false, function() {
+    return mcDataSection(trData);
+  });
+
+  // 7. Quantitative Analyses
+  html += mcSection('Quantitative Analyses', false, function() {
+    var body = '';
+    var ur = qa.unitaryResults || [];
+    if (ur.length > 0) {
+      body += '<p><strong>Unitary Results:</strong></p>';
+      body += '<table class="model-card-table"><tr><th>Metric</th><th>Value</th><th>Subset</th></tr>';
+      for (var i = 0; i < ur.length; i++) {
+        body += '<tr><td>' + esc(ur[i].metric || '') + '</td><td>' + esc(String(ur[i].value || '')) + '</td>';
+        body += '<td>' + esc(ur[i].subset || '') + '</td></tr>';
+      }
+      body += '</table>';
+    }
+    var ir = qa.intersectionalResults || [];
+    if (ir.length > 0) {
+      body += '<p><strong>Intersectional Results:</strong></p>';
+      body += '<table class="model-card-table"><tr><th>Metric</th><th>Value</th><th>Factors</th></tr>';
+      for (var i = 0; i < ir.length; i++) {
+        body += '<tr><td>' + esc(ir[i].metric || '') + '</td><td>' + esc(String(ir[i].value || '')) + '</td>';
+        body += '<td>' + esc((ir[i].factors || []).join(', ')) + '</td></tr>';
+      }
+      body += '</table>';
+    }
+    return body || '<p>No quantitative analyses available.</p>';
+  });
+
+  // 8. Ethical Considerations (highlighted)
+  html += mcSection('Ethical Considerations', true, function() {
+    var body = '';
+    var risks = eth.risks || [];
+    if (risks.length > 0) {
+      body += '<p><strong>Risks:</strong></p><ul>';
+      for (var i = 0; i < risks.length; i++) body += '<li>' + esc(risks[i]) + '</li>';
+      body += '</ul>';
+    }
+    var mits = eth.mitigations || [];
+    if (mits.length > 0) {
+      body += '<p><strong>Mitigations:</strong></p><ul>';
+      for (var i = 0; i < mits.length; i++) body += '<li>' + esc(mits[i]) + '</li>';
+      body += '</ul>';
+    }
+    if (eth.academicReview) {
+      body += '<p><strong>Academic Review:</strong></p><p>' + esc(eth.academicReview) + '</p>';
+    }
+    return body || '<p>No ethical considerations documented.</p>';
+  });
+
+  // 9. Caveats and Recommendations
+  html += mcSection('Caveats and Recommendations', false, function() {
+    var body = '';
+    var cavs = cav.caveats || [];
+    if (cavs.length > 0) {
+      body += '<p><strong>Caveats:</strong></p><ul>';
+      for (var i = 0; i < cavs.length; i++) body += '<li>' + esc(cavs[i]) + '</li>';
+      body += '</ul>';
+    }
+    var recs = cav.recommendations || [];
+    if (recs.length > 0) {
+      body += '<p><strong>Recommendations:</strong></p><ul>';
+      for (var i = 0; i < recs.length; i++) body += '<li>' + esc(recs[i]) + '</li>';
+      body += '</ul>';
+    }
+    return body || '<p>No caveats or recommendations.</p>';
+  });
+
+  // ── Eval Summary footer ──
+  var evalDims = evalSum.dimensions || [];
+  if (evalSum.overallVerdict || evalDims.length > 0) {
+    html += '<div class="model-card-eval-footer">';
+    html += '<p class="eval-section-label">Evaluation Summary</p>';
+    if (evalSum.overallVerdict) {
+      var v = evalSum.overallVerdict.toLowerCase();
+      html += '<span class="eval-verdict-badge ' + v + '">' + esc(evalSum.overallVerdict) + '</span>';
+    }
+    if (evalDims.length > 0) {
+      html += '<div class="model-card-eval-dims">';
+      for (var i = 0; i < evalDims.length; i++) {
+        var ev = evalDims[i];
+        var cls = (ev.verdict || '').toLowerCase() === 'pass' ? 'pass' : 'fail';
+        html += '<span class="model-card-eval-dim ' + cls + '">' + esc(ev.dimension) + ': ' + esc(ev.verdict || '') + '</span>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  // ── Export button ──
+  html += '<button class="model-card-export-btn" onclick="mcExportMarkdown(\'' + esc(panel.panelId) + '\')">Export as Markdown</button>';
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Model card section builder
+function mcSection(title, isEthical, contentFn) {
+  var cls = 'model-card-section' + (isEthical ? ' ethical' : '');
+  return '<details class="' + cls + '" open>' +
+    '<summary>' + esc(title) + '</summary>' +
+    '<div class="model-card-section-body">' + contentFn() + '</div>' +
+    '</details>';
+}
+
+// Dataset info helper
+function mcDataSection(data) {
+  var body = '';
+  var ds = data.datasets;
+  if (ds) {
+    var arr = Array.isArray(ds) ? ds : [ds];
+    body += '<p><strong>Datasets:</strong> ' + arr.map(function(d) { return esc(d); }).join(', ') + '</p>';
+  }
+  if (data.size) body += '<p><strong>Size:</strong> ' + esc(String(data.size)) + '</p>';
+  if (data.preprocessing) body += '<p><strong>Preprocessing:</strong> ' + esc(data.preprocessing) + '</p>';
+  if (data.motivation) body += '<p><strong>Motivation:</strong> ' + esc(data.motivation) + '</p>';
+  return body || '<p>Not specified.</p>';
+}
+
+// Export model card as markdown
+function mcExportMarkdown(panelId) {
+  var p = openPanels[panelId];
+  if (!p || !p.rawData) return;
+  var md = modelCardToMarkdown(p.rawData);
+  var blob = new Blob([md], { type: 'text/markdown' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (p.rawData.projectName || 'model-card') + '-model-card.md';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function modelCardToMarkdown(d) {
+  var md = d.modelDetails || {};
+  var iu = d.intendedUse || {};
+  var fac = d.factors || {};
+  var met = d.metrics || {};
+  var evData = d.evaluationData || {};
+  var trData = d.trainingData || {};
+  var qa = d.quantitativeAnalyses || {};
+  var eth = d.ethicalConsiderations || {};
+  var cav = d.caveatsAndRecommendations || {};
+  var evalSum = d.evalSummary || {};
+  var cost = evalSum.cost || {};
+
+  var lines = [];
+  lines.push('# Model Card: ' + (md.name || d.projectName || 'Untitled'));
+  lines.push('');
+  lines.push('- **Version:** ' + (md.version || 'N/A'));
+  lines.push('- **Type:** ' + (md.type || 'N/A'));
+  lines.push('- **Owner:** ' + (md.owner || 'N/A'));
+  lines.push('- **Date:** ' + (md.date || 'N/A'));
+  lines.push('- **Framework:** ' + (md.framework || 'N/A'));
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // Model Details
+  lines.push('## Model Details');
+  lines.push('');
+  if (md.license) lines.push('**License:** ' + md.license);
+  var refs = md.references || [];
+  if (refs.length > 0) {
+    lines.push('');
+    lines.push('**References:**');
+    for (var i = 0; i < refs.length; i++) lines.push('- ' + refs[i]);
+  }
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // Intended Use
+  lines.push('## Intended Use');
+  lines.push('');
+  if (iu.primaryUse) lines.push('- **Primary use:** ' + iu.primaryUse);
+  if (iu.primaryUsers) lines.push('- **Primary users:** ' + iu.primaryUsers);
+  var oos = iu.outOfScopeUses || [];
+  if (oos.length > 0) {
+    lines.push('- **Out-of-scope uses:**');
+    for (var i = 0; i < oos.length; i++) lines.push('  - ' + oos[i]);
+  }
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // Factors
+  lines.push('## Factors');
+  lines.push('');
+  var rf = fac.relevantFactors || [];
+  if (rf.length > 0) {
+    lines.push('- **Relevant factors:** ' + rf.join(', '));
+  }
+  var ef = fac.evaluationFactors || [];
+  if (ef.length > 0) {
+    lines.push('- **Evaluation factors:** ' + ef.join(', '));
+  }
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // Metrics
+  lines.push('## Metrics');
+  lines.push('');
+  var pm = met.performanceMeasures || [];
+  if (pm.length > 0) {
+    lines.push('| Measure | Value | Description | Rationale |');
+    lines.push('|---------|-------|-------------|-----------|');
+    for (var i = 0; i < pm.length; i++) {
+      lines.push('| ' + (pm[i].name || '') + ' | ' + (pm[i].value || '') + ' | ' + (pm[i].description || '') + ' | ' + (pm[i].rationale || '') + ' |');
+    }
+  }
+  var dt = met.decisionThresholds || [];
+  if (dt.length > 0) {
+    lines.push('');
+    lines.push('### Decision Thresholds');
+    lines.push('');
+    lines.push('| Threshold | Value | Rationale |');
+    lines.push('|-----------|-------|-----------|');
+    for (var i = 0; i < dt.length; i++) {
+      lines.push('| ' + (dt[i].name || '') + ' | ' + (dt[i].threshold || '') + ' | ' + (dt[i].rationale || '') + ' |');
+    }
+  }
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // Evaluation Data
+  lines.push('## Evaluation Data');
+  lines.push('');
+  lines.push(mdDataSection(evData));
+  lines.push('---');
+  lines.push('');
+
+  // Training Data
+  lines.push('## Training Data');
+  lines.push('');
+  lines.push(mdDataSection(trData));
+  lines.push('---');
+  lines.push('');
+
+  // Quantitative Analyses
+  lines.push('## Quantitative Analyses');
+  lines.push('');
+  var ur = qa.unitaryResults || [];
+  if (ur.length > 0) {
+    lines.push('### Unitary Results');
+    lines.push('');
+    lines.push('| Metric | Value | Subset |');
+    lines.push('|--------|-------|--------|');
+    for (var i = 0; i < ur.length; i++) {
+      lines.push('| ' + (ur[i].metric || '') + ' | ' + (ur[i].value || '') + ' | ' + (ur[i].subset || '') + ' |');
+    }
+    lines.push('');
+  }
+  var ir = qa.intersectionalResults || [];
+  if (ir.length > 0) {
+    lines.push('### Intersectional Results');
+    lines.push('');
+    lines.push('| Metric | Value | Factors |');
+    lines.push('|--------|-------|---------|');
+    for (var i = 0; i < ir.length; i++) {
+      lines.push('| ' + (ir[i].metric || '') + ' | ' + (ir[i].value || '') + ' | ' + (ir[i].factors || []).join(', ') + ' |');
+    }
+    lines.push('');
+  }
+  lines.push('---');
+  lines.push('');
+
+  // Ethical Considerations
+  lines.push('## Ethical Considerations');
+  lines.push('');
+  var risks = eth.risks || [];
+  if (risks.length > 0) {
+    lines.push('**Risks:**');
+    for (var i = 0; i < risks.length; i++) lines.push('- ' + risks[i]);
+    lines.push('');
+  }
+  var mits = eth.mitigations || [];
+  if (mits.length > 0) {
+    lines.push('**Mitigations:**');
+    for (var i = 0; i < mits.length; i++) lines.push('- ' + mits[i]);
+    lines.push('');
+  }
+  if (eth.academicReview) {
+    lines.push('**Academic Review:**');
+    lines.push('');
+    lines.push(eth.academicReview);
+    lines.push('');
+  }
+  lines.push('---');
+  lines.push('');
+
+  // Caveats and Recommendations
+  lines.push('## Caveats and Recommendations');
+  lines.push('');
+  var cavs = cav.caveats || [];
+  if (cavs.length > 0) {
+    lines.push('**Caveats:**');
+    for (var i = 0; i < cavs.length; i++) lines.push('- ' + cavs[i]);
+    lines.push('');
+  }
+  var recs = cav.recommendations || [];
+  if (recs.length > 0) {
+    lines.push('**Recommendations:**');
+    for (var i = 0; i < recs.length; i++) lines.push('- ' + recs[i]);
+    lines.push('');
+  }
+  lines.push('---');
+  lines.push('');
+
+  // Eval Summary
+  var evalDims = evalSum.dimensions || [];
+  if (evalSum.overallVerdict || evalDims.length > 0) {
+    lines.push('## Evaluation Summary');
+    lines.push('');
+    if (evalSum.overallVerdict) lines.push('- **Overall verdict:** ' + evalSum.overallVerdict);
+    lines.push('');
+    if (evalDims.length > 0) {
+      lines.push('| Dimension | Metric | Target | Actual | Verdict |');
+      lines.push('|-----------|--------|--------|--------|---------|');
+      for (var i = 0; i < evalDims.length; i++) {
+        var ev = evalDims[i];
+        lines.push('| ' + (ev.dimension || '') + ' | ' + (ev.metric || '') + ' | ' + (ev.target || '') + ' | ' + (ev.actual || '') + ' | ' + (ev.verdict || '') + ' |');
+      }
+      lines.push('');
+    }
+    if (cost.perRequest != null || cost.per1kTokens != null || cost.monthlyProjected != null) {
+      lines.push('### Cost Profile');
+      lines.push('');
+      if (cost.perRequest != null) lines.push('- **Per request:** $' + cost.perRequest.toFixed(4));
+      if (cost.per1kTokens != null) lines.push('- **Per 1k tokens:** $' + cost.per1kTokens.toFixed(4));
+      if (cost.monthlyProjected != null) lines.push('- **Monthly projection:** $' + cost.monthlyProjected);
+      if (cost.budget != null) lines.push('- **Budget:** $' + cost.budget);
+      lines.push('');
+    }
+  }
+
+  return lines.join('\n');
+}
+
+function mdDataSection(data) {
+  var lines = [];
+  var ds = data.datasets;
+  if (ds) {
+    var arr = Array.isArray(ds) ? ds : [ds];
+    lines.push('- **Datasets:** ' + arr.join(', '));
+  }
+  if (data.size) lines.push('- **Size:** ' + data.size);
+  if (data.preprocessing) lines.push('- **Preprocessing:** ' + data.preprocessing);
+  if (data.motivation) lines.push('- **Motivation:** ' + data.motivation);
+  lines.push('');
+  return lines.join('\n');
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -1,0 +1,161 @@
+/* ─── Model Card Panel ────────────────────────────────── */
+.model-card-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Header */
+.model-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #1e1e32;
+}
+.model-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e0e0f0;
+  margin: 0;
+}
+.model-card-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: #6a6a88;
+}
+.model-card-meta-item strong { color: #b0b0c8; }
+.model-card-version-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: #1a1a3a;
+  color: #6a8ac8;
+}
+
+/* Collapsible sections */
+.model-card-section {
+  border: 1px solid #1e1e32;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.model-card-section summary {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b0b0c8;
+  cursor: pointer;
+  background: #0f0f1e;
+  user-select: none;
+  list-style: none;
+}
+.model-card-section summary::-webkit-details-marker { display: none; }
+.model-card-section summary::before {
+  content: '\25B6';
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 9px;
+  transition: transform 0.15s ease;
+  color: #6a6a88;
+}
+.model-card-section[open] summary::before { transform: rotate(90deg); }
+.model-card-section summary:hover { color: #e0e0f0; }
+.model-card-section-body {
+  padding: 12px 14px;
+  font-size: 12px;
+  color: #b0b0c8;
+  line-height: 1.6;
+}
+.model-card-section-body p { margin: 0 0 8px; }
+.model-card-section-body ul {
+  margin: 4px 0 8px;
+  padding-left: 18px;
+}
+.model-card-section-body li { margin-bottom: 4px; }
+.model-card-section-body strong { color: #e0e0f0; }
+
+/* Ethical considerations — highlighted */
+.model-card-section.ethical { border-color: #2a2a1a; }
+.model-card-section.ethical summary { background: #1a1a0f; color: #c8a84a; }
+
+/* Inline tables */
+.model-card-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin: 8px 0;
+}
+.model-card-table th,
+.model-card-table td {
+  padding: 5px 8px;
+  text-align: left;
+  border-bottom: 1px solid #1e1e32;
+}
+.model-card-table th {
+  color: #6a6a88;
+  font-weight: 600;
+}
+
+/* Eval summary footer */
+.model-card-eval-footer {
+  border-top: 1px solid #1e1e32;
+  padding-top: 12px;
+}
+.model-card-eval-footer .eval-verdict-badge {
+  font-size: 11px;
+  padding: 3px 10px;
+}
+.model-card-eval-dims {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.model-card-eval-dim {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.model-card-eval-dim.pass { background: #1a2a1a; color: #4a9; }
+.model-card-eval-dim.fail { background: #2a1a1a; color: #c84a4a; }
+
+/* Export button */
+.model-card-export-btn {
+  background: #0f0f1e;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  color: #6a6a88;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 6px 14px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+.model-card-export-btn:hover { border-color: #4a9; color: #4a9; }
+
+/* ─── Light theme ─────────────────────────────────────────── */
+[data-theme="light"] .model-card-title { color: #1a1a1a; }
+[data-theme="light"] .model-card-meta { color: #666; }
+[data-theme="light"] .model-card-meta-item strong { color: #333; }
+[data-theme="light"] .model-card-header { border-bottom-color: #e0e0e0; }
+[data-theme="light"] .model-card-version-badge { background: #e8eaf6; color: #3f51b5; }
+[data-theme="light"] .model-card-section { border-color: #e0e0e0; }
+[data-theme="light"] .model-card-section summary { background: #f8f8f8; color: #333; }
+[data-theme="light"] .model-card-section summary::before { color: #999; }
+[data-theme="light"] .model-card-section summary:hover { color: #1a1a1a; }
+[data-theme="light"] .model-card-section-body { color: #444; }
+[data-theme="light"] .model-card-section-body strong { color: #1a1a1a; }
+[data-theme="light"] .model-card-section.ethical { border-color: #e0d4a0; }
+[data-theme="light"] .model-card-section.ethical summary { background: #fef9e7; color: #8b6914; }
+[data-theme="light"] .model-card-table th { color: #666; }
+[data-theme="light"] .model-card-table td { border-bottom-color: #e0e0e0; }
+[data-theme="light"] .model-card-eval-footer { border-top-color: #e0e0e0; }
+[data-theme="light"] .model-card-export-btn { background: #f8f8f8; border-color: #e0e0e0; color: #666; }
+[data-theme="light"] .model-card-export-btn:hover { border-color: #4a9; color: #4a9; }

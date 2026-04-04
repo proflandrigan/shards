@@ -14,7 +14,8 @@
  *   diagram       ER / architecture diagram
  *   chart         Plotly.js chart
  *   diff          Code diff viewer
- *   model-card    Structured model metadata card
+ *   model-card    Structured model metadata card (Mitchell et al. 2019)
+ *   eval-dashboard Live evaluation results dashboard
  *   close         Close a panel by ID
  *
  * Options:
@@ -128,7 +129,7 @@ async function main() {
 
   if (!args.panel) process.exit(0);
 
-  const VALID_PANELS = ['data-viewer', 'dag', 'diagram', 'chart', 'diff', 'model-card', 'experiment-dashboard', 'prompt-lab', 'close'];
+  const VALID_PANELS = ['data-viewer', 'dag', 'diagram', 'chart', 'diff', 'model-card', 'experiment-dashboard', 'eval-dashboard', 'prompt-lab', 'close'];
   if (!VALID_PANELS.includes(args.panel)) process.exit(0);
 
   // Resolve source to absolute path if given
