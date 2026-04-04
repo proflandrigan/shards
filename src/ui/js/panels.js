@@ -136,6 +136,12 @@ function updatePanelData(panelId, newData) {
     return;
   }
 
+  if (p.panel === 'prompt-lab') {
+    cleanupPromptLab(p);
+    renderPromptLab(document.getElementById('file-rendered-view'), p);
+    return;
+  }
+
   if (p.panel === 'data-viewer' && p.tabulatorInstance) {
     var sorters = [];
     try { sorters = p.tabulatorInstance.getSorters() || []; } catch(e) {}
@@ -191,6 +197,10 @@ function renderPanelPane(panelId) {
     tableView.classList.remove('visible');
     renderedView.classList.add('visible');
     renderExperimentDashboard(renderedView, p);
+  } else if (p.panel === 'prompt-lab') {
+    tableView.classList.remove('visible');
+    renderedView.classList.add('visible');
+    renderPromptLab(renderedView, p);
   } else if (p.panel === 'chart') {
     tableView.classList.remove('visible');
     renderedView.classList.add('visible');
@@ -759,4 +769,456 @@ function expCompareColumn(exp) {
   html += '<div style="margin-top:8px;font-size:11px"><strong>Recommendation:</strong> ' + esc(exp.recommendation || '-') + '</div>';
   html += '</div>';
   return html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Prompt Laboratory panel
+// ═══════════════════════════════════════════════════════════════
+
+function cleanupPromptLab(panel) {
+  if (panel._plEditor) {
+    try { panel._plEditor.dispose(); } catch(e) {}
+    panel._plEditor = null;
+  }
+  if (panel._plDiffEditor) {
+    try {
+      var model = panel._plDiffEditor.getModel();
+      if (model) {
+        if (model.original) model.original.dispose();
+        if (model.modified) model.modified.dispose();
+      }
+      panel._plDiffEditor.dispose();
+    } catch(e) {}
+    panel._plDiffEditor = null;
+  }
+  if (panel._plOriginalModel) {
+    try { panel._plOriginalModel.dispose(); } catch(e) {}
+    panel._plOriginalModel = null;
+  }
+  if (panel._plModifiedModel) {
+    try { panel._plModifiedModel.dispose(); } catch(e) {}
+    panel._plModifiedModel = null;
+  }
+}
+
+function renderPromptLab(container, panel) {
+  var d = panel.rawData;
+  if (!d) {
+    container.innerHTML = '<div class="pl-empty">No prompt lab data. The AI Engineer will push this panel when a project has prompts.</div>';
+    return;
+  }
+
+  // Preserve editor state across re-renders
+  panel._plState = panel._plState || { diffMode: false, resultsCollapsed: false };
+  var state = panel._plState;
+
+  var prompts = d.prompts || [];
+  var active = d.activePrompt || (prompts.length > 0 ? prompts[0].name : '');
+  var status = d.status || 'idle';
+  var testRuns = d.testRuns || [];
+  var syncHistory = d.syncHistory || [];
+  var pid = panel.panelId;
+
+  var html = '<div class="prompt-lab">';
+
+  // ── Toolbar ──
+  html += '<div class="pl-toolbar">';
+  html += '<select id="pl-select-' + esc(pid) + '" onchange="plSelectPrompt(\'' + esc(pid) + '\')">';
+  for (var i = 0; i < prompts.length; i++) {
+    var sel = prompts[i].name === active ? ' selected' : '';
+    html += '<option value="' + esc(prompts[i].name) + '"' + sel + '>' + esc(prompts[i].filename) + ' (v' + esc(prompts[i].currentVersion) + ')</option>';
+  }
+  if (prompts.length === 0) html += '<option value="">No prompts found</option>';
+  html += '</select>';
+
+  html += '<span class="pl-status-badge ' + esc(status) + '">' + esc(status) + '</span>';
+  html += '<span class="pl-toolbar-spacer"></span>';
+
+  html += '<button class="pl-btn' + (state.diffMode ? ' active' : '') + '" onclick="plToggleDiff(\'' + esc(pid) + '\')" title="Toggle diff view">Diff</button>';
+  html += '<button class="pl-btn primary" onclick="plRunTest(\'' + esc(pid) + '\')"' + (status !== 'idle' ? ' disabled' : '') + '>Run Test</button>';
+  html += '<button class="pl-btn sync" onclick="plSyncToProject(\'' + esc(pid) + '\')"' + (status !== 'idle' ? ' disabled' : '') + '>Sync to Project</button>';
+  html += '</div>';
+
+  // ── Body: editor + sidebar ──
+  html += '<div class="pl-body">';
+
+  // Editor column
+  html += '<div class="pl-editor-col">';
+  html += '<div class="pl-editor-container" id="pl-editor-' + esc(pid) + '"></div>';
+  html += '</div>';
+
+  // Version sidebar
+  html += '<div class="pl-sidebar" id="pl-sidebar-' + esc(pid) + '">';
+  html += '</div>';
+
+  html += '</div>'; // end pl-body
+
+  // ── Results area ──
+  html += '<div class="pl-results" id="pl-results-' + esc(pid) + '" style="' + (state.resultsCollapsed ? 'display:none' : '') + '">';
+  html += '</div>';
+
+  html += '</div>'; // end prompt-lab
+  container.innerHTML = html;
+
+  // Render sidebar
+  plRenderVersionSidebar(
+    document.getElementById('pl-sidebar-' + pid),
+    prompts, active, syncHistory, pid
+  );
+
+  // Render results
+  plRenderResults(document.getElementById('pl-results-' + pid), testRuns);
+
+  // Initialize Monaco editor
+  var editorContainer = document.getElementById('pl-editor-' + pid);
+  if (!editorContainer) return;
+
+  // Determine content to show
+  var content = d.editedContent || d.originalContent || '';
+  var originalContent = d.originalContent || '';
+  panel._plOriginalContent = originalContent;
+  panel._plEditedContent = content;
+
+  if (state.diffMode) {
+    plInitDiffEditor(panel, editorContainer, originalContent, content);
+  } else {
+    plInitEditor(panel, editorContainer, content);
+  }
+}
+
+function plInitEditor(panel, container, content) {
+  loadMonaco().then(function() {
+    if (panel._plEditor || panel._plDiffEditor) return; // already initialized
+    var editor = createMonacoEditor(container, {
+      value: content,
+      language: 'markdown',
+      wordWrap: 'on',
+      readOnly: false,
+    });
+    panel._plEditor = editor;
+
+    // Track edits
+    editor.onDidChangeModelContent(function() {
+      panel._plEditedContent = editor.getValue();
+    });
+
+    // Keyboard shortcuts
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function() {
+      plRunTest(panel.panelId);
+    });
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
+      // Save draft — prevent default, content is auto-tracked
+    });
+  });
+}
+
+function plInitDiffEditor(panel, container, original, modified) {
+  loadMonaco().then(function() {
+    if (panel._plEditor || panel._plDiffEditor) return;
+    var originalModel = monaco.editor.createModel(original, 'markdown');
+    var modifiedModel = monaco.editor.createModel(modified, 'markdown');
+    panel._plOriginalModel = originalModel;
+    panel._plModifiedModel = modifiedModel;
+
+    var diffEditor = monaco.editor.createDiffEditor(container, {
+      theme: currentMonacoTheme(),
+      automaticLayout: true,
+      readOnly: false,
+      renderSideBySide: true,
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      fontSize: 13,
+      fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
+      lineHeight: 20,
+      scrollbar: { verticalScrollbarSize: 5, horizontalScrollbarSize: 5 },
+      overviewRulerLanes: 0,
+      padding: { top: 8, bottom: 8 },
+    });
+    diffEditor.setModel({ original: originalModel, modified: modifiedModel });
+    panel._plDiffEditor = diffEditor;
+
+    // Track edits on modified side
+    modifiedModel.onDidChangeContent(function() {
+      panel._plEditedContent = modifiedModel.getValue();
+    });
+  });
+}
+
+function plSelectPrompt(panelId) {
+  var p = openPanels[panelId];
+  if (!p || !p.rawData) return;
+  var sel = document.getElementById('pl-select-' + panelId);
+  if (!sel) return;
+  var promptName = sel.value;
+  plLoadPrompt(panelId, promptName);
+}
+
+function plLoadPrompt(panelId, promptName) {
+  var p = openPanels[panelId];
+  if (!p || !p.rawData) return;
+  var d = p.rawData;
+
+  // Find the prompt in data
+  var prompt = null;
+  for (var i = 0; i < (d.prompts || []).length; i++) {
+    if (d.prompts[i].name === promptName) { prompt = d.prompts[i]; break; }
+  }
+  if (!prompt) return;
+
+  // Build the file path
+  var promptsDir = d.promptsDir || 'prompts';
+  var filePath = (d.projectDir ? d.projectDir + '/' : '') + promptsDir + '/' + prompt.filename;
+
+  authFetch('/browse/file/text?path=' + encodeURIComponent(filePath))
+    .then(function(res) { return res.ok ? res.text() : Promise.reject('File not found'); })
+    .then(function(content) {
+      p._plOriginalContent = content;
+      p._plEditedContent = content;
+      d.activePrompt = promptName;
+      d.originalContent = content;
+      d.editedContent = content;
+
+      // Update editor
+      if (p._plEditor) {
+        p._plEditor.setValue(content);
+      } else if (p._plDiffEditor) {
+        // Re-render in diff mode with new content
+        cleanupPromptLab(p);
+        var container = document.getElementById('pl-editor-' + panelId);
+        if (container) {
+          container.innerHTML = '';
+          plInitDiffEditor(p, container, content, content);
+        }
+      }
+
+      // Re-render sidebar to update active state
+      var sidebar = document.getElementById('pl-sidebar-' + panelId);
+      if (sidebar) {
+        plRenderVersionSidebar(sidebar, d.prompts || [], promptName, d.syncHistory || [], panelId);
+      }
+    })
+    .catch(function(err) {
+      console.warn('plLoadPrompt failed:', err);
+    });
+}
+
+function plToggleDiff(panelId) {
+  var p = openPanels[panelId];
+  if (!p) return;
+  p._plState = p._plState || { diffMode: false, resultsCollapsed: false };
+  p._plState.diffMode = !p._plState.diffMode;
+
+  // Capture current content before cleanup
+  var editedContent = p._plEditedContent || '';
+  var originalContent = p._plOriginalContent || '';
+  cleanupPromptLab(p);
+
+  var container = document.getElementById('pl-editor-' + panelId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (p._plState.diffMode) {
+    plInitDiffEditor(p, container, originalContent, editedContent);
+  } else {
+    plInitEditor(p, container, editedContent);
+  }
+
+  // Update diff button active state
+  var toolbar = container.closest('.prompt-lab');
+  if (toolbar) {
+    var btns = toolbar.querySelectorAll('.pl-btn');
+    for (var i = 0; i < btns.length; i++) {
+      if (btns[i].textContent === 'Diff') {
+        btns[i].classList.toggle('active', p._plState.diffMode);
+        break;
+      }
+    }
+  }
+}
+
+function plRunTest(panelId) {
+  var p = openPanels[panelId];
+  if (!p || !p.rawData) return;
+  var d = p.rawData;
+  if (d.status !== 'idle') return;
+
+  var promptName = d.activePrompt || '';
+  var content = p._plEditedContent || '';
+  if (!promptName || !content) return;
+
+  var message = '[PROMPT-LAB] Run evaluation for prompt "' + promptName + '" with content:\n---\n' + content + '\n---';
+
+  // Find active session
+  var sessionId = activeSessionId;
+
+  authFetch('/chat/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: message, sessionId: sessionId })
+  }).then(function(res) {
+    if (!res.ok) console.warn('plRunTest: chat/send failed');
+  }).catch(function(err) {
+    console.warn('plRunTest error:', err);
+  });
+
+  // Optimistic status update
+  var badge = document.querySelector('#pl-select-' + panelId);
+  if (badge) {
+    var statusBadge = badge.parentNode.querySelector('.pl-status-badge');
+    if (statusBadge) {
+      statusBadge.className = 'pl-status-badge testing';
+      statusBadge.textContent = 'testing';
+    }
+  }
+}
+
+function plSyncToProject(panelId) {
+  var p = openPanels[panelId];
+  if (!p || !p.rawData) return;
+  var d = p.rawData;
+  if (d.status !== 'idle') return;
+
+  var promptName = d.activePrompt || '';
+  var content = p._plEditedContent || '';
+  if (!promptName || !content) return;
+
+  var message = '[PROMPT-LAB] Sync prompt "' + promptName + '" to project. Edited content:\n---\n' + content + '\n---\nWrite to prompts/ with incremented version, update project-specs.md, and commit.';
+
+  var sessionId = activeSessionId;
+
+  authFetch('/chat/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: message, sessionId: sessionId })
+  }).then(function(res) {
+    if (!res.ok) console.warn('plSyncToProject: chat/send failed');
+  }).catch(function(err) {
+    console.warn('plSyncToProject error:', err);
+  });
+
+  // Optimistic status update
+  var badge = document.querySelector('#pl-select-' + panelId);
+  if (badge) {
+    var statusBadge = badge.parentNode.querySelector('.pl-status-badge');
+    if (statusBadge) {
+      statusBadge.className = 'pl-status-badge syncing';
+      statusBadge.textContent = 'syncing';
+    }
+  }
+}
+
+function plRenderResults(container, testRuns) {
+  if (!container) return;
+  if (!testRuns || testRuns.length === 0) {
+    container.innerHTML = '<div class="pl-results-header"><span class="pl-results-title">Test Results</span></div>' +
+      '<div style="font-size:11px;color:#6a6a88">No test runs yet. Edit a prompt and click "Run Test".</div>';
+    return;
+  }
+
+  // Show latest run
+  var run = testRuns[testRuns.length - 1];
+  var html = '<div class="pl-results-header">';
+  html += '<span class="pl-results-title">Test Results — ' + esc(run.promptName || '') + '</span>';
+  html += '<span style="font-size:10px;color:#6a6a88">' + esc(run.timestamp || '') + '</span>';
+  html += '</div>';
+
+  // Status
+  if (run.status === 'running') {
+    html += '<div style="font-size:11px;color:#c8a84a">Evaluation running...</div>';
+    container.innerHTML = html;
+    return;
+  }
+  if (run.status === 'error') {
+    html += '<div style="font-size:11px;color:#c84a4a">Error: ' + esc(run.error || 'Unknown error') + '</div>';
+    container.innerHTML = html;
+    return;
+  }
+
+  // Metrics cards
+  var metrics = run.metrics || {};
+  var metricKeys = Object.keys(metrics);
+  if (metricKeys.length > 0) {
+    html += '<div class="pl-metrics">';
+    for (var i = 0; i < metricKeys.length; i++) {
+      var key = metricKeys[i];
+      var val = metrics[key];
+      var valStr = typeof val === 'object' ? JSON.stringify(val) : String(val);
+      html += '<div class="pl-metric-card">';
+      html += '<div class="pl-metric-name">' + esc(key) + '</div>';
+      html += '<div class="pl-metric-value">' + esc(valStr) + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  // Sample outputs
+  var samples = run.sampleOutputs || [];
+  if (samples.length > 0) {
+    html += '<div class="pl-samples">';
+    for (var j = 0; j < samples.length && j < 5; j++) {
+      var s = samples[j];
+      html += '<div class="pl-sample-card">';
+      if (s.score != null) html += '<span class="pl-sample-score">' + s.score + '</span>';
+      html += '<div class="pl-sample-label">Input</div>';
+      html += '<div class="pl-sample-text">' + esc(s.input || '') + '</div>';
+      html += '<div class="pl-sample-label" style="margin-top:4px">Output</div>';
+      html += '<div class="pl-sample-text">' + esc(s.output || '') + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+function plRenderVersionSidebar(container, prompts, activePrompt, syncHistory, panelId) {
+  if (!container) return;
+  var html = '<div class="pl-sidebar-title">Prompts</div>';
+
+  for (var i = 0; i < prompts.length; i++) {
+    var pr = prompts[i];
+    var isActive = pr.name === activePrompt;
+    html += '<div class="pl-prompt-item' + (isActive ? ' active' : '') + '" onclick="plLoadPrompt(\'' + esc(panelId) + '\', \'' + esc(pr.name) + '\')">';
+    html += '<div class="pl-prompt-name">' + esc(pr.filename) + '</div>';
+    html += '<div class="pl-prompt-meta">v' + esc(pr.currentVersion) + ' &middot; ' + esc(pr.model || '') + '</div>';
+    html += '</div>';
+
+    // Version list (expanded for active prompt)
+    if (isActive && pr.versions && pr.versions.length > 0) {
+      html += '<div class="pl-version-list">';
+      for (var j = 0; j < pr.versions.length; j++) {
+        var v = pr.versions[j];
+        var isCurrent = v.version === pr.currentVersion;
+        var scoreStr = '';
+        if (v.evaluationScore) {
+          var scoreKeys = Object.keys(v.evaluationScore);
+          if (scoreKeys.length > 0) scoreStr = scoreKeys[0] + ': ' + v.evaluationScore[scoreKeys[0]];
+        }
+        html += '<div class="pl-version-item' + (isCurrent ? ' current' : '') + '">';
+        html += '<span>v' + esc(v.version) + (isCurrent ? ' (current)' : '') + '</span>';
+        html += '<span>' + esc(scoreStr) + '</span>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+  }
+
+  // Sync history
+  if (syncHistory.length > 0) {
+    html += '<div class="pl-sync-history">';
+    html += '<div class="pl-sidebar-title">Sync History</div>';
+    for (var k = syncHistory.length - 1; k >= 0 && k >= syncHistory.length - 5; k--) {
+      var sh = syncHistory[k];
+      html += '<div class="pl-sync-entry">';
+      html += esc(sh.promptName) + ' <span class="version">v' + esc(sh.fromVersion) + ' → v' + esc(sh.toVersion) + '</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  if (prompts.length === 0) {
+    html += '<div style="padding:12px;font-size:11px;color:#6a6a88">No prompts in project.</div>';
+  }
+
+  container.innerHTML = html;
 }

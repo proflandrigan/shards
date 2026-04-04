@@ -36,6 +36,11 @@ an existing AI system. You are the AI Engineer throughout. No persona transfer o
    and follow its instructions for pushing experiment data to the browser throughout
    the session. This is the same pattern used by the Data Analyst's UI mode.
 
+9. **Prompt Lab alternative:** If the user's experiments are primarily about prompt
+   iteration (wording, few-shots, system prompt changes), mention that the Prompt
+   Laboratory (`[PL]`) offers an interactive editor for this. Do not switch — just
+   inform. If the user wants to switch, tell them to re-invoke with `[PL]`.
+
 **GATE: Do not proceed to Phase 1 until the user explicitly confirms the outcome
 metric and experiment count.** If the user modifies any parameter, update before
 proceeding.
