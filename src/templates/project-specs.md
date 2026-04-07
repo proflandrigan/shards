@@ -5,6 +5,8 @@
 - **Track:** {{TRACK}}
 - **Status:** In Progress
 - **Directory:** {{PROJECT_DIR}}
+- **Dependencies:** {{DEPENDENCIES}}
+- **Brainstorm origin:** {{BRAINSTORM_ORIGIN}}
 
 ---
 

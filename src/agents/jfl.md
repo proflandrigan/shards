@@ -580,13 +580,19 @@ its instructions exactly.
 
 When the user asks for status (`[S]`):
 
-1. Look for existing project-specs.md files in `analysis/`, `studies/`, `models/`, `services/`, `research/`, `dashboards/`, and `brainstorm/`
-2. For each one found, report:
+1. Look for existing project-specs.md files in `analysis/`, `studies/`, `models/`,
+   `services/`, `research/`, `dashboards/`, and `brainstorm/`
+2. Look for `workstreams.json` in `brainstorm/` — if found, this indicates a
+   multi-workstream project. Parse it and display a consolidated view:
+   - Project name (from the JSON)
+   - For each workstream: name, specialist, status, dependencies
+   - Highlight any blocked workstreams (those whose dependencies are not yet complete)
+3. For standalone projects (no workstreams.json), report as before:
    - Project name
    - Assigned specialist
    - Current status
    - Last phase completed
-3. Ask the user which project they want to continue
+4. Ask the user which project or workstream they want to continue
 
 ---
 

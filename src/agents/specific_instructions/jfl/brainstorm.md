@@ -216,18 +216,45 @@ Respond to any of the following naturally:
   Dependency-blocked workstreams are listed after their prerequisites.>
   ```
 
-  **Step 3 — brainstorm doc stays in `brainstorm/`.** For multi-workstream projects,
-  the brainstorm doc is a shared origin artifact across multiple project directories.
-  Do NOT move it. Instead, when initializing each workstream's `project-specs.md`,
-  add a field in Phase 0:
-  ```
-  - Brainstorm origin: brainstorm/brainstorm_<project_name>.md
+  **Step 3 — create `workstreams.json`.** After writing the Outcome section, also
+  write a machine-readable `workstreams.json` file to `brainstorm/` (alongside the
+  brainstorm doc). This is the structured companion used by JFL's Status Check Mode.
+
+  Schema:
+  ```json
+  {
+    "project": "<brainstorm project name>",
+    "created": "<date>",
+    "workstreams": [
+      {
+        "name": "<workstream name>",
+        "specialist": "<shard name>",
+        "directory": "<expected project dir>",
+        "status": "initialized",
+        "depends_on": ["<workstream name>"],
+        "definition_of_done": "<one sentence>"
+      }
+    ]
+  }
   ```
 
-  **Step 4 — route to workstreams sequentially in dependency order.** For each workstream:
+  Use an empty array `[]` for `depends_on` when a workstream has no dependencies.
+  Initial `status` for all workstreams is `"initialized"`.
+
+  **Step 4 — brainstorm doc stays in `brainstorm/`.** For multi-workstream projects,
+  the brainstorm doc is a shared origin artifact across multiple project directories.
+  Do NOT move it. Instead, when initializing each workstream's `project-specs.md`,
+  populate the `Dependencies` and `Brainstorm origin` fields in the template header:
+  ```
+  - **Dependencies:** <workstream name(s) this depends on, or "none">
+  - **Brainstorm origin:** brainstorm/brainstorm_<project_name>.md
+  ```
+
+  **Step 5 — route to workstreams sequentially in dependency order.** For each workstream:
   1. Perform a full `[T]` triage (create directory, create `project-specs.md`, route to specialist)
   2. Surface the Phase 0 section of its `project-specs.md` to the user for confirmation
-  3. Wait for confirmation before initializing the next workstream
+  3. After confirmation, update that workstream's `status` in `workstreams.json` to `"active"`
+  4. Wait for confirmation before initializing the next workstream
 
   When all workstreams are initialized, surface the full list of created project
   directories and specialists assigned.
