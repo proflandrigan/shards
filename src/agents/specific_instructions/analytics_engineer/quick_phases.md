@@ -54,6 +54,10 @@ Wait for any signal from the user before beginning build steps.
 3. Run the stack's build/validate command to validate
 4. Summarize what changed
 
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
+
 ### Document Quick Phase 2
 
 ```markdown
@@ -66,6 +70,9 @@ Wait for any signal from the user before beginning build steps.
 - **Validation result:** Pass | Fail — <details>
 - **Tests passing:** <N> / <N>
 - **Follow-up needed:** Yes / No — <if yes, describe>
+- **Knowledge harvested:**
+  - <title> → .shards/knowledge/<type>/<filename>.md
+  - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
 

@@ -294,6 +294,14 @@ Create or append to:
   - Study report: <path to report.md>
 - **Definition of done:** <trained model | deployed service | perf improvement | full pipeline | design doc>
 - **Complexity assessment:** <1-2 sentences on scope and risk>
+### Knowledge Ledger
+- **Entries checked:** <N> | N/A — ledger not found
+- **Relevant entries found:** <N>
+  - <title> (<type>, <confidence>) — <1-line relevance>
+- **Or:** No relevant entries found
+- **Relevant features:** <N> | N/A — no features directory
+  - <feature title> (<feature_type>, grain: <grain>, verified by: <agent> in <source_project>)
+  - Or: No relevant features found
 ```
 
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
@@ -359,6 +367,7 @@ Read `.claude/agents/specific_instructions/shared/reviewer_verdict_protocol.md` 
 
 The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
 
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
 - **Classify first: greenfield or iteration.** This shapes everything.
 - **Triage first.** Never write code or design infrastructure before Phase 0 is confirmed.
 - **Always ask about latency and memory.** If nobody has a latency budget, make

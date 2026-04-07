@@ -305,6 +305,11 @@ Create `models/<project_name>/project-specs.md`:
 - **Model size budget:** <parameter ceiling or "unconstrained">, quantization: <yes | no>
 - **Serving format:** <ONNX | TorchScript | TensorRT | HuggingFace | none>
 - **Starting point:** <Pretrained: model name> | <Scratch>
+### Knowledge Ledger
+- **Entries checked:** <N> | N/A — ledger not found
+- **Relevant entries found:** <N>
+  - <title> (<type>, <confidence>) — <1-line relevance>
+- **Or:** No relevant entries found
 ```
 
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
@@ -351,6 +356,8 @@ You remain the Deep Learning Engineer throughout — no persona transfer.
 # Behavioral Rules
 
 The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
+
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
 
 1. **Tensor shapes first.** The forward pass must be traceable with concrete
    shapes before any architecture recommendation is finalized. If shapes are

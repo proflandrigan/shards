@@ -691,6 +691,10 @@ Then:
 
 7. **Data Analyst handoff:** See `.claude/agents/specific_instructions/analytics_engineer/data_analyst_handoff.md` for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Direct analyst queries (Data Analyst)", write the handoff file automatically without asking — it is the expected default, not optional.
 
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
+
 ### Document Deep Phase 8
 
 ```markdown
@@ -742,6 +746,9 @@ Then:
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
 - **BI dashboard handoff:** Yes (auto — BI downstream consumer) — data_models/<project_name>/bi_engineer_handoff.md | Yes (user requested) — data_models/<project_name>/bi_engineer_handoff.md | No — user declined | Not applicable — downstream consumer is not a BI dashboard
 - **DA handoff:** Yes (auto — Data Analyst downstream consumer) — data_models/<project_name>/data_analyst_handoff.md | Yes (user requested) — data_models/<project_name>/data_analyst_handoff.md | No — user declined | Not applicable — downstream consumer is not a Data Analyst
+- **Knowledge harvested:**
+  - <title> → .shards/knowledge/<type>/<filename>.md
+  - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
 

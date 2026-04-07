@@ -531,7 +531,15 @@ weight decay; Goyal et al., 2017 for LR scaling, etc.)>
 1. <experiment or engineering step>
 2. <experiment or engineering step>
 3. <experiment or engineering step>
+
+## Knowledge Harvested
+- <title> → .shards/knowledge/<type>/<filename>.md
+- Or: None — project did not produce reusable knowledge
 ```
+
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
 
 **GATE: Read Phase 5 summary to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
 

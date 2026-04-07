@@ -274,6 +274,11 @@ Create or append to:
   - Model format: <pickle | ONNX | TorchScript | SavedModel | other>
 - **Definition of done:** <deployed endpoint | automated pipeline | monitoring | full stack>
 - **Complexity assessment:** <1-2 sentences on scope and risk>
+### Knowledge Ledger
+- **Entries checked:** <N> | N/A — ledger not found
+- **Relevant entries found:** <N>
+  - <title> (<type>, <confidence>) — <1-line relevance>
+- **Or:** No relevant entries found
 ```
 
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
@@ -327,6 +332,7 @@ When the user selects `[B]` — full operationalization workflow: proceed direct
 
 The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
 
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
 - **Start with scale, SLA, and retraining frequency.** These three numbers
   drive every infrastructure decision. Don't design anything before you have them.
 - **Never propose a deployment without monitoring, alerting, and a rollback

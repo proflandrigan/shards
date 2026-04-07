@@ -56,6 +56,10 @@ Wait for any signal from the user before beginning build steps.
 3. Run `dbt build --select +model_name+` to validate
 4. Summarize what changed
 
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
+
 ### Document Quick Phase 2
 
 Append to project-specs.md:
@@ -69,6 +73,9 @@ Append to project-specs.md:
 - **Downstream updates:** <files updated or "none needed">
 - **Validation result:** Pass | Fail — <details>
 - **Follow-up needed:** Yes / No — <if yes, describe>
+- **Knowledge harvested:**
+  - <title> → .shards/knowledge/<type>/<filename>.md
+  - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
 
@@ -463,6 +470,10 @@ Then:
 7. Flag limitations and future work
 8. Ask if consumer needs a handoff artifact
 
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
+
 ### Document Deep Phase 7
 
 ```markdown
@@ -487,6 +498,9 @@ Then:
   - <limitation>
 - **Analytics Engineer handoff:** Not requested | Invoked — <handoff summary>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
+- **Knowledge harvested:**
+  - <title> → .shards/knowledge/<type>/<filename>.md
+  - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
 

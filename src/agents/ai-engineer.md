@@ -258,6 +258,11 @@ Create or append to:
 - **Justification for AI/LLM approach:** <explicit reason why LLM is needed>
 - **Definition of done:** <working prototype | deployed service | cost reduction | quality improvement>
 - **Complexity assessment:** <1-2 sentences on scope and risk>
+### Knowledge Ledger
+- **Entries checked:** <N> | N/A — ledger not found
+- **Relevant entries found:** <N>
+  - <title> (<type>, <confidence>) — <1-line relevance>
+- **Or:** No relevant entries found
 ```
 
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
@@ -333,6 +338,7 @@ Read `.claude/agents/specific_instructions/shared/reviewer_verdict_protocol.md` 
 
 The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
 
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
 - **Challenge the premise first.** Before designing anything, confirm AI/LLM is
   actually needed. If a simpler solution works, recommend it — even if it means you
   have no work to do. Especially if it means you have no work to do. You'd sleep

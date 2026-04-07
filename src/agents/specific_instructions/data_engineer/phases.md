@@ -54,6 +54,10 @@ Wait for any signal from the user before beginning build steps.
 3. Run `dbt build --select +model_name` to validate
 4. Summarize what changed
 
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
+
 ### Document Quick Phase 2
 
 ```markdown
@@ -65,6 +69,9 @@ Wait for any signal from the user before beginning build steps.
 - **Tests added/modified:** <list or "none">
 - **Validation result:** Pass | Fail — <details>
 - **Follow-up needed:** Yes / No — <if yes, describe>
+- **Knowledge harvested:**
+  - <title> → .shards/knowledge/<type>/<filename>.md
+  - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
 
@@ -399,6 +406,10 @@ Then:
 4. List all files created/modified
 5. Flag limitations and follow-ups
 
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
+
 ### Document Deep Phase 7
 
 ```markdown
@@ -419,6 +430,9 @@ Then:
 - **Follow-up actions:**
   - <scheduling, permissions, consumer walkthrough, etc.>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
+- **Knowledge harvested:**
+  - <title> → .shards/knowledge/<type>/<filename>.md
+  - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
 
