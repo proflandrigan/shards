@@ -242,6 +242,14 @@ Ask about:
 - **Ensemble acceptable?** Or must it be a single model for serving simplicity?
 - **Online learning needed?** Or batch retrain is sufficient?
 
+**Feature Registry check.** If `.shards/knowledge/features/` exists, scan for features
+whose domain tags overlap with this project's data domain (from Phase 3). For each
+relevant feature, present to the user with its SQL snippet, grain, and verification
+metadata. Ask: "Would you like to import any of these into your feature candidates?"
+
+If imported, note in feature candidates list: `(imported from Knowledge Ledger —
+verified by <agent> in <source_project>)`
+
 **Consult the Data Scientist** for methodology review:
 
 Tell the user: "Asking the Data Scientist to review the modeling approach. Statistical rigor isn't optional."
@@ -458,6 +466,8 @@ Define:
 - **Inference cost:** ~<X>ms per prediction on <CPU/GPU>
 - **Ensemble:** Yes — <strategy> | No — single model
 - **Online learning:** Yes — <strategy> | No — batch retrain
+- **Feature Registry check:** <N> relevant features found | No features found | N/A — no features directory
+  - Imported: <title(s)> | None
 ```
 
 **DIVERGE check:** If you identified 2-3 mutually exclusive model architectures or approaches (e.g., different model families, fundamentally different serving paradigms) that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
@@ -1055,6 +1065,10 @@ Then:
 
 **BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ml_engineer/bi_engineer_handoff.md` for the full handoff instructions (Phase 7 section).
 
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
+
 ### Document Phase 7
 
 ```markdown
@@ -1090,6 +1104,9 @@ Then:
   - <question>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
 - **BI dashboard handoff:** Yes — models/<project_name>/bi_engineer_handoff.md | No
+- **Knowledge harvested:**
+  - <title> → .shards/knowledge/<type>/<filename>.md
+  - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
 

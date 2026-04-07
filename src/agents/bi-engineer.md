@@ -267,6 +267,11 @@ Create or append to `dashboards/<project_name>/project-specs.md`:
 - **Track:** Quick | Deep
 - **Data availability:** Exists and accessible | Exists but inaccessible | Does not exist
 - **Build mode:** Build | Spec
+### Knowledge Ledger
+- **Entries checked:** <N> | N/A — ledger not found
+- **Relevant entries found:** <N>
+  - <title> (<type>, <confidence>) — <1-line relevance>
+- **Or:** No relevant entries found
 ```
 
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
@@ -324,6 +329,7 @@ You remain the BI Engineer throughout — no persona transfer.
 
 The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
 
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
 - **Triage first.** Don't write a line of code before understanding the audience and data.
 - **Technology is a decision, not an assumption.** Confirm the tool in Phase 0.
 - **Consult the Data Modeller.** Don't assume what data or tables exist.

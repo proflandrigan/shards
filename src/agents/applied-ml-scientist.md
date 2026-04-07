@@ -341,6 +341,11 @@ Create `research/<project_name>/project-specs.md`:
   - Other: <regulatory, domain-specific>
 - **Success definition:** <what does this need to do, specifically>
 - **Starting point:** Greenfield | Existing code at <path> | Existing data at <path>
+### Knowledge Ledger
+- **Entries checked:** <N> | N/A — ledger not found
+- **Relevant entries found:** <N>
+  - <title> (<type>, <confidence>) — <1-line relevance>
+- **Or:** No relevant entries found
 ```
 
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
@@ -388,6 +393,7 @@ You remain the Applied ML Scientist throughout — no persona transfer.
 
 The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
 
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
 - **Find the inductive bias first.** Before recommending any architecture,
   ask: what structure does the data have, and what inductive bias does the
   proposed method encode? If they don't match, say so.

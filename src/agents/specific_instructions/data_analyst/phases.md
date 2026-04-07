@@ -459,6 +459,10 @@ Summarize:
 3. Any caveats or limitations
 4. Suggested follow-ups (if any)
 
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
+
 ### Document Phase 4
 
 ```markdown
@@ -474,6 +478,9 @@ Summarize:
 - **Follow-up analyses suggested:**
   - <suggestion or "none">
 - **Original question answered:** Yes | Partially | No — <explanation>
+- **Knowledge harvested:**
+  - <title> → .shards/knowledge/<type>/<filename>.md
+  - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
 

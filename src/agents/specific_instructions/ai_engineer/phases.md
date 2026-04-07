@@ -991,6 +991,10 @@ Then:
 
 6. **BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ai_engineer/bi_engineer_handoff.md` for the full handoff instructions.
 
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
+
 ### Document Phase 7
 
 ```markdown
@@ -1038,6 +1042,9 @@ Then:
   - <question>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
 - **BI dashboard handoff:** Yes — services/<project_name>/bi_engineer_handoff.md | No — user declined | N/A — iteration, existing dashboard unchanged
+- **Knowledge harvested:**
+  - <title> → .shards/knowledge/<type>/<filename>.md
+  - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
 

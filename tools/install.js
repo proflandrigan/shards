@@ -94,7 +94,8 @@ function uninstall() {
   }
 
   fs.unlinkSync(manifestPath);
-  console.log(`\n✅ Uninstalled ${removed} files.\n`);
+  console.log(`\n✅ Uninstalled ${removed} files.`);
+  console.log(`  ℹ  .shards/knowledge/ preserved (persistent workspace memory)\n`);
 }
 
 // ─── Install ─────────────────────────────────────────────────────────────────
@@ -143,6 +144,29 @@ function install() {
   const uiFiles = listFiles(UI_SRC);
   for (const f of uiFiles) {
     console.log(`  ✓ .shards/ui/${f}`);
+  }
+
+  // 6. Create Knowledge Ledger directory
+  const knowledgeDir = path.join(SHARDS_DIR, "knowledge");
+  const knowledgeSubdirs = ["entities", "infrastructure", "patterns", "features"];
+  if (!fs.existsSync(knowledgeDir)) {
+    fs.mkdirSync(knowledgeDir, { recursive: true });
+    for (const sub of knowledgeSubdirs) {
+      fs.mkdirSync(path.join(knowledgeDir, sub), { recursive: true });
+    }
+    // Copy INDEX.md template
+    const indexSrc = path.join(TEMPLATES_SRC, "knowledge-index.md");
+    const indexDest = path.join(knowledgeDir, "INDEX.md");
+    if (fs.existsSync(indexSrc)) {
+      fs.copyFileSync(indexSrc, indexDest);
+    }
+    console.log("\n📂 Created .shards/knowledge/ (persistent workspace memory)");
+  } else {
+    console.log("\n📂 .shards/knowledge/ already exists (preserved)");
+    // Ensure subdirs exist even on re-install
+    for (const sub of knowledgeSubdirs) {
+      fs.mkdirSync(path.join(knowledgeDir, sub), { recursive: true });
+    }
   }
 
   // 7. Create output directories
@@ -201,6 +225,7 @@ phased workflow.
 |---------|-------|-------------|------------|
 | \`/shards\` | JFL (Orchestrator) | Friendly, structured | Triage, delegation, final review |
 | \`/brainstorm\` | JFL (Brainstorm) | Friendly, structured | Multi-agent ideation, hack day exploration |
+| \`/knowledge\` | JFL (Knowledge) | Friendly, structured | Seed, browse, and manage the Knowledge Ledger |
 | \`/data-analyst\` | Data Analyst | Helpful | Adhoc queries, quick analyses |
 | \`/data-scientist\` | Data Scientist | Condescending | EDA, modeling, deep studies |
 | \`/ml-engineer\` | ML Engineer | Intense | Recommenders, ranking, production ML |
@@ -246,6 +271,25 @@ phased workflow.
 Every project produces a \`project-specs.md\` file documenting all decisions.
 Agents cannot advance to the next phase until each phase is written and confirmed.
 This is the gate pattern — documentation IS the gate.
+
+### Knowledge Ledger
+
+Shards maintains a persistent workspace-wide Knowledge Ledger at \`.shards/knowledge/\`.
+Agents automatically check it before starting work and contribute to it when projects complete.
+
+- \`.shards/knowledge/INDEX.md\` — one-line-per-entry index scanned for keyword matches
+- \`.shards/knowledge/entities/\` — data table quirks, column semantics, grain surprises
+- \`.shards/knowledge/infrastructure/\` — warehouse/API/system behaviors
+- \`.shards/knowledge/patterns/\` — reusable SQL/Python snippets
+- \`.shards/knowledge/features/\` — verified ML features (Data Scientist + ML Engineer)
+
+**Auto-retrieval:** Before Phase 1, agents scan INDEX.md for entries relevant to the
+current project and document findings in project-specs.md.
+
+**Auto-harvest:** After JFL final review, agents extract reusable knowledge and present
+candidates for user confirmation before writing to the ledger.
+
+The knowledge directory is preserved across installs and uninstalls.
 `;
 
   if (fs.existsSync(claudeMdPath)) {

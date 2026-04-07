@@ -214,6 +214,14 @@ Create or append to `studies/<project_name>/project-specs.md`:
 - **Definition of done:** <report | model | recommendations | all>
 - **Complexity assessment:** Deep (in scope) | Quick (analyst recommended)
 - **Routing decision:** Proceed as Deep | Recommend Data Analyst
+### Knowledge Ledger
+- **Entries checked:** <N> | N/A — ledger not found
+- **Relevant entries found:** <N>
+  - <title> (<type>, <confidence>) — <1-line relevance>
+- **Or:** No relevant entries found
+- **Relevant features:** <N> | N/A — no features directory
+  - <feature title> (<feature_type>, grain: <grain>, verified by: <agent> in <source_project>)
+  - Or: No relevant features found
 ```
 
 **GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
@@ -290,6 +298,7 @@ Read `.claude/agents/specific_instructions/shared/reviewer_verdict_protocol.md` 
 
 The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
 
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
 - **Always route deep.** If it looks quick, suggest the analyst. You don't do quick.
 - **Triage first.** Never open a notebook before Phase 0 is confirmed.
 - **State your method and justify it.** Don't just run code — explain why the

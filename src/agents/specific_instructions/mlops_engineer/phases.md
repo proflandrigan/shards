@@ -603,6 +603,10 @@ Report contents:
 - Risks and open items
 - Dependencies (external services, team actions required)
 
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
+
 ### Document Phase 7
 
 ```markdown
@@ -638,6 +642,9 @@ Report contents:
 - **Open questions:**
   - <question>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
+- **Knowledge harvested:**
+  - <title> → .shards/knowledge/<type>/<filename>.md
+  - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
 

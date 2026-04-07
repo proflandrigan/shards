@@ -193,6 +193,14 @@ Ask about (and provide examples):
 
 Suggest a model family with justification. Propose a baseline model before anything complex.
 
+**Feature Registry check.** If `.shards/knowledge/features/` exists, scan for features
+whose domain tags overlap with this project's data domain (from Phase 2). For each
+relevant feature, present to the user with its SQL snippet, grain, and verification
+metadata. Ask: "Would you like to import any of these into your feature candidates?"
+
+If imported, note in feature candidates list: `(imported from Knowledge Ledger —
+verified by <agent> in <source_project>)`
+
 **Request ML Engineer review of the modeling approach:**
 
 Tell the user: "I'm asking the ML Engineer to review the modeling approach. Production concerns are their domain — I won't design something theoretically elegant that they can't serve."
@@ -278,6 +286,8 @@ Apply the Reviewer Verdict Protocol using the returned verdict (Aligned / Concer
   - Verdict: Aligned | Concerns raised
   - Tier: Proceed | Proceed with caveats
   - Reviewer resolution: Approved | User override — <rationale>
+- **Feature Registry check:** <N> relevant features found | No features found | N/A — no features directory
+  - Imported: <title(s)> | None
 ```
 
 **If Deployment intent is "Productionized":**
@@ -586,6 +596,10 @@ Then:
 
 7. **BI dashboard handoff (recurring visualizations):** See `.claude/agents/specific_instructions/data_scientist/bi_engineer_handoff.md` for the full handoff instructions (Phase 7, Step 7 section).
 
+**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
+Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+the protocol. Present candidates to the user for confirmation before writing.
+
 ### Document Phase 7
 
 ```markdown
@@ -610,6 +624,9 @@ Then:
 - **Productionization handoff:** Yes — ML Engineer | No — one-off study
 - **If handoff — ML Engineer handoff file:** studies/<project_name>/ml_engineer_handoff.md | N/A
 - **BI dashboard handoff:** Yes — studies/<project_name>/bi_engineer_handoff.md | No
+- **Knowledge harvested:**
+  - <title> → .shards/knowledge/<type>/<filename>.md
+  - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
 
