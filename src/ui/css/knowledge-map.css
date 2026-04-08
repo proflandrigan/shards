@@ -1,0 +1,383 @@
+/* ─── Knowledge Map Panel ─────────────────────────────── */
+.km-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Toolbar */
+.km-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #1e1e32;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.km-search {
+  flex: 1;
+  min-width: 140px;
+  max-width: 280px;
+  padding: 5px 10px;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  background: #0a0a1a;
+  color: #e0e0f0;
+  font-size: 12px;
+  outline: none;
+}
+.km-search:focus { border-color: #3860c0; }
+.km-search::placeholder { color: #4a4a68; }
+
+.km-filter-group {
+  display: flex;
+  gap: 4px;
+}
+.km-filter-chip {
+  padding: 3px 10px;
+  border: 1px solid #1e1e32;
+  border-radius: 12px;
+  background: transparent;
+  color: #8888a8;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.km-filter-chip:hover { border-color: #3860c0; color: #b0b0c8; }
+.km-filter-chip.active { background: #1a1a3a; border-color: #3860c0; color: #6a8ac8; font-weight: 600; }
+
+.km-toolbar-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.km-btn {
+  padding: 4px 12px;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  background: #0f0f1e;
+  color: #b0b0c8;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.km-btn:hover { border-color: #3860c0; color: #e0e0f0; }
+.km-btn-primary {
+  background: #1a2a5a;
+  border-color: #3860c0;
+  color: #8ab0ff;
+}
+.km-btn-primary:hover { background: #243470; }
+.km-btn-danger { border-color: #5a1a1a; color: #c86a6a; }
+.km-btn-danger:hover { background: #2a0a0a; border-color: #c86a6a; }
+
+/* Content area */
+.km-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Card grid */
+.km-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+/* Type section header */
+.km-type-section {
+  margin-bottom: 20px;
+}
+.km-type-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8888a8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #14142a;
+}
+
+/* Cards */
+.km-card {
+  border: 1px solid #1e1e32;
+  border-radius: 6px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #0a0a1a;
+}
+.km-card:hover { border-color: #3860c0; background: #0e0e20; }
+.km-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.km-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0e0f0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.km-type-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+.km-type-badge.entities { background: #0e1e3a; color: #4a8ae8; }
+.km-type-badge.infrastructure { background: #1e0e2a; color: #9a6ac8; }
+.km-type-badge.patterns { background: #0e2a1a; color: #4ac87a; }
+.km-type-badge.features { background: #2a1e0a; color: #c8a04a; }
+
+.km-confidence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.km-confidence-dot.high { background: #4ac87a; }
+.km-confidence-dot.medium { background: #c8a04a; }
+.km-confidence-dot.low { background: #c86a6a; }
+
+.km-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.km-domain-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #1a1a3a;
+  color: #6a8ac8;
+}
+.km-card-date {
+  font-size: 10px;
+  color: #6a6a88;
+  margin-left: auto;
+}
+.km-stale-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid #8a6a2a;
+  color: #c8a04a;
+  margin-left: 4px;
+}
+.km-card-preview {
+  font-size: 11px;
+  color: #7a7a98;
+  line-height: 1.4;
+  max-height: 42px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.km-card-preview p { margin: 0; }
+
+/* Expanded card */
+.km-card.expanded {
+  grid-column: 1 / -1;
+  cursor: default;
+  border-color: #3860c0;
+  background: #0c0c1c;
+}
+.km-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+.km-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.km-field label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6a6a88;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.km-field input,
+.km-field select,
+.km-field textarea {
+  padding: 6px 10px;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  background: #0a0a1a;
+  color: #e0e0f0;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+.km-field input:focus,
+.km-field select:focus,
+.km-field textarea:focus { border-color: #3860c0; }
+.km-field textarea {
+  min-height: 100px;
+  resize: vertical;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  line-height: 1.5;
+}
+.km-edit-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.km-preview-area {
+  border: 1px solid #14142a;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 12px;
+  color: #b0b0c8;
+  line-height: 1.5;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.km-preview-area p { margin: 0 0 8px; }
+.km-preview-area code {
+  background: #1a1a3a;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 11px;
+}
+.km-preview-label {
+  font-size: 10px;
+  color: #4a4a68;
+  margin-bottom: 4px;
+}
+
+/* Graph view */
+.km-graph-viewport {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.km-graph-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  cursor: grab;
+}
+.km-graph-canvas:active { cursor: grabbing; }
+.km-graph-canvas svg { display: block; }
+
+/* Empty state */
+.km-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: #6a6a88;
+  text-align: center;
+  padding: 40px;
+}
+.km-empty-icon {
+  font-size: 48px;
+  opacity: 0.3;
+}
+.km-empty-state h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #8888a8;
+  margin: 0;
+}
+.km-empty-state p {
+  font-size: 12px;
+  max-width: 360px;
+  line-height: 1.5;
+}
+
+/* New entry form (modal-ish overlay in content area) */
+.km-new-entry-form {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #1e1e32;
+  border-radius: 8px;
+  background: #0c0c1c;
+}
+.km-new-entry-form h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e0e0f0;
+  margin: 0 0 14px;
+}
+.km-field-row {
+  display: flex;
+  gap: 10px;
+}
+.km-field-row .km-field { flex: 1; }
+
+/* Confirmation dialog */
+.km-confirm-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.km-confirm-box {
+  background: #0f0f1e;
+  border: 1px solid #1e1e32;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 360px;
+  text-align: center;
+}
+.km-confirm-box p { font-size: 13px; color: #b0b0c8; margin-bottom: 14px; }
+.km-confirm-box .km-edit-actions { justify-content: center; }
+
+/* ─── Light theme overrides ──────────────────────────── */
+[data-theme="light"] .km-toolbar { border-bottom-color: #ddd; }
+[data-theme="light"] .km-search { background: #fff; border-color: #ccc; color: #333; }
+[data-theme="light"] .km-search::placeholder { color: #999; }
+[data-theme="light"] .km-filter-chip { border-color: #ccc; color: #666; }
+[data-theme="light"] .km-filter-chip.active { background: #e8f0ff; border-color: #3860c0; color: #2a5ab0; }
+[data-theme="light"] .km-btn { background: #f8f8f8; border-color: #ccc; color: #555; }
+[data-theme="light"] .km-btn:hover { border-color: #3860c0; color: #333; }
+[data-theme="light"] .km-btn-primary { background: #e8f0ff; border-color: #3860c0; color: #2a5ab0; }
+[data-theme="light"] .km-card { background: #fff; border-color: #ddd; }
+[data-theme="light"] .km-card:hover { border-color: #3860c0; background: #fafafe; }
+[data-theme="light"] .km-card.expanded { background: #fafafe; border-color: #3860c0; }
+[data-theme="light"] .km-card-title { color: #333; }
+[data-theme="light"] .km-type-badge.entities { background: #e0edff; color: #2a5ab0; }
+[data-theme="light"] .km-type-badge.infrastructure { background: #f0e4ff; color: #6a3aaa; }
+[data-theme="light"] .km-type-badge.patterns { background: #e0f5e8; color: #2a8a4a; }
+[data-theme="light"] .km-type-badge.features { background: #fff5e0; color: #8a6a2a; }
+[data-theme="light"] .km-domain-tag { background: #e8f0ff; color: #2a5ab0; }
+[data-theme="light"] .km-card-preview { color: #777; }
+[data-theme="light"] .km-type-header { color: #666; border-bottom-color: #eee; }
+[data-theme="light"] .km-field input,
+[data-theme="light"] .km-field select,
+[data-theme="light"] .km-field textarea { background: #fff; border-color: #ccc; color: #333; }
+[data-theme="light"] .km-preview-area { border-color: #ddd; color: #555; }
+[data-theme="light"] .km-preview-area code { background: #e8f0ff; }
+[data-theme="light"] .km-new-entry-form { background: #fafafe; border-color: #ddd; }
+[data-theme="light"] .km-empty-state { color: #999; }
+[data-theme="light"] .km-empty-state h3 { color: #666; }
+[data-theme="light"] .km-confirm-box { background: #fff; border-color: #ddd; }
+[data-theme="light"] .km-confirm-box p { color: #555; }
+[data-theme="light"] .km-stale-badge { border-color: #c8a04a; }
