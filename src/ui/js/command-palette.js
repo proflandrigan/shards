@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 var commandRegistry = [
+  { label: 'Open Knowledge Map', shortcut: '', action: function() { openKnowledgeMapPanel(); }, category: 'View' },
   { label: 'Toggle Explorer', shortcut: 'Cmd+B', action: function() { toggleExplorer(); }, category: 'View' },
   { label: 'Toggle Split View', shortcut: 'Cmd+\\', action: function() { toggleSplit(); }, category: 'View' },
   { label: 'Toggle Theme', shortcut: '', action: function() { toggleTheme(); }, category: 'View' },

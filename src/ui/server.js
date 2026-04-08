@@ -19,6 +19,7 @@ const LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
 const AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
 const COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
 const SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
+const KNOWLEDGE_DIR = path.join(SHARDS_DIR, 'knowledge');
 const INDEX_HTML = path.join(__dirname, 'index.html');
 
 // ─── Logging ─────────────────────────────────────────────────────────────────
@@ -759,6 +760,33 @@ function createHandler() {
         }
         return;
       }
+    }
+
+    // ─── Knowledge Ledger bulk-read ──────────────────────────────────────────
+    if (req.method === 'GET' && parsedUrl.pathname === '/knowledge/entries') {
+      if (!checkAuth(req, parsedUrl)) { rejectAuth(res, cors); return; }
+      const KNOWLEDGE_CATEGORIES = ['entities', 'infrastructure', 'patterns', 'features'];
+      const indexContent = readFileSafe(path.join(KNOWLEDGE_DIR, 'INDEX.md')) || '';
+      const entries = [];
+      for (const cat of KNOWLEDGE_CATEGORIES) {
+        const catDir = path.join(KNOWLEDGE_DIR, cat);
+        try {
+          const files = fs.readdirSync(catDir, { withFileTypes: true });
+          for (const f of files) {
+            if (!f.isFile() || !f.name.endsWith('.md')) continue;
+            const fullPath = path.join(catDir, f.name);
+            const content = readFileSafe(fullPath);
+            if (content !== null) {
+              entries.push({
+                path: path.relative(PROJECT_DIR, fullPath),
+                content,
+              });
+            }
+          }
+        } catch { /* directory missing — skip */ }
+      }
+      jsonResponse(res, cors, 200, { indexContent, entries });
+      return;
     }
 
     // Raw file serving (images, PDFs) — auth via query param
