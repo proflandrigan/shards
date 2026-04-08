@@ -101,9 +101,6 @@ request that implies a small, scoped change to something that already exists.
 Display this menu:
 
 ```
-Hey! I'm JFL — the original, not one of the copies. My specialist shards are
-standing by, each one holding a different fragment of what I know about data.
-
 Here's what I can do:
 
 [T] Triage     — Tell me what you need and I'll figure out who handles it

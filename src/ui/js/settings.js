@@ -2,6 +2,8 @@
 // Settings panel (Cmd+,)
 // ═══════════════════════════════════════════════════════════════
 
+var permissionsCache = { allow: [], presets: {} };
+
 function toggleSettings() {
   var overlay = document.getElementById('settings-overlay');
   var isVisible = overlay.classList.contains('visible');
@@ -15,6 +17,7 @@ function toggleSettings() {
   document.getElementById('settings-font-size').value = prefs.fontSize;
   document.getElementById('settings-editor-font-size').value = prefs.editorFontSize;
   overlay.classList.add('visible');
+  loadPermissions();
 }
 
 function loadPreferences() {
@@ -346,6 +349,120 @@ function renderExplorerSearchResults(results) {
     el.appendChild(row);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Permissions management
+// ═══════════════════════════════════════════════════════════════
+
+function loadPermissions() {
+  authFetch('/permissions')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      permissionsCache.allow = data.allow || [];
+      permissionsCache.presets = data.presets || {};
+      renderPermissionsList();
+    })
+    .catch(function() {
+      var list = document.getElementById('permissions-list');
+      if (list) list.innerHTML = '<span class="perm-empty">Could not load permissions</span>';
+    });
+}
+
+function renderPermissionsList() {
+  var list = document.getElementById('permissions-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  // Filter out internal shards permissions from display
+  var display = permissionsCache.allow.filter(function(p) {
+    return p.indexOf('ui-push.js') === -1 && p.indexOf('relay.js') === -1;
+  });
+
+  if (display.length === 0) {
+    list.innerHTML = '<span class="perm-empty">No permissions configured. Use a preset or add custom rules.</span>';
+    return;
+  }
+
+  for (var i = 0; i < display.length; i++) {
+    var item = document.createElement('div');
+    item.className = 'perm-item';
+    item.innerHTML = '<code>' + esc(display[i]) + '</code><span class="perm-remove" title="Remove">&times;</span>';
+    item.querySelector('.perm-remove').addEventListener('click', (function(perm) {
+      return function() { removePermission(perm); };
+    })(display[i]));
+    list.appendChild(item);
+  }
+}
+
+function removePermission(pattern) {
+  authFetch('/permissions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ remove: [pattern] }),
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.allow) permissionsCache.allow = data.allow;
+      renderPermissionsList();
+    });
+}
+
+function addCustomPermission() {
+  var input = document.getElementById('permissions-custom-input');
+  var raw = (input.value || '').trim();
+  if (!raw) return;
+
+  // Parse comma-separated patterns; wrap bare commands in Bash(cmd:*)
+  var patterns = raw.split(',').map(function(p) {
+    p = p.trim();
+    if (!p) return null;
+    return p.indexOf('(') !== -1 ? p : 'Bash(' + p + ':*)';
+  }).filter(Boolean);
+
+  if (patterns.length === 0) return;
+
+  authFetch('/permissions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ add: patterns }),
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.allow) permissionsCache.allow = data.allow;
+      renderPermissionsList();
+      input.value = '';
+    });
+}
+
+function applyPermissionPreset(presetName) {
+  var preset = permissionsCache.presets[presetName];
+  if (!preset) return;
+
+  // Merge preset into existing — don't remove existing custom rules
+  authFetch('/permissions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ add: preset }),
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.allow) permissionsCache.allow = data.allow;
+      renderPermissionsList();
+    });
+}
+
+// Allow Enter key in custom permission input
+(function() {
+  var input = document.getElementById('permissions-custom-input');
+  if (input) {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addCustomPermission();
+      }
+    });
+  }
+})();
 
 // Apply saved preferences on load
 (function initPreferences() {

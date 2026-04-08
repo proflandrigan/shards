@@ -49,6 +49,7 @@ JFL will greet you, figure out what you need, and summon the right shard.
 |-------|---------|-------------|------------|
 | **JFL** | `/shards` | Friendly, structured | Triage, delegation, final review |
 | **JFL (Brainstorm)** | `/brainstorm` | Friendly, structured | Multi-agent ideation, exploration |
+| **JFL (Knowledge)** | `/knowledge` | Friendly, structured | Seed, browse, and manage the Knowledge Ledger |
 | **Data Analyst** | `/data-analyst` | Helpful | Adhoc queries, quick analyses |
 | **Data Scientist** | `/data-scientist` | Condescending | EDA, feature engineering, modeling |
 | **ML Engineer** | `/ml-engineer` | Intense | Recommenders, ranking, production ML systems |
@@ -87,16 +88,23 @@ your-project/
 │   │   ├── researcher.md
 │   │   ├── academic.md
 │   │   └── specific_instructions/  # Deferred phase files per agent
-│   └── commands/               # Slash commands
+│   └── commands/               # Slash commands (18 total)
 │       ├── shards.md
 │       ├── brainstorm.md
+│       ├── knowledge.md
 │       ├── shards-ui.md
 │       ├── data-analyst.md
-│       └── ...
+│       └── ... (one per agent)
 ├── .shards/
-│   └── ui/                     # Shards web UI (local server + browser client)
-│       ├── js/                 # Browser-side ES modules
-│       └── css/                # Stylesheets
+│   ├── ui/                     # Shards web UI (local server + browser client)
+│   │   ├── js/                 # Browser-side ES modules
+│   │   └── css/                # Stylesheets
+│   └── knowledge/              # Persistent Knowledge Ledger
+│       ├── INDEX.md            # One-line-per-entry index
+│       ├── entities/           # Table quirks, column semantics, grain
+│       ├── infrastructure/     # Warehouse/API/system behaviors
+│       ├── patterns/           # Reusable SQL/Python snippets
+│       └── features/           # Verified ML features
 ├── templates/                  # Output templates
 ├── analysis/                   # Adhoc analyses (Data Analyst)
 ├── studies/                    # Deep studies (Data Scientist)
@@ -106,6 +114,7 @@ your-project/
 ├── dashboards/                 # BI Engineer dashboards
 ├── research/                   # Applied ML Scientist novel frameworks
 ├── brainstorm/                 # JFL brainstorm sessions
+├── fixes/                      # JFL Fixer quick fixes
 └── CLAUDE.md                   # Updated with Shards docs
 ```
 
@@ -162,9 +171,20 @@ You can type the code to jump to that action. Common modes across agents:
 | `[U]` | Update | DA, AE, BI | Iterate on an existing analysis or model |
 | `[EX]` | Explain | DA, DS | Walk through a completed analysis retrospectively |
 | `[EX]` | Experiment | ML, AI | Run targeted experiments on an existing model |
+| `[EXP]` | Experiment | DS | Run targeted experiments on an existing study |
+| `[PL]` | Prompt Lab | AI | Interactive prompt editing, evaluation, versioning via Shards UI |
 | `[F]` | Fix | JFL | Quick fix — JFL handles it directly without specialist handoff |
+| `[S]` | Status | JFL | Check on a current project |
+| `[D]` | Diff | JFL | Compare two projects side by side |
+| `[K]` | Knowledge | JFL | Seed, browse, or manage the Knowledge Ledger |
 | `[B]` | Brainstorm | JFL | Multi-agent ideation session |
 | `[C]` | Clean | BE | Apply structural fixes without changing functionality |
+| `[F]` | FastAPI | BE | Route design, dependency injection, middleware |
+| `[P]` | Pydantic | BE | Model design, validators, schema evolution |
+| `[O]` | OOP | BE | Class structure, responsibility boundaries |
+| `[M]` | Modularize | BE | Break down a monolith, restructure a module |
+| `[X]` | Performance | BE | Profiling guidance, query efficiency, memory patterns |
+| `[D]` | Data Contract | BE | API contracts, schema versioning |
 
 Not every agent has every mode — the agent displays its own menu on startup.
 
@@ -192,10 +212,12 @@ isn't warranted.
 
 ### Experiment Mode
 
-The ML Engineer and AI Engineer support an experiment mode (`[EX]`): run
-targeted experiments on an existing model or pipeline to improve specific
-metrics. The agent loads the existing project context, designs experiments,
-runs them, and reports results — without going through the full build workflow.
+The ML Engineer, AI Engineer, and Data Scientist support experiment mode:
+run targeted experiments on an existing model, pipeline, or study to improve
+specific metrics. The agent loads the existing project context, designs
+experiments, runs them, and reports results — without going through the full
+build workflow. ML Engineer and AI Engineer use `[EX]`; Data Scientist uses
+`[EXP]` (since `[EX]` is Explain mode on that agent).
 
 ### Code Review
 
@@ -204,14 +226,78 @@ code review on the produced artifacts. It partitions files by type (Python
 vs. non-Python), reviews each category, and reports findings. This happens
 automatically when triggered by the specialist — you don't need to request it.
 
+### Knowledge Ledger
+
+Shards maintains a persistent workspace-wide Knowledge Ledger at `.shards/knowledge/`.
+Agents automatically check it before starting work and contribute to it when projects
+complete.
+
+- **Auto-retrieval:** Before Phase 1, agents scan `INDEX.md` for entries relevant to the current project
+- **Auto-harvest:** After JFL final review, agents extract reusable knowledge and present candidates for your confirmation before writing to the ledger
+
+Run `/knowledge` or type `[K]` at JFL's menu to seed, browse, or manage the ledger directly.
+The knowledge directory is preserved across installs and uninstalls.
+
+### Prompt Lab
+
+The AI Engineer supports a Prompt Lab mode (`[PL]`): interactive prompt editing,
+evaluation, and versioning via the Shards UI. Design prompts, run evaluations,
+and iterate — all within the browser dashboard.
+
+### Diff Mode
+
+Type `[D]` at JFL's menu to compare two projects side by side. JFL reads both
+project directories, compares methodology, metrics, implementation, and artifacts,
+and produces a structured diff report.
+
+### Time-Travel Branching
+
+Specialists can propose parallel experimentation branches during a build. The
+diverge protocol forks the work into parallel Task branches, each exploring a
+different approach. When branches complete, JFL enters Arbiter mode — reads all
+branch reports, builds a side-by-side leaderboard, and returns an advisory
+recommendation. You make the final call on which branch to promote.
+
 ### Shards UI
 
 Run `/shards-ui` inside Claude Code (or `shards-ui` from your terminal) to open
 a local web dashboard that shows real-time agent session activity. It hooks into
-Claude Code via `UserPromptSubmit`, `Stop`, and `PostToolUse` hooks and displays
+Claude Code via `UserPromptSubmit`, `Stop`, `PostToolUse`, and `PreToolUse` hooks and displays
 the live feed of agent work in the browser. The UI includes a file explorer, Monaco
 editor integration, code intelligence (symbol indexing via ctags), git status, and
 a command palette.
+
+#### Permission Whitelisting
+
+By default, Claude Code prompts for approval on every shell command. You can
+whitelist common tools at startup so agents can run them without interruption:
+
+```bash
+# Apply a preset
+shards-ui start --permissions permissive
+shards-ui start --permissions readonly
+
+# Whitelist specific commands (bare names auto-wrap to Bash(cmd:*))
+shards-ui start --allow "find,grep,ls"
+
+# Full pattern syntax
+shards-ui start --allow "Bash(python3:*),Bash(pytest:*)"
+
+# Combine both
+shards-ui start --permissions readonly --allow "Bash(python3:*)"
+```
+
+**Presets:**
+
+| Preset | What it allows |
+|--------|---------------|
+| `readonly` | `find`, `grep`, `rg`, `ls`, `cat`, `head`, `tail`, `wc`, `git log`, `git status`, `git diff`, `git branch`, `git show`, `echo`, `pwd`, `which` |
+| `permissive` | Everything in `readonly` + `python`, `python3`, `node`, `npm`, `pip`, `pip3`, `env` |
+
+You can also manage permissions from the browser: open **Settings** (Cmd+,) in
+the Shards UI and use the **Permissions** panel to apply presets, add custom
+rules, or remove existing ones. Changes take effect immediately — they write
+directly to `.claude/settings.json`.
 
 ### BI Handoffs
 
@@ -240,9 +326,10 @@ Additionally:
 | AI Engineer | `services/<name>/` (greenfield) or existing service dir (iteration) | `project-specs.md`, `prompts/`, `eval/`, `notebooks/*.ipynb`, `report.md` |
 | Applied ML Scientist | `research/<name>/` | `project-specs.md`, `notebooks/*.ipynb`, `report.md` |
 | Deep Learning Engineer | `services/<name>/` | `project-specs.md`, `notebooks/*.ipynb`, `report.md` |
-| MLOps Engineer | `services/<name>/mlops/` (greenfield or handoff) | `project-specs.md` |
+| MLOps Engineer | `services/<name>/` | `project-specs.md` |
 | Analytics Engineer | `data_models/<name>/` | `project-specs.md` |
 | BI Engineer | `dashboards/<name>/` | `project-specs.md` |
+| JFL (Fixer) | `fixes/<name>/` | `project-specs.md` |
 | Backend Engineer | — (review only, no files produced) | — |
 | Data Engineer | `models/<name>/` | `project-specs.md` |
 | Data Modeller | `data_models/<name>/` | `project-specs.md` |

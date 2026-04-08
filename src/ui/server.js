@@ -1333,6 +1333,79 @@ function createHandler() {
       return;
     }
 
+    // ─── Permissions management endpoints ──────────────────────────
+
+    // GET /permissions — return current allow/deny lists + available presets
+    if (req.method === 'GET' && parsedUrl.pathname === '/permissions') {
+      loadSettingsCache();
+      jsonResponse(res, cors, 200, {
+        allow: settingsCache.allow,
+        deny: settingsCache.deny,
+        presets: {
+          permissive: [
+            'Bash(find:*)', 'Bash(grep:*)', 'Bash(rg:*)', 'Bash(ls:*)',
+            'Bash(cat:*)', 'Bash(head:*)', 'Bash(tail:*)', 'Bash(wc:*)',
+            'Bash(git log:*)', 'Bash(git status:*)', 'Bash(git diff:*)',
+            'Bash(git branch:*)', 'Bash(git show:*)',
+            'Bash(echo:*)', 'Bash(pwd:*)', 'Bash(which:*)', 'Bash(env:*)',
+            'Bash(python:*)', 'Bash(python3:*)', 'Bash(node:*)',
+            'Bash(npm:*)', 'Bash(pip:*)', 'Bash(pip3:*)',
+          ],
+          readonly: [
+            'Bash(find:*)', 'Bash(grep:*)', 'Bash(rg:*)', 'Bash(ls:*)',
+            'Bash(cat:*)', 'Bash(head:*)', 'Bash(tail:*)', 'Bash(wc:*)',
+            'Bash(git log:*)', 'Bash(git status:*)', 'Bash(git diff:*)',
+            'Bash(git branch:*)', 'Bash(git show:*)',
+            'Bash(echo:*)', 'Bash(pwd:*)', 'Bash(which:*)',
+          ],
+        },
+      });
+      return;
+    }
+
+    // POST /permissions — update allow list
+    if (req.method === 'POST' && parsedUrl.pathname === '/permissions') {
+      const body = await readBody(req);
+      let params;
+      try { params = JSON.parse(body); } catch {
+        jsonResponse(res, cors, 400, { error: 'Invalid JSON' });
+        return;
+      }
+
+      const settingsPath = path.join(PROJECT_DIR, '.claude', 'settings.json');
+      let settings = {};
+      try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8')); } catch {}
+
+      if (!settings.permissions) settings.permissions = {};
+      if (!settings.permissions.allow) settings.permissions.allow = [];
+
+      // params.add: array of patterns to add
+      if (Array.isArray(params.add)) {
+        for (const p of params.add) {
+          if (typeof p === 'string' && p.trim() && !settings.permissions.allow.includes(p.trim())) {
+            settings.permissions.allow.push(p.trim());
+          }
+        }
+      }
+
+      // params.remove: array of patterns to remove
+      if (Array.isArray(params.remove)) {
+        const toRemove = new Set(params.remove.map(p => (typeof p === 'string' ? p.trim() : '')));
+        settings.permissions.allow = settings.permissions.allow.filter(p => !toRemove.has(p));
+      }
+
+      // params.set: replace the entire allow list
+      if (Array.isArray(params.set)) {
+        settings.permissions.allow = params.set.filter(p => typeof p === 'string' && p.trim());
+      }
+
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+      loadSettingsCache();
+
+      jsonResponse(res, cors, 200, { ok: true, allow: settingsCache.allow });
+      return;
+    }
+
     // ─── P2: Event endpoint with ack ────────────────────────────
     if (req.method === 'POST' && parsedUrl.pathname === '/event') {
       const body = await readBody(req);

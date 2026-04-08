@@ -88,7 +88,12 @@ async function browseDir(dir) {
 function renderTree() {
   var el = document.getElementById('explorer-listing');
   el.innerHTML = '';
-  if (!treeRootPath || !treeChildren[treeRootPath]) return;
+  if (!treeRootPath) return;
+  if (!treeChildren[treeRootPath]) {
+    // Root was invalidated — re-fetch it (fetchTreeDir calls renderTree when done)
+    if (!treeLoading[treeRootPath]) fetchTreeDir(treeRootPath);
+    return;
+  }
   renderTreeNodes(el, treeRootPath, 0);
 }
 

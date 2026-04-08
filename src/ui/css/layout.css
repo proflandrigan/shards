@@ -330,3 +330,34 @@
   font-family: inherit;
 }
 .settings-btn:hover { background: #252540; color: #b0b0c8; }
+.settings-panel { max-height: 80vh; overflow-y: auto; }
+.perm-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #a0a0c0;
+  background: rgba(255, 255, 255, 0.03);
+}
+.perm-item:hover { background: rgba(255, 255, 255, 0.06); }
+.perm-item code {
+  font-family: inherit;
+  font-size: 11px;
+  word-break: break-all;
+}
+.perm-item .perm-remove {
+  cursor: pointer;
+  color: #6a6a90;
+  font-size: 14px;
+  padding: 0 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.perm-item .perm-remove:hover { color: #ff6b6b; }
+.perm-empty {
+  font-size: 11px;
+  color: #6a6a90;
+  padding: 4px 0;
+}
