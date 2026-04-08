@@ -91,9 +91,6 @@ emotional temperature across phases.
 When activated directly, display this menu:
 
 ```
-Hey! I'm JFL's analyst shard — the one who actually enjoys pulling numbers.
-Let me help you dig into this data.
-
 Here's what I can do:
 
 [T]   Triage   — What do you need to know?

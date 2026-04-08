@@ -19,7 +19,7 @@ node tools/shards-ui.js stop   # stop the UI server
 node tools/shards-ui.js status # check if UI server is running
 ```
 
-The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.claude/commands/`, `src/templates/` → `templates/`, and `src/ui/` → `.shards/ui/` in the target project. It also creates output directories (`analysis/`, `studies/`, `models/`, `data_models/`, `services/`, `research/`, `dashboards/`, `brainstorm/`), writes a manifest to `.claude/.shards-manifest.json` for uninstall tracking, and appends a Shards section to CLAUDE.md.
+The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.claude/commands/`, `src/templates/` → `templates/`, and `src/ui/` → `.shards/ui/` in the target project. It also creates output directories (`analysis/`, `studies/`, `models/`, `data_models/`, `services/`, `research/`, `dashboards/`, `brainstorm/`, `fixes/`), sets up the Knowledge Ledger at `.shards/knowledge/` (with `entities/`, `infrastructure/`, `patterns/`, `features/` subdirectories and an `INDEX.md`), writes a manifest to `.claude/.shards-manifest.json` for uninstall tracking, and appends a Shards section to CLAUDE.md.
 
 The `.claude/` directory at the repo root is a live installation used when working on shards itself. After editing source files, re-run `node tools/install.js` from the repo root to update it.
 
@@ -31,9 +31,9 @@ The `.claude/` directory at the repo root is a live installation used when worki
 
 **`src/agents/*.md`** — the core agent definitions. These contain each agent's persona, activation menu, Phase 0 (triage), mode references, and behavioral rules. Phased workflow instructions (Phase 1+) are deferred to `specific_instructions/<agent_name>/phases.md` files that load on-demand after Phase 0 completes. Each agent file has YAML frontmatter specifying `name`, `description`, `tools`, and `model`.
 
-**`src/templates/*.md`** — output document templates with `{{PLACEHOLDER}}` tokens. `project-specs.md` is the central one — every project produces a filled-in instance. `analysis-template.md`, `study-template.md`, and `report-template.md` are output-specific templates used by the Data Analyst, Data Scientist, and other specialists respectively.
+**`src/templates/*.md`** — output document templates with `{{PLACEHOLDER}}` tokens. `project-specs.md` is the central one — every project produces a filled-in instance. `analysis-template.md`, `study-template.md`, and `report-template.md` are output-specific templates. `model-card.md` is used by ML/DL specialists. `branch-report.md` and `diff-report.md` support Time-Travel branching and cross-project comparison. `knowledge-index.md` seeds the Knowledge Ledger INDEX.
 
-**`src/ui/*.js` + `src/ui/index.html`** — the Shards web UI. Installed to `.shards/ui/` in target projects. The UI hooks into Claude Code via `UserPromptSubmit`, `Stop`, and `PostToolUse` hooks configured in `.claude/settings.json`. Key files:
+**`src/ui/*.js` + `src/ui/index.html`** — the Shards web UI. Installed to `.shards/ui/` in target projects. The UI hooks into Claude Code via `UserPromptSubmit`, `Stop`, `PostToolUse`, and `PreToolUse` (Bash only) hooks configured in `.claude/settings.json`. Key files:
 
 - `server.js` — HTTP/HTTPS server (ports 7842–7845, localhost-bound). Serves `index.html`, handles session storage under `.shards/sessions/`, exposes a REST API for the browser client. Uses a per-process auth token.
 - `chat-session.js` — tracks a single Claude Code session: buffers tool calls, user prompts, and stop events into a session JSON file.
@@ -42,7 +42,7 @@ The `.claude/` directory at the repo root is a live installation used when worki
 - `spawn-server.js` / `open-browser.js` — called by the `/shards-ui` slash command to start the server and open the browser.
 - `symbol-index.js` — ctags-based symbol indexing engine (with regex fallback) for code intelligence features in the UI. Builds and watches an in-memory index of symbols across the project.
 - `js/` — browser-side ES modules: `state.js`, `events.js`, `chat.js`, `agents.js`, `panels.js`, `tabs.js`, `explorer.js`, `file-view.js`, `table.js`, `tabular.js`, `notebook.js`, `monaco.js`, `markdown.js`, `split-view.js`, `command-palette.js`, `quick-open.js`, `settings.js`, `init.js`, `utils.js`, `bookmarks.js`, `code-intel.js`, `git.js`, `pinboard.js`, `selection-context.js`.
-- `css/` — browser-side stylesheets: `base.css`, `layout.css`, `sidebar.css`, `chat.css`, `editor.css`, `experiment.css`, `theme-light.css`.
+- `css/` — browser-side stylesheets: `base.css`, `layout.css`, `sidebar.css`, `chat.css`, `editor.css`, `experiment.css`, `eval-dashboard.css`, `model-card.css`, `prompt-lab.css`, `theme-light.css`.
 
 ### Agent taxonomy
 
@@ -85,7 +85,9 @@ This means a full `/shards` session is a depth-2 nested Task call: JFL spawns sp
 | AI Engineer (iteration) | existing service directory |
 | Applied ML Scientist | `research/<project_name>/` |
 | Deep Learning Engineer | `services/<project_name>/` |
+| MLOps Engineer | `services/<project_name>/` |
 | BI Engineer | `dashboards/<project_name>/` |
+| JFL (Fixer) | `fixes/<project_name>/` |
 | Backend Engineer | — (review only, no files produced) |
 
 ### Deferred phase loading
@@ -112,10 +114,15 @@ After editing source files, re-run `node tools/install.js` in any target project
 
 ### Shared behavioral files
 
-`specific_instructions/shared/` contains two cross-cutting files referenced by all agents:
+`specific_instructions/shared/` contains cross-cutting files referenced by agents:
 
 - **`behavioral_rules.md`** — the four rules every specialist must follow: document before advancing, one phase at a time, announce cross-agent reviews, facilitate don't generate. Referenced from each agent's Behavioral Rules section to avoid duplication.
 - **`reviewer_verdict_protocol.md`** — the three-tier verdict system (APPROVED / NEEDS REVISION / BLOCKED) used by JFL and all reviewer agents when returning sign-off decisions.
+- **`diverge_protocol.md`** — Time-Travel branching protocol for parallel experimentation. Defines fork-execute-converge lifecycle, branch spawning via Task, and JFL arbiter convergence.
+- **`experiment_versioning.md`** — versioning protocol for experiment mode. Detects DVC or git and creates checkpoints after each experiment result.
+- **`join_path_protocol.md`** — self-check protocol for tracing join paths before writing or executing multi-table SQL.
+- **`knowledge_harvest.md`** — protocol for extracting reusable knowledge at project completion. Agents present candidates for user confirmation before writing to the Knowledge Ledger.
+- **`knowledge_retrieval.md`** — protocol for checking the Knowledge Ledger before Phase 1. Agents scan INDEX.md for entries relevant to the current project.
 
 ### Variant files in `specific_instructions/`
 
@@ -123,14 +130,15 @@ Each agent has a subdirectory under `specific_instructions/` (e.g., `specific_in
 
 - **Mode variants:** `review.md`, `advise.md`, `explain.md`, `update.md`, `clean.md` — referenced by core agent files for `[R]`, `[ADV]`, `[EX]`, `[U]`, `[C]` menu options
 - **UI mode:** `data_analyst/ui_mode.md`, `analytics_engineer/ui_mode.md` — variant invoked by the Shards UI to push structured output for the browser client
-- **Service mode:** `analytics_engineer/service_mode.md`, `data_modeller/service_mode.md` — stripped-down mode used when these agents are consulted as reviewers via Task by other specialists
-- **JFL modes:** `jfl/brainstorm.md` (also has a `/brainstorm` command entry point), `jfl/final_review.md` (read when specialists invoke JFL for sign-off via Task), `jfl/code_review.md` (triggered when a specialist calls Task with `CODE REVIEW MODE` — partitions and reviews Python and non-Python artifacts), `jfl/fixer.md` (the `[F]` menu option — JFL directly implements minor fixes without specialist handoff, suspending the "facilitate don't generate" rule)
-- **Experiment:** `ml_engineer/experiment.md`, `ai_engineer/experiment.md` — plus `ml_engineer/experiment_ui_mode.md` and `ai_engineer/experiment_ui_mode.md` for Shards UI integration of experiment mode
+- **Service mode:** `analytics_engineer/service_mode.md`, `data_modeller/service_mode.md`, `researcher/service_mode.md` — stripped-down mode used when these agents are consulted as reviewers via Task by other specialists
+- **JFL modes:** `jfl/brainstorm.md` (also has a `/brainstorm` command entry point), `jfl/final_review.md` (read when specialists invoke JFL for sign-off via Task), `jfl/code_review.md` (triggered when a specialist calls Task with `CODE REVIEW MODE` — partitions and reviews Python and non-Python artifacts), `jfl/fixer.md` (the `[F]` menu option — JFL directly implements minor fixes without specialist handoff, suspending the "facilitate don't generate" rule), `jfl/arbiter.md` (Time-Travel branch comparison — reads all branch reports, builds leaderboard, returns advisory recommendation), `jfl/diff.md` (cross-project comparison — reads two project directories and produces structured diff report), `jfl/knowledge.md` (also has a `/knowledge` command entry point — seed, browse, and manage the Knowledge Ledger)
+- **Experiment:** `ml_engineer/experiment.md`, `ai_engineer/experiment.md`, `data_scientist/experiment.md` — plus `ml_engineer/experiment_ui_mode.md` and `ai_engineer/experiment_ui_mode.md` for Shards UI integration of experiment mode
 - **Prompt Lab:** `ai_engineer/prompt_lab.md`, `ai_engineer/prompt_lab_ui_mode.md` — interactive prompt editing, evaluation, and versioning via the Shards UI `prompt-lab` panel type
 - **BI handoffs:** `ai_engineer/bi_engineer_handoff.md`, `ml_engineer/bi_engineer_handoff.md`, `data_scientist/bi_engineer_handoff.md`, `analytics_engineer/bi_engineer_handoff.md` — specialist variants that hand off to the BI Engineer
 - **DA handoffs:** `analytics_engineer/data_analyst_handoff.md`, `bi_engineer/data_analyst_handoff.md` — variants that hand off to the Data Analyst
 - **Handoff receivers:** `bi_engineer/incoming_handoff.md`, `data_analyst/incoming_handoff.md` — receiver-side instructions for agents accepting a structured handoff brief from another specialist
 - **Explain:** `data_analyst/explain.md`, `data_scientist/explain.md` — explanation-focused variants
 - **DS handoffs:** `data_scientist/greenfield_data.md`, `data_scientist/ml_engineer_handoff.md` — Data Scientist variants for greenfield data work and ML Engineer handoff
+- **Service mode (Backend):** `backend_engineer/service_mode.md` — stripped-down mode used when the Backend Engineer is consulted as a reviewer via Task by other specialists
 - **Review checklists:** `backend_engineer/review_checklist.md`, `researcher/review_checklist.md` — review checklists used during service-mode consultations
 - **Report:** `academic/report.md` — Academic shard variant for producing full literature review / research report documents

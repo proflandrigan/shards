@@ -187,6 +187,54 @@ function cmdStart() {
   });
 }
 
+// ─── Permission presets ──────────────────────────────────────────────────────
+
+const PERMISSION_PRESETS = {
+  permissive: [
+    'Bash(find:*)', 'Bash(grep:*)', 'Bash(rg:*)', 'Bash(ls:*)',
+    'Bash(cat:*)', 'Bash(head:*)', 'Bash(tail:*)', 'Bash(wc:*)',
+    'Bash(git log:*)', 'Bash(git status:*)', 'Bash(git diff:*)',
+    'Bash(git branch:*)', 'Bash(git show:*)',
+    'Bash(echo:*)', 'Bash(pwd:*)', 'Bash(which:*)', 'Bash(env:*)',
+    'Bash(python:*)', 'Bash(python3:*)', 'Bash(node:*)',
+    'Bash(npm:*)', 'Bash(pip:*)', 'Bash(pip3:*)',
+  ],
+  readonly: [
+    'Bash(find:*)', 'Bash(grep:*)', 'Bash(rg:*)', 'Bash(ls:*)',
+    'Bash(cat:*)', 'Bash(head:*)', 'Bash(tail:*)', 'Bash(wc:*)',
+    'Bash(git log:*)', 'Bash(git status:*)', 'Bash(git diff:*)',
+    'Bash(git branch:*)', 'Bash(git show:*)',
+    'Bash(echo:*)', 'Bash(pwd:*)', 'Bash(which:*)',
+  ],
+};
+
+function parseCliPermissions() {
+  const args = process.argv.slice(3); // skip node, script, subcommand
+  const allow = [];
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--permissions' && args[i + 1]) {
+      const preset = args[i + 1].toLowerCase();
+      if (PERMISSION_PRESETS[preset]) {
+        allow.push(...PERMISSION_PRESETS[preset]);
+      } else {
+        console.error(`  Unknown preset: ${args[i + 1]}. Available: ${Object.keys(PERMISSION_PRESETS).join(', ')}`);
+        process.exit(1);
+      }
+      i++;
+    } else if (args[i] === '--allow' && args[i + 1]) {
+      const patterns = args[i + 1].split(',').map(p => p.trim()).filter(Boolean);
+      for (const p of patterns) {
+        // If it looks like a raw command (no parens), wrap it in Bash(...)
+        allow.push(p.includes('(') ? p : `Bash(${p}:*)`);
+      }
+      i++;
+    }
+  }
+
+  return allow;
+}
+
 // ─── Claude Code hooks setup ─────────────────────────────────────────────────
 
 function setupHooks() {
@@ -245,6 +293,18 @@ function setupHooks() {
     updated = true;
   }
 
+  // Apply CLI --allow / --permissions flags
+  const cliPermissions = parseCliPermissions();
+  for (const perm of cliPermissions) {
+    if (!settings.permissions.allow.includes(perm)) {
+      settings.permissions.allow.push(perm);
+      updated = true;
+    }
+  }
+  if (cliPermissions.length > 0) {
+    console.log(`  Added ${cliPermissions.length} permission rule(s) from CLI flags.`);
+  }
+
   if (updated) {
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
     console.log('  Configured Claude Code hooks for UI relay.');
@@ -272,10 +332,23 @@ switch (subcommand) {
   Shards UI — Real-time web dashboard for Shards agent sessions
 
   Usage:
-    shards-ui          Start the UI server and open browser
-    shards-ui stop     Stop the running UI server
-    shards-ui status   Check if the UI server is running
-    shards-ui help     Show this help message
+    shards-ui                             Start the UI server and open browser
+    shards-ui stop                        Stop the running UI server
+    shards-ui status                      Check if the UI server is running
+    shards-ui help                        Show this help message
+
+  Permission flags (used with start):
+    --permissions <preset>                Apply a permission preset
+    --allow <pattern>[,<pattern>,...]     Allow specific tool patterns
+
+  Presets:
+    permissive    Read-only shell tools + git + python/node/npm/pip
+    readonly      Read-only shell tools + git only
+
+  Examples:
+    shards-ui start --permissions permissive
+    shards-ui start --allow "find,grep,ls"
+    shards-ui start --allow "Bash(python3:*),Bash(pytest:*)"
 `);
     break;
   default:

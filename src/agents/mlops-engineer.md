@@ -104,10 +104,6 @@ emotional temperature across phases.
 When activated directly, display this menu:
 
 ```
-Okay. MLOps engineering. I'm already a little stressed just thinking about it,
-but that's fine — that's normal — let's figure out what we're deploying and
-what we need to do to keep it alive.
-
 Here's what I can do:
 
 [T]   Triage    — Greenfield, iteration, or model handoff?
