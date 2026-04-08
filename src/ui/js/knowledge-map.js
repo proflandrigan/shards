@@ -256,9 +256,12 @@ function kmFilterEntries(entries) {
   var search = kmActiveFilters.search.toLowerCase();
   for (var i = 0; i < entries.length; i++) {
     var e = entries[i];
+    // Hide superseded entries unless searching explicitly
+    if (e.meta.superseded === 'true' && !search) continue;
     if (kmActiveFilters.type !== 'all' && e.meta.type !== kmActiveFilters.type) continue;
     if (search) {
-      var haystack = ((e.meta.title || '') + ' ' + e.body + ' ' + (e.meta.domain || []).join(' ')).toLowerCase();
+      var doms = Array.isArray(e.meta.domain) ? e.meta.domain : (e.meta.domain ? [e.meta.domain] : []);
+      var haystack = ((e.meta.title || '') + ' ' + e.body + ' ' + doms.join(' ')).toLowerCase();
       if (haystack.indexOf(search) === -1) continue;
     }
     result.push(e);
@@ -413,9 +416,40 @@ function kmExpandCard(card, entry) {
     newMeta.domain = domainStr ? domainStr.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
     var newBody = textarea.value;
 
-    kmSaveEntry(entry, newMeta, newBody).then(function() {
-      kmRefreshContent(document.getElementById('km-content-area'));
-    });
+    // If type changed, we need to write to new path and blank the old file
+    var oldType = entry.meta.type || 'patterns';
+    var newType = newMeta.type;
+    if (oldType !== newType) {
+      var filename = entry.path.split('/').pop();
+      var newPath = '.shards/knowledge/' + newType + '/' + filename;
+      var content = kmRebuildFrontmatter(newMeta) + '\n\n' + newBody;
+      // Write new file, then mark old file as moved (redirect stub)
+      authFetch('/browse/file/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: newPath, content: content }),
+      }).then(function() {
+        // Write a stub so the old path isn't an orphan empty file
+        var stub = '---\nsuperseded: true\nmoved_to: ' + newPath + '\n---\n\nMoved to ' + newPath + '\n';
+        return authFetch('/browse/file/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: entry.path, content: stub }),
+        });
+      }).then(function() {
+        entry.path = newPath;
+        entry.meta = newMeta;
+        entry.body = newBody;
+        entry.raw = content;
+        return kmUpdateIndex(knowledgeCache);
+      }).then(function() {
+        kmRefreshContent(document.getElementById('km-content-area'));
+      });
+    } else {
+      kmSaveEntry(entry, newMeta, newBody).then(function() {
+        kmRefreshContent(document.getElementById('km-content-area'));
+      });
+    }
   });
 
   // Cancel
@@ -446,15 +480,16 @@ function kmExpandCard(card, entry) {
 
 function kmSaveEntry(entry, newMeta, newBody) {
   var content = kmRebuildFrontmatter(newMeta) + '\n\n' + newBody;
-  entry.meta = newMeta;
-  entry.body = newBody;
-  entry.raw = content;
 
   return authFetch('/browse/file/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path: entry.path, content: content }),
   }).then(function() {
+    // Only update cache after successful save
+    entry.meta = newMeta;
+    entry.body = newBody;
+    entry.raw = content;
     return kmUpdateIndex(knowledgeCache);
   });
 }
@@ -753,7 +788,7 @@ function kmBuildMermaidDef(entries, edges) {
     var e = entries[i];
     var nodeId = kmNodeId(e.path);
     var icon = TYPE_ICONS[e.meta.type] || '▪';
-    var label = icon + ' ' + (e.meta.title || 'Untitled').replace(/"/g, "'");
+    var label = icon + ' ' + (e.meta.title || 'Untitled').replace(/["[\](){}|<>#&]/g, ' ');
     lines.push('  ' + nodeId + '["' + label + '"]');
   }
 
@@ -763,7 +798,8 @@ function kmBuildMermaidDef(entries, edges) {
     var toId = kmNodeId(edge.to);
 
     if (edge.type === 'domain') {
-      lines.push('  ' + fromId + ' --- |' + edge.label + '| ' + toId);
+      var safeLabel = (edge.label || '').replace(/[|[\]"]/g, ' ');
+      lines.push('  ' + fromId + ' --- |' + safeLabel + '| ' + toId);
     } else if (edge.type === 'reference') {
       lines.push('  ' + fromId + ' --> |references| ' + toId);
     } else {
