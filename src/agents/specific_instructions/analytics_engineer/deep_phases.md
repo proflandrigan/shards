@@ -432,6 +432,42 @@ For each model:
 - Run the stack's build/validate command (e.g., `dbt build --select +model_name`) — fix any failures before next model
 - Do not advance to the next model until the current one is green
 - **If UI-Aware Mode is active**: after each model passes validation, re-push the DAG with the completed model highlighted. Use the same `--panel-id` from Phase 4 (e.g., `dag-<project_name>`) so it updates in place. Apply a Mermaid `style` to mark green models (e.g., `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`)
+- **Post-build validation (per model, after `dbt build` passes):** Run the
+  applicable checks below using `dbt show` or the warehouse CLI. If any check
+  fails, halt and diagnose before advancing to the next model. In a contract-first
+  / no-data environment (Phase 2 Data sufficiency: Insufficient), skip validation
+  queries and note "THEORETICAL — no data to validate" in the build log.
+
+  1. **Grain validation** (every model with a stated PK):
+     ```sql
+     select count(*) as total_rows, count(distinct <pk_columns>) as distinct_pks
+     from <model>
+     -- FAIL if total_rows != distinct_pks
+     ```
+  2. **Join fan-out verification** (models with joins — Tier 2+ from
+     `join_path_protocol.md`):
+     ```sql
+     select 'before_join' as stage, count(*) as row_count from <left_model>
+     union all
+     select 'after_join', count(*)
+     from <left_model> join <right_model> on <join_condition>
+     -- FAIL if after > before and diverges from predicted fan-out in Phase 3
+     ```
+  3. **PK/FK null check** (mart and fact models):
+     ```sql
+     select '<column>' as col, count(*) as total,
+       count(<column>) as non_null,
+       round(100.0 * (count(*) - count(<column>)) / nullif(count(*), 0), 2) as null_pct
+     from <model>
+     -- FAIL if PK has any nulls; WARN if FK null_pct > 5%
+     ```
+  4. **Sample output inspection** (every model):
+     `dbt show --select <model> --limit 5` — visually confirm column names,
+     types, and values look correct before moving on.
+
+  Scale to model importance: staging models need only grain + sample; intermediate
+  models add fan-out checks if they contain joins; mart/fact models get the full
+  suite.
 
 **SQL template for staging model** (adapt reference syntax to your stack):
 ```sql
@@ -539,6 +575,11 @@ select * from final
 - **Build validation:**
   - Build result: Pass | Fail — <details>
   - Tests passing: <N> / <N>
+- **Post-build validation:**
+  | Model | Grain Check | Fan-Out Check | PK/FK Nulls | Sample OK | Notes |
+  |-------|-------------|---------------|-------------|-----------|-------|
+  | <model> | PASS / FAIL | PASS / FAIL / N/A | PASS / WARN / FAIL | Yes / No | <details or "clean"> |
+  - (or "THEORETICAL — no data to validate" if contract-first design)
 - **Deviations from design:** <changes from Phases 4-6 and why, or "none">
 - **Performance notes:** <run time, row counts, anything notable>
 ```

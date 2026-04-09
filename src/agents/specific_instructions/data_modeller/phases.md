@@ -54,7 +54,12 @@ Wait for any signal from the user before beginning build steps.
 1. Implement the change in model SQL and .yml schema
 2. Update any downstream models that reference changed columns
 3. Run `dbt build --select +model_name+` to validate
-4. Summarize what changed
+4. **Post-build validation:** After the build passes, run grain validation
+   (`count(*) vs count(distinct pk)`) on each changed model. For models with
+   joins, run the fan-out check from `join_path_protocol.md` Tier 2+. Run
+   `dbt show --select <model> --limit 5` to confirm output looks right.
+   If any check fails, fix before proceeding. Skip if no-data environment.
+5. Summarize what changed
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
 Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
@@ -72,6 +77,7 @@ Append to project-specs.md:
   - <file path>: <what changed>
 - **Downstream updates:** <files updated or "none needed">
 - **Validation result:** Pass | Fail — <details>
+- **Post-build validation:** PASS | FAIL | SKIPPED (no data) — <details>
 - **Follow-up needed:** Yes / No — <if yes, describe>
 - **Knowledge harvested:**
   - <title> → .shards/knowledge/<type>/<filename>.md
@@ -360,6 +366,42 @@ Build in this order:
 For each model: write SQL, write .yml schema, run `dbt build --select +model_name`,
 fix failures before next model.
 
+**Post-build validation (per model, after `dbt build` passes):** Run the
+applicable checks below using `dbt show` or the warehouse CLI. If any check
+fails, halt and diagnose before advancing to the next model. In a contract-first
+/ no-data environment, skip validation queries and note "THEORETICAL — no data
+to validate" in the build log.
+
+1. **Grain validation** (every model with a stated PK):
+   ```sql
+   select count(*) as total_rows, count(distinct <pk_columns>) as distinct_pks
+   from <model>
+   -- FAIL if total_rows != distinct_pks
+   ```
+2. **Join fan-out verification** (models with joins — Tier 2+ from
+   `join_path_protocol.md`):
+   ```sql
+   select 'before_join' as stage, count(*) as row_count from <left_model>
+   union all
+   select 'after_join', count(*)
+   from <left_model> join <right_model> on <join_condition>
+   -- FAIL if after > before and diverges from predicted fan-out
+   ```
+3. **PK/FK null check** (dimension and fact models):
+   ```sql
+   select '<column>' as col, count(*) as total,
+     count(<column>) as non_null,
+     round(100.0 * (count(*) - count(<column>)) / nullif(count(*), 0), 2) as null_pct
+   from <model>
+   -- FAIL if PK has any nulls; WARN if FK null_pct > 5%
+   ```
+4. **Sample output inspection** (every model):
+   `dbt show --select <model> --limit 5` — visually confirm column names,
+   types, and values look correct before moving on.
+
+Scale to model importance: staging models need only grain + sample; dimension/fact
+models get the full suite.
+
 ### Document Deep Phase 6
 
 ```markdown
@@ -373,6 +415,11 @@ fix failures before next model.
 - **Build validation:**
   - `dbt build` result: Pass | Fail — <details>
   - Tests passing: <N> / <N>
+- **Post-build validation:**
+  | Model | Grain Check | Fan-Out Check | PK/FK Nulls | Sample OK | Notes |
+  |-------|-------------|---------------|-------------|-----------|-------|
+  | <model> | PASS / FAIL | PASS / FAIL / N/A | PASS / WARN / FAIL | Yes / No | <details or "clean"> |
+  - (or "THEORETICAL — no data to validate" if contract-first design)
 - **Deviations from design:** <changes from earlier phases and why, or "none">
 - **Entity-relationship diagram (final):**
   ```

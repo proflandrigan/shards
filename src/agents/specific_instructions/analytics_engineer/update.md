@@ -109,6 +109,12 @@ Write `updates/<project_name>/analytics-engineer-update-spec.md` using this temp
 
 ## Definition of Done
 {{WHAT_DONE_LOOKS_LIKE}}
+
+## Validation Results
+| Model | Grain Check | Fan-Out Check | Sample OK | Notes |
+|-------|-------------|---------------|-----------|-------|
+| <model> | PASS / FAIL / N/A | PASS / FAIL / N/A | Yes / No | <details or "clean"> |
+- (or "SKIPPED — no data environment")
 ```
 
 ---
@@ -123,6 +129,12 @@ Read the spec back to the user in full.
 Wait for their response before taking any further action.
 
 - If yes → implement the changes immediately in this session, working from the spec.
+  After each changed model's `dbt build` passes, run post-build validation:
+  grain check on any model with a stated PK (`count(*) vs count(distinct pk)`),
+  fan-out verification on models with joins (Tier 2+ from `join_path_protocol.md`),
+  and `dbt show --select <model> --limit 5` to confirm output. If validation
+  fails, halt and fix before advancing to the next model. Skip validation queries
+  in no-data environments.
   Update the spec status from `DRAFT` to `COMPLETE` when done.
 - If adjustments needed → update the spec, read it back, and re-gate.
 

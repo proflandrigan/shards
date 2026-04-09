@@ -52,7 +52,12 @@ Wait for any signal from the user before beginning build steps.
 1. Implement the change in the model SQL and schema file
 2. Update downstream models if column names or types changed
 3. Run the stack's build/validate command to validate
-4. Summarize what changed
+4. **Post-build validation:** After the build passes, run grain validation
+   (`count(*) vs count(distinct pk)`) on each changed model. For models with
+   joins, run the fan-out check from `join_path_protocol.md` Tier 2+. Run
+   `dbt show --select <model> --limit 5` to confirm output looks right.
+   If any check fails, fix before proceeding. Skip if no-data environment.
+5. Summarize what changed
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
 Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
@@ -69,6 +74,7 @@ the protocol. Present candidates to the user for confirmation before writing.
 - **Downstream updates:** <files updated or "none needed">
 - **Validation result:** Pass | Fail — <details>
 - **Tests passing:** <N> / <N>
+- **Post-build validation:** PASS | FAIL | SKIPPED (no data) — <details>
 - **Follow-up needed:** Yes / No — <if yes, describe>
 - **Knowledge harvested:**
   - <title> → .shards/knowledge/<type>/<filename>.md
