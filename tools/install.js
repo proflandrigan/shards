@@ -38,9 +38,9 @@ function copyDir(src, dest) {
       count += copyDir(srcPath, destPath);
     } else {
       if (fs.existsSync(destPath)) {
-        const existing = fs.readFileSync(destPath, "utf8");
-        const incoming = fs.readFileSync(srcPath, "utf8");
-        if (existing === incoming) {
+        const existing = fs.readFileSync(destPath);
+        const incoming = fs.readFileSync(srcPath);
+        if (existing.equals(incoming)) {
           continue;
         }
         const backupPath = destPath + ".backup";
