@@ -53,8 +53,21 @@ Before dispatching agents, scan the workspace yourself to understand what's here
    - `**/*.py` — Python code, pipelines
    - `**/dbt_project.yml` — dbt projects
    - `**/*.md` — existing documentation
-2. Summarize what you found: "I see N SQL files, a dbt project at X, Python code
-   in Y, etc." This informs which agents to dispatch.
+2. If Python files exist, scan for ML/AI signals using Grep:
+   - **ML framework imports:** `sklearn`, `xgboost`, `lightgbm`, `catboost`, `torch`,
+     `tensorflow`, `keras`, `optuna`, `hyperopt`, `mlflow`, `wandb`, `feature_store`,
+     `feast`
+   - **LLM/AI library imports:** `openai`, `anthropic`, `langchain`, `llama_index`,
+     `litellm`, `instructor`, `guardrails`, `chromadb`, `pinecone`, `weaviate`,
+     `qdrant`, `faiss`
+   - **MLOps file patterns:** Glob for `**/Dockerfile`, `**/*.tf`, `**/terraform/**`,
+     `**/k8s/**`, `**/kubernetes/**`, `**/kubeflow/**`, `**/bentofile.yaml`,
+     `**/sagemaker/**`, `**/vertex/**`, `**/serving/**`, `**/monitoring/**`,
+     `**/evidently*`, `**/model_registry/**`
+3. Summarize what you found: "I see N SQL files, a dbt project at X, Python code
+   in Y, etc." Include ML/AI signals if detected: "I found scikit-learn and XGBoost
+   imports in services/recommender/, LangChain usage in services/chatbot/, and
+   Terraform configs in infra/." This informs which agents to dispatch.
 
 If the workspace has almost no code (e.g., fresh project), tell the user:
 > "There's not much to scan yet. Want to switch to [A] Add mode and record
@@ -71,12 +84,21 @@ Select which specialists to call based on what exists in the workspace:
 | Transformation SQL exists (staging/intermediate/mart layers) | Analytics Engineer | Reusable SQL patterns, join strategies, aggregation techniques |
 | Python code exists | Backend Engineer | API patterns, connection patterns, data contract quirks |
 | Existing analysis/ or studies/ directories | Data Analyst | Common query patterns, data quality observations from prior work |
+| ML framework imports detected (sklearn, torch, tensorflow, xgboost, lightgbm, catboost, optuna, mlflow, feast, etc.) | ML Engineer | Model architecture patterns, training configs, feature engineering approaches, drift detection patterns, feature-serving gaps, latency budgets |
+| LLM/AI library imports detected (openai, anthropic, langchain, llama_index, litellm, chromadb, pinecone, instructor, guardrails, etc.) | AI Engineer | LLM integration patterns, prompt engineering strategies, RAG patterns, evaluation approaches, safety guardrails, cost patterns |
+| ML-adjacent deployment infra exists (Dockerfile/terraform/k8s configs AND ML or AI signals also detected in scan, or ML-specific dirs like serving/, monitoring/, kubeflow/, sagemaker/, vertex/) | MLOps Engineer | Serving infrastructure patterns, deployment strategies, monitoring setups, retraining automation, CI/CD for ML, operational gotchas |
 
-**Minimum:** always call at least the Data Modeller (entities are the most universally valuable knowledge type).
+**Minimum:** always call at least the Data Modeller (entities are the most universally
+valuable knowledge type). If ML/AI signals were detected in the scan, also call the
+ML Engineer as a minimum (features and model patterns are high-value knowledge).
 
 **If "full sweep" was requested:** call all agents that have relevant files to inspect.
 
-For each selected agent, call via Task:
+For each selected agent, call via Task. Use the **generic prompt** for Data Modeller,
+Data Engineer, Analytics Engineer, Backend Engineer, and Data Analyst. Use the
+**agent-specific prompts** for ML Engineer, AI Engineer, and MLOps Engineer.
+
+#### Generic prompt (data agents)
 
 ```
 Task(
@@ -107,9 +129,157 @@ Return 0-10 candidates. Quality over quantity. "None found" is acceptable.
 )
 ```
 
+#### ML Engineer prompt
+
+```
+Task(
+  subagent_type="ml-engineer",
+  prompt="""
+You are in KNOWLEDGE SWEEP MODE — not executing a project. JFL is building the
+workspace's Knowledge Ledger and needs you to scan the codebase for reusable
+knowledge from your ML engineering domain.
+
+**Workspace context:** <domains, systems, and any user-provided knowledge from intake>
+**Files to inspect:** <relevant file paths — focus on files with ML framework imports>
+
+Scan the files above and identify ML knowledge worth recording. For each candidate:
+- **Title:** short, specific, grep-friendly
+- **Category:** patterns | infrastructure | features
+- **Domain tags:** 2-4 keywords
+- **Confidence:** high (verified in code) | medium (inferred from patterns) | low (guessed)
+- **Content:** 3-10 lines — be specific. Include model names, framework versions,
+  hyperparameters, feature names, metric values, serving constraints.
+
+Look specifically for:
+- Model architecture patterns and why specific architectures were chosen
+- Training configurations that encode hard-won knowledge (learning rate schedules,
+  regularization choices, batch sizes tied to memory constraints)
+- Feature engineering approaches — especially non-obvious transformations, temporal
+  features, or interaction features that proved valuable
+- Feature-serving gaps — differences between training-time and inference-time
+  feature availability
+- Drift detection patterns or model monitoring configurations
+- Latency or memory constraints that shaped model selection
+- Threshold tuning decisions (classification cutoffs, anomaly thresholds)
+
+For **feature** candidates, also include:
+- **SQL or code snippet:** the feature computation
+- **Feature type:** numeric | categorical | boolean | temporal | embedding
+- **Grain:** one row per what
+- **Verified by:** which model, with what metric impact (if discoverable from code)
+
+Focus on things that would surprise or save time for someone building the next model
+in this workspace. "The recommender uses XGBoost" is not knowledge — "XGBoost was
+chosen over a neural approach because the feature space is sparse and inference
+latency budget is 15ms p99, which rules out embedding-based models" IS knowledge.
+
+Return 0-10 candidates. Quality over quantity. "None found" is acceptable.
+  """
+)
+```
+
+#### AI Engineer prompt
+
+```
+Task(
+  subagent_type="ai-engineer",
+  prompt="""
+You are in KNOWLEDGE SWEEP MODE — not executing a project. JFL is building the
+workspace's Knowledge Ledger and needs you to scan the codebase for reusable
+knowledge from your AI engineering domain.
+
+**Workspace context:** <domains, systems, and any user-provided knowledge from intake>
+**Files to inspect:** <relevant file paths — focus on files with LLM/AI library imports>
+
+Scan the files above and identify AI/LLM knowledge worth recording. For each candidate:
+- **Title:** short, specific, grep-friendly
+- **Category:** patterns | infrastructure
+- **Domain tags:** 2-4 keywords
+- **Confidence:** high (verified in code) | medium (inferred from patterns) | low (guessed)
+- **Content:** 3-10 lines — be specific. Include model names, provider APIs,
+  prompt strategies, chunk sizes, embedding models, cost figures.
+
+Look specifically for:
+- LLM integration patterns — which models are used, how they're called, retry and
+  fallback strategies, structured output parsing
+- Prompt engineering patterns — system prompt conventions, few-shot strategies,
+  chain-of-thought usage, prompt versioning approaches
+- RAG implementation details — chunking strategy, embedding model choice, retrieval
+  method, reranking, context window management
+- Evaluation approaches — how outputs are tested, ground truth management, quality
+  metrics, regression detection
+- Safety guardrails — content filtering, output validation, PII detection, jailbreak
+  prevention, human-in-the-loop gates
+- Cost patterns — token usage patterns, caching strategies, model selection for
+  cost vs. quality trade-offs
+- Simplification opportunities — places where deterministic logic replaced or could
+  replace LLM calls
+
+Focus on things that would surprise or save time for someone building the next AI
+feature in this workspace. "The chatbot uses GPT-4" is not knowledge — "GPT-4 is
+used for classification but gpt-4o-mini handles 80% of summarization tasks at 1/10
+the cost, with a routing layer that escalates ambiguous cases" IS knowledge.
+
+Return 0-10 candidates. Quality over quantity. "None found" is acceptable.
+  """
+)
+```
+
+#### MLOps Engineer prompt
+
+```
+Task(
+  subagent_type="mlops-engineer",
+  prompt="""
+You are in KNOWLEDGE SWEEP MODE — not executing a project. JFL is building the
+workspace's Knowledge Ledger and needs you to scan the codebase for reusable
+knowledge from your MLOps domain.
+
+**Workspace context:** <domains, systems, and any user-provided knowledge from intake>
+**Files to inspect:** <relevant file paths — focus on deployment configs, IaC,
+serving infrastructure, monitoring setups, CI/CD workflows>
+
+Scan the files above and identify MLOps knowledge worth recording. For each candidate:
+- **Title:** short, specific, grep-friendly
+- **Category:** infrastructure | patterns
+- **Domain tags:** 2-4 keywords
+- **Confidence:** high (verified in code) | medium (inferred from patterns) | low (guessed)
+- **Content:** 3-10 lines — be specific. Include service names, resource specs,
+  threshold values, tool versions, deployment strategies.
+
+Look specifically for:
+- Serving infrastructure patterns — framework choices, resource allocations, scaling
+  configs, GPU/CPU decisions, endpoint design
+- Deployment strategies — canary/blue-green/shadow patterns, traffic shifting rules,
+  rollback procedures encoded in configs or scripts
+- Monitoring setups — what metrics are tracked, alert thresholds, drift detection
+  configs, dashboard locations, on-call routing
+- Retraining automation — pipeline triggers, validation gates, promotion criteria,
+  data freshness requirements for retraining
+- CI/CD patterns for ML — how model artifacts flow from training to production,
+  automated testing of model artifacts, performance regression gates
+- IaC patterns — Terraform modules, K8s resource patterns, cloud-specific configs
+  that encode operational knowledge
+- Operational gotchas — resource limits that were tuned through incidents, cold start
+  behaviors, memory growth patterns, GPU memory fragmentation workarounds
+
+Focus on things that would save the next engineer from an incident or a wasted day.
+"The model runs on Kubernetes" is not knowledge — "The serving pod requires 4GB
+memory limit (not request) because the XGBoost model loads a 2.8GB feature lookup
+table at startup, and setting memory request=limit prevents OOM kills during the
+loading spike" IS knowledge.
+
+Return 0-10 candidates. Quality over quantity. "None found" is acceptable.
+  """
+)
+```
+
 Announce each dispatch to the user:
 > "Sending the Data Modeller to scan the schema files..."
 > "Data Engineer is checking the pipeline configs..."
+> "ML Engineer is reviewing the model training code..."
+> "AI Engineer is scanning the LLM integration patterns..."
+> "MLOps Engineer is inspecting the deployment infrastructure..."
 
 ### Step 4 — Consolidate
 
@@ -118,8 +288,11 @@ After all agents return:
 1. Collect all candidates from all agents.
 2. Add any knowledge the user provided manually during intake.
 3. Deduplicate — if two agents surfaced the same knowledge, keep the version with
-   more detail and higher confidence.
-4. Group by category (entities, infrastructure, patterns).
+   more detail and higher confidence. When ML Engineer and MLOps Engineer surface
+   overlapping infrastructure findings, prefer the MLOps Engineer's version for
+   operational/deployment knowledge and the ML Engineer's version for model/feature
+   knowledge.
+4. Group by category (entities, infrastructure, patterns, features).
 
 ### Step 5 — Present & Confirm (GATE)
 
@@ -141,8 +314,12 @@ Knowledge sweep complete — here's what the shards found:
 ## Patterns (N candidates)
 4. ...
 
+## Features (N candidates)
+5. "days_since_last_login predicts churn" (high, from ML Engineer)
+   — Grain: user-day. DATEDIFF(CURRENT_DATE, last_login_at). +3.2% AUC in churn model.
+
 ## User-provided
-5. ...
+6. ...
 
 Total: N candidates across M categories.
 Add, edit, remove, or adjust confidence? Or confirm to write.
