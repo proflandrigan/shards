@@ -96,6 +96,8 @@ function createSessionState(sid, agent) {
     openPanels: {},
     panelTabOrder: [],
     pinnedItems: [],  // Pinboard: array of { type, path, name, text?, startLine?, endLine? }
+    totalCost: 0,       // cumulative USD cost for this session
+    totalDuration: 0,   // cumulative ms for this session
   };
   chatSessions[sid] = state;
   sessionOrder.push(sid);
@@ -155,4 +157,5 @@ function loadSessionWorkspace(session) {
   panelTabOrder = session.panelTabOrder;
   pinnedItems = session.pinnedItems || [];
   if (typeof renderPinboard === 'function') renderPinboard();
+  if (typeof renderHud === 'function') renderHud();
 }

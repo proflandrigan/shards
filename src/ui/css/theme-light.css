@@ -486,3 +486,26 @@
 [data-theme="light"] .diagram-zoom-label {
   color: #888;
 }
+
+/* ─── HUD light theme ────────────────────────────────────── */
+[data-theme="light"] #status-bar {
+  background: rgba(0, 0, 0, 0.04);
+  border-top-color: rgba(0, 0, 0, 0.08);
+  color: #888;
+}
+[data-theme="light"] .hud-git {
+  background: rgba(74, 128, 224, 0.1);
+  color: #4a80e0;
+}
+[data-theme="light"] .hud-context {
+  background: rgba(102, 187, 106, 0.1);
+}
+[data-theme="light"] .hud-separator {
+  background: rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .hud-dirty-active { color: #c08030; }
+[data-theme="light"] .hud-dirty-clean { color: #388e3c; }
+[data-theme="light"] .hud-ctx-low { color: #388e3c; }
+[data-theme="light"] .hud-ctx-mid { color: #c08030; }
+[data-theme="light"] .hud-ctx-high { color: #d32f2f; }
+[data-theme="light"] .hud-label { color: #999; }

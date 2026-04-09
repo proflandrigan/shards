@@ -56,6 +56,7 @@ function renderPinboard() {
   if (pinnedItems.length === 0) {
     el.classList.remove('visible');
     el.innerHTML = '';
+    if (typeof renderHud === 'function') renderHud();
     return;
   }
 
@@ -80,6 +81,7 @@ function renderPinboard() {
 
   html += '</div>';
   el.innerHTML = html;
+  if (typeof renderHud === 'function') renderHud();
 }
 
 // ─── Format pinned context for message prepending ───────────

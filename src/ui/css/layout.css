@@ -361,3 +361,75 @@
   color: #6a6a90;
   padding: 4px 0;
 }
+
+/* ─── Environment HUD (bottom status bar) ────────────────── */
+#status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  padding: 0 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border-top: 1px solid var(--glass-border);
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #6a6a90;
+  user-select: none;
+}
+.hud-left, .hud-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.hud-icon {
+  font-size: 12px;
+  opacity: 0.7;
+}
+.hud-separator {
+  width: 1px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Git section — visually prominent with background badge ── */
+.hud-git {
+  background: rgba(56, 96, 192, 0.15);
+  border-radius: 3px;
+  padding: 1px 8px;
+  color: #7aa0e0;
+}
+.hud-branch-name {
+  font-weight: 600;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hud-dirty-active { color: #e0a040; }
+.hud-dirty-clean { color: #4CAF50; }
+
+/* ── Context indicator — visually prominent on right side ── */
+.hud-context {
+  background: rgba(76, 175, 80, 0.12);
+  border-radius: 3px;
+  padding: 1px 8px;
+  gap: 5px;
+}
+.hud-label {
+  color: #6a6a90;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.hud-context-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.hud-ctx-low { color: #4CAF50; }
+.hud-ctx-mid { color: #e0a040; }
+.hud-ctx-high { color: #F44336; }

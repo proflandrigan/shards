@@ -174,6 +174,9 @@ function handleChatEventForSession(data, session, isActive) {
 
     case 'chat-turn-end':
       session.chatResponding = false;
+      if (data.cost != null) session.totalCost = (session.totalCost || 0) + data.cost;
+      if (data.duration != null) session.totalDuration = (session.totalDuration || 0) + data.duration;
+      if (typeof renderHud === 'function') renderHud();
       if (isActive) {
         removeThinkingIndicator();
         setChatInputEnabled(true);
