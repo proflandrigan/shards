@@ -182,6 +182,33 @@
   </div>
 </main>
 
+<!-- Environment HUD -->
+<footer id="status-bar">
+  <div class="hud-left">
+    <span class="hud-item hud-git" title="Git branch">
+      <span class="hud-icon">&#9095;</span>
+      <span id="hud-git-branch" class="hud-branch-name">&mdash;</span>
+      <span id="hud-git-dirty" class="hud-dirty">&mdash;</span>
+    </span>
+    <span class="hud-separator" id="hud-git-sep"></span>
+    <span class="hud-item" title="Pinned context items">
+      <span class="hud-icon">&#128204;</span>
+      <span id="hud-pins">0 pinned</span>
+    </span>
+  </div>
+  <div class="hud-right">
+    <span class="hud-item" title="Session cost">
+      <span class="hud-icon">&#9673;</span>
+      <span id="hud-cost">$0.00</span>
+    </span>
+    <span class="hud-separator"></span>
+    <span class="hud-item hud-context" title="Estimated context usage">
+      <span class="hud-label">Context</span>
+      <span id="hud-context" class="hud-context-value">&mdash;</span>
+    </span>
+  </div>
+</footer>
+
 <!-- Context menu (shared) -->
 <div id="ctx-menu" class="ctx-menu">
   <div class="ctx-item" id="ctx-copy-path">Copy Path</div>
@@ -272,6 +299,7 @@
 <script src="js/command-palette.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/git.js"></script>
+<script src="js/hud.js"></script>
 <script src="js/events.js"></script>
 <script src="js/init.js"></script>
 </body>

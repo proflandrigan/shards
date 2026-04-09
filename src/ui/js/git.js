@@ -25,6 +25,7 @@ async function fetchGitStatus() {
       }
     }
     renderGitChanges();
+    if (typeof renderHud === 'function') renderHud();
     // Invalidate diff cache for files no longer changed
     for (var p in openFiles) {
       if (openFiles[p].cachedDiffData && !gitChangesMap[p]) {

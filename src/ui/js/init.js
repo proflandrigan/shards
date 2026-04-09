@@ -297,6 +297,7 @@ loadInitial().then(function() {
   if (typeof renderSessionFiles === 'function') renderSessionFiles();
   if (typeof initBookmarks === 'function') initBookmarks();
   if (typeof fetchGitStatus === 'function') fetchGitStatus();
+  if (typeof renderHud === 'function') renderHud();
   if (typeof switchSidebarView === 'function') switchSidebarView(activeSidebarView);
   if (typeof renderModeIndicator === 'function') renderModeIndicator();
 });
