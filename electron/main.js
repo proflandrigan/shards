@@ -10,13 +10,14 @@ const { ClaudeDetector } = require('./claude-detector');
 const { setupHooksForProject } = require('./hook-setup');
 const { saveWindowState, restoreWindowState } = require('./window-manager');
 const { TerminalManager } = require('./terminal-manager');
+const appPaths = require('./paths');
+const { initUpdater, checkForUpdates } = require('./updater');
 const { fork } = require('child_process');
 const fs = require('fs');
 
 const store = new Store({ name: 'shards-ide' });
 const registry = new WorkspaceRegistry();
 const terminalManager = new TerminalManager();
-const SERVER_WORKER = path.join(__dirname, 'server-worker.js');
 let claude; // ClaudeDetector instance, set in app.whenReady
 
 // Single instance lock — prevent duplicate app launches
@@ -63,7 +64,7 @@ async function openProject(projectDir) {
     if (response === 0) {
       try {
         const { execSync } = require('child_process');
-        execSync(`node "${path.join(__dirname, '..', 'tools', 'install.js')}"`, {
+        execSync(`node "${appPaths.getInstallScript()}"`, {
           cwd: projectDir,
           stdio: 'pipe'
         });
@@ -164,10 +165,14 @@ app.whenReady().then(async () => {
   }
 
   // Set up native menu bar
-  buildMenuBar({ openProject, showFolderPicker, registry, store });
+  buildMenuBar({ openProject, showFolderPicker, registry, store, checkForUpdates });
 
   // Set up system tray
   setupTray({ registry, store });
+
+  // Initialize auto-updater (silent check on startup)
+  initUpdater(console.log);
+  setTimeout(checkForUpdates, 5000); // Check after 5s to not block startup
 
   // Open project from CLI arg or show welcome/picker
   const projectArg = process.argv.find((a, i) => i > 1 && !a.startsWith('-'));
@@ -319,7 +324,7 @@ app.on('before-quit', () => {
 
 function spawnServerWorker(projectDir) {
   return new Promise((resolve, reject) => {
-    const worker = fork(SERVER_WORKER, [], { stdio: 'pipe' });
+    const worker = fork(appPaths.getServerWorkerPath(), [], { stdio: 'pipe' });
 
     const timeout = setTimeout(() => {
       worker.kill();
@@ -352,8 +357,9 @@ function spawnServerWorker(projectDir) {
     worker.send({
       type: 'start',
       projectDir,
-      uiDir: path.join(__dirname, '..', 'src', 'ui'),
-      vendorDir: path.join(__dirname, 'vendor')
+      serverPath: path.join(appPaths.getUiDir(), 'server.js'),
+      uiDir: appPaths.getUiDir(),
+      vendorDir: appPaths.getVendorDir()
     });
   });
 }

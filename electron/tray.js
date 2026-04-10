@@ -7,7 +7,8 @@ let tray = null;
 
 function setupTray({ registry, store }) {
   // Create a small tray icon (16x16 template image)
-  const iconPath = path.join(__dirname, '..', 'src', 'ui', 'shards_icon.png');
+  const appPaths = require('./paths');
+  const iconPath = appPaths.getIconPath();
   let icon;
   try {
     icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });

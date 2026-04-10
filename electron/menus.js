@@ -2,7 +2,7 @@
 
 const { Menu, app, BrowserWindow } = require('electron');
 
-function buildMenuBar({ openProject, showFolderPicker, registry, store }) {
+function buildMenuBar({ openProject, showFolderPicker, registry, store, checkForUpdates }) {
   const isMac = process.platform === 'darwin';
   const folderPicker = showFolderPicker || openProject;
 
@@ -119,6 +119,10 @@ function buildMenuBar({ openProject, showFolderPicker, registry, store }) {
           click: () => {
             require('electron').shell.openExternal('https://github.com/proflandrigan/shards');
           }
+        },
+        {
+          label: 'Check for Updates...',
+          click: () => { if (checkForUpdates) checkForUpdates(); }
         },
         { type: 'separator' },
         {
