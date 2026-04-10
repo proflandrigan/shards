@@ -7,7 +7,7 @@ function openFileTab(relPath, content, absPath, opts) {
   if (relPath in openFiles) {
     // Update content if not modified by user
     var f = openFiles[relPath];
-    if (!f.modified && !f.editMode) {
+    if (!f.modified) {
       f.content = content;
       f.originalContent = content;
     }
@@ -18,7 +18,7 @@ function openFileTab(relPath, content, absPath, opts) {
       absPath: absPath || relPath,
       originalContent: content,
       modified: false,
-      editMode: false,
+      editMode: true,
       tabularData: null,
       tabulatorInstance: null,
       media: opts.media || false,

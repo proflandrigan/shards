@@ -71,13 +71,19 @@ function renderFilePane(relPath) {
     document.getElementById('edit-btn').style.display = 'none';
     document.getElementById('save-btn').style.display = f.modified ? '' : 'none';
   } else {
-    document.getElementById('edit-btn').style.display = '';
     if (isTabular) {
+      document.getElementById('edit-btn').style.display = '';
       document.getElementById('edit-btn').textContent = f.editMode ? 'Table' : 'Raw';
-      document.getElementById('save-btn').style.display = (f.modified || f.editMode) ? '' : 'none';
-    } else {
+      document.getElementById('save-btn').style.display = '';
+    } else if (isMarkdown) {
+      // Markdown keeps toggle — View renders markdown, Edit shows raw
+      document.getElementById('edit-btn').style.display = '';
       document.getElementById('edit-btn').textContent = f.editMode ? 'View' : 'Edit';
-      document.getElementById('save-btn').style.display = f.editMode ? '' : 'none';
+      document.getElementById('save-btn').style.display = '';
+    } else {
+      // Code files — always editable, no toggle needed
+      document.getElementById('edit-btn').style.display = 'none';
+      document.getElementById('save-btn').style.display = '';
     }
   }
 
@@ -253,7 +259,12 @@ function renderCodeView(relPath, f) {
       activeMonacoInstance = createMonacoEditor(monacoFileContainer, {
         value: f.content,
         language: lang,
-        readOnly: true,
+        readOnly: false,
+      });
+      activeMonacoInstance.onDidChangeModelContent(function() {
+        f.content = activeMonacoInstance.getValue();
+        f.modified = f.content !== f.originalContent;
+        renderWsTabs();
       });
     }).catch(function() {
       monacoFileContainer.style.display = 'none';
@@ -397,7 +408,7 @@ function highlightLatestSpecsSection(container) {
 function handleArtifactUpdate(relPath, content, isSessionFile) {
   if (relPath in openFiles) {
     var f = openFiles[relPath];
-    if (!f.modified && !f.editMode) {
+    if (!f.modified) {
       f.content = content;
       f.originalContent = content;
       f.tabularData = null; // Force re-parse for tabular files
@@ -405,8 +416,15 @@ function handleArtifactUpdate(relPath, content, isSessionFile) {
       f.cachedDiffData = false; // Invalidate diff cache
       var currentKey = getCurrentFileKey();
       if (relPath === currentKey) {
-        disposeNotebookCellMonaco();
-        renderFilePane(relPath);
+        // Update Monaco in-place if possible to avoid cursor jump
+        if (activeMonacoInstance && f.editMode) {
+          var cursorPos = activeMonacoInstance.getPosition();
+          activeMonacoInstance.setValue(content);
+          if (cursorPos) activeMonacoInstance.setPosition(cursorPos);
+        } else {
+          disposeNotebookCellMonaco();
+          renderFilePane(relPath);
+        }
       } else {
         var tabEl = document.querySelector('[data-path="' + CSS.escape(relPath) + '"]');
         if (tabEl) tabEl.classList.add('unread');
@@ -424,7 +442,7 @@ function initFileAutoRefresh() {
     for (var i = 0; i < fileTabOrder.length; i++) {
       var relPath = fileTabOrder[i];
       var f = openFiles[relPath];
-      if (!f || f.editMode || f.modified) continue;
+      if (!f || f.modified) continue;
 
       try {
         var res = await authFetch('/browse/file?path=' + encodeURIComponent(f.absPath));
@@ -438,8 +456,15 @@ function initFileAutoRefresh() {
           f.cachedDiffData = false; // Invalidate diff cache
           var currentKey = getCurrentFileKey();
           if (relPath === currentKey) {
-            disposeNotebookCellMonaco();
-            renderFilePane(relPath);
+            // Update Monaco in-place if possible to avoid cursor jump
+            if (activeMonacoInstance && f.editMode) {
+              var cursorPos = activeMonacoInstance.getPosition();
+              activeMonacoInstance.setValue(data.content);
+              if (cursorPos) activeMonacoInstance.setPosition(cursorPos);
+            } else {
+              disposeNotebookCellMonaco();
+              renderFilePane(relPath);
+            }
           } else {
             // Mark unread
             var tabEl = document.querySelector('[data-path="' + CSS.escape(relPath) + '"]');
