@@ -12,6 +12,12 @@ contextBridge.exposeInMainWorld('shardsElectron', {
     openFolder: () => ipcRenderer.invoke('open-folder')
   },
 
+  // Native notifications
+  notify: (title, body) => ipcRenderer.send('notification:show', title, body),
+
+  // Claude CLI status
+  getClaude: () => ipcRenderer.invoke('get-claude-status'),
+
   // Terminal (Phase 3 — stubs for now)
   terminal: {
     create: (opts) => ipcRenderer.invoke('terminal:create', opts),

@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Notification } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const { WorkspaceRegistry } = require('./workspace-registry');
@@ -8,10 +8,12 @@ const { buildMenuBar } = require('./menus');
 const { setupTray } = require('./tray');
 const { ClaudeDetector } = require('./claude-detector');
 const { setupHooksForProject } = require('./hook-setup');
+const { saveWindowState, restoreWindowState } = require('./window-manager');
 const fs = require('fs');
 
 const store = new Store({ name: 'shards-ide' });
 const registry = new WorkspaceRegistry();
+let claude; // ClaudeDetector instance, set in app.whenReady
 
 // Single instance lock — prevent duplicate app launches
 const gotLock = app.requestSingleInstanceLock();
@@ -80,12 +82,17 @@ async function openProject(projectDir) {
     vendorDir: path.join(__dirname, 'vendor')
   });
 
+  const saved = restoreWindowState(store);
+  const isMac = process.platform === 'darwin';
+
   const win = new BrowserWindow({
-    width: store.get('windowWidth', 1400),
-    height: store.get('windowHeight', 900),
-    x: store.get('windowX', undefined),
-    y: store.get('windowY', undefined),
+    width: saved.width,
+    height: saved.height,
+    x: saved.x,
+    y: saved.y,
     title: `${path.basename(projectDir)} — Shards IDE`,
+    titleBarStyle: isMac ? 'hiddenInset' : 'default',
+    trafficLightPosition: isMac ? { x: 12, y: 12 } : undefined,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -94,24 +101,23 @@ async function openProject(projectDir) {
     }
   });
 
+  if (saved.maximized) win.maximize();
+
   registry.add(win.id, { projectDir, port, authToken, server: null, shutdown, window: win });
 
   // Save window bounds on move/resize
-  const saveBounds = () => {
-    const bounds = win.getBounds();
-    store.set('windowWidth', bounds.width);
-    store.set('windowHeight', bounds.height);
-    store.set('windowX', bounds.x);
-    store.set('windowY', bounds.y);
-  };
-  win.on('resize', saveBounds);
-  win.on('move', saveBounds);
+  const debouncedSave = debounce(() => saveWindowState(store, win), 500);
+  win.on('resize', debouncedSave);
+  win.on('move', debouncedSave);
 
   win.on('closed', () => {
     const entry = registry.get(win.id);
     if (entry && entry.shutdown) entry.shutdown();
     registry.remove(win.id);
   });
+
+  // Handle folder drag-and-drop onto the window
+  win.webContents.on('will-navigate', (e) => e.preventDefault());
 
   // Load the UI
   win.loadURL(`http://127.0.0.1:${port}/`);
@@ -135,7 +141,7 @@ async function showFolderPicker() {
 
 app.whenReady().then(async () => {
   // Check for Claude CLI
-  const claude = new ClaudeDetector(store);
+  claude = new ClaudeDetector(store);
   const claudePath = claude.detect();
   if (!claudePath) {
     dialog.showMessageBoxSync({
@@ -152,12 +158,11 @@ app.whenReady().then(async () => {
   // Set up system tray
   setupTray({ registry, store });
 
-  // Open project from CLI arg or show folder picker
+  // Open project from CLI arg or show welcome/picker
   const projectArg = process.argv.find((a, i) => i > 1 && !a.startsWith('-'));
   let projectDir = projectArg || null;
 
   if (!projectDir) {
-    // Try last opened project
     const recents = store.get('recentProjects', []);
     if (recents.length > 0) {
       projectDir = recents[0];
@@ -169,15 +174,15 @@ app.whenReady().then(async () => {
   if (projectDir) {
     await openProject(projectDir);
   } else {
-    app.quit();
+    // Show welcome window instead of quitting
+    await showWelcomeWindow();
   }
 });
 
 // macOS: re-create window when dock icon clicked and no windows open
 app.on('activate', async () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    const projectDir = await showFolderPicker();
-    if (projectDir) await openProject(projectDir);
+    await showWelcomeWindow();
   }
 });
 
@@ -204,3 +209,103 @@ ipcMain.handle('open-folder', async () => {
   if (dir) await openProject(dir);
   return dir;
 });
+
+// Claude CLI status
+ipcMain.handle('get-claude-status', () => {
+  if (!claude) return { installed: false, path: null, version: null };
+  const claudePath = store.get('claudePath');
+  return {
+    installed: !!claudePath,
+    path: claudePath || null,
+    version: claude.getVersion()
+  };
+});
+
+// Native notifications
+ipcMain.on('notification:show', (_event, title, body) => {
+  if (Notification.isSupported()) {
+    new Notification({ title, body }).show();
+  }
+});
+
+// Drag-and-drop: renderer sends dropped folder paths
+ipcMain.on('drop:folder', (_event, folderPath) => {
+  if (fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()) {
+    openProject(folderPath);
+  }
+});
+
+// ─── Welcome window ──────────────────────────────────────────────────────────
+
+async function showWelcomeWindow() {
+  const isMac = process.platform === 'darwin';
+
+  const win = new BrowserWindow({
+    width: 600,
+    height: 450,
+    resizable: false,
+    title: 'Shards IDE',
+    titleBarStyle: isMac ? 'hiddenInset' : 'default',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
+    }
+  });
+
+  const recents = store.get('recentProjects', []);
+  const recentItems = recents.map(p =>
+    `<li class="recent" data-path="${p.replace(/"/g, '&quot;')}">${path.basename(p)}<span class="path">${p}</span></li>`
+  ).join('');
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: #1a1a2e; color: #e0e0e0; padding: ${isMac ? '40px' : '20px'} 32px 20px;
+    -webkit-app-region: drag; height: 100vh; display: flex; flex-direction: column; }
+  h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; color: #fff; }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 24px; }
+  .actions { display: flex; gap: 12px; margin-bottom: 24px; -webkit-app-region: no-drag; }
+  button { background: #6c5ce7; color: #fff; border: none; padding: 10px 20px;
+    border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 500; }
+  button:hover { background: #7d6ff0; }
+  .recents-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: #666; margin-bottom: 8px; }
+  ul { list-style: none; flex: 1; overflow-y: auto; -webkit-app-region: no-drag; }
+  li.recent { padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex;
+    align-items: center; justify-content: space-between; }
+  li.recent:hover { background: #2a2a4a; }
+  li.recent .path { font-size: 11px; color: #666; margin-left: 12px; }
+  .empty { color: #555; font-size: 13px; padding: 12px; }
+</style></head><body>
+  <h1>Shards IDE</h1>
+  <p class="subtitle">Shards of JFL's brain — data-focused agents for Claude Code</p>
+  <div class="actions">
+    <button onclick="window.shardsElectron.project.openFolder()">Open Folder</button>
+  </div>
+  ${recents.length > 0 ? `<div class="recents-label">Recent Projects</div><ul>${recentItems}</ul>` : '<p class="empty">No recent projects. Open a folder to get started.</p>'}
+  <script>
+    document.querySelectorAll('.recent').forEach(el => {
+      el.addEventListener('click', () => {
+        const p = el.dataset.path;
+        if (p) window.shardsElectron.project.openFolder();
+      });
+    });
+  </script>
+</body></html>`;
+
+  win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+}
+
+// ─── Utilities ───────────────────────────────────────────────────────────────
+
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+}
