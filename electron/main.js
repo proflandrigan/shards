@@ -9,10 +9,12 @@ const { setupTray } = require('./tray');
 const { ClaudeDetector } = require('./claude-detector');
 const { setupHooksForProject } = require('./hook-setup');
 const { saveWindowState, restoreWindowState } = require('./window-manager');
+const { TerminalManager } = require('./terminal-manager');
 const fs = require('fs');
 
 const store = new Store({ name: 'shards-ide' });
 const registry = new WorkspaceRegistry();
+const terminalManager = new TerminalManager();
 let claude; // ClaudeDetector instance, set in app.whenReady
 
 // Single instance lock — prevent duplicate app launches
@@ -233,6 +235,49 @@ ipcMain.on('drop:folder', (_event, folderPath) => {
   if (fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()) {
     openProject(folderPath);
   }
+});
+
+// ─── Terminal IPC ────────────────────────────────────────────────────────────
+
+ipcMain.handle('terminal:create', (event, opts = {}) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  const entry = registry.get(win?.id);
+  const cwd = opts.cwd || entry?.projectDir || process.cwd();
+
+  const id = terminalManager.create({
+    cwd,
+    cols: opts.cols,
+    rows: opts.rows,
+    onData: (termId, data) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('terminal:data', termId, data);
+      }
+    },
+    onExit: (termId, code) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('terminal:exit', termId, code);
+      }
+    }
+  });
+
+  return id;
+});
+
+ipcMain.on('terminal:write', (_event, id, data) => {
+  terminalManager.write(id, data);
+});
+
+ipcMain.on('terminal:resize', (_event, id, cols, rows) => {
+  terminalManager.resize(id, cols, rows);
+});
+
+ipcMain.on('terminal:destroy', (_event, id) => {
+  terminalManager.destroy(id);
+});
+
+// Clean up all terminals on app quit
+app.on('before-quit', () => {
+  terminalManager.destroyAll();
 });
 
 // ─── Welcome window ──────────────────────────────────────────────────────────

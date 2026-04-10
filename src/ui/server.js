@@ -751,6 +751,12 @@ function createHandler() {
             html = html.replace('https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js', 'vendor/tabulator-tables/tabulator.min.js');
             html = html.replace('https://cdn.plot.ly/plotly-2.35.2.min.js', 'vendor/plotly/plotly.min.js');
             html = html.replace('https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js', 'vendor/mermaid/mermaid.min.js');
+            // Inject xterm.js and fit addon for terminal support
+            html = html.replace('</head>',
+              '<link rel="stylesheet" href="vendor/xterm/xterm.css">\n' +
+              '<script src="vendor/xterm/xterm.js"><\/script>\n' +
+              '<script src="vendor/xterm/xterm-addon-fit.js"><\/script>\n' +
+              '</head>');
           }
         }
         res.writeHead(200, { ...cors, 'Content-Type': 'text/html; charset=utf-8' });
@@ -769,6 +775,7 @@ function createHandler() {
         '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
         '.gif': 'image/gif', '.svg': 'image/svg+xml', '.webp': 'image/webp',
         '.ico': 'image/x-icon',
+        '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf',
       };
       const ext = path.extname(parsedUrl.pathname).toLowerCase();
       if (MIME[ext]) {

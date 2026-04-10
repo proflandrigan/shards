@@ -1,0 +1,113 @@
+/* ─── Terminal panel (Electron only) ─────────────────────────────────────── */
+
+#terminal-panel {
+  display: none;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+  background: #0d1117;
+  min-height: 100px;
+  max-height: 600px;
+  position: relative;
+}
+
+#terminal-resize-handle {
+  height: 4px;
+  cursor: ns-resize;
+  background: transparent;
+  position: absolute;
+  top: -2px;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+#terminal-resize-handle:hover {
+  background: var(--accent, #6c5ce7);
+}
+
+/* ─── Terminal tab bar ─────────────────────────────────────────────────────── */
+
+#terminal-tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  background: #161b22;
+  border-bottom: 1px solid #21262d;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.terminal-tab {
+  background: none;
+  border: none;
+  color: #8b949e;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.terminal-tab:hover {
+  background: #21262d;
+  color: #e6edf3;
+}
+
+.terminal-tab.active {
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+.terminal-tab-close {
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.terminal-tab:hover .terminal-tab-close {
+  opacity: 0.7;
+}
+
+.terminal-tab-close:hover {
+  opacity: 1 !important;
+  color: #ff7b72;
+}
+
+.terminal-tab-add {
+  color: #484f58;
+  font-size: 16px;
+  padding: 2px 8px;
+}
+
+.terminal-tab-add:hover {
+  color: #8b949e;
+}
+
+/* ─── Terminal container ───────────────────────────────────────────────────── */
+
+#terminal-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.terminal-instance {
+  width: 100%;
+  height: 100%;
+  padding: 4px 8px;
+}
+
+/* xterm.js overrides */
+.terminal-instance .xterm {
+  height: 100%;
+}
+
+.terminal-instance .xterm-viewport {
+  overflow-y: auto !important;
+}
