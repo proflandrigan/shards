@@ -7,6 +7,8 @@ const { WorkspaceRegistry } = require('./workspace-registry');
 const { buildMenuBar } = require('./menus');
 const { setupTray } = require('./tray');
 const { ClaudeDetector } = require('./claude-detector');
+const { setupHooksForProject } = require('./hook-setup');
+const fs = require('fs');
 
 const store = new Store({ name: 'shards-ide' });
 const registry = new WorkspaceRegistry();
@@ -41,13 +43,41 @@ async function openProject(projectDir) {
     return;
   }
 
+  // Check if shards is installed in this project
+  const agentsDir = path.join(projectDir, '.claude', 'agents');
+  if (!fs.existsSync(agentsDir)) {
+    const { response } = await dialog.showMessageBox({
+      type: 'question',
+      title: 'Install Shards',
+      message: `This project doesn't have Shards installed.\n\nWould you like to install Shards agents into:\n${projectDir}`,
+      buttons: ['Install', 'Open Anyway', 'Cancel'],
+      defaultId: 0
+    });
+    if (response === 2) return; // Cancel
+    if (response === 0) {
+      try {
+        const { execSync } = require('child_process');
+        execSync(`node "${path.join(__dirname, '..', 'tools', 'install.js')}"`, {
+          cwd: projectDir,
+          stdio: 'pipe'
+        });
+      } catch (err) {
+        dialog.showErrorBox('Install Failed', `Could not install Shards: ${err.message}`);
+      }
+    }
+  }
+
+  // Auto-setup relay hooks
+  setupHooksForProject(projectDir);
+
   // Import server factory (lazy — avoids loading at startup if not needed)
   const { createServer } = require('../src/ui/server');
   const serverPath = path.join(__dirname, '..', 'src', 'ui');
 
   const { port, authToken, shutdown } = await createServer(projectDir, {
     uiDir: serverPath,
-    electronMode: true
+    electronMode: true,
+    vendorDir: path.join(__dirname, 'vendor')
   });
 
   const win = new BrowserWindow({

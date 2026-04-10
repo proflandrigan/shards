@@ -34,7 +34,12 @@ function initPaths(projectDir, options = {}) {
   KNOWLEDGE_DIR = path.join(SHARDS_DIR, 'knowledge');
   const uiDir = options.uiDir || __dirname;
   INDEX_HTML = path.join(uiDir, 'index.html');
+  ELECTRON_MODE = !!options.electronMode;
+  VENDOR_DIR = options.vendorDir || null;
 }
+
+let ELECTRON_MODE = false;
+let VENDOR_DIR = null;
 
 // ─── Logging ─────────────────────────────────────────────────────────────────
 
@@ -737,6 +742,17 @@ function createHandler() {
         let html = fs.readFileSync(INDEX_HTML, 'utf8');
         // Inject token into HTML as a meta tag before </head>
         html = html.replace('</head>', `<meta name="shards-token" content="${AUTH_TOKEN}">\n</head>`);
+        // Electron mode: swap CDN URLs for local vendor paths and inject detection flag
+        if (ELECTRON_MODE) {
+          html = html.replace('</head>', `<script>window.__shardsElectronServer = true;</script>\n</head>`);
+          if (VENDOR_DIR) {
+            html = html.replace('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', 'vendor/inter-font/inter.css');
+            html = html.replace('https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator_midnight.min.css', 'vendor/tabulator-tables/tabulator_midnight.min.css');
+            html = html.replace('https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js', 'vendor/tabulator-tables/tabulator.min.js');
+            html = html.replace('https://cdn.plot.ly/plotly-2.35.2.min.js', 'vendor/plotly/plotly.min.js');
+            html = html.replace('https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js', 'vendor/mermaid/mermaid.min.js');
+          }
+        }
         res.writeHead(200, { ...cors, 'Content-Type': 'text/html; charset=utf-8' });
         res.end(html);
       } catch {
@@ -756,9 +772,19 @@ function createHandler() {
       };
       const ext = path.extname(parsedUrl.pathname).toLowerCase();
       if (MIME[ext]) {
-        const filePath = path.join(__dirname, decodeURIComponent(parsedUrl.pathname));
-        const resolved = path.resolve(filePath);
-        if (!resolved.startsWith(__dirname)) {
+        const decodedPath = decodeURIComponent(parsedUrl.pathname);
+        let filePath = path.join(__dirname, decodedPath);
+        let resolved = path.resolve(filePath);
+        // In Electron mode, also serve from vendor directory
+        if (ELECTRON_MODE && VENDOR_DIR && decodedPath.startsWith('/vendor/')) {
+          filePath = path.join(VENDOR_DIR, decodedPath.slice('/vendor/'.length));
+          resolved = path.resolve(filePath);
+          if (!resolved.startsWith(path.resolve(VENDOR_DIR))) {
+            res.writeHead(403);
+            res.end('Forbidden');
+            return;
+          }
+        } else if (!resolved.startsWith(__dirname)) {
           res.writeHead(403);
           res.end('Forbidden');
           return;
