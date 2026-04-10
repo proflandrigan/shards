@@ -10,11 +10,13 @@ const { ClaudeDetector } = require('./claude-detector');
 const { setupHooksForProject } = require('./hook-setup');
 const { saveWindowState, restoreWindowState } = require('./window-manager');
 const { TerminalManager } = require('./terminal-manager');
+const { fork } = require('child_process');
 const fs = require('fs');
 
 const store = new Store({ name: 'shards-ide' });
 const registry = new WorkspaceRegistry();
 const terminalManager = new TerminalManager();
+const SERVER_WORKER = path.join(__dirname, 'server-worker.js');
 let claude; // ClaudeDetector instance, set in app.whenReady
 
 // Single instance lock — prevent duplicate app launches
@@ -74,15 +76,9 @@ async function openProject(projectDir) {
   // Auto-setup relay hooks
   setupHooksForProject(projectDir);
 
-  // Import server factory (lazy — avoids loading at startup if not needed)
-  const { createServer } = require('../src/ui/server');
-  const serverPath = path.join(__dirname, '..', 'src', 'ui');
-
-  const { port, authToken, shutdown } = await createServer(projectDir, {
-    uiDir: serverPath,
-    electronMode: true,
-    vendorDir: path.join(__dirname, 'vendor')
-  });
+  // Fork a server worker — each workspace gets its own process
+  // so module-level state in server.js doesn't collide
+  const { port, authToken, worker } = await spawnServerWorker(projectDir);
 
   const saved = restoreWindowState(store);
   const isMac = process.platform === 'darwin';
@@ -105,7 +101,7 @@ async function openProject(projectDir) {
 
   if (saved.maximized) win.maximize();
 
-  registry.add(win.id, { projectDir, port, authToken, server: null, shutdown, window: win });
+  registry.add(win.id, { projectDir, port, authToken, worker, window: win });
 
   // Save window bounds on move/resize
   const debouncedSave = debounce(() => saveWindowState(store, win), 500);
@@ -114,8 +110,21 @@ async function openProject(projectDir) {
 
   win.on('closed', () => {
     const entry = registry.get(win.id);
-    if (entry && entry.shutdown) entry.shutdown();
-    registry.remove(win.id);
+    if (entry) {
+      // Kill the server worker process
+      if (entry.worker && entry.worker.connected) {
+        entry.worker.send({ type: 'shutdown' });
+      }
+      registry.remove(win.id);
+    }
+
+    // On macOS, show welcome window when last project window closes
+    if (process.platform === 'darwin') {
+      const remaining = BrowserWindow.getAllWindows().filter(w => !w.isDestroyed());
+      if (remaining.length === 0) {
+        showWelcomeWindow();
+      }
+    }
   });
 
   // Handle folder drag-and-drop onto the window
@@ -155,7 +164,7 @@ app.whenReady().then(async () => {
   }
 
   // Set up native menu bar
-  buildMenuBar({ openProject: showFolderPicker, registry, store });
+  buildMenuBar({ openProject, showFolderPicker, registry, store });
 
   // Set up system tray
   setupTray({ registry, store });
@@ -210,6 +219,27 @@ ipcMain.handle('open-folder', async () => {
   const dir = await showFolderPicker();
   if (dir) await openProject(dir);
   return dir;
+});
+
+ipcMain.handle('open-recent', async (_event, projectDir) => {
+  if (projectDir && fs.existsSync(projectDir)) {
+    await openProject(projectDir);
+    // Close welcome window if it's the sender
+    const win = BrowserWindow.fromWebContents(_event.sender);
+    if (win && !registry.get(win.id)) {
+      win.close();
+    }
+    return true;
+  }
+  return false;
+});
+
+ipcMain.handle('get-workspace-list', () => {
+  return registry.all().map(entry => ({
+    projectDir: entry.projectDir,
+    port: entry.port,
+    name: path.basename(entry.projectDir)
+  }));
 });
 
 // Claude CLI status
@@ -275,10 +305,58 @@ ipcMain.on('terminal:destroy', (_event, id) => {
   terminalManager.destroy(id);
 });
 
-// Clean up all terminals on app quit
+// Clean up all terminals and server workers on app quit
 app.on('before-quit', () => {
   terminalManager.destroyAll();
+  for (const entry of registry.all()) {
+    if (entry.worker && entry.worker.connected) {
+      entry.worker.send({ type: 'shutdown' });
+    }
+  }
 });
+
+// ─── Server worker ───────────────────────────────────────────────────────────
+
+function spawnServerWorker(projectDir) {
+  return new Promise((resolve, reject) => {
+    const worker = fork(SERVER_WORKER, [], { stdio: 'pipe' });
+
+    const timeout = setTimeout(() => {
+      worker.kill();
+      reject(new Error('Server worker timed out'));
+    }, 15000);
+
+    worker.on('message', (msg) => {
+      if (msg.type === 'ready') {
+        clearTimeout(timeout);
+        resolve({ port: msg.port, authToken: msg.authToken, worker });
+      } else if (msg.type === 'error') {
+        clearTimeout(timeout);
+        worker.kill();
+        reject(new Error(msg.message));
+      }
+    });
+
+    worker.on('error', (err) => {
+      clearTimeout(timeout);
+      reject(err);
+    });
+
+    worker.on('exit', (code) => {
+      if (code !== 0 && code !== null) {
+        clearTimeout(timeout);
+        reject(new Error(`Server worker exited with code ${code}`));
+      }
+    });
+
+    worker.send({
+      type: 'start',
+      projectDir,
+      uiDir: path.join(__dirname, '..', 'src', 'ui'),
+      vendorDir: path.join(__dirname, 'vendor')
+    });
+  });
+}
 
 // ─── Welcome window ──────────────────────────────────────────────────────────
 
@@ -336,7 +414,7 @@ async function showWelcomeWindow() {
     document.querySelectorAll('.recent').forEach(el => {
       el.addEventListener('click', () => {
         const p = el.dataset.path;
-        if (p) window.shardsElectron.project.openFolder();
+        if (p) window.shardsElectron.project.openRecent(p);
       });
     });
   </script>

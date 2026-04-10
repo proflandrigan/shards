@@ -35,15 +35,18 @@ function setupTray({ registry, store }) {
   const updateMenu = () => {
     const workspaces = registry.all();
     const items = [
-      { label: 'Shards IDE', enabled: false },
+      { label: `Shards IDE — ${workspaces.length} project${workspaces.length !== 1 ? 's' : ''} open`, enabled: false },
       { type: 'separator' }
     ];
 
     if (workspaces.length > 0) {
       workspaces.forEach(ws => {
+        const name = path.basename(ws.projectDir);
+        const isFocused = ws.window.isFocused();
         items.push({
-          label: path.basename(ws.projectDir),
-          click: () => ws.window.show()
+          label: `${isFocused ? '\u25CF ' : '  '}${name}`,
+          sublabel: ws.projectDir,
+          click: () => { ws.window.show(); ws.window.focus(); }
         });
       });
     } else {

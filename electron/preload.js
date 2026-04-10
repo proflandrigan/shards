@@ -9,7 +9,9 @@ contextBridge.exposeInMainWorld('shardsElectron', {
   project: {
     getDir: () => ipcRenderer.invoke('get-project-dir'),
     getRecents: () => ipcRenderer.invoke('get-recent-projects'),
-    openFolder: () => ipcRenderer.invoke('open-folder')
+    openFolder: () => ipcRenderer.invoke('open-folder'),
+    openRecent: (dir) => ipcRenderer.invoke('open-recent', dir),
+    getWorkspaces: () => ipcRenderer.invoke('get-workspace-list')
   },
 
   // Native notifications

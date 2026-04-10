@@ -2,8 +2,9 @@
 
 const { Menu, app, BrowserWindow } = require('electron');
 
-function buildMenuBar({ openProject, registry, store }) {
+function buildMenuBar({ openProject, showFolderPicker, registry, store }) {
   const isMac = process.platform === 'darwin';
+  const folderPicker = showFolderPicker || openProject;
 
   const template = [
     // App menu (macOS only)
@@ -34,7 +35,10 @@ function buildMenuBar({ openProject, registry, store }) {
         {
           label: 'Open Folder...',
           accelerator: 'CmdOrCtrl+O',
-          click: () => openProject()
+          click: async () => {
+            const dir = await folderPicker();
+            if (dir) openProject(dir);
+          }
         },
         { type: 'separator' },
         {
@@ -142,8 +146,9 @@ function buildRecentsSubmenu(store, openProject) {
   if (recents.length === 0) {
     return [{ label: 'No Recent Projects', enabled: false }];
   }
+  const path = require('path');
   return recents.map(dir => ({
-    label: dir,
+    label: `${path.basename(dir)}  —  ${dir}`,
     click: () => openProject(dir)
   }));
 }
