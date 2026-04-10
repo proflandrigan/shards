@@ -1,0 +1,57 @@
+{
+  "name": "shards-ide",
+  "version": "0.1.0",
+  "description": "Shards IDE — Desktop application for the Shards agent suite",
+  "author": "JFL",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "postinstall": "electron-rebuild"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "node-pty": "^1.0.0",
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.8.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.0",
+    "electron-rebuild": "^3.2.9",
+    "electron-updater": "^6.3.0"
+  },
+  "build": {
+    "appId": "com.shards.ide",
+    "productName": "Shards IDE",
+    "files": [
+      "main.js",
+      "preload.js",
+      "*.js",
+      "vendor/**"
+    ],
+    "extraResources": [
+      "../src/**",
+      "../tools/**",
+      "../templates/**"
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.developer-tools",
+      "icon": "icons/icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icons/icon.ico"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Development",
+      "icon": "icons"
+    }
+  }
+}
