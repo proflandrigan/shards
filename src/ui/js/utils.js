@@ -166,7 +166,7 @@ function showNotificationToast(session, reason) {
     if (isSessBackground || isTabHidden) {
       var n = new Notification(title, {
         body: reason,
-        icon: '/shards_logo.png'
+        icon: '/shards_icon.png'
       });
       n.onclick = function() {
         window.focus();
