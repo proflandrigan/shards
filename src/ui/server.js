@@ -11,16 +11,30 @@ const { randomUUID } = require('crypto');
 const { ChatSession, reconnectOrCleanup } = require('./chat-session');
 const symbolIndex = require('./symbol-index');
 
-const PROJECT_DIR = process.cwd();
-const SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
-const PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
-const PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
-const LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
-const AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
-const COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
-const SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
-const KNOWLEDGE_DIR = path.join(SHARDS_DIR, 'knowledge');
-const INDEX_HTML = path.join(__dirname, 'index.html');
+let PROJECT_DIR = process.cwd();
+let SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
+let PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
+let PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
+let LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
+let AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
+let COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
+let SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
+let KNOWLEDGE_DIR = path.join(SHARDS_DIR, 'knowledge');
+let INDEX_HTML = path.join(__dirname, 'index.html');
+
+function initPaths(projectDir, options = {}) {
+  PROJECT_DIR = projectDir;
+  SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
+  PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
+  PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
+  LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
+  AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
+  COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
+  SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
+  KNOWLEDGE_DIR = path.join(SHARDS_DIR, 'knowledge');
+  const uiDir = options.uiDir || __dirname;
+  INDEX_HTML = path.join(uiDir, 'index.html');
+}
 
 // ─── Logging ─────────────────────────────────────────────────────────────────
 
@@ -1737,9 +1751,11 @@ function createHandler() {
   };
 }
 
-function startServer(portIndex) {
+function startServer(portIndex, resolve, reject) {
   if (portIndex >= PORTS.length) {
-    console.error('Shards UI: all ports in use (7842-7845)');
+    const msg = 'Shards UI: all ports in use (7842-7845)';
+    if (reject) { reject(new Error(msg)); return; }
+    console.error(msg);
     process.exit(1);
   }
 
@@ -1758,7 +1774,9 @@ function startServer(portIndex) {
       server = https.createServer(tlsOptions, handler);
       protocol = 'https';
     } catch (err) {
-      console.error(`Shards UI: Failed to load TLS cert/key: ${err.message}`);
+      const msg = `Shards UI: Failed to load TLS cert/key: ${err.message}`;
+      if (reject) { reject(new Error(msg)); return; }
+      console.error(msg);
       process.exit(1);
     }
   } else {
@@ -1772,9 +1790,11 @@ function startServer(portIndex) {
 
   server.on('error', (e) => {
     if (e.code === 'EADDRINUSE') {
-      startServer(portIndex + 1);
+      startServer(portIndex + 1, resolve, reject);
     } else {
-      console.error('Shards UI server error:', e.message);
+      const msg = 'Shards UI server error: ' + e.message;
+      if (reject) { reject(new Error(msg)); return; }
+      console.error(msg);
       process.exit(1);
     }
   });
@@ -1807,6 +1827,19 @@ function startServer(portIndex) {
         log(`Symbol index build failed: ${err.message}`);
       }
     }, 100);
+
+    // Resolve the promise for createServer callers
+    if (resolve) {
+      resolve({
+        port,
+        authToken: AUTH_TOKEN,
+        httpServer: server,
+        shutdown: () => {
+          server.close();
+          cleanup();
+        }
+      });
+    }
   });
 }
 
@@ -1820,4 +1853,18 @@ process.on('exit', cleanup);
 process.on('SIGTERM', () => { cleanup(); process.exit(0); });
 process.on('SIGINT', () => { cleanup(); process.exit(0); });
 
-startServer(0);
+// ─── Factory for Electron / programmatic use ────────────────────────────────
+
+function createServer(projectDir, options = {}) {
+  initPaths(projectDir, options);
+  return new Promise((resolve, reject) => {
+    startServer(0, resolve, reject);
+  });
+}
+
+// Standalone mode — preserves existing CLI behavior
+if (require.main === module) {
+  startServer(0);
+}
+
+module.exports = { createServer };
