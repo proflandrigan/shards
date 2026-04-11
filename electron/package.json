@@ -2,7 +2,10 @@
   "name": "shards-ide",
   "version": "0.1.0",
   "description": "Shards IDE — Desktop application for the Shards agent suite",
-  "author": "JFL",
+  "author": {
+    "name": "JFL",
+    "email": "proflandrigan@gmail.com"
+  },
   "license": "MIT",
   "main": "main.js",
   "repository": {
