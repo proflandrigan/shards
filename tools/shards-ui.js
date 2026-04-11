@@ -238,76 +238,121 @@ function parseCliPermissions() {
 // ─── Claude Code hooks setup ─────────────────────────────────────────────────
 
 function setupHooks() {
+  const relayScript = path.join(UI_DEST, 'relay.js');
+
+  // 1. Claude Code hooks
   const claudeDir = path.join(PROJECT_DIR, '.claude');
   fs.mkdirSync(claudeDir, { recursive: true });
 
-  const settingsPath = path.join(claudeDir, 'settings.json');
-  let settings = {};
-  if (fs.existsSync(settingsPath)) {
+  const claudeSettingsPath = path.join(claudeDir, 'settings.json');
+  let claudeSettings = {};
+  if (fs.existsSync(claudeSettingsPath)) {
     try {
-      settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      claudeSettings = JSON.parse(fs.readFileSync(claudeSettingsPath, 'utf8'));
     } catch {}
   }
 
-  const relayScript = path.join(UI_DEST, 'relay.js');
-
   // Claude Code hooks format: {"matcher": "<tool_name_or_empty>", "hooks": [{"type": "command", "command": "..."}]}
-  const requiredHooks = {
+  const requiredClaudeHooks = {
     UserPromptSubmit: { matcher: '', hooks: [{ type: 'command', command: `node ${relayScript} user-prompt` }] },
     Stop: { matcher: '', hooks: [{ type: 'command', command: `node ${relayScript} stop` }] },
     PostToolUse: { matcher: '', hooks: [{ type: 'command', command: `node ${relayScript} post-tool-use` }] },
     PreToolUse: { matcher: 'Bash', hooks: [{ type: 'command', command: `node ${relayScript} pre-tool-use` }] },
   };
 
-  if (!settings.hooks) settings.hooks = {};
+  if (!claudeSettings.hooks) claudeSettings.hooks = {};
 
-  let updated = false;
+  let claudeUpdated = false;
 
-  for (const [hookName, hookDef] of Object.entries(requiredHooks)) {
-    if (!settings.hooks[hookName]) {
-      settings.hooks[hookName] = [];
+  for (const [hookName, hookDef] of Object.entries(requiredClaudeHooks)) {
+    if (!claudeSettings.hooks[hookName]) {
+      claudeSettings.hooks[hookName] = [];
     }
 
-    const exists = settings.hooks[hookName].some(entry =>
+    const exists = claudeSettings.hooks[hookName].some(entry =>
       entry.hooks && entry.hooks.some(h => h.command && h.command.includes('relay.js'))
     );
     if (!exists) {
-      settings.hooks[hookName].push(hookDef);
-      updated = true;
+      claudeSettings.hooks[hookName].push(hookDef);
+      claudeUpdated = true;
     }
   }
 
   // Add Bash permission for ui-push.js so agents can push panels without approval prompts
-  if (!settings.permissions) settings.permissions = {};
-  if (!settings.permissions.allow) settings.permissions.allow = [];
+  if (!claudeSettings.permissions) claudeSettings.permissions = {};
+  if (!claudeSettings.permissions.allow) claudeSettings.permissions.allow = [];
 
   const uiPushPermission = 'Bash(node .shards/ui/ui-push.js:*)';
-  if (!settings.permissions.allow.includes(uiPushPermission)) {
-    settings.permissions.allow.push(uiPushPermission);
-    updated = true;
+  if (!claudeSettings.permissions.allow.includes(uiPushPermission)) {
+    claudeSettings.permissions.allow.push(uiPushPermission);
+    claudeUpdated = true;
   }
 
   const relayPreToolPermission = 'Bash(node .shards/ui/relay.js pre-tool-use*)';
-  if (!settings.permissions.allow.includes(relayPreToolPermission)) {
-    settings.permissions.allow.push(relayPreToolPermission);
-    updated = true;
+  if (!claudeSettings.permissions.allow.includes(relayPreToolPermission)) {
+    claudeSettings.permissions.allow.push(relayPreToolPermission);
+    claudeUpdated = true;
   }
 
   // Apply CLI --allow / --permissions flags
   const cliPermissions = parseCliPermissions();
   for (const perm of cliPermissions) {
-    if (!settings.permissions.allow.includes(perm)) {
-      settings.permissions.allow.push(perm);
-      updated = true;
+    if (!claudeSettings.permissions.allow.includes(perm)) {
+      claudeSettings.permissions.allow.push(perm);
+      claudeUpdated = true;
     }
   }
-  if (cliPermissions.length > 0) {
-    console.log(`  Added ${cliPermissions.length} permission rule(s) from CLI flags.`);
+
+  if (claudeUpdated) {
+    fs.writeFileSync(claudeSettingsPath, JSON.stringify(claudeSettings, null, 2));
+    console.log('  Configured Claude Code hooks for UI relay.');
   }
 
-  if (updated) {
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-    console.log('  Configured Claude Code hooks for UI relay.');
+  // 2. Gemini CLI hooks
+  const geminiDir = path.join(PROJECT_DIR, '.gemini');
+  fs.mkdirSync(geminiDir, { recursive: true });
+
+  const geminiSettingsPath = path.join(geminiDir, 'settings.json');
+  let geminiSettings = {};
+  if (fs.existsSync(geminiSettingsPath)) {
+    try {
+      geminiSettings = JSON.parse(fs.readFileSync(geminiSettingsPath, 'utf8'));
+    } catch {}
+  }
+
+  if (!geminiSettings.hooks) geminiSettings.hooks = {};
+
+  let geminiUpdated = false;
+
+  // Gemini CLI hooks format: {"BeforeAgent": [{"type": "command", "command": "..."}]}
+  const geminiHookMapping = {
+    BeforeAgent: `node ${relayScript}`,
+    AfterAgent: `node ${relayScript}`,
+    BeforeTool: `node ${relayScript}`,
+    AfterTool: `node ${relayScript}`,
+    SessionEnd: `node ${relayScript}`,
+  };
+
+  for (const [hookName, command] of Object.entries(geminiHookMapping)) {
+    if (!geminiSettings.hooks[hookName]) {
+      geminiSettings.hooks[hookName] = [];
+    }
+
+    const exists = geminiSettings.hooks[hookName].some(h =>
+      h.command && h.command.includes('relay.js')
+    );
+    if (!exists) {
+      geminiSettings.hooks[hookName].push({
+        type: 'command',
+        command: command,
+      });
+      geminiUpdated = true;
+    }
+  }
+
+  if (geminiUpdated) {
+    fs.writeFileSync(geminiSettingsPath, JSON.stringify(geminiSettings, null, 2));
+    console.log('  Configured Gemini CLI hooks for UI relay.');
   }
 }
 

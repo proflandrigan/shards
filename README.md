@@ -4,7 +4,7 @@
   style="display: block; margin-left: auto; margin-right: auto; width: 400px;" 
 />
 
-**Shards of JFL's brain** — a suite of data-focused agents for Claude Code.
+**Shards of JFL's brain** — a suite of data-focused agents for Claude Code and Gemini CLI.
 
 Each agent is a specialist shard (fragment) of JFL, carrying a piece of his expertise
 into a focused domain: data analysis, data science, ML engineering, data engineering,
@@ -35,10 +35,16 @@ cd your-project
 npx github:proflandrigan/shards install
 ```
 
-Then open Claude Code and run:
+Then open **Claude Code** and run:
 
 ```
 /shards
+```
+
+Or open **Gemini CLI** and run:
+
+```
+Ask jfl to [task]
 ```
 
 JFL will greet you, figure out what you need, and summon the right shard.

@@ -291,8 +291,12 @@ async function main() {
     return;
   }
 
+  // Detect Gemini CLI vs Claude Code
+  const isGemini = !!payload.hook_event_name;
+  const geminiEvent = payload.hook_event_name;
+
   // Pre-tool-use: blocking mode — handle separately and exit
-  if (eventType === 'pre-tool-use') {
+  if (eventType === 'pre-tool-use' || geminiEvent === 'BeforeTool') {
     await handlePreToolUse(port, token, payload);
     return; // handlePreToolUse always calls process.exit
   }
@@ -312,11 +316,19 @@ async function main() {
   // ─── Build current event payload ───
   let currentPayload = null;
 
-  if (eventType === 'user-prompt') {
-    const transcript = payload.transcript || [];
-    const lastMsg = transcript[transcript.length - 1];
-    if (lastMsg && lastMsg.role === 'user') {
-      const content = extractTextContent(lastMsg.content);
+  if (eventType === 'user-prompt' || geminiEvent === 'BeforeAgent') {
+    let content = '';
+    if (isGemini) {
+      content = payload.prompt || '';
+    } else {
+      const transcript = payload.transcript || [];
+      const lastMsg = transcript[transcript.length - 1];
+      if (lastMsg && lastMsg.role === 'user') {
+        content = extractTextContent(lastMsg.content);
+      }
+    }
+
+    if (content) {
       currentPayload = {
         eventType: 'user-message',
         content,
@@ -324,21 +336,27 @@ async function main() {
       };
     }
 
-  } else if (eventType === 'stop') {
-    const transcript = payload.transcript || [];
-    const lastMsg = transcript[transcript.length - 1];
-    if (lastMsg && lastMsg.role === 'assistant') {
-      const content = extractTextContent(lastMsg.content);
-      if (content) {
-        currentPayload = {
-          eventType: 'agent-message',
-          content,
-          agent: state.currentAgent,
-        };
+  } else if (eventType === 'stop' || geminiEvent === 'AfterAgent') {
+    let content = '';
+    if (isGemini) {
+      content = payload.prompt_response || '';
+    } else {
+      const transcript = payload.transcript || [];
+      const lastMsg = transcript[transcript.length - 1];
+      if (lastMsg && lastMsg.role === 'assistant') {
+        content = extractTextContent(lastMsg.content);
       }
     }
 
-  } else if (eventType === 'post-tool-use') {
+    if (content) {
+      currentPayload = {
+        eventType: 'agent-message',
+        content,
+        agent: state.currentAgent,
+      };
+    }
+
+  } else if (eventType === 'post-tool-use' || geminiEvent === 'AfterTool') {
     const toolName = payload.tool_name || '';
     const toolInput = payload.tool_input || {};
 
@@ -354,11 +372,11 @@ async function main() {
         currentPayload = { eventType: 'event-log', text: `Consulting ${consultAgent}...` };
       }
 
-    } else if (toolName === 'Read') {
-      const filePath = toolInput.file_path || '';
-      const agentMatch = filePath.match(/\.claude\/agents\/([^/]+)\.md$/);
+    } else if (toolName === 'Read' || toolName === 'read_file') {
+      const filePath = toolInput.file_path || toolInput.path || '';
+      const agentMatch = filePath.match(/\.(claude|gemini)\/agents\/([^/]+)\.md$/);
       if (agentMatch && state.currentAgent === 'jfl') {
-        const newAgent = agentMatch[1];
+        const newAgent = agentMatch[2];
         const prevAgent = state.currentAgent;
         state.currentAgent = newAgent;
         saveState(state);
@@ -377,7 +395,7 @@ async function main() {
         currentPayload = { eventType: 'event-log', text: `Persona transfer: ${prevAgent} -> ${newAgent}` };
       }
 
-    } else if (toolName === 'Write' || toolName === 'Edit') {
+    } else if (toolName === 'Write' || toolName === 'Edit' || toolName === 'write_file' || toolName === 'replace') {
       const fp = toolInput.file_path || toolInput.path || 'file';
       const evt1 = { eventType: 'event-log', text: `${toolName}: ${fp}` };
       const entry1 = { seq: nextSeq++, timestamp: Date.now(), payload: evt1 };
@@ -386,11 +404,11 @@ async function main() {
 
       currentPayload = { eventType: 'file-touched', filePath: fp };
 
-    } else if (toolName === 'Bash') {
-      currentPayload = { eventType: 'event-log', text: `Bash: ${(toolInput.command || '').slice(0, 60)}` };
+    } else if (toolName === 'Bash' || toolName === 'run_shell_command') {
+      currentPayload = { eventType: 'event-log', text: `${toolName}: ${(toolInput.command || '').slice(0, 60)}` };
     }
 
-  } else if (eventType === 'session-end') {
+  } else if (eventType === 'session-end' || geminiEvent === 'SessionEnd') {
     currentPayload = { eventType: 'session-end' };
     saveState({ currentAgent: 'jfl', sessionId: null, messageCount: 0 });
   }

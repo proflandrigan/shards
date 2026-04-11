@@ -11,14 +11,16 @@ const SRC_DIR = path.join(PACKAGE_ROOT, "src");
 // Target is always the current working directory (where the user ran npx from)
 const PROJECT_DIR = process.cwd();
 const CLAUDE_DIR = path.join(PROJECT_DIR, ".claude");
+const GEMINI_DIR = path.join(PROJECT_DIR, ".gemini");
 
 const AGENTS_SRC = path.join(SRC_DIR, "agents");
 const COMMANDS_SRC = path.join(SRC_DIR, "commands");
 const TEMPLATES_SRC = path.join(SRC_DIR, "templates");
 const UI_SRC = path.join(SRC_DIR, "ui");
 
-const AGENTS_DEST = path.join(CLAUDE_DIR, "agents");
-const COMMANDS_DEST = path.join(CLAUDE_DIR, "commands");
+const AGENTS_DEST_CLAUDE = path.join(CLAUDE_DIR, "agents");
+const AGENTS_DEST_GEMINI = path.join(GEMINI_DIR, "agents");
+const COMMANDS_DEST_CLAUDE = path.join(CLAUDE_DIR, "commands");
 const TEMPLATES_DEST = path.join(PROJECT_DIR, "templates");
 const SHARDS_DIR = path.join(PROJECT_DIR, ".shards");
 const UI_DEST = path.join(SHARDS_DIR, "ui");
@@ -75,13 +77,19 @@ function listFiles(dir, prefix = "") {
 function uninstall() {
   console.log("\n🗑  Uninstalling shards...\n");
 
-  const manifestPath = path.join(CLAUDE_DIR, MANIFEST_NAME);
-  if (!fs.existsSync(manifestPath)) {
+  const manifestPathClaude = path.join(CLAUDE_DIR, MANIFEST_NAME);
+  const manifestPathGemini = path.join(GEMINI_DIR, MANIFEST_NAME);
+  
+  let manifest = { files: [] };
+  if (fs.existsSync(manifestPathClaude)) {
+    manifest = JSON.parse(fs.readFileSync(manifestPathClaude, "utf8"));
+  } else if (fs.existsSync(manifestPathGemini)) {
+    manifest = JSON.parse(fs.readFileSync(manifestPathGemini, "utf8"));
+  } else {
     console.log("  No installation manifest found. Nothing to uninstall.");
     process.exit(0);
   }
 
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   let removed = 0;
 
   for (const filePath of manifest.files || []) {
@@ -93,7 +101,9 @@ function uninstall() {
     }
   }
 
-  fs.unlinkSync(manifestPath);
+  if (fs.existsSync(manifestPathClaude)) fs.unlinkSync(manifestPathClaude);
+  if (fs.existsSync(manifestPathGemini)) fs.unlinkSync(manifestPathGemini);
+  
   console.log(`\n✅ Uninstalled ${removed} files.`);
   console.log(`  ℹ  .shards/knowledge/ preserved (persistent workspace memory)\n`);
 }
@@ -108,23 +118,27 @@ function install() {
 ╚══════════════════════════════════════════╝
 `);
   console.log(`  Project directory: ${PROJECT_DIR}`);
-  console.log(`  Installing to:    ${CLAUDE_DIR}\n`);
+  console.log(`  Claude directory:  ${CLAUDE_DIR}`);
+  console.log(`  Gemini directory:  ${GEMINI_DIR}\n`);
 
-  // 1. Create .claude directory structure
-  fs.mkdirSync(AGENTS_DEST, { recursive: true });
-  fs.mkdirSync(COMMANDS_DEST, { recursive: true });
+  // 1. Create directory structures
+  fs.mkdirSync(AGENTS_DEST_CLAUDE, { recursive: true });
+  fs.mkdirSync(AGENTS_DEST_GEMINI, { recursive: true });
+  fs.mkdirSync(COMMANDS_DEST_CLAUDE, { recursive: true });
 
   // 2. Copy agents
   console.log("📦 Installing agents...");
-  const agentCount = copyDir(AGENTS_SRC, AGENTS_DEST);
+  copyDir(AGENTS_SRC, AGENTS_DEST_CLAUDE);
+  copyDir(AGENTS_SRC, AGENTS_DEST_GEMINI);
   const agentFiles = listFiles(AGENTS_SRC);
   for (const f of agentFiles) {
     console.log(`  ✓ .claude/agents/${f}`);
+    console.log(`  ✓ .gemini/agents/${f}`);
   }
 
-  // 3. Copy commands (slash commands)
+  // 3. Copy commands (slash commands for Claude)
   console.log("\n📦 Installing commands...");
-  const cmdCount = copyDir(COMMANDS_SRC, COMMANDS_DEST);
+  copyDir(COMMANDS_SRC, COMMANDS_DEST_CLAUDE);
   const cmdFiles = listFiles(COMMANDS_SRC);
   for (const f of cmdFiles) {
     console.log(`  ✓ .claude/commands/${f}`);
@@ -196,6 +210,7 @@ function install() {
   // 9. Write manifest for uninstall tracking
   const allFiles = [
     ...agentFiles.map((f) => `.claude/agents/${f}`),
+    ...agentFiles.map((f) => `.gemini/agents/${f}`),
     ...cmdFiles.map((f) => `.claude/commands/${f}`),
     ...tplFiles.map((f) => `templates/${f}`),
     ...uiFiles.map((f) => `.shards/ui/${f}`),
@@ -209,68 +224,56 @@ function install() {
     path.join(CLAUDE_DIR, MANIFEST_NAME),
     JSON.stringify(manifest, null, 2)
   );
+  fs.writeFileSync(
+    path.join(GEMINI_DIR, MANIFEST_NAME),
+    JSON.stringify(manifest, null, 2)
+  );
 
-  // 10. Append to CLAUDE.md
+  // 10. Append to CLAUDE.md and GEMINI.md
   const claudeMdPath = path.join(PROJECT_DIR, "CLAUDE.md");
-  const claudeBlock = `
+  const geminiMdPath = path.join(PROJECT_DIR, "GEMINI.md");
+  const shardsBlock = `
 ## Shards — Agent Suite
 
 This project uses **Shards**, a suite of data-focused agents that are shards of
 JFL's brain. Each agent is a specialist fragment with a distinct personality and
 phased workflow.
 
-### Available commands
+### Available Agents
 
-| Command | Agent | Personality | Speciality |
-|---------|-------|-------------|------------|
-| \`/shards\` | JFL (Orchestrator) | Friendly, structured | Triage, delegation, final review |
-| \`/brainstorm\` | JFL (Brainstorm) | Friendly, structured | Multi-agent ideation, hack day exploration |
-| \`/knowledge\` | JFL (Knowledge) | Friendly, structured | Seed, browse, and manage the Knowledge Ledger |
-| \`/data-analyst\` | Data Analyst | Helpful | Adhoc queries, quick analyses |
-| \`/data-scientist\` | Data Scientist | Condescending | EDA, modeling, deep studies |
-| \`/ml-engineer\` | ML Engineer | Intense | Recommenders, ranking, production ML |
-| \`/ai-engineer\` | AI Engineer | Existentially anxious | LLM workflows, RAG, prompt engineering, AI safety |
-| \`/data-engineer\` | Data Engineer | Grumpy | Pipelines, dbt models |
-| \`/data-modeller\` | Data Modeller | Sarcastic | Entities, relationships, grain |
-| \`/mlops-engineer\` | MLOps Engineer | Constantly stressed | Model deployment, serving, monitoring, retraining pipelines, AWS/GCP/BentoML |
-| \`/bi-engineer\` | BI Engineer | Bored and tired | Streamlit, Plotly Dash, Altair, dashboards, chart design |
-| \`/researcher\` | Researcher | Nerdy | Statistical review, methodology validation |
-| \`/backend-engineer\` | Backend Engineer | Stressed, overworked | Python code review, FastAPI, Pydantic, data contracts, performance |
-| \`/applied-ml-scientist\` | Applied ML Scientist | Intensely technical | Novel framework design, cutting-edge methodology review |
-| \`/deep-learning-engineer\` | Deep Learning Engineer | Robot-precise | Neural architecture design, training protocols, custom DL models |
+| Agent | Personality | Speciality |
+|-------|-------------|------------|
+| JFL (Orchestrator) | Friendly, structured | Triage, delegation, final review |
+| Data Analyst | Helpful | Adhoc queries, quick analyses |
+| Data Scientist | Condescending | EDA, modeling, deep studies |
+| ML Engineer | Intense | Recommenders, ranking, production ML |
+| AI Engineer | Existentially anxious | LLM workflows, RAG, prompt engineering, AI safety |
+| Data Engineer | Grumpy | Pipelines, dbt models |
+| Data Modeller | Sarcastic | Entities, relationships, grain |
+| MLOps Engineer | Constantly stressed | Model deployment, serving, monitoring, retraining pipelines, AWS/GCP/BentoML |
+| BI Engineer | Bored and tired | Streamlit, Plotly Dash, Altair, dashboards, chart design |
+| Researcher | Nerdy | Statistical review, methodology validation |
+| Backend Engineer | Stressed, overworked | Python code review, FastAPI, Pydantic, data contracts, performance |
+| Applied ML Scientist | Intensely technical | Novel framework design, cutting-edge methodology review |
+| Deep Learning Engineer | Robot-precise | Neural architecture design, training protocols, custom DL models |
 
-### How it works
+### How to use with Claude Code
 
 - Run \`/shards\` to start — JFL triages your request and delegates to the right shard
-- Or run a specialist command directly if you know what you need
-- Every phase produces documented decisions in \`project-specs.md\`
-- Agents consult each other automatically (visible to you)
-- The AI Engineer consults the ML Engineer for production infrastructure and the Researcher for evaluation rigor
-- The Researcher reviews statistical methodology for the Data Analyst, Data Scientist, and AI Engineer
-- The Backend Engineer reviews Python code (.py and .ipynb) consulted automatically by JFL during Code Review Mode when Python artifacts are present
-- The ML Engineer consults the Applied ML Scientist for cutting-edge methodology review on non-standard problems
-- The Deep Learning Engineer reviews the ML Engineer's work when DL approaches are warranted, and reviews the Applied ML Scientist's novel frameworks for DL implementation fidelity
-- The ML Engineer and Applied ML Scientist both review the Deep Learning Engineer's Create output
-- The MLOps Engineer consults the ML Engineer for model architecture constraints and infrastructure design review
-- The MLOps Engineer consults the AI Engineer for LLM-specific deployment requirements
-- The BI Engineer reviews visualization outputs for the Data Analyst, Data Scientist, and ML Engineer when charts or dashboards are part of the deliverable
-- JFL reviews every final plan before execution
+- Or run a specialist command directly: \`/data-analyst\`, \`/data-scientist\`, etc.
 
-### Output directories
+### How to use with Gemini CLI
 
-- \`analysis/\` — Data Analyst adhoc analyses
-- \`studies/\` — Data Scientist deep studies
-- \`models/\` — Data Engineer and Data Modeller work
-- \`services/\` — ML Engineer greenfield projects
-- \`research/\` — Applied ML Scientist novel framework projects
-- \`dashboards/\` — BI Engineer dashboard projects
-- \`brainstorm/\` — JFL brainstorm sessions
+- Run \`Ask jfl to [task]\` — JFL will triage and coordinate.
+- Or call a specialist directly: \`Ask data-analyst to [task]\`.
+- Specialists will run as native sub-agents.
 
-### Decision documentation
+### Workflow & Decision Documentation
 
 Every project produces a \`project-specs.md\` file documenting all decisions.
-Agents cannot advance to the next phase until each phase is written and confirmed.
-This is the gate pattern — documentation IS the gate.
+Agents follow a **phased workflow** and a **gate pattern**: they cannot advance
+to the next phase until the current phase's decisions are written and confirmed
+by the user. Documentation IS the gate.
 
 ### Knowledge Ledger
 
@@ -278,55 +281,37 @@ Shards maintains a persistent workspace-wide Knowledge Ledger at \`.shards/knowl
 Agents automatically check it before starting work and contribute to it when projects complete.
 
 - \`.shards/knowledge/INDEX.md\` — one-line-per-entry index scanned for keyword matches
-- \`.shards/knowledge/entities/\` — data table quirks, column semantics, grain surprises
-- \`.shards/knowledge/infrastructure/\` — warehouse/API/system behaviors
-- \`.shards/knowledge/patterns/\` — reusable SQL/Python snippets
-- \`.shards/knowledge/features/\` — verified ML features (Data Scientist + ML Engineer)
-
-**Auto-retrieval:** Before Phase 1, agents scan INDEX.md for entries relevant to the
-current project and document findings in project-specs.md.
-
-**Auto-harvest:** After JFL final review, agents extract reusable knowledge and present
-candidates for user confirmation before writing to the ledger.
-
-The knowledge directory is preserved across installs and uninstalls.
+- \`.shards/knowledge/entities/\`, \`infrastructure/\`, \`patterns/\`, \`features/\` — detailed entries
 `;
 
-  if (fs.existsSync(claudeMdPath)) {
-    const content = fs.readFileSync(claudeMdPath, "utf8");
-    if (!content.includes("Shards")) {
-      fs.appendFileSync(claudeMdPath, claudeBlock);
-      console.log("\n📝 Appended Shards section to existing CLAUDE.md");
+  const appendToMd = (mdPath, block) => {
+    if (fs.existsSync(mdPath)) {
+      const content = fs.readFileSync(mdPath, "utf8");
+      if (!content.includes("Shards")) {
+        fs.appendFileSync(mdPath, block);
+        console.log(`\n📝 Appended Shards section to existing ${path.basename(mdPath)}`);
+      }
+    } else {
+      fs.writeFileSync(mdPath, `# Project\n${block}`);
+      console.log(`\n📝 Created ${path.basename(mdPath)} with Shards section`);
     }
-  } else {
-    fs.writeFileSync(claudeMdPath, `# Project\n${claudeBlock}`);
-    console.log("\n📝 Created CLAUDE.md with Shards section");
-  }
+  };
+
+  appendToMd(claudeMdPath, shardsBlock);
+  appendToMd(geminiMdPath, shardsBlock);
 
   // Done
-  const total = agentCount + cmdCount + tplCount + uiCount;
+  const total = agentFiles.length * 2 + cmdFiles.length + tplFiles.length + uiFiles.length;
   console.log(`
 ╔══════════════════════════════════════════╗
 ║  ✅ Installed ${String(total).padEnd(3)} files successfully      ║
 ╠══════════════════════════════════════════╣
 ║                                          ║
-║  Open Claude Code in this directory      ║
-║  and run:  /shards                       ║
+║  Use with Claude Code:                   ║
+║    /shards                               ║
 ║                                          ║
-║  Or go directly to a specialist:         ║
-║    /data-analyst                         ║
-║    /data-scientist                       ║
-║    /ml-engineer                          ║
-║    /ai-engineer                          ║
-║    /data-engineer                        ║
-║    /data-modeller                        ║
-║    /mlops-engineer                       ║
-║    /bi-engineer                          ║
-║    /researcher                           ║
-║    /backend-engineer                     ║
-║    /applied-ml-scientist                 ║
-║    /deep-learning-engineer               ║
-║    /brainstorm                           ║
+║  Use with Gemini CLI:                    ║
+║    Ask jfl to [task]                     ║
 ║                                          ║
 ║  Launch the web UI:                      ║
 ║    shards-ui                             ║
