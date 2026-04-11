@@ -21,7 +21,7 @@
     "build:win": "electron-builder --win",
     "build:linux": "electron-builder --linux",
     "build:all": "electron-builder -mwl",
-    "postinstall": "@electron/rebuild"
+    "postinstall": "electron-rebuild"
   },
   "overrides": {
     "node-pty": {
