@@ -36,10 +36,13 @@ jobs:
         with:
           node-version: 20
 
-      # Python setuptools provides distutils (removed in Python 3.12+)
-      # Required by node-gyp when building native modules like node-pty
-      - name: Install Python setuptools
-        run: pip install setuptools
+      # Python 3.12+ removed distutils; node-gyp needs it via setuptools
+      - name: Setup Python with setuptools
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install setuptools for node-gyp
+        run: python -m pip install setuptools
 
       # Linux needs extra packages for electron-builder and node-pty
       - name: Install Linux build dependencies
