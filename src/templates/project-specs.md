@@ -7,6 +7,8 @@
 - **Directory:** {{PROJECT_DIR}}
 - **Dependencies:** {{DEPENDENCIES}}
 - **Brainstorm origin:** {{BRAINSTORM_ORIGIN}}
+- **PM project:** {{PM_PROJECT}}
+- **Workstream:** {{WORKSTREAM}}
 
 ---
 
