@@ -145,6 +145,16 @@ Go to the repo on GitHub > Actions tab > "Build Shards IDE" > "Run workflow". Pi
 6. Uploads artifacts to the workflow run
 7. If triggered by a version tag: creates a draft GitHub Release with all artifacts
 
+### Where the installers end up
+
+Build artifacts land in two places depending on how the workflow was triggered:
+
+1. **Workflow Artifacts (always)** — downloadable from the Actions tab. Go to the repo > Actions > click the workflow run > scroll to the "Artifacts" section at the bottom. You'll see `shards-ide-macOS`, `shards-ide-Linux`, and `shards-ide-Windows` as zip downloads. These expire after 90 days by default.
+
+2. **Draft GitHub Release (only on tag push)** — when triggered by pushing a `v*` tag, the `release` job creates a draft release under Releases with all the `.dmg`, `.AppImage`, `.deb`, and `.exe` files attached directly. You review it and click "Publish" to make it public. These persist permanently.
+
+If you trigger the workflow manually (via "Run workflow"), you only get #1 — no release is created.
+
 ### Downloading artifacts without a release
 
 Go to Actions > click the workflow run > scroll to "Artifacts" at the bottom. Download `shards-ide-macOS`, `shards-ide-Linux`, or `shards-ide-Windows`.
