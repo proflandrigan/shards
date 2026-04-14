@@ -3,7 +3,7 @@ name: diverge-protocol
 description: >
   Time-Travel branching protocol for parallel experimentation. Defines the full
   fork-execute-converge lifecycle: when to propose DIVERGE, how to spawn parallel
-  branch Tasks, how branches produce reports, how JFL arbitrates, and how the
+  branch Tasks, how branches produce reports, how Syn arbitrates, and how the
   winning branch is promoted back to the main project directory.
 type: reference
 ---
@@ -52,7 +52,7 @@ as isolated branches, then compare results side by side.
 | `<branch-slug-2>` | <approach summary> | <why this is viable> | <Low/Med/High> |
 
 **What this means:** Each branch runs autonomously in its own directory,
-produces artifacts and a branch report, then JFL compares them as an arbiter
+produces artifacts and a branch report, then Syn compares them as an arbiter
 so you can pick the winner.
 
 **Proceed with DIVERGE, or pick one approach and go straight?**
@@ -133,7 +133,7 @@ confirmation. Work efficiently and produce results.
 2. **Evaluate** — run training, evaluation, or analysis and collect metrics.
    Use the best proxy available for the primary success metric.
 3. **Write branch-report.md** — produce `<branch_dir>/branch-report.md` using
-   the template below. This is the artifact JFL will read during arbitration.
+   the template below. This is the artifact Syn will read during arbitration.
 
 ## Branch Report Template
 
@@ -185,11 +185,11 @@ After ALL branch Tasks have completed:
    - **Status:** Converged — awaiting arbiter
    ```
 
-2. Call JFL in Arbiter Mode:
+2. Call Syn in Arbiter Mode:
 
 ```python
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="ARBITER MODE: Time-Travel branch comparison",
   prompt="""
 ARBITER MODE
@@ -207,11 +207,11 @@ instructions to produce a leaderboard and comparison.
 )
 ```
 
-3. Present JFL's leaderboard and recommendation to the user.
+3. Present Syn's leaderboard and recommendation to the user.
 
 4. Ask the user to select the winning branch:
    ```
-   **Time-Travel complete.** JFL has compared the branches.
+   **Time-Travel complete.** Syn has compared the branches.
 
    <present leaderboard summary>
 

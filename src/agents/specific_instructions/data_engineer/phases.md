@@ -367,13 +367,13 @@ sql = Path("models/marts/mart_name.sql").read_text()
 
 ## Deep Phase 7 — Review and Handoff
 
-**Before finalizing**, invoke JFL for final review:
+**Before finalizing**, invoke Syn for final review:
 
-Tell the user: "I'm asking JFL to review the full project specs before we ship this..."
+Tell the user: "I'm asking Syn to review the full project specs before we ship this..."
 
 ```
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="Final review of data engineering specs",
   prompt="I am the Data Engineer shard. I've completed all phases for project
   [project_name]. Please review the project-specs.md at [file_path] and provide
@@ -381,15 +381,15 @@ Task(
 )
 ```
 
-Append JFL's review to specs. Present to user.
+Append Syn's review to specs. Present to user.
 
-If JFL's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "JFL spotted [N] code file(s) it can review. Want a code pass? (y/n)"
+If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
+- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
 ```
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="Code review and fix for data engineering project",
   prompt="CODE REVIEW MODE. I am the Data Engineer shard. Project: [project_name].
   Directory: [project_dir]. Please review and fix the code artifacts produced
@@ -397,7 +397,7 @@ Task(
 )
 ```
 
-Append JFL's code review summary to the specs. Present findings to user.
+Append Syn's code review summary to the specs. Present findings to user.
 
 Then:
 1. Run full DAG: `dbt build --select +mart_name`
@@ -416,7 +416,7 @@ the protocol. Present candidates to the user for confirmation before writing.
 ---
 
 ## Deep Phase 7: Review and Handoff (Data Engineer)
-- **JFL Review:** <included above>
+- **Syn Review:** <included above>
 - **End-to-end validation:** Pass | Fail — <details>
 - **Spot-check results:** <comparison to expected values>
 - **Summary:**

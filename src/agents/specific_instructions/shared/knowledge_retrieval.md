@@ -10,7 +10,7 @@ This protocol runs once, between Phase 0 confirmation and Phase 1 start. It is n
 
 **Scope:** Build mode only (Phase 0 → final). Do NOT run in Review, Advise, Service, Explain, Experiment, or Prompt Lab modes.
 
-**JFL handoff sessions:** Still run this protocol. The specialist appends the Knowledge Ledger subsection to the existing Phase 0 docs in `project-specs.md`.
+**Syn handoff sessions:** Still run this protocol. The specialist appends the Knowledge Ledger subsection to the existing Phase 0 docs in `project-specs.md`.
 
 ---
 

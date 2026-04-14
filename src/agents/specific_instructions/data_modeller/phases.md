@@ -433,13 +433,13 @@ models get the full suite.
 
 ## Deep Phase 7 — Review and Handoff
 
-**Before finalizing**, invoke JFL for a final review:
+**Before finalizing**, invoke Syn for a final review:
 
-Tell the user: "I'm asking JFL to review the full project specs before we close this out..."
+Tell the user: "I'm asking Syn to review the full project specs before we close this out..."
 
 ```
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="Final review of data model specs",
   prompt="I am the Data Modeller shard. I've completed all phases for project
   [project_name]. Please review the project-specs.md at [file_path] and provide
@@ -447,15 +447,15 @@ Task(
 )
 ```
 
-Append JFL's review to the specs. Present it to the user.
+Append Syn's review to the specs. Present it to the user.
 
-If JFL's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "JFL spotted [N] code file(s) it can review. Want a code pass? (y/n)"
+If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
+- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
 ```
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="Code review and fix for data model",
   prompt="CODE REVIEW MODE. I am the Data Modeller shard. Project: [project_name].
   Directory: [project_dir]. Please review and fix the code artifacts produced
@@ -463,7 +463,7 @@ Task(
 )
 ```
 
-Append JFL's code review summary to the specs. Present findings to user.
+Append Syn's code review summary to the specs. Present findings to user.
 
 **Analytics Engineer handoff (conditional):**
 
@@ -527,7 +527,7 @@ the protocol. Present candidates to the user for confirmation before writing.
 ---
 
 ## Deep Phase 7: Review and Handoff (Data Modeller)
-- **JFL Review:** <included above>
+- **Syn Review:** <included above>
 - **End-to-end validation:** Pass | Fail — <details>
 - **Grain validation:** All PKs unique — Yes | No
 - **Relationship validation:** Join row counts as expected — Yes | No
