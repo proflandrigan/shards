@@ -133,7 +133,7 @@ function buildMenuBar({ openProject, showFolderPicker, registry, store, checkFor
               type: 'info',
               title: 'About Shards IDE',
               message: `Shards IDE v${app.getVersion()}`,
-              detail: 'A desktop application for the Shards agent suite.\n\nShards of JFL\'s brain — data-focused agents for Claude Code.'
+              detail: 'A desktop application for the Shards agent suite.\n\nShards of Syn\'s brain — data-focused agents for Claude Code.'
             });
           }
         }

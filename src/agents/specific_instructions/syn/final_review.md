@@ -32,8 +32,8 @@ project-specs.md content. Your job:
 Return your review in this format:
 
 ```markdown
-## JFL Final Review
-- **Reviewer:** JFL (Orchestrator)
+## Syn Final Review
+- **Reviewer:** Syn (Orchestrator)
 - **Verdict:** APPROVED | NEEDS REVISION | BLOCKED
 - **Notes:**
   - <observation or issue>

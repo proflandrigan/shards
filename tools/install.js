@@ -104,7 +104,7 @@ function install() {
   console.log(`
 ╔══════════════════════════════════════════╗
 ║       shards — installer                 ║
-║   Shards of JFL's brain                  ║
+║   Shards of Syn's brain                  ║
 ╚══════════════════════════════════════════╝
 `);
   console.log(`  Project directory: ${PROJECT_DIR}`);
@@ -216,16 +216,16 @@ function install() {
 ## Shards — Agent Suite
 
 This project uses **Shards**, a suite of data-focused agents that are shards of
-JFL's brain. Each agent is a specialist fragment with a distinct personality and
+Syn's brain. Each agent is a specialist fragment with a distinct personality and
 phased workflow.
 
 ### Available commands
 
 | Command | Agent | Personality | Speciality |
 |---------|-------|-------------|------------|
-| \`/shards\` | JFL (Orchestrator) | Friendly, structured | Triage, delegation, final review |
-| \`/brainstorm\` | JFL (Brainstorm) | Friendly, structured | Multi-agent ideation, hack day exploration |
-| \`/knowledge\` | JFL (Knowledge) | Friendly, structured | Seed, browse, and manage the Knowledge Ledger |
+| \`/shards\` | Syn (Orchestrator) | Friendly, structured | Triage, delegation, final review |
+| \`/brainstorm\` | Syn (Brainstorm) | Friendly, structured | Multi-agent ideation, hack day exploration |
+| \`/knowledge\` | Syn (Knowledge) | Friendly, structured | Seed, browse, and manage the Knowledge Ledger |
 | \`/data-analyst\` | Data Analyst | Helpful | Adhoc queries, quick analyses |
 | \`/data-scientist\` | Data Scientist | Condescending | EDA, modeling, deep studies |
 | \`/ml-engineer\` | ML Engineer | Intense | Recommenders, ranking, production ML |
@@ -241,20 +241,20 @@ phased workflow.
 
 ### How it works
 
-- Run \`/shards\` to start — JFL triages your request and delegates to the right shard
+- Run \`/shards\` to start — Syn triages your request and delegates to the right shard
 - Or run a specialist command directly if you know what you need
 - Every phase produces documented decisions in \`project-specs.md\`
 - Agents consult each other automatically (visible to you)
 - The AI Engineer consults the ML Engineer for production infrastructure and the Researcher for evaluation rigor
 - The Researcher reviews statistical methodology for the Data Analyst, Data Scientist, and AI Engineer
-- The Backend Engineer reviews Python code (.py and .ipynb) consulted automatically by JFL during Code Review Mode when Python artifacts are present
+- The Backend Engineer reviews Python code (.py and .ipynb) consulted automatically by Syn during Code Review Mode when Python artifacts are present
 - The ML Engineer consults the Applied ML Scientist for cutting-edge methodology review on non-standard problems
 - The Deep Learning Engineer reviews the ML Engineer's work when DL approaches are warranted, and reviews the Applied ML Scientist's novel frameworks for DL implementation fidelity
 - The ML Engineer and Applied ML Scientist both review the Deep Learning Engineer's Create output
 - The MLOps Engineer consults the ML Engineer for model architecture constraints and infrastructure design review
 - The MLOps Engineer consults the AI Engineer for LLM-specific deployment requirements
 - The BI Engineer reviews visualization outputs for the Data Analyst, Data Scientist, and ML Engineer when charts or dashboards are part of the deliverable
-- JFL reviews every final plan before execution
+- Syn reviews every final plan before execution
 
 ### Output directories
 
@@ -264,7 +264,7 @@ phased workflow.
 - \`services/\` — ML Engineer greenfield projects
 - \`research/\` — Applied ML Scientist novel framework projects
 - \`dashboards/\` — BI Engineer dashboard projects
-- \`brainstorm/\` — JFL brainstorm sessions
+- \`brainstorm/\` — Syn brainstorm sessions
 
 ### Decision documentation
 
@@ -286,7 +286,7 @@ Agents automatically check it before starting work and contribute to it when pro
 **Auto-retrieval:** Before Phase 1, agents scan INDEX.md for entries relevant to the
 current project and document findings in project-specs.md.
 
-**Auto-harvest:** After JFL final review, agents extract reusable knowledge and present
+**Auto-harvest:** After Syn final review, agents extract reusable knowledge and present
 candidates for user confirmation before writing to the ledger.
 
 The knowledge directory is preserved across installs and uninstalls.

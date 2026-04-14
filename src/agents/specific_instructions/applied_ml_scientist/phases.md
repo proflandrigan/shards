@@ -267,7 +267,7 @@ Goal: Final review, report, and sign-off.
 **If the framework involves deep learning components** — custom neural
 architectures, specialized training objectives for neural models, or
 implementation of DL-based novel methods — consult the Deep Learning Engineer
-for implementation grounding before the JFL review:
+for implementation grounding before the Syn review:
 
 Tell the user: "This framework has deep learning implementation requirements —
 I'm asking the Deep Learning Engineer shard to review implementation fidelity,
@@ -310,14 +310,14 @@ Task(
 )
 ```
 
-Address any blocking implementation concerns raised before proceeding to JFL.
+Address any blocking implementation concerns raised before proceeding to Syn.
 
 **Backend Engineer code review (Python artifacts):**
 
 Glob the project directory (`research/<project_name>/`) for `.py` and `.ipynb` files.
 If any are found:
 
-Tell the user: "Before JFL signs off, the Backend Engineer is reviewing the
+Tell the user: "Before Syn signs off, the Backend Engineer is reviewing the
 Python artifacts. Code quality is not optional."
 
 ```
@@ -333,14 +333,14 @@ Task(
 Append the Backend Engineer's review to project-specs.md. If no Python files are
 found, skip this step.
 
-**Consult JFL for final sign-off:**
+**Consult Syn for final sign-off:**
 
-Tell the user: "I'm asking JFL to review the framework design and results
+Tell the user: "I'm asking Syn to review the framework design and results
 before we close..."
 
 ```
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="Final review of novel ML framework: <project name>",
   prompt="I am the Applied ML Scientist shard. I have completed a novel ML
   framework research project. Please review and provide APPROVED / NEEDS

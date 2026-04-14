@@ -40,7 +40,7 @@ function getState() {
   try {
     return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
   } catch {
-    return { currentAgent: 'jfl', sessionId: null, messageCount: 0 };
+    return { currentAgent: 'syn', sessionId: null, messageCount: 0 };
   }
 }
 
@@ -348,7 +348,7 @@ async function main() {
     } else if (toolName === 'Read') {
       const filePath = toolInput.file_path || '';
       const agentMatch = filePath.match(/\.claude\/agents\/([^/]+)\.md$/);
-      if (agentMatch && state.currentAgent === 'jfl') {
+      if (agentMatch && state.currentAgent === 'syn') {
         const newAgent = agentMatch[1];
         const prevAgent = state.currentAgent;
         state.currentAgent = newAgent;
@@ -383,7 +383,7 @@ async function main() {
 
   } else if (eventType === 'session-end') {
     currentPayload = { eventType: 'session-end' };
-    saveState({ currentAgent: 'jfl', sessionId: null, messageCount: 0 });
+    saveState({ currentAgent: 'syn', sessionId: null, messageCount: 0 });
   }
 
   // ─── P2: Send current event, queue on failure ───

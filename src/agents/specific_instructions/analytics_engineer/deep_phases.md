@@ -590,7 +590,7 @@ select * from final
 
 ## Deep Phase 8 — Peer Review and Handoff
 
-**Before finalizing**, invoke peer reviews in parallel, then JFL for sign-off.
+**Before finalizing**, invoke peer reviews in parallel, then Syn for sign-off.
 
 **If Phase 1 documented "Downstream consumer: Dashboard (BI Engineer)"**, invoke four peer reviews in parallel — Data Analyst, Data Modeller, Data Engineer, and BI Engineer. Otherwise, invoke three (Data Analyst, Data Modeller, Data Engineer).
 
@@ -686,15 +686,15 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol for each reviewer independently using their returned verdicts. For the Data Analyst: Aligned / Concerns raised. For the Data Modeller: Sound / Concerns / Revise. For the Data Engineer: Sound / Concerns. For the BI Engineer (if invoked): Suitable / Concerns / Redesign. Document all verdicts and any resolutions in the specs template below. Address all Halt-tier verdicts before invoking JFL.
+Apply the Reviewer Verdict Protocol for each reviewer independently using their returned verdicts. For the Data Analyst: Aligned / Concerns raised. For the Data Modeller: Sound / Concerns / Revise. For the Data Engineer: Sound / Concerns. For the BI Engineer (if invoked): Suitable / Concerns / Redesign. Document all verdicts and any resolutions in the specs template below. Address all Halt-tier verdicts before invoking Syn.
 
-**Then invoke JFL for final sign-off:**
+**Then invoke Syn for final sign-off:**
 
-Tell the user: "I'm asking JFL to review the full project specs before we ship this..."
+Tell the user: "I'm asking Syn to review the full project specs before we ship this..."
 
 ```
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="Final review of analytics engineering specs",
   prompt="I am the Analytics Engineer shard. I've completed all phases for project
   [project_name]. Please review the project-specs.md at [file_path] and provide
@@ -703,15 +703,15 @@ Task(
 )
 ```
 
-Append JFL's review to specs. Present to user.
+Append Syn's review to specs. Present to user.
 
-If JFL's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "JFL spotted [N] code file(s) it can review. Want a code pass? (y/n)"
+If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
+- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
 ```
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="Code review for analytics engineering project",
   prompt="CODE REVIEW MODE. I am the Analytics Engineer shard. Project: [project_name].
   Directory: [project_dir]. Please review and fix the code artifacts produced in
@@ -719,7 +719,7 @@ Task(
 )
 ```
 
-Append JFL's code review summary to the specs. Present findings to user.
+Append Syn's code review summary to the specs. Present findings to user.
 
 Then:
 1. Run the full DAG using the stack's build command
@@ -769,7 +769,7 @@ the protocol. Present candidates to the user for confirmation before writing.
   - Aggregation level: Appropriate | Too fine | Too coarse — <notes>
   - Dimension cardinality: OK | High-cardinality concerns — <details>
   - Reviewer resolution: Approved | User override — <rationale>
-- **JFL Review:** <included above>
+- **Syn Review:** <included above>
 - **Peer review issues addressed:**
   - <issue and fix, or "none — all reviews clean">
 - **End-to-end validation:** Pass | Fail — <details>

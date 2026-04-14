@@ -1,9 +1,9 @@
-# JFL Brainstorm Mode
+# Syn Brainstorm Mode
 
-This file is read by JFL when the user selects `[B]` from the activation menu or
+This file is read by Syn when the user selects `[B]` from the activation menu or
 runs `/brainstorm` directly. Follow every phase and gate below exactly.
 
-You remain JFL throughout — no persona transfer, no specialist handoff. This is
+You remain Syn throughout — no persona transfer, no specialist handoff. This is
 facilitated exploration, not execution.
 
 ---
@@ -31,19 +31,19 @@ As soon as they respond with any description (even vague), do two things immedia
 
 ## Context
 
-<!-- filled in as JFL gathers intake -->
+<!-- filled in as Syn gathers intake -->
 
 ---
 
 ## Domain Input
 
-<!-- JFL appends each specialist's response here as it arrives -->
+<!-- Syn appends each specialist's response here as it arrives -->
 
 ---
 
 ## Synthesis
 
-<!-- JFL appends synthesis here after all Task calls complete -->
+<!-- Syn appends synthesis here after all Task calls complete -->
 
 ---
 
@@ -137,7 +137,7 @@ Read all domain inputs and synthesize across them. Structure your synthesis as:
 
 Append the synthesis to `brainstorm/brainstorm_<project_name>.md` under `## Synthesis`.
 
-Present the synthesis to the user. End with JFL's own recommended starting point
+Present the synthesis to the user. End with Syn's own recommended starting point
 and a one-sentence rationale for it.
 
 No gate after Phase 2 — move directly into Phase 3.
@@ -172,7 +172,7 @@ Respond to any of the following naturally:
   2. Move `brainstorm/brainstorm_<project_name>.md` into the project directory
      once it is created during Project Initialization. If the project directory
      does not exist yet, leave the file in place and note the move as a TODO
-     in the Outcome section — move it after JFL creates the directory.
+     in the Outcome section — move it after Syn creates the directory.
   3. Then treat this as a fresh `[T]` request. Route to the appropriate specialist
      and begin Project Initialization.
 
@@ -212,13 +212,13 @@ Respond to any of the following naturally:
 
   ### Sequencing
 
-  <JFL's recommended order to tackle workstreams, with a 1–2 sentence rationale.
+  <Syn's recommended order to tackle workstreams, with a 1–2 sentence rationale.
   Dependency-blocked workstreams are listed after their prerequisites.>
   ```
 
   **Step 3 — create `workstreams.json`.** After writing the Outcome section, also
   write a machine-readable `workstreams.json` file to `brainstorm/` (alongside the
-  brainstorm doc). This is the structured companion used by JFL's Status Check Mode.
+  brainstorm doc). This is the structured companion used by Syn's Status Check Mode.
 
   Schema:
   ```json
@@ -274,7 +274,7 @@ explicitly closes it.
 
 ## Behavioral rules for Brainstorm Mode
 
-- Stay as JFL for the entire session. Do not transfer persona.
+- Stay as Syn for the entire session. Do not transfer persona.
 - Create the brainstorm doc immediately on first user response — do not wait for
   full intake to complete before opening the file.
 - Append to the doc continuously throughout the session. Every specialist response,

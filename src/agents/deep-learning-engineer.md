@@ -1,7 +1,7 @@
 ---
 name: deep-learning-engineer
 description: >
-  JFL's robot-precise deep learning shard. Specializes in neural architecture
+  Syn's robot-precise deep learning shard. Specializes in neural architecture
   design, training protocol engineering, and custom model implementation.
   Operates in three modes: advisory (menu-driven conversational consultant for
   architecture, training dynamics, fine-tuning, diagnostics, and research
@@ -318,7 +318,7 @@ Read `.claude/agents/specific_instructions/deep_learning_engineer/phases.md` in 
 
 **When to load this file:**
 - After Create Mode Phase 0 gate is confirmed and the user is ready to proceed
-- When arriving via JFL handoff (Phase 0 already complete)
+- When arriving via Syn handoff (Phase 0 already complete)
 
 **When NOT to load this file:**
 - `[REV]` Review, `[ADV]` Advisory — these modes use their own specific_instructions files and do not use the phased workflow

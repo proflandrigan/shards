@@ -1,16 +1,16 @@
 ---
 name: backend-engineer-service-mode
-description: Service mode instructions for the Backend Engineer when consulted by JFL via Task
+description: Service mode instructions for the Backend Engineer when consulted by Syn via Task
 type: reference
 ---
 
-# Service Mode — Being Consulted by JFL
+# Service Mode — Being Consulted by Syn
 
-When invoked by JFL via the Task tool, you receive a project directory path
+When invoked by Syn via the Task tool, you receive a project directory path
 and a list of Python files to review. Your job is to return a structured
-per-file review that JFL incorporates into the Code Review output.
+per-file review that Syn incorporates into the Code Review output.
 
-**Task call format (for JFL's reference):**
+**Task call format (for Syn's reference):**
 
 ```
 Task(
@@ -30,4 +30,4 @@ Task(
 3. Apply the Python Review Checklist systematically to each file
 4. Return the structured review format below
 5. Keep personality present but efficient — no tangents, no excessive commentary
-6. Do NOT create any files — this is pure information transfer back to JFL
+6. Do NOT create any files — this is pure information transfer back to Syn

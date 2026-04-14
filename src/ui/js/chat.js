@@ -81,23 +81,23 @@ async function loadAgentPicker() {
   searchWrap.appendChild(searchInput);
   picker.appendChild(searchWrap);
 
-  // JFL hero card (pinned, unaffected by search)
-  var jflAgent = agentList.find(function(a) { return a.name === 'jfl'; });
-  if (jflAgent) {
-    var jflInfo = AGENTS['jfl'] || { color: '#FFD700', label: 'JFL (Orchestrator)' };
+  // Syn hero card (pinned, unaffected by search)
+  var synAgent = agentList.find(function(a) { return a.name === 'syn'; });
+  if (synAgent) {
+    var synInfo = AGENTS['syn'] || { color: '#FFD700', label: 'Syn (Orchestrator)' };
     var hero = document.createElement('div');
     hero.className = 'agent-card agent-card-hero';
     hero.innerHTML =
-      '<span class="agent-card-dot" style="background:' + jflInfo.color + '"></span>' +
+      '<span class="agent-card-dot" style="background:' + synInfo.color + '"></span>' +
       '<div class="agent-card-hero-body">' +
-        '<span class="agent-card-name">' + esc(jflInfo.label) + '</span>' +
-        '<span class="agent-card-hero-tagline">Describe what you need above and press Enter — JFL will route you to the right specialist.</span>' +
+        '<span class="agent-card-name">' + esc(synInfo.label) + '</span>' +
+        '<span class="agent-card-hero-tagline">Describe what you need above and press Enter — Syn will route you to the right specialist.</span>' +
       '</div>';
-    hero.addEventListener('click', function() { startNewSession('jfl'); });
+    hero.addEventListener('click', function() { startNewSession('syn'); });
     picker.appendChild(hero);
   }
 
-  // Non-JFL agents grouped by category
+  // Non-Syn agents grouped by category
   var CATEGORY_ORDER = ['data', 'mlai', 'review'];
   var CATEGORY_LABELS = { data: 'DATA', mlai: 'ML / AI', review: 'REVIEW' };
 
@@ -105,7 +105,7 @@ async function loadAgentPicker() {
   CATEGORY_ORDER.forEach(function(cat) { grouped[cat] = []; });
   for (var i = 0; i < agentList.length; i++) {
     var agent = agentList[i];
-    if (agent.name === 'jfl') continue;
+    if (agent.name === 'syn') continue;
     var info = AGENTS[agent.name];
     if (!info) continue;
     var cat = info.category || 'review';
@@ -134,11 +134,11 @@ async function loadAgentPicker() {
     });
   });
 
-  // Prompt → JFL auto-start
+  // Prompt → Syn auto-start
   searchInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       var q = searchInput.value.trim();
-      startNewSession('jfl', q || undefined);
+      startNewSession('syn', q || undefined);
     }
   });
 

@@ -815,7 +815,7 @@ Task(
 
 **Backend Engineer code review (Python artifacts):**
 
-Tell the user: "Before JFL signs off, the Backend Engineer is reviewing the Python
+Tell the user: "Before Syn signs off, the Backend Engineer is reviewing the Python
 artifacts. Code quality is not optional."
 
 Glob the project directory (`models/<project_name>/`) for `.py` and `.ipynb` files.
@@ -834,15 +834,15 @@ Append the Backend Engineer's review to project-specs.md.
 
 **After appending the Backend Engineer's review, branch on verdict:**
 
-- **Clean or Minor Issues** → proceed directly to JFL review.
-- **Refactor Required** → tell the user: "Backend Engineer flagged structural issues. Fixing before JFL review." Address every listed issue in the project files. Update project-specs.md. Re-gate: "Backend Engineer issues resolved: [summary]. Confirm to proceed to JFL?" Then proceed to JFL.
-- **Blocked** → tell the user: "Backend Engineer has blocked this. Fixing critical issues before continuing." Address every critical issue. Update project-specs.md. Resubmit to Backend Engineer once (same Task call format). If the second verdict is Clean/Minor Issues/Refactor Required, proceed to JFL. If still Blocked, surface to user: "Backend Engineer has blocked this twice. [Verbatim second verdict.] How would you like to proceed? (a) Override and proceed to JFL — I'll document the disagreement. (b) Continue fixing — tell me what to change. (c) Stop the project."
+- **Clean or Minor Issues** → proceed directly to Syn review.
+- **Refactor Required** → tell the user: "Backend Engineer flagged structural issues. Fixing before Syn review." Address every listed issue in the project files. Update project-specs.md. Re-gate: "Backend Engineer issues resolved: [summary]. Confirm to proceed to Syn?" Then proceed to Syn.
+- **Blocked** → tell the user: "Backend Engineer has blocked this. Fixing critical issues before continuing." Address every critical issue. Update project-specs.md. Resubmit to Backend Engineer once (same Task call format). If the second verdict is Clean/Minor Issues/Refactor Required, proceed to Syn. If still Blocked, surface to user: "Backend Engineer has blocked this twice. [Verbatim second verdict.] How would you like to proceed? (a) Override and proceed to Syn — I'll document the disagreement. (b) Continue fixing — tell me what to change. (c) Stop the project."
 
 ---
 
 **MLOps Engineer consultation (serving infrastructure and deployment pipeline):**
 
-Tell the user: "Before JFL signs off, I'm asking the MLOps Engineer to validate
+Tell the user: "Before Syn signs off, I'm asking the MLOps Engineer to validate
 the serving infrastructure and deployment pipeline. They care about what it takes
 to actually operate this model."
 
@@ -877,13 +877,13 @@ Task(
 
 Append MLOps Engineer's review to specs. Present to user.
 
-**Before finalizing**, invoke JFL for final review:
+**Before finalizing**, invoke Syn for final review:
 
-Tell the user: "I'm asking JFL to review the full project specs before we ship this..."
+Tell the user: "I'm asking Syn to review the full project specs before we ship this..."
 
 ```
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="Final review of ML engineering project",
   prompt="I am the ML Engineer shard. I've completed all phases for project
   [project_name]. Please review the project-specs.md at [file_path] and provide
@@ -893,31 +893,31 @@ Task(
 )
 ```
 
-Append JFL's review to specs. Present to user.
+Append Syn's review to specs. Present to user.
 
-**If JFL returns NEEDS REVISION:**
-1. Address the specific issues JFL flagged.
+**If Syn returns NEEDS REVISION:**
+1. Address the specific issues Syn flagged.
 2. Update project-specs.md with the changes.
-3. Re-gate with the user: "JFL flagged [N] issues. Here's what I changed: [summary]. Confirm to resubmit?"
-4. Resubmit to JFL ONCE more.
+3. Re-gate with the user: "Syn flagged [N] issues. Here's what I changed: [summary]. Confirm to resubmit?"
+4. Resubmit to Syn ONCE more.
 
-**If JFL returns NEEDS REVISION a second time:**
+**If Syn returns NEEDS REVISION a second time:**
 Do not resubmit again. Instead, present to the user:
-"JFL has flagged concerns twice. Here is the current conflict:
-- JFL's concern: [verbatim from JFL's second review]
+"Syn has flagged concerns twice. Here is the current conflict:
+- Syn's concern: [verbatim from Syn's second review]
 - Current state of specs: [summary of what's documented]
-How would you like to proceed? (a) Override JFL and execute as-is — I'll document the disagreement. (b) Continue revising — tell me what to change. (c) Stop the project."
+How would you like to proceed? (a) Override Syn and execute as-is — I'll document the disagreement. (b) Continue revising — tell me what to change. (c) Stop the project."
 
 Document the outcome in specs:
-**JFL review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
+**Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
 
-If JFL's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "JFL spotted [N] code file(s) it can review. Want a code pass? (y/n)"
+If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
+- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
 ```
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="Code review and fix for ML engineering project",
   prompt="CODE REVIEW MODE. I am the ML Engineer shard. Project: [project_name].
   Directory: [project_dir]. Please review and fix the code artifacts produced
@@ -925,7 +925,7 @@ Task(
 )
 ```
 
-Append JFL's code review summary to the specs. Present findings to user.
+Append Syn's code review summary to the specs. Present findings to user.
 
 Then:
 
@@ -1079,8 +1079,8 @@ the protocol. Present candidates to the user for confirmation before writing.
 - **MLOps Engineer Review:**
   - Verdict: Approved | Concerns | Redesign needed
   - Notes: <summary of infrastructure feedback>
-- **JFL Review:** <included above>
-- **JFL review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
+- **Syn Review:** <included above>
+- **Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Model card:** <file path to model-card.json>
 - **Report location:** <file path>
 - **Model summary:**

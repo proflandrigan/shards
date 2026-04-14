@@ -552,13 +552,13 @@ Task(
 )
 ```
 
-**Step 2: Invoke JFL for final review:**
+**Step 2: Invoke Syn for final review:**
 
-Tell the user: "Calling in JFL for final sign-off. Every project gets reviewed before we hand over the keys."
+Tell the user: "Calling in Syn for final sign-off. Every project gets reviewed before we hand over the keys."
 
 ```
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="Final review of MLOps engineering project",
   prompt="I am the MLOps Engineer shard. I've completed all phases for project
   [project_name]. Please review the project-specs.md at
@@ -572,13 +572,13 @@ Task(
 
 Append both reviews to specs. Present to user.
 
-If JFL's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "JFL spotted [N] file(s) it can review. Want a code pass? (y/n)"
+If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
+- Tell the user: "Syn spotted [N] file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
 ```
 Task(
-  subagent_type="jfl",
+  subagent_type="syn",
   description="Code review for MLOps engineering project",
   prompt="CODE REVIEW MODE. I am the MLOps Engineer shard. Project: [project_name].
   Directory: services/[project_name]/mlops/. Please review and fix the artifacts
@@ -587,7 +587,7 @@ Task(
 )
 ```
 
-Append JFL's code review summary to the specs.
+Append Syn's code review summary to the specs.
 
 **Then write the final report:**
 
@@ -614,7 +614,7 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 ## Phase 7: Review and Handoff (MLOps Engineer)
 - **ML Engineer Review:** <included above>
-- **JFL Review:** <included above>
+- **Syn Review:** <included above>
 - **Report location:** <file path>
 - **Deployment architecture summary:** <brief description>
 - **Deployment checklist:**
