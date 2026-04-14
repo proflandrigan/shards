@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="css/eval-dashboard.css">
 <link rel="stylesheet" href="css/model-card.css">
 <link rel="stylesheet" href="css/knowledge-map.css">
+<link rel="stylesheet" href="css/terminal.css">
 </head>
 <body>
 
@@ -179,6 +180,12 @@
         <div id="git-diff-container"></div>
       </div>
     </div>
+    <!-- Terminal panel (Electron only — hidden in web UI) -->
+    <div id="terminal-panel">
+      <div id="terminal-resize-handle"></div>
+      <div id="terminal-tab-bar"></div>
+      <div id="terminal-container"></div>
+    </div>
   </div>
 </main>
 
@@ -295,6 +302,7 @@
 <script src="js/settings.js"></script>
 <script src="js/git.js"></script>
 <script src="js/hud.js"></script>
+<script src="js/terminal.js"></script>
 <script src="js/events.js"></script>
 <script src="js/init.js"></script>
 </body>

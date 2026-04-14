@@ -1,0 +1,9 @@
+node_modules/
+dist/
+out/
+vendor/
+*.dmg
+*.exe
+*.AppImage
+*.deb
+*.snap

@@ -11,16 +11,35 @@ const { randomUUID } = require('crypto');
 const { ChatSession, reconnectOrCleanup } = require('./chat-session');
 const symbolIndex = require('./symbol-index');
 
-const PROJECT_DIR = process.cwd();
-const SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
-const PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
-const PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
-const LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
-const AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
-const COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
-const SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
-const KNOWLEDGE_DIR = path.join(SHARDS_DIR, 'knowledge');
-const INDEX_HTML = path.join(__dirname, 'index.html');
+let PROJECT_DIR = process.cwd();
+let SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
+let PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
+let PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
+let LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
+let AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
+let COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
+let SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
+let KNOWLEDGE_DIR = path.join(SHARDS_DIR, 'knowledge');
+let INDEX_HTML = path.join(__dirname, 'index.html');
+
+function initPaths(projectDir, options = {}) {
+  PROJECT_DIR = projectDir;
+  SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
+  PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
+  PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
+  LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
+  AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
+  COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
+  SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
+  KNOWLEDGE_DIR = path.join(SHARDS_DIR, 'knowledge');
+  const uiDir = options.uiDir || __dirname;
+  INDEX_HTML = path.join(uiDir, 'index.html');
+  ELECTRON_MODE = !!options.electronMode;
+  VENDOR_DIR = options.vendorDir || null;
+}
+
+let ELECTRON_MODE = false;
+let VENDOR_DIR = null;
 
 // ─── Logging ─────────────────────────────────────────────────────────────────
 
@@ -724,6 +743,23 @@ function createHandler() {
         let html = fs.readFileSync(INDEX_HTML, 'utf8');
         // Inject token into HTML as a meta tag before </head>
         html = html.replace('</head>', `<meta name="shards-token" content="${AUTH_TOKEN}">\n</head>`);
+        // Electron mode: swap CDN URLs for local vendor paths and inject detection flag
+        if (ELECTRON_MODE) {
+          html = html.replace('</head>', `<script>window.__shardsElectronServer = true;</script>\n</head>`);
+          if (VENDOR_DIR) {
+            html = html.replace('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', 'vendor/inter-font/inter.css');
+            html = html.replace('https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator_midnight.min.css', 'vendor/tabulator-tables/tabulator_midnight.min.css');
+            html = html.replace('https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js', 'vendor/tabulator-tables/tabulator.min.js');
+            html = html.replace('https://cdn.plot.ly/plotly-2.35.2.min.js', 'vendor/plotly/plotly.min.js');
+            html = html.replace('https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js', 'vendor/mermaid/mermaid.min.js');
+            // Inject xterm.js and fit addon for terminal support
+            html = html.replace('</head>',
+              '<link rel="stylesheet" href="vendor/xterm/xterm.css">\n' +
+              '<script src="vendor/xterm/xterm.js"><\/script>\n' +
+              '<script src="vendor/xterm/xterm-addon-fit.js"><\/script>\n' +
+              '</head>');
+          }
+        }
         res.writeHead(200, { ...cors, 'Content-Type': 'text/html; charset=utf-8' });
         res.end(html);
       } catch {
@@ -740,12 +776,23 @@ function createHandler() {
         '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
         '.gif': 'image/gif', '.svg': 'image/svg+xml', '.webp': 'image/webp',
         '.ico': 'image/x-icon',
+        '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf',
       };
       const ext = path.extname(parsedUrl.pathname).toLowerCase();
       if (MIME[ext]) {
-        const filePath = path.join(__dirname, decodeURIComponent(parsedUrl.pathname));
-        const resolved = path.resolve(filePath);
-        if (!resolved.startsWith(__dirname)) {
+        const decodedPath = decodeURIComponent(parsedUrl.pathname);
+        let filePath = path.join(__dirname, decodedPath);
+        let resolved = path.resolve(filePath);
+        // In Electron mode, also serve from vendor directory
+        if (ELECTRON_MODE && VENDOR_DIR && decodedPath.startsWith('/vendor/')) {
+          filePath = path.join(VENDOR_DIR, decodedPath.slice('/vendor/'.length));
+          resolved = path.resolve(filePath);
+          if (!resolved.startsWith(path.resolve(VENDOR_DIR))) {
+            res.writeHead(403);
+            res.end('Forbidden');
+            return;
+          }
+        } else if (!resolved.startsWith(__dirname)) {
           res.writeHead(403);
           res.end('Forbidden');
           return;
@@ -1738,9 +1785,11 @@ function createHandler() {
   };
 }
 
-function startServer(portIndex) {
+function startServer(portIndex, resolve, reject) {
   if (portIndex >= PORTS.length) {
-    console.error('Shards UI: all ports in use (7842-7845)');
+    const msg = 'Shards UI: all ports in use (7842-7845)';
+    if (reject) { reject(new Error(msg)); return; }
+    console.error(msg);
     process.exit(1);
   }
 
@@ -1759,7 +1808,9 @@ function startServer(portIndex) {
       server = https.createServer(tlsOptions, handler);
       protocol = 'https';
     } catch (err) {
-      console.error(`Shards UI: Failed to load TLS cert/key: ${err.message}`);
+      const msg = `Shards UI: Failed to load TLS cert/key: ${err.message}`;
+      if (reject) { reject(new Error(msg)); return; }
+      console.error(msg);
       process.exit(1);
     }
   } else {
@@ -1773,9 +1824,11 @@ function startServer(portIndex) {
 
   server.on('error', (e) => {
     if (e.code === 'EADDRINUSE') {
-      startServer(portIndex + 1);
+      startServer(portIndex + 1, resolve, reject);
     } else {
-      console.error('Shards UI server error:', e.message);
+      const msg = 'Shards UI server error: ' + e.message;
+      if (reject) { reject(new Error(msg)); return; }
+      console.error(msg);
       process.exit(1);
     }
   });
@@ -1808,6 +1861,19 @@ function startServer(portIndex) {
         log(`Symbol index build failed: ${err.message}`);
       }
     }, 100);
+
+    // Resolve the promise for createServer callers
+    if (resolve) {
+      resolve({
+        port,
+        authToken: AUTH_TOKEN,
+        httpServer: server,
+        shutdown: () => {
+          server.close();
+          cleanup();
+        }
+      });
+    }
   });
 }
 
@@ -1821,4 +1887,18 @@ process.on('exit', cleanup);
 process.on('SIGTERM', () => { cleanup(); process.exit(0); });
 process.on('SIGINT', () => { cleanup(); process.exit(0); });
 
-startServer(0);
+// ─── Factory for Electron / programmatic use ────────────────────────────────
+
+function createServer(projectDir, options = {}) {
+  initPaths(projectDir, options);
+  return new Promise((resolve, reject) => {
+    startServer(0, resolve, reject);
+  });
+}
+
+// Standalone mode — preserves existing CLI behavior
+if (require.main === module) {
+  startServer(0);
+}
+
+module.exports = { createServer };
