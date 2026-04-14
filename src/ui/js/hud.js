@@ -37,21 +37,8 @@ function renderHud() {
     pinsEl.title = pinCount + ' context item(s) pinned';
   }
 
-  // ── Session cost (right side) ──
-  var costEl = document.getElementById('hud-cost');
-  var session = getActiveSession();
-  if (costEl) {
-    if (session && session.totalCost > 0) {
-      costEl.textContent = '$' + session.totalCost.toFixed(4);
-      costEl.title = 'Session cost: $' + session.totalCost.toFixed(4) +
-        ' | Duration: ' + (session.totalDuration / 1000).toFixed(1) + 's';
-    } else {
-      costEl.textContent = '$0.00';
-      costEl.title = 'No cost data yet';
-    }
-  }
-
   // ── Context usage indicator (right side, prominent) ──
+  var session = getActiveSession();
   var ctxEl = document.getElementById('hud-context');
   if (ctxEl && session) {
     var msgCount = session.messages ? session.messages.length : 0;

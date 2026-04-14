@@ -110,7 +110,8 @@ const permissionRequests = new Map();
 setInterval(() => {
   const cutoff = Date.now() - 5 * 60 * 1000;
   for (const [id, req] of permissionRequests) {
-    if (req.createdAt < cutoff) permissionRequests.delete(id);
+    // Only clean up decided requests — never delete pending ones the user hasn't responded to
+    if (req.decision !== null && req.createdAt < cutoff) permissionRequests.delete(id);
   }
 }, 60_000);
 
