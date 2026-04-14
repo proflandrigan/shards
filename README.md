@@ -4,11 +4,11 @@
   style="display: block; margin-left: auto; margin-right: auto; width: 400px;" 
 />
 
-**Shards of JFL's brain** — a suite of data-focused agents for Claude Code.
+**Shards of Syn's brain** — a suite of data-focused agents for Claude Code.
 
-Each agent is a specialist shard (fragment) of JFL, carrying a piece of his expertise
+Each agent is a specialist shard (fragment) of Syn, carrying a piece of his expertise
 into a focused domain: data analysis, data science, ML engineering, data engineering,
-and data modelling. JFL himself serves as the orchestrator, triaging requests and
+and data modelling. Syn himself serves as the orchestrator, triaging requests and
 summoning the right shard for the job.
 
 They're opinionated, they document everything, and they don't skip steps.
@@ -23,7 +23,7 @@ decision trail — not just code, but the reasoning behind it.
 
 Agents also review each other's work. The Data Scientist asks the Data Modeller
 to verify queries. The Analyst asks the Scientist to sanity-check the plan.
-And JFL reviews every final plan before execution begins. You see all of this
+And Syn reviews every final plan before execution begins. You see all of this
 happening — nothing is hidden.
 
 ## Quick Start
@@ -41,15 +41,15 @@ Then open Claude Code and run:
 /shards
 ```
 
-JFL will greet you, figure out what you need, and summon the right shard.
+Syn will greet you, figure out what you need, and summon the right shard.
 
 ## The Shards
 
 | Shard | Command | Personality | Speciality |
 |-------|---------|-------------|------------|
-| **JFL** | `/shards` | Friendly, structured | Triage, delegation, final review |
-| **JFL (Brainstorm)** | `/brainstorm` | Friendly, structured | Multi-agent ideation, exploration |
-| **JFL (Knowledge)** | `/knowledge` | Friendly, structured | Seed, browse, and manage the Knowledge Ledger |
+| **Syn** | `/shards` | Friendly, structured | Triage, delegation, final review |
+| **Syn (Brainstorm)** | `/brainstorm` | Friendly, structured | Multi-agent ideation, exploration |
+| **Syn (Knowledge)** | `/knowledge` | Friendly, structured | Seed, browse, and manage the Knowledge Ledger |
 | **Data Analyst** | `/data-analyst` | Helpful | Adhoc queries, quick analyses |
 | **Data Scientist** | `/data-scientist` | Condescending | EDA, feature engineering, modeling |
 | **ML Engineer** | `/ml-engineer` | Intense | Recommenders, ranking, production ML systems |
@@ -72,7 +72,7 @@ JFL will greet you, figure out what you need, and summon the right shard.
 your-project/
 ├── .claude/
 │   ├── agents/                 # Agent persona definitions
-│   │   ├── jfl.md
+│   │   ├── syn.md
 │   │   ├── data-analyst.md
 │   │   ├── data-scientist.md
 │   │   ├── ml-engineer.md
@@ -113,8 +113,8 @@ your-project/
 ├── services/                   # ML / AI / Deep Learning / MLOps greenfield projects
 ├── dashboards/                 # BI Engineer dashboards
 ├── research/                   # Applied ML Scientist novel frameworks
-├── brainstorm/                 # JFL brainstorm sessions
-├── fixes/                      # JFL Fixer quick fixes
+├── brainstorm/                 # Syn brainstorm sessions
+├── fixes/                      # Syn Fixer quick fixes
 └── CLAUDE.md                   # Updated with Shards docs
 ```
 
@@ -152,7 +152,7 @@ Agents consult each other at defined checkpoints:
   on research-heavy architecture questions
 - **Any agent** can consult the Academic when safety, ethical, or behavioral
   science questions arise
-- **All specialists** invoke JFL for a final review before execution
+- **All specialists** invoke Syn for a final review before execution
 
 You see every review happening. The agent announces it, runs the review, and
 reports findings before proceeding.
@@ -173,11 +173,11 @@ You can type the code to jump to that action. Common modes across agents:
 | `[EX]` | Experiment | ML, AI | Run targeted experiments on an existing model |
 | `[EXP]` | Experiment | DS | Run targeted experiments on an existing study |
 | `[PL]` | Prompt Lab | AI | Interactive prompt editing, evaluation, versioning via Shards UI |
-| `[F]` | Fix | JFL | Quick fix — JFL handles it directly without specialist handoff |
-| `[S]` | Status | JFL | Check on a current project |
-| `[D]` | Diff | JFL | Compare two projects side by side |
-| `[K]` | Knowledge | JFL | Seed, browse, or manage the Knowledge Ledger |
-| `[B]` | Brainstorm | JFL | Multi-agent ideation session |
+| `[F]` | Fix | Syn | Quick fix — Syn handles it directly without specialist handoff |
+| `[S]` | Status | Syn | Check on a current project |
+| `[D]` | Diff | Syn | Compare two projects side by side |
+| `[K]` | Knowledge | Syn | Seed, browse, or manage the Knowledge Ledger |
+| `[B]` | Brainstorm | Syn | Multi-agent ideation session |
 | `[C]` | Clean | BE | Apply structural fixes without changing functionality |
 | `[F]` | FastAPI | BE | Route design, dependency injection, middleware |
 | `[P]` | Pydantic | BE | Model design, validators, schema evolution |
@@ -190,12 +190,12 @@ Not every agent has every mode — the agent displays its own menu on startup.
 
 ### Orchestration
 
-When you run `/shards`, JFL triages your request and morphs into the
+When you run `/shards`, Syn triages your request and morphs into the
 appropriate specialist within the same conversation — no context lost.
-The specialist handles the work, then invokes JFL for final review
+The specialist handles the work, then invokes Syn for final review
 before execution.
 
-Run `/brainstorm` to enter a lighter mode: JFL gathers context, polls
+Run `/brainstorm` to enter a lighter mode: Syn gathers context, polls
 all relevant specialists via parallel Task calls, and synthesizes ideas
 without committing to a full project workflow.
 
@@ -204,9 +204,9 @@ if you already know what you need.
 
 ### Fixer Mode
 
-Type `[F]` at JFL's menu (or describe something that sounds like a minor fix)
-and JFL handles it directly — no specialist handoff, no full phased workflow.
-JFL plans the change, gets a quick specialist review via Task, and applies
+Type `[F]` at Syn's menu (or describe something that sounds like a minor fix)
+and Syn handles it directly — no specialist handoff, no full phased workflow.
+Syn plans the change, gets a quick specialist review via Task, and applies
 the fix. Designed for small updates where the overhead of a full workflow
 isn't warranted.
 
@@ -221,7 +221,7 @@ build workflow. ML Engineer and AI Engineer use `[EX]`; Data Scientist uses
 
 ### Code Review
 
-During the final phases of a specialist workflow, JFL can run a structured
+During the final phases of a specialist workflow, Syn can run a structured
 code review on the produced artifacts. It partitions files by type (Python
 vs. non-Python), reviews each category, and reports findings. This happens
 automatically when triggered by the specialist — you don't need to request it.
@@ -233,9 +233,9 @@ Agents automatically check it before starting work and contribute to it when pro
 complete.
 
 - **Auto-retrieval:** Before Phase 1, agents scan `INDEX.md` for entries relevant to the current project
-- **Auto-harvest:** After JFL final review, agents extract reusable knowledge and present candidates for your confirmation before writing to the ledger
+- **Auto-harvest:** After Syn final review, agents extract reusable knowledge and present candidates for your confirmation before writing to the ledger
 
-Run `/knowledge` or type `[K]` at JFL's menu to seed, browse, or manage the ledger directly.
+Run `/knowledge` or type `[K]` at Syn's menu to seed, browse, or manage the ledger directly.
 The knowledge directory is preserved across installs and uninstalls.
 
 ### Prompt Lab
@@ -246,7 +246,7 @@ and iterate — all within the browser dashboard.
 
 ### Diff Mode
 
-Type `[D]` at JFL's menu to compare two projects side by side. JFL reads both
+Type `[D]` at Syn's menu to compare two projects side by side. Syn reads both
 project directories, compares methodology, metrics, implementation, and artifacts,
 and produces a structured diff report.
 
@@ -254,7 +254,7 @@ and produces a structured diff report.
 
 Specialists can propose parallel experimentation branches during a build. The
 diverge protocol forks the work into parallel Task branches, each exploring a
-different approach. When branches complete, JFL enters Arbiter mode — reads all
+different approach. When branches complete, Syn enters Arbiter mode — reads all
 branch reports, builds a side-by-side leaderboard, and returns an advisory
 recommendation. You make the final call on which branch to promote.
 
@@ -329,7 +329,7 @@ Additionally:
 | MLOps Engineer | `services/<name>/` | `project-specs.md` |
 | Analytics Engineer | `data_models/<name>/` | `project-specs.md` |
 | BI Engineer | `dashboards/<name>/` | `project-specs.md` |
-| JFL (Fixer) | `fixes/<name>/` | `project-specs.md` |
+| Syn (Fixer) | `fixes/<name>/` | `project-specs.md` |
 | Backend Engineer | — (review only, no files produced) | — |
 | Data Engineer | `models/<name>/` | `project-specs.md` |
 | Data Modeller | `data_models/<name>/` | `project-specs.md` |

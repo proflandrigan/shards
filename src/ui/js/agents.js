@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 var AGENTS = {
-  'jfl':                    { color: '#FFD700', label: 'JFL (Orchestrator)',           desc: 'Triage, delegation, and final review',                          type: 'orchestrator', category: 'route', keywords: [] },
+  'syn':                    { color: '#FFD700', label: 'Syn (Orchestrator)',           desc: 'Triage, delegation, and final review',                          type: 'orchestrator', category: 'route', keywords: [] },
   'data-analyst':           { color: '#4CAF50', label: 'Data Analyst',                desc: 'Quick adhoc queries and analyses',                              type: 'specialist',   category: 'data',  keywords: ['sql', 'query', 'adhoc', 'quick', 'analyze', 'explore', 'summarize', 'aggregate', 'metrics', 'kpi'] },
   'data-scientist':         { color: '#2196F3', label: 'Data Scientist',              desc: 'EDA, feature engineering, and predictive modeling',              type: 'specialist',   category: 'data',  keywords: ['eda', 'exploratory', 'hypothesis', 'statistical', 'correlation', 'predict', 'notebook', 'feature', 'study', 'regression'] },
   'data-engineer':          { color: '#FF9800', label: 'Data Engineer',               desc: 'Pipelines, dbt models, warehouse infrastructure',                type: 'specialist',   category: 'data',  keywords: ['pipeline', 'etl', 'ingestion', 'source', 'warehouse', 'airflow', 'batch', 'streaming', 'integration', 'orchestrate'] },

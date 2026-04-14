@@ -411,7 +411,7 @@ async function showWelcomeWindow() {
   .empty { color: #555; font-size: 13px; padding: 12px; }
 </style></head><body>
   <h1>Shards IDE</h1>
-  <p class="subtitle">Shards of JFL's brain — data-focused agents for Claude Code</p>
+  <p class="subtitle">Shards of Syn's brain — data-focused agents for Claude Code</p>
   <div class="actions">
     <button onclick="window.shardsElectron.project.openFolder()">Open Folder</button>
   </div>
