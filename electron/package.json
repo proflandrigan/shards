@@ -1,6 +1,6 @@
 {
   "name": "shards-ide",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Shards IDE — Desktop application for the Shards agent suite",
   "author": {
     "name": "Syn",
@@ -60,7 +60,7 @@
         "filter": ["**/*"]
       },
       {
-        "from": "../templates",
+        "from": "../src/templates",
         "to": "templates",
         "filter": ["**/*"]
       }

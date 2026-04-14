@@ -16,14 +16,17 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            build_cmd: npm run build:mac
-            artifact_glob: 'electron/dist/*.dmg'
+            arch: arm64
+            build_cmd: npx electron-builder --mac --arm64
+          - os: macos-latest
+            arch: x64
+            build_cmd: npx electron-builder --mac --x64
           - os: ubuntu-latest
+            arch: x64
             build_cmd: npm run build:linux
-            artifact_glob: 'electron/dist/*.{AppImage,deb}'
           - os: windows-latest
+            arch: x64
             build_cmd: npm run build:win
-            artifact_glob: 'electron/dist/*.exe'
 
     runs-on: ${{ matrix.os }}
 
@@ -75,7 +78,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: shards-ide-${{ runner.os }}
+          name: shards-ide-${{ runner.os }}-${{ matrix.arch }}
           path: |
             electron/dist/*.dmg
             electron/dist/*.AppImage
