@@ -1,6 +1,6 @@
 {
   "name": "shards-ide",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Shards IDE — Desktop application for the Shards agent suite",
   "author": {
     "name": "Syn",
@@ -75,6 +75,7 @@
     },
     "dmg": {
       "title": "Shards IDE",
+      "background": null,
       "contents": [
         { "x": 130, "y": 220 },
         { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
