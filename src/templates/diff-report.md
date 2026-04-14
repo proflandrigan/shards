@@ -1,7 +1,7 @@
 # Cross-Project Diff: {{PROJECT_A_NAME}} vs. {{PROJECT_B_NAME}}
 
 - **Date:** {{DATE}}
-- **Analyst:** JFL (Diff Mode)
+- **Analyst:** Syn (Diff Mode)
 - **Directory A:** {{DIR_A}}
 - **Directory B:** {{DIR_B}}
 - **Focus:** {{FOCUS}}
@@ -77,7 +77,7 @@
 
 ---
 
-## JFL's Analysis
+## Syn's Analysis
 
 {{ANALYSIS}}
 

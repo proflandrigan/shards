@@ -17,7 +17,7 @@
     4. Modeling Approach (ML only)
     5. Output Format
     6. Execute (with Data Modeller query review)
-    7. Findings and Handoff (with JFL final review)
+    7. Findings and Handoff (with Syn final review)
 
   Queries are written to: queries/*.sql
   Notebooks are written to: notebooks/*.ipynb

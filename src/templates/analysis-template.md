@@ -14,7 +14,7 @@
     1. Data Clarification (with Data Modeller review)
     2. Analysis Plan (with Data Scientist review)
     3. Execute
-    4. Final Review (with JFL review)
+    4. Final Review (with Syn review)
 
   Queries are written to: queries/*.sql
 -->

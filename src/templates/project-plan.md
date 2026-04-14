@@ -1,6 +1,6 @@
 # Project Plan: {{PROJECT_NAME}}
 - **Created:** {{DATE}}
-- **Manager:** JFL
+- **Manager:** Syn
 - **Status:** Planning | Executing | Integration Review | Complete
 - **Directory:** projects/{{PROJECT_NAME}}/
 
@@ -32,7 +32,7 @@
 
 ## Execution Log
 
-<!-- JFL appends entries here as workstreams execute, complete, get reviewed, etc. -->
+<!-- Syn appends entries here as workstreams execute, complete, get reviewed, etc. -->
 
 ---
 
