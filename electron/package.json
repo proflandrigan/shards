@@ -1,6 +1,6 @@
 {
   "name": "shards-ide",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Shards IDE — Desktop application for the Shards agent suite",
   "author": {
     "name": "Syn",
@@ -67,19 +67,14 @@
     ],
     "mac": {
       "target": [
-        { "target": "dmg", "arch": ["x64", "arm64"] }
+        { "target": "zip", "arch": ["x64", "arm64"] }
       ],
       "category": "public.app-category.developer-tools",
       "icon": "icons/icon.icns",
       "darkModeSupport": true
     },
-    "dmg": {
-      "title": "Shards IDE",
-      "background": null,
-      "contents": [
-        { "x": 130, "y": 220 },
-        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
-      ]
+    "zip": {
+      "artifactName": "Shards-IDE-${version}-${arch}.${ext}"
     },
     "win": {
       "target": [

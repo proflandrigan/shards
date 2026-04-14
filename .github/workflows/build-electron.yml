@@ -80,6 +80,7 @@ jobs:
         with:
           name: shards-ide-${{ runner.os }}-${{ matrix.arch }}
           path: |
+            electron/dist/*.zip
             electron/dist/*.dmg
             electron/dist/*.AppImage
             electron/dist/*.deb
