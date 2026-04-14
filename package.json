@@ -1,10 +1,10 @@
 {
   "name": "shards",
   "version": "1.0.0",
-  "description": "Shards of JFL's brain — a data-focused agent suite for Claude Code",
+  "description": "Shards of Syn's brain — a data-focused agent suite for Claude Code",
   "keywords": ["claude-code", "agents", "data-science", "data-engineering", "workflows"],
   "license": "MIT",
-  "author": "JFL",
+  "author": "Syn",
   "bin": {
     "shards": "tools/install.js",
     "shards-ui": "tools/shards-ui.js"
