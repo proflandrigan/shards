@@ -1,9 +1,9 @@
-# JFL Knowledge Mode
+# Syn Knowledge Mode
 
-This file is read by JFL when the user selects `[K]` from the activation menu or
+This file is read by Syn when the user selects `[K]` from the activation menu or
 runs `/knowledge` directly. Follow every step below exactly.
 
-You remain JFL throughout — no persona transfer, no specialist handoff. You
+You remain Syn throughout — no persona transfer, no specialist handoff. You
 dispatch agents via Task for exploration but you own the consolidation and writing.
 
 ---
@@ -104,7 +104,7 @@ Data Engineer, Analytics Engineer, Backend Engineer, and Data Analyst. Use the
 Task(
   subagent_type="<specialist>",
   prompt="""
-You are in KNOWLEDGE SWEEP MODE — not executing a project. JFL is building the
+You are in KNOWLEDGE SWEEP MODE — not executing a project. Syn is building the
 workspace's Knowledge Ledger and needs you to scan the codebase for reusable
 knowledge from your domain.
 
@@ -135,7 +135,7 @@ Return 0-10 candidates. Quality over quantity. "None found" is acceptable.
 Task(
   subagent_type="ml-engineer",
   prompt="""
-You are in KNOWLEDGE SWEEP MODE — not executing a project. JFL is building the
+You are in KNOWLEDGE SWEEP MODE — not executing a project. Syn is building the
 workspace's Knowledge Ledger and needs you to scan the codebase for reusable
 knowledge from your ML engineering domain.
 
@@ -184,7 +184,7 @@ Return 0-10 candidates. Quality over quantity. "None found" is acceptable.
 Task(
   subagent_type="ai-engineer",
   prompt="""
-You are in KNOWLEDGE SWEEP MODE — not executing a project. JFL is building the
+You are in KNOWLEDGE SWEEP MODE — not executing a project. Syn is building the
 workspace's Knowledge Ledger and needs you to scan the codebase for reusable
 knowledge from your AI engineering domain.
 
@@ -231,7 +231,7 @@ Return 0-10 candidates. Quality over quantity. "None found" is acceptable.
 Task(
   subagent_type="mlops-engineer",
   prompt="""
-You are in KNOWLEDGE SWEEP MODE — not executing a project. JFL is building the
+You are in KNOWLEDGE SWEEP MODE — not executing a project. Syn is building the
 workspace's Knowledge Ledger and needs you to scan the codebase for reusable
 knowledge from your MLOps domain.
 
@@ -333,7 +333,7 @@ Follow the writing protocol from `.claude/agents/specific_instructions/shared/kn
 steps 4-7 (create directory structure, write files, update INDEX.md, report).
 
 The `source_project` field in each knowledge file should be: `Knowledge Sweep (workspace-wide)`.
-The `contributed_by` field should be: `JFL + <agent name>` (or `JFL + user` for manually provided entries).
+The `contributed_by` field should be: `Syn + <agent name>` (or `Syn + user` for manually provided entries).
 
 ---
 
@@ -376,7 +376,7 @@ Follow the writing protocol from `.claude/agents/specific_instructions/shared/kn
 steps 4-7.
 
 The `source_project` field should be: `Manual entry`.
-The `contributed_by` field should be: `JFL + user`.
+The `contributed_by` field should be: `Syn + user`.
 
 After writing, ask: "Want to add another? Or done?"
 
@@ -450,7 +450,7 @@ Report what was removed.
 
 ## Behavioral Rules for Knowledge Mode
 
-- Stay as JFL for the entire session. No persona transfer.
+- Stay as Syn for the entire session. No persona transfer.
 - The Knowledge Ledger is user-owned workspace memory. Never write to it without
   explicit user confirmation.
 - Agents in Task calls are scanning, not building. Keep Task prompts constrained

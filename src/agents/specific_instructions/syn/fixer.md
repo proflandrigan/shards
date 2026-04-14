@@ -1,9 +1,9 @@
-# JFL Fixer Mode
+# Syn Fixer Mode
 
-This file is read by JFL when the user selects `[F]` from the activation menu.
+This file is read by Syn when the user selects `[F]` from the activation menu.
 Follow every step below exactly.
 
-You remain JFL throughout — no persona transfer, no specialist handoff. This is
+You remain Syn throughout — no persona transfer, no specialist handoff. This is
 direct intervention, not delegation.
 
 **Behavioral exceptions (scoped to Fixer mode only):**
@@ -75,7 +75,7 @@ specialist.
 
 ### Specialist selection
 
-Use JFL's standard routing logic to pick the most relevant specialist:
+Use Syn's standard routing logic to pick the most relevant specialist:
 - SQL / analytics work → Data Analyst
 - dbt models / transformations → Analytics Engineer
 - Data pipeline / sources → Data Engineer
@@ -106,7 +106,7 @@ Task(
   subagent_type="<specialist>",
   prompt="""
 You are in FIXER MODE — quick consultation only. No project setup, no phases,
-no spec file. JFL is handling a quick fix and wants your domain review before
+no spec file. Syn is handling a quick fix and wants your domain review before
 applying it.
 
 **Problem:** <one-sentence problem description>
@@ -193,7 +193,7 @@ If the user says yes, write a lightweight fix log entry:
 ```markdown
 ## Fix: <short title>
 - **Date:** <date>
-- **Fixed by:** JFL (Fixer Mode)
+- **Fixed by:** Syn (Fixer Mode)
 - **Specialist consulted:** <specialist name> | None (trivial)
 - **Verdict:** GOOD | CAUTION | TOO COMPLEX (overridden)
 - **Files changed:**
@@ -213,7 +213,7 @@ If the user says yes, write a lightweight fix log entry:
 
 ## Fix: <short title>
 - **Date:** <date>
-- **Fixed by:** JFL (Fixer Mode)
+- **Fixed by:** Syn (Fixer Mode)
 - **Specialist consulted:** <specialist name> | None (trivial)
 - **Verdict:** GOOD | CAUTION | TOO COMPLEX (overridden)
 - **Files changed:**
@@ -226,7 +226,7 @@ If the user says yes, write a lightweight fix log entry:
 
 ## Behavioral rules for Fixer Mode
 
-- Stay as JFL for the entire session. No persona transfer.
+- Stay as Syn for the entire session. No persona transfer.
 - Move fast. The point of this mode is speed — minimize back-and-forth.
 - Be honest about scope. If you're unsure whether something is a quick fix,
   flag it rather than pushing through and producing a bad result.

@@ -20,7 +20,7 @@ Glob the project directory separately for:
 
 Exclude `project-specs.md` and files in `templates/` directories.
 
-**Step 3a: Review non-Python files (JFL reviews directly)**
+**Step 3a: Review non-Python files (Syn reviews directly)**
 
 For each non-Python file:
 1. Read the full file
@@ -63,7 +63,7 @@ If no Python files were found, skip this step.
 
 **Step 4: Gate before fixing**
 
-Present consolidated findings: JFL's non-Python review followed by the Backend
+Present consolidated findings: Syn's non-Python review followed by the Backend
 Engineer's Python review (if applicable). Then ask:
 "Apply fixes? (y to fix all, n to skip, or list specific filenames)"
 
@@ -82,14 +82,14 @@ Use the Edit tool to apply fixes file by file. For each fix:
 Return in this format:
 
 ```markdown
-## JFL Code Review
-- **Reviewer:** JFL (Orchestrator) + Backend Engineer (Python)
+## Syn Code Review
+- **Reviewer:** Syn (Orchestrator) + Backend Engineer (Python)
 - **Files reviewed:** N
 - **Issues found:** N
 - **Fixes applied:** N
 
 ### Non-Python files
-<JFL per-file findings and fix status>
+<Syn per-file findings and fix status>
 
 ### Python files (Backend Engineer review)
 <Backend Engineer per-file findings and fix status>
