@@ -227,33 +227,24 @@ async function handlePreToolUse(port, token, payload) {
     process.exit(2);
   }
 
-  // Pending — poll loop
+  // Pending — poll loop (no timeout: wait indefinitely for user decision)
   const POLL_MS = 200;
-  const TIMEOUT_MS = 60_000;
-  const start = Date.now();
 
-  while (Date.now() - start < TIMEOUT_MS) {
+  for (;;) {
     await sleep(POLL_MS);
     const decision = await pollDecision(port, token, response.id);
     if (decision === 'allow') {
       process.exit(0);
     }
-    if (decision === 'deny' || decision === 'not_found') {
+    if (decision === 'deny') {
       process.stdout.write(JSON.stringify({
         decision: 'block',
         reason: 'Denied by user in Shards UI',
       }));
       process.exit(2);
     }
-    // 'pending' — keep looping
+    // 'pending' or 'not_found' — keep polling
   }
-
-  // Timed out
-  process.stdout.write(JSON.stringify({
-    decision: 'block',
-    reason: 'Permission request timed out after 60s',
-  }));
-  process.exit(2);
 }
 
 function extractTextContent(content) {

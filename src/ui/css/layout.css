@@ -9,11 +9,6 @@
   flex-shrink: 0;
   height: 42px;
 }
-.logo {
-  height: 28px;
-  width: auto;
-  display: block;
-}
 #header-center {
   flex: 1;
   display: flex;
