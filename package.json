@@ -2,9 +2,9 @@
   "name": "shards",
   "version": "1.0.0",
   "description": "Shards of Syn's brain — a data-focused agent suite for Claude Code",
-  "keywords": ["claude-code", "agents", "data-science", "data-engineering", "workflows"],
+  "keywords": ["claude-code", "agents", "data-science", "data-engineering", "workflows", "machine-learning", "artificial intelligence"],
   "license": "MIT",
-  "author": "Syn",
+  "author": "JFL",
   "bin": {
     "shards": "tools/install.js",
     "shards-ui": "tools/shards-ui.js"
