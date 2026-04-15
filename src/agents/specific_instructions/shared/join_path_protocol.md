@@ -28,6 +28,14 @@ Assess query complexity before tracing:
 one table is a model built from five CTEs with internal joins, the real complexity
 is higher. When in doubt, bump the tier up.
 
+## Knowledge Pre-Check
+
+Before beginning the join trace, run a Knowledge Checkpoint for each table in the planned join. Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` (fast path first, deep path if needed).
+
+If a knowledge entry documents the grain, key type, or semantics of a table involved in the join, incorporate it into the trace and cite it using the citation format in the checkpoint protocol. Grain and key-type mismatches that the ledger already documents should be called out before any SQL is written — not discovered post-execution.
+
+If the ledger has no relevant entries, proceed directly to the trace.
+
 ## The Trace
 
 Present the trace in-chat before writing the query. Format:

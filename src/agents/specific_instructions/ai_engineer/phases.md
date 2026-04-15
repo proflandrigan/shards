@@ -546,6 +546,8 @@ you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
+**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+
 Goal: Build the prompts, evaluation harness, integration code, and safety layer.
 
 **Build artifacts:**

@@ -49,6 +49,8 @@ you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
+**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+
 1. Implement the change in the model SQL and schema file
 2. Update downstream models if column names or types changed
 3. Run the stack's build/validate command to validate

@@ -377,6 +377,8 @@ you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
+**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+
 Goal: Build the notebook, queries, and report.
 
 **Join path self-check:** Before requesting the Data Modeller review, trace the

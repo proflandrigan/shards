@@ -51,6 +51,8 @@ you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
+**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+
 1. Implement the change in model SQL and .yml schema
 2. Update any downstream models that reference changed columns
 3. Run `dbt build --select +model_name+` to validate
@@ -354,6 +356,8 @@ executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
+
+**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
 
 Build in this order:
 1. Source definitions
