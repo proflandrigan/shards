@@ -160,6 +160,11 @@ function updatePanelData(panelId, newData) {
     return;
   }
 
+  if (p.panel === 'pr-review') {
+    renderPRReviewPanel(document.getElementById('file-rendered-view'), p);
+    return;
+  }
+
   if (p.panel === 'data-viewer' && p.tabulatorInstance) {
     var sorters = [];
     try { sorters = p.tabulatorInstance.getSorters() || []; } catch(e) {}
@@ -239,6 +244,10 @@ function renderPanelPane(panelId) {
     tableView.classList.remove('visible');
     renderedView.classList.add('visible');
     renderKnowledgeMapPanel(renderedView, p);
+  } else if (p.panel === 'pr-review') {
+    tableView.classList.remove('visible');
+    renderedView.classList.add('visible');
+    renderPRReviewPanel(renderedView, p);
   } else {
     tableView.classList.remove('visible');
     renderedView.classList.add('visible');
@@ -2010,4 +2019,251 @@ function plRenderVersionSidebar(container, prompts, activePrompt, syncHistory, p
   }
 
   container.innerHTML = html;
+}
+
+// ─── PR Review Panel ──────────────────────────────────────────────────────────
+
+function renderPRReviewPanel(container, panel) {
+  var data = panel.rawData;
+
+  // Ensure addressed map exists on panel object (persists across re-renders)
+  if (!panel._addressedMap) panel._addressedMap = {};
+
+  if (!data) {
+    container.innerHTML = '<div class="pr-review"><div class="pr-empty"><h3>Loading PR comments...</h3><p>Fetching from GitHub.</p></div></div>';
+    return;
+  }
+
+  if (data.ghMissing) {
+    container.innerHTML =
+      '<div class="pr-review"><div class="pr-gh-missing">' +
+      '<h3>GitHub CLI not installed</h3>' +
+      '<p>Install it with <code>brew install gh</code> and authenticate with <code>gh auth login</code>.</p>' +
+      '</div></div>';
+    return;
+  }
+
+  if (data.error) {
+    container.innerHTML =
+      '<div class="pr-review"><div class="pr-empty"><h3>Could not load PR</h3><p>' + esc(data.error) + '</p></div></div>';
+    return;
+  }
+
+  var threads = data.threads || [];
+  var generalComments = data.generalComments || [];
+  var reviews = data.reviews || [];
+
+  // Count addressed
+  var addressedCount = Object.values(panel._addressedMap).filter(Boolean).length;
+  var totalThreads = threads.length;
+  var pct = totalThreads > 0 ? Math.round((addressedCount / totalThreads) * 100) : 0;
+
+  // Determine review decision display
+  var prInfo = panel._prInfo || {};
+  var reviewDecision = prInfo.reviewDecision || '';
+  var decisionClass = reviewDecision === 'APPROVED' ? 'approved' :
+                      reviewDecision === 'CHANGES_REQUESTED' ? 'changes' :
+                      reviewDecision === 'REVIEW_REQUIRED' ? 'review-required' : 'pending';
+  var decisionLabel = reviewDecision === 'APPROVED' ? 'Approved' :
+                      reviewDecision === 'CHANGES_REQUESTED' ? 'Changes Requested' :
+                      reviewDecision === 'REVIEW_REQUIRED' ? 'Review Required' : 'Pending';
+
+  var html = '<div class="pr-review">';
+
+  // Header
+  html += '<div class="pr-header">';
+  html += '<div class="pr-header-title">';
+  if (prInfo.url) {
+    html += '<a href="' + esc(prInfo.url) + '" target="_blank" rel="noopener">PR #' + esc(String(data.pr || '')) + '</a>';
+    if (prInfo.title) html += ' &mdash; ' + esc(prInfo.title);
+  } else {
+    html += 'PR #' + esc(String(data.pr || ''));
+  }
+  html += '</div>';
+  html += '<div class="pr-header-meta">';
+  if (reviewDecision) {
+    html += '<span class="pr-review-badge ' + decisionClass + '">' + esc(decisionLabel) + '</span>';
+  }
+  html += '<button class="pr-btn" onclick="refreshPRReviewPanel(' + JSON.stringify(panel.panelId) + ')">Refresh</button>';
+  html += '</div>';
+  html += '</div>';
+
+  // Progress bar
+  if (totalThreads > 0) {
+    html += '<div class="pr-progress-bar">';
+    html += '<span class="pr-progress-label">' + addressedCount + ' / ' + totalThreads + ' addressed</span>';
+    html += '<div class="pr-progress-track"><div class="pr-progress-fill" style="width:' + pct + '%"></div></div>';
+    html += '</div>';
+  }
+
+  html += '<div class="pr-content" id="pr-content-' + esc(panel.panelId) + '">';
+
+  // Review summaries (non-COMMENTED reviews with a body)
+  var summaryReviews = reviews.filter(function(r) { return r.body && r.body.trim(); });
+  if (summaryReviews.length > 0) {
+    html += '<div class="pr-section-header">Reviews</div>';
+    for (var ri = 0; ri < summaryReviews.length; ri++) {
+      var rv = summaryReviews[ri];
+      var rvClass = rv.state === 'APPROVED' ? 'approved' : rv.state === 'CHANGES_REQUESTED' ? 'changes' : 'pending';
+      html += '<div class="pr-review-card">';
+      html += '<div class="pr-review-card-header">';
+      html += '<span class="pr-review-badge ' + rvClass + '">' + esc(rv.state.replace(/_/g, ' ')) + '</span>';
+      html += '<span class="pr-review-card-author">' + esc(rv.author) + '</span>';
+      html += '<span class="pr-review-card-date">' + esc(formatPRDate(rv.submittedAt)) + '</span>';
+      html += '</div>';
+      if (rv.body) html += '<div class="pr-review-card-body">' + renderPRMarkdown(rv.body) + '</div>';
+      html += '</div>';
+    }
+  }
+
+  // Inline review threads
+  if (threads.length > 0) {
+    html += '<div class="pr-section-header">Review Threads (' + threads.length + ')</div>';
+    for (var ti = 0; ti < threads.length; ti++) {
+      var thread = threads[ti];
+      var isAddressed = !!panel._addressedMap[thread.threadId];
+      var isCollapsed = panel._collapsedMap && panel._collapsedMap[thread.threadId];
+      var threadClass = 'pr-thread-card' + (isAddressed ? ' addressed' : '') + (isCollapsed ? ' collapsed' : '');
+      html += '<div class="' + threadClass + '" id="pr-thread-' + esc(thread.threadId) + '" data-thread-id="' + esc(thread.threadId) + '">';
+
+      // Thread header (file + line, clickable to open file)
+      html += '<div class="pr-thread-header" onclick="prToggleThread(' + JSON.stringify(panel.panelId) + ',' + JSON.stringify(thread.threadId) + ')">';
+      html += '<span class="pr-thread-file" title="Open file at line ' + thread.line + '" onclick="event.stopPropagation();prOpenFileLine(' + JSON.stringify(thread.file) + ',' + thread.line + ')">' + esc(thread.file) + '</span>';
+      if (thread.line) html += '<span class="pr-thread-line">:' + thread.line + '</span>';
+      html += '<span class="pr-thread-count">' + thread.comments.length + ' comment' + (thread.comments.length !== 1 ? 's' : '') + '</span>';
+      html += '<div class="pr-addressed-toggle" onclick="event.stopPropagation()">';
+      html += '<input type="checkbox" id="pr-addr-' + esc(thread.threadId) + '" ' + (isAddressed ? 'checked' : '') +
+              ' onchange="prToggleAddressed(' + JSON.stringify(panel.panelId) + ',' + JSON.stringify(thread.threadId) + ',this.checked)">';
+      html += '<label class="pr-addressed-label" for="pr-addr-' + esc(thread.threadId) + '">Done</label>';
+      html += '</div>';
+      html += '<span class="pr-thread-collapse-icon">&#9660;</span>';
+      html += '</div>';
+
+      // Thread body
+      html += '<div class="pr-thread-body">';
+
+      // Diff hunk
+      if (thread.diffHunk) {
+        html += '<div class="pr-diff-hunk">';
+        var hunkLines = thread.diffHunk.split('\n');
+        for (var hl = 0; hl < hunkLines.length; hl++) {
+          var ln = hunkLines[hl];
+          var lnClass = ln.startsWith('+') ? 'add' : ln.startsWith('-') ? 'del' : ln.startsWith('@') ? 'meta' : 'ctx';
+          html += '<span class="pr-diff-hunk-line ' + lnClass + '">' + esc(ln) + '</span>';
+        }
+        html += '</div>';
+      }
+
+      // Comments
+      html += '<div class="pr-comment-list">';
+      for (var ci = 0; ci < thread.comments.length; ci++) {
+        var comment = thread.comments[ci];
+        html += '<div class="pr-comment' + (comment.isReply ? ' reply' : '') + '">';
+        html += '<div class="pr-comment-header">';
+        html += '<span class="pr-comment-author">' + esc(comment.author) + '</span>';
+        html += '<span class="pr-comment-date">' + esc(formatPRDate(comment.createdAt)) + '</span>';
+        html += '</div>';
+        html += '<div class="pr-comment-body">' + renderPRMarkdown(comment.body) + '</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+
+      html += '</div>'; // thread body
+      html += '</div>'; // thread card
+    }
+  } else {
+    html += '<div class="pr-empty"><h3>No review threads</h3><p>No inline code review comments found on this PR.</p></div>';
+  }
+
+  // General comments
+  if (generalComments.length > 0) {
+    html += '<div class="pr-section-header">PR Comments (' + generalComments.length + ')</div>';
+    for (var gi = 0; gi < generalComments.length; gi++) {
+      var gc = generalComments[gi];
+      html += '<div class="pr-general-comment">';
+      html += '<div class="pr-comment-header">';
+      html += '<span class="pr-comment-author">' + esc(gc.author) + '</span>';
+      html += '<span class="pr-comment-date">' + esc(formatPRDate(gc.createdAt)) + '</span>';
+      html += '</div>';
+      html += '<div class="pr-comment-body">' + renderPRMarkdown(gc.body) + '</div>';
+      html += '</div>';
+    }
+  }
+
+  html += '</div>'; // pr-content
+  html += '</div>'; // pr-review
+
+  container.innerHTML = html;
+}
+
+function prToggleThread(panelId, threadId) {
+  var p = openPanels[panelId];
+  if (!p) return;
+  if (!p._collapsedMap) p._collapsedMap = {};
+  p._collapsedMap[threadId] = !p._collapsedMap[threadId];
+  var card = document.getElementById('pr-thread-' + threadId);
+  if (card) card.classList.toggle('collapsed', !!p._collapsedMap[threadId]);
+}
+
+function prToggleAddressed(panelId, threadId, checked) {
+  var p = openPanels[panelId];
+  if (!p) return;
+  if (!p._addressedMap) p._addressedMap = {};
+  p._addressedMap[threadId] = checked;
+  // Update addressed class on the card
+  var card = document.getElementById('pr-thread-' + threadId);
+  if (card) card.classList.toggle('addressed', checked);
+  // Recompute progress bar
+  var threads = (p.rawData && p.rawData.threads) || [];
+  var total = threads.length;
+  var addressed = Object.values(p._addressedMap).filter(Boolean).length;
+  var pct = total > 0 ? Math.round((addressed / total) * 100) : 0;
+  var fill = document.querySelector('#pr-content-' + CSS.escape(panelId) + ' ~ .pr-progress-bar .pr-progress-fill') ||
+             document.querySelector('.pr-progress-fill');
+  if (fill) fill.style.width = pct + '%';
+  var label = document.querySelector('.pr-progress-label');
+  if (label) label.textContent = addressed + ' / ' + total + ' addressed';
+}
+
+function prOpenFileLine(filePath, line) {
+  if (typeof openFileFromExplorer !== 'function') return;
+  openFileFromExplorer(filePath).then(function() {
+    setTimeout(function() {
+      var inst = typeof activeMonacoInstance !== 'undefined' ? activeMonacoInstance : null;
+      if (inst && line) {
+        inst.revealLineInCenter(line);
+        inst.setPosition({ lineNumber: line, column: 1 });
+        inst.focus();
+      }
+    }, 200);
+  }).catch(function() {});
+}
+
+function refreshPRReviewPanel(panelId) {
+  var p = openPanels[panelId];
+  if (!p || !p.rawData || !p.rawData.pr) return;
+  var prNum = p.rawData.pr;
+  authFetch('/git/pr-comments?pr=' + prNum).then(function(res) { return res.json(); }).then(function(data) {
+    p.rawData = Object.assign({}, p.rawData, data);
+    var container = document.getElementById('file-rendered-view');
+    if (container) renderPRReviewPanel(container, p);
+  }).catch(function() {});
+}
+
+function formatPRDate(iso) {
+  if (!iso) return '';
+  try {
+    var d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' +
+           d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  } catch { return iso; }
+}
+
+function renderPRMarkdown(text) {
+  if (!text) return '';
+  if (typeof marked !== 'undefined') {
+    try { return marked.parse(text); } catch {}
+  }
+  // Minimal fallback: escape and preserve newlines
+  return '<p>' + esc(text).replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
 }

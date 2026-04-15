@@ -7,19 +7,36 @@ var gitChanges = [];       // [{ path, status, staged }]
 var gitChangesMap = {};    // path -> { status, staged }
 var gitDiffInstance = null; // Monaco diff editor instance
 var gitRefreshTimer = null;
+var activeGitRepo = null;  // null = PROJECT_DIR root; string = subrepo relPath (e.g. "repo-a")
+var discoveredRepos = [];  // [{ name, relPath, branch }]
+
+// Append ?repo=<activeGitRepo> to a URL (or &repo= if query string already present)
+function gitUrl(base) {
+  if (!activeGitRepo || activeGitRepo === '.') return base;
+  var sep = base.indexOf('?') === -1 ? '?' : '&';
+  return base + sep + 'repo=' + encodeURIComponent(activeGitRepo);
+}
 
 async function fetchGitStatus() {
   try {
-    var res = await authFetch('/git/status');
+    var res = await authFetch(gitUrl('/git/status'));
     var data = await res.json();
     if (data.error && !data.branch) {
       gitCurrentBranch = null;
       gitChanges = [];
       gitChangesMap = {};
     } else {
+      var prevBranch = gitCurrentBranch;
       gitCurrentBranch = data.branch;
       gitChanges = data.changes || [];
       gitChangesMap = {};
+      // If branch changed, re-detect PR
+      if (prevBranch !== gitCurrentBranch && typeof fetchPRInfo === 'function') {
+        gitPRInfo = null;
+        gitPRCommentCount = 0;
+        if (gitPRCountInterval) { clearInterval(gitPRCountInterval); gitPRCountInterval = null; }
+        fetchPRInfo();
+      }
       for (var i = 0; i < gitChanges.length; i++) {
         gitChangesMap[gitChanges[i].path] = gitChanges[i];
       }
@@ -46,20 +63,35 @@ async function fetchGitStatus() {
 }
 
 function renderGitChanges() {
-  var section = document.getElementById('git-changes');
   var list = document.getElementById('git-changes-list');
   var branchLabel = document.getElementById('git-branch-label');
-  if (!section || !list) return;
+  var emptyState = document.getElementById('git-view-empty');
+  var badge = document.getElementById('activity-git-badge');
+  if (!list) return;
 
-  if (!gitCurrentBranch || gitChanges.length === 0) {
-    section.classList.remove('visible');
-    return;
+  // Update branch label in git view header
+  if (branchLabel) {
+    branchLabel.textContent = gitCurrentBranch || '';
+    branchLabel.title = gitCurrentBranch || '';
   }
 
-  section.classList.add('visible');
-  branchLabel.textContent = gitCurrentBranch;
-  branchLabel.title = gitCurrentBranch;
+  var count = gitChanges ? gitChanges.length : 0;
+
+  // Update activity bar badge
+  if (badge) {
+    if (count > 0) {
+      badge.textContent = count > 99 ? '99+' : String(count);
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // Toggle empty state
+  if (emptyState) emptyState.style.display = count === 0 ? '' : 'none';
+
   list.innerHTML = '';
+  if (count === 0) return;
 
   for (var i = 0; i < gitChanges.length; i++) {
     var change = gitChanges[i];
@@ -93,7 +125,7 @@ function renderGitChanges() {
 
 async function openGitDiff(filePath, status) {
   try {
-    var res = await authFetch('/git/diff?path=' + encodeURIComponent(filePath));
+    var res = await authFetch(gitUrl('/git/diff?path=' + encodeURIComponent(filePath)));
     var data = await res.json();
     if (data.error) return;
 
@@ -238,7 +270,7 @@ async function toggleDiffMode() {
 
   // Fetch diff data from server
   try {
-    var res = await authFetch('/git/diff?path=' + encodeURIComponent(key));
+    var res = await authFetch(gitUrl('/git/diff?path=' + encodeURIComponent(key)));
     var data = await res.json();
     if (data.error) { f.diffMode = false; updateDiffButtonState(key); return; }
 
@@ -342,3 +374,163 @@ function scheduleGitRefresh() {
 
 // Auto-refresh git status periodically (every 15s)
 setInterval(fetchGitStatus, 15000);
+
+// ═══════════════════════════════════════════════════════════════
+// GitHub PR integration
+// ═══════════════════════════════════════════════════════════════
+
+var gitPRInfo = null;          // { number, title, state, url, branch, base, author, reviewDecision }
+var gitPRCommentCount = 0;
+var gitPRCountInterval = null;
+var gitPRLastBranch = null;
+
+async function fetchPRInfo() {
+  try {
+    var res = await authFetch(gitUrl('/git/pr-info'));
+    var data = await res.json();
+    gitPRInfo = (data && data.pr) ? data.pr : null;
+    updatePRHud();
+    if (gitPRInfo) {
+      // Start polling comment count if not already running
+      if (!gitPRCountInterval) {
+        fetchPRCommentCount();
+        gitPRCountInterval = setInterval(fetchPRCommentCount, 60000);
+      }
+    } else {
+      // No PR — stop polling, clear HUD
+      if (gitPRCountInterval) { clearInterval(gitPRCountInterval); gitPRCountInterval = null; }
+      gitPRCommentCount = 0;
+      updatePRHud();
+    }
+  } catch (e) {
+    // gh not available or network error — silent fail
+  }
+}
+
+async function fetchPRCommentCount() {
+  if (!gitPRInfo) return;
+  try {
+    var res = await authFetch(gitUrl('/git/pr-comments?pr=' + gitPRInfo.number));
+    var data = await res.json();
+    if (data && data.threads) {
+      gitPRCommentCount = data.threads.length;
+      updatePRHud();
+    }
+  } catch (e) {}
+}
+
+async function fetchPRComments(prNumber) {
+  var res = await authFetch(gitUrl('/git/pr-comments?pr=' + prNumber));
+  return await res.json();
+}
+
+async function openPRReviewPanel() {
+  // Ensure we have PR info
+  if (!gitPRInfo) {
+    await fetchPRInfo();
+  }
+  if (!gitPRInfo) {
+    // Show a brief message in the chat or as a status bar tooltip
+    var hudPR = document.getElementById('hud-pr-text');
+    if (hudPR) { hudPR.textContent = 'No open PR for this branch'; setTimeout(updatePRHud, 3000); }
+    return;
+  }
+  var panelId = 'pr-review-' + gitPRInfo.number;
+  // If already open, just switch to it
+  if (typeof openPanels !== 'undefined' && openPanels[panelId]) {
+    if (typeof switchTab === 'function') switchTab(panelId);
+    return;
+  }
+  // Open panel with placeholder while loading
+  if (typeof openPanelTab === 'function') {
+    openPanelTab(panelId, { panel: 'pr-review', title: 'PR #' + gitPRInfo.number, data: null });
+    // Store PR info on the panel for the renderer
+    if (typeof openPanels !== 'undefined' && openPanels[panelId]) {
+      openPanels[panelId]._prInfo = gitPRInfo;
+    }
+  }
+  // Fetch comments and update panel
+  try {
+    var data = await fetchPRComments(gitPRInfo.number);
+    if (typeof openPanels !== 'undefined' && openPanels[panelId]) {
+      openPanels[panelId].rawData = data;
+      openPanels[panelId]._prInfo = gitPRInfo;
+      if (typeof updatePanelData === 'function') updatePanelData(panelId, data);
+    }
+  } catch (e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Multi-repo discovery & picker
+// ═══════════════════════════════════════════════════════════════
+
+async function fetchGitRepos() {
+  try {
+    var res = await authFetch('/git/repos');
+    var data = await res.json();
+    discoveredRepos = data.repos || [];
+    renderRepoPicker();
+  } catch (e) {
+    // silent fail
+  }
+}
+
+function renderRepoPicker() {
+  var picker = document.getElementById('git-repo-picker');
+  var select = document.getElementById('git-repo-select');
+  if (!picker || !select) return;
+
+  // Hide when there's only one repo (or none)
+  if (discoveredRepos.length <= 1) {
+    picker.style.display = 'none';
+    return;
+  }
+
+  picker.style.display = '';
+  select.innerHTML = '';
+
+  for (var i = 0; i < discoveredRepos.length; i++) {
+    var r = discoveredRepos[i];
+    var opt = document.createElement('option');
+    opt.value = r.relPath;
+    opt.textContent = r.name + '  (' + r.branch + ')';
+    if ((activeGitRepo === r.relPath) || (!activeGitRepo && r.relPath === '.')) {
+      opt.selected = true;
+    }
+    select.appendChild(opt);
+  }
+}
+
+function setActiveGitRepo(relPath) {
+  activeGitRepo = (relPath === '.' || relPath === '') ? null : relPath;
+  // Reset PR state for the new repo
+  gitPRInfo = null;
+  gitPRCommentCount = 0;
+  if (gitPRCountInterval) { clearInterval(gitPRCountInterval); gitPRCountInterval = null; }
+  // Refresh git status and PR info for the newly selected repo
+  fetchGitStatus();
+  fetchPRInfo();
+}
+
+function updatePRHud() {
+  var item = document.getElementById('hud-pr-item');
+  var sep  = document.getElementById('hud-pr-sep');
+  var text = document.getElementById('hud-pr-text');
+  if (!item) return;
+  if (gitPRInfo && gitPRCommentCount > 0) {
+    item.style.display = '';
+    if (sep) sep.style.display = '';
+    if (text) text.textContent = gitPRCommentCount + ' PR comment' + (gitPRCommentCount !== 1 ? 's' : '');
+    item.title = 'PR #' + gitPRInfo.number + ': ' + gitPRCommentCount + ' review comment' + (gitPRCommentCount !== 1 ? 's' : '') + ' — click to open';
+  } else if (gitPRInfo) {
+    // PR exists but no comments — show subtler indicator
+    item.style.display = '';
+    if (sep) sep.style.display = '';
+    if (text) text.textContent = 'PR #' + gitPRInfo.number;
+    item.title = 'PR #' + gitPRInfo.number + ': ' + (gitPRInfo.title || '') + ' — click to open';
+  } else {
+    item.style.display = 'none';
+    if (sep) sep.style.display = 'none';
+  }
+  if (typeof renderHud === 'function') renderHud();
+}
