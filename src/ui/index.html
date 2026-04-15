@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="css/eval-dashboard.css">
 <link rel="stylesheet" href="css/model-card.css">
 <link rel="stylesheet" href="css/knowledge-map.css">
+<link rel="stylesheet" href="css/pr-review.css">
 <link rel="stylesheet" href="css/terminal.css">
 </head>
 <body>
@@ -53,6 +54,13 @@
       <button class="activity-btn" id="activity-bookmarks" onclick="onActivityClick('bookmarks')" title="Bookmarks">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
       </button>
+      <button class="activity-btn" id="activity-git" onclick="onActivityClick('git')" title="Source Control">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/>
+          <path d="M18 9v2a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9"/><line x1="12" y1="12" x2="12" y2="15"/>
+        </svg>
+        <span class="badge" id="activity-git-badge" style="display:none"></span>
+      </button>
       <button class="activity-btn" id="activity-knowledge" onclick="openKnowledgeMapPanel()" title="Knowledge Map">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><!-- organic left brain half --><path d="M12 4.5C9.5 4 7 5 5.5 7C4.5 8.5 4 10 4 12C4 13.5 4.2 14.8 4.2 15.5C4 17 4.8 18.5 6.5 19.5C8 20.5 10 20 11.5 19.5L12 19.2"/><!-- fold lines --><path d="M8 7.5C6.5 9 6.5 11 7.5 12.5"/><path d="M6 14C6.5 15.5 7.5 16.5 8 18"/><!-- center spine --><line x1="12" y1="4.5" x2="12" y2="19.5"/><!-- circuit branches --><polyline points="12,7 15,7 15,5.5 21,5.5"/><polyline points="12,11 21,11"/><polyline points="12,14.5 15,14.5 15,13.5 21,13.5"/><polyline points="12,18 15,18 15,17 21,17"/><!-- endpoint nodes --><circle cx="21" cy="5.5" r="1.2"/><circle cx="21" cy="11" r="1.2"/><circle cx="21" cy="13.5" r="1.2"/><circle cx="21" cy="17" r="1.2"/></svg>
       </button>
@@ -68,15 +76,20 @@
         <div id="explorer-search-wrap">
           <input type="text" id="explorer-search-input" placeholder="Search files...">
         </div>
-        <div id="git-changes">
-          <div id="git-changes-header" onclick="document.getElementById('git-changes').classList.toggle('collapsed')">
-            <span><span class="chevron">&#9660;</span> Git Changes</span>
-            <span id="git-branch-label"></span>
-          </div>
-          <div id="git-changes-list"></div>
-        </div>
         <div id="explorer-breadcrumb"></div>
         <div id="explorer-listing"></div>
+      </div>
+      <!-- Git / Source Control view -->
+      <div id="sidebar-view-git" class="sidebar-view">
+        <div id="git-view-header">
+          <span class="git-view-title">Source Control</span>
+          <span id="git-branch-label"></span>
+        </div>
+        <div id="git-repo-picker" style="display:none">
+          <select id="git-repo-select" onchange="setActiveGitRepo(this.value)"></select>
+        </div>
+        <div id="git-view-empty" class="sidebar-empty-state" style="display:none">Working tree is clean</div>
+        <div id="git-changes-list"></div>
       </div>
       <!-- Session files view -->
       <div id="sidebar-view-session" class="sidebar-view">
@@ -201,6 +214,11 @@
     <span class="hud-item" title="Pinned context items">
       <span class="hud-icon">&#128204;</span>
       <span id="hud-pins">0 pinned</span>
+    </span>
+    <span class="hud-separator" id="hud-pr-sep" style="display:none"></span>
+    <span class="hud-item hud-pr" id="hud-pr-item" style="display:none;cursor:pointer" onclick="openPRReviewPanel()">
+      <span class="hud-icon">&#9679;</span>
+      <span id="hud-pr-text">0 PR comments</span>
     </span>
   </div>
   <div class="hud-right">

@@ -23,6 +23,7 @@ function switchSidebarView(view) {
   if (activeView) activeView.classList.add('active');
 
   if (view === 'session' && typeof renderSessionFiles === 'function') renderSessionFiles();
+  if (view === 'git' && typeof renderGitChanges === 'function') renderGitChanges();
 }
 
 function onActivityClick(view) {

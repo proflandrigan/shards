@@ -1232,10 +1232,61 @@ function createHandler() {
 
     // ─── Git endpoints ─────────────────────────────────────────────
 
-    if (req.method === 'GET' && parsedUrl.pathname === '/git/status') {
+    // Resolve the active repo directory from an optional ?repo=<relPath> param.
+    // Returns { repoDir, repoRel } where repoRel is the stripped prefix (e.g. "repo-a").
+    function getRepoDir(pu) {
+      const repo = pu.searchParams.get('repo');
+      if (!repo || repo === '.' || repo === '') return { repoDir: PROJECT_DIR, repoRel: '' };
+      // Strip any path traversal attempts
+      const safe = path.normalize(repo).replace(/^(\.\.\/|\/|\.\.\\|\\)+/, '');
+      if (!safe) return { repoDir: PROJECT_DIR, repoRel: '' };
+      const resolved = path.resolve(PROJECT_DIR, safe);
+      // Must stay inside PROJECT_DIR
+      if (resolved !== PROJECT_DIR && !resolved.startsWith(PROJECT_DIR + path.sep)) {
+        return { repoDir: PROJECT_DIR, repoRel: '' };
+      }
+      return { repoDir: resolved, repoRel: safe };
+    }
+
+    // Strip a repo-relative prefix from a file path so git commands get the
+    // right path relative to their cwd (the subrepo root).
+    function stripRepoPrefix(filePath, repoRel) {
+      if (!repoRel) return filePath;
+      const prefix = repoRel.replace(/\\/g, '/') + '/';
+      const fp = filePath.replace(/\\/g, '/');
+      return fp.startsWith(prefix) ? fp.slice(prefix.length) : fp;
+    }
+
+    // GET /git/repos — discover all git repos at PROJECT_DIR and one level deep
+    if (req.method === 'GET' && parsedUrl.pathname === '/git/repos') {
+      const repos = [];
+      // Check root itself
       try {
         const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: PROJECT_DIR, encoding: 'utf8', timeout: 5000 }).trim();
-        const statusRaw = execSync('git status --porcelain', { cwd: PROJECT_DIR, encoding: 'utf8', timeout: 5000 });
+        repos.push({ name: path.basename(PROJECT_DIR), relPath: '.', branch, isRoot: true });
+      } catch {}
+      // Scan one level of subdirectories
+      try {
+        const entries = fs.readdirSync(PROJECT_DIR, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+          const subDir = path.join(PROJECT_DIR, entry.name);
+          if (!fs.existsSync(path.join(subDir, '.git'))) continue;
+          try {
+            const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: subDir, encoding: 'utf8', timeout: 5000 }).trim();
+            repos.push({ name: entry.name, relPath: entry.name, branch, isRoot: false });
+          } catch {}
+        }
+      } catch {}
+      jsonResponse(res, cors, 200, { repos });
+      return;
+    }
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/git/status') {
+      const { repoDir, repoRel } = getRepoDir(parsedUrl);
+      try {
+        const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: repoDir, encoding: 'utf8', timeout: 5000 }).trim();
+        const statusRaw = execSync('git status --porcelain', { cwd: repoDir, encoding: 'utf8', timeout: 5000 });
         const changes = [];
         for (const line of statusRaw.split('\n')) {
           if (!line) continue;
@@ -1249,9 +1300,11 @@ function createHandler() {
           else if (xy[0] === 'D' || xy[1] === 'D') status = 'deleted';
           else if (xy[0] === 'R' || xy[1] === 'R') status = 'renamed';
           const staged = xy[0] !== ' ' && xy[0] !== '?';
-          changes.push({ path: actualPath, status, staged });
+          // Prefix path with repoRel so the browser can locate the file from PROJECT_DIR
+          const fullPath = repoRel && repoRel !== '.' ? repoRel + '/' + actualPath : actualPath;
+          changes.push({ path: fullPath, status, staged });
         }
-        jsonResponse(res, cors, 200, { branch, changes });
+        jsonResponse(res, cors, 200, { branch, changes, repoRel: repoRel || null });
       } catch (err) {
         // Not a git repo or git not available
         jsonResponse(res, cors, 200, { branch: null, changes: [], error: err.message });
@@ -1265,40 +1318,199 @@ function createHandler() {
         jsonResponse(res, cors, 400, { error: 'Missing path parameter' });
         return;
       }
+      const { repoDir, repoRel } = getRepoDir(parsedUrl);
+      // File path relative to the repo root (strip subrepo prefix if present)
+      const gitPath = stripRepoPrefix(filePath, repoRel);
       try {
         // Try staged diff first, then unstaged
         let diff = '';
         try {
-          diff = execSync(`git diff -- ${JSON.stringify(filePath)}`, { cwd: PROJECT_DIR, encoding: 'utf8', timeout: 10000 });
+          diff = execSync(`git diff -- ${JSON.stringify(gitPath)}`, { cwd: repoDir, encoding: 'utf8', timeout: 10000 });
         } catch {}
         if (!diff) {
           try {
-            diff = execSync(`git diff --cached -- ${JSON.stringify(filePath)}`, { cwd: PROJECT_DIR, encoding: 'utf8', timeout: 10000 });
+            diff = execSync(`git diff --cached -- ${JSON.stringify(gitPath)}`, { cwd: repoDir, encoding: 'utf8', timeout: 10000 });
           } catch {}
         }
         // For untracked files, show full content as "added"
         if (!diff) {
-          const resolved = path.resolve(PROJECT_DIR, filePath);
+          const resolved = path.resolve(repoDir, gitPath);
           try {
             const content = fs.readFileSync(resolved, 'utf8');
-            diff = '--- /dev/null\n+++ b/' + filePath + '\n@@ -0,0 +1,' + content.split('\n').length + ' @@\n' +
+            diff = '--- /dev/null\n+++ b/' + gitPath + '\n@@ -0,0 +1,' + content.split('\n').length + ' @@\n' +
               content.split('\n').map(l => '+' + l).join('\n');
           } catch {}
         }
         // Get original (HEAD) content for side-by-side diff
         let original = '';
         try {
-          original = execSync(`git show HEAD:${JSON.stringify(filePath)}`, { cwd: PROJECT_DIR, encoding: 'utf8', timeout: 5000 });
+          original = execSync(`git show HEAD:${JSON.stringify(gitPath)}`, { cwd: repoDir, encoding: 'utf8', timeout: 5000 });
         } catch {}
         // Get current working copy
         let modified = '';
         try {
-          const resolved = path.resolve(PROJECT_DIR, filePath);
+          const resolved = path.resolve(repoDir, gitPath);
           modified = fs.readFileSync(resolved, 'utf8');
         } catch {}
         jsonResponse(res, cors, 200, { diff, original, modified, path: filePath });
       } catch (err) {
         jsonResponse(res, cors, 400, { error: err.message });
+      }
+      return;
+    }
+
+    // ─── GitHub PR endpoints ──────────────────────────────────────────
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/git/pr-info') {
+      const { repoDir: prInfoDir } = getRepoDir(parsedUrl);
+      try {
+        const raw = execSync('gh pr view --json number,title,state,url,headRefName,baseRefName,author,reviewDecision', {
+          cwd: prInfoDir, encoding: 'utf8', timeout: 10000,
+        });
+        const pr = JSON.parse(raw);
+        jsonResponse(res, cors, 200, { pr: {
+          number: pr.number,
+          title: pr.title,
+          state: pr.state,
+          url: pr.url,
+          branch: pr.headRefName,
+          base: pr.baseRefName,
+          author: (pr.author && pr.author.login) ? pr.author.login : String(pr.author || ''),
+          reviewDecision: pr.reviewDecision || null,
+        }});
+      } catch (err) {
+        const msg = err.message || '';
+        if (msg.includes('ENOENT') || msg.includes('executable not found')) {
+          jsonResponse(res, cors, 200, { pr: null, ghMissing: true });
+        } else {
+          jsonResponse(res, cors, 200, { pr: null, error: msg.split('\n')[0] });
+        }
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/git/pr-comments') {
+      const prNumber = parsedUrl.searchParams.get('pr');
+      if (!prNumber) { jsonResponse(res, cors, 400, { error: 'Missing pr parameter' }); return; }
+      const { repoDir: prCommentsDir } = getRepoDir(parsedUrl);
+      try {
+        // Resolve owner/repo from gh CLI
+        let repo = null;
+        try {
+          repo = execSync("gh repo view --json owner,name --jq '.owner.login + \"/\" + .name'", {
+            cwd: prCommentsDir, encoding: 'utf8', timeout: 10000,
+          }).trim();
+        } catch {}
+
+        if (!repo) {
+          jsonResponse(res, cors, 200, { error: 'Could not determine repository', threads: [], generalComments: [], reviews: [] });
+          return;
+        }
+
+        // Inline review comments
+        let reviewComments = [];
+        try {
+          const raw = execSync(`gh api repos/${repo}/pulls/${prNumber}/comments --paginate`, {
+            cwd: PROJECT_DIR, encoding: 'utf8', timeout: 30000,
+          });
+          reviewComments = JSON.parse(raw);
+          if (reviewComments.length > 500) reviewComments = reviewComments.slice(0, 500);
+        } catch {}
+
+        // General PR conversation comments
+        let generalComments = [];
+        try {
+          const raw = execSync(`gh api repos/${repo}/issues/${prNumber}/comments --paginate`, {
+            cwd: PROJECT_DIR, encoding: 'utf8', timeout: 30000,
+          });
+          generalComments = JSON.parse(raw).map(function(c) {
+            return {
+              id: c.id,
+              body: c.body,
+              author: (c.user && c.user.login) ? c.user.login : '',
+              createdAt: c.created_at,
+              updatedAt: c.updated_at,
+              url: c.html_url,
+            };
+          });
+        } catch {}
+
+        // Reviews (APPROVED / CHANGES_REQUESTED / etc.)
+        let reviews = [];
+        try {
+          const raw = execSync(`gh api repos/${repo}/pulls/${prNumber}/reviews`, {
+            cwd: PROJECT_DIR, encoding: 'utf8', timeout: 15000,
+          });
+          reviews = JSON.parse(raw).map(function(r) {
+            return {
+              id: r.id,
+              state: r.state,
+              body: r.body || '',
+              author: (r.user && r.user.login) ? r.user.login : '',
+              submittedAt: r.submitted_at,
+            };
+          }).filter(function(r) { return r.state !== 'COMMENTED' || r.body; });
+        } catch {}
+
+        // Thread inline comments: group by path + line + review_id
+        const commentMap = {};
+        for (const c of reviewComments) commentMap[c.id] = c;
+
+        const threadMap = {};
+        const rootComments = reviewComments.filter(function(c) { return !c.in_reply_to_id; });
+        for (const c of rootComments) {
+          const tid = String(c.pull_request_review_id) + ':' + c.path + ':' + (c.line || c.original_line || 0);
+          if (!threadMap[tid]) {
+            threadMap[tid] = {
+              threadId: tid,
+              file: c.path,
+              line: c.line || c.original_line || 0,
+              startLine: c.start_line || c.line || c.original_line || 0,
+              diffHunk: c.diff_hunk || '',
+              resolved: false,
+              comments: [],
+            };
+          }
+          threadMap[tid].comments.push({
+            id: c.id,
+            author: (c.user && c.user.login) ? c.user.login : '',
+            body: c.body,
+            createdAt: c.created_at,
+            url: c.html_url,
+            isReply: false,
+          });
+        }
+
+        // Attach replies
+        const replyComments = reviewComments.filter(function(c) { return !!c.in_reply_to_id; });
+        for (const c of replyComments) {
+          const parent = commentMap[c.in_reply_to_id];
+          if (!parent) continue;
+          const tid = String(parent.pull_request_review_id) + ':' + parent.path + ':' + (parent.line || parent.original_line || 0);
+          if (threadMap[tid]) {
+            threadMap[tid].comments.push({
+              id: c.id,
+              author: (c.user && c.user.login) ? c.user.login : '',
+              body: c.body,
+              createdAt: c.created_at,
+              url: c.html_url,
+              isReply: true,
+            });
+          }
+        }
+
+        const threads = Object.values(threadMap).sort(function(a, b) {
+          return a.file.localeCompare(b.file) || a.line - b.line;
+        });
+
+        jsonResponse(res, cors, 200, { pr: parseInt(prNumber), threads, generalComments, reviews });
+      } catch (err) {
+        const msg = err.message || '';
+        if (msg.includes('ENOENT') || msg.includes('executable not found')) {
+          jsonResponse(res, cors, 200, { error: 'gh CLI not installed', ghMissing: true, threads: [], generalComments: [], reviews: [] });
+        } else {
+          jsonResponse(res, cors, 200, { error: msg.split('\n')[0], threads: [], generalComments: [], reviews: [] });
+        }
       }
       return;
     }

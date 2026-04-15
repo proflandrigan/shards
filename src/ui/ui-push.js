@@ -129,7 +129,7 @@ async function main() {
 
   if (!args.panel) process.exit(0);
 
-  const VALID_PANELS = ['data-viewer', 'dag', 'diagram', 'chart', 'diff', 'model-card', 'experiment-dashboard', 'eval-dashboard', 'prompt-lab', 'close'];
+  const VALID_PANELS = ['data-viewer', 'dag', 'diagram', 'chart', 'diff', 'model-card', 'experiment-dashboard', 'eval-dashboard', 'prompt-lab', 'pr-review', 'close'];
   if (!VALID_PANELS.includes(args.panel)) process.exit(0);
 
   // Resolve source to absolute path if given

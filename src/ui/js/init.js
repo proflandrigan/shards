@@ -296,7 +296,9 @@ loadInitial().then(function() {
   if (typeof restoreLayout === 'function') restoreLayout();
   if (typeof renderSessionFiles === 'function') renderSessionFiles();
   if (typeof initBookmarks === 'function') initBookmarks();
+  if (typeof fetchGitRepos === 'function') fetchGitRepos();
   if (typeof fetchGitStatus === 'function') fetchGitStatus();
+  if (typeof fetchPRInfo === 'function') fetchPRInfo();
   if (typeof renderHud === 'function') renderHud();
   if (typeof switchSidebarView === 'function') switchSidebarView(activeSidebarView);
   if (typeof renderModeIndicator === 'function') renderModeIndicator();
