@@ -412,6 +412,8 @@ you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
+**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+
 Build in this order:
 1. Source definitions (sources.yml updates)
 2. Staging models

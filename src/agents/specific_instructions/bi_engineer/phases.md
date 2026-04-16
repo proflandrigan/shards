@@ -244,6 +244,8 @@ I'll be working from project-specs.md from here. Say the word when you're ready.
 
 Wait for any signal from the user before beginning build steps.
 
+**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+
 Goal: Build the dashboard code or produce the design specification.
 
 ### Build Mode (data exists)

@@ -228,7 +228,17 @@ Append to `project-specs.md`:
 
 Goal: Build the model implementation.
 
-Offer `/compact` before building if the conversation is long. Then create:
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning build steps.
+
+**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+
+Then create:
 
 **`models/<project_name>/notebooks/model_development.ipynb`**
 

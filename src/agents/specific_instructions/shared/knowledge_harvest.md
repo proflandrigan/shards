@@ -23,6 +23,39 @@ Read the full `project-specs.md` for this project. Identify candidates across fo
 | **Patterns** | `patterns/` | Reusable SQL snippets, Python patterns, transformation techniques, join strategies that solved a non-obvious problem |
 | **Features** | `features/` | Verified ML features with SQL, grain, and performance data — **Data Scientist and ML Engineer only** |
 
+### 1b. Check for contradiction resolutions
+
+Search `project-specs.md` for lines matching the structured template:
+
+```
+**Knowledge contradiction:** "<title>" claims ...
+```
+
+This template is written by the checkpoint protocol (`knowledge_checkpoint.md`) whenever an agent observes data that contradicts a ledger entry during execution.
+
+For each contradiction found where "Ledger update needed: Yes":
+
+- Identify the existing knowledge file path from INDEX.md (match by title)
+- Draft an **update candidate** with:
+  - **Action:** Update (not a new entry — overwrite the existing file)
+  - **Existing entry:** `.shards/knowledge/<category>/<filename>.md`
+  - **Change:** old claim → new claim (extracted from the contradiction template)
+  - **New confidence:** re-assess based on observed data (usually downgrade or upgrade from original)
+
+When multiple contradictions exist in a single project, group them in the harvest candidate list as a subsection:
+
+```
+Ledger updates from contradictions:
+1. Update "<title>" — old claim: <X> → new claim: <Y> (confidence: <new>)
+2. Update "<title>" — old claim: <X> → new claim: <Y> (confidence: <new>)
+```
+
+Present these alongside new candidates in Step 3 so the user can confirm or reject them as a batch.
+
+**On confirm:** Overwrite the existing knowledge file — update the `date`, `confidence`, and content fields in place. Do **not** create a `_v2` file for contradiction resolutions. Update the INDEX.md row to reflect the new date and confidence.
+
+If no contradiction lines are found in `project-specs.md`, skip this step.
+
 ### 2. Draft candidates
 
 For each candidate, draft:

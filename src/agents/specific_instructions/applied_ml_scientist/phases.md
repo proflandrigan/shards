@@ -210,6 +210,16 @@ capture the essential properties needed to test the hypothesis?>
 
 Goal: Build the prototype.
 
+**Context checkpoint:** Before building, prompt the user:
+
+"Planning's locked — good moment to run `/compact` or `/clear` before we start
+executing. I'll be working from project-specs.md from here. Say the word when
+you're ready."
+
+Wait for any signal from the user before beginning build steps.
+
+**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+
 **Create `research/<project_name>/notebooks/framework_prototype.ipynb`:**
 
 Structure the notebook with these sections:
