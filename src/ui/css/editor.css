@@ -306,6 +306,8 @@
 #table-container .tabulator-cell {
   border-right: 1px solid #111120;
   padding: 3px 6px;
+  white-space: normal;
+  word-break: break-word;
 }
 #table-container .tabulator-cell.tabulator-editing input {
   background: #0a0a16;

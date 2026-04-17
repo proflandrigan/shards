@@ -21,9 +21,9 @@
 }
 #chat-collapse-btn {
   background: none;
-  border: 1px solid #1e1e32;
+  border: 1px solid #3a3a5a;
   border-radius: 4px;
-  color: #4a4a68;
+  color: #7a7a98;
   font-size: 12px;
   cursor: pointer;
   padding: 0 6px;
@@ -31,7 +31,7 @@
   transition: all 0.2s;
   display: none;
 }
-#chat-collapse-btn:hover { background: #1a1a30; color: #8080a0; }
+#chat-collapse-btn:hover { background: #1a1a30; color: #b0b0c8; }
 #chat-pane.split-visible #chat-collapse-btn { display: block; }
 
 /* ─── Collapsed chat state ────────────────────────────────── */
@@ -670,19 +670,19 @@
   50% { opacity: 0.7; }
 }
 #chat-send-btn, #chat-stop-btn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid #2a2a40;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #4a4a6a;
   border-radius: 5px;
-  color: #808098;
+  color: #b0b0c8;
   font-family: inherit;
   font-size: 12px;
   padding: 6px 14px;
   cursor: pointer;
   transition: all 0.2s;
 }
-#chat-send-btn:hover { background: #252540; color: #b0b0c8; }
-#chat-stop-btn { border-color: #5a2020; color: #c06060; }
-#chat-stop-btn:hover { background: #2a1010; color: #e08080; }
+#chat-send-btn:hover { background: #2a2a4a; color: #e0e0f0; }
+#chat-stop-btn { border-color: #7a3030; color: #e07070; }
+#chat-stop-btn:hover { background: #3a1515; color: #ff9090; }
 #chat-send-btn:disabled { opacity: 0.3; cursor: default; }
 
 /* ─── Agent picker grid ──────────────────────────────────── */
@@ -759,7 +759,7 @@
 /* Agent cards */
 .agent-card {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 12px;
   padding: 10px 14px;
   background: transparent;
@@ -793,9 +793,6 @@
   font-size: 12px;
   color: #4a4a68;
   line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ─── Session tab bar (in header) ─────────────────────────── */
@@ -899,9 +896,9 @@
 }
 #new-session-btn {
   background: none;
-  border: 1px solid #1e1e32;
+  border: 1px solid #3a3a5a;
   border-radius: 4px;
-  color: #4a4a68;
+  color: #7a7a98;
   font-size: 11px;
   height: 26px;
   padding: 0 10px;
@@ -915,7 +912,7 @@
   white-space: nowrap;
   font-family: inherit;
 }
-#new-session-btn:hover { background: rgba(255, 255, 255, 0.06); color: #b0b0c8; border-color: #2a2a40; }
+#new-session-btn:hover { background: rgba(255, 255, 255, 0.06); color: #b0b0c8; border-color: #4a4a6a; }
 
 /* ─── Permission approval cards ─────────────────────────── */
 .permission-card {

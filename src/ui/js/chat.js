@@ -98,8 +98,8 @@ async function loadAgentPicker() {
   }
 
   // Non-Syn agents grouped by category
-  var CATEGORY_ORDER = ['data', 'mlai', 'review'];
-  var CATEGORY_LABELS = { data: 'DATA', mlai: 'ML / AI', review: 'REVIEW' };
+  var CATEGORY_ORDER = ['data', 'analytics', 'mlai', 'review'];
+  var CATEGORY_LABELS = { data: 'DATA', analytics: 'ANALYTICS', mlai: 'ML / AI', review: 'REVIEW' };
 
   var grouped = {};
   CATEGORY_ORDER.forEach(function(cat) { grouped[cat] = []; });

@@ -146,7 +146,35 @@ function install() {
     console.log(`  ✓ .shards/ui/${f}`);
   }
 
-  // 6. Create Knowledge Ledger directory
+  // 6. Seed .claude/settings.json with readonly preset (if not already present)
+  const settingsPath = path.join(CLAUDE_DIR, "settings.json");
+  if (!fs.existsSync(settingsPath)) {
+    const defaultSettings = {
+      permissions: {
+        allow: [
+          "Bash(git log:*)", "Bash(git status:*)", "Bash(git diff:*)",
+          "Bash(git branch:*)", "Bash(git show:*)", "Bash(git rev-parse:*)",
+          "Bash(git remote:*)", "Bash(git tag:*)", "Bash(git stash list:*)",
+          "Bash(find:*)", "Bash(ls:*)", "Bash(tree:*)", "Bash(file:*)",
+          "Bash(stat:*)", "Bash(du:*)", "Bash(df:*)",
+          "Bash(cat:*)", "Bash(head:*)", "Bash(tail:*)", "Bash(less:*)",
+          "Bash(grep:*)", "Bash(rg:*)", "Bash(ag:*)", "Bash(fzf:*)",
+          "Bash(wc:*)", "Bash(echo:*)", "Bash(pwd:*)", "Bash(which:*)",
+          "Bash(whoami:*)", "Bash(env:*)", "Bash(printenv:*)",
+          "Bash(type:*)", "Bash(command -v:*)", "Bash(uname:*)",
+          "Bash(sort:*)", "Bash(uniq:*)", "Bash(cut:*)", "Bash(awk:*)",
+          "Bash(diff:*)", "Bash(comm:*)", "Bash(jq:*)",
+        ],
+        deny: [],
+      },
+    };
+    fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
+    console.log("\n🔐 Created .claude/settings.json with readonly permissions preset");
+  } else {
+    console.log("\n🔐 .claude/settings.json already exists (preserved)");
+  }
+
+  // 7. Create Knowledge Ledger directory
   const knowledgeDir = path.join(SHARDS_DIR, "knowledge");
   const knowledgeSubdirs = ["entities", "infrastructure", "patterns", "features"];
   if (!fs.existsSync(knowledgeDir)) {
@@ -169,7 +197,7 @@ function install() {
     }
   }
 
-  // 7. Create output directories
+  // 8. Create output directories
   const outputDirs = ["analysis", "studies", "models", "data_models", "services", "research", "dashboards", "brainstorm", "fixes", "projects"];
   for (const dir of outputDirs) {
     const dirPath = path.join(PROJECT_DIR, dir);
@@ -179,7 +207,7 @@ function install() {
     }
   }
 
-  // 8. Add .gitignore entries
+  // 9. Add .gitignore entries
   const gitignorePath = path.join(PROJECT_DIR, ".gitignore");
   const gitignoreEntry =
     "\n# shards — agent output directories (optional — remove comments to track)\n# analysis/\n# studies/\n# models/\n# data_models/\n# services/\n# research/\n# dashboards/\n# brainstorm/\n# fixes/\n# projects/\n";
@@ -193,7 +221,7 @@ function install() {
     }
   }
 
-  // 9. Write manifest for uninstall tracking
+  // 10. Write manifest for uninstall tracking
   const allFiles = [
     ...agentFiles.map((f) => `.claude/agents/${f}`),
     ...cmdFiles.map((f) => `.claude/commands/${f}`),
@@ -210,7 +238,7 @@ function install() {
     JSON.stringify(manifest, null, 2)
   );
 
-  // 10. Append to CLAUDE.md
+  // 11. Append to CLAUDE.md
   const claudeMdPath = path.join(PROJECT_DIR, "CLAUDE.md");
   const claudeBlock = `
 ## Shards — Agent Suite
