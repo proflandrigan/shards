@@ -198,6 +198,33 @@ function loadSettingsCache() {
 }
 loadSettingsCache();
 
+// Ensure the PreToolUse hook exists — without it, non-whitelisted Bash commands
+// are denied by Claude Code's internal permission system in stream-json mode
+// and never reach the browser permission card flow.
+function ensurePreToolUseHook() {
+  const settingsPath = path.join(PROJECT_DIR, '.claude', 'settings.json');
+  let settings = {};
+  try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8')); } catch {}
+
+  if (!settings.hooks) settings.hooks = {};
+  if (!settings.hooks.PreToolUse) settings.hooks.PreToolUse = [];
+
+  const hasRelay = settings.hooks.PreToolUse.some(entry =>
+    entry.hooks && entry.hooks.some(h => h.command && h.command.includes('relay.js'))
+  );
+
+  if (!hasRelay) {
+    const relayPath = path.join(__dirname, 'relay.js');
+    settings.hooks.PreToolUse.push({
+      matcher: 'Bash',
+      hooks: [{ type: 'command', command: `node ${relayPath} pre-tool-use` }],
+    });
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    console.log('[shards-ui] Added missing PreToolUse hook to settings.json');
+  }
+}
+ensurePreToolUseHook();
+
 function matchesPermission(command, patterns) {
   for (const pattern of patterns) {
     const m = pattern.match(/^Bash\((.+)\)$/);
@@ -1609,6 +1636,7 @@ function createHandler() {
 
     // POST /pre-tool-use — relay posts permission request
     if (req.method === 'POST' && parsedUrl.pathname === '/pre-tool-use') {
+      loadSettingsCache(); // Refresh from disk so CLI flag changes take effect immediately
       const body = await readBody(req);
       let params;
       try { params = JSON.parse(body); } catch {
