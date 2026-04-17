@@ -889,6 +889,18 @@ function createHandler() {
       return;
     }
 
+    /**
+     * Resolve a user-supplied path and verify it stays within PROJECT_DIR.
+     * Returns the resolved absolute path, or null if out of bounds.
+     */
+    function resolveSafe(userPath) {
+      const resolved = path.resolve(userPath);
+      if (resolved !== PROJECT_DIR && !resolved.startsWith(PROJECT_DIR + path.sep)) {
+        return null;
+      }
+      return resolved;
+    }
+
     // Raw file serving (images, PDFs) — auth via query param
     if (req.method === 'GET' && parsedUrl.pathname === '/browse/file/raw') {
       if (!checkAuth(req, parsedUrl)) {
@@ -901,7 +913,12 @@ function createHandler() {
         res.end('Missing path');
         return;
       }
-      const resolved = path.resolve(filePath);
+      const resolved = resolveSafe(filePath);
+      if (!resolved) {
+        res.writeHead(403);
+        res.end('Forbidden');
+        return;
+      }
       const RAW_MIME = {
         '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
         '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
@@ -948,7 +965,12 @@ function createHandler() {
         res.end(JSON.stringify({ error: 'Missing path' }));
         return;
       }
-      const resolved = path.resolve(filePath);
+      const resolved = resolveSafe(filePath);
+      if (!resolved) {
+        res.writeHead(403, { ...cors, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Forbidden' }));
+        return;
+      }
       try {
         const stat = fs.statSync(resolved);
         if (!stat.isFile()) {
@@ -1080,7 +1102,11 @@ function createHandler() {
 
       if (parsedUrl.pathname === '/browse') {
         let dir = parsedUrl.searchParams.get('dir') || PROJECT_DIR;
-        dir = path.resolve(dir);
+        dir = resolveSafe(dir);
+        if (!dir) {
+          jsonResponse(res, cors, 403, { error: 'Forbidden' });
+          return;
+        }
 
         try {
           const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -1118,7 +1144,11 @@ function createHandler() {
           jsonResponse(res, cors, 400, { error: 'Missing path parameter' });
           return;
         }
-        const resolved = path.resolve(filePath);
+        const resolved = resolveSafe(filePath);
+        if (!resolved) {
+          jsonResponse(res, cors, 403, { error: 'Forbidden' });
+          return;
+        }
         try {
           const stat = fs.statSync(resolved);
           const isNotebook = resolved.endsWith('.ipynb');
@@ -1234,7 +1264,11 @@ function createHandler() {
         return;
       }
 
-      const resolved = path.resolve(filePath);
+      const resolved = resolveSafe(filePath);
+      if (!resolved) {
+        jsonResponse(res, cors, 403, { error: 'Forbidden' });
+        return;
+      }
       try {
         fs.writeFileSync(resolved, content, 'utf8');
         // Update symbol index for saved file
@@ -1266,7 +1300,11 @@ function createHandler() {
         return;
       }
 
-      const resolved = path.resolve(filePath);
+      const resolved = resolveSafe(filePath);
+      if (!resolved) {
+        jsonResponse(res, cors, 403, { error: 'Forbidden' });
+        return;
+      }
       try {
         const stat = fs.statSync(resolved);
         if (stat.size > 2 * 1024 * 1024) {
