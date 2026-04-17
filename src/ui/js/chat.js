@@ -48,7 +48,9 @@ function applyModeToSession() {
     if (data.switched && data.sessionId) {
       replaceSessionInTab(activeSessionId, data.sessionId, data.agent);
     }
-  }).catch(function() {});
+  }).catch(function() {
+    addSystemNotice('Failed to switch permission mode — server unreachable.');
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -211,7 +213,9 @@ async function startNewSession(agentName, initialMessage) {
 
     var chatInput = document.getElementById('chat-input');
     chatInput.focus();
-  } catch (err) {}
+  } catch (err) {
+    addSystemNotice('Failed to start session — server unreachable.');
+  }
 }
 
 async function sendChatMessage() {
@@ -271,7 +275,9 @@ async function sendChatMessage() {
     if (data.switched && data.agent) {
       replaceSessionInTab(activeSessionId, data.sessionId, data.agent);
     }
-  } catch (err) {}
+  } catch (err) {
+    addSystemNotice('Message failed to send — server unreachable.');
+  }
 }
 
 async function stopChat() {
@@ -283,7 +289,9 @@ async function stopChat() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId: sid }),
     });
-  } catch(e) {}
+  } catch(e) {
+    console.warn('[shards] stop request failed:', e);
+  }
   endSessionTab(sid);
 }
 
@@ -345,7 +353,9 @@ async function closeSessionTab(sessionId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId: sessionId }),
     });
-  } catch(e) {}
+  } catch(e) {
+    console.warn('[shards] close session request failed:', e);
+  }
   endSessionTab(sessionId);
 }
 
@@ -629,7 +639,9 @@ function startTabRename(sessionId, titleEl) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: sessionId, title: newTitle }),
-      }).catch(function() {});
+      }).catch(function() {
+        console.warn('[shards] tab rename failed to persist');
+      });
     } else {
       session.title = null;
     }
