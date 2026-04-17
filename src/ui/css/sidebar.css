@@ -40,12 +40,12 @@
   border: none;
   border-left: 2px solid transparent;
   cursor: pointer;
-  color: #3a3a54;
+  color: #5a5a78;
   font-size: 14px;
   transition: color 0.15s, border-color 0.15s;
   padding: 0;
 }
-.activity-btn:hover { color: #7070a0; }
+.activity-btn:hover { color: #9090b0; }
 .activity-btn.active { color: #b0b0c8; border-left-color: #3860c0; }
 .activity-btn .badge {
   position: absolute;
@@ -87,14 +87,14 @@
   font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #3a3a54;
+  color: #6a6a88;
   background: #0a0a14;
   border-bottom: 1px solid #12121e;
   flex-shrink: 0;
 }
 #session-file-count {
   font-size: 9px;
-  color: #4a4a68;
+  color: #6a6a88;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -120,7 +120,7 @@
   font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #3a3a54;
+  color: #6a6a88;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -129,7 +129,7 @@
   display: inline-block;
   transition: transform 0.2s;
   font-size: 7px;
-  color: #3a3a54;
+  color: #6a6a88;
 }
 #explorer-sidebar.collapsed #explorer-toggle .chevron { transform: rotate(-90deg); }
 #explorer-sidebar.collapsed #explorer-toggle .label-text { display: none; }
@@ -138,7 +138,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #3a3a54;
+  color: #6a6a88;
   font-size: 14px;
   padding: 0 2px;
   line-height: 1;
@@ -147,7 +147,7 @@
   transition: color 0.15s;
   flex-shrink: 0;
 }
-#explorer-collapse-btn:hover { color: #7070a0; }
+#explorer-collapse-btn:hover { color: #b0b0c8; }
 #explorer-sidebar.collapsed #explorer-collapse-btn { transform: scaleX(-1); }
 
 #explorer-breadcrumb {
@@ -196,21 +196,21 @@
   width: 14px;
   text-align: center;
   flex-shrink: 0;
-  color: #4a4a68;
+  color: #6a6a88;
 }
 .dir-entry.is-dir .dir-icon { color: #5a7aaa; }
 .dir-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dir-size { font-size: 10px; color: #3a3a54; flex-shrink: 0; }
-.dir-entry.parent-entry { color: #5a5a78; font-style: italic; }
-.dir-entry.parent-entry .dir-icon { color: #5a5a78; }
+.dir-size { font-size: 10px; color: #5a5a78; flex-shrink: 0; }
+.dir-entry.parent-entry { color: #7a7a98; font-style: italic; }
+.dir-entry.parent-entry .dir-icon { color: #7a7a98; }
 
 /* ─── Explorer view toggle button ────────────────────────── */
 #explorer-view-toggle {
   background: none;
-  border: 1px solid #1e1e30;
+  border: 1px solid #3a3a5a;
   border-radius: 3px;
   cursor: pointer;
-  color: #3a3a54;
+  color: #7a7a98;
   font-size: 9px;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -219,7 +219,7 @@
   transition: color 0.15s, border-color 0.15s;
   flex-shrink: 0;
 }
-#explorer-view-toggle:hover { color: #7070a0; border-color: #3a3a60; }
+#explorer-view-toggle:hover { color: #b0b0c8; border-color: #5a5a80; }
 #explorer-sidebar.collapsed #explorer-view-toggle { display: none; }
 
 /* ─── Tree view entries ───────────────────────────────────── */
@@ -244,11 +244,11 @@
   min-width: 10px;
   text-align: center;
   flex-shrink: 0;
-  color: #3a3a54;
+  color: #5a5a78;
   line-height: 1;
 }
 .tree-entry.is-dir .dir-icon { color: #5a7aaa; }
-.tree-entry.is-file .dir-icon { color: #4a4a68; }
+.tree-entry.is-file .dir-icon { color: #6a6a88; }
 
 /* ─── Explorer search input ───────────────────────────────── */
 #explorer-search-wrap {
@@ -261,7 +261,7 @@
 #explorer-search-input {
   width: 100%;
   background: #0a0a14;
-  border: 1px solid #1e1e30;
+  border: 1px solid #2a2a44;
   border-radius: 4px;
   color: #c8c8d8;
   font-family: inherit;
@@ -299,14 +299,14 @@
   font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #3a3a54;
+  color: #6a6a88;
   background: #0a0a14;
   border-bottom: 1px solid #12121e;
   flex-shrink: 0;
 }
 #bookmarks-count {
   font-size: 9px;
-  color: #4a4a68;
+  color: #6a6a88;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -319,7 +319,7 @@
   display: none;
   padding: 16px 12px;
   font-size: 11px;
-  color: #3a3a54;
+  color: #5a5a78;
   text-align: center;
 }
 #bookmarks-empty.visible { display: block; }
@@ -366,7 +366,7 @@
 .bookmark-entry-remove {
   background: none;
   border: none;
-  color: #3a3a54;
+  color: #5a5a78;
   font-size: 14px;
   cursor: pointer;
   padding: 0 2px;
@@ -427,12 +427,12 @@
   font-size: 9px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #4a4a68;
+  color: #6a6a88;
   background: #0a0a14;
   border-bottom: 1px solid #12121e;
   flex-shrink: 0;
 }
-.git-view-title { color: #4a4a68; }
+.git-view-title { color: #6a6a88; }
 #git-branch-label {
   font-size: 9px;
   color: #6a8acc;
@@ -478,7 +478,7 @@
 .git-status-badge.untracked { color: #6a8acc; }
 .git-status-badge.renamed { color: #b07acc; }
 .git-change-entry .dir-name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-.git-change-entry .git-dir { font-size: 9px; color: #3a3a54; flex-shrink: 0; max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+.git-change-entry .git-dir { font-size: 9px; color: #5a5a78; flex-shrink: 0; max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
 
 /* Git diff badges on file tabs */
 .ws-tab .git-diff-badge {

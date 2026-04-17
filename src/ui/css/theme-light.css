@@ -192,17 +192,18 @@
 [data-theme="light"] #table-search { background: #ffffff; border-color: #ccc; color: #333; }
 [data-theme="light"] #table-search:focus { border-color: #4a80e0; }
 [data-theme="light"] #table-row-count { color: #888; }
-[data-theme="light"] #table-container .tabulator { background: #f5f5f8; color: #333; }
-[data-theme="light"] #table-container .tabulator-header { background: #ffffff; border-bottom-color: #ddd; }
-[data-theme="light"] #table-container .tabulator-col { background: #ffffff; border-right-color: #ddd; }
+[data-theme="light"] #table-container .tabulator { background: #ffffff; color: #333; }
+[data-theme="light"] #table-container .tabulator-header { background: #f8f9fb; border-bottom-color: #ddd; }
+[data-theme="light"] #table-container .tabulator-col { background: #f8f9fb; border-right-color: #ddd; }
 [data-theme="light"] #table-container .tabulator-col-title { color: #555; }
 [data-theme="light"] #table-container .tabulator-col .tabulator-header-filter input { background: #f5f5f8; border-color: #ccc; color: #333; }
-[data-theme="light"] #table-container .tabulator-row { border-bottom-color: #eee; }
-[data-theme="light"] #table-container .tabulator-row:hover { background: #eef0f8; }
-[data-theme="light"] #table-container .tabulator-row.tabulator-selected { background: #dde4f4; }
+[data-theme="light"] #table-container .tabulator-row { background: #ffffff; border-bottom-color: #eee; color: #333; }
+[data-theme="light"] #table-container .tabulator-row:nth-child(even) { background: #f4f5f7; }
+[data-theme="light"] #table-container .tabulator-row:hover { background: #dce6f7; color: #333; }
+[data-theme="light"] #table-container .tabulator-row.tabulator-selected { background: #c8d6f0; color: #333; }
 [data-theme="light"] #table-container .tabulator-cell { border-right-color: #eee; }
 [data-theme="light"] #table-container .tabulator-cell.tabulator-editing input { background: #fff; color: #333; border-color: #4a80e0; }
-[data-theme="light"] #table-container .tabulator-tableholder { background: #f5f5f8; }
+[data-theme="light"] #table-container .tabulator-tableholder { background: #ffffff; }
 [data-theme="light"] #table-container .tabulator-placeholder { color: #aaa; }
 
 /* Syntax highlight light overrides */

@@ -136,17 +136,17 @@
   flex-shrink: 0;
 }
 #split-btn, #close-all-btn {
-  background: #0f0f1e;
-  border: 1px solid #1e1e32;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #3a3a5a;
   border-radius: 4px;
-  color: #5a5a78;
+  color: #8888a8;
   font-family: inherit;
   font-size: 10px;
   padding: 3px 10px;
   cursor: pointer;
   transition: all 0.2s;
 }
-#split-btn:hover, #close-all-btn:hover { background: #1a1a30; color: #8080a0; }
+#split-btn:hover, #close-all-btn:hover { background: #1a1a30; color: #b0b0c8; }
 #split-btn.active { background: #1a2a1a; border-color: #2a6a2a; color: #60a060; }
 
 /* ─── Workspace content ──────────────────────────────────── */
@@ -159,18 +159,19 @@
 /* ─── Theme toggle button ───────────────────────────────── */
 #theme-toggle {
   background: none;
-  border: 1px solid #1e1e32;
+  border: 1px solid #3a3a5a;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
   padding: 2px 6px;
   line-height: 1;
+  color: #8888a8;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-#theme-toggle:hover { background: #1a1a30; }
+#theme-toggle:hover { background: #1a1a30; color: #b0b0c8; }
 
 /* ─── Overlay panels (quick-open, command palette, settings) ── */
 .overlay-backdrop {

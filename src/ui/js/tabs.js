@@ -13,12 +13,14 @@ function openFileTab(relPath, content, absPath, opts) {
     }
     if (opts.media) f.media = true;
   } else {
+    var ext = relPath.split('.').pop().toLowerCase();
+    var isMarkdown = ext === 'md';
     openFiles[relPath] = {
       content: content,
       absPath: absPath || relPath,
       originalContent: content,
       modified: false,
-      editMode: true,
+      editMode: !isMarkdown,
       tabularData: null,
       tabulatorInstance: null,
       media: opts.media || false,

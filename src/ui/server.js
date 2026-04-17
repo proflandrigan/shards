@@ -136,18 +136,65 @@ setInterval(() => {
 
 // ─── Settings cache for permission fast paths ───────────────────────────────
 
+const READONLY_PRESET = [
+  // Git read-only
+  'Bash(git log:*)', 'Bash(git status:*)', 'Bash(git diff:*)',
+  'Bash(git branch:*)', 'Bash(git show:*)', 'Bash(git rev-parse:*)',
+  'Bash(git remote:*)', 'Bash(git tag:*)', 'Bash(git stash list:*)',
+  // File exploration
+  'Bash(find:*)', 'Bash(ls:*)', 'Bash(tree:*)', 'Bash(file:*)',
+  'Bash(stat:*)', 'Bash(du:*)', 'Bash(df:*)',
+  // File reading
+  'Bash(cat:*)', 'Bash(head:*)', 'Bash(tail:*)', 'Bash(less:*)',
+  // Search
+  'Bash(grep:*)', 'Bash(rg:*)', 'Bash(ag:*)', 'Bash(fzf:*)',
+  // Inspection
+  'Bash(wc:*)', 'Bash(echo:*)', 'Bash(pwd:*)', 'Bash(which:*)',
+  'Bash(whoami:*)', 'Bash(env:*)', 'Bash(printenv:*)',
+  'Bash(type:*)', 'Bash(command -v:*)', 'Bash(uname:*)',
+  // Data inspection
+  'Bash(sort:*)', 'Bash(uniq:*)', 'Bash(cut:*)', 'Bash(awk:*)',
+  'Bash(diff:*)', 'Bash(comm:*)', 'Bash(jq:*)',
+];
+
 let settingsCache = { allow: [], deny: [] };
 
 function loadSettingsCache() {
+  let allow = [];
+  let deny = [];
+  let hasSettingsJson = false;
+
+  // Read .claude/settings.json (project-level, managed by UI)
   try {
     const raw = JSON.parse(fs.readFileSync(
       path.join(PROJECT_DIR, '.claude', 'settings.json'), 'utf8'
     ));
-    settingsCache.allow = (raw.permissions && raw.permissions.allow) || [];
-    settingsCache.deny  = (raw.permissions && raw.permissions.deny)  || [];
-  } catch {
-    settingsCache = { allow: [], deny: [] };
+    allow = (raw.permissions && raw.permissions.allow) || [];
+    deny  = (raw.permissions && raw.permissions.deny)  || [];
+    hasSettingsJson = true;
+  } catch {}
+
+  // Merge .claude/settings.local.json (user-level, managed by Claude Code)
+  try {
+    const local = JSON.parse(fs.readFileSync(
+      path.join(PROJECT_DIR, '.claude', 'settings.local.json'), 'utf8'
+    ));
+    const localAllow = (local.permissions && local.permissions.allow) || [];
+    const localDeny  = (local.permissions && local.permissions.deny)  || [];
+    for (const entry of localAllow) {
+      if (!allow.includes(entry)) allow.push(entry);
+    }
+    for (const entry of localDeny) {
+      if (!deny.includes(entry)) deny.push(entry);
+    }
+  } catch {}
+
+  // Fall back to readonly preset when no settings.json exists
+  if (!hasSettingsJson && allow.length === 0) {
+    allow = [...READONLY_PRESET];
   }
+
+  settingsCache = { allow, deny };
 }
 loadSettingsCache();
 
@@ -156,7 +203,12 @@ function matchesPermission(command, patterns) {
     const m = pattern.match(/^Bash\((.+)\)$/);
     if (!m) continue;
     const glob = m[1];
-    const regex = new RegExp('^' + glob.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$');
+    // The colon in Bash(cmd:*) is Claude Code's delimiter between command prefix
+    // and argument glob — replace with a pattern matching space-or-end-of-string
+    const regex = new RegExp('^' + glob
+      .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+      .replace(/:/, '( |$)')
+      .replace(/\*/g, '.*') + '$');
     if (regex.test(command)) return true;
   }
   return false;
@@ -1631,21 +1683,11 @@ function createHandler() {
         deny: settingsCache.deny,
         presets: {
           permissive: [
-            'Bash(find:*)', 'Bash(grep:*)', 'Bash(rg:*)', 'Bash(ls:*)',
-            'Bash(cat:*)', 'Bash(head:*)', 'Bash(tail:*)', 'Bash(wc:*)',
-            'Bash(git log:*)', 'Bash(git status:*)', 'Bash(git diff:*)',
-            'Bash(git branch:*)', 'Bash(git show:*)',
-            'Bash(echo:*)', 'Bash(pwd:*)', 'Bash(which:*)', 'Bash(env:*)',
+            ...READONLY_PRESET,
             'Bash(python:*)', 'Bash(python3:*)', 'Bash(node:*)',
             'Bash(npm:*)', 'Bash(pip:*)', 'Bash(pip3:*)',
           ],
-          readonly: [
-            'Bash(find:*)', 'Bash(grep:*)', 'Bash(rg:*)', 'Bash(ls:*)',
-            'Bash(cat:*)', 'Bash(head:*)', 'Bash(tail:*)', 'Bash(wc:*)',
-            'Bash(git log:*)', 'Bash(git status:*)', 'Bash(git diff:*)',
-            'Bash(git branch:*)', 'Bash(git show:*)',
-            'Bash(echo:*)', 'Bash(pwd:*)', 'Bash(which:*)',
-          ],
+          readonly: [...READONLY_PRESET],
         },
       });
       return;
