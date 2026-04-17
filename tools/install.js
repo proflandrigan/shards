@@ -146,10 +146,19 @@ function install() {
     console.log(`  ✓ .shards/ui/${f}`);
   }
 
-  // 6. Seed .claude/settings.json with readonly preset (if not already present)
+  // 6. Seed .claude/settings.json with readonly preset and PreToolUse hook
   const settingsPath = path.join(CLAUDE_DIR, "settings.json");
+  const relayScript = path.join(SHARDS_DIR, "ui", "relay.js");
+  const preToolUseHook = {
+    matcher: "Bash",
+    hooks: [{ type: "command", command: `node ${relayScript} pre-tool-use` }],
+  };
+
   if (!fs.existsSync(settingsPath)) {
     const defaultSettings = {
+      hooks: {
+        PreToolUse: [preToolUseHook],
+      },
       permissions: {
         allow: [
           "Bash(git log:*)", "Bash(git status:*)", "Bash(git diff:*)",
@@ -171,7 +180,21 @@ function install() {
     fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
     console.log("\n🔐 Created .claude/settings.json with readonly permissions preset");
   } else {
-    console.log("\n🔐 .claude/settings.json already exists (preserved)");
+    // Ensure PreToolUse hook is present on existing installs
+    let settings = {};
+    try { settings = JSON.parse(fs.readFileSync(settingsPath, "utf8")); } catch {}
+    if (!settings.hooks) settings.hooks = {};
+    if (!settings.hooks.PreToolUse) settings.hooks.PreToolUse = [];
+    const hasRelay = settings.hooks.PreToolUse.some((entry) =>
+      entry.hooks && entry.hooks.some((h) => h.command && h.command.includes("relay.js"))
+    );
+    if (!hasRelay) {
+      settings.hooks.PreToolUse.push(preToolUseHook);
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+      console.log("\n🔐 Added missing PreToolUse hook to .claude/settings.json");
+    } else {
+      console.log("\n🔐 .claude/settings.json already exists (preserved)");
+    }
   }
 
   // 7. Create Knowledge Ledger directory
