@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shards.local/schemas/model-card-schema.json",
+  "title": "Shards Model Card",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "generatedAt", "generatedBy", "projectName",
+    "modelDetails", "intendedUse", "factors", "metrics",
+    "evaluationData", "trainingData", "quantitativeAnalyses",
+    "ethicalConsiderations", "caveatsAndRecommendations", "evalSummary"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "generatedBy": { "type": "string", "enum": ["ml-engineer", "ai-engineer"] },
+    "projectName": { "type": "string" },
+    "modelDetails": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "type", "owner", "date", "framework", "license", "references"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "type": { "type": "string" },
+        "owner": { "type": "string" },
+        "date": { "type": "string" },
+        "framework": { "type": "string" },
+        "license": { "type": "string" },
+        "references": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "intendedUse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primaryUse", "primaryUsers", "outOfScopeUses"],
+      "properties": {
+        "primaryUse": { "type": "string" },
+        "primaryUsers": { "type": "string" },
+        "outOfScopeUses": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "factors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relevantFactors", "evaluationFactors"],
+      "properties": {
+        "relevantFactors": { "type": "array", "items": { "type": "string" } },
+        "evaluationFactors": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["performanceMeasures", "decisionThresholds"],
+      "properties": {
+        "performanceMeasures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "value", "description", "rationale"],
+            "properties": {
+              "name": { "type": "string" },
+              "value": { "type": "string" },
+              "description": { "type": "string" },
+              "rationale": { "type": "string" }
+            }
+          }
+        },
+        "decisionThresholds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "threshold", "rationale"],
+            "properties": {
+              "name": { "type": "string" },
+              "threshold": { "type": "string" },
+              "rationale": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "evaluationData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["datasets", "preprocessing", "size", "motivation"],
+      "properties": {
+        "datasets": { "type": "array", "items": { "type": "string" } },
+        "preprocessing": { "type": "string" },
+        "size": { "type": "string" },
+        "motivation": { "type": "string" }
+      }
+    },
+    "trainingData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["datasets", "preprocessing", "size", "motivation"],
+      "properties": {
+        "datasets": { "type": "array", "items": { "type": "string" } },
+        "preprocessing": { "type": "string" },
+        "size": { "type": "string" },
+        "motivation": { "type": "string" }
+      }
+    },
+    "quantitativeAnalyses": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unitaryResults", "intersectionalResults"],
+      "properties": {
+        "unitaryResults": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["metric", "value", "subset"],
+            "properties": {
+              "metric": { "type": "string" },
+              "value": { "type": "string" },
+              "subset": { "type": "string" }
+            }
+          }
+        },
+        "intersectionalResults": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        }
+      }
+    },
+    "ethicalConsiderations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["risks", "mitigations", "academicReview"],
+      "properties": {
+        "risks": { "type": "array", "items": { "type": "string" } },
+        "mitigations": { "type": "array", "items": { "type": "string" } },
+        "academicReview": { "type": "string" }
+      }
+    },
+    "caveatsAndRecommendations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caveats", "recommendations"],
+      "properties": {
+        "caveats": { "type": "array", "items": { "type": "string" } },
+        "recommendations": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "evalSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overallVerdict", "dimensions", "cost"],
+      "properties": {
+        "overallVerdict": { "type": "string", "enum": ["PASS", "FAIL", "PARTIAL"] },
+        "dimensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["dimension", "metric", "target", "actual", "verdict"],
+            "properties": {
+              "dimension": { "type": "string" },
+              "metric": { "type": "string" },
+              "target": { "type": "string" },
+              "actual": { "type": "string" },
+              "verdict": { "type": "string", "enum": ["pass", "fail"] }
+            }
+          }
+        },
+        "cost": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["perRequest", "per1kTokens", "monthlyProjected", "budget"],
+          "properties": {
+            "perRequest": { "type": ["string", "number", "null"] },
+            "per1kTokens": { "type": ["string", "number", "null"] },
+            "monthlyProjected": { "type": ["string", "number", "null"] },
+            "budget": { "type": ["string", "number", "null"] }
+          }
+        }
+      }
+    }
+  }
+}

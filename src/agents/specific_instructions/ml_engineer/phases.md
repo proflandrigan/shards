@@ -961,81 +961,16 @@ Then:
    - Greenfield: `models/<name>/model-card.json`
    - Iteration: `<existing_service_dir>/model-card.json`
 
-   The JSON must follow this schema:
-   ```json
-   {
-     "schemaVersion": "1.0",
-     "generatedAt": "<ISO-8601>",
-     "generatedBy": "ml-engineer",
-     "projectName": "<project_name>",
-     "modelDetails": {
-       "name": "<model name>",
-       "version": "<version>",
-       "type": "<LightGBM classifier | XGBoost regressor | etc.>",
-       "owner": "<owner>",
-       "date": "<YYYY-MM-DD>",
-       "framework": "<scikit-learn | LightGBM | PyTorch | etc.>",
-       "license": "<license or N/A>",
-       "references": ["<urls or citations>"]
-     },
-     "intendedUse": {
-       "primaryUse": "<what the model predicts/ranks/classifies>",
-       "primaryUsers": "<who consumes the model output>",
-       "outOfScopeUses": ["<uses this model should NOT be used for>"]
-     },
-     "factors": {
-       "relevantFactors": ["<groups, segments, environments>"],
-       "evaluationFactors": ["<factors evaluated>"]
-     },
-     "metrics": {
-       "performanceMeasures": [
-         { "name": "<metric>", "value": "<value>", "description": "<what it measures>", "rationale": "<why chosen>" }
-       ],
-       "decisionThresholds": [
-         { "name": "<threshold>", "threshold": "<value>", "rationale": "<why>" }
-       ]
-     },
-     "evaluationData": {
-       "datasets": ["<eval set description>"],
-       "preprocessing": "<how prepared>",
-       "size": "<N examples>",
-       "motivation": "<why this eval set>"
-     },
-     "trainingData": {
-       "datasets": ["<training data description>"],
-       "preprocessing": "<feature engineering summary>",
-       "size": "<N examples>",
-       "motivation": "<why this data>"
-     },
-     "quantitativeAnalyses": {
-       "unitaryResults": [
-         { "metric": "<metric>", "value": "<value>", "subset": "<subset>" }
-       ],
-       "intersectionalResults": []
-     },
-     "ethicalConsiderations": {
-       "risks": ["<from Academic shard>"],
-       "mitigations": ["<from Academic shard>"],
-       "academicReview": "<Academic shard's full response>"
-     },
-     "caveatsAndRecommendations": {
-       "caveats": ["<limitations>"],
-       "recommendations": ["<deployment recommendations>"]
-     },
-     "evalSummary": {
-       "overallVerdict": "<PASS | FAIL | PARTIAL>",
-       "dimensions": [
-         { "dimension": "<name>", "metric": "<metric>", "target": "<target>", "actual": "<actual>", "verdict": "<pass | fail>" }
-       ],
-       "cost": {
-         "perRequest": "<$X or null>",
-         "per1kTokens": null,
-         "monthlyProjected": "<$X or null>",
-         "budget": "<$X or null>"
-       }
-     }
-   }
-   ```
+   The JSON must conform to the schema defined in
+   `templates/model-card-schema.json` (JSON Schema, draft 2020-12).
+   See `templates/model-card-schema.md` for an annotated example and
+   field notes.
+
+   ML-engineer-specific overrides:
+   - `generatedBy`: `"ml-engineer"`.
+   - `evalSummary.cost.per1kTokens`: `null` unless the model is an LLM.
+   - `modelDetails.type`: e.g. `"LightGBM classifier"`, `"XGBoost regressor"`,
+     `"scikit-learn pipeline"`.
 
    If the Shards UI is active (`.shards/ui.port` file exists), push the model
    card panel:
