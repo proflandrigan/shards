@@ -36,7 +36,9 @@ Ask about:
 - **Business priority:** Critical | High | Medium
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ml-engineer-phases-phase1 phase=1 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -101,7 +103,9 @@ Task(
   - <summary of pipeline feasibility findings>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ml-engineer-phases-phase2 phase=2 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -215,7 +219,9 @@ Present findings, then ask:
 - **Data environment:** <not greenfield | Feature data exists but inaccessible — candidates user-described, not verified | GREENFIELD — No data assets detected. Theoretical ML design only>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ml-engineer-phases-phase3 phase=3 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -472,7 +478,9 @@ Define:
 
 **DIVERGE check:** If you identified 2-3 mutually exclusive model architectures or approaches (e.g., different model families, fundamentally different serving paradigms) that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ml-engineer-phases-phase4 phase=4 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -622,7 +630,9 @@ Address any concerns raised by either review before finalizing the infrastructur
   - Backward compatibility: <ensured | breaking — migration plan>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ml-engineer-phases-phase5 phase=5 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -809,7 +819,9 @@ Task(
 - **Surprising findings:** <anything unexpected>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ml-engineer-phases-phase6 phase=6 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -1049,6 +1061,8 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
+::GATE:: id=specific-instructions-ml-engineer-phases-phase7 phase=7 kind=final
+Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
+::ENDGATE::
 
 ---

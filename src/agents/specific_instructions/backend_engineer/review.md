@@ -18,7 +18,9 @@ Ask the user:
 4. Are there any known concerns going in? (e.g., "the route handlers are too fat",
    "I think there's a blocking call in an async route", or is this an open review?)
 
-**GATE: Do not proceed until the user confirms the review scope.**
+::GATE:: id=specific-instructions-backend-engineer-review-phase1 phase=1 kind=phase
+Do not proceed until the user confirms the review scope.
+::ENDGATE::
 Summarise what you're reviewing and which checklist sections you'll apply. Wait for
 explicit confirmation.
 
@@ -58,7 +60,9 @@ core agent file. Include the per-file sections and the Overall Summary.
 
 After presenting:
 
-**GATE: Ask the user:**
+::GATE:: id=specific-instructions-backend-engineer-review-phase3 phase=3 kind=final
+Ask the user:
+::ENDGATE::
 - Do you want to dig into any specific finding?
 - Should we switch to `[C] Clean` mode to apply structural fixes for any issues flagged?
 - Or is this review complete?

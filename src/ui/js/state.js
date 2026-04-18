@@ -132,6 +132,33 @@ function saveSessionWorkspace(session) {
   session.pinnedItems = pinnedItems;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Gate state polling
+// ═══════════════════════════════════════════════════════════════
+
+var gateState = { open: false, history: [] };
+var _gatePoller = null;
+
+function startGatePoller() {
+  if (_gatePoller) return;
+  _gatePoller = setInterval(function() {
+    authFetch('/gate-state')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var wasOpen = gateState.open;
+        gateState = data;
+        if (typeof renderGatePill === 'function') {
+          renderGatePill(gateState);
+        }
+      })
+      .catch(function() {});
+  }, 2000);
+}
+
+function stopGatePoller() {
+  if (_gatePoller) { clearInterval(_gatePoller); _gatePoller = null; }
+}
+
 // Load workspace globals from the given session object
 function loadSessionWorkspace(session) {
   if (!session) {

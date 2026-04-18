@@ -325,7 +325,9 @@ Total: N candidates across M categories.
 Add, edit, remove, or adjust confidence? Or confirm to write.
 ```
 
-**GATE: Do not write any files until the user confirms.**
+::GATE:: id=specific-instructions-syn-knowledge-phase0 phase=0 kind=phase
+Do not write any files until the user confirms.
+::ENDGATE::
 
 ### Step 6 — Write
 
@@ -368,7 +370,9 @@ Here's what I'll record:
 Write it? (y/n) Or edit something first.
 ```
 
-**GATE: Do not write until the user confirms.**
+::GATE:: id=specific-instructions-syn-knowledge-phase0-2 phase=0 kind=phase
+Do not write until the user confirms.
+::ENDGATE::
 
 ### Step 3 — Write
 
@@ -436,7 +440,9 @@ Pruning candidates:
 Remove all recommended? Or pick which to keep/remove.
 ```
 
-**GATE: Do not delete until the user confirms.**
+::GATE:: id=specific-instructions-syn-knowledge-phase0-3 phase=0 kind=final
+Do not delete until the user confirms.
+::ENDGATE::
 
 ### Step 3 — Execute
 

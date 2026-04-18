@@ -1,0 +1,6 @@
+{
+  "hook_event_name": "Stop",
+  "session_id": "test-session-001",
+  "transcript_path": "__TRANSCRIPT__",
+  "turn_number": 3
+}

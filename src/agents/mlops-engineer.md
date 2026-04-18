@@ -272,7 +272,9 @@ Create or append to:
 - **Or:** No relevant entries found
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=mlops-engineer-phase0 phase=0 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 

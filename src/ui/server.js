@@ -1739,6 +1739,20 @@ function createHandler() {
       return;
     }
 
+    // ─── Gate state endpoint ────────────────────────────────────────
+
+    // GET /gate-state — returns current gate state from .shards/gates/state.json
+    if (req.method === 'GET' && parsedUrl.pathname === '/gate-state') {
+      const gateStatePath = path.join(SHARDS_DIR, 'gates', 'state.json');
+      try {
+        const raw = fs.readFileSync(gateStatePath, 'utf8');
+        jsonResponse(res, cors, 200, JSON.parse(raw));
+      } catch {
+        jsonResponse(res, cors, 200, { open: false, history: [] });
+      }
+      return;
+    }
+
     // ─── Permissions management endpoints ──────────────────────────
 
     // GET /permissions — return current allow/deny lists + available presets

@@ -219,7 +219,9 @@ Create or append to `studies/<project_name>/project-specs.md`:
   - Or: No relevant features found
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=data-scientist-phase0 phase=0 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 

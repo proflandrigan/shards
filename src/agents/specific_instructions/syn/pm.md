@@ -25,7 +25,9 @@ from the template at `templates/project-plan.md`. Fill in:
 - `{{PROJECT_SCOPE}}`: full project description from intake
 - Leave other placeholders for Phase 1
 
-**GATE: Read back the captured scope to the user. Do not proceed until the user explicitly confirms.**
+::GATE:: id=specific-instructions-syn-pm-phase0 phase=0 kind=phase
+Read back the captured scope to the user. Do not proceed until the user explicitly confirms.
+::ENDGATE::
 
 ---
 
@@ -85,8 +87,10 @@ Incorporate specialist feedback, adjust the plan if needed, then:
 1. Write the full workstream details and dependency graph to `project-plan.md`
 2. Create `projects/<project_name>/workstreams.json` with the schema below
 
-**GATE: Present the full plan to the user — workstreams, dependency graph, execution
-groups, and specialist feasibility feedback. Do not proceed until the user explicitly confirms.**
+::GATE:: id=specific-instructions-syn-pm-phase1 phase=1 kind=phase
+Present the full plan to the user — workstreams, dependency graph, execution
+groups, and specialist feasibility feedback. Do not proceed until the user explicitly confirms.
+::ENDGATE::
 
 ---
 
@@ -298,7 +302,9 @@ After all execution groups complete:
       + contradiction updates), grouped by category. Follow the harvest protocol's
       Step 3 presentation format.
 
-   e. **GATE: Do not write to the Knowledge Ledger until the user confirms.**
+   e. ::GATE:: id=specific-instructions-syn-pm-phase5 phase=5 kind=final
+Do not write to the Knowledge Ledger until the user confirms.
+::ENDGATE::
       This is the one gate in the harvest flow — consistent with standalone
       projects. The user may edit, remove, or add candidates.
 

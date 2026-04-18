@@ -15,7 +15,9 @@ Ask the user:
    approach if any, production requirements — latency budget, VRAM, serving format)
 3. Is there a preferred outcome, or is this an open exploration?
 
-**GATE: Do not proceed until the user confirms the question.**
+::GATE:: id=specific-instructions-deep-learning-engineer-advise-phase1 phase=1 kind=phase
+Do not proceed until the user confirms the question.
+::ENDGATE::
 Restate the question in your own words to confirm alignment. Wait for confirmation.
 
 ---
@@ -71,7 +73,9 @@ After the discussion, ask:
 
 > "Want me to write this up as a structured advisory document?"
 
-**GATE: Wait for explicit confirmation before writing anything.**
+::GATE:: id=specific-instructions-deep-learning-engineer-advise-phase4 phase=4 kind=final
+Wait for explicit confirmation before writing anything.
+::ENDGATE::
 
 If the user says yes, write `advisory/<topic_name>/deep-learning-engineer-advisory.md`
 using this template exactly:

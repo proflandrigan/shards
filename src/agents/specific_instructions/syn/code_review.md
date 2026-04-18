@@ -67,7 +67,9 @@ Present consolidated findings: Syn's non-Python review followed by the Backend
 Engineer's Python review (if applicable). Then ask:
 "Apply fixes? (y to fix all, n to skip, or list specific filenames)"
 
-**GATE: Read these findings back to the user. Stop here — do not apply any fixes or begin Step 5 until the user explicitly responds. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-syn-code-review-phase0 phase=0 kind=phase
+Read these findings back to the user. Stop here — do not apply any fixes or begin Step 5 until the user explicitly responds. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 **Step 5: Apply fixes**
 

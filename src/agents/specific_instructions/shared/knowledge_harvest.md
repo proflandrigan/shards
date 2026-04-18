@@ -93,7 +93,9 @@ Knowledge harvest — candidates for the Knowledge Ledger:
 Add, edit, or remove? Or confirm to write.
 ```
 
-**GATE: Do not write any files until the user confirms.** The user may edit titles, remove candidates, adjust confidence, or add new ones.
+::GATE:: id=specific-instructions-shared-knowledge-harvest-phase0 phase=0 kind=phase
+Do not write any files until the user confirms.
+::ENDGATE:: The user may edit titles, remove candidates, adjust confidence, or add new ones.
 
 ### 4. Create directory structure
 

@@ -63,7 +63,9 @@ As each answer arrives, append it to the `## Context` section of the brainstorm 
 
 After all context is gathered, read the full Context section back to the user.
 
-**GATE: Do not proceed to Phase 1 until the user confirms the context is right.**
+::GATE:: id=specific-instructions-syn-brainstorm-phase0 phase=0 kind=phase
+Do not proceed to Phase 1 until the user confirms the context is right.
+::ENDGATE::
 
 ---
 

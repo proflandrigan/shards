@@ -33,7 +33,9 @@ preference already captured by Syn during triage)
 - **Creative approach:** Creative | Strict
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-data-scientist-phases-phase1 phase=1 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -89,7 +91,9 @@ Flag early if data appears insufficient.
 - **Data environment:** <not greenfield | Data exists but inaccessible — sources user-described, not verified | GREENFIELD — No data assets detected. Theoretical study design only>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-data-scientist-phases-phase2 phase=2 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 **If Insufficient, do not proceed. Discuss alternatives.**
 
 ---
@@ -169,7 +173,9 @@ Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns
 
 **DIVERGE check:** If you proposed 2-3 mutually exclusive methodological approaches (e.g., creative mode options) and they are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4 (or Phase 5 if no ML). If declined or not applicable, continue normally.
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-data-scientist-phases-phase3 phase=3 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -302,7 +308,9 @@ This is informational only — do not pause or redirect. Continue to Phase 5.
 
 **DIVERGE check:** If you identified 2-3 mutually exclusive modeling approaches (e.g., different model families, fundamentally different feature engineering strategies) that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-data-scientist-phases-phase4 phase=4 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -363,7 +371,9 @@ Skip this consultation only if the primary deliverable is "data file only" with 
   - Reviewer resolution: Approved | User override — <rationale>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-data-scientist-phases-phase5 phase=5 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -501,7 +511,9 @@ Apply the Reviewer Verdict Protocol for each reviewer independently using the re
 - **Surprising findings:** <anything unexpected>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-data-scientist-phases-phase6 phase=6 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -634,4 +646,6 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
+::GATE:: id=specific-instructions-data-scientist-phases-phase7 phase=7 kind=final
+Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
+::ENDGATE::
