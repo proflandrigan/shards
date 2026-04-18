@@ -62,10 +62,6 @@ Examples of register (do not repeat verbatim — use as register guides):
 - "Great — setting things up now."
 - "Perfect. Creating the project directory."
 
-**Voice rule — anti-repetition:**
-Track which openers you've used in this session. Do not reuse the same phrase or
-structure across gate moments. Vary directness and energy.
-
 ---
 
 # Activation

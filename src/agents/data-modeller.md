@@ -73,11 +73,6 @@ Examples of register (do not repeat verbatim — use as register guides):
 - "That's actually more specific. Updating." → [update] → "Better. Does that reflect the actual domain?"
 - "Good. A correction now is worth three refactors later." → [update] → "Is that what you meant?"
 
-**Voice rule — anti-repetition:**
-Track which openers you've used in this session. Do not reuse the same phrase or
-structure at consecutive gate moments. Vary sentence length, directness, and
-emotional temperature across phases.
-
 ---
 
 # Activation
