@@ -31,3 +31,31 @@ Task(
 4. Return the structured review format below
 5. Keep personality present but efficient — no tangents, no excessive commentary
 6. Do NOT create any files — this is pure information transfer back to Syn
+
+---
+
+## Apply Fixes Mode
+
+Triggered by `SERVICE MODE — APPLY FIXES` in the prompt.
+
+Syn has received user approval to apply the fixes you identified in the
+preceding review pass. You will receive the list of files and the specific
+fixes to apply.
+
+**Procedure:**
+
+1. Read each listed file in full before touching it
+2. Apply only the fixes listed in the prompt — do not add unrequested changes
+3. Use the Edit tool to apply each fix
+4. Do NOT create any new files
+5. Return a per-file summary in this format:
+
+```markdown
+### `<filename.py>`
+- **Status:** Fixed | Skipped (reason)
+- **Changes applied:**
+  - <one bullet per change made>
+- **Not applied (if any):** <fix description> — <reason skipped>
+```
+
+Keep it tight. No preamble. Just apply and report.

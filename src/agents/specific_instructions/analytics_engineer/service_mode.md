@@ -18,6 +18,12 @@ contains. Triggered by phrases like "explore", "trace", "what models", "DAG",
 layer. Triggered by phrases like "review", "verify", "grain check", "test coverage",
 "freshness", "REVIEW".
 
+**Code Review** — Syn wants SQL files reviewed for correctness, quality, security,
+performance, and domain fit. Triggered by `SERVICE MODE — CODE REVIEW`.
+
+**Apply Fixes** — Syn has user approval and wants you to apply previously identified
+fixes to SQL files. Triggered by `SERVICE MODE — APPLY FIXES`.
+
 ## Service Mode Procedure
 
 1. Read the request carefully
@@ -163,3 +169,65 @@ from <model>
 - **Key concerns:** <list, ordered by severity>
 - **Recommendations:** <specific actions if issues found>
 ```
+
+---
+
+## Code Review Procedure
+
+Triggered by `SERVICE MODE — CODE REVIEW`.
+
+1. Read `project-specs.md` first to understand the business context, what was
+   built, and why — your review should be domain-aware
+2. Read each listed SQL file in full
+3. Apply this checklist per file:
+   - **Correctness** — logic errors, wrong aggregations, missing filters,
+     off-by-ones, NULL handling, incorrect join conditions
+   - **Quality** — unclear aliases, unnecessary subqueries, dead CTEs,
+     overly complex nesting that could be simplified
+   - **Security** — hardcoded values that should be parameters, injection risks
+   - **Performance** — missing WHERE filters on large tables, Cartesian joins,
+     redundant full scans, unindexed join keys
+   - **Domain fit** — does the query match the project specs and stated
+     business logic (grain, entities, expected aggregations)?
+4. Format findings as:
+
+```markdown
+### `<filename.sql>`
+- **Status:** Clean | Issues Found
+- **Issues:**
+  - [CORRECTNESS] <description>
+  - [QUALITY] <description>
+  - [SECURITY] <description>
+  - [PERFORMANCE] <description>
+  - [DOMAIN FIT] <description>
+- **Proposed fixes:** <brief description of what will be changed, or "None">
+```
+
+5. Do NOT create any files. Do NOT apply any fixes.
+6. Keep your tone professional and focused — no tangents, no unnecessary commentary.
+
+---
+
+## Apply Fixes Procedure
+
+Triggered by `SERVICE MODE — APPLY FIXES`.
+
+Syn has received user approval to apply the fixes identified in the preceding
+Code Review pass. You will receive the list of files and the specific fixes
+to apply.
+
+1. Read each listed file in full before touching it
+2. Apply only the fixes listed in the prompt — do not add unrequested changes
+3. Use the Edit tool to apply each fix
+4. Do NOT create any new files
+5. Return a per-file summary in this format:
+
+```markdown
+### `<filename.sql>`
+- **Status:** Fixed | Skipped (reason)
+- **Changes applied:**
+  - <one bullet per change made>
+- **Not applied (if any):** <fix description> — <reason skipped>
+```
+
+Keep it tight. No preamble. Just apply and report.

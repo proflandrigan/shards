@@ -142,7 +142,7 @@ There are **180 `GATE:` directives and 70 `Wait for the user to explicitly confi
 
 **Fix:** The specialist should return the leaderboard markdown verbatim, not paraphrased, and explicitly surface the "Syn's Read" paragraph unchanged.
 
-### 4.8 Circular "Syn calls Syn for code review" is a true cycle
+### 4.8 Circular "Syn calls Syn for code review" is a true cycle ✅ DONE
 Phase 7 Syn review returns a "Code Review" section if code artifacts exist. Specialist then calls `Task(subagent_type="syn", prompt="CODE REVIEW MODE...")`. Syn in code-review mode invokes `Task(subagent_type="backend-engineer")`. If the Backend Engineer flags a bug that requires fixing a Python file *that the ML Engineer would ordinarily own*, Syn edits the file directly (via Edit tool in code review mode). This violates "don't do the specialist's job" — which Syn has explicitly suspended in fixer mode but not in code review mode. The instruction set does not clarify.
 
 **Fix:** Explicitly state that Syn code-review mode carries the same exception as fixer mode. Or, alternatively, have the backend-engineer apply its own fixes (it already has Write/Edit permission in Clean mode).
