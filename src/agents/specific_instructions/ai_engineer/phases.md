@@ -95,7 +95,9 @@ Ask about:
 - **Business priority:** Critical | High | Medium
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ai-engineer-phases-phase1 phase=1 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -171,7 +173,9 @@ Task(
   - <summary of infrastructure feasibility findings>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ai-engineer-phases-phase2 phase=2 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -257,7 +261,9 @@ Design decisions to make:
 
 **DIVERGE check:** If you identified 2-3 mutually exclusive architectural approaches (e.g., different positions on the Simplicity Ladder, fundamentally different system designs) that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ai-engineer-phases-phase3 phase=3 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -385,7 +391,9 @@ Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns
 - **Evaluation cadence:** <on every prompt change | weekly | before each deploy>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ai-engineer-phases-phase4 phase=4 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -532,7 +540,9 @@ Task(
   - Prevention: <post-incident review process>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ai-engineer-phases-phase5 phase=5 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -688,7 +698,9 @@ Goal: Build the prompts, evaluation harness, integration code, and safety layer.
 - **Surprising findings:** <anything unexpected>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-ai-engineer-phases-phase6 phase=6 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -890,81 +902,20 @@ Then:
    - Greenfield: `services/<name>/model-card.json`
    - Iteration: `<existing_service_dir>/model-card.json`
 
-   The JSON must follow this schema:
-   ```json
-   {
-     "schemaVersion": "1.0",
-     "generatedAt": "<ISO-8601>",
-     "generatedBy": "ai-engineer",
-     "projectName": "<project_name>",
-     "modelDetails": {
-       "name": "<model/system name>",
-       "version": "<version>",
-       "type": "<LLM prompt chain | RAG pipeline | AI agent | etc.>",
-       "owner": "<owner>",
-       "date": "<YYYY-MM-DD>",
-       "framework": "<framework>",
-       "license": "<license or N/A>",
-       "references": ["<urls or citations>"]
-     },
-     "intendedUse": {
-       "primaryUse": "<description>",
-       "primaryUsers": "<who>",
-       "outOfScopeUses": ["<uses this system should NOT be used for>"]
-     },
-     "factors": {
-       "relevantFactors": ["<groups, instruments, environments>"],
-       "evaluationFactors": ["<factors evaluated>"]
-     },
-     "metrics": {
-       "performanceMeasures": [
-         { "name": "<metric>", "value": "<value>", "description": "<what it measures>", "rationale": "<why chosen>" }
-       ],
-       "decisionThresholds": [
-         { "name": "<threshold>", "threshold": "<value>", "rationale": "<why>" }
-       ]
-     },
-     "evaluationData": {
-       "datasets": ["<eval set description>"],
-       "preprocessing": "<how prepared>",
-       "size": "<N examples>",
-       "motivation": "<why this eval set>"
-     },
-     "trainingData": {
-       "datasets": ["<training data description or N/A for prompt-based>"],
-       "preprocessing": "<how prepared or N/A>",
-       "size": "<N examples or N/A>",
-       "motivation": "<why this data>"
-     },
-     "quantitativeAnalyses": {
-       "unitaryResults": [
-         { "metric": "<metric>", "value": "<value>", "subset": "<subset>" }
-       ],
-       "intersectionalResults": []
-     },
-     "ethicalConsiderations": {
-       "risks": ["<from Academic shard>"],
-       "mitigations": ["<from Academic shard>"],
-       "academicReview": "<Academic shard's full response>"
-     },
-     "caveatsAndRecommendations": {
-       "caveats": ["<limitations>"],
-       "recommendations": ["<deployment recommendations>"]
-     },
-     "evalSummary": {
-       "overallVerdict": "<PASS | FAIL | PARTIAL>",
-       "dimensions": [
-         { "dimension": "<name>", "metric": "<metric>", "target": "<target>", "actual": "<actual>", "verdict": "<pass | fail>" }
-       ],
-       "cost": {
-         "perRequest": "<$X>",
-         "per1kTokens": "<$X>",
-         "monthlyProjected": "<$X>",
-         "budget": "<$X>"
-       }
-     }
-   }
-   ```
+   The JSON must conform to the schema defined in
+   `templates/model-card-schema.json` (JSON Schema, draft 2020-12).
+   See `templates/model-card-schema.md` for an annotated example and
+   field notes.
+
+   AI-engineer-specific overrides:
+   - `generatedBy`: `"ai-engineer"`.
+   - `modelDetails.type`: e.g. `"LLM prompt chain"`, `"RAG pipeline"`,
+     `"AI agent"`.
+   - `trainingData`: use `"N/A"` or `"Not applicable — prompt-based"` for
+     pure prompt/RAG systems; populate fully for fine-tuned models.
+   - `evalSummary.cost.per1kTokens` and `evalSummary.cost.perRequest`:
+     populate with numeric/string values (not `null`) for any LLM-backed
+     system — cost visibility is a non-negotiable for AI systems.
 
    If the Shards UI is active (`.shards/ui.port` file exists), push the model
    card panel:
@@ -1052,7 +1003,9 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
+::GATE:: id=specific-instructions-ai-engineer-phases-phase7 phase=7 kind=final
+Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
+::ENDGATE::
 
 ---
 

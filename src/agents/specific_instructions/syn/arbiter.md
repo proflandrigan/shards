@@ -98,3 +98,7 @@ and let the user choose.
 
 If any branch report is missing or incomplete, note this in the leaderboard
 and flag it as a concern — do not penalize the branch, but note the gap.
+
+**Sub-agent gate rule:** Do not emit `::GATE::` fences. Gate enforcement only
+applies to the main session. If the caller needs to stop, it will open its own
+gate in the next turn — sub-agents invoked via Task must not emit gate fences.

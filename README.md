@@ -131,6 +131,41 @@ Every agent follows a phased workflow. At the end of each phase:
 
 This turns conversation into documentation automatically.
 
+### Gate Enforcement
+
+Gates are machine-enforced via `::GATE::` fences and three Claude Code hooks:
+
+**Fence syntax:**
+```
+::GATE:: id=<unique-slug> phase=<n> kind=<phase|confirm|handoff|execute|final>
+<human-readable gate prompt>
+::ENDGATE::
+```
+
+**Hooks installed by the shards installer:**
+
+| Hook | File | Behavior |
+|------|------|----------|
+| `Stop` | `.shards/hooks/gate-hook.js stop` | Detects gate fences in the last assistant message; opens `state.json`; blocks if post-fence content violates the gate |
+| `PreToolUse` | `.shards/hooks/gate-hook.js pre-tool-use` | While a gate is open, blocks all tools except `Read`, `Glob`, `Grep` |
+| `UserPromptSubmit` | `.shards/hooks/gate-hook.js user-prompt-submit` | Classifies user prompt as confirm / deny / ambiguous; closes gate on confirm |
+
+**State file:** `.shards/gates/state.json` — tracks open/closed status, gate id, phase, kind, and full history.
+
+**Diagnostics CLI:**
+```bash
+shards-gates status        # current state + last 10 history entries
+shards-gates history       # full history
+shards-gates violations    # violation log
+shards-gates force-close   # operator override when hook gets stuck
+```
+
+**Escape hatch:** Set `SHARDS_GATE_ENFORCE=0` to disable all enforcement without uninstalling. Useful for debugging or emergency rollback.
+
+**Troubleshooting:**
+- Agent is stuck on a gate? Run `shards-gates force-close` then resume the session.
+- Gate not closing after you confirmed? The confirmation wording may have been ambiguous. Use `::GATE-CONFIRM:: <gate-id>` as an explicit override, or run `force-close`.
+
 ### Cross-Agent Review
 
 Agents consult each other at defined checkpoints:

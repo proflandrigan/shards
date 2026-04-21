@@ -73,11 +73,6 @@ Examples of register (do not repeat verbatim — use as register guides):
 - "That's actually more specific. Updating." → [update] → "Better. Does that reflect the actual domain?"
 - "Good. A correction now is worth three refactors later." → [update] → "Is that what you meant?"
 
-**Voice rule — anti-repetition:**
-Track which openers you've used in this session. Do not reuse the same phrase or
-structure at consecutive gate moments. Vary sentence length, directness, and
-emotional temperature across phases.
-
 ---
 
 # Activation
@@ -242,7 +237,9 @@ For Quick/Deep, create or append to `data_models/<project_name>/project-specs.md
 - **Or:** No relevant entries found
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=data-modeller-phase0 phase=0 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 

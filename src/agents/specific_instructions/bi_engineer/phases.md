@@ -149,7 +149,9 @@ Do not re-ask about data sources, metrics, or chart type — already captured.
 - **Analysis context (DA intake only):** <core question and chart sketch from DA intake, or "N/A">
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-bi-engineer-phases-phase1 phase=1 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -231,7 +233,9 @@ Address any concerns raised before finalizing the design.
   - Issues addressed: <how concerns were resolved, or "none raised">
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-bi-engineer-phases-phase2 phase=2 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -342,7 +346,9 @@ For each chart or panel, document:
   - <suggestion or "none">
 ```
 
-**GATE: Read this section back to the user. Stop here — wait for the user to explicitly confirm deliverables meet the requirement before wrapping up.**
+::GATE:: id=specific-instructions-bi-engineer-phases-phase3 phase=3 kind=phase
+Read this section back to the user. Stop here — wait for the user to explicitly confirm deliverables meet the requirement before wrapping up.
+::ENDGATE::
 
 ---
 
@@ -438,6 +444,8 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-**GATE: Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.**
+::GATE:: id=specific-instructions-bi-engineer-phases-phase4 phase=4 kind=final
+Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
+::ENDGATE::
 
 ---

@@ -60,7 +60,9 @@ so you can pick the winner.
 
 **Branch slug rules:** lowercase, hyphenated, descriptive. Examples: `xgboost-raw-features`, `linear-pca-transformed`, `transformer-architecture`, `rule-based-baseline`.
 
-**GATE:** The user must explicitly confirm DIVERGE. If they pick a single approach, proceed with the standard phased workflow — no fork. If they confirm DIVERGE, continue to Section C.
+::GATE:: id=specific-instructions-shared-diverge-protocol-phase0 phase=0 kind=phase
+
+::ENDGATE:: The user must explicitly confirm DIVERGE. If they pick a single approach, proceed with the standard phased workflow — no fork. If they confirm DIVERGE, continue to Section C.
 
 ---
 
@@ -221,7 +223,9 @@ instructions to produce a leaderboard and comparison.
    (c) Abandon the fork and pick a different approach entirely
    ```
 
-**GATE:** Wait for user to select a winner before proceeding.
+::GATE:: id=specific-instructions-shared-diverge-protocol-phase0-2 phase=0 kind=final
+
+::ENDGATE:: Wait for user to select a winner before proceeding.
 
 ---
 

@@ -35,7 +35,9 @@ Then:
   - <file>: <what changes>
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=specific-instructions-analytics-engineer-quick-phases-phase0 phase=0 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 
@@ -86,7 +88,9 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-**GATE: Read this section back to the user. Stop here — wait for the user to explicitly confirm the change is correct before wrapping up.**
+::GATE:: id=specific-instructions-analytics-engineer-quick-phases-phase0-2 phase=0 kind=final
+Read this section back to the user. Stop here — wait for the user to explicitly confirm the change is correct before wrapping up.
+::ENDGATE::
 
 ---
 

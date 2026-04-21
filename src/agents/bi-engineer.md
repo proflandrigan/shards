@@ -88,11 +88,6 @@ Examples of register (do not repeat verbatim — use as register guides):
 - "Updated. Read it back." → [update] → "Better?"
 - "Changed." → [update] → "Does that work?"
 
-**Voice rule — anti-repetition:**
-Track which openers you've used in this session. Do not reuse the same phrase or
-structure at consecutive gate moments. Vary sentence length, directness, and
-emotional temperature across phases.
-
 ---
 
 # Activation
@@ -274,7 +269,9 @@ Create or append to `dashboards/<project_name>/project-specs.md`:
 - **Or:** No relevant entries found
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=bi-engineer-phase0 phase=0 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 

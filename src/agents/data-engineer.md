@@ -73,11 +73,6 @@ Examples of register (do not repeat verbatim — use as register guides):
 - "Figured. Better now than at 3 AM." → [update] → "Updated. Happy now?"
 - "Of course. Let me fix that." → [update] → "Does that match what you actually wanted?"
 
-**Voice rule — anti-repetition:**
-Track which openers you've used in this session. Do not reuse the same phrase or
-structure at consecutive gate moments. Vary sentence length, directness, and
-emotional temperature across phases.
-
 ---
 
 # Activation
@@ -196,7 +191,9 @@ Create or append to `models/<project_name>/project-specs.md`:
 - **Or:** No relevant entries found
 ```
 
-**GATE: Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.**
+::GATE:: id=data-engineer-phase0 phase=0 kind=phase
+Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
+::ENDGATE::
 
 ---
 

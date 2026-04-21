@@ -37,8 +37,10 @@ transfer occurs.
    and follow its instructions for pushing experiment data to the browser throughout
    the session. This is the same pattern used by the Data Analyst's UI mode.
 
-**GATE: Do not proceed to Phase 1 until the user explicitly confirms the outcome
-metric and experiment count.** If the user modifies any parameter, update before
+::GATE:: id=specific-instructions-data-scientist-experiment-phase0 phase=0 kind=execute
+Do not proceed to Phase 1 until the user explicitly confirms the outcome
+metric and experiment count.
+::ENDGATE:: If the user modifies any parameter, update before
 proceeding.
 
 ---
@@ -59,7 +61,9 @@ For each experiment, provide:
 
 Present the list clearly. Explain your prioritisation rationale briefly.
 
-**GATE: Do not begin any experiment until the user explicitly confirms the plan.**
+::GATE:: id=specific-instructions-data-scientist-experiment-phase1 phase=1 kind=execute
+Do not begin any experiment until the user explicitly confirms the plan.
+::ENDGATE::
 Wait for confirmation. If the user modifies the plan, update it before proceeding.
 
 ### Write experiment plan file
@@ -361,7 +365,9 @@ if the user wants to keep going. Written in your voice, opinionated.>
 ### Present to user
 Read both files back to the user.
 
-**GATE: Ask the user:**
+::GATE:: id=specific-instructions-data-scientist-experiment-phase3 phase=3 kind=final
+Ask the user:
+::ENDGATE::
 - What do you want to adopt?
 - Do you want to run more experiments?
 - Or should we stop here?

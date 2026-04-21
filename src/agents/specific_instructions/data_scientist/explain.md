@@ -37,7 +37,9 @@ Surface the following from the loaded files:
 Keep the tone grounded: "Let me confirm we're looking at the right thing before I
 explain the wrong study."
 
-**GATE: Do not proceed to Phase 1 until the user confirms the orientation is correct.**
+::GATE:: id=specific-instructions-data-scientist-explain-phase0 phase=0 kind=phase
+Do not proceed to Phase 1 until the user confirms the orientation is correct.
+::ENDGATE::
 If the user corrects something (wrong project, wrong question), reload the right files
 and re-surface Phase 0 before advancing.
 

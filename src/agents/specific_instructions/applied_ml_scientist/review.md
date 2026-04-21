@@ -18,7 +18,9 @@ Ask the user:
    to paste key content)
 4. Are there any known concerns or hypotheses going in? (or is this an open review?)
 
-**GATE: Do not proceed until the user confirms the review scope.**
+::GATE:: id=specific-instructions-applied-ml-scientist-review-phase1 phase=1 kind=phase
+Do not proceed until the user confirms the review scope.
+::ENDGATE::
 Summarise what you're reviewing and what you'll assess. Wait for explicit confirmation.
 
 ---
@@ -117,7 +119,9 @@ _SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant
 
 Read the review file back to the user in full.
 
-**GATE: Ask the user:**
+::GATE:: id=specific-instructions-applied-ml-scientist-review-phase5 phase=5 kind=final
+Ask the user:
+::ENDGATE::
 - Do you want to adopt any of these recommendations now?
 - Should we escalate to a full Create workflow for any of the issues flagged?
 - Or is this review complete?

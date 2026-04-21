@@ -59,7 +59,7 @@ Every specialist phase ends with the same sequence:
 2. Read the section back to the user
 3. Wait for confirmation before advancing
 
-This is enforced by prose in each agent file — "**GATE: Do not proceed until the user confirms.**" Documentation IS the gate.
+Gates are now machine-enforced via `::GATE:: ... ::ENDGATE::` fences parsed by three Claude Code hooks (`Stop`, `PreToolUse`, `UserPromptSubmit`) installed under `.shards/hooks/gate-hook.js`. State is tracked in `.shards/gates/state.json`. Use `shards-gates status` for diagnostics and `shards-gates force-close` to unstick a session. Set `SHARDS_GATE_ENFORCE=0` to disable enforcement entirely.
 
 ### Task tool orchestration
 

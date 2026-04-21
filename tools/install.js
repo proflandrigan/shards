@@ -22,6 +22,7 @@ const COMMANDS_DEST = path.join(CLAUDE_DIR, "commands");
 const TEMPLATES_DEST = path.join(PROJECT_DIR, "templates");
 const SHARDS_DIR = path.join(PROJECT_DIR, ".shards");
 const UI_DEST = path.join(SHARDS_DIR, "ui");
+const HOOKS_DEST = path.join(SHARDS_DIR, "hooks");
 
 const MANIFEST_NAME = ".shards-manifest.json";
 
@@ -93,6 +94,32 @@ function uninstall() {
     }
   }
 
+  // Remove gate hook entries from settings.json
+  const settingsPath = path.join(CLAUDE_DIR, "settings.json");
+  if (fs.existsSync(settingsPath)) {
+    try {
+      let settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
+      if (settings.hooks) {
+        const filterHooks = (arr) =>
+          (arr || []).filter((entry) =>
+            !entry.hooks || !entry.hooks.some((h) => h.command && h.command.includes("gate-hook.js"))
+          );
+        settings.hooks.Stop = filterHooks(settings.hooks.Stop);
+        settings.hooks.PreToolUse = filterHooks(settings.hooks.PreToolUse);
+        settings.hooks.UserPromptSubmit = filterHooks(settings.hooks.UserPromptSubmit);
+      }
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+      console.log("  ✓ Removed gate hook entries from .claude/settings.json");
+    } catch {}
+  }
+
+  // Remove .shards/hooks/
+  const hooksDir = path.join(PROJECT_DIR, ".shards", "hooks");
+  if (fs.existsSync(hooksDir)) {
+    fs.rmSync(hooksDir, { recursive: true });
+    console.log("  ✓ Removed .shards/hooks/");
+  }
+
   fs.unlinkSync(manifestPath);
   console.log(`\n✅ Uninstalled ${removed} files.`);
   console.log(`  ℹ  .shards/knowledge/ preserved (persistent workspace memory)\n`);
@@ -146,18 +173,45 @@ function install() {
     console.log(`  ✓ .shards/ui/${f}`);
   }
 
+  // 5b. Copy gate-hook.js + gate-hook/ into .shards/hooks/
+  console.log("\n📦 Installing gate hooks...");
+  fs.mkdirSync(HOOKS_DEST, { recursive: true });
+  const gateHookSrc = path.join(PACKAGE_ROOT, "tools", "gate-hook.js");
+  const gateHookDirSrc = path.join(PACKAGE_ROOT, "tools", "gate-hook");
+  const gateHookDest = path.join(HOOKS_DEST, "gate-hook.js");
+  const gateHookDirDest = path.join(HOOKS_DEST, "gate-hook");
+  fs.copyFileSync(gateHookSrc, gateHookDest);
+  copyDir(gateHookDirSrc, gateHookDirDest);
+  console.log(`  ✓ .shards/hooks/gate-hook.js`);
+
   // 6. Seed .claude/settings.json with readonly preset and PreToolUse hook
   const settingsPath = path.join(CLAUDE_DIR, "settings.json");
   const relayScript = path.join(SHARDS_DIR, "ui", "relay.js");
+  const gateHookScript = gateHookDest;
+
   const preToolUseHook = {
     matcher: "Bash",
     hooks: [{ type: "command", command: `node ${relayScript} pre-tool-use` }],
+  };
+  const gateStopHook = {
+    matcher: "",
+    hooks: [{ type: "command", command: `node ${gateHookScript} stop` }],
+  };
+  const gatePreToolUseHook = {
+    matcher: "",
+    hooks: [{ type: "command", command: `node ${gateHookScript} pre-tool-use` }],
+  };
+  const gateUserPromptSubmitHook = {
+    matcher: "",
+    hooks: [{ type: "command", command: `node ${gateHookScript} user-prompt-submit` }],
   };
 
   if (!fs.existsSync(settingsPath)) {
     const defaultSettings = {
       hooks: {
-        PreToolUse: [preToolUseHook],
+        Stop: [gateStopHook],
+        PreToolUse: [preToolUseHook, gatePreToolUseHook],
+        UserPromptSubmit: [gateUserPromptSubmitHook],
       },
       permissions: {
         allow: [
@@ -180,18 +234,42 @@ function install() {
     fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
     console.log("\n🔐 Created .claude/settings.json with readonly permissions preset");
   } else {
-    // Ensure PreToolUse hook is present on existing installs
+    // Ensure hooks are present on existing installs
     let settings = {};
     try { settings = JSON.parse(fs.readFileSync(settingsPath, "utf8")); } catch {}
     if (!settings.hooks) settings.hooks = {};
+    let changed = false;
+
+    // Relay PreToolUse hook
     if (!settings.hooks.PreToolUse) settings.hooks.PreToolUse = [];
     const hasRelay = settings.hooks.PreToolUse.some((entry) =>
       entry.hooks && entry.hooks.some((h) => h.command && h.command.includes("relay.js"))
     );
-    if (!hasRelay) {
-      settings.hooks.PreToolUse.push(preToolUseHook);
+    if (!hasRelay) { settings.hooks.PreToolUse.push(preToolUseHook); changed = true; }
+
+    // Gate Stop hook
+    if (!settings.hooks.Stop) settings.hooks.Stop = [];
+    const hasGateStop = settings.hooks.Stop.some((entry) =>
+      entry.hooks && entry.hooks.some((h) => h.command && h.command.includes("gate-hook.js"))
+    );
+    if (!hasGateStop) { settings.hooks.Stop.push(gateStopHook); changed = true; }
+
+    // Gate PreToolUse hook
+    const hasGatePreToolUse = settings.hooks.PreToolUse.some((entry) =>
+      entry.hooks && entry.hooks.some((h) => h.command && h.command.includes("gate-hook.js") && h.command.includes("pre-tool-use"))
+    );
+    if (!hasGatePreToolUse) { settings.hooks.PreToolUse.push(gatePreToolUseHook); changed = true; }
+
+    // Gate UserPromptSubmit hook
+    if (!settings.hooks.UserPromptSubmit) settings.hooks.UserPromptSubmit = [];
+    const hasGateUserPrompt = settings.hooks.UserPromptSubmit.some((entry) =>
+      entry.hooks && entry.hooks.some((h) => h.command && h.command.includes("gate-hook.js"))
+    );
+    if (!hasGateUserPrompt) { settings.hooks.UserPromptSubmit.push(gateUserPromptSubmitHook); changed = true; }
+
+    if (changed) {
       fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-      console.log("\n🔐 Added missing PreToolUse hook to .claude/settings.json");
+      console.log("\n🔐 Updated .claude/settings.json with gate enforcement hooks");
     } else {
       console.log("\n🔐 .claude/settings.json already exists (preserved)");
     }

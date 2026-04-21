@@ -53,7 +53,9 @@ Wait for the user to choose. Once chosen, `cd` into that subdirectory (or prefix
 all subsequent shell commands with `cd <chosen-repo> &&`) so every `gh` and `git`
 command runs from the correct repo root.
 
-**GATE: Do not proceed until the repo is confirmed.**
+::GATE:: id=specific-instructions-syn-pr-review-phase0 phase=0 kind=phase
+Do not proceed until the repo is confirmed.
+::ENDGATE::
 
 ---
 
@@ -115,7 +117,9 @@ Display a summary:
 >
 > I'll walk through each thread. Ready to start?"
 
-**GATE: Wait for user confirmation before proceeding.**
+::GATE:: id=specific-instructions-syn-pr-review-phase0-2 phase=0 kind=phase
+Wait for user confirmation before proceeding.
+::ENDGATE::
 
 ---
 
@@ -167,7 +171,9 @@ Analyze the comment and the code. Determine whether this is:
 
 ### 3d. Gate — wait before applying
 
-**GATE:**
+::GATE:: id=specific-instructions-syn-pr-review-phase0-3 phase=0 kind=final
+
+::ENDGATE::
 > "Apply this fix? Type **y** to apply, **n** to skip, **edit** to describe your
 > own fix instead, or **done** to stop walking through comments."
 

@@ -304,6 +304,7 @@ loadInitial().then(function() {
   if (typeof renderModeIndicator === 'function') renderModeIndicator();
 });
 connect();
+startGatePoller();
 browseDir();
 initExplorerResize();
 initSplitResize();
