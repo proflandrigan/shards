@@ -39,7 +39,7 @@ Across all agents there are **121 "in full" directives** and **114 `Read .claude
 
 **Fix:** State once, at the top of each core file, that the phase file is loaded exactly once upon transition to Phase 1, regardless of origin. Remove the "When to load" bullet list — it promotes re-reads.
 
-### 3.2 Redundant Reviewer Verdict Protocol reload
+### 3.2 Redundant Reviewer Verdict Protocol reload ✅ COMPLETE
 `ml-engineer.md:364` reads `reviewer_verdict_protocol.md` once under "Behavioral Rules." But every phase file that invokes a reviewer repeats the verdict mapping inline anyway (see `ml_engineer/phases.md:311`, `:808`). Net effect: the 30-line protocol is loaded once and then re-stated in phase-local language multiple times, doubling the cognitive surface without improving clarity.
 
 **Fix:** Pick one location. The shared protocol or the phase file — not both.

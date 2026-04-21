@@ -320,7 +320,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns / Revise). Document the verdict and any resolution in the specs template below.
+Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 
 **Evaluation dimensions to design:**
 - **Correctness / accuracy:** Is the output factually correct? How do you measure this?
@@ -817,7 +817,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns / Revise). Document the verdict and any resolution in the Phase 7 specs.
+Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 
 **Review 4 — Syn (final sign-off):**
 

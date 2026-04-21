@@ -221,7 +221,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns / Revise). Document the verdict and any resolution in the specs template below.
+Apply the Reviewer Verdict Protocol (see shared protocol — `data-modeller` row).
 
 ### Document Deep Phase 3
 
@@ -702,7 +702,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol for each reviewer independently using their returned verdicts. For the Data Analyst: Aligned / Concerns raised. For the Data Modeller: Sound / Concerns / Revise. For the Data Engineer: Sound / Concerns. For the BI Engineer (if invoked): Suitable / Concerns / Redesign. Document all verdicts and any resolutions in the specs template below. Address all Halt-tier verdicts before invoking Syn.
+Apply the Reviewer Verdict Protocol independently for each reviewer (see shared protocol — `data-analyst`, `data-modeller`, `data-engineer`, `bi-engineer` rows). Address all Halt-tier verdicts before invoking Syn.
 
 **Then invoke Syn for final sign-off:**
 

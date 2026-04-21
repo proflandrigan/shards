@@ -156,7 +156,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns / Revise). Document the verdict and any resolution in the specs template below.
+Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 
 ### Document Phase 3
 
