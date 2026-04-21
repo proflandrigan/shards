@@ -228,7 +228,7 @@ Everything — routing, gating, persona, error handling, reviewer mapping — is
 
 **Fix:** A dev mode that symlinks `src/` → `.claude/` for hot-reload. Or a file watcher on `src/` that re-runs install.
 
-### 6.3 Eight "Distinguishing X from Y" paragraphs add 140 lines for an ambiguity Syn could just ask about
+### ~~6.3 Eight "Distinguishing X from Y" paragraphs add 140 lines for an ambiguity Syn could just ask about~~ ✅ DONE
 Syn's triage could resolve every "gray area" by asking one direct question to the user ("Is the goal to train a model, or to operate an existing one?"). Instead there are eight paragraphs of pre-computed rules the model must reason through. The asking approach is cheaper, clearer, and more robust.
 
 **Fix:** Replace the paragraphs with a routing-decision tree of at most 5 user-facing questions.

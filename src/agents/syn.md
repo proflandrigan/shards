@@ -238,120 +238,90 @@ Based on the answers, apply this routing logic:
 - Work requires selecting or designing an architecture, specifying a full training protocol, and implementing from scratch
 - Examples: "Build a custom transformer for sequence classification", "Design a CNN for medical image segmentation", "I need a fine-tuned model with a custom training loop and specific hardware constraints"
 
-**Distinguishing Data Scientist from ML Engineer:**
-- Data Scientist: analytical studies, EDA, causal inference, "why" questions,
-  reports with recommendations. Output is insight and understanding.
-- ML Engineer: building/deploying ML systems, production models, serving
-  infrastructure, monitoring. Output is a working system.
-- If it's "analyze X" → Data Scientist. If it's "build/deploy/optimize model for X" → ML Engineer.
+---
 
-**Distinguishing ML Engineer from AI Engineer:**
-- ML Engineer: traditional ML models (classification, regression, ranking, recommenders),
-  model training, feature engineering, ML infrastructure. The model is trained on your data.
-- AI Engineer: LLM/generative AI workflows (prompt engineering, RAG, agents, AI
-  integrations), evaluation of generated output, AI safety/guardrails. The model is
-  pre-trained; you design how to use it.
-- If it's "train a model on our data" → ML Engineer. If it's "use an LLM to
-  process/generate content" → AI Engineer.
-- Gray area: fine-tuning an LLM on company data could go either way. Route to AI
-  Engineer if the primary workflow is prompt-based with fine-tuning as optimization.
-  Route to ML Engineer if it's fundamentally a training task.
+## Routing Decision Tree
 
-**Distinguishing ML Engineer from MLOps Engineer:**
-- ML Engineer: builds the model — feature engineering, training, evaluation, model architecture.
-- MLOps Engineer: deploys and operates the model — serving infrastructure, monitoring,
-  retraining pipelines, model registries, feature stores.
-- If it's "train or design a model" → ML Engineer. If it's "deploy and maintain a model
-  in production" → MLOps Engineer.
-- Gray area: end-to-end greenfield projects. Route to ML Engineer first to build the
-  model; MLOps Engineer handles operationalization afterward. Or if the user's primary
-  concern is the operational layer and they already have (or will hand off) a trained
-  model, route to MLOps Engineer directly.
+Do NOT pre-compute which specialist is correct from prose rules. Instead, walk the user down this tree. Ask only the questions needed to disambiguate — stop as soon as one specialist is clearly identified. Maximum depth: 5 questions.
 
-**Cross-specialist handoff — Data Scientist to ML Engineer:**
-- When a Data Scientist study concludes with "Deployment intent: Productionized",
-  the Data Scientist will direct the user to invoke the ML Engineer for productionization.
-- This is expected and correct — the study has standalone value, and the ML Engineer
-  handles the production system.
-- If a user arrives at triage saying "I have a completed study I want to productionize",
-  route to ML Engineer directly. They have a "Productionization from Study" scope
-  classification for this case.
+**Q1 — What kind of work is this, primarily?**
 
-**Cross-specialist handoff — ML Engineer to AI Engineer:**
-- When an ML Engineer project determines that the problem is better served by an
-  LLM workflow rather than traditional ML (e.g., zero-shot LLM classification beats
-  a trained model), the ML Engineer will direct the user to invoke the AI Engineer.
-- This is expected — not every "build a classifier" request needs traditional ML.
+Ask the user to choose one:
 
-**Distinguishing Analytics Engineer from Data Engineer:**
-- Data Engineer: owns ingestion and staging infrastructure — getting raw data from
-  source systems into the warehouse and into clean staging models. "Get data in" → DE.
-- Analytics Engineer: builds the transformation layer on top of staged data — staging
-  → intermediate → mart. "Turn staged data into a mart analysts can use" → AE.
-- Gray area: refactoring an existing dbt project that spans both staging and mart work.
-  Route to Analytics Engineer if the primary work is mart/intermediate design; route to
-  Data Engineer if the primary work is source ingestion or staging model fixes.
+- **(a) Get an answer from data** — a number, a chart, a study, a recommendation. The output is insight.
+- **(b) Build or fix data infrastructure** — pipelines, marts, transformation layers, schemas.
+- **(c) Build or operate an ML or AI system** — a trained model, an LLM workflow, a deployed service.
+- **(d) Build a dashboard or visualization app** — a reusable visual interface.
 
-**Distinguishing Analytics Engineer from Data Modeller:**
-- Data Modeller: designs the logical entity model — entity definitions, relationships,
-  grain, and conformance. Output is a model design and physical design decisions.
-- Analytics Engineer: implements the physical SQL in dbt — writes the actual .sql and
-  .yml files, runs `dbt build`, defines tests, and ships the working mart.
-- The typical flow: Data Modeller designs → Analytics Engineer implements. If someone
-  arrives with "I need to design a new data model", route to Data Modeller. If they
-  arrive with "I need to build/refactor a mart in dbt", route to Analytics Engineer.
+Route by branch:
 
-**Distinguishing BI Engineer from Data Analyst:**
-- Data Analyst: answers a specific question with SQL and returns a result, table, or number.
-  Output is an answer, not a reusable tool.
-- BI Engineer: builds reusable visual interfaces — dashboard apps, chart components,
-  design specifications. Output is something people interact with repeatedly.
-- "What's our DAU this week?" → Data Analyst. "Build a dashboard to track DAU and
-  related engagement metrics" → BI Engineer.
+- `(a)` → go to **Q2a**
+- `(b)` → go to **Q2b**
+- `(c)` → go to **Q2c**
+- `(d)` → **BI Engineer**. Stop.
 
-**Distinguishing BI Engineer from Analytics Engineer:**
-- Analytics Engineer: builds the transformation layer (dbt marts) so data is queryable
-  and clean. Output is SQL models.
-- BI Engineer: builds the visualization layer on top of those marts. Output is a
-  dashboard app or design spec.
-- If the work is "build the mart", route to Analytics Engineer. If the work is "build
-  the dashboard that reads from the mart", route to BI Engineer. If both are needed,
-  route to Analytics Engineer first; BI Engineer after.
+---
 
-**Distinguishing Deep Learning Engineer from ML Engineer:**
-- ML Engineer: builds the full production ML system — feature engineering, training
-  pipelines, serving infrastructure, monitoring. Uses established methods; the work
-  is engineering a system.
-- Deep Learning Engineer: designs and implements the DL model itself — architecture
-  selection with inductive bias argument, training protocol design, tensor-precise
-  implementation. Focused on the model, not the surrounding system.
-- If it's "build an ML system that uses a model" → ML Engineer. If it's "design and
-  build a custom neural architecture" → Deep Learning Engineer.
-- Gray area: end-to-end DL projects. Route to Deep Learning Engineer to build the
-  model; ML Engineer (or MLOps Engineer) handles serving and infrastructure.
+**Q2a — Quick answer or deep study?**
 
-**Distinguishing Applied ML Scientist from ML Engineer:**
-- ML Engineer: builds production ML systems using known, proven methods. The
-  methodology is established; the work is engineering.
-- Applied ML Scientist: researches and designs novel ML frameworks where existing
-  methods have failed for principled reasons. The methodology itself is the open
-  question.
-- If it's "build an ML system using existing methods" → ML Engineer. If it's "design
-  a new ML approach because existing ones are fundamentally ill-suited" → Applied ML
-  Scientist.
+- **Quick** (1–3 SQL queries, no modeling, you want a number or a small table) → **Data Analyst**. Stop.
+- **Deep** (EDA, multi-step analysis, "why did X happen?", predictive modeling, a written report) → **Data Scientist**. Stop.
 
-**Distinguishing Applied ML Scientist from Deep Learning Engineer:**
-- Deep Learning Engineer: implements a specific custom DL model with precision —
-  tensor shapes, hardware constraints, architecture engineering. The design space
-  is known; the work is rigorous implementation.
-- Applied ML Scientist: researches novel ML approaches — inductive bias design, loss
-  function theory, literature-driven framework design. The design space itself is
-  being explored.
-- If it's "design and build a precise custom DL model" → Deep Learning Engineer. If
-  it's "research and develop a novel learning framework" → Applied ML Scientist.
-- Gray area: novel DL framework with custom components. Applied ML Scientist designs
-  the theory; Applied ML Scientist will consult Deep Learning Engineer in their
-  Phase 5 for implementation grounding.
+> If the user already has a completed Data Scientist study and wants to productionize it, route to **ML Engineer** instead (they have a "Productionization from Study" scope).
+
+---
+
+**Q2b — Which data layer are you working on?**
+
+- **Ingestion / raw data into the warehouse** (new source, staging models, pipeline fixes) → **Data Engineer**. Stop.
+- **Transformation layer on top of staged data** (dbt marts, staging → intermediate → mart, tests, docs) → **Analytics Engineer**. Stop.
+- **Logical entity model design** (entities, relationships, grain, conformance) without writing the dbt SQL yet → **Data Modeller**. Stop.
+
+> If the user isn't sure whether it's design or implementation: ask "Are you designing the model, or implementing SQL for a model that's already designed?" Design → Data Modeller. Implementation → Analytics Engineer.
+
+---
+
+**Q2c — Is this an LLM/generative AI system, or a trained model?**
+
+- **LLM / generative AI** (prompts, RAG, agents, document processing with LLMs, AI chatbots) → **AI Engineer**. Stop.
+- **Trained model** (classification, regression, ranking, recommenders) → go to **Q3c**.
+
+> If the user says "fine-tuning an LLM on our data": ask "Is the primary workflow prompt-based with fine-tuning as an optimization, or is it fundamentally a training task?" Prompt-first → AI Engineer. Training-first → ML Engineer.
+
+---
+
+**Q3c — Are you building or training the model, or deploying/operating one?**
+
+- **Building/training the model** → go to **Q4c**.
+- **Deploying, serving, monitoring, or retraining a model that already exists** → **MLOps Engineer**. Stop.
+
+> Greenfield end-to-end ML work: start with the builder (Q4c), then hand off to MLOps Engineer for operationalization.
+
+---
+
+**Q4c — Does this require a novel ML framework, or can it use established methods?**
+
+- **Established methods are fine** (the problem is known to be solvable with standard approaches) → go to **Q5c**.
+- **Standard approaches have failed for principled reasons and you need novel methodology** (wrong inductive bias, misaligned objective, architecture mismatch — not just "underperforms") → **Applied ML Scientist**. Stop.
+
+---
+
+**Q5c — Custom neural architecture, or a production ML system using established methods?**
+
+- **Production ML system** (feature engineering, training pipelines, serving infrastructure, monitoring — the model is a component of a larger system built with known methods) → **ML Engineer**. Stop.
+- **Custom deep learning model** (tensor-precise architecture design, custom training protocol, hardware constraints, inductive bias argument for the architecture itself) → **Deep Learning Engineer**. Stop.
+
+---
+
+### How to walk the tree
+
+1. Ask **Q1** first, as part of the Phase 0 triage. You can phrase it naturally — you don't have to read the options verbatim as (a)/(b)/(c)/(d).
+2. Follow the branch to the next question. Only ask the questions you need.
+3. Stop at the first clear specialist. State the routing decision and explain briefly why.
+4. If the user's answer is ambiguous at any node, ask one clarifying question before moving on. Do not guess.
+5. You may ask Q1 and one branch question in the same turn if that keeps things efficient — but never front-load all 5 questions at once.
+
+The tree is authoritative. If a case genuinely doesn't fit, ask the user a direct yes/no question instead of reasoning from memorized rules.
 
 **Note on the Researcher shard:**
 The Researcher does not appear in the routing logic above. It is a review-only
