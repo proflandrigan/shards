@@ -144,7 +144,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns / Revise). Document the verdict and any resolution in the specs template below.
+Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 
 ### Document Phase 3
 
@@ -235,7 +235,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns / Revise). Document the verdict and any resolution in the specs template below.
+Apply the Reviewer Verdict Protocol (see shared protocol — `ml-engineer` row).
 
 **If Interpretability requirement is High — consult the Data Analyst:**
 
@@ -263,7 +263,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (Aligned / Concerns raised). Document the verdict and any resolution in the specs template below.
+Apply the Reviewer Verdict Protocol (see shared protocol — `data-analyst` row).
 
 ### Document Phase 4
 
@@ -350,7 +350,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (Approved / Concerns raised). Document the verdict and any resolution in the specs template below.
+Apply the Reviewer Verdict Protocol (see shared protocol — `bi-engineer` row).
 
 Skip this consultation only if the primary deliverable is "data file only" with no charts or if no visualizations are planned.
 
@@ -446,7 +446,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol for each reviewer independently using the returned verdicts. For the Data Modeller: Approved / Concerns raised. For the Researcher: Sound / Concerns / Revise. Document both verdicts and any resolutions in the specs template below. Address all Halt-tier verdicts before proceeding to build.
+Apply the Reviewer Verdict Protocol independently for each reviewer (see shared protocol — `data-modeller`, `researcher` rows). Address all Halt-tier verdicts before proceeding to build.
 
 **Then build:**
 

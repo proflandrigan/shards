@@ -180,7 +180,7 @@ If it does:
      `Proceed as contract-first design — user confirmed`. Add:
      `**Data environment:** GREENFIELD — No source data detected. Contract-first design only.`
 
-After the Data Modeller responds (and any greenfield path is resolved), assess findings against the Reviewer Verdict Protocol: no quality concerns = Proceed; data quality notes with issues = Proceed with caveats; grain violations or structural problems = Halt and fix. Document the assessment in the specs template below.
+After the Data Modeller responds (and any greenfield path is resolved), apply the Reviewer Verdict Protocol (see shared protocol — `data-modeller` row).
 
 ### Document Deep Phase 2
 

@@ -314,7 +314,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Consider Alternatives / Revise). Document the verdict and any resolution in the specs template below.
+Apply the Reviewer Verdict Protocol (see shared protocol — `applied-ml-scientist` row).
 
 **If the candidate model involves deep learning** — neural networks for image,
 text, audio, point cloud, or graph data, transformer variants, CNNs, RNNs, or any
@@ -353,7 +353,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (DEPLOY / OPTIMIZE / REDESIGN). Document the verdict and any resolution in the specs template below.
+Apply the Reviewer Verdict Protocol (see shared protocol — `deep-learning-engineer` row).
 
 **If Interpretability is High — consult the Data Analyst:**
 
@@ -383,7 +383,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (Aligned / Concerns raised). Document the verdict and any resolution in the specs template below.
+Apply the Reviewer Verdict Protocol (see shared protocol — `data-analyst` row).
 
 **If the evaluation involves statistical inference** — A/B testing, confidence
 intervals, power analysis, significance testing, or experiment design for
@@ -415,7 +415,7 @@ Task(
 )
 ```
 
-Apply the Reviewer Verdict Protocol using the returned verdict (Sound / Concerns / Revise). Document the verdict and any resolution in the specs template below.
+Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 
 Define:
 - **Baseline model:** Simple, fast, interpretable. The floor to beat.
