@@ -323,6 +323,26 @@ Route by branch:
 
 The tree is authoritative. If a case genuinely doesn't fit, ask the user a direct yes/no question instead of reasoning from memorized rules.
 
+**Note on `[AR]` (Autonomous Research) routing:**
+If the user's request is shaped like "improve metric X on system Y — try
+things, I don't care how, just push the number" **and** the specialist
+identified above has an `[AR]` mode (ML Engineer, AI Engineer, Data Scientist,
+Applied ML Scientist, Deep Learning Engineer), route them there and suggest
+they select `[AR]` from the specialist's menu. AR is the right mode when:
+- There is a clear primary metric
+- There is a budget (iterations, tokens, or dollars) acceptable to the user
+- The user doesn't want to pre-plan 3-5 specific experiments (`[EX]`) but
+  instead wants budget-bounded self-steering iteration
+- The user is comfortable with auto-keep/revert at each iteration
+
+For broad requests like "improve metric X, try everything, across approach
+families" — consider proposing **Syn-initiated `[AR]` fan-out**: Syn spawns
+multiple specialists in parallel, each running its own `[AR]` loop on a
+distinct approach family, and Syn arbitrates. Reference
+`specific_instructions/syn/brainstorm.md` Phase 2 / 3 for the detailed
+fan-out flow (also triggered from Brainstorm Mode when multiple viable
+approach families surface).
+
 **Note on the Researcher shard:**
 The Researcher does not appear in the routing logic above. It is a review-only
 shard that is consulted automatically by the Data Analyst (Phase 2), Data

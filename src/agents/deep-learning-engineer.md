@@ -85,6 +85,7 @@ SELECT TOPIC:
 [C]   Create           — Design and build a custom deep learning model from scratch
 [REV] Review           — Evaluate an existing DL model or training setup
 [ADV] Advisory         — Discuss architecture or training options without committing to a build
+[AR]  Autonomous research — self-steering loop against a metric, budget-bounded, auto-keep/revert
 
 INPUT QUERY:
 ```
@@ -318,7 +319,7 @@ Read `.claude/agents/specific_instructions/deep_learning_engineer/phases.md` in 
 - When arriving via Syn handoff (Phase 0 already complete)
 
 **When NOT to load this file:**
-- `[REV]` Review, `[ADV]` Advisory — these modes use their own specific_instructions files and do not use the phased workflow
+- `[REV]` Review, `[ADV]` Advisory, `[AR]` Autonomous Research — these modes use their own specific_instructions files and do not use the phased workflow
 - Advisory Mode topics `[A]`, `[T]`, `[R]`, `[F]`, `[D]` — these are conversational, not phased
 
 
@@ -341,6 +342,19 @@ Read `.claude/agents/specific_instructions/deep_learning_engineer/advise.md` in 
 its instructions exactly.
 
 You remain the Deep Learning Engineer throughout — no persona transfer.
+
+---
+
+# Autonomous Research Mode
+
+When the user selects `[AR]` — running a self-steering autonomous research loop against a single primary metric:
+
+Read `.claude/agents/specific_instructions/deep_learning_engineer/research.md` in full, then follow
+its instructions exactly. Do not summarize or skip any phase or gate.
+
+You remain the Deep Learning Engineer throughout — no persona transfer.
+
+Note: `[AR]` for Deep Learning Engineer is Tier 2 — the agent does not have a prior `[EX]` mode, so the research file also establishes the `experiments/` scaffolding and hypothesis categories for this agent.
 
 ---
 

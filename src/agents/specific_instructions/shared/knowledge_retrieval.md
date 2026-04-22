@@ -8,7 +8,15 @@ type: reference
 
 This protocol runs once, between Phase 0 confirmation and Phase 1 start. It is non-blocking — if the ledger doesn't exist or is empty, document "N/A" and proceed.
 
-**Scope:** Build mode only (Phase 0 → final). Do NOT run in Review, Advise, Service, Explain, Experiment, or Prompt Lab modes.
+**Scope:** Build mode (Phase 0 → final), and Autonomous Research (`[AR]`) mode (Phase 0 setup). Do NOT run in Review, Advise, Service, Explain, Experiment (`[EX]`/`[EXP]`), or Prompt Lab modes.
+
+**AR entry point.** `[AR]` mode calls this protocol from `autonomous_research.md` Section A.1, before the research brief is drafted. Prior AR runs in the ledger may have already established saturation points, known-leaky features, or architectural dead ends that should shape hypotheses from iteration 1. The match criteria most useful for AR are:
+
+- **Metric** — has a prior AR or study measured the same primary metric on similar data?
+- **Domain / dataset / entity** — normal domain match.
+- **Approach family** — prior runs that explored the same model family (gradient boosting, transformer, prompt-chain, etc.) — these often document why a family is or is not a fit.
+
+Add these keywords to the extraction step alongside the normal domain keywords.
 
 **Syn handoff sessions:** Still run this protocol. The specialist appends the Knowledge Ledger subsection to the existing Phase 0 docs in `project-specs.md`.
 

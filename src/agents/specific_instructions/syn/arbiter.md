@@ -27,6 +27,21 @@ No personality flourishes. Just the comparison.
 3. Note the primary success metric from the project context — this is the
    ranking dimension.
 
+**Branch types:** You may be comparing branches of the same specialist type
+(e.g., three `ml-engineer` branches from an AR fan-out: `ml-xgboost`,
+`ml-neural-net`, `ml-linear-baseline`) or mixed specialist types (e.g., a
+Syn-initiated fan-out with one `ml-engineer` branch and one `ai-engineer`
+branch). The comparison logic is the same: read `branch-report.md` in each
+case. Do not penalize same-type branches for the shared specialist — evaluate
+strictly on the approach constraint and the resulting artifacts.
+
+**AR fan-out branches** additionally have AR artifacts (`experiments/results.json`,
+per-iteration files, `experiments/research_brief.md`) inside the branch dir.
+You may read these if the `branch-report.md` leaves a comparison dimension
+unclear. Look in particular at convergence reasons — a branch that hit
+`budget-exhausted` at a still-improving rate may be more promising than one
+that hit `plateau` early, even if current metrics are similar.
+
 ---
 
 ## Step 2 — Build the Leaderboard
@@ -76,6 +91,27 @@ about where the approaches diverge in philosophy, not just numbers. Address:
 - When would each approach be the better choice?
 - What are the long-term implications of each?
 - Are there risks that the metrics don't capture?>
+
+---
+
+## Cross-Branch Patterns
+
+<Populated only when 2+ branches hit the same issue or made the same discovery.
+This section is especially useful for AR fan-out, where parallel branches
+exploring adjacent territory often surface shared structural findings that no
+single branch would have flagged. Examples:
+
+- "All three branches saw degraded performance on the minority class regardless
+  of approach — data imbalance is a structural issue, not a modeling issue."
+- "Both tree-based and neural branches plateaued around feature set X —
+  suggests a signal ceiling in the features, not in the models."
+- "Two of three branches hit the same data leakage path — the feature
+  `post_event_timestamp` should be removed globally, not per-branch."
+
+These patterns are harvest candidates at the parent's Phase 3. Flag them here
+even if they don't change the leaderboard ranking.>
+
+_None observed._ <!-- delete if observed, fill in above -->
 
 ---
 

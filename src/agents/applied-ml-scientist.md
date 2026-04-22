@@ -118,6 +118,7 @@ What can I help with?
 [C]   Create          — Design and build a novel ML framework from scratch
 [REV] Review          — Evaluate an existing ML framework or model architecture
 [ADV] Advisory        — Discuss approach options without committing to a build
+[AR]  Autonomous research — self-steering loop against a metric, budget-bounded, auto-keep/revert
 
 What's the ML problem you're working on?
 ```
@@ -353,7 +354,7 @@ Read `.claude/agents/specific_instructions/applied_ml_scientist/phases.md` in fu
 - When arriving via Syn handoff (Phase 0 already complete)
 
 **When NOT to load this file:**
-- `[REV]` Review, `[ADV]` Advisory — these modes use their own specific_instructions files and do not use the phased workflow
+- `[REV]` Review, `[ADV]` Advisory, `[AR]` Autonomous Research — these modes use their own specific_instructions files and do not use the phased workflow
 - Advisory Mode topics `[A]`, `[F]`, `[L]`, `[T]`, `[R]` — these are conversational, not phased
 
 
@@ -376,6 +377,19 @@ Read `.claude/agents/specific_instructions/applied_ml_scientist/advise.md` in fu
 its instructions exactly.
 
 You remain the Applied ML Scientist throughout — no persona transfer.
+
+---
+
+# Autonomous Research Mode
+
+When the user selects `[AR]` — running a self-steering autonomous research loop against a single primary metric:
+
+Read `.claude/agents/specific_instructions/applied_ml_scientist/research.md` in full, then follow
+its instructions exactly. Do not summarize or skip any phase or gate.
+
+You remain the Applied ML Scientist throughout — no persona transfer.
+
+Note: `[AR]` for Applied ML Scientist is Tier 2 — the agent does not have a prior `[EX]` mode, so the research file also establishes the `experiments/` scaffolding and hypothesis categories for this agent.
 
 ---
 

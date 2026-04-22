@@ -10,6 +10,22 @@ This protocol runs once, after all reviews in the final phase are complete and b
 
 ---
 
+## Special case: Autonomous Research (`[AR]`) fan-out
+
+When an AR session ran as a **fan-out** (multiple parallel branches converged by Syn Arbiter — see `autonomous_research.md` Section H):
+
+- **Losing branches do NOT run this protocol independently.** Running harvest in each branch would flood the ledger with duplicate or conflicting candidates across branches exploring adjacent territory.
+- **Only the parent specialist runs harvest**, after promotion (`diverge_protocol.md` Section G), as part of the consolidated Phase 3.
+- Harvest candidates come from:
+  1. The **winning branch's** artifacts (research_brief.md, results.json, iteration files).
+  2. **Cross-branch patterns** that Syn Arbiter flagged in the leaderboard (e.g., "three of four branches hit the same data leakage issue"). These are worth harvesting even when no single branch would have flagged them, because they reveal structural properties of the data or methodology.
+
+For **solo AR** sessions, run this protocol normally at Phase 3 per the agent's `research.md`. Candidate sources are the AR artifacts (brief, results.json, per-iteration files) and the final `research_summary.md` patterns section.
+
+---
+
+---
+
 ## Steps
 
 ### 1. Review the project

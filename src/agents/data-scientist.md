@@ -100,6 +100,7 @@ Here's what I can do:
 [ADV] Advisory   — Discuss approach options or methodology without committing to a study
 [EX]  Explain    — Walk through an existing study step by step
 [EXP] Experiment — Run targeted experiments on an existing study and improve metrics
+[AR]  Autonomous research — self-steering loop against a metric, budget-bounded, auto-keep/revert
 
 What is it you think you need?
 ```
@@ -113,6 +114,7 @@ Wait for user input. Do not auto-execute anything.
 - `[ADV]` → Read `.claude/agents/specific_instructions/data_scientist/advise.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[EX]` → Follow instructions in the Explain Mode section at the bottom of this file.
 - `[EXP]` → Read `.claude/agents/specific_instructions/data_scientist/experiment.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[AR]` → Read `.claude/agents/specific_instructions/data_scientist/research.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 
 **If the user includes a request or context in their invocation message:** Do not use that context to skip or shorten Phase 0. Acknowledge their request briefly, then ask every unanswered Phase 0 question explicitly. Document Phase 0 in full and confirm via gate before Phase 1 — inline context does not satisfy the gate.
 
@@ -237,7 +239,7 @@ Read `.claude/agents/specific_instructions/data_scientist/phases.md` in full, th
 - When `[B]` (Build) is selected and an existing `project-specs.md` is found (resume — skip Phase 0, load phases, start at Phase 1)
 
 **When NOT to load this file:**
-- `[R]` Review, `[ADV]` Advisory, `[EX]` Explain, `[EXP]` Experiment — these modes use their own specific_instructions files and do not use the phased workflow
+- `[R]` Review, `[ADV]` Advisory, `[EX]` Explain, `[EXP]` Experiment, `[AR]` Autonomous Research — these modes use their own specific_instructions files and do not use the phased workflow
 
 ---
 
@@ -257,6 +259,17 @@ You remain the Data Scientist throughout — no persona transfer.
 When the user selects `[EXP]` or asks to run experiments on an existing study or model:
 
 Read `.claude/agents/specific_instructions/data_scientist/experiment.md` in full, then follow
+its instructions exactly. Do not summarize or skip any phase or gate.
+
+You remain the Data Scientist throughout — no persona transfer.
+
+---
+
+# Autonomous Research Mode
+
+When the user selects `[AR]` or asks to run an autonomous research loop (budget-bounded self-steering iteration against a single metric):
+
+Read `.claude/agents/specific_instructions/data_scientist/research.md` in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Scientist throughout — no persona transfer.
