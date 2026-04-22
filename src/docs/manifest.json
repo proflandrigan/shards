@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "title": "Shards Developer Guide",
+  "sections": [
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "pages": [
+        { "id": "intro", "title": "What Is Shards?", "file": "README.md" },
+        { "id": "install", "title": "Install & Setup", "file": "01-getting-started/install.md" },
+        { "id": "first-session", "title": "Your First Session", "file": "01-getting-started/first-session.md" },
+        { "id": "concepts", "title": "Core Concepts", "file": "01-getting-started/concepts.md" }
+      ]
+    },
+    {
+      "id": "agents",
+      "title": "Agents",
+      "pages": [
+        { "id": "overview", "title": "Agent Taxonomy", "file": "02-agents/overview.md" },
+        { "id": "syn", "title": "Syn — Orchestrator", "file": "02-agents/syn.md" },
+        { "id": "data-analyst", "title": "Data Analyst", "file": "02-agents/data-analyst.md" },
+        { "id": "data-scientist", "title": "Data Scientist", "file": "02-agents/data-scientist.md" },
+        { "id": "ml-engineer", "title": "ML Engineer", "file": "02-agents/ml-engineer.md" },
+        { "id": "ai-engineer", "title": "AI Engineer", "file": "02-agents/ai-engineer.md" },
+        { "id": "data-engineer", "title": "Data Engineer", "file": "02-agents/data-engineer.md" },
+        { "id": "data-modeller", "title": "Data Modeller", "file": "02-agents/data-modeller.md" },
+        { "id": "analytics-engineer", "title": "Analytics Engineer", "file": "02-agents/analytics-engineer.md" },
+        { "id": "bi-engineer", "title": "BI Engineer", "file": "02-agents/bi-engineer.md" },
+        { "id": "applied-ml-scientist", "title": "Applied ML Scientist", "file": "02-agents/applied-ml-scientist.md" },
+        { "id": "deep-learning-engineer", "title": "Deep Learning Engineer", "file": "02-agents/deep-learning-engineer.md" },
+        { "id": "mlops-engineer", "title": "MLOps Engineer", "file": "02-agents/mlops-engineer.md" },
+        { "id": "backend-engineer", "title": "Backend Engineer", "file": "02-agents/backend-engineer.md" },
+        { "id": "researcher", "title": "Researcher", "file": "02-agents/researcher.md" },
+        { "id": "academic", "title": "Academic", "file": "02-agents/academic.md" }
+      ]
+    },
+    {
+      "id": "protocols",
+      "title": "Shared Protocols",
+      "pages": [
+        { "id": "gate-pattern", "title": "The Gate Pattern", "file": "03-protocols/gate-pattern.md" },
+        { "id": "behavioral-rules", "title": "Behavioral Rules", "file": "03-protocols/behavioral-rules.md" },
+        { "id": "reviewer-verdicts", "title": "Reviewer Verdicts", "file": "03-protocols/reviewer-verdicts.md" },
+        { "id": "diverge", "title": "DIVERGE (Time-Travel Branches)", "file": "03-protocols/diverge.md" },
+        { "id": "autonomous-research", "title": "Autonomous Research", "file": "03-protocols/autonomous-research.md" },
+        { "id": "experiment-versioning", "title": "Experiment Versioning", "file": "03-protocols/experiment-versioning.md" },
+        { "id": "knowledge-ledger", "title": "Knowledge Ledger", "file": "03-protocols/knowledge-ledger.md" },
+        { "id": "join-path", "title": "Join-Path Protocol", "file": "03-protocols/join-path.md" }
+      ]
+    },
+    {
+      "id": "ui",
+      "title": "Shards UI",
+      "pages": [
+        { "id": "overview", "title": "UI Overview", "file": "04-ui/overview.md" },
+        { "id": "activity-bar", "title": "Activity Bar", "file": "04-ui/activity-bar.md" },
+        { "id": "chat-pane", "title": "Chat Pane", "file": "04-ui/chat-pane.md" },
+        { "id": "file-editing", "title": "File Editing", "file": "04-ui/file-editing.md" },
+        { "id": "panels", "title": "Agent-Pushed Panels", "file": "04-ui/panels.md" },
+        { "id": "pinboard-selection", "title": "Pinboard & Selection", "file": "04-ui/pinboard-selection.md" },
+        { "id": "git", "title": "Git & PR Review", "file": "04-ui/git.md" },
+        { "id": "code-intel", "title": "Code Intelligence", "file": "04-ui/code-intel.md" },
+        { "id": "quick-open-palette", "title": "Quick Open & Command Palette", "file": "04-ui/quick-open-palette.md" },
+        { "id": "knowledge-map", "title": "Knowledge Map", "file": "04-ui/knowledge-map.md" },
+        { "id": "settings-permissions", "title": "Settings & Permissions", "file": "04-ui/settings-permissions.md" },
+        { "id": "keybindings", "title": "Keybindings Reference", "file": "04-ui/keybindings.md" }
+      ]
+    },
+    {
+      "id": "commands",
+      "title": "Commands",
+      "pages": [
+        { "id": "reference", "title": "Slash Command Reference", "file": "05-commands/reference.md" }
+      ]
+    },
+    {
+      "id": "outputs",
+      "title": "Outputs",
+      "pages": [
+        { "id": "directory-map", "title": "Output Directory Map", "file": "06-outputs/directory-map.md" }
+      ]
+    },
+    {
+      "id": "workflows",
+      "title": "Example Workflows",
+      "pages": [
+        { "id": "quick-analysis", "title": "Quick Analysis", "file": "07-workflows/quick-analysis.md" },
+        { "id": "deep-study-to-production", "title": "Study → Production ML", "file": "07-workflows/deep-study-to-production.md" },
+        { "id": "ai-eval-first", "title": "AI Eval-First", "file": "07-workflows/ai-eval-first.md" },
+        { "id": "diverge-exploration", "title": "Parallel Exploration (DIVERGE)", "file": "07-workflows/diverge-exploration.md" }
+      ]
+    }
+  ]
+}

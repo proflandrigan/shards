@@ -889,6 +889,54 @@ function createHandler() {
       }
     }
 
+    // ─── Developer Guide (docs) ──────────────────────────────────────────────
+    // Serves the Shards Developer Guide from .shards/ui/docs/ — no auth,
+    // public static docs. __dirname here is the .shards/ui/ directory in the
+    // target install.
+    const DOCS_DIR = path.join(__dirname, 'docs');
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/docs/manifest') {
+      try {
+        const raw = fs.readFileSync(path.join(DOCS_DIR, 'manifest.json'), 'utf8');
+        res.writeHead(200, { ...cors, 'Content-Type': 'application/json' });
+        res.end(raw);
+      } catch {
+        res.writeHead(404, { ...cors });
+        res.end('Guide manifest not found');
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/docs/page') {
+      const file = parsedUrl.searchParams.get('file');
+      if (!file) {
+        res.writeHead(400, { ...cors });
+        res.end('Missing file');
+        return;
+      }
+      const filePath = path.join(DOCS_DIR, file);
+      const resolved = path.resolve(filePath);
+      if (!resolved.startsWith(path.resolve(DOCS_DIR) + path.sep)) {
+        res.writeHead(403, { ...cors });
+        res.end('Forbidden');
+        return;
+      }
+      if (!resolved.endsWith('.md')) {
+        res.writeHead(400, { ...cors });
+        res.end('Only .md files are served');
+        return;
+      }
+      try {
+        const content = fs.readFileSync(resolved, 'utf8');
+        res.writeHead(200, { ...cors, 'Content-Type': 'text/markdown; charset=utf-8' });
+        res.end(content);
+      } catch {
+        res.writeHead(404, { ...cors });
+        res.end('Not found');
+      }
+      return;
+    }
+
     // ─── Knowledge Ledger bulk-read ──────────────────────────────────────────
     if (req.method === 'GET' && parsedUrl.pathname === '/knowledge/entries') {
       if (!checkAuth(req, parsedUrl)) { rejectAuth(res, cors); return; }

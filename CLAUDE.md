@@ -19,13 +19,13 @@ node tools/shards-ui.js stop   # stop the UI server
 node tools/shards-ui.js status # check if UI server is running
 ```
 
-The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.claude/commands/`, `src/templates/` → `templates/`, and `src/ui/` → `.shards/ui/` in the target project. It also creates output directories (`analysis/`, `studies/`, `models/`, `data_models/`, `services/`, `research/`, `dashboards/`, `brainstorm/`, `fixes/`), sets up the Knowledge Ledger at `.shards/knowledge/` (with `entities/`, `infrastructure/`, `patterns/`, `features/` subdirectories and an `INDEX.md`), writes a manifest to `.claude/.shards-manifest.json` for uninstall tracking, and appends a Shards section to CLAUDE.md.
+The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.claude/commands/`, `src/templates/` → `templates/`, `src/ui/` → `.shards/ui/`, and `src/docs/` → both `.shards/ui/docs/` (served by the UI guide panel) and `docs/shards-guide/` (plain-markdown copy at the project root) in the target project. It also creates output directories (`analysis/`, `studies/`, `models/`, `data_models/`, `services/`, `research/`, `dashboards/`, `brainstorm/`, `fixes/`), sets up the Knowledge Ledger at `.shards/knowledge/` (with `entities/`, `infrastructure/`, `patterns/`, `features/` subdirectories and an `INDEX.md`), writes a manifest to `.claude/.shards-manifest.json` for uninstall tracking, and appends a Shards section to CLAUDE.md.
 
 The `.claude/` directory at the repo root is a live installation used when working on shards itself. After editing source files, re-run `node tools/install.js` from the repo root to update it.
 
 ## Architecture
 
-### Four file types in `src/`
+### Five file types in `src/`
 
 **`src/commands/*.md`** — slash command entry points. Each command file is short (~30 lines). It sets the agent's persona, references the corresponding agent file path (`.claude/agents/<name>.md`), and contains the startup instructions. When a user runs `/shards` or `/data-analyst`, Claude reads this file and enters the described character.
 
@@ -43,6 +43,8 @@ The `.claude/` directory at the repo root is a live installation used when worki
 - `symbol-index.js` — ctags-based symbol indexing engine (with regex fallback) for code intelligence features in the UI. Builds and watches an in-memory index of symbols across the project.
 - `js/` — browser-side ES modules: `state.js`, `events.js`, `chat.js`, `agents.js`, `panels.js`, `tabs.js`, `explorer.js`, `file-view.js`, `table.js`, `tabular.js`, `notebook.js`, `monaco.js`, `markdown.js`, `split-view.js`, `command-palette.js`, `quick-open.js`, `settings.js`, `init.js`, `utils.js`, `bookmarks.js`, `code-intel.js`, `git.js`, `pinboard.js`, `selection-context.js`.
 - `css/` — browser-side stylesheets: `base.css`, `layout.css`, `sidebar.css`, `chat.css`, `editor.css`, `experiment.css`, `eval-dashboard.css`, `model-card.css`, `prompt-lab.css`, `theme-light.css`.
+
+**`src/docs/*.md` + `src/docs/manifest.json`** — the Shards Developer Guide, a single-source-of-truth reference for agents, protocols, the UI, commands, output directories, and example workflows. Installed to two places: `.shards/ui/docs/` (served by the UI guide panel — `openGuidePanel()` in `src/ui/js/guide.js`, routes `/docs/manifest` and `/docs/page` in `server.js`) and `docs/shards-guide/` at the project root for plain-markdown browsing. `manifest.json` defines the TOC (sections → pages). When editing guide content, update the corresponding markdown file under `src/docs/` and re-run `node tools/install.js` — do not edit the installed copies directly.
 
 ### Agent taxonomy
 
@@ -109,6 +111,7 @@ When changing agent behavior:
 - **Phased workflow (Phase 1+):** edit `src/agents/specific_instructions/<agent_name>/phases.md`
 - **Command file** (`src/commands/`): only edit if startup instructions or persona framing change
 - **Templates** (`src/templates/`): only edit if output document structure changes
+- **Developer Guide** (`src/docs/`): only edit when agents, protocols, UI features, commands, or output directories change. Update the relevant page and, if adding/removing pages, also update `src/docs/manifest.json`.
 
 After editing source files, re-run `node tools/install.js` in any target project to pick up the changes.
 

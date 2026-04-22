@@ -302,6 +302,15 @@ loadInitial().then(function() {
   if (typeof renderHud === 'function') renderHud();
   if (typeof switchSidebarView === 'function') switchSidebarView(activeSidebarView);
   if (typeof renderModeIndicator === 'function') renderModeIndicator();
+
+  // Honor URL hash/query for direct-open panels (e.g. /shards-guide → #guide).
+  try {
+    var hash = (window.location.hash || '').replace(/^#/, '');
+    var params = new URLSearchParams(window.location.search || '');
+    var panel = hash || params.get('panel');
+    if (panel === 'guide' && typeof openGuidePanel === 'function') openGuidePanel();
+    else if (panel === 'knowledge' && typeof openKnowledgeMapPanel === 'function') openKnowledgeMapPanel();
+  } catch(e) {}
 });
 connect();
 startGatePoller();
