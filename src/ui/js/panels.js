@@ -579,33 +579,98 @@ function renderExperimentDashboard(container, panel) {
     return;
   }
 
+  // Detect AR (autonomous-research) mode vs. classic experiment mode.
+  // AR uses `iterationBudget` in constraints and marks `mode: "autonomous-research"`.
+  // Classic experiment mode uses `plannedCount`. The dashboard renders both, with
+  // AR-specific enrichments (auto-decision colors, cost accounting, convergence).
+  var isAR = d.mode === 'autonomous-research';
+  var constraints = d.constraints || {};
+  var cost = d.costAccounting || {};
+  var convergence = d.convergence || {};
+  var exps = d.experiments || [];
+
   // Preserve comparison state across re-renders
   panel._expState = panel._expState || { selectedRows: [] };
 
-  var html = '<div class="experiment-dashboard">';
+  var html = '<div class="experiment-dashboard' + (isAR ? ' ar-mode' : '') + '">';
 
   // ── Progress bar ──
-  var total = d.plannedCount || 0;
-  var done = (d.experiments || []).length;
+  var total = isAR
+    ? (constraints.iterationBudget || d.plannedCount || 0)
+    : (d.plannedCount || 0);
+  var done = exps.length;
   var status = d.status || 'setup';
   var current = d.currentExperiment || null;
+  var label = isAR ? 'iterations' : 'experiments';
 
   html += '<div class="exp-progress">';
   html += '<div class="exp-progress-label">';
   html += '<span><span class="exp-status-badge ' + esc(status) + '">' + esc(status) + '</span></span>';
-  html += '<span>' + done + ' / ' + total + ' experiments</span>';
+  if (isAR && d.preset) {
+    html += '<span class="exp-preset-badge">' + esc(d.preset) + '</span>';
+  }
+  html += '<span>' + done + ' / ' + total + ' ' + label + '</span>';
+  if (isAR && convergence.detected && convergence.reason) {
+    html += '<span class="exp-converge-badge" title="Convergence">' + esc(convergence.reason) + '</span>';
+  }
   html += '</div>';
   html += '<div class="exp-progress-bar">';
-  for (var i = 1; i <= total; i++) {
-    var cls = 'pending';
-    if (i <= done) cls = 'completed';
-    else if (status === 'running' && current === i) cls = 'active';
-    html += '<div class="exp-progress-segment ' + cls + '"></div>';
+  if (isAR) {
+    // AR: color-code each completed iteration by auto-decision
+    for (var i = 1; i <= total; i++) {
+      var cls = 'pending';
+      if (i <= done) {
+        var ent = exps[i - 1];
+        if (ent && ent.autoDecision === 'green') cls = 'completed ar-green';
+        else if (ent && ent.autoDecision === 'red') cls = 'completed ar-red';
+        else if (ent && ent.autoDecision === 'yellow') cls = 'completed ar-yellow';
+        else cls = 'completed';
+      } else if (status === 'running' && current === i) {
+        cls = 'active';
+      }
+      html += '<div class="exp-progress-segment ' + cls + '"></div>';
+    }
+  } else {
+    for (var i = 1; i <= total; i++) {
+      var cls = 'pending';
+      if (i <= done) cls = 'completed';
+      else if (status === 'running' && current === i) cls = 'active';
+      html += '<div class="exp-progress-segment ' + cls + '"></div>';
+    }
   }
   html += '</div></div>';
 
+  // ── AR cost/convergence strip ──
+  if (isAR) {
+    var ceiling = constraints.costCeiling || {};
+    var dollarsSpent = cost.dollarsSpent || 0;
+    var tokensIn = cost.tokensIn || 0;
+    var tokensOut = cost.tokensOut || 0;
+    var reviewerTasks = cost.reviewerTasksSpawned || 0;
+    var pctDollars = (ceiling.dollars && ceiling.dollars > 0)
+      ? (dollarsSpent / ceiling.dollars * 100) : null;
+    var pctTokens = (ceiling.tokens && ceiling.tokens > 0)
+      ? ((tokensIn + tokensOut) / ceiling.tokens * 100) : null;
+    var warnCls = '';
+    if (pctDollars >= 80 || pctTokens >= 80) warnCls = ' ar-cost-warn';
+    else if (pctDollars >= 50 || pctTokens >= 50) warnCls = ' ar-cost-caution';
+
+    html += '<div class="ar-cost-strip' + warnCls + '">';
+    html += '<span class="ar-cost-item"><strong>$' + dollarsSpent.toFixed(4) + '</strong>';
+    if (ceiling.dollars) html += ' / $' + ceiling.dollars;
+    html += '</span>';
+    html += '<span class="ar-cost-item"><strong>' + (tokensIn + tokensOut) + '</strong> tokens';
+    if (ceiling.tokens) html += ' / ' + ceiling.tokens;
+    html += '</span>';
+    html += '<span class="ar-cost-item"><strong>' + reviewerTasks + '</strong> reviewer tasks</span>';
+    if (d.lastGreenCommit) {
+      html += '<span class="ar-cost-item" title="lastGreenCommit">green @ '
+        + esc(String(d.lastGreenCommit).slice(0, 7)) + '</span>';
+    }
+    html += '</div>';
+  }
+
   // ── Charts ──
-  var exps = d.experiments || [];
   var barId = 'exp-bar-' + panel.panelId;
   var lineId = 'exp-line-' + panel.panelId;
   html += '<div class="exp-charts">';
@@ -699,29 +764,60 @@ function renderExperimentDashboard(container, panel) {
         delta: om.delta != null ? om.delta : '',
         dsVerdict: e.dsVerdict || '',
         outcome: e.outcome || '',
-        recommendation: e.recommendation || ''
+        recommendation: e.recommendation || '',
+        // AR-specific fields (undefined on classic experiment runs — columns hidden below)
+        autoDecision: e.autoDecision || '',
+        reverted: e.reverted === true ? 'yes' : (e.reverted === false ? 'no' : ''),
+        evalType: e.evalType || '',
+        hypothesisSource: e.hypothesisSource || '',
+        reviewerVerdict: e.reviewerVerdict || ''
       };
     });
 
-    var tblContainer = document.getElementById('exp-table-' + panel.panelId);
-    var tbl = new Tabulator(tblContainer, {
-      data: tableRows,
-      layout: 'fitDataFill',
-      height: '100%',
-      selectableRows: 'highlight',
-      columns: [
-        { title: '#', field: 'index', width: 40, hozAlign: 'center' },
-        { title: 'Name', field: 'name', minWidth: 120 },
-        { title: 'Before', field: 'before', hozAlign: 'right', width: 80 },
-        { title: 'After', field: 'after', hozAlign: 'right', width: 80 },
-        { title: 'Delta', field: 'delta', hozAlign: 'right', width: 80,
+    var columns = [
+      { title: '#', field: 'index', width: 40, hozAlign: 'center' },
+      { title: 'Name', field: 'name', minWidth: 120 },
+      { title: 'Before', field: 'before', hozAlign: 'right', width: 80 },
+      { title: 'After', field: 'after', hozAlign: 'right', width: 80 },
+      { title: 'Delta', field: 'delta', hozAlign: 'right', width: 80,
+        formatter: function(cell) {
+          var v = cell.getValue();
+          if (v === '' || v == null) return '';
+          var cls = v > 0 ? 'exp-delta-positive' : (v < 0 ? 'exp-delta-negative' : '');
+          return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v + '</span>';
+        }
+      }
+    ];
+
+    if (isAR) {
+      columns.push(
+        { title: 'Auto', field: 'autoDecision', width: 80,
           formatter: function(cell) {
             var v = cell.getValue();
-            if (v === '' || v == null) return '';
-            var cls = v > 0 ? 'exp-delta-positive' : (v < 0 ? 'exp-delta-negative' : '');
-            return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v + '</span>';
+            if (!v) return '';
+            return '<span class="ar-auto-badge ar-' + esc(v) + '">' + esc(v) + '</span>';
           }
         },
+        { title: 'Kept?', field: 'reverted', width: 70,
+          formatter: function(cell) {
+            var v = cell.getValue();
+            if (v === 'yes') return '<span class="ar-reverted">reverted</span>';
+            if (v === 'no') return '<span class="ar-kept">kept</span>';
+            return '';
+          }
+        },
+        { title: 'Eval', field: 'evalType', width: 70 },
+        { title: 'Source', field: 'hypothesisSource', width: 110 },
+        { title: 'Reviewer', field: 'reviewerVerdict', width: 110,
+          formatter: function(cell) {
+            var v = cell.getValue();
+            if (!v) return '';
+            return '<span class="ar-reviewer-verdict ar-rv-' + esc(v.toLowerCase()) + '">' + esc(v) + '</span>';
+          }
+        }
+      );
+    } else {
+      columns.push(
         { title: 'DS Verdict', field: 'dsVerdict', minWidth: 150,
           formatter: function(cell) {
             var v = cell.getValue();
@@ -742,7 +838,16 @@ function renderExperimentDashboard(container, panel) {
             return '<span class="exp-rec-badge ' + cls + '">' + esc(v) + '</span>';
           }
         }
-      ]
+      );
+    }
+
+    var tblContainer = document.getElementById('exp-table-' + panel.panelId);
+    var tbl = new Tabulator(tblContainer, {
+      data: tableRows,
+      layout: 'fitDataFill',
+      height: '100%',
+      selectableRows: 'highlight',
+      columns: columns
     });
 
     // Track selection for comparison

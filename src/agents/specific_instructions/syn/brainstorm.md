@@ -267,6 +267,74 @@ Respond to any of the following naturally:
 - **"What if we..."** → Engage freely. Explore the angle, then offer to loop in
   the relevant specialist if the user wants grounded domain input.
 
+- **"Just try everything, push the metric as far as you can"** (or the
+  domain inputs surfaced 2–3 fundamentally different approach families that
+  all look viable for the same metric-bounded problem) → Propose
+  **Syn-initiated Autonomous Research (`[AR]`) fan-out** per
+  `.claude/agents/specific_instructions/shared/autonomous_research.md`
+  Section H.
+
+  Preconditions (inherit from DIVERGE Section A):
+  - A clear primary metric with direction and baseline.
+  - A budget the user accepts (iterations × K branches × per-branch cost).
+  - 2–3 mutually exclusive approach families that are genuinely viable.
+  - AR-capable specialists identified for the approaches (ML Engineer,
+    AI Engineer, Data Scientist, Applied ML Scientist, Deep Learning
+    Engineer).
+
+  Flow:
+
+  1. **Ask confirming questions** — get the primary metric, baseline, total
+     budget, mutable/immutable scope, cost ceiling. Capture these in a
+     transient brief.
+
+  2. **Propose the fan-out** using DIVERGE proposal format, with the AR
+     gate ID namespace
+     (`specific-instructions-shared-diverge-protocol-ar-<project>`):
+
+     ```
+     **AR FAN-OUT PROPOSED — Time-Travel across approach families**
+
+     | Branch | Specialist | Approach | Budget | Risk |
+     |--------|-----------|----------|--------|------|
+     | `ml-xgboost`        | ml-engineer        | Tree-based (XGBoost/LightGBM) | <N iter> | Low |
+     | `ai-rag-prompt`     | ai-engineer        | RAG with prompt tuning         | <N iter> | Medium |
+     | `dle-transformer`   | deep-learning-engineer | Custom transformer backbone | <N iter> | High |
+
+     Each branch runs its own autonomous research loop against the same
+     metric. Syn arbitrates the results. Total cost: <sum of per-branch
+     ceilings>.
+
+     Proceed, or pick one approach and go solo?
+     ```
+
+  3. **Gate on user confirmation** using the AR fan-out gate ID.
+
+  4. **On confirm:**
+     - Create project directory and `project-specs.md` with an AR fan-out
+       Phase 0 section (metric, baseline, budget, branches, mutable/immutable
+       scope, cost ceiling).
+     - Create `<project_dir>/.shards/branches/<slug>/` for each branch.
+     - Spawn each specialist in parallel via Task, using the Section H.3
+       branch prompt template from `autonomous_research.md`. Each branch
+       prompt carries inherited Phase 0 setup (metric, budget, scope, cost
+       ceiling, git strategy — default `branch-local`) so the specialist
+       skips its own Phase 0 gate.
+     - All branch Tasks are called in **a single message with multiple Task
+       content blocks** (parallel).
+
+  5. **After all branches return:** invoke Syn Arbiter Mode via Task per
+     `diverge_protocol.md` Section F. Present the leaderboard to the user
+     at the Phase 3 arbitration gate. Promote the winner per
+     `diverge_protocol.md` Section G (with AR git strategy handling).
+     Syn writes the consolidated summary and runs `knowledge_harvest.md`
+     per `autonomous_research.md` Section H.10 (only winner's candidates
+     plus cross-branch patterns surfaced by the arbiter).
+
+  If the user declines fan-out but still wants AR, route them to the single
+  specialist best matching the most promising approach family and suggest
+  they select `[AR]` from that specialist's menu (solo AR).
+
 No mandatory gate in Phase 3 — this is conversation, not execution.
 
 Session ends when the user is satisfied, decides to escalate to execution, or
