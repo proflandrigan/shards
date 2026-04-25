@@ -72,6 +72,26 @@ Present these alongside new candidates in Step 3 so the user can confirm or reje
 
 If no contradiction lines are found in `project-specs.md`, skip this step.
 
+### 1c. Check for validation findings worth harvesting
+
+Read the `## Validation` section of `project-specs.md` (per `shared/validation_protocol.md`). Validation that caught a real issue is often the highest-signal source of harvest candidates — the check surfaced something that would have quietly been wrong otherwise.
+
+Look for:
+
+- **Checks with `Pass/Fail: ✗` that were fixed.** The issue that was caught is a candidate entity/infrastructure/pattern entry ("billing.revenue column contains negative values on refunds"; "incremental predicate on `updated_at` misses rows when source clock drifts").
+- **Checks with surprising `Observed` values even when Pass/Fail = ✓.** Distribution shifts, null-rate anomalies, unexpected fan-out multipliers — the check passed but the value is worth remembering (e.g., "orders-to-items fan-out is 4.8x on this warehouse, not the industry-typical 2-3x — use for capacity planning").
+- **`n/a` with an instructive justification.** When a check is genuinely inapplicable for a non-obvious reason, that reason is a pattern (e.g., "DL-09 inference parity is n/a for this service because training and serving share the same feature module — note the pattern, not the skip").
+- **Downstream impact discoveries.** Consumers that were affected in non-obvious ways. These are often infrastructure or feature-level knowledge.
+
+These candidates blend in with the Step 1 / Step 2 draft list — tag them clearly so the user sees that they came from the validation section:
+
+```
+4. [patterns] "orders-items fan-out is 4.8x in this warehouse" (high confidence, from Validation AE-06)
+   — Verified across two quarters of data. Use for capacity planning and query tier assessment.
+```
+
+If the `## Validation` section is absent or contains nothing worth harvesting, skip this step.
+
 ### 2. Draft candidates
 
 For each candidate, draft:

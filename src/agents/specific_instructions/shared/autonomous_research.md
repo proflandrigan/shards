@@ -433,6 +433,38 @@ based on data leakage or a methodology flaw), execute:
 5. Resume the loop from the reverted baseline. **Iteration counter keeps
    incrementing** — no re-use of numbers. The next iteration is N+1, not M+1.
 
+### C.5 Per-iteration validation (Fixer-level)
+
+Each **kept** iteration (GREEN or kept-YELLOW) must produce a lightweight validation block following `shared/validation_protocol.md`. Reverted iterations (RED or reverted-YELLOW) do not — the change is gone, validation is moot.
+
+The block is **not** written to `project-specs.md`. Instead, it is added to the iteration's entry in `experiments/results.json` under a new `validation` field:
+
+```json
+{
+  "iteration": 7,
+  "autoDecision": "green",
+  "reverted": false,
+  "metrics": { ... },
+  "validation": {
+    "track": "quick",
+    "mode": "experiment",
+    "checklist": "<agent_name>/validation_checklist.md",
+    "checks": [
+      { "check": "<id>", "observed": "<value>", "passFail": "✓", "notes": "" }
+    ],
+    "artifacts": ["results/iter7_metrics.json"],
+    "summary": "<one sentence: what this iteration changed, what the smoke-check confirmed>"
+  }
+}
+```
+
+Constraints:
+- Use the Fixer-level subset from the relevant checklist (e.g., ML `ML-12 + ML-06 diff`; AI `AI-02 + AI-03 diff`; DS `DS-11 + DS-12`).
+- Minimum: headline metric value, at-most-one component test or smoke-check result, one-sentence summary.
+- No `## Validation` section is written to `project-specs.md` during the AR loop — the Phase 3 research summary (Section I) consolidates validation across kept iterations.
+
+The gate hook does **not** enforce this per-iteration block because AR iterations do not emit gate fences. Discipline is on the AR loop itself; the Phase 3 consolidation is where structural enforcement resumes.
+
 ---
 
 ## Section D — Reviewer Consultation Cadence
@@ -1156,6 +1188,18 @@ Append / update the `## Autonomous Research` section in `project-specs.md`:
 - **Summary:** `experiments/research_summary.md`
 - **Recommendations:** `experiments/research_recommendations.md`
 ```
+
+Also write a consolidated `## Validation` section to `project-specs.md` per `shared/validation_protocol.md`. The Phase 3 gate is validation-eligible (the AR run produces a durable set of kept iterations / final artifact), and the gate hook enforces the schema at Phase 3.
+
+Consolidation rules:
+- **Track:** `deep` (Phase 3 is the deep gate; per-iteration blocks were already Fixer-level)
+- **Mode:** `research`
+- **Evidence:** pull the headline metric per kept iteration from `results.json.experiments[*].validation` and aggregate. Expected format: one row per check ID from the agent's Fixer subset, with Observed = "N iterations × check, M passes, K n/a" or the final-iteration value for diff-style checks.
+- **Artifacts:** `experiments/results.json`, `experiments/research_summary.md`, the final-iteration checkpoint commit SHA, any per-iteration artifacts referenced in `validation.artifacts`
+- **Downstream Impact:** consumers of the final artifact (services, marts, reports) — same analysis the agent would do in a normal deep-track phase
+- **Summary:** two to four sentences on what was validated across the kept iterations, what residual risk exists, and what would need a fuller validation pass if this is productionized
+
+This section is machine-readable by the gate hook when Phase 3 emits its gate with `validates=<agent>`. Per-agent `research.md` files are responsible for including that attribute on their Phase 3 gate fence.
 
 ### I.5 Knowledge harvest
 

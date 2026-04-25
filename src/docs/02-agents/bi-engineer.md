@@ -16,7 +16,7 @@ Specializes in dashboard and visualization building — Streamlit, Plotly Dash, 
 
 | Mode | File | Purpose |
 |---|---|---|
-| Phases (Build) | `specific_instructions/bi_engineer/phases.md` | Full dashboard workflow. |
+| Phases (Build) | `specific_instructions/bi_engineer/phases/` | Full dashboard workflow — one file per phase, progressively loaded. |
 | Review | `specific_instructions/bi_engineer/review.md` | Chart/dashboard review. |
 | Advisory | `specific_instructions/bi_engineer/advise.md` | Advisor mode. |
 | Update | `specific_instructions/bi_engineer/update.md` | Iterate on existing dashboards. |

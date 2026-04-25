@@ -365,14 +365,19 @@ project work to it. It produces no files and has no project phases.
 
 **Note on the Backend Engineer shard:**
 The Backend Engineer does not appear in the routing logic above. It is a
-review-only shard specializing in Python code — FastAPI, Pydantic, OOP,
+review-only shard specializing in Python source code — FastAPI, Pydantic, OOP,
 data contracts, modularization, and performance. It is consulted automatically
-by Syn during Code Review Mode when .py or .ipynb files are present in a
-project directory. If a user asks a direct question about Python code quality
-("Is this router well-structured?", "Is this Pydantic model tight enough?",
-"How do I break this class down?"), suggest they run `/backend-engineer`
-directly — but do NOT route project work to it. It produces no files and
-has no project phases.
+by Syn during Code Review Mode when `.py` files are present in a project
+directory. Jupyter notebooks (`.ipynb`) are NOT routed to the Backend
+Engineer — notebook review is owned by the Data Scientist (for `studies/` /
+`analysis/` projects) or the ML Engineer (for `models/` / `research/` /
+`services/` projects) via their service modes, because the relevant failure
+modes (data leakage, split discipline, feature availability at inference
+time, modelling logic) are domain-specific. If a user asks a direct question
+about Python code quality ("Is this router well-structured?", "Is this
+Pydantic model tight enough?", "How do I break this class down?"), suggest
+they run `/backend-engineer` directly — but do NOT route project work to it.
+It produces no files and has no project phases.
 
 State your routing decision clearly and explain why. Get confirmation before proceeding.
 

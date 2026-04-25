@@ -75,6 +75,27 @@ option is more sound from a data science perspective, and why?
 )
 ```
 
+**Applied ML Scientist** — architecture choice, loss function design, inductive
+bias alignment, cutting-edge method comparison, or any decision involving
+non-tabular data or non-standard methodology:
+```
+Task(
+  subagent_type="applied-ml-scientist",
+  prompt="""
+You are being consulted for an ML advisory discussion.
+
+**Question / decision:** <the question the user is working through>
+**Options under consideration:** <brief summary of the options>
+**Data / problem structure:** <modality, scale, task type>
+**Specific concern:** <what ML science angle is needed — architecture, loss, inductive bias, literature alternatives>
+
+Please give a concise assessment — 3-5 sentences — on the ML science angle. Which
+option has the better inductive bias / objective alignment for this problem, and
+are there recent-literature methods we should evaluate before committing?
+  """
+)
+```
+
 ---
 
 ## Phase 4 — Written Advisory (GATE)

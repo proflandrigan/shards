@@ -15,7 +15,7 @@ Specializes in building and fixing data pipelines, dbt models, and warehouse inf
 
 | Mode | File | Purpose |
 |---|---|---|
-| Phases (Build) | `specific_instructions/data_engineer/phases.md` | Combined Quick and Deep track workflow. |
+| Phases (Build) | `specific_instructions/data_engineer/phases_quick/` and `phases_deep/` | Quick + Deep track workflows — one file per phase in each track, progressively loaded. |
 | Review | `specific_instructions/data_engineer/review.md` | Review-only. |
 | Advisory | `specific_instructions/data_engineer/advise.md` | Advisor mode. |
 

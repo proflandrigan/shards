@@ -197,6 +197,22 @@ function pollDecision(port, token, id) {
   });
 }
 
+// Emit the structured PreToolUse hook output Claude Code expects to override
+// its internal permission gate. Exit 0 for both allow and deny — exit 2 is
+// reserved for hook *failures*, not user denials. Without this shape, a bare
+// exit(0) doesn't actually override acceptEdits mode's internal deny of
+// non-allowlisted Bash commands.
+function emitDecision(decision, reason) {
+  process.stdout.write(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision: decision,
+      permissionDecisionReason: reason || '',
+    },
+  }));
+  process.exit(0);
+}
+
 async function handlePreToolUse(port, token, payload) {
   const toolName = payload.tool_name || '';
   const command = (payload.tool_input && payload.tool_input.command) || '';
@@ -209,39 +225,33 @@ async function handlePreToolUse(port, token, payload) {
     sessionId: sessionId,
   });
 
-  // Server unreachable — fail open
+  // Server unreachable — fall through to Claude Code's own permission rules
+  // (exit 0 without structured output). Matches previous fail-open posture.
   if (!response) {
-    process.stderr.write('shards-ui: server unreachable, allowing command\n');
+    process.stderr.write('shards-ui: server unreachable, deferring to Claude Code permission rules\n');
     process.exit(0);
   }
 
   // Fast paths
   if (response.status === 'allowed') {
-    process.exit(0);
+    emitDecision('allow', 'Allowed by shards-ui permission rules');
   }
   if (response.status === 'denied') {
-    process.stdout.write(JSON.stringify({
-      decision: 'block',
-      reason: 'Denied by permission rules',
-    }));
-    process.exit(2);
+    emitDecision('deny', 'Denied by shards-ui permission rules');
   }
 
-  // Pending — poll loop (no timeout: wait indefinitely for user decision)
+  // Pending — poll loop (no timeout: wait for user decision up to the
+  // hook timeout configured in .claude/settings.json)
   const POLL_MS = 200;
 
   for (;;) {
     await sleep(POLL_MS);
     const decision = await pollDecision(port, token, response.id);
     if (decision === 'allow') {
-      process.exit(0);
+      emitDecision('allow', 'Approved by user in Shards UI');
     }
     if (decision === 'deny') {
-      process.stdout.write(JSON.stringify({
-        decision: 'block',
-        reason: 'Denied by user in Shards UI',
-      }));
-      process.exit(2);
+      emitDecision('deny', 'Denied by user in Shards UI');
     }
     // 'pending' or 'not_found' — keep polling
   }

@@ -23,7 +23,7 @@ Every specialist runs a numbered phased workflow — typically 4-8 phases. Phase
 2. **Phase 1-N — Planning phases.** Decide scope, method, architecture, evaluation, safety, etc.
 3. **Final phase — Execute + review.** Run the work, invoke reviewers, invoke Syn for sign-off, write the final report.
 
-Phases are deferred-loaded from `.claude/agents/specific_instructions/<agent>/phases.md` after Phase 0 completes. This keeps the core agent file small while letting each shard ship a rich phased workflow.
+Phases are progressively loaded from `.claude/agents/specific_instructions/<agent>/phases/` — the agent reads `index.md` to orient on the full journey, then reads `phase-1.md` to start work. Each phase file ends with a pointer to the next phase file that only fires once the current gate is confirmed. This keeps the core agent file small and only one phase's content in context at a time. Dual-track agents (analytics_engineer, data_modeller, data_engineer) have `phases_quick/` and `phases_deep/` siblings.
 
 ## Gates
 

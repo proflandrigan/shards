@@ -13,6 +13,11 @@ var guideState = {
 var GUIDE_LS_KEY = 'shards.guide.lastPage';
 
 function openGuidePanel() {
+  var sidebar = document.getElementById('explorer-sidebar');
+  if (sidebar && !sidebar.classList.contains('collapsed')) {
+    sidebar.classList.add('collapsed');
+    if (typeof saveLayout === 'function') saveLayout();
+  }
   openPanelTab('guide-main', {
     panel: 'guide',
     title: 'Developer Guide',

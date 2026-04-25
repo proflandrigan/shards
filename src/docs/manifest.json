@@ -41,11 +41,13 @@
         { "id": "gate-pattern", "title": "The Gate Pattern", "file": "03-protocols/gate-pattern.md" },
         { "id": "behavioral-rules", "title": "Behavioral Rules", "file": "03-protocols/behavioral-rules.md" },
         { "id": "reviewer-verdicts", "title": "Reviewer Verdicts", "file": "03-protocols/reviewer-verdicts.md" },
+        { "id": "validation", "title": "Validation Protocol", "file": "03-protocols/validation.md" },
         { "id": "diverge", "title": "DIVERGE (Time-Travel Branches)", "file": "03-protocols/diverge.md" },
         { "id": "autonomous-research", "title": "Autonomous Research", "file": "03-protocols/autonomous-research.md" },
         { "id": "experiment-versioning", "title": "Experiment Versioning", "file": "03-protocols/experiment-versioning.md" },
         { "id": "knowledge-ledger", "title": "Knowledge Ledger", "file": "03-protocols/knowledge-ledger.md" },
-        { "id": "join-path", "title": "Join-Path Protocol", "file": "03-protocols/join-path.md" }
+        { "id": "join-path", "title": "Join-Path Protocol", "file": "03-protocols/join-path.md" },
+        { "id": "incremental-testing", "title": "Incremental Testing", "file": "03-protocols/incremental-testing.md" }
       ]
     },
     {

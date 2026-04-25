@@ -29,7 +29,7 @@ The `.claude/` directory at the repo root is a live installation used when worki
 
 **`src/commands/*.md`** — slash command entry points. Each command file is short (~30 lines). It sets the agent's persona, references the corresponding agent file path (`.claude/agents/<name>.md`), and contains the startup instructions. When a user runs `/shards` or `/data-analyst`, Claude reads this file and enters the described character.
 
-**`src/agents/*.md`** — the core agent definitions. These contain each agent's persona, activation menu, Phase 0 (triage), mode references, and behavioral rules. Phased workflow instructions (Phase 1+) are deferred to `specific_instructions/<agent_name>/phases.md` files that load on-demand after Phase 0 completes. Each agent file has YAML frontmatter specifying `name`, `description`, `tools`, and `model`.
+**`src/agents/*.md`** — the core agent definitions. These contain each agent's persona, activation menu, Phase 0 (triage), mode references, and behavioral rules. Phased workflow instructions (Phase 1+) are deferred to `specific_instructions/<agent_name>/phases/` (or `phases_quick/` + `phases_deep/` for dual-track agents) — one file per phase, loaded progressively after Phase 0 completes. Each agent file has YAML frontmatter specifying `name`, `description`, `tools`, and `model`.
 
 **`src/templates/*.md`** — output document templates with `{{PLACEHOLDER}}` tokens. `project-specs.md` is the central one — every project produces a filled-in instance. `analysis-template.md`, `study-template.md`, and `report-template.md` are output-specific templates. `model-card.md` is used by ML/DL specialists. `branch-report.md` and `diff-report.md` support Time-Travel branching and cross-project comparison. `knowledge-index.md` seeds the Knowledge Ledger INDEX.
 
@@ -92,23 +92,27 @@ This means a full `/shards` session is a depth-2 nested Task call: Syn spawns sp
 | Syn (Fixer) | `fixes/<project_name>/` |
 | Backend Engineer | — (review only, no files produced) |
 
-### Deferred phase loading
+### Progressive phase loading
 
-Each specialist agent is split into two files:
+Each specialist agent is split into a core file plus a per-phase directory:
 
 1. **Core file** (`src/agents/<name>.md`, ~250-550 lines) — persona, activation menu, Phase 0, mode references, behavioral rules. Loaded immediately on invocation.
-2. **Phases file** (`src/agents/specific_instructions/<agent_name>/phases.md`, ~350-870 lines) — Phase 1+ workflow instructions. Loaded on-demand after Phase 0 gate passes.
+2. **Phases directory** (`src/agents/specific_instructions/<agent_name>/phases/`) — one `index.md` that lists all phases with 1-line goals, plus one `phase-<N>.md` per phase containing the full phase body (instructions, doc template, gate). Agents load the index first (to orient), then `phase-1.md`. When each phase's gate is confirmed, that phase's file directs the agent to read the next phase file. This keeps only one phase's content in context at a time.
 
-The core file contains a "Phase Progression" section that instructs Claude to `Read .claude/agents/specific_instructions/<agent_name>/phases.md in full` when it's time to advance past Phase 0. This uses the same proven pattern as Review, Advisory, and Explain mode references.
+The core file's "Phase Progression" section instructs Claude to read the index then `phase-1.md`. Phase-<N>.md ends with a `## When this gate is confirmed` block that points to `phase-<N+1>.md` (or to the final-phase wrap-up). Phase numbering uses a dash for subphases (e.g., ml_engineer's optional `phase-6-5.md`).
 
-Agents with Quick/Deep tracks (analytics-engineer) have separate `quick_phases.md` and `deep_phases.md` files instead of a single `phases.md`. Agents with Create Mode (deep-learning-engineer, applied-ml-scientist) defer the Create Mode phases.
+**Dual-track agents** (analytics_engineer, data_modeller, data_engineer) have two sibling directories: `phases_quick/` and `phases_deep/`, each with its own `index.md`. The core file's Phase Progression section directs the agent to the right track index based on Phase 0 decisions.
+
+**Create Mode agents** (deep_learning_engineer, applied_ml_scientist) use the same layout — their phases are numbered 1-5 and labeled "Create Mode — Phase N".
+
+**Gate IDs** follow the scheme `<kebab-agent-name>-phase-<N>` (e.g., `ml-engineer-phase-1`, `analytics-engineer-deep-phase-7`, `ml-engineer-phase-6-5`). Every gate carries `phase=<N>` matching its phase number and `kind=phase` (intermediate), `kind=final` (last phase of a track), or `kind=checkpoint` (mid-build — punctuates a build phase at each component seam; does not advance the phase). Gates that front a validation-eligible build phase also carry `validates=<agent_name>`; `kind=checkpoint` gates never carry `validates=` since validation evidence is a phase-gate concern. The `SHARDS_CHECKPOINT_ENFORCE=0` env var downgrades checkpoint gates to advisory; `SHARDS_GATE_ENFORCE=0` still disables all gate enforcement.
 
 ### Editing workflow
 
 When changing agent behavior:
 
 - **Persona, activation, Phase 0, or behavioral rules:** edit `src/agents/<name>.md`
-- **Phased workflow (Phase 1+):** edit `src/agents/specific_instructions/<agent_name>/phases.md`
+- **Phased workflow (Phase 1+):** edit the relevant file under `src/agents/specific_instructions/<agent_name>/phases/` (or `phases_quick/` / `phases_deep/` for dual-track agents). Each phase lives in its own `phase-<N>.md`. If you add or remove a phase, also update the `index.md` table and the "When this gate is confirmed" pointer in the adjacent phase files.
 - **Command file** (`src/commands/`): only edit if startup instructions or persona framing change
 - **Templates** (`src/templates/`): only edit if output document structure changes
 - **Developer Guide** (`src/docs/`): only edit when agents, protocols, UI features, commands, or output directories change. Update the relevant page and, if adding/removing pages, also update `src/docs/manifest.json`.
@@ -127,15 +131,16 @@ After editing source files, re-run `node tools/install.js` in any target project
 - **`knowledge_harvest.md`** — protocol for extracting reusable knowledge at project completion. Agents present candidates for user confirmation before writing to the Knowledge Ledger.
 - **`autonomous_research.md`** — `[AR]` Autonomous Research mode protocol. Budget-bounded self-steering loop with adaptive hypothesis generation, auto-keep/revert, steering document the user can edit mid-loop, windowed history reads, dual reviewer cadence. Sections A-G cover solo AR; Section H covers AR fan-out (parallel approach families via DIVERGE composition); Section I covers Phase 3 research summary. Referenced by ML Engineer, AI Engineer, Data Scientist, Applied ML Scientist, and Deep Learning Engineer from their `research.md` files.
 - **`knowledge_retrieval.md`** — protocol for checking the Knowledge Ledger before Phase 1. Agents scan INDEX.md for entries relevant to the current project.
+- **`incremental_testing.md`** — mid-build testing contract for notebook and pipeline specialists (ML, DS, AI, AMS, DLE, DE, AE, MLOps). Between each component written (notebook cell group, dbt model, pipeline step, etc.) the agent executes the component, records evidence, and emits a `kind=checkpoint` gate. Prevents the build-then-run-all pathology where failures surface only at the end. Referenced from each agent's build-phase file.
 
 ### Variant files in `specific_instructions/`
 
-Each agent has a subdirectory under `specific_instructions/` (e.g., `specific_instructions/data_analyst/`). Beyond the `phases.md` files (core workflow), these subdirectories contain mode variants and other files:
+Each agent has a subdirectory under `specific_instructions/` (e.g., `specific_instructions/data_analyst/`). Beyond the `phases/` directories (core workflow), these subdirectories contain mode variants and other files:
 
 - **Mode variants:** `review.md`, `advise.md`, `explain.md`, `update.md`, `clean.md` — referenced by core agent files for `[R]`, `[ADV]`, `[EX]`, `[U]`, `[C]` menu options
 - **UI mode:** `data_analyst/ui_mode.md`, `analytics_engineer/ui_mode.md` — variant invoked by the Shards UI to push structured output for the browser client
-- **Service mode:** `analytics_engineer/service_mode.md`, `data_modeller/service_mode.md`, `researcher/service_mode.md` — stripped-down mode used when these agents are consulted as reviewers via Task by other specialists
-- **Syn modes:** `syn/brainstorm.md` (also has a `/brainstorm` command entry point), `syn/final_review.md` (read when specialists invoke Syn for sign-off via Task), `syn/code_review.md` (triggered when a specialist calls Task with `CODE REVIEW MODE` — partitions and reviews Python and non-Python artifacts), `syn/fixer.md` (the `[F]` menu option — Syn directly implements minor fixes without specialist handoff, suspending the "facilitate don't generate" rule), `syn/arbiter.md` (Time-Travel branch comparison — reads all branch reports, builds leaderboard, returns advisory recommendation), `syn/diff.md` (cross-project comparison — reads two project directories and produces structured diff report), `syn/knowledge.md` (also has a `/knowledge` command entry point — seed, browse, and manage the Knowledge Ledger)
+- **Service mode:** `analytics_engineer/service_mode.md`, `data_modeller/service_mode.md`, `researcher/service_mode.md`, `data_scientist/service_mode.md`, `ml_engineer/service_mode.md` — stripped-down mode used when these agents are consulted as reviewers via Task by other specialists. The Data Scientist and ML Engineer service modes specifically handle domain-aware Jupyter notebook (`.ipynb`) code review (code quality, bugs, data leakage, split discipline, feature/modelling logic) — routed by project directory prefix (`studies/`/`analysis/` → Data Scientist; `models/`/`research/`/`services/` → ML Engineer).
+- **Syn modes:** `syn/brainstorm.md` (also has a `/brainstorm` command entry point), `syn/final_review.md` (read when specialists invoke Syn for sign-off via Task), `syn/code_review.md` (triggered when a specialist calls Task with `CODE REVIEW MODE` — partitions artifacts by type and routes: `.sql` → Analytics Engineer, `.py` → Backend Engineer, `.ipynb` → Data Scientist or ML Engineer by project directory prefix, config/infra → MLOps Engineer), `syn/fixer.md` (the `[F]` menu option — Syn directly implements minor fixes without specialist handoff, suspending the "facilitate don't generate" rule), `syn/arbiter.md` (Time-Travel branch comparison — reads all branch reports, builds leaderboard, returns advisory recommendation), `syn/diff.md` (cross-project comparison — reads two project directories and produces structured diff report), `syn/knowledge.md` (also has a `/knowledge` command entry point — seed, browse, and manage the Knowledge Ledger)
 - **Experiment:** `ml_engineer/experiment.md`, `ai_engineer/experiment.md`, `data_scientist/experiment.md` — plus `ml_engineer/experiment_ui_mode.md` and `ai_engineer/experiment_ui_mode.md` for Shards UI integration of experiment mode
 - **Autonomous Research:** `ml_engineer/research.md`, `ai_engineer/research.md`, `data_scientist/research.md`, `applied_ml_scientist/research.md`, `deep_learning_engineer/research.md` — `[AR]` mode for each agent, referenced from the core agent file. Tier 1 agents (ML/AI/DS) also have `research_ui_mode.md` variants that reuse the `experiment-dashboard` panel type (the renderer detects `mode: "autonomous-research"` in `results.json` and renders AR enrichments — auto-decision color coding, cost strip, convergence badge).
 - **Prompt Lab:** `ai_engineer/prompt_lab.md`, `ai_engineer/prompt_lab_ui_mode.md` — interactive prompt editing, evaluation, and versioning via the Shards UI `prompt-lab` panel type
@@ -144,6 +149,6 @@ Each agent has a subdirectory under `specific_instructions/` (e.g., `specific_in
 - **Handoff receivers:** `bi_engineer/incoming_handoff.md`, `data_analyst/incoming_handoff.md` — receiver-side instructions for agents accepting a structured handoff brief from another specialist
 - **Explain:** `data_analyst/explain.md`, `data_scientist/explain.md` — explanation-focused variants
 - **DS handoffs:** `data_scientist/greenfield_data.md`, `data_scientist/ml_engineer_handoff.md` — Data Scientist variants for greenfield data work and ML Engineer handoff
-- **Service mode (Backend):** `backend_engineer/service_mode.md` — stripped-down mode used when the Backend Engineer is consulted as a reviewer via Task by other specialists
+- **Service mode (Backend):** `backend_engineer/service_mode.md` — stripped-down mode used when the Backend Engineer is consulted as a `.py` script reviewer via Task by other specialists. Notebooks (`.ipynb`) are explicitly out of Backend Engineer scope — they route to the Data Scientist or ML Engineer service modes.
 - **Review checklists:** `backend_engineer/review_checklist.md`, `researcher/review_checklist.md` — review checklists used during service-mode consultations
 - **Report:** `academic/report.md` — Academic shard variant for producing full literature review / research report documents

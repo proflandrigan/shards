@@ -16,7 +16,7 @@ Specializes in understanding existing data models, designing new entity-relation
 
 | Mode | File | Purpose |
 |---|---|---|
-| Phases (Build) | `specific_instructions/data_modeller/phases.md` | Full model design workflow. |
+| Phases (Build) | `specific_instructions/data_modeller/phases_quick/` and `phases_deep/` | Quick + Deep track workflows — one file per phase in each track, progressively loaded. |
 | Review | `specific_instructions/data_modeller/review.md` | Review-only. |
 | Advisory | `specific_instructions/data_modeller/advise.md` | Advisor mode. |
 | Service Mode | `specific_instructions/data_modeller/service_mode.md` | Stripped-down mode invoked by other specialists via Task for data discovery. |

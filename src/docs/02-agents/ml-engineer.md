@@ -17,7 +17,7 @@ Specializes in production machine learning — recommenders, ranking, classifica
 
 | Mode | File | Purpose |
 |---|---|---|
-| Phases (Build) | `specific_instructions/ml_engineer/phases.md` | Full phased workflow. |
+| Phases (Build) | `specific_instructions/ml_engineer/phases/` | Full phased workflow — one file per phase, progressively loaded. |
 | Review | `specific_instructions/ml_engineer/review.md` | Review-only. |
 | Advisory | `specific_instructions/ml_engineer/advise.md` | Advisor mode. |
 | Experiment | `specific_instructions/ml_engineer/experiment.md` | Fixed-N experimentation. |

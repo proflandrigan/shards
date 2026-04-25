@@ -10,6 +10,7 @@ const { execSync } = require('child_process');
 const { randomUUID } = require('crypto');
 const { ChatSession, reconnectOrCleanup } = require('./chat-session');
 const symbolIndex = require('./symbol-index');
+const { permissionPattern } = require('./permission-pattern');
 
 let PROJECT_DIR = process.cwd();
 let SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
@@ -201,6 +202,12 @@ loadSettingsCache();
 // Ensure the PreToolUse hook exists — without it, non-whitelisted Bash commands
 // are denied by Claude Code's internal permission system in stream-json mode
 // and never reach the browser permission card flow.
+//
+// Hook timeout is in seconds. Default Claude Code hook timeout is 600s;
+// we extend to 1800s (30 min) so users have a realistic window to respond
+// to a permission card before Claude Code falls back to its internal rules.
+const PRETOOL_HOOK_TIMEOUT_SEC = 1800;
+
 function ensurePreToolUseHook() {
   const settingsPath = path.join(PROJECT_DIR, '.claude', 'settings.json');
   let settings = {};
@@ -209,18 +216,40 @@ function ensurePreToolUseHook() {
   if (!settings.hooks) settings.hooks = {};
   if (!settings.hooks.PreToolUse) settings.hooks.PreToolUse = [];
 
-  const hasRelay = settings.hooks.PreToolUse.some(entry =>
-    entry.hooks && entry.hooks.some(h => h.command && h.command.includes('relay.js'))
-  );
+  const relayPath = path.join(__dirname, 'relay.js');
+  let mutated = false;
+
+  // Find an existing relay entry if any, and patch its timeout in place
+  // so older installations pick up the longer window without manual edits.
+  let hasRelay = false;
+  for (const entry of settings.hooks.PreToolUse) {
+    if (!entry.hooks) continue;
+    for (const h of entry.hooks) {
+      if (h.command && h.command.includes('relay.js')) {
+        hasRelay = true;
+        if (h.timeout !== PRETOOL_HOOK_TIMEOUT_SEC) {
+          h.timeout = PRETOOL_HOOK_TIMEOUT_SEC;
+          mutated = true;
+        }
+      }
+    }
+  }
 
   if (!hasRelay) {
-    const relayPath = path.join(__dirname, 'relay.js');
     settings.hooks.PreToolUse.push({
       matcher: 'Bash',
-      hooks: [{ type: 'command', command: `node ${relayPath} pre-tool-use` }],
+      hooks: [{
+        type: 'command',
+        command: `node ${relayPath} pre-tool-use`,
+        timeout: PRETOOL_HOOK_TIMEOUT_SEC,
+      }],
     });
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    mutated = true;
     console.log('[shards-ui] Added missing PreToolUse hook to settings.json');
+  }
+
+  if (mutated) {
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
   }
 }
 ensurePreToolUseHook();
@@ -250,7 +279,11 @@ function persistPermission(command, decision) {
   const key = decision === 'allow' ? 'allow' : 'deny';
   if (!settings.permissions[key]) settings.permissions[key] = [];
 
-  const entry = `Bash(${command})`;
+  // Persist as a prefix glob (Bash(cmd:*)) rather than the literal command, so
+  // clicking Always Allow on `python3 foo.py` also covers `python3 bar.py`.
+  // For launcher commands (git, dbt, npm, …) the subcommand is included in the
+  // prefix — Bash(git status:*) — so scope doesn't widen to every git call.
+  const entry = permissionPattern(command);
   if (!settings.permissions[key].includes(entry)) {
     settings.permissions[key].push(entry);
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));

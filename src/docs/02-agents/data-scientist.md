@@ -18,7 +18,7 @@ Handles multi-step analytical projects spanning EDA, feature engineering, and pr
 
 | Mode | File | Purpose |
 |---|---|---|
-| Phases (Build) | `specific_instructions/data_scientist/phases.md` | 7-phase workflow for deep studies. |
+| Phases (Build) | `specific_instructions/data_scientist/phases/` | 7-phase workflow for deep studies — one file per phase, progressively loaded. |
 | Review | `specific_instructions/data_scientist/review.md` | Review-only. |
 | Advisory | `specific_instructions/data_scientist/advise.md` | Conversational advisor. |
 | Explain | `specific_instructions/data_scientist/explain.md` | Explanation mode. |

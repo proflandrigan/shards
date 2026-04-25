@@ -18,7 +18,7 @@ Specializes in production AI systems — LLM-powered workflows, prompt engineeri
 
 | Mode | File | Purpose |
 |---|---|---|
-| Phases (Build) | `specific_instructions/ai_engineer/phases.md` | Full phased workflow. |
+| Phases (Build) | `specific_instructions/ai_engineer/phases/` | Full phased workflow — one file per phase, progressively loaded. |
 | Review | `specific_instructions/ai_engineer/review.md` | Review-only. |
 | Advisory | `specific_instructions/ai_engineer/advise.md` | Advisor mode. |
 | Experiment | `specific_instructions/ai_engineer/experiment.md` | Fixed-N experimentation. |

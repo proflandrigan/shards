@@ -16,8 +16,8 @@ Specializes in analytical transformation layers (staging → intermediate → ma
 
 | Mode | File | Purpose |
 |---|---|---|
-| Quick Phases | `specific_instructions/analytics_engineer/quick_phases.md` | Quick Track (2-3 phases) for mart iteration. |
-| Deep Phases | `specific_instructions/analytics_engineer/deep_phases.md` | Deep Track (7-8 phases) for greenfield transformation layers. |
+| Quick Phases | `specific_instructions/analytics_engineer/phases_quick/` | Quick Track (2 phases) for mart iteration — one file per phase, progressively loaded. |
+| Deep Phases | `specific_instructions/analytics_engineer/phases_deep/` | Deep Track (8 phases) for greenfield transformation layers — one file per phase, progressively loaded. |
 | Review | `specific_instructions/analytics_engineer/review.md` | Review-only. |
 | Advisory | `specific_instructions/analytics_engineer/advise.md` | Advisor mode. |
 | Update | `specific_instructions/analytics_engineer/update.md` | Iterate on existing marts. |

@@ -16,7 +16,7 @@ Handles adhoc analyses that can be answered in a few SQL queries. No deep track 
 
 | Mode | File | Purpose |
 |---|---|---|
-| Phases (Build) | `specific_instructions/data_analyst/phases.md` | The 4-phase adhoc workflow. |
+| Phases (Build) | `specific_instructions/data_analyst/phases/` | The 4-phase adhoc workflow — one file per phase, progressively loaded. |
 | Review | `specific_instructions/data_analyst/review.md` | Review an existing analysis. |
 | Advisory | `specific_instructions/data_analyst/advise.md` | Conversational advisor. |
 | Explain | `specific_instructions/data_analyst/explain.md` | Walk through an existing analysis. |

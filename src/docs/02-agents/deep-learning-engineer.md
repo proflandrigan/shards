@@ -20,7 +20,7 @@ Specializes in neural architecture design, training protocol engineering, and cu
 
 | Mode | File | Purpose |
 |---|---|---|
-| Phases (Create) | `specific_instructions/deep_learning_engineer/phases.md` | Custom DL model design. |
+| Phases (Create) | `specific_instructions/deep_learning_engineer/phases/` | Custom DL model design (Create Mode — 5 phases) — one file per phase, progressively loaded. |
 | Review | `specific_instructions/deep_learning_engineer/review.md` | Architecture and training review. |
 | Advisory | `specific_instructions/deep_learning_engineer/advise.md` | Conversational advisor. |
 | Research | `specific_instructions/deep_learning_engineer/research.md` | Autonomous Research loop. |

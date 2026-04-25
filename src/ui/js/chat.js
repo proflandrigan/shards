@@ -709,9 +709,10 @@ function finalizePendingBubble(markdownContent) {
   if (!session) return;
   flushTokens();
   if (session.pendingBubble) {
-    var rendered = renderMarkdown(markdownContent);
+    var displayContent = stripGateFence(markdownContent);
+    var rendered = renderMarkdown(displayContent);
     session.pendingBubble.innerHTML = linkifyFilePaths(rendered);
-    session.pendingBubble.setAttribute('data-raw-md', markdownContent);
+    session.pendingBubble.setAttribute('data-raw-md', displayContent);
     // Assign message index for bookmarking
     var msgEl = session.pendingBubble.parentElement;
     var msgIdx = session.messages.length - 1;
@@ -749,22 +750,27 @@ function finalizePendingBubble(markdownContent) {
 
 // ─── Gate confirmation detection and buttons ────────────────────────────────
 
+function stripGateFence(content) {
+  if (!content) return content;
+  return content.replace(/::GATE::[\s\S]*?::ENDGATE::\s*/g, '');
+}
+
 function isGateMessage(content) {
   if (!content) return false;
-  // Check the tail of the message for confirmation request patterns
-  var tail = content.slice(-400).toLowerCase();
-  var confirmPhrases = [
-    'confirm', 'proceed', 'look correct', 'look good', 'approve',
-    'any changes', 'any corrections', 'ready to move', 'shall we',
-    'want to adjust', 'good to go', 'move forward', 'does this capture',
-    'anything you\'d like to change', 'before i move on', 'before moving on',
-    'want me to continue', 'satisfied with', 'aligned on this',
-    'ready for phase', 'sound right', 'on the right track'
-  ];
-  for (var i = 0; i < confirmPhrases.length; i++) {
-    if (tail.includes(confirmPhrases[i])) return true;
+  // Require a real ::GATE:: ... ::ENDGATE:: fence — the same syntax parsed
+  // authoritatively by tools/gate-hook/parser.js and emitted by agents per
+  // src/agents/specific_instructions/shared/behavioral_rules.md. Substring
+  // heuristics on words like "confirm" or "proceed" false-positive on agent
+  // narration (e.g. "Confirmed — X is not present in Y").
+  if (!/::GATE::[\s\S]*?::ENDGATE::/.test(content)) return false;
+  // Prefer server state — only inject buttons when the gate hook has
+  // actually opened a gate. If gateState isn't loaded yet (first poll
+  // lands within 2s, see src/ui/js/state.js), fall back to trusting the
+  // fence since the fence itself is unambiguous.
+  if (typeof gateState !== 'undefined' && gateState) {
+    return gateState.open === true;
   }
-  return false;
+  return true;
 }
 
 function injectGateButtons(messageEl) {
@@ -985,12 +991,13 @@ function addMessageDirect(role, content, agent, skipAnimation) {
       '<div class="message-bubble">' + linkifyFilePaths(esc(content)) + '</div>' +
       '<div class="message-actions">' + starHtml + '</div>';
   } else {
+    var displayContent = stripGateFence(content);
     div.innerHTML =
       '<div class="message-meta">' +
       '<span class="meta-dot" style="background:' + info.color + '; color:' + info.color + '"></span>' +
       esc(info.label) +
       '</div>' +
-      '<div class="message-bubble" data-raw-md="' + esc(content).replace(/"/g, '&quot;') + '">' + linkifyFilePaths(renderMarkdown(content)) + '</div>' +
+      '<div class="message-bubble" data-raw-md="' + esc(displayContent).replace(/"/g, '&quot;') + '">' + linkifyFilePaths(renderMarkdown(displayContent)) + '</div>' +
       '<div class="message-actions">' + starHtml + '<button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button></div>';
   }
 

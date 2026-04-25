@@ -254,7 +254,7 @@ Before beginning Phase 1, run `cat .shards/ui.port 2>/dev/null`. If the file exi
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/data_analyst/phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
+Read `.claude/agents/specific_instructions/data_analyst/phases/index.md` in full to orient on the phase journey. Then read `.claude/agents/specific_instructions/data_analyst/phases/phase-1.md` and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed

@@ -15,7 +15,7 @@ Specializes in deploying, monitoring, and maintaining ML systems in production. 
 
 | Mode | File | Purpose |
 |---|---|---|
-| Phases (Build) | `specific_instructions/mlops_engineer/phases.md` | Full operationalization workflow. |
+| Phases (Build) | `specific_instructions/mlops_engineer/phases/` | Full operationalization workflow — one file per phase, progressively loaded. |
 | Review | `specific_instructions/mlops_engineer/review.md` | Deployment review. |
 | Advisory | `specific_instructions/mlops_engineer/advise.md` | Advisor mode. |
 | Service Mode | `specific_instructions/mlops_engineer/service_mode.md` | Service consultation mode (invoked by ML Engineer or AI Engineer for deployment review). |

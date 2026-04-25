@@ -345,7 +345,7 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 # Phase Progression (Create Mode)
 
-Read `.claude/agents/specific_instructions/applied_ml_scientist/phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
+Read `.claude/agents/specific_instructions/applied_ml_scientist/phases/index.md` in full to orient on the phase journey. Then read `.claude/agents/specific_instructions/applied_ml_scientist/phases/phase-1.md` and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
 **Time-Travel (DIVERGE):** During planning phases (Phase 3 — Framework Architecture), if you identify 2-3 mutually exclusive approaches that are genuinely equally viable, you may propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its instructions exactly. DIVERGE is opt-in — the user must confirm before branches spawn. Do not propose DIVERGE if one approach is clearly superior.
 

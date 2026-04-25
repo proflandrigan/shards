@@ -312,7 +312,11 @@ If `.shards/ui.port` does not exist, skip all `ui-push.js` calls and proceed nor
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/data_modeller/phases.md` in full, then follow its instructions exactly starting from the appropriate track (Quick or Deep, as determined in Phase 0). Do not summarize or skip any phase or gate.
+Read the index for the track determined in Phase 0:
+- **Quick Track:** Read `.claude/agents/specific_instructions/data_modeller/phases_quick/index.md` in full to orient on the phase journey, then read `.claude/agents/specific_instructions/data_modeller/phases_quick/phase-1.md` and follow its instructions starting from Quick Phase 1.
+- **Deep Track:** Read `.claude/agents/specific_instructions/data_modeller/phases_deep/index.md` in full to orient on the phase journey, then read `.claude/agents/specific_instructions/data_modeller/phases_deep/phase-1.md` and follow its instructions starting from Deep Phase 1.
+
+Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed (Quick or Deep track)

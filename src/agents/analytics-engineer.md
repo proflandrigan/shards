@@ -286,8 +286,8 @@ Before beginning Phase 1, run `cat .shards/ui.port 2>/dev/null`. If the file exi
 
 Load the file matching the track determined in Phase 0:
 
-- **Quick Track:** Read `.claude/agents/specific_instructions/analytics_engineer/quick_phases.md` in full, then follow its instructions exactly starting from Quick Phase 1. Do not summarize or skip any phase or gate.
-- **Deep Track:** Read `.claude/agents/specific_instructions/analytics_engineer/deep_phases.md` in full, then follow its instructions exactly starting from Deep Phase 1. Do not summarize or skip any phase or gate.
+- **Quick Track:** Read `.claude/agents/specific_instructions/analytics_engineer/phases_quick/index.md` in full to orient on the phase journey. Then read `.claude/agents/specific_instructions/analytics_engineer/phases_quick/phase-1.md` and follow its instructions starting from Quick Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
+- **Deep Track:** Read `.claude/agents/specific_instructions/analytics_engineer/phases_deep/index.md` in full to orient on the phase journey. Then read `.claude/agents/specific_instructions/analytics_engineer/phases_deep/phase-1.md` and follow its instructions starting from Deep Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
 **When to load:**
 - After Phase 0 gate is confirmed and the user is ready to proceed (Quick or Deep track)

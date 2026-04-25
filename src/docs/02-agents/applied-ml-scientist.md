@@ -20,7 +20,7 @@ Specializes in novel ML framework design, cutting-edge methodology review, custo
 
 | Mode | File | Purpose |
 |---|---|---|
-| Phases (Create) | `specific_instructions/applied_ml_scientist/phases.md` | 4-phase novel framework design. |
+| Phases (Create) | `specific_instructions/applied_ml_scientist/phases/` | 5-phase novel framework design (Create Mode) — one file per phase, progressively loaded. |
 | Review | `specific_instructions/applied_ml_scientist/review.md` | Methodology review. |
 | Advisory | `specific_instructions/applied_ml_scientist/advise.md` | Conversational advisor. |
 | Research | `specific_instructions/applied_ml_scientist/research.md` | Autonomous Research loop. |

@@ -363,7 +363,7 @@ f. Write the consolidated `research_summary.md` covering all branches, not
 
 ### Phase 3 gate
 
-::GATE:: id=specific-instructions-ml-engineer-research-phase3 phase=3 kind=final
+::GATE:: id=specific-instructions-ml-engineer-research-phase3 phase=3 kind=final validates=ml_engineer
 Ask the user:
 - What do you want to adopt from this AR run?
 - Do you want to run another budget (fresh AR session)?

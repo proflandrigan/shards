@@ -251,12 +251,20 @@ function setupHooks() {
 
   const relayScript = path.join(UI_DEST, 'relay.js');
 
+  // PreToolUse hook timeout in seconds. Default Claude Code hook timeout is
+  // 600s; extend to 1800s (30 min) so users have a realistic window to
+  // respond to a permission card before CC falls back to internal rules.
+  const PRETOOL_HOOK_TIMEOUT_SEC = 1800;
+
   // Claude Code hooks format: {"matcher": "<tool_name_or_empty>", "hooks": [{"type": "command", "command": "..."}]}
   const requiredHooks = {
     UserPromptSubmit: { matcher: '', hooks: [{ type: 'command', command: `node ${relayScript} user-prompt` }] },
     Stop: { matcher: '', hooks: [{ type: 'command', command: `node ${relayScript} stop` }] },
     PostToolUse: { matcher: '', hooks: [{ type: 'command', command: `node ${relayScript} post-tool-use` }] },
-    PreToolUse: { matcher: 'Bash', hooks: [{ type: 'command', command: `node ${relayScript} pre-tool-use` }] },
+    PreToolUse: {
+      matcher: 'Bash',
+      hooks: [{ type: 'command', command: `node ${relayScript} pre-tool-use`, timeout: PRETOOL_HOOK_TIMEOUT_SEC }],
+    },
   };
 
   if (!settings.hooks) settings.hooks = {};
@@ -268,10 +276,21 @@ function setupHooks() {
       settings.hooks[hookName] = [];
     }
 
-    const exists = settings.hooks[hookName].some(entry =>
-      entry.hooks && entry.hooks.some(h => h.command && h.command.includes('relay.js'))
-    );
-    if (!exists) {
+    let found = false;
+    for (const entry of settings.hooks[hookName]) {
+      if (!entry.hooks) continue;
+      for (const h of entry.hooks) {
+        if (h.command && h.command.includes('relay.js')) {
+          found = true;
+          // Patch PreToolUse timeout on existing installs that predate this fix
+          if (hookName === 'PreToolUse' && h.timeout !== PRETOOL_HOOK_TIMEOUT_SEC) {
+            h.timeout = PRETOOL_HOOK_TIMEOUT_SEC;
+            updated = true;
+          }
+        }
+      }
+    }
+    if (!found) {
       settings.hooks[hookName].push(hookDef);
       updated = true;
     }
