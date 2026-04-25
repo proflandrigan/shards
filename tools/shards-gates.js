@@ -48,8 +48,23 @@ function cmdStatus() {
   if (history.length > 0) {
     console.log('\n── Last 10 Gates ────────────────────────────');
     for (const h of history) {
-      console.log(`  [${h.id}] phase=${h.phase} opened=${formatDate(h.opened_at)} closed=${formatDate(h.closed_at)}`);
+      const kindTag = h.kind === 'checkpoint' ? ' [checkpoint]' : h.kind === 'final' ? ' [final]' : '';
+      console.log(`  [${h.id}]${kindTag} phase=${h.phase} opened=${formatDate(h.opened_at)} closed=${formatDate(h.closed_at)}`);
     }
+  }
+  console.log('');
+}
+
+function cmdCheckpoints() {
+  const s = readState();
+  const entries = (s.history || []).filter(h => h.kind === 'checkpoint');
+  if (entries.length === 0) {
+    console.log('\nNo checkpoint gates recorded in the current session.\n');
+    return;
+  }
+  console.log(`\n── Checkpoint History (${entries.length} entries) ──────────────`);
+  for (const h of entries) {
+    console.log(`  [${h.id}] phase=${h.phase} opened=${formatDate(h.opened_at)} closed=${formatDate(h.closed_at)} via=${h.confirmed_by || '—'}`);
   }
   console.log('');
 }
@@ -116,9 +131,10 @@ function cmdForceClose() {
 const cmd = process.argv[2] || 'status';
 
 switch (cmd) {
-  case 'status':   cmdStatus(); break;
-  case 'history':  cmdHistory(); break;
-  case 'violations': cmdViolations(); break;
+  case 'status':      cmdStatus(); break;
+  case 'history':     cmdHistory(); break;
+  case 'checkpoints': cmdCheckpoints(); break;
+  case 'violations':  cmdViolations(); break;
   case 'force-close': cmdForceClose(); break;
   default:
     console.log(`
@@ -127,6 +143,7 @@ shards-gates — Gate enforcement diagnostics
 Usage:
   shards-gates status          Print current gate state and last 10 history entries
   shards-gates history         Full gate history dump
+  shards-gates checkpoints     List checkpoint-kind gates in the current session
   shards-gates violations      Tail violations.jsonl
   shards-gates force-close     Force-close an open gate (operator override)
 `);

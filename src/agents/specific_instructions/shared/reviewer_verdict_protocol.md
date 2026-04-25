@@ -49,3 +49,26 @@ Document the resolution in specs:
 **Resubmission cap:** Never resubmit to the same reviewer more than once per phase. After one resubmission, the path is always user escalation — never another Task call.
 
 **Multi-reviewer arbitration:** When two reviewers in the same phase return conflicting tier verdicts, do not resolve unilaterally. Present both verdicts verbatim to the user with a one-sentence summary of the conflict. Ask which direction to take before making any changes. Document the user's decision in specs.
+
+## Final Review (Syn Sign-Off) — Validation Section Check
+
+When a specialist invokes Syn via `Task(subagent_type="syn", ...)` for final sign-off on a validation-eligible phase, Syn's review must explicitly inspect the `## Validation` section in `project-specs.md` per `shared/validation_protocol.md`. This is distinct from the gate hook's structural check — Syn performs the *semantic* check the hook cannot.
+
+Syn's validation review looks for:
+
+- **Evidence, not assertion.** Does every check row record a measured value, or is the Observed cell filled with prose that could be true of a broken implementation?
+- **Coverage matching Track / Mode.** Did the specialist run the checks its declared `(Track, Mode)` requires, or did it skip checks with `n/a` without real justification?
+- **Downstream impact honest.** Is "verified intact" supported by an actual check, or is it a claim?
+- **Open Issues not hiding failures.** Unresolved `✗` rows and unacceptable residual risks should be surfaced, not quietly deprioritized.
+- **Summary matches evidence.** Does the Summary paragraph describe what actually happened, or does it paper over failed checks?
+
+Syn's verdict mapping:
+
+| Validation state | Verdict |
+|------------------|---------|
+| Section populated, evidence is real, coverage appropriate, risks surfaced | APPROVED |
+| Section populated but evidence is thin on 1-2 checks, coverage mostly correct | NEEDS REVISION — specific checks called out |
+| Section missing checks from required list, or evidence is theater (assertions masquerading as measurements), or failed checks are hidden | NEEDS REVISION — point the specialist back to the protocol and checklist |
+| Section claims `n/a` on clearly applicable checks with vague justifications | NEEDS REVISION — demand the actual check or a real justification |
+
+A structurally-complete but semantically-empty Validation section is the most common failure mode. Syn is the last line of defense against it before a reviewer verdict is issued.

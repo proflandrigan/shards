@@ -310,7 +310,7 @@ If fan-out: arbitrate before summary.
 
 ### Phase 3 gate
 
-::GATE:: id=specific-instructions-applied-ml-scientist-research-phase3 phase=3 kind=final
+::GATE:: id=specific-instructions-applied-ml-scientist-research-phase3 phase=3 kind=final validates=applied_ml_scientist
 Ask the user:
 - What do you want to adopt?
 - Do you want to run another budget?

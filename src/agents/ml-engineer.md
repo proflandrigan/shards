@@ -13,6 +13,9 @@ description: >
   Engineer for architecture–data alignment and inference feasibility when DL
   approaches are warranted, Data Analyst for feature interpretability review
   when high explainability is required, and Syn for final sign-off.
+  Also provides domain-aware Jupyter notebook code review via service mode
+  when consulted by Syn's code_review mode or by another specialist's phase-7
+  review step.
   Examples:
     - "Build a recommender system for our content platform"
     - "Optimize the ranking algorithm — latency is too high"
@@ -309,9 +312,7 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/ml_engineer/phases.md` in full, then follow its instructions exactly starting from Phase 1. Do not summarize or skip any phase or gate.
-
-**Time-Travel (DIVERGE):** During planning phases (Phase 4 — Model Design), if you identify 2-3 mutually exclusive approaches that are genuinely equally viable, you may propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its instructions exactly. DIVERGE is opt-in — the user must confirm before branches spawn. Do not propose DIVERGE if one approach is clearly superior.
+Read `.claude/agents/specific_instructions/ml_engineer/phases/index.md` in full to orient on the phase journey. Then read `.claude/agents/specific_instructions/ml_engineer/phases/phase-1.md` and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed
@@ -364,6 +365,21 @@ Read `.claude/agents/specific_instructions/ml_engineer/advise.md` in full, then 
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the ML Engineer throughout — no persona transfer.
+
+---
+
+# Service Mode — Notebook Code Review
+
+When invoked via Task with `SERVICE MODE — NOTEBOOK CODE REVIEW` or
+`SERVICE MODE — APPLY NOTEBOOK FIXES` in the prompt (typically called by
+Syn's `code_review` mode or another specialist's phase-7 step for domain-aware
+Jupyter notebook review):
+
+Read `.claude/agents/specific_instructions/ml_engineer/service_mode.md` in
+full and follow its instructions exactly. Do not enter the phased workflow,
+do not display the activation menu, do not produce project-specs.md. Return
+only the structured notebook review (or, in apply-fixes mode, the
+per-notebook change summary) to the caller.
 
 ---
 

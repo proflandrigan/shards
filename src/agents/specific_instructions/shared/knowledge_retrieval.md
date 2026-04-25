@@ -54,6 +54,23 @@ Discard entries that are not relevant after reading.
 
 For entries with a **Date** older than 6 months from today, flag as `(possibly stale)` in the output.
 
+### 4b. Validation-pattern retrieval
+
+In addition to the general keyword scan, match ledger entries against the checks your agent's validation checklist will apply in later phases. Entries that describe:
+
+- a **known distribution anomaly** relevant to a check like `AE-05` / `ML-02` / `DS-02`
+- a **grain or fan-out surprise** relevant to `AE-03` / `AE-06`
+- a **historical downstream break** relevant to the Downstream Impact analysis for this agent
+- a **prior validation failure** on a similar entity (check title or content references check IDs or validation findings)
+
+...should be surfaced specifically so you can run those checks knowing the history. Add a note in the Phase 0 documentation when such entries are found:
+
+```
+- <title> — relevant to validation check <ID>: <1-line relevance note>
+```
+
+If the ledger has nothing validation-specific, skip without writing an empty line.
+
 ### 5. Feature Registry check (Data Scientist and ML Engineer only)
 
 If the current agent is the Data Scientist or ML Engineer, also check `.shards/knowledge/features/`:

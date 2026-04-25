@@ -14,6 +14,16 @@ const { parseGates, checkViolation } = require(path.join(HOOK_DIR, 'gate-hook', 
 const { classify } = require(path.join(HOOK_DIR, 'gate-hook', 'classify.js'));
 const { readLastAssistantMessage } = require(path.join(HOOK_DIR, 'gate-hook', 'transcript.js'));
 const { appendViolation, appendHistory } = require(path.join(HOOK_DIR, 'gate-hook', 'log.js'));
+const validation = require(path.join(HOOK_DIR, 'gate-hook', 'validation.js'));
+
+// Opt-in validation enforcement. Default: off (parse-and-log only).
+// Flip to 1 to have the hook block gates when validation is missing.
+const VALIDATION_ENFORCE = process.env.SHARDS_VALIDATION_ENFORCE === '1';
+
+// Checkpoint gates (kind=checkpoint) can be downgraded to advisory by setting
+// SHARDS_CHECKPOINT_ENFORCE=0 — they are still logged but do not block tools.
+// Phase and final gates are unaffected.
+const CHECKPOINT_ENFORCE = process.env.SHARDS_CHECKPOINT_ENFORCE !== '0';
 
 // Read tools that are allowed while a gate is open
 const ALLOWED_TOOLS = new Set(['Read', 'Glob', 'Grep']);
@@ -56,13 +66,65 @@ function handleStop(payload) {
     return;
   }
 
+  // Checkpoint advisory mode: if this is a checkpoint gate and enforcement is
+  // disabled, log the advisory and exit without opening state — tool calls
+  // downstream remain unblocked.
+  const gateKind = kind || 'phase';
+  if (gateKind === 'checkpoint' && !CHECKPOINT_ENFORCE) {
+    appendHistory({
+      event: 'advisory',
+      kind: 'checkpoint',
+      gate_id: id,
+      phase: phase || null,
+      session_id: sessionId,
+    });
+    return;
+  }
+
+  // Validation enforcement: if the gate declares `validates=<checklist>`, check
+  // the `## Validation` section in project-specs.md before opening.
+  // Checkpoints are build-time punctuation and never carry a validates= field;
+  // the final phase gate is where validation evidence is required.
+  const validates = gateKind === 'checkpoint' ? null : gate.attrs.validates;
+  if (validates && validates !== 'none') {
+    const specs = validation.readSpecs();
+    const parsed = validation.parseValidationSection(specs);
+    const errors = validation.checkValidation(parsed);
+    if (errors.length > 0) {
+      appendViolation({
+        type: 'validation-missing',
+        gate_id: id,
+        checklist: validates,
+        errors,
+        session_id: sessionId,
+      });
+      if (VALIDATION_ENFORCE) {
+        respond({
+          decision: 'block',
+          reason: validation.formatValidationError(validates, gate.attrs, errors),
+        });
+        return;  // do not open gate
+      }
+      // Soft-launch mode: log but do not block.
+    } else {
+      appendHistory({
+        event: 'validation-passed',
+        gate_id: id,
+        checklist: validates,
+        evidence_rows: parsed.evidenceRows.length,
+        track: parsed.track,
+        mode: parsed.mode || null,
+      });
+    }
+  }
+
   // Open the gate
   const current = state.read();
   const newState = {
     open: true,
     id,
     phase: phase || null,
-    kind: kind || 'phase',
+    kind: gateKind,
     agent: agent || sessionId,
     opened_at: new Date().toISOString(),
     opened_in_turn: payload.turn_number || null,
@@ -70,7 +132,7 @@ function handleStop(payload) {
     history: current.history || [],
   };
   state.write(newState);
-  appendHistory({ event: 'opened', gate_id: id, session_id: sessionId });
+  appendHistory({ event: 'opened', gate_id: id, kind: gateKind, session_id: sessionId });
 }
 
 // ─── PreToolUse handler ───────────────────────────────────────────────────────
@@ -82,8 +144,14 @@ function handlePreToolUse(payload) {
   const toolName = payload.tool_name || '';
   if (ALLOWED_TOOLS.has(toolName)) return;
 
+  const gateKind = s.kind || 'phase';
+  const label = gateKind === 'checkpoint'
+    ? 'Checkpoint gate — a component was just tested and awaits user confirmation before the next component can be written.'
+    : 'Phase gate — await user confirmation before advancing.';
+
   const msg = [
-    `::GATE-BLOCK:: Gate '${s.id}' (phase ${s.phase}, kind ${s.kind}) is still open.`,
+    `::GATE-BLOCK:: Gate '${s.id}' (phase ${s.phase}, kind ${gateKind}) is still open.`,
+    label,
     `Opened at ${s.opened_at}. User must confirm before you can proceed.`,
     `If the user just confirmed, the UserPromptSubmit hook should have closed`,
     `the gate — if it did not, the confirmation language was ambiguous. Ask`,
@@ -117,7 +185,7 @@ function handleUserPromptSubmit(payload) {
       history: [...(s.history || []), historyEntry],
     };
     state.write(newState);
-    appendHistory({ event: 'closed', gate_id: s.id, confirmed_by: 'user-prompt' });
+    appendHistory({ event: 'closed', gate_id: s.id, kind: s.kind || 'phase', confirmed_by: 'user-prompt' });
   } else if (result === 'deny') {
     // Gate stays open — user is asking for a change
   } else {

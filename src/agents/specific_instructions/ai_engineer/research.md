@@ -320,7 +320,7 @@ If fan-out: arbitrate before writing the consolidated summary. Standard
 
 ### Phase 3 gate
 
-::GATE:: id=specific-instructions-ai-engineer-research-phase3 phase=3 kind=final
+::GATE:: id=specific-instructions-ai-engineer-research-phase3 phase=3 kind=final validates=ai_engineer
 Ask the user:
 - Which iteration (or Pareto point) do you want to adopt?
 - Do you want to run another budget?

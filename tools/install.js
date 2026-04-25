@@ -16,12 +16,15 @@ const AGENTS_SRC = path.join(SRC_DIR, "agents");
 const COMMANDS_SRC = path.join(SRC_DIR, "commands");
 const TEMPLATES_SRC = path.join(SRC_DIR, "templates");
 const UI_SRC = path.join(SRC_DIR, "ui");
+const DOCS_SRC = path.join(SRC_DIR, "docs");
 
 const AGENTS_DEST = path.join(CLAUDE_DIR, "agents");
 const COMMANDS_DEST = path.join(CLAUDE_DIR, "commands");
 const TEMPLATES_DEST = path.join(PROJECT_DIR, "templates");
 const SHARDS_DIR = path.join(PROJECT_DIR, ".shards");
 const UI_DEST = path.join(SHARDS_DIR, "ui");
+const UI_DOCS_DEST = path.join(UI_DEST, "docs");
+const DOCS_DEST = path.join(PROJECT_DIR, "docs", "shards-guide");
 const HOOKS_DEST = path.join(SHARDS_DIR, "hooks");
 
 const MANIFEST_NAME = ".shards-manifest.json";
@@ -171,6 +174,20 @@ function install() {
   const uiFiles = listFiles(UI_SRC);
   for (const f of uiFiles) {
     console.log(`  ✓ .shards/ui/${f}`);
+  }
+
+  // 5a. Copy developer guide docs into two places:
+  //     1) .shards/ui/docs/ — served by the UI guide panel
+  //     2) docs/shards-guide/ — readable as plain markdown outside the UI
+  console.log("\n📦 Installing Developer Guide...");
+  const uiDocsCount = copyDir(DOCS_SRC, UI_DOCS_DEST);
+  const docsCount = copyDir(DOCS_SRC, DOCS_DEST);
+  const docFiles = listFiles(DOCS_SRC);
+  for (const f of docFiles) {
+    console.log(`  ✓ .shards/ui/docs/${f}`);
+  }
+  if (docFiles.length > 0) {
+    console.log(`  ✓ docs/shards-guide/ (${docFiles.length} files, plain-markdown copy)`);
   }
 
   // 5b. Copy gate-hook.js + gate-hook/ into .shards/hooks/
@@ -328,6 +345,8 @@ function install() {
     ...cmdFiles.map((f) => `.claude/commands/${f}`),
     ...tplFiles.map((f) => `templates/${f}`),
     ...uiFiles.map((f) => `.shards/ui/${f}`),
+    ...docFiles.map((f) => `.shards/ui/docs/${f}`),
+    ...docFiles.map((f) => `docs/shards-guide/${f}`),
   ];
   const manifest = {
     version: require(path.join(PACKAGE_ROOT, "package.json")).version,
@@ -433,7 +452,7 @@ The knowledge directory is preserved across installs and uninstalls.
   }
 
   // Done
-  const total = agentCount + cmdCount + tplCount + uiCount;
+  const total = agentCount + cmdCount + tplCount + uiCount + uiDocsCount + docsCount;
   console.log(`
 ╔══════════════════════════════════════════╗
 ║  ✅ Installed ${String(total).padEnd(3)} files successfully      ║

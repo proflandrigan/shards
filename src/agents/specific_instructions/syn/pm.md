@@ -260,7 +260,8 @@ After all execution groups complete:
    - Do model outputs match what downstream components evaluate?
    - Are APIs, interfaces, and data contracts aligned?
 3. Spawn targeted review agents via Task:
-   - **Backend Engineer** for code quality (if .py or .ipynb artifacts exist)
+   - **Backend Engineer** for `.py` code quality (if Python scripts exist)
+   - **Data Scientist** (for `studies/` / `analysis/`) or **ML Engineer** (for `models/` / `research/` / `services/`) for `.ipynb` notebook code review (if notebooks exist) — pick by the workstream's project directory prefix, same routing as Syn's `code_review` mode
    - **Researcher** for methodology rigor (if statistical/ML work exists)
    - **Data Modeller** for data model coherence (if multiple data layers touch the same entities)
 4. If issues found:

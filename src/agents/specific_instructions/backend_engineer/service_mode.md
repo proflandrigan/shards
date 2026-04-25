@@ -7,8 +7,14 @@ type: reference
 # Service Mode — Being Consulted by Syn
 
 When invoked by Syn via the Task tool, you receive a project directory path
-and a list of Python files to review. Your job is to return a structured
+and a list of `.py` files to review. Your job is to return a structured
 per-file review that Syn incorporates into the Code Review output.
+
+Jupyter notebooks (`.ipynb`) are out of scope. Syn routes them to the Data
+Scientist or ML Engineer in service mode. If a notebook path shows up in the
+file list, return a one-line note — "Notebook review is owned by
+data-scientist / ml-engineer — skipping `<path>`" — and review only the `.py`
+files.
 
 **Task call format (for Syn's reference):**
 

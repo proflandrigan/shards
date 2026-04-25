@@ -488,6 +488,36 @@
   color: #888;
 }
 
+/* ─── Developer Guide panel ──────────────────────────────── */
+[data-theme="light"] .guide-toc { background: #fafafa; border-right-color: #ddd; }
+[data-theme="light"] .guide-search-wrap { border-bottom-color: #eee; }
+[data-theme="light"] #guide-search-input { background: #ffffff; color: #333; border-color: #ccc; }
+[data-theme="light"] #guide-search-input:focus { border-color: #4a80e0; }
+[data-theme="light"] .guide-section-title { color: #888; }
+[data-theme="light"] .guide-page-item { color: #555; }
+[data-theme="light"] .guide-page-item:hover { background: #f0f0f4; }
+[data-theme="light"] .guide-page-item.active {
+  background: rgba(56, 96, 192, 0.08);
+  border-left-color: #3860c0;
+  color: #222;
+}
+[data-theme="light"] .guide-content { color: #333; }
+[data-theme="light"] .guide-loading,
+[data-theme="light"] .guide-empty { color: #888; }
+[data-theme="light"] .guide-error { color: #c04040; }
+[data-theme="light"] .guide-prose { color: #333; }
+[data-theme="light"] .guide-prose h1 { color: #222; border-bottom-color: #ddd; }
+[data-theme="light"] .guide-prose h2 { color: #333; border-bottom-color: #ddd; }
+[data-theme="light"] .guide-prose h3 { color: #444; }
+[data-theme="light"] .guide-prose th,
+[data-theme="light"] .guide-prose td { border-bottom-color: #ddd; }
+[data-theme="light"] .guide-prose th { background: #f0f0f5; color: #444; }
+[data-theme="light"] .guide-prose code { background: #eff0f5; color: #3050a0; }
+[data-theme="light"] .guide-prose pre { background: #f0f0f5; border: 1px solid #ddd; }
+[data-theme="light"] .guide-prose pre code { color: #333; background: transparent; }
+[data-theme="light"] .guide-prose a { color: #3060c0; }
+[data-theme="light"] .guide-prose blockquote { border-left-color: #ccc; color: #777; }
+
 /* ─── HUD light theme ────────────────────────────────────── */
 [data-theme="light"] #status-bar {
   background: rgba(0, 0, 0, 0.04);

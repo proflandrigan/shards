@@ -87,6 +87,36 @@ Be concise and direct.
 )
 ```
 
+**Applied ML Scientist** — if the review touches model architecture, loss function
+design, inductive bias alignment with data structure, or non-standard methodology
+(non-tabular data, custom objectives, self-supervised components, architecture
+search, or any approach the Data Scientist review doesn't adequately cover):
+```
+Task(
+  subagent_type="applied-ml-scientist",
+  prompt="""
+You are being consulted to review the ML science of an existing system.
+
+**System under review:** <system name and brief description>
+**Problem framing:** <task type, data modality, business goal>
+**Architecture / approach:** <model family, key components, objective function>
+**Data structure:** <modality, scale, key characteristics>
+**Key concerns or observations:** <anything notable from code review>
+
+Please assess:
+1. Problem formulation — is this framed as the right ML problem for the data and goal?
+2. Inductive bias — does the architecture match the structure of the data?
+3. Loss / objective alignment — does the training objective align with what the
+   business actually cares about?
+4. Cutting-edge alternatives — are there methods from recent literature that would
+   meaningfully outperform the current approach?
+5. One or two specific recommendations.
+
+Return your review in the service-mode format. Be concise.
+  """
+)
+```
+
 ---
 
 ## Phase 4 — Write Review File

@@ -365,7 +365,7 @@ if the user wants to keep going. Written in your voice, opinionated.>
 ### Present to user
 Read both files back to the user.
 
-::GATE:: id=specific-instructions-data-scientist-experiment-phase3 phase=3 kind=final
+::GATE:: id=specific-instructions-data-scientist-experiment-phase3 phase=3 kind=final validates=data_scientist
 Ask the user:
 ::ENDGATE::
 - What do you want to adopt?

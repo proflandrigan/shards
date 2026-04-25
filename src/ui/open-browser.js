@@ -25,7 +25,16 @@ function getPort() {
 }
 
 const port = getPort();
-const url = `http://localhost:${port}`;
+
+// Optional --hash argument: /shards-guide passes --hash guide so the UI
+// opens the guide panel immediately on load.
+let hash = '';
+const args = process.argv.slice(2);
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--hash' && args[i + 1]) { hash = args[i + 1]; i++; }
+}
+
+const url = `http://localhost:${port}${hash ? '#' + hash : ''}`;
 
 console.log(`Shards UI: ${url}`);
 

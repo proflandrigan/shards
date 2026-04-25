@@ -302,6 +302,20 @@ the live feed of agent work in the browser. The UI includes a file explorer, Mon
 editor integration, code intelligence (symbol indexing via ctags), git status, and
 a command palette.
 
+### Developer Guide
+
+A comprehensive browsable guide ships with every install. Two ways to read it:
+
+- **In the UI** — click the book icon in the activity bar, or run `/shards-guide`.
+- **As plain markdown** — open `docs/shards-guide/` in any editor or browse it on
+  GitHub. Start with `docs/shards-guide/README.md`.
+
+Both versions come from a single source of truth (`src/docs/`) so they can't drift.
+The guide covers every shard (persona, menu, phases, consultants, output dir),
+every shared protocol (gate pattern, DIVERGE, Autonomous Research, Knowledge
+Ledger, etc.), every UI feature (panels, keybindings, pinboard, code intel), and
+example workflows.
+
 #### Permission Whitelisting
 
 By default, Claude Code prompts for approval on every shell command. You can

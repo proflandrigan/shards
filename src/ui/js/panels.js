@@ -160,6 +160,12 @@ function updatePanelData(panelId, newData) {
     return;
   }
 
+  if (p.panel === 'guide') {
+    cleanupGuide(p);
+    renderGuidePanel(document.getElementById('file-rendered-view'), p);
+    return;
+  }
+
   if (p.panel === 'pr-review') {
     renderPRReviewPanel(document.getElementById('file-rendered-view'), p);
     return;
@@ -244,6 +250,10 @@ function renderPanelPane(panelId) {
     tableView.classList.remove('visible');
     renderedView.classList.add('visible');
     renderKnowledgeMapPanel(renderedView, p);
+  } else if (p.panel === 'guide') {
+    tableView.classList.remove('visible');
+    renderedView.classList.add('visible');
+    renderGuidePanel(renderedView, p);
   } else if (p.panel === 'pr-review') {
     tableView.classList.remove('visible');
     renderedView.classList.add('visible');
