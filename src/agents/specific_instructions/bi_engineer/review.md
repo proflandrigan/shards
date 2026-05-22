@@ -17,7 +17,7 @@ Ask the user:
    to paste key files)
 4. Are there any known concerns going in? (or is this an open review?)
 
-::GATE:: id=specific-instructions-bi-engineer-review-phase1 phase=1 kind=phase
+::GATE:: id=bi-engineer-review-phase-1 phase=1 kind=phase
 Do not proceed until the user confirms the review scope.
 ::ENDGATE::
 Summarise what you're reviewing and what you'll assess. Wait for explicit confirmation.
@@ -144,7 +144,7 @@ _SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant
 
 Read the review file back to the user in full.
 
-::GATE:: id=specific-instructions-bi-engineer-review-phase5 phase=5 kind=final
+::GATE:: id=bi-engineer-review-phase-5 phase=5 kind=final
 Ask the user:
 ::ENDGATE::
 - Do you want to adopt any of these recommendations now?

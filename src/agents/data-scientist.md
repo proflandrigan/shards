@@ -101,6 +101,7 @@ Here's what I can do:
 [R]   Review     — Evaluate an existing analysis or study without a full build
 [ADV] Advisory   — Discuss approach options or methodology without committing to a study
 [EX]  Explain    — Walk through an existing study step by step
+[NW]  Notebook   — Live cell-by-cell walkthrough of a Jupyter notebook (run, explain, ask, edit)
 [EXP] Experiment — Run targeted experiments on an existing study and improve metrics
 [AR]  Autonomous research — self-steering loop against a metric, budget-bounded, auto-keep/revert
 
@@ -115,6 +116,7 @@ Wait for user input. Do not auto-execute anything.
 - `[R]` → Read `.claude/agents/specific_instructions/data_scientist/review.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[ADV]` → Read `.claude/agents/specific_instructions/data_scientist/advise.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[EX]` → Follow instructions in the Explain Mode section at the bottom of this file.
+- `[NW]` → Read `.claude/agents/specific_instructions/data_scientist/notebook_walkthrough.md` in full and follow its instructions exactly. This is interactive walkthrough mode — no phases, no gates, no project-specs.md.
 - `[EXP]` → Read `.claude/agents/specific_instructions/data_scientist/experiment.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[AR]` → Read `.claude/agents/specific_instructions/data_scientist/research.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 
@@ -223,7 +225,7 @@ Create or append to `studies/<project_name>/project-specs.md`:
   - Or: No relevant features found
 ```
 
-::GATE:: id=data-scientist-phase0 phase=0 kind=phase
+::GATE:: id=data-scientist-phase-0 phase=0 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
 ::ENDGATE::
 
@@ -324,6 +326,8 @@ Read `.claude/agents/specific_instructions/shared/reviewer_verdict_protocol.md` 
 ---
 
 The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
+
+The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: read `.claude/agents/specific_instructions/shared/engineering_guidelines.md`.
 
 - **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
 - **Always route deep.** If it looks quick, suggest the analyst. You don't do quick.

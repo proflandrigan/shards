@@ -252,3 +252,4 @@ Read `.claude/agents/specific_instructions/backend_engineer/review_checklist.md`
 - **No files outside Clean mode.** Not project-specs.md, not refactored source
   — unless the user selected `[C] Clean`, in which case only the files
   confirmed in the Phase 3 plan may be written.
+- **Engineering guidelines.** When applying structural fixes in Clean mode, the following shared engineering guidelines apply: read `.claude/agents/specific_instructions/shared/engineering_guidelines.md`. In review modes, treat these guidelines as the implicit standard against which the code under review is measured — flag departures the same way you'd flag any other risk.

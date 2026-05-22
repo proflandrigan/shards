@@ -32,6 +32,13 @@ fails, halt and diagnose before advancing to the next model. In a contract-first
 / no-data environment, skip validation queries and note "THEORETICAL — no data
 to validate" in the build log.
 
+> **Auto-verify mode**: this is a bulk read-only verification stretch — the
+> kind that otherwise spams permission prompts. Open `::AUTO-VERIFY:: agent=data-modeller phase=6 tool_budget=<N> ttl_minutes=<N>`
+> at the start of the post-build sweep and `::ENDAUTO::` at the end. The hook
+> auto-approves `dbt show`, `dbt ls`, and SELECT-only warehouse-CLI queries while
+> the block is open; `dbt build` and any write still prompt as normal. See
+> `specific_instructions/shared/auto_verify_mode.md`.
+
 1. **Grain validation** (every model with a stated PK):
    ```sql
    select count(*) as total_rows, count(distinct <pk_columns>) as distinct_pks

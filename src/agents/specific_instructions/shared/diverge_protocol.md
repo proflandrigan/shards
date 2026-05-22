@@ -80,7 +80,9 @@ Example (planning-phase form):
 
 ::GATE:: id=specific-instructions-shared-diverge-protocol-phase0 phase=0 kind=phase
 
-::ENDGATE:: The user must explicitly confirm DIVERGE. If they pick a single approach, proceed with the standard phased workflow — no fork. If they confirm DIVERGE, continue to Section C.
+::ENDGATE::
+
+The user must explicitly confirm DIVERGE. If they pick a single approach, proceed with the standard phased workflow — no fork. If they confirm DIVERGE, continue to Section C.
 
 ---
 
@@ -302,7 +304,9 @@ Example (planning-phase form):
 
 ::GATE:: id=specific-instructions-shared-diverge-protocol-phase0-2 phase=0 kind=final
 
-::ENDGATE:: Wait for user to select a winner before proceeding.
+::ENDGATE::
+
+Wait for user to select a winner before proceeding.
 
 ---
 

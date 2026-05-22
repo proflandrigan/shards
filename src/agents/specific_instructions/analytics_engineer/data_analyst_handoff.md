@@ -14,7 +14,7 @@ This file governs Step 7 of Phase 8 (Deliver and Document) for the Analytics Eng
    - **If the downstream consumer was not a Data Analyst:**
      Ask the user: "This mart is built for downstream consumption. Do you want a
      `data_analyst_handoff.md` so the Data Analyst shard can run the analysis on top of it?"
-     ::GATE:: id=specific-instructions-analytics-engineer-data-analyst-handoff-phase0 phase=0 kind=phase
+     ::GATE:: id=analytics-engineer-data-analyst-handoff-phase-0 phase=0 kind=phase
 Wait for an explicit yes or no. Do not generate the file unless the user confirms.
 ::ENDGATE::
 

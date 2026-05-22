@@ -71,6 +71,13 @@ For each model:
   / no-data environment (Phase 2 Data sufficiency: Insufficient), skip validation
   queries and note "THEORETICAL — no data to validate" in the build log.
 
+  **Auto-verify mode**: each layer's post-build sweep is a bulk read-only
+  verification stretch. Open `::AUTO-VERIFY:: agent=analytics-engineer phase=7 tool_budget=<N>`
+  at the start of the layer's validation pass and `::ENDAUTO::` before
+  emitting the layer's checkpoint gate. The hook will auto-approve `dbt show`
+  and SELECT-only warehouse-CLI queries while the block is open; `dbt build`
+  and writes still prompt. See `specific_instructions/shared/auto_verify_mode.md`.
+
   1. **Grain validation** (every model with a stated PK):
      ```sql
      select count(*) as total_rows, count(distinct <pk_columns>) as distinct_pks

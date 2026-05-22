@@ -43,7 +43,7 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-::GATE:: id=data-engineer-quick-phase-2 phase=2 kind=phase
+::GATE:: id=data-engineer-quick-phase-2 phase=2 kind=final validates=data_engineer
 Read this section back to the user. Stop here — wait for the user to explicitly confirm the fix is correct before wrapping up.
 ::ENDGATE::
 

@@ -5,14 +5,14 @@
 
 ## Phase 7 — Review and Handoff
 
-**Code review (Python scripts and notebooks):**
+**Code review (Python scripts, notebooks, and SQL):**
 
 Tell the user: "Before Syn reviews this, we're running code review. Python
-scripts go to the Backend Engineer; notebooks go to the ML Engineer for a
-domain-aware read. Peer review is good science."
+scripts → Backend Engineer; notebooks → ML Engineer; SQL queries → Analytics
+Engineer (review + LIMIT 100 validation). Peer review is good science."
 
-Glob the project directory (`studies/<study_name>/`) for `.py` files and,
-separately, for `.ipynb` files.
+Glob the project directory (`studies/<study_name>/`) for `.py` files,
+`.ipynb` files, and `.sql` files — three separate buckets.
 
 **Python scripts → Backend Engineer** (only if any `.py` files were found):
 
@@ -43,12 +43,40 @@ Task(
 )
 ```
 
-If both buckets are non-empty, fire both Task calls in parallel. If neither
-bucket has files, report "No Python code artifacts — skipping code review."
+**SQL queries → Analytics Engineer** (only if any `.sql` files were found).
+Cross-shard review — the AE catches grain, fan-out, and source-layer issues
+that the Data Scientist may have missed, and validates each query under
+LIMIT 100:
 
-Append both reviews to project-specs.md under a combined `Code Review` heading.
+```
+Task(
+  subagent_type="analytics-engineer",
+  description="SQL code review + LIMIT 100 validation for [study_name]",
+  prompt="SERVICE MODE — CODE REVIEW. Review the following SQL files in
+  studies/[study_name]/. Read project-specs.md first for context.
+  Files to review: [list of .sql files found]
 
-**After appending the reviews, branch on the worst verdict across both:**
+  Beyond the standard code review pass (correctness, quality, security,
+  performance, domain fit), please ALSO execute each query under LIMIT 100
+  and report:
+  - Row count under LIMIT, column list, and dtypes
+  - Join fan-out (multi-table queries only): left row count vs. joined row count
+  - Any unexpected NULLs on join keys or critical filter columns
+  - Match against the Phase 3 grain and join path documented in project-specs.md
+
+  The LIMIT 100 sweep is a read-only validation — feel free to open an
+  ::AUTO-VERIFY:: marker if it speeds up your run.
+
+  Your job here is review + validation only — do not apply any fixes."
+)
+```
+
+If two or more buckets are non-empty, fire all Task calls in parallel. If all
+buckets are empty, report "No code artifacts — skipping code review."
+
+Append all reviews to project-specs.md under a combined `Code Review` heading.
+
+**After appending the reviews, branch on the worst verdict across all reviewers:**
 
 - **Clean or Minor Issues** → proceed directly to Syn review.
 - **Refactor Required** → tell the user: "Reviewer(s) flagged structural
@@ -142,6 +170,7 @@ the protocol. Present candidates to the user for confirmation before writing.
 ## Phase 7: Findings and Handoff (Data Scientist)
 - **Backend Engineer Review (.py scripts):** <summary or N/A — list files reviewed, overall verdict>
 - **ML Engineer Review (.ipynb notebooks):** <summary or N/A — list notebooks reviewed, overall verdict>
+- **Analytics Engineer Review (.sql queries):** <summary or N/A — list files reviewed, overall verdict, LIMIT 100 validation findings (row counts / fan-out / null anomalies)>
 - **Syn Review:** <included above>
 - **Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Report location:** <file path>

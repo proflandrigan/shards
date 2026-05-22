@@ -5,6 +5,18 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { randomUUID } = require('crypto');
+
+// Read-only allowlist shared with the gate hook. Used to short-circuit the
+// HTTP round-trip to the shards-ui server for obvious read-only Bash ops.
+// Graceful degradation: if the module isn't available (standalone deploy,
+// install partially rolled back, etc.) we fall through to the normal POST.
+let isAutoApprovable;
+try {
+  ({ isAutoApprovable } = require('../hooks/gate-hook/auto-allowlist.js'));
+} catch (_) {
+  isAutoApprovable = () => false;
+}
 
 const SHARDS_DIR = path.join(process.cwd(), '.shards');
 const PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
@@ -17,8 +29,12 @@ const MAX_QUEUE_SIZE = 500;
 
 const eventType = process.argv[2]; // user-prompt | stop | post-tool-use | session-end
 
-// P2: Monotonic sequence counter persisted alongside the queue
-let nextSeq = 1;
+// P2: Per-event UUID for server-side dedup. Previously a process-local
+// integer counter — but every Claude Code hook invocation spawns a fresh
+// relay process, so two concurrent hooks both started at seq=1 and the
+// server's dedup set saw collisions. UUIDs are opaque on the server side
+// (used only as Set keys in the dedup check) so this is a drop-in swap.
+function nextSeq() { return randomUUID(); }
 
 // P1: Read port and auth token from JSON port file
 function getServerInfo() {
@@ -77,7 +93,7 @@ function writeQueue(events) {
 }
 
 function appendToQueue(payload) {
-  const entry = { seq: nextSeq++, timestamp: Date.now(), payload };
+  const entry = { seq: nextSeq(), timestamp: Date.now(), payload };
   try {
     fs.appendFileSync(QUEUE_FILE, JSON.stringify(entry) + '\n');
   } catch {}
@@ -202,21 +218,49 @@ function pollDecision(port, token, id) {
 // reserved for hook *failures*, not user denials. Without this shape, a bare
 // exit(0) doesn't actually override acceptEdits mode's internal deny of
 // non-allowlisted Bash commands.
-function emitDecision(decision, reason) {
-  process.stdout.write(JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: decision,
-      permissionDecisionReason: reason || '',
-    },
-  }));
+//
+// updatedInput is an optional object the hook can use to rewrite the tool's
+// parameters before execution (Claude Code PreToolUse contract). We use it to
+// attach dangerouslyDisableSandbox=true on allowed Bash commands — see
+// buildBashAllowInput below for why.
+function emitDecision(decision, reason, updatedInput) {
+  const hookSpecificOutput = {
+    hookEventName: 'PreToolUse',
+    permissionDecision: decision,
+    permissionDecisionReason: reason || '',
+  };
+  if (updatedInput) hookSpecificOutput.updatedInput = updatedInput;
+  process.stdout.write(JSON.stringify({ hookSpecificOutput }));
   process.exit(0);
+}
+
+// When the user (or their persisted allowlist) approves a Bash command, attach
+// dangerouslyDisableSandbox=true so the command isn't then silently blocked by
+// the OS-level sandbox (Seatbelt/bubblewrap) — which would force a second
+// permission round-trip that the shards-ui flow doesn't surface cleanly. Scope
+// is per-call: the flag rides along with this single tool invocation only.
+function buildBashAllowInput(toolName, toolInput) {
+  if (toolName !== 'Bash') return null;
+  if (!toolInput || typeof toolInput !== 'object') return null;
+  if (toolInput.dangerouslyDisableSandbox === true) return null; // already set
+  return { ...toolInput, dangerouslyDisableSandbox: true };
 }
 
 async function handlePreToolUse(port, token, payload) {
   const toolName = payload.tool_name || '';
-  const command = (payload.tool_input && payload.tool_input.command) || '';
+  const toolInput = payload.tool_input || {};
+  const command = toolInput.command || '';
   const sessionId = payload.session_id || '';
+
+  // Fast path: read-only inspection ops auto-approve without an HTTP round-trip.
+  // The shards-ui server's settings allowlist would also approve these — this
+  // just shaves the ~5-50ms POST per call across long specialist sessions.
+  // Same authority as a server "allowed" response: deny rules still beat us
+  // (CC evaluates deny before any hook decision).
+  if (isAutoApprovable(toolName, toolInput)) {
+    emitDecision('allow', 'Auto-approved by shards read-only allowlist',
+                 buildBashAllowInput(toolName, toolInput));
+  }
 
   // POST to server
   const response = await postPermissionRequest(port, token, {
@@ -234,24 +278,44 @@ async function handlePreToolUse(port, token, payload) {
 
   // Fast paths
   if (response.status === 'allowed') {
-    emitDecision('allow', 'Allowed by shards-ui permission rules');
+    emitDecision('allow', 'Allowed by shards-ui permission rules', buildBashAllowInput(toolName, toolInput));
   }
   if (response.status === 'denied') {
     emitDecision('deny', 'Denied by shards-ui permission rules');
   }
 
-  // Pending — poll loop (no timeout: wait for user decision up to the
-  // hook timeout configured in .claude/settings.json)
+  // Pending — poll the UI until the user decides, OR until the poll deadline
+  // expires. The deadline is generous (default 10 minutes) so a user who steps
+  // away mid-call doesn't have their tool silently rejected. On expiry we exit
+  // 0 with no structured output — same posture as "server unreachable" above —
+  // which hands control back to Claude Code's built-in permission rules.
+  //
+  // Tunable via SHARDS_UI_PERMISSION_TIMEOUT_MS; the hard ceiling is the
+  // .claude/settings.json hook `timeout` (1800s today). Setting the env var to
+  // 0 restores the old wait-forever behavior.
   const POLL_MS = 200;
+  const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000;
+  const envTimeout = parseInt(process.env.SHARDS_UI_PERMISSION_TIMEOUT_MS, 10);
+  const timeoutMs = Number.isFinite(envTimeout) && envTimeout >= 0
+    ? envTimeout
+    : DEFAULT_TIMEOUT_MS;
+  const deadline = timeoutMs > 0 ? Date.now() + timeoutMs : null;
 
   for (;;) {
     await sleep(POLL_MS);
     const decision = await pollDecision(port, token, response.id);
     if (decision === 'allow') {
-      emitDecision('allow', 'Approved by user in Shards UI');
+      emitDecision('allow', 'Approved by user in Shards UI', buildBashAllowInput(toolName, toolInput));
     }
     if (decision === 'deny') {
       emitDecision('deny', 'Denied by user in Shards UI');
+    }
+    if (deadline && Date.now() >= deadline) {
+      process.stderr.write(
+        `shards-ui: no user decision after ${Math.round(timeoutMs / 1000)}s — ` +
+        `deferring to Claude Code permission rules\n`
+      );
+      process.exit(0);
     }
     // 'pending' or 'not_found' — keep polling
   }
@@ -300,11 +364,31 @@ async function main() {
 
   const state = getState();
 
+  // Claude Code injects session_id into every hook stdin payload (verified by
+  // the pre-tool-use branch above which already reads it). Forward it on every
+  // event we post so the server can target SSE delivery per browser session
+  // instead of misattributing to "most recently active session." Sessions
+  // started via the shards-ui server use --session-id <uuid>, so this value
+  // matches the SessionStore key 1:1 for UI-spawned sessions; sessions started
+  // outside the UI simply won't match any store (server falls through to the
+  // legacy broadcast path).
+  const ccSessionId = payload.session_id || null;
+
   // ─── P2: Drain pending events from queue before processing current ───
+  // Note: queued events were captured with their *original* sessionId. Don't
+  // overwrite it with the current process's session_id — that would re-target
+  // an old session's event to the wrong browser. Fall through to the entry's
+  // stored sessionId, or null for legacy entries written before this change.
   const pending = readQueue();
   const stillPending = [];
   for (const entry of pending) {
-    const acked = await postEvent(port, token, { ...entry.payload, seq: entry.seq });
+    const acked = await postEvent(port, token, {
+      ...entry.payload,
+      seq: entry.seq,
+      sessionId: entry.payload && entry.payload.sessionId !== undefined
+        ? entry.payload.sessionId
+        : (entry.sessionId || null),
+    });
     if (!acked) {
       stillPending.push(entry);
     }
@@ -347,12 +431,12 @@ async function main() {
       const consultAgent = toolInput.subagent_type;
       if (consultAgent) {
         // Send both events — queue the first, send second as current
-        const evt1 = { eventType: 'agent-consulting', agent: consultAgent };
-        const entry1 = { seq: nextSeq++, timestamp: Date.now(), payload: evt1 };
+        const evt1 = { eventType: 'agent-consulting', agent: consultAgent, sessionId: ccSessionId };
+        const entry1 = { seq: nextSeq(), timestamp: Date.now(), payload: evt1 };
         const acked1 = await postEvent(port, token, { ...evt1, seq: entry1.seq });
         if (!acked1) stillPending.push(entry1);
 
-        currentPayload = { eventType: 'event-log', text: `Consulting ${consultAgent}...` };
+        currentPayload = { eventType: 'event-log', text: `Consulting ${consultAgent}...`, sessionId: ccSessionId };
       }
 
     } else if (toolName === 'Read') {
@@ -365,40 +449,46 @@ async function main() {
         saveState(state);
 
         // Send activation events
-        const evt1 = { eventType: 'agent-activated', agent: newAgent };
-        const entry1 = { seq: nextSeq++, timestamp: Date.now(), payload: evt1 };
+        const evt1 = { eventType: 'agent-activated', agent: newAgent, sessionId: ccSessionId };
+        const entry1 = { seq: nextSeq(), timestamp: Date.now(), payload: evt1 };
         const acked1 = await postEvent(port, token, { ...evt1, seq: entry1.seq });
         if (!acked1) stillPending.push(entry1);
 
-        const evt2 = { eventType: 'agent-changed', from: prevAgent, to: newAgent };
-        const entry2 = { seq: nextSeq++, timestamp: Date.now(), payload: evt2 };
+        const evt2 = { eventType: 'agent-changed', from: prevAgent, to: newAgent, sessionId: ccSessionId };
+        const entry2 = { seq: nextSeq(), timestamp: Date.now(), payload: evt2 };
         const acked2 = await postEvent(port, token, { ...evt2, seq: entry2.seq });
         if (!acked2) stillPending.push(entry2);
 
-        currentPayload = { eventType: 'event-log', text: `Persona transfer: ${prevAgent} -> ${newAgent}` };
+        currentPayload = { eventType: 'event-log', text: `Persona transfer: ${prevAgent} -> ${newAgent}`, sessionId: ccSessionId };
       }
 
     } else if (toolName === 'Write' || toolName === 'Edit') {
       const fp = toolInput.file_path || toolInput.path || 'file';
-      const evt1 = { eventType: 'event-log', text: `${toolName}: ${fp}` };
-      const entry1 = { seq: nextSeq++, timestamp: Date.now(), payload: evt1 };
+      const evt1 = { eventType: 'event-log', text: `${toolName}: ${fp}`, sessionId: ccSessionId };
+      const entry1 = { seq: nextSeq(), timestamp: Date.now(), payload: evt1 };
       const acked1 = await postEvent(port, token, { ...evt1, seq: entry1.seq });
       if (!acked1) stillPending.push(entry1);
 
-      currentPayload = { eventType: 'file-touched', filePath: fp };
+      currentPayload = { eventType: 'file-touched', filePath: fp, sessionId: ccSessionId };
 
     } else if (toolName === 'Bash') {
-      currentPayload = { eventType: 'event-log', text: `Bash: ${(toolInput.command || '').slice(0, 60)}` };
+      currentPayload = { eventType: 'event-log', text: `Bash: ${(toolInput.command || '').slice(0, 60)}`, sessionId: ccSessionId };
     }
 
   } else if (eventType === 'session-end') {
-    currentPayload = { eventType: 'session-end' };
+    currentPayload = { eventType: 'session-end', sessionId: ccSessionId };
     saveState({ currentAgent: 'syn', sessionId: null, messageCount: 0 });
+  }
+
+  // Tag user-prompt / stop payloads built earlier with the CC session_id too
+  // so the server can target SSE delivery per browser session.
+  if (currentPayload && currentPayload.sessionId === undefined) {
+    currentPayload.sessionId = ccSessionId;
   }
 
   // ─── P2: Send current event, queue on failure ───
   if (currentPayload) {
-    const entry = { seq: nextSeq++, timestamp: Date.now(), payload: currentPayload };
+    const entry = { seq: nextSeq(), timestamp: Date.now(), payload: currentPayload };
     const acked = await postEvent(port, token, { ...currentPayload, seq: entry.seq });
     if (!acked) {
       stillPending.push(entry);

@@ -19,13 +19,21 @@ function readLastAssistantMessage(transcriptPath) {
   for (const line of lines) {
     try {
       const entry = JSON.parse(line);
-      if (entry.role === 'assistant' && Array.isArray(entry.content)) {
-        const text = entry.content
-          .filter((c) => c.type === 'text')
-          .map((c) => c.text)
-          .join('');
-        if (text) lastAssistantText = text;
+      // Claude Code transcript shape: {type: "assistant", message: {role, content}}
+      // Test/legacy shape: {role: "assistant", content: [...]}
+      let content = null;
+      if (entry.type === 'assistant' && entry.message && Array.isArray(entry.message.content)) {
+        content = entry.message.content;
+      } else if (entry.role === 'assistant' && Array.isArray(entry.content)) {
+        content = entry.content;
       }
+      if (!content) continue;
+
+      const text = content
+        .filter((c) => c && c.type === 'text' && typeof c.text === 'string')
+        .map((c) => c.text)
+        .join('');
+      if (text) lastAssistantText = text;
     } catch {
       // malformed line — skip
     }

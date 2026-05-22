@@ -159,7 +159,7 @@ Append to `project-specs.md`:
 - **eval-results.json bestCandidate:** Locked | Skipped — bestCandidate left as-is
 ```
 
-::GATE:: id=ml-engineer-phase-6-5 phase=6 kind=phase
+::GATE:: id=ml-engineer-phase-6-5 phase=6.5 kind=phase
 Read this section back to the user. Stop here — do not begin Phase 7 or output any further content. Wait for the user to explicitly confirm before proceeding.
 ::ENDGATE::
 

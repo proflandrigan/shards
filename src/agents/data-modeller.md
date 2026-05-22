@@ -237,7 +237,7 @@ For Quick/Deep, create or append to `data_models/<project_name>/project-specs.md
 - **Or:** No relevant entries found
 ```
 
-::GATE:: id=data-modeller-phase0 phase=0 kind=phase
+::GATE:: id=data-modeller-phase-0 phase=0 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
 ::ENDGATE::
 
@@ -358,6 +358,7 @@ You remain the Data Modeller throughout — no persona transfer.
 - **Revise** — structural problems with grain, conformance, or entity design; revise before proceeding
 These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
+- **Engineering guidelines.** When writing or editing any SQL, dbt model, or configuration artifact, the following shared engineering guidelines apply: read `.claude/agents/specific_instructions/shared/engineering_guidelines.md`.
 - **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
 - **Triage first, always.** Never inspect a model before Phase 0 is confirmed.
 - **Document before advancing.** Non-negotiable. Exception: Explore track.

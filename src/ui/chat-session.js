@@ -235,15 +235,41 @@ class ChatSession {
     this.onEvent({ type: 'chat-unknown', raw: data, sessionId: this.sessionId });
   }
 
-  send(message) {
+  send(message, attachments) {
     if (!this.child || !this.child.stdin.writable) {
       throw new Error('Chat session is not running');
+    }
+    // Build the content array. Anthropic's Messages API recommends image blocks
+    // before the text block when both are present, since the text typically
+    // references the image. An empty text block is invalid, so we omit it when
+    // the user sent only attachments.
+    const content = [];
+    if (Array.isArray(attachments)) {
+      for (const a of attachments) {
+        if (!a || !a.dataBase64 || !a.mediaType) continue;
+        content.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: a.mediaType,
+            data: a.dataBase64,
+          },
+        });
+      }
+    }
+    if (message && message.length > 0) {
+      content.push({ type: 'text', text: message });
+    }
+    if (content.length === 0) {
+      // Should be unreachable — /chat/send rejects empty payloads — but guard
+      // against a degenerate input rather than emit an invalid stream-json frame.
+      throw new Error('Empty message: no text and no valid attachments');
     }
     const payload = {
       type: 'user',
       message: {
         role: 'user',
-        content: [{ type: 'text', text: message }],
+        content,
       },
     };
     this.child.stdin.write(JSON.stringify(payload) + '\n');

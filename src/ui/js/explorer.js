@@ -24,6 +24,8 @@ function switchSidebarView(view) {
 
   if (view === 'session' && typeof renderSessionFiles === 'function') renderSessionFiles();
   if (view === 'git' && typeof renderGitChanges === 'function') renderGitChanges();
+  if (view === 'timeline' && typeof renderTimeline === 'function') renderTimeline();
+  if (view === 'sessions' && typeof refreshSessions === 'function') refreshSessions();
 }
 
 function onActivityClick(view) {

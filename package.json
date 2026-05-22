@@ -16,7 +16,8 @@
   "bin": {
     "shards": "tools/install.js",
     "shards-ui": "tools/shards-ui.js",
-    "shards-gates": "tools/shards-gates.js"
+    "shards-gates": "tools/shards-gates.js",
+    "shards-sessions": "tools/shards-sessions.js"
   },
   "scripts": {
     "test": "vitest run"
@@ -27,6 +28,7 @@
     "tools/gate-hook.js",
     "tools/gate-hook/",
     "tools/shards-gates.js",
+    "tools/shards-sessions.js",
     "README.md"
   ],
   "devDependencies": {

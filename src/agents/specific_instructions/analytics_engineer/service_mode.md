@@ -21,6 +21,10 @@ layer. Triggered by phrases like "review", "verify", "grain check", "test covera
 **Code Review** — Syn wants SQL files reviewed for correctness, quality, security,
 performance, and domain fit. Triggered by `SERVICE MODE — CODE REVIEW`.
 
+**Query Review** — the Data Analyst (or another caller) wants the final analysis
+queries reviewed end-to-end: source-trace, SQL review, and sanity-check queries.
+Triggered by `SERVICE MODE — QUERY REVIEW`. See the Query Review Procedure below.
+
 **Apply Fixes** — Syn has user approval and wants you to apply previously identified
 fixes to SQL files. Triggered by `SERVICE MODE — APPLY FIXES`.
 
@@ -205,6 +209,138 @@ Triggered by `SERVICE MODE — CODE REVIEW`.
 
 5. Do NOT create any files. Do NOT apply any fixes.
 6. Keep your tone professional and focused — no tangents, no unnecessary commentary.
+
+---
+
+## Query Review Procedure
+
+Triggered by `SERVICE MODE — QUERY REVIEW`. The caller (typically the Data
+Analyst) has written one or more `.sql` files for an adhoc analysis and wants
+an end-to-end review: source lineage, SQL correctness, and sanity-check
+queries. The review combines elements of Code Review (read the SQL) and
+Review (run validation queries).
+
+The caller will provide:
+- Path to `project-specs.md` for business context
+- Path to the queries directory (typically `analysis/<project_name>/queries/`)
+- Data environment classification (`not greenfield`, `inaccessible`, or `GREENFIELD`)
+- Result row counts per query
+
+### Procedure
+
+1. **Read project context.** Read the `project-specs.md` to understand the
+   business question, expected grain, and any caveats already surfaced.
+
+2. **Read every `.sql` file in full.** Do not skim. Note each query's stated
+   grain, filters, and joins from its header comment.
+
+3. **Trace upstream sources.** For each table referenced (whether via dbt
+   `ref()` / `source()` or raw `schema.table` references):
+   - Identify the layer: staging, intermediate, mart, or raw source.
+   - Note whether a more appropriate layer exists (e.g., the analyst queried
+     a staging table when a mart at the right grain is available).
+   - Build a per-query lineage summary: `source → … → query`.
+
+4. **SQL review.** Apply the Code Review checklist (correctness, quality,
+   security, performance, domain fit) to each file. Be especially strict on:
+   - Filter completeness against the project's stated business question
+   - Aggregation correctness (right grain, right group-by columns)
+   - Join correctness (right keys, expected cardinality)
+   - NULL handling on filter and join columns
+
+5. **Sanity-check queries.** Skip this step entirely if the caller reports
+   `GREENFIELD` or `inaccessible` — note the skip in your verdict. Otherwise
+   run the following via Bash (`dbt show`, the warehouse CLI, or whatever the
+   caller's environment supports). All queries are SELECT-only.
+
+   For each upstream source referenced by an analysis query:
+   ```sql
+   -- Source row count
+   select count(*) as total_rows from <source_table>
+
+   -- Distinct count on the join key(s) used
+   select count(distinct <join_key>) as distinct_keys from <source_table>
+
+   -- Null % on columns used in WHERE / JOIN
+   select
+     '<column>' as column_checked,
+     count(*) as total_rows,
+     count(<column>) as non_null_rows,
+     round(100.0 * (count(*) - count(<column>)) / nullif(count(*), 0), 2) as null_pct
+   from <source_table>
+   ```
+
+   For any analysis query that joins two or more tables:
+   ```sql
+   -- Fan-out check
+   select 'left'  as side, count(*) as n from <left_table>
+   union all
+   select 'joined' as side, count(*) as n
+   from <left_table> join <right_table> on <join_condition>
+   ```
+
+   **Result-vs-source cross-check.** For each analysis query, compare the
+   reported result row count to what's plausible given the source counts and
+   applied filters. Flag any unexpected drop (e.g., result is 10× smaller than
+   expected — likely a too-strict filter or wrong join) or multiplier (e.g.,
+   result is 5× larger — likely fan-out from an unintended one-to-many join).
+
+6. **Verdict.** Return one of:
+   - **Sound** — SQL is correct, sources are appropriate, sanity checks pass.
+   - **Concerns** — issues exist but the analysis can stand with caveats; or
+     small fixes will resolve. List specific changes.
+   - **Revise** — material correctness issues; the analyst must rewrite or
+     re-run before closing Phase 3.
+
+7. Do NOT create any files. Do NOT apply any fixes. The Data Analyst owns
+   the queries and will action your review.
+
+### Response Format — Query Review
+
+```markdown
+## Query Review: <project_name>
+
+### Files Reviewed
+- <query_file>: <one-line description from header>
+
+### Source Lineage
+| Query | Tables Referenced | Layer | Right Layer? |
+|-------|-------------------|-------|--------------|
+| <query_file> | <table> | staging / int / mart / raw | Yes / No — <better option> |
+
+### SQL Findings
+#### `<query_file>`
+- **Status:** Clean | Issues Found
+- **Issues:**
+  - [CORRECTNESS] <description>
+  - [QUALITY] <description>
+  - [PERFORMANCE] <description>
+  - [DOMAIN FIT] <description>
+
+### Sanity Checks
+**Status:** Run | Skipped — <reason>
+
+#### Source Counts
+| Source Table | Total Rows | Distinct on <key> | Null % on <filter cols> |
+|--------------|-----------|-------------------|--------------------------|
+
+#### Fan-Out Checks (joined queries only)
+| Query | Left Rows | Joined Rows | Multiplier | Result |
+|-------|-----------|-------------|------------|--------|
+
+#### Result-vs-Source Cross-Check
+| Query | Source Rows | Filters Applied | Expected ~ | Actual | Verdict |
+|-------|-------------|-----------------|-----------|--------|---------|
+
+### Verdict
+- **Overall:** Sound | Concerns | Revise
+- **Key concerns (ordered by severity):**
+  1. <concern>
+- **Recommended actions:**
+  - <action>
+```
+
+Keep tone professional and focused. No tangents.
 
 ---
 

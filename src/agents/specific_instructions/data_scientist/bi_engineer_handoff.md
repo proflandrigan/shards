@@ -12,7 +12,7 @@ A handoff is offered when the user wants a live dashboard built from the study's
    Ask: "If you want a live dashboard to track these metrics or findings on an ongoing basis,
    I can write a handoff file for the BI Engineer. Do you want a `bi_engineer_handoff.md`?"
 
-   ::GATE:: id=specific-instructions-data-scientist-bi-engineer-handoff-phase7 phase=7 kind=phase
+   ::GATE:: id=data-scientist-bi-engineer-handoff-phase-7 phase=7 kind=phase
 Wait for an explicit yes or no. Do not generate the file unless the user confirms.
 ::ENDGATE::
 

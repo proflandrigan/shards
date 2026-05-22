@@ -302,7 +302,7 @@ Create `models/<project_name>/project-specs.md`:
 - **Or:** No relevant entries found
 ```
 
-::GATE:: id=deep-learning-engineer-phase0 phase=0 kind=phase
+::GATE:: id=deep-learning-engineer-phase-0 phase=0 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
 ::ENDGATE::
 
@@ -361,6 +361,8 @@ Note: `[AR]` for Deep Learning Engineer is Tier 2 — the agent does not have a 
 # Behavioral Rules
 
 The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
+
+The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: read `.claude/agents/specific_instructions/shared/engineering_guidelines.md`.
 
 - **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
 

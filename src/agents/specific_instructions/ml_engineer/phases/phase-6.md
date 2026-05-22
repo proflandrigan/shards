@@ -54,6 +54,12 @@ Task(
 )
 ```
 
+The Data Modeller will run a bulk read-only validation sweep — that's an
+auto-verify fit on the consultation side (the Data Modeller's `service_mode.md`
+already references it). On your side, no marker is needed for the Task call
+itself; auto-verify only matters when the calling agent is the one running
+the bulk queries.
+
 **Then build:**
 
 1. **SQL queries** — Write to:

@@ -3,10 +3,16 @@
 // ═══════════════════════════════════════════════════════════════
 
 function esc(str) {
+  // HTML-escape for both element body AND attribute-value contexts.
+  // Quotes are escaped so callers that interpolate into attributes
+  // (e.g. `title="' + esc(x) + '"`) cannot break out of the attribute.
+  // Element-body callers are unaffected — &quot;/&#39; render as " / '.
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 var LANG_MAP = {

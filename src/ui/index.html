@@ -23,7 +23,10 @@
 <link rel="stylesheet" href="css/knowledge-map.css">
 <link rel="stylesheet" href="css/guide.css">
 <link rel="stylesheet" href="css/pr-review.css">
+<link rel="stylesheet" href="css/notebook-walkthrough.css">
+<link rel="stylesheet" href="css/brainstorm.css">
 <link rel="stylesheet" href="css/terminal.css">
+<link rel="stylesheet" href="css/sessions.css">
 </head>
 <body>
 
@@ -31,6 +34,7 @@
   <div id="header-center">
     <div id="header-session-bar">
       <button id="new-session-btn" title="New chat">+ New Chat</button>
+      <button id="end-session-btn" title="End current chat (resumeable later)" onclick="endActiveSession()" disabled>End Chat</button>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
@@ -51,6 +55,13 @@
       </button>
       <button class="activity-btn" id="activity-session" onclick="onActivityClick('session')" title="Session Files">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </button>
+      <button class="activity-btn" id="activity-timeline" onclick="onActivityClick('timeline')" title="Session Activity">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="4" x2="6" y2="20"/><circle cx="6" cy="7" r="1.6"/><circle cx="6" cy="12" r="1.6"/><circle cx="6" cy="17" r="1.6"/><line x1="10" y1="7" x2="20" y2="7"/><line x1="10" y1="12" x2="18" y2="12"/><line x1="10" y1="17" x2="16" y2="17"/></svg>
+        <span class="badge" id="activity-timeline-badge" style="display:none"></span>
+      </button>
+      <button class="activity-btn" id="activity-sessions" onclick="onActivityClick('sessions')" title="Sessions (resume past chats)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 9 8 9"/></svg>
       </button>
       <button class="activity-btn" id="activity-bookmarks" onclick="onActivityClick('bookmarks')" title="Bookmarks">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
@@ -103,6 +114,31 @@
         </div>
         <div id="session-files-list"></div>
       </div>
+      <!-- Session Activity timeline view (R3) -->
+      <div id="sidebar-view-timeline" class="sidebar-view">
+        <div id="timeline-view-header">
+          <span>Session Activity</span>
+          <span id="timeline-session-count"></span>
+        </div>
+        <div id="timeline-list"></div>
+        <div id="timeline-empty" class="sidebar-empty-state">No active sessions yet</div>
+      </div>
+      <!-- Sessions view (durable history from .shards/sessions/INDEX.json) -->
+      <div id="sidebar-view-sessions" class="sidebar-view">
+        <div id="sessions-view-header">
+          <span>Sessions</span>
+          <div class="sessions-actions">
+            <button class="sessions-refresh-btn" onclick="refreshSessions()" title="Refresh">↻</button>
+          </div>
+        </div>
+        <div id="sessions-filter-row">
+          <button class="sessions-filter-btn" data-status="active" onclick="setSessionsFilter('active')">Live</button>
+          <button class="sessions-filter-btn" data-status="ended" onclick="setSessionsFilter('ended')">Ended</button>
+          <button class="sessions-filter-btn" data-status="abandoned" onclick="setSessionsFilter('abandoned')">Abandoned</button>
+        </div>
+        <div id="sessions-list"></div>
+        <div id="sessions-empty" style="display:none">No sessions recorded yet.</div>
+      </div>
       <!-- Bookmarks view -->
       <div id="sidebar-view-bookmarks" class="sidebar-view">
         <div id="bookmarks-view-header">
@@ -150,7 +186,8 @@
           <div id="mode-indicator-row">
             <button id="mode-indicator" onclick="cyclePermissionMode(1)" title="Shift+Tab to cycle modes"></button>
           </div>
-          <textarea id="chat-input" placeholder="Message the agent... (type / for commands)" rows="1"></textarea>
+          <div id="chat-attachments" class="chat-attachments" style="display:none"></div>
+          <textarea id="chat-input" placeholder="Message the agent... (type / for commands, paste images to attach)" rows="1"></textarea>
           <button id="chat-send-btn" onclick="sendChatMessage()">Send</button>
           <button id="chat-stop-btn" onclick="stopChat()">End</button>
         </div>
@@ -234,6 +271,23 @@
   </div>
 </footer>
 
+<!-- Resume confirmation modal -->
+<div id="resume-modal" onclick="if(event.target===this)closeResumeModal()">
+  <div class="resume-panel">
+    <h3>Resume this chat?</h3>
+    <div class="resume-detail">
+      <div><strong>Agent:</strong> <span id="resume-modal-agent"></span></div>
+      <div><strong>Project:</strong> <span id="resume-modal-project"></span></div>
+      <div><strong>Status:</strong> <span id="resume-modal-status"></span> · <span id="resume-modal-phase"></span></div>
+    </div>
+    <div class="resume-prompt-preview" id="resume-modal-prompt"></div>
+    <div class="resume-actions">
+      <button class="btn-cancel" onclick="closeResumeModal()">Cancel</button>
+      <button class="btn-confirm" onclick="confirmResume()">Resume</button>
+    </div>
+  </div>
+</div>
+
 <!-- Context menu (shared) -->
 <div id="ctx-menu" class="ctx-menu">
   <div class="ctx-item" id="ctx-copy-path">Copy Path</div>
@@ -313,6 +367,7 @@
 <script src="js/table.js"></script>
 <script src="js/notebook.js"></script>
 <script src="js/panels.js"></script>
+<script src="js/notebook-walkthrough.js"></script>
 <script src="js/knowledge-map.js"></script>
 <script src="js/guide.js"></script>
 <script src="js/tabs.js"></script>
@@ -321,6 +376,8 @@
 <script src="js/selection-context.js"></script>
 <script src="js/pinboard.js"></script>
 <script src="js/chat.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/sessions.js"></script>
 <script src="js/quick-open.js"></script>
 <script src="js/command-palette.js"></script>
 <script src="js/settings.js"></script>

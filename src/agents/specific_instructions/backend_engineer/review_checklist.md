@@ -2,6 +2,8 @@
 
 Apply this systematically when reviewing any Python file.
 
+The shared engineering guidelines at `.claude/agents/specific_instructions/shared/engineering_guidelines.md` define the implicit standard against which the code is measured. Flag departures (overcomplication, speculative scope, drifting refactors, unverified work) under the appropriate section below or as their own finding.
+
 ## Structure
 - Imports organized: stdlib → third-party → local, no wildcard imports
 - Single responsibility: does the module do one thing?

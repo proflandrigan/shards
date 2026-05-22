@@ -223,6 +223,16 @@ document.getElementById('chat-input').addEventListener('blur', function() {
   setTimeout(hideSlashSuggestions, 150);
 });
 
+// Image paste & drag-drop on the chat input
+document.getElementById('chat-input').addEventListener('paste', handleChatInputPaste);
+(function() {
+  var inputArea = document.getElementById('chat-input-area');
+  if (!inputArea) return;
+  inputArea.addEventListener('dragover', handleChatInputDragOver);
+  inputArea.addEventListener('dragleave', handleChatInputDragLeave);
+  inputArea.addEventListener('drop', handleChatInputDrop);
+})();
+
 // Capture selection context when user finishes selecting in file pane
 document.getElementById('file-pane').addEventListener('mouseup', function() {
   setTimeout(function() {
@@ -256,6 +266,8 @@ async function loadInitial() {
         sess.title = s.title || null;
         sess.messages = s.transcript || [];
         sess.hasMessages = sess.messages.length > 0;
+        sess.projectName = s.projectName || null;
+        sess.projectDir = s.projectDir || null;
       }
       // Activate the last (most recent) session and load its workspace
       var lastSession = activeSessions[activeSessions.length - 1];
@@ -302,6 +314,7 @@ loadInitial().then(function() {
   if (typeof renderHud === 'function') renderHud();
   if (typeof switchSidebarView === 'function') switchSidebarView(activeSidebarView);
   if (typeof renderModeIndicator === 'function') renderModeIndicator();
+  if (typeof updateEndChatButton === 'function') updateEndChatButton();
 
   // Honor URL hash/query for direct-open panels (e.g. /shards-guide → #guide).
   try {
@@ -314,6 +327,14 @@ loadInitial().then(function() {
 });
 connect();
 startGatePoller();
+
+// R2/R3 — periodic refresh so "idle 12s → 1m" relative-time text and timeline
+// status pills update even when no events are firing. 15s is a reasonable
+// floor: short enough to feel current, long enough to be cheap.
+setInterval(function() {
+  if (typeof renderSessionTabs === 'function') renderSessionTabs();
+  if (typeof renderTimeline === 'function') renderTimeline();
+}, 15000);
 browseDir();
 initExplorerResize();
 initSplitResize();

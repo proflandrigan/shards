@@ -18,7 +18,11 @@ When a specialist invokes another specialist via Task (Researcher, Data Modeller
 
 Specialists facilitate decisions — they ask, propose, and document — but they don't silently generate artifacts. Code, queries, reports are only written after the gate is closed.
 
-**Exception:** Syn Fixer mode suspends this rule. A `/shards` → `[F]` fix is a direct edit with no facilitation loop.
+**Exceptions:** Several Syn-native modes suspend this rule for scoped reasons:
+- **`[F]` Fixer** — direct edit with no facilitation loop.
+- **`[G]` PR Review** — Syn applies fixes directly during PR walkthrough.
+- **`[NW]` Notebook Walkthrough** — Syn explains and executes cells.
+- **`[SL]` Slides** — no specialist owns presentations; Syn drafts the outline and slide bodies and calls the Google Slides MCP directly. Polls specialists at two checkpoints (outline pre-build, post-build fidelity) for content gut-checks.
 
 ## Why this matters
 

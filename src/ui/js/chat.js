@@ -1,4 +1,165 @@
 // ═══════════════════════════════════════════════════════════════
+// Image attachments (paste / drag-and-drop)
+// ═══════════════════════════════════════════════════════════════
+
+var ATTACHMENT_MAX_COUNT = 5;
+var ATTACHMENT_MAX_BYTES = 5 * 1024 * 1024;  // 5MB decoded
+var ATTACHMENT_ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+function _attachmentSession() {
+  // Attachments live on the active session so they don't bleed across tabs.
+  // Fall back to a global staging slot when no session has been started yet
+  // (e.g., user pastes into the agent-picker search box) — currently unused
+  // since the picker doesn't accept paste, but guards against null deref.
+  var s = (typeof getActiveSession === 'function') ? getActiveSession() : null;
+  if (s && !s.pendingAttachments) s.pendingAttachments = [];
+  return s;
+}
+
+function _formatBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(0) + ' KB';
+  return (n / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function renderAttachmentChips() {
+  var wrap = document.getElementById('chat-attachments');
+  if (!wrap) return;
+  var session = _attachmentSession();
+  var items = (session && session.pendingAttachments) ? session.pendingAttachments : [];
+
+  if (items.length === 0) {
+    wrap.style.display = 'none';
+    wrap.innerHTML = '';
+    return;
+  }
+
+  wrap.style.display = 'flex';
+  wrap.innerHTML = '';
+  for (var i = 0; i < items.length; i++) {
+    var a = items[i];
+    var chip = document.createElement('div');
+    chip.className = 'attachment-chip';
+    chip.innerHTML =
+      '<img class="attachment-chip-thumb" src="' + a.previewUrl + '" alt="' + esc(a.name || 'image') + '">' +
+      '<div class="attachment-chip-meta">' +
+        '<span class="attachment-chip-name">' + esc(a.name || 'pasted image') + '</span>' +
+        '<span class="attachment-chip-size">' + _formatBytes(a.sizeBytes) + '</span>' +
+      '</div>' +
+      '<button class="attachment-chip-remove" title="Remove" data-id="' + a.id + '">&times;</button>';
+    chip.querySelector('.attachment-chip-remove').addEventListener('click', (function(id) {
+      return function() { removeAttachment(id); };
+    })(a.id));
+    wrap.appendChild(chip);
+  }
+}
+
+function removeAttachment(id) {
+  var session = _attachmentSession();
+  if (!session) return;
+  session.pendingAttachments = (session.pendingAttachments || []).filter(function(a) { return a.id !== id; });
+  renderAttachmentChips();
+}
+
+function clearAttachments() {
+  var session = _attachmentSession();
+  if (!session) return;
+  session.pendingAttachments = [];
+  renderAttachmentChips();
+}
+
+function _addAttachmentFromFile(file) {
+  var session = _attachmentSession();
+  if (!session) {
+    addSystemNotice('Start a chat session before attaching images.');
+    return;
+  }
+  if (!file || !file.type || ATTACHMENT_ALLOWED_MIME.indexOf(file.type) === -1) {
+    addSystemNotice('Only JPEG, PNG, GIF, and WebP images are supported.');
+    return;
+  }
+  if (file.size > ATTACHMENT_MAX_BYTES) {
+    addSystemNotice('Image exceeds the 5MB limit.');
+    return;
+  }
+  if ((session.pendingAttachments || []).length >= ATTACHMENT_MAX_COUNT) {
+    addSystemNotice('Attachment limit reached (' + ATTACHMENT_MAX_COUNT + ').');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result || '';
+    var commaIdx = dataUrl.indexOf(',');
+    if (commaIdx === -1) {
+      addSystemNotice('Failed to read pasted image.');
+      return;
+    }
+    var dataBase64 = dataUrl.slice(commaIdx + 1);
+    var entry = {
+      id: 'att_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      mediaType: file.type,
+      dataBase64: dataBase64,
+      sizeBytes: file.size,
+      name: file.name || ('pasted-' + new Date().toISOString().replace(/[:.]/g, '-') + '.' + (file.type.split('/')[1] || 'png')),
+      previewUrl: dataUrl,
+    };
+    if (!session.pendingAttachments) session.pendingAttachments = [];
+    session.pendingAttachments.push(entry);
+    renderAttachmentChips();
+  };
+  reader.onerror = function() {
+    addSystemNotice('Failed to read pasted image.');
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleChatInputPaste(e) {
+  var items = (e.clipboardData && e.clipboardData.items) || [];
+  var imageFiles = [];
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    if (it.kind === 'file' && it.type && it.type.indexOf('image/') === 0) {
+      var f = it.getAsFile();
+      if (f) imageFiles.push(f);
+    }
+  }
+  if (imageFiles.length === 0) return;  // let the browser handle text paste normally
+  e.preventDefault();
+  for (var j = 0; j < imageFiles.length; j++) {
+    _addAttachmentFromFile(imageFiles[j]);
+  }
+}
+
+function handleChatInputDragOver(e) {
+  if (!e.dataTransfer || !e.dataTransfer.types) return;
+  if (Array.prototype.indexOf.call(e.dataTransfer.types, 'Files') === -1) return;
+  e.preventDefault();
+  var wrap = document.getElementById('chat-attachments');
+  if (wrap) wrap.classList.add('drag-over');
+}
+
+function handleChatInputDragLeave() {
+  var wrap = document.getElementById('chat-attachments');
+  if (wrap) wrap.classList.remove('drag-over');
+}
+
+function handleChatInputDrop(e) {
+  if (!e.dataTransfer) return;
+  var files = e.dataTransfer.files || [];
+  var imageFiles = [];
+  for (var i = 0; i < files.length; i++) {
+    if (files[i].type && files[i].type.indexOf('image/') === 0) imageFiles.push(files[i]);
+  }
+  if (imageFiles.length === 0) return;
+  e.preventDefault();
+  var wrap = document.getElementById('chat-attachments');
+  if (wrap) wrap.classList.remove('drag-over');
+  for (var k = 0; k < imageFiles.length; k++) {
+    _addAttachmentFromFile(imageFiles[k]);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Permission mode cycling (Shift+Tab)
 // ═══════════════════════════════════════════════════════════════
 
@@ -163,10 +324,12 @@ function showChatView() {
 // Chat session control
 // ═══════════════════════════════════════════════════════════════
 
-async function startNewSession(agentName, initialMessage) {
+async function startNewSession(agentName, initialMessage, options) {
+  options = options || {};
   try {
     var body = { agent: agentName, permissionMode: currentPermissionMode };
     if (initialMessage) body.initialMessage = initialMessage;
+    if (options.resumeSessionId) body.resumeSessionId = options.resumeSessionId;
     var res = await authFetch('/chat/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -222,39 +385,50 @@ async function sendChatMessage() {
   var session = getActiveSession();
   var input = document.getElementById('chat-input');
   var message = input.value.trim();
-  if (!message || !session || session.chatResponding) return;
+  var attachments = (session && session.pendingAttachments) ? session.pendingAttachments.slice() : [];
+  if ((!message && attachments.length === 0) || !session || session.chatResponding) return;
 
   input.value = '';
   input.style.height = 'auto';
 
+  // Slash commands take the text path and ignore attachments (drop them silently)
+  var lower = message.toLowerCase();
+  var isSlash = (lower === '/clear' || lower === '/config' || lower === '/mode' || lower === '/exit');
+
   // Client-side /clear — no server round-trip needed
-  if (message.toLowerCase() === '/clear') {
+  if (lower === '/clear') {
     document.getElementById('messages').innerHTML = '';
     session.messages = [];
     session.hasMessages = false;
     clearSelectionContext();
+    clearAttachments();
     return;
   }
 
   // Client-side /config — open settings panel, no server round-trip
-  if (message.toLowerCase() === '/config') {
+  if (lower === '/config') {
     toggleSettings();
+    clearAttachments();
     return;
   }
 
   // Client-side /mode — cycle permission mode
-  if (message.toLowerCase() === '/mode') {
+  if (lower === '/mode') {
     cyclePermissionMode(1);
+    clearAttachments();
     return;
   }
 
   // Client-side /exit — stop session and close tab
-  if (message.toLowerCase() === '/exit') {
+  if (lower === '/exit') {
     if (session && activeSessionId) {
       closeSessionTab(activeSessionId);
     }
+    clearAttachments();
     return;
   }
+
+  if (isSlash) return;
 
   // Augment message with selection context if present
   var fullMessage = formatSelectionContextForMessage(message);
@@ -263,11 +437,33 @@ async function sendChatMessage() {
   // Prepend pinned context (fetches file contents for pinned files)
   fullMessage = await formatPinnedContextForMessage(fullMessage);
 
+  // Clear staged attachments locally now that we've captured them for this send
+  if (attachments.length > 0) {
+    session.pendingAttachments = [];
+    renderAttachmentChips();
+  }
+
+  // Wire format sent to the server: only id/mediaType/dataBase64 are required
+  // server-side. previewUrl/name/sizeBytes ride along for the transcript so the
+  // chat history can render thumbnails on reload.
+  var wireAttachments = attachments.map(function(a) {
+    return {
+      mediaType: a.mediaType,
+      dataBase64: a.dataBase64,
+      name: a.name,
+      sizeBytes: a.sizeBytes,
+    };
+  });
+
   try {
     var res = await authFetch('/chat/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: fullMessage, sessionId: activeSessionId }),
+      body: JSON.stringify({
+        message: fullMessage,
+        sessionId: activeSessionId,
+        attachments: wireAttachments,
+      }),
     });
     var data = await res.json();
 
@@ -442,11 +638,101 @@ function setChatInputEnabled(enabled) {
 // Session tab bar
 // ═══════════════════════════════════════════════════════════════
 
+// R1 — short relative-time string for tooltips ("12s", "4m", "2h")
+function formatRelativeTime(ts) {
+  if (!ts) return '';
+  var diff = Math.max(0, Date.now() - ts);
+  var s = Math.floor(diff / 1000);
+  if (s < 60) return s + 's';
+  var m = Math.floor(s / 60);
+  if (m < 60) return m + 'm';
+  var h = Math.floor(m / 60);
+  if (h < 24) return h + 'h';
+  return Math.floor(h / 24) + 'd';
+}
+
+// R2 — derive the per-tab subline ("now doing") text.
+// Priority: needsAttention reason > responding state > lastSignal > idle.
+function deriveTabSubline(session) {
+  if (!session) return '';
+  if (session.needsAttention) {
+    if (session.attentionReason === 'gate') return 'gate reached';
+    if (session.attentionReason === 'permission') return 'permission required';
+    if (session.attentionReason === 'error') return 'error';
+    if (session.attentionReason === 'turn-end') return 'awaiting input';
+  }
+  var sig = session.lastSignal;
+  if (session.chatResponding) {
+    if (sig && sig.kind === 'tool') return '→ ' + sig.label;
+    if (sig && sig.kind === 'consult') return '↘ consulting ' + sig.label;
+    return 'responding…';
+  }
+  if (sig) {
+    if (sig.kind === 'gate') return '⏸ ' + sig.label;
+    if (sig.kind === 'tool') return '→ ' + sig.label;
+    if (sig.kind === 'file') return '✎ ' + sig.label;
+    if (sig.kind === 'consult') return '↘ ' + sig.label;
+    if (sig.kind === 'error') return '⚠ ' + sig.label;
+  }
+  if (session.lastActivityAt) return 'idle · ' + formatRelativeTime(session.lastActivityAt);
+  return '';
+}
+
+// Truncate a free-form prompt to a short snippet suitable for a tab label.
+// Collapses whitespace, drops trailing punctuation before ellipsis, caps at
+// ~32 chars. Returns '' when the input has no usable text.
+function buildPromptSnippet(text, max) {
+  if (typeof text !== 'string') return '';
+  var s = text.replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  var cap = max || 32;
+  if (s.length <= cap) return s;
+  var slice = s.slice(0, cap).replace(/[\s.,;:!?\-—]+$/, '');
+  return slice + '…';
+}
+
+// Pull the first user prompt from a session and cache the snippet on the
+// session object. Returns '' if no user message has been received yet.
+function deriveFirstPromptSnippet(session) {
+  if (!session) return '';
+  if (session._promptSnippet != null) return session._promptSnippet;
+  if (!session.messages || !session.messages.length) return '';
+  for (var i = 0; i < session.messages.length; i++) {
+    var m = session.messages[i];
+    if (m && m.role === 'user' && typeof m.content === 'string') {
+      var snippet = buildPromptSnippet(m.content, 32);
+      session._promptSnippet = snippet;
+      return snippet;
+    }
+  }
+  return '';
+}
+
+// Always-on tab context: prefer auto-detected project name, fall back to a
+// truncated first-prompt snippet (quoted), then to a same-agent ordinal #N
+// only when disambiguation is actually needed.
+function deriveTabContext(session, agentCounts, ordinal) {
+  if (!session) return '';
+  if (session.projectName) return session.projectName;
+  var snippet = deriveFirstPromptSnippet(session);
+  if (snippet) return '"' + snippet + '"';
+  if (agentCounts && agentCounts[session.agent] > 1) return '#' + ordinal;
+  return '';
+}
+
 function renderSessionTabs() {
   var bar = document.getElementById('header-session-bar');
   if (!bar) return;
 
   bar.innerHTML = '';
+
+  // Pre-pass: count sessions per agent so we know whether to disambiguate.
+  var agentCounts = {};
+  for (var p = 0; p < sessionOrder.length; p++) {
+    var ps = chatSessions[sessionOrder[p]];
+    if (ps) agentCounts[ps.agent] = (agentCounts[ps.agent] || 0) + 1;
+  }
+  var agentOrdinals = {};
 
   for (var i = 0; i < sessionOrder.length; i++) {
     var sid = sessionOrder[i];
@@ -454,19 +740,56 @@ function renderSessionTabs() {
     if (!session) continue;
 
     var info = AGENTS[session.agent] || { color: '#666', label: session.agent };
+    agentOrdinals[session.agent] = (agentOrdinals[session.agent] || 0) + 1;
+    var ordinal = agentOrdinals[session.agent];
+    var suffix = deriveTabContext(session, agentCounts, ordinal);
+    var subline = deriveTabSubline(session);
+
     var tab = document.createElement('div');
     var tabClass = 'session-tab';
     if (sid === activeSessionId) tabClass += ' active';
     if (session.needsAttention) tabClass += ' needs-attention';
     else if (session.unread) tabClass += ' unread';
+    if (session.chatResponding) tabClass += ' responding';
+    if (subline) tabClass += ' has-subline';
     tab.className = tabClass;
     tab.style.setProperty('--tab-color', info.color);
 
     var titleText = session.title || info.label;
+    var suffixHtml = suffix
+      ? '<span class="session-tab-suffix">· ' + esc(suffix) + '</span>'
+      : '';
+    var sublineHtml = subline
+      ? '<span class="session-tab-subline">' + esc(subline) + '</span>'
+      : '';
+
     tab.innerHTML =
-      '<span class="session-tab-dot" style="background:' + info.color + '"></span>' +
-      '<span class="session-tab-title">' + esc(titleText) + '</span>' +
-      '<span class="session-tab-close" title="Close session">&times;</span>';
+      '<div class="session-tab-row">' +
+        '<span class="session-tab-dot" style="background:' + info.color + '"></span>' +
+        '<span class="session-tab-title">' + esc(titleText) + '</span>' +
+        suffixHtml +
+        '<span class="session-tab-close" title="Close session">&times;</span>' +
+      '</div>' +
+      sublineHtml;
+
+    // R1 — rich hover tooltip aggregating activity + cost
+    var tipLines = [titleText + (suffix ? ' · ' + suffix : '')];
+    var firstPromptFull = '';
+    if (session.messages && session.messages.length) {
+      for (var mi = 0; mi < session.messages.length; mi++) {
+        var fm = session.messages[mi];
+        if (fm && fm.role === 'user' && typeof fm.content === 'string') {
+          firstPromptFull = fm.content.replace(/\s+/g, ' ').trim();
+          if (firstPromptFull.length > 160) firstPromptFull = firstPromptFull.slice(0, 160) + '…';
+          break;
+        }
+      }
+    }
+    if (firstPromptFull) tipLines.push('Prompt: ' + firstPromptFull);
+    if (session.lastSignal) tipLines.push('Last: ' + session.lastSignal.label);
+    if (session.lastActivityAt) tipLines.push('Active ' + formatRelativeTime(session.lastActivityAt) + ' ago');
+    if (session.totalCost) tipLines.push('Cost: $' + Number(session.totalCost).toFixed(4));
+    tab.title = tipLines.join('\n');
 
     tab.addEventListener('click', (function(id) {
       return function(e) {
@@ -554,7 +877,7 @@ function switchSession(sessionId) {
       messagesEl.innerHTML = '<div class="empty-state">Waiting for response...</div>';
     } else {
       for (var i = 0; i < newSession.messages.length; i++) {
-        addMessageDirect(newSession.messages[i].role, newSession.messages[i].content, newSession.messages[i].agent, true);
+        addMessageDirect(newSession.messages[i].role, newSession.messages[i].content, newSession.messages[i].agent, true, newSession.messages[i].attachments);
       }
     }
     newSession.domDirty = false;
@@ -589,6 +912,7 @@ function switchSession(sessionId) {
 
   updateTitleNotification();
   renderSessionTabs();
+  renderAttachmentChips();
 
   // Rebuild workspace layout for this session
   applySplitLayout();
@@ -763,10 +1087,17 @@ function isGateMessage(content) {
   // heuristics on words like "confirm" or "proceed" false-positive on agent
   // narration (e.g. "Confirmed — X is not present in Y").
   if (!/::GATE::[\s\S]*?::ENDGATE::/.test(content)) return false;
+  // Suppress the Confirm/Request-Changes injection when enforcement is off
+  // (SHARDS_GATE_ENFORCE=0) — the gate hook will never act on the response,
+  // so showing the buttons as if they meant something is misleading. The
+  // /gate-mode banner already tells the user gates are advisory.
+  if (typeof gateMode !== 'undefined' && gateMode && gateMode.enforce === false) {
+    return false;
+  }
   // Prefer server state — only inject buttons when the gate hook has
-  // actually opened a gate. If gateState isn't loaded yet (first poll
-  // lands within 2s, see src/ui/js/state.js), fall back to trusting the
-  // fence since the fence itself is unambiguous.
+  // actually opened a gate. With SSE in place gateState lands ~immediately;
+  // the fallback (10s polling) can still leave a transient window where
+  // gateState is stale, so we fall back to trusting the fence.
   if (typeof gateState !== 'undefined' && gateState) {
     return gateState.open === true;
   }
@@ -969,7 +1300,7 @@ function addSystemNotice(text, opts) {
   container.scrollTop = container.scrollHeight;
 }
 
-function addMessageDirect(role, content, agent, skipAnimation) {
+function addMessageDirect(role, content, agent, skipAnimation, attachments) {
   var session = getActiveSession();
   var container = document.getElementById('messages');
   if (session && !session.hasMessages) { container.innerHTML = ''; session.hasMessages = true; }
@@ -986,9 +1317,23 @@ function addMessageDirect(role, content, agent, skipAnimation) {
   var bookmarkedClass = (activeSessionId && typeof isBookmarked === 'function' && isBookmarked(activeSessionId, msgIdx)) ? ' bookmarked' : '';
 
   if (role === 'user') {
+    var attachmentsHtml = '';
+    if (attachments && attachments.length) {
+      attachmentsHtml = '<div class="message-attachments">';
+      for (var ai = 0; ai < attachments.length; ai++) {
+        var att = attachments[ai];
+        if (!att || !att.dataBase64 || !att.mediaType) continue;
+        var dataUrl = 'data:' + att.mediaType + ';base64,' + att.dataBase64;
+        var altText = esc(att.name || 'attached image');
+        attachmentsHtml +=
+          '<img class="message-attachment-img" src="' + dataUrl + '" alt="' + altText + '" title="' + altText + '" onclick="window.open(this.src, \'_blank\')">';
+      }
+      attachmentsHtml += '</div>';
+    }
+    var textHtml = content ? linkifyFilePaths(esc(content)) : '';
     div.innerHTML =
       '<div class="message-meta">You</div>' +
-      '<div class="message-bubble">' + linkifyFilePaths(esc(content)) + '</div>' +
+      '<div class="message-bubble">' + attachmentsHtml + textHtml + '</div>' +
       '<div class="message-actions">' + starHtml + '</div>';
   } else {
     var displayContent = stripGateFence(content);
@@ -997,7 +1342,7 @@ function addMessageDirect(role, content, agent, skipAnimation) {
       '<span class="meta-dot" style="background:' + info.color + '; color:' + info.color + '"></span>' +
       esc(info.label) +
       '</div>' +
-      '<div class="message-bubble" data-raw-md="' + esc(displayContent).replace(/"/g, '&quot;') + '">' + linkifyFilePaths(renderMarkdown(displayContent)) + '</div>' +
+      '<div class="message-bubble" data-raw-md="' + esc(displayContent) + '">' + linkifyFilePaths(renderMarkdown(displayContent)) + '</div>' +
       '<div class="message-actions">' + starHtml + '<button class="msg-copy-btn" onclick="copyMessageContent(this)">Copy</button></div>';
   }
 
@@ -1375,6 +1720,104 @@ function renderGatePill(state) {
   pill.appendChild(dismissBtn);
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Gate block banner (gate hook returned decision:block)
+// ═══════════════════════════════════════════════════════════════
+//
+// Pushed by the server's /gate-state-stream SSE channel when a new entry
+// appears in .shards/gates/violations.jsonl. Rendered as a chip above the
+// most recent assistant message so the user can see *why* the turn was
+// blocked (the agent's text alone doesn't reveal the hook's decision).
+
+function renderGateBlockBanner(evt) {
+  if (!evt) return;
+  var container = document.getElementById('messages');
+  if (!container) return;
+
+  // Find the last assistant bubble in the active session.
+  var bubbles = container.querySelectorAll('.message.assistant');
+  var anchor = bubbles.length > 0 ? bubbles[bubbles.length - 1] : null;
+
+  var banner = document.createElement('div');
+  banner.className = 'gate-block-banner';
+  var reason = evt.reason || 'Gate violation';
+  var detail = [];
+  if (evt.kind) detail.push(evt.kind);
+  if (evt.gateId) detail.push('gate ' + evt.gateId);
+  if (evt.phase) detail.push('phase ' + evt.phase);
+  var detailStr = detail.length > 0 ? ' (' + detail.join(', ') + ')' : '';
+  banner.innerHTML =
+    '<span class="gate-block-icon">⛔</span>' +
+    '<span class="gate-block-text"><strong>Blocked:</strong> ' +
+      (typeof esc === 'function' ? esc(reason) : reason) +
+      (typeof esc === 'function' ? esc(detailStr) : detailStr) +
+    '</span>' +
+    '<button class="gate-block-dismiss" type="button" aria-label="Dismiss">×</button>';
+
+  banner.querySelector('.gate-block-dismiss').onclick = function() {
+    banner.remove();
+  };
+
+  if (anchor && anchor.parentElement) {
+    anchor.parentElement.insertBefore(banner, anchor);
+  } else {
+    container.appendChild(banner);
+  }
+  container.scrollTop = container.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Gate mode disabled banner
+// ═══════════════════════════════════════════════════════════════
+//
+// Surfaces SHARDS_GATE_ENFORCE=0 / SHARDS_CHECKPOINT_ENFORCE=0 /
+// SHARDS_AUTO_VERIFY=0 to the user. Without this the Confirm/Request-Changes
+// buttons render normally even though the hook will ignore the response,
+// which is misleading (Bug M4 in the audit).
+
+function renderGateModeBanner(mode) {
+  if (!mode) return;
+  var host = document.getElementById('chat-pane') ||
+             document.getElementById('messages') ||
+             document.body;
+  if (!host) return;
+
+  var existing = document.getElementById('gate-mode-banner');
+  var flags = [];
+  if (mode.enforce === false) flags.push('SHARDS_GATE_ENFORCE=0');
+  if (mode.checkpointEnforce === false) flags.push('SHARDS_CHECKPOINT_ENFORCE=0');
+  if (mode.autoVerify === false) flags.push('SHARDS_AUTO_VERIFY=0');
+
+  if (flags.length === 0) {
+    if (existing) existing.remove();
+    return;
+  }
+
+  var msg;
+  if (mode.enforce === false) {
+    msg = '⚠ Gate enforcement disabled (' + flags.join(', ') + ') — gates are advisory only.';
+  } else {
+    msg = '⚠ Reduced gate enforcement (' + flags.join(', ') + ').';
+  }
+
+  if (existing) {
+    existing.textContent = msg;
+    return;
+  }
+
+  var banner = document.createElement('div');
+  banner.id = 'gate-mode-banner';
+  banner.className = 'gate-mode-banner';
+  banner.textContent = msg;
+
+  // Insert at the top of the chat pane so it's always visible.
+  if (host.firstChild) {
+    host.insertBefore(banner, host.firstChild);
+  } else {
+    host.appendChild(banner);
+  }
+}
+
 function rebuildMessages(msgArray) {
   var session = getActiveSession();
   var container = document.getElementById('messages');
@@ -1385,6 +1828,6 @@ function rebuildMessages(msgArray) {
     return;
   }
   for (var i = 0; i < msgArray.length; i++) {
-    addMessageDirect(msgArray[i].role, msgArray[i].content, msgArray[i].agent, true);
+    addMessageDirect(msgArray[i].role, msgArray[i].content, msgArray[i].agent, true, msgArray[i].attachments);
   }
 }

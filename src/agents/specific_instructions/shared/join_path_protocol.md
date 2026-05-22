@@ -123,6 +123,11 @@ from <left_table> join <right_table> on <join_condition>
 If after > before: fan-out is occurring. Confirm it is expected. If unexpected,
 diagnose before writing the query.
 
+**Auto-verify**: when a query has 3+ joins and you're running this sweep
+once per join, that's the bulk read-only pattern auto-verify is for. Open
+`::AUTO-VERIFY:: agent=<your-agent> phase=<N>` before the sweep and
+`::ENDAUTO::` after. See `specific_instructions/shared/auto_verify_mode.md`.
+
 ## Escalation Triggers
 
 Invoke the Data Modeller via Task instead of self-assessing when:

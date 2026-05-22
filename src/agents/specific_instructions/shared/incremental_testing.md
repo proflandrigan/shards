@@ -90,7 +90,7 @@ Stop here — await explicit confirmation before writing the next component.
 
 **Gate ID scheme.** Kebab-case, agent name + phase number + short component slug:
 - `ml-engineer-phase-6-checkpoint-data`
-- `data-scientist-phase-6-checkpoint-eda`
+- `data-scientist-phase-6-checkpoint-notebook`
 - `analytics-engineer-phase-7-checkpoint-staging`
 - `deep-learning-engineer-phase-4-checkpoint-smoke-fit`
 

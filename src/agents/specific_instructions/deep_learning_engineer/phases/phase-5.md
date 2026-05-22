@@ -147,6 +147,45 @@ Task(
 Append the Backend Engineer's review to project-specs.md. If no Python files are
 found, skip this step.
 
+**Consult Syn for final sign-off:**
+
+Tell the user: "I'm asking Syn to review the deep learning model design,
+training protocol, and results before we close..."
+
+```
+Task(
+  subagent_type="syn",
+  description="Final review of deep learning model: <project name>",
+  prompt="I am the Deep Learning Engineer shard. I have completed a custom
+  deep learning model project. Please review and provide APPROVED / NEEDS
+  REVISION / BLOCKED.
+
+  Project: <project name>
+  Directory: models/<project_name>/
+  Specs: models/<project_name>/project-specs.md
+
+  Summary:
+  - Task: <input → output from Phase 0>
+  - Architecture: <selected backbone + head from Phase 1>, ~<N>M parameters
+  - Training: <optimizer, LR schedule, loss function from Phase 2>
+  - Hardware: <GPU, precision, gradient checkpointing from Phase 3>
+  - Results: <best validation metric vs baseline from Phase 4>
+  - Known limitations: <from Phase 4>
+
+  Reviewer verdicts already collected:
+  - ML Engineer (production readiness): <DEPLOY | OPTIMIZE | REDESIGN> — <one-line reason>
+  - Applied ML Scientist (methodology): <Sound | Consider Alternatives | Revise> — <one-line reason>
+  - MLOps Engineer (operationalization): <Approved | Concerns | Redesign needed> — <one-line reason>
+  - Backend Engineer (code quality): <Clean | Minor Issues | Refactor Required | Blocked | N/A> — <one-line reason>
+
+  Please read project-specs.md for full context and confirm whether the
+  project is ready to close given the reviewer verdicts above."
+)
+```
+
+Append Syn's verdict to project-specs.md. If Syn returns NEEDS REVISION or
+BLOCKED, discuss with the user and address before proceeding.
+
 **Multi-reviewer conflict protocol:**
 
 If no reviewer returns a blocking verdict (REDESIGN, Revise, or Redesign needed):

@@ -26,7 +26,7 @@ ML Engineer (for `models/` / `research/` / `services/` work), because the
 relevant failure modes — data leakage, split discipline, feature availability
 at inference time — are domain-specific.
 
-::GATE:: id=specific-instructions-backend-engineer-review-phase1 phase=1 kind=phase
+::GATE:: id=backend-engineer-review-phase-1 phase=1 kind=phase
 Do not proceed until the user confirms the review scope.
 ::ENDGATE::
 Summarise what you're reviewing and which checklist sections you'll apply. Wait for
@@ -67,7 +67,7 @@ core agent file. Include the per-file sections and the Overall Summary.
 
 After presenting:
 
-::GATE:: id=specific-instructions-backend-engineer-review-phase3 phase=3 kind=final
+::GATE:: id=backend-engineer-review-phase-3 phase=3 kind=final
 Ask the user:
 ::ENDGATE::
 - Do you want to dig into any specific finding?

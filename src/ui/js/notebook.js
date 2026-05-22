@@ -85,6 +85,21 @@ function renderCellOutputs(outputs) {
   return html;
 }
 
+// Render one cell's input + outputs as static HTML. Used by the standalone
+// notebook view below and by the notebook-walkthrough panel renderer.
+// No Monaco, no edit handlers — read-only display only.
+function renderStaticCellHtml(cell) {
+  if (!cell) return '';
+  var html = '';
+  if (cell.cell_type === 'markdown') {
+    html += '<div class="file-rendered">' + renderMarkdown(cell.source || '') + '</div>';
+  } else {
+    html += '<pre><code>' + highlightCode(esc(cell.source || ''), 'python') + '</code></pre>';
+  }
+  html += renderCellOutputs(cell.outputs);
+  return html;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // Notebook rendering and cell operations
 // ═══════════════════════════════════════════════════════════════
@@ -110,13 +125,13 @@ function renderNotebookView(relPath) {
     html += '<div class="nb-cell ' + (isActive ? 'nb-cell-active' : '') + '" data-cell-idx="' + i + '">';
     html += '<div class="nb-cell-sidebar">' + badge + execCount;
     html += '<div class="nb-cell-actions">';
-    html += '<button class="nb-cell-action-btn" onclick="nbMoveCellUp(\'' + esc(relPath) + '\',' + i + ')" title="Move up">&uarr;</button>';
-    html += '<button class="nb-cell-action-btn" onclick="nbMoveCellDown(\'' + esc(relPath) + '\',' + i + ')" title="Move down">&darr;</button>';
-    html += '<button class="nb-cell-action-btn" onclick="nbToggleCellType(\'' + esc(relPath) + '\',' + i + ')" title="Toggle type">&harr;</button>';
-    html += '<button class="nb-cell-action-btn" onclick="nbDeleteCell(\'' + esc(relPath) + '\',' + i + ')" title="Delete">&times;</button>';
+    html += '<button class="nb-cell-action-btn" data-nb-action="move-up" data-cell-idx="' + i + '" title="Move up">&uarr;</button>';
+    html += '<button class="nb-cell-action-btn" data-nb-action="move-down" data-cell-idx="' + i + '" title="Move down">&darr;</button>';
+    html += '<button class="nb-cell-action-btn" data-nb-action="toggle-type" data-cell-idx="' + i + '" title="Toggle type">&harr;</button>';
+    html += '<button class="nb-cell-action-btn" data-nb-action="delete" data-cell-idx="' + i + '" title="Delete">&times;</button>';
     html += '</div></div>';
     html += '<div class="nb-cell-content">';
-    html += '<div class="nb-cell-input" onclick="nbCellClick(\'' + esc(relPath) + '\',' + i + ')" data-cell-input="' + i + '">';
+    html += '<div class="nb-cell-input" data-nb-action="cell-click" data-cell-idx="' + i + '" data-cell-input="' + i + '">';
     if (cell.cell_type === 'markdown') {
       if (cell.editing) {
         html += '<div class="monaco-container" data-md-monaco="' + i + '"></div>';
@@ -137,6 +152,30 @@ function renderNotebookView(relPath) {
   html += '</div>';
   renderedView.innerHTML = html;
 
+  // Wire up button/click handlers (replaces inline onclicks so that paths
+  // containing apostrophes don't break the HTML attribute parser).
+  renderedView.querySelectorAll('[data-nb-action]').forEach(function(el) {
+    el.addEventListener('click', function(ev) {
+      var action = el.getAttribute('data-nb-action');
+      var idx = parseInt(el.getAttribute('data-cell-idx'), 10);
+      if (action === 'move-up') {
+        nbMoveCellUp(relPath, idx);
+      } else if (action === 'move-down') {
+        nbMoveCellDown(relPath, idx);
+      } else if (action === 'toggle-type') {
+        nbToggleCellType(relPath, idx);
+      } else if (action === 'delete') {
+        nbDeleteCell(relPath, idx);
+      } else if (action === 'cell-click') {
+        nbCellClick(relPath, idx);
+      } else if (action === 'add-cell') {
+        var afterIdx = parseInt(el.getAttribute('data-after-idx'), 10);
+        var cellType = el.getAttribute('data-cell-type');
+        nbAddCell(relPath, afterIdx, cellType);
+      }
+    });
+  });
+
   // Mount Monaco for editing markdown cell (if any), otherwise eagerly load Monaco
   var editingMdIdx = null;
   for (var ci = 0; ci < nb.cells.length; ci++) {
@@ -154,8 +193,8 @@ function renderNotebookView(relPath) {
 
 function renderAddCellRow(relPath, afterIdx) {
   return '<div class="nb-add-cell-row">' +
-    '<button class="nb-add-cell-btn" onclick="nbAddCell(\'' + esc(relPath) + '\',' + afterIdx + ',\'code\')">+ Code</button>' +
-    '<button class="nb-add-cell-btn" onclick="nbAddCell(\'' + esc(relPath) + '\',' + afterIdx + ',\'markdown\')">+ Markdown</button>' +
+    '<button class="nb-add-cell-btn" data-nb-action="add-cell" data-cell-type="code" data-after-idx="' + afterIdx + '">+ Code</button>' +
+    '<button class="nb-add-cell-btn" data-nb-action="add-cell" data-cell-type="markdown" data-after-idx="' + afterIdx + '">+ Markdown</button>' +
     '</div>';
 }
 
@@ -186,8 +225,10 @@ function nbCellClick(relPath, cellIdx) {
   if (monacoFailed) {
     // Fallback: textarea for code cell
     cell.editing = true;
-    inputEl.innerHTML = '<textarea onblur="nbFinishCodeEdit(\'' + esc(relPath) + '\',' + cellIdx + ')" style="width:100%;min-height:80px;background:#0a0a16;color:#c0c0d0;border:none;outline:none;font-family:inherit;font-size:13px;line-height:1.55;resize:vertical;padding:0">' + esc(cell.source) + '</textarea>';
-    inputEl.querySelector('textarea').focus();
+    inputEl.innerHTML = '<textarea style="width:100%;min-height:80px;background:#0a0a16;color:#c0c0d0;border:none;outline:none;font-family:inherit;font-size:13px;line-height:1.55;resize:vertical;padding:0">' + esc(cell.source) + '</textarea>';
+    var fallbackTa = inputEl.querySelector('textarea');
+    fallbackTa.addEventListener('blur', function() { nbFinishCodeEdit(relPath, cellIdx); });
+    fallbackTa.focus();
     return;
   }
 

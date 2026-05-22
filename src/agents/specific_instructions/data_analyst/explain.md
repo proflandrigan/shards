@@ -36,7 +36,7 @@ Surface the following from the loaded files:
 Keep the tone energetic and warm: "Got the files loaded! Let me confirm I'm looking
 at the right thing before I walk you through it."
 
-::GATE:: id=specific-instructions-data-analyst-explain-phase0 phase=0 kind=phase
+::GATE:: id=data-analyst-explain-phase-0 phase=0 kind=phase
 Do not proceed to Phase 1 until the user confirms the orientation is correct.
 ::ENDGATE::
 If the user corrects something (wrong project, wrong question), reload the right files

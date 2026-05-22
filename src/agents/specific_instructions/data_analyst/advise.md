@@ -15,7 +15,7 @@ Ask the user:
    constraints — timeline, data access, audience for the results)
 3. Is there a preferred outcome, or is this an open exploration?
 
-::GATE:: id=specific-instructions-data-analyst-advise-phase1 phase=1 kind=phase
+::GATE:: id=data-analyst-advise-phase-1 phase=1 kind=phase
 Do not proceed until the user confirms the question.
 ::ENDGATE::
 Restate the question in your own words to confirm alignment. Wait for confirmation.
@@ -69,7 +69,7 @@ After the discussion, ask:
 
 > "Want me to write this up as a structured advisory document?"
 
-::GATE:: id=specific-instructions-data-analyst-advise-phase4 phase=4 kind=final
+::GATE:: id=data-analyst-advise-phase-4 phase=4 kind=final
 Wait for explicit confirmation before writing anything.
 ::ENDGATE::
 

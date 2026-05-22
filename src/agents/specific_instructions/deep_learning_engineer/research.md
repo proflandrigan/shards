@@ -177,6 +177,42 @@ Propose DIVERGE per `diverge_protocol.md` Section B with AR gate ID namespace.
 > `experiments/research_brief.md` — I re-read it every iteration. Phase 0,
 > Phase 1, and Phase 3 remain gated.
 
+### Optional `/goal` activation
+
+Read `.claude/agents/specific_instructions/shared/goal_mode.md` in full before
+writing the gate. Compose a candidate `/goal` condition from this run's
+Phase 0 settings (primary metric, direction, target if set, iteration budget,
+metric floor) using the AR condition template, and include the resulting
+copy-paste block in the message that precedes the Phase 1 gate:
+
+```text
+/goal The AR loop is complete when ANY of the following is true:
+  (a) the most recent inline iteration summary shows <primary_metric> has
+      <crossed target X in the maximize direction
+       | dropped below target X in the minimize direction>;
+  (b) the most recent iteration summary or status line contains
+      "Convergence detected" with reason in {plateau, diminishing-returns,
+      budget-exhausted, cost-ceiling, consecutive-failures,
+      metric-floor-breach, user-interrupt, reviewer-pause,
+      scope-violation, error-limit, timeout-limit};
+  (c) the agent has begun writing the Phase 3 research summary
+      (look for "Phase 3" or "research_summary.md").
+Or stop after <budget+5> turns.
+```
+
+If no target was set, drop clause (a). Activation is optional:
+- **With `/goal`:** Phase 2 runs without per-iteration prompts. Transcript
+  discipline (`autonomous_research.md` §B.4/B.8) is mandatory — the evaluator
+  reads only the conversation, not files. NaN/Inf loss, gradient-collapse,
+  and tensor-shape mismatches must also be surfaced inline so the evaluator
+  can see emergency stops.
+- **Without `/goal`:** §E convergence and §G safety rails still terminate
+  the loop. Per-iteration echoes remain recommended for readability.
+
+If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
+rejected), accept that and proceed — the loop still runs and terminates per
+the existing logic.
+
 ### Gate
 
 ::GATE:: id=specific-instructions-deep-learning-engineer-research-phase1 phase=1 kind=execute

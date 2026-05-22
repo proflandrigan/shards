@@ -1,0 +1,525 @@
+/* ═══════════════════════════════════════════════════════════════
+   Brainstorm panel — live multi-specialist fan-out from Syn
+   Renderer: src/ui/js/panels.js renderBrainstorm()
+   Data:     brainstorm/brainstorm_<project>.state.json
+   ═══════════════════════════════════════════════════════════════ */
+
+.brainstorm-panel {
+  padding: 20px 24px;
+  height: 100%;
+  overflow-y: auto;
+  font-size: 13px;
+  color: var(--text-color, #b0b0c8);
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+
+.brain-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.brain-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color-strong, #e0e0f0);
+}
+
+.brain-phase-pill {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 9px;
+  border-radius: 10px;
+  background: #2a2a44;
+  color: #b0b0c8;
+}
+
+.brain-phase-intake        { background: #2a2a44; color: #b0b0c8; }
+.brain-phase-gathering     { background: #3a4a8a; color: #c8d8ff; }
+.brain-phase-synthesis     { background: #4a3a8a; color: #d8c8ff; }
+.brain-phase-facilitation  { background: #4a8a4a; color: #c8ffc8; }
+
+/* ── Problem statement ──────────────────────────────────────── */
+
+.brain-problem {
+  margin: 10px 0 16px;
+  padding: 12px 14px;
+  background: rgba(106, 138, 200, 0.08);
+  border-left: 3px solid #6a8ac8;
+  border-radius: 0 4px 4px 0;
+}
+
+.brain-problem-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6a8ac8;
+  margin-bottom: 4px;
+}
+
+.brain-problem-body {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-color-strong, #e0e0f0);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ── Context strip ──────────────────────────────────────────── */
+
+.brain-context-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.brain-context-item {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  min-width: 80px;
+  max-width: 240px;
+}
+
+.brain-context-key {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6a6a88;
+  margin-bottom: 2px;
+}
+
+.brain-context-val {
+  font-size: 11px;
+  color: var(--text-color, #b0b0c8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Progress bar ───────────────────────────────────────────── */
+
+.brain-progress {
+  margin-bottom: 18px;
+}
+
+.brain-progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-color, #b0b0c8);
+  margin-bottom: 6px;
+}
+
+.brain-progress-pending {
+  color: #c8a84a;
+  font-style: italic;
+}
+
+.brain-progress-bar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+}
+
+.brain-prog-seg {
+  flex: 1;
+  border-radius: 2px;
+  background: #2a2a44;
+  transition: background 0.3s ease;
+}
+
+.brain-prog-seg.queued    { background: #2a2a44; }
+.brain-prog-seg.thinking  { background: #4a5a8a; animation: brain-pulse 1.4s ease-in-out infinite; }
+.brain-prog-seg.responded { background: #4a9; }
+.brain-prog-seg.skipped   { background: #5a3a3a; }
+
+@keyframes brain-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+/* ── Section labels ─────────────────────────────────────────── */
+
+.brain-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6a6a88;
+  margin: 18px 0 8px;
+}
+
+/* ── Specialist grid ────────────────────────────────────────── */
+
+.brain-specialist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.brain-card {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  max-width: 380px;
+  min-width: 0;
+}
+
+.brain-card-queued    { opacity: 0.55; }
+.brain-card-thinking  { border-color: #4a5a8a; background: rgba(74, 90, 138, 0.08); }
+.brain-card-responded { border-color: rgba(74, 153, 153, 0.4); background: rgba(74, 153, 153, 0.06); }
+.brain-card-skipped   { opacity: 0.4; }
+
+.brain-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.brain-card-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-color-strong, #e0e0f0);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.brain-card-status {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6a6a88;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.brain-card-thinking .brain-card-status { color: #6a8ac8; }
+.brain-card-responded .brain-card-status { color: #4a9; }
+
+.brain-spinner {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: brain-pulse 1.2s ease-in-out infinite;
+}
+
+.brain-card-headline {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-color, #b0b0c8);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.brain-card-pending {
+  font-style: italic;
+  color: #6a6a88;
+}
+
+.brain-card-meta {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #6a6a88;
+}
+
+.brain-empty {
+  padding: 16px;
+  text-align: center;
+  color: #6a6a88;
+  font-style: italic;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+}
+
+/* ── Synthesis ──────────────────────────────────────────────── */
+
+.brain-synthesis {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.brain-bucket {
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border-left: 3px solid #6a6a88;
+}
+
+.brain-bucket-quick-wins { border-left-color: #4a9; }
+.brain-bucket-bold-bets  { border-left-color: #c8a84a; }
+.brain-bucket-wildcards  { border-left-color: #c84aa8; }
+
+.brain-bucket-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-color, #b0b0c8);
+  margin-bottom: 6px;
+}
+
+.brain-bucket-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-color, #b0b0c8);
+}
+
+.brain-bucket-list li {
+  margin-bottom: 4px;
+}
+
+.brain-bucket-list strong {
+  color: var(--text-color-strong, #e0e0f0);
+}
+
+.brain-themes {
+  padding: 10px 14px;
+  background: rgba(106, 138, 200, 0.06);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.brain-themes-label {
+  font-weight: 600;
+  color: #6a8ac8;
+  margin-right: 4px;
+}
+
+.brain-theme-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  margin: 2px 4px 2px 0;
+  background: rgba(106, 138, 200, 0.15);
+  color: var(--text-color-strong, #e0e0f0);
+  border-radius: 10px;
+  font-size: 11px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  vertical-align: top;
+}
+
+.brain-recommend {
+  margin-top: 4px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(74, 153, 153, 0.12), rgba(106, 138, 200, 0.08));
+  border-radius: 8px;
+  border: 1px solid rgba(74, 153, 153, 0.3);
+}
+
+.brain-recommend-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4a9;
+  margin-bottom: 4px;
+}
+
+.brain-recommend-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color-strong, #e0e0f0);
+  margin-bottom: 4px;
+}
+
+.brain-recommend-rationale {
+  font-size: 12px;
+  color: var(--text-color, #b0b0c8);
+  line-height: 1.4;
+}
+
+/* ── Facilitation log ───────────────────────────────────────── */
+
+.brain-log {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+}
+
+.brain-log-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.brain-log-entry:last-child {
+  border-bottom: none;
+}
+
+.brain-log-actor {
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 60px;
+}
+
+.brain-actor-user { color: #6a8ac8; }
+.brain-actor-syn  { color: #c8a84a; }
+
+.brain-log-text {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-color, #b0b0c8);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.brain-log-ts {
+  font-size: 10px;
+  color: #6a6a88;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Outcome banner ─────────────────────────────────────────── */
+
+.brain-outcome {
+  margin-top: 18px;
+  padding: 12px 16px;
+  background: rgba(74, 153, 153, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #4a9;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Explicit teal for `single` decision (matches default styling). */
+.brain-outcome-single {
+  background: rgba(74, 153, 153, 0.1);
+  border-left-color: #4a9;
+}
+
+.brain-outcome-multi-workstream {
+  background: rgba(200, 168, 74, 0.1);
+  border-left-color: #c8a84a;
+}
+
+/* Neutral fallback for unanticipated decision values (renderer dumps JSON). */
+.brain-outcome-unknown {
+  background: rgba(255, 255, 255, 0.04);
+  border-left-color: #6a6a88;
+}
+
+.brain-outcome-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4a9;
+  flex-shrink: 0;
+}
+
+.brain-outcome-multi-workstream .brain-outcome-label {
+  color: #c8a84a;
+}
+
+.brain-outcome-unknown .brain-outcome-label {
+  color: #b0b0c8;
+}
+
+.brain-outcome-detail {
+  font-size: 13px;
+  color: var(--text-color-strong, #e0e0f0);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.brain-outcome-detail code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ── Light theme overrides ──────────────────────────────────── */
+
+[data-theme="light"] .brain-card {
+  background: #f5f5fa;
+}
+[data-theme="light"] .brain-card-thinking  { background: #e8eef8; }
+[data-theme="light"] .brain-card-responded { background: #e8f5f0; }
+[data-theme="light"] .brain-problem        { background: #eef2fa; }
+[data-theme="light"] .brain-bucket         { background: #f5f5fa; }
+[data-theme="light"] .brain-themes         { background: #eef2fa; }
+[data-theme="light"] .brain-context-item   { background: #f0f0f5; }
+[data-theme="light"] .brain-empty          { background: #f5f5fa; }
+[data-theme="light"] .brain-log            { background: #f5f5fa; }
+
+/* Phase pills — dark solids need darker text on lighter pill bgs */
+[data-theme="light"] .brain-phase-pill,
+[data-theme="light"] .brain-phase-intake       { background: #e0e0e8; color: #555; }
+[data-theme="light"] .brain-phase-gathering    { background: #dbe5fb; color: #2a4a8a; }
+[data-theme="light"] .brain-phase-synthesis    { background: #e4dbfb; color: #4a2a8a; }
+[data-theme="light"] .brain-phase-facilitation { background: #d6f0d6; color: #2a6a2a; }
+
+/* Progress segments — dark fills become softer hues, keep contrast vs label */
+[data-theme="light"] .brain-prog-seg            { background: #d8d8e0; }
+[data-theme="light"] .brain-prog-seg.queued    { background: #d8d8e0; }
+[data-theme="light"] .brain-prog-seg.thinking  { background: #7a8ec8; }
+[data-theme="light"] .brain-prog-seg.responded { background: #3a8a7a; }
+[data-theme="light"] .brain-prog-seg.skipped   { background: #c8a8a8; }
+
+/* Recommend banner gradient and outcome tints read low-contrast on white */
+[data-theme="light"] .brain-recommend {
+  background: linear-gradient(135deg, rgba(74, 153, 153, 0.18), rgba(106, 138, 200, 0.14));
+  border-color: rgba(74, 153, 153, 0.45);
+}
+[data-theme="light"] .brain-outcome,
+[data-theme="light"] .brain-outcome-single        { background: rgba(74, 153, 153, 0.16); }
+[data-theme="light"] .brain-outcome-multi-workstream { background: rgba(200, 168, 74, 0.20); }
+[data-theme="light"] .brain-outcome-unknown       { background: rgba(0, 0, 0, 0.05); }
+
+/* Log entry dividers and code chip need a darker accent on light bg */
+[data-theme="light"] .brain-log-entry             { border-bottom-color: rgba(0, 0, 0, 0.06); }
+[data-theme="light"] .brain-outcome-detail code   { background: rgba(0, 0, 0, 0.06); }
+[data-theme="light"] .brain-theme-chip            { background: rgba(106, 138, 200, 0.20); }
+
+/* ── Reduced motion ─────────────────────────────────────────── */
+/* With up to 11 specialists thinking in parallel, the pulse animation
+   becomes ~22 parallel infinite animations. Disable for users who
+   request reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .brain-prog-seg.thinking,
+  .brain-spinner {
+    animation: none;
+  }
+  .brain-prog-seg.thinking { opacity: 0.85; }
+  .brain-spinner           { opacity: 0.85; }
+  .brain-card {
+    transition: none;
+  }
+}

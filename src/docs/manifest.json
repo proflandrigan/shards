@@ -40,6 +40,7 @@
       "pages": [
         { "id": "gate-pattern", "title": "The Gate Pattern", "file": "03-protocols/gate-pattern.md" },
         { "id": "behavioral-rules", "title": "Behavioral Rules", "file": "03-protocols/behavioral-rules.md" },
+        { "id": "engineering-guidelines", "title": "Engineering Guidelines", "file": "03-protocols/engineering-guidelines.md" },
         { "id": "reviewer-verdicts", "title": "Reviewer Verdicts", "file": "03-protocols/reviewer-verdicts.md" },
         { "id": "validation", "title": "Validation Protocol", "file": "03-protocols/validation.md" },
         { "id": "diverge", "title": "DIVERGE (Time-Travel Branches)", "file": "03-protocols/diverge.md" },
@@ -47,7 +48,8 @@
         { "id": "experiment-versioning", "title": "Experiment Versioning", "file": "03-protocols/experiment-versioning.md" },
         { "id": "knowledge-ledger", "title": "Knowledge Ledger", "file": "03-protocols/knowledge-ledger.md" },
         { "id": "join-path", "title": "Join-Path Protocol", "file": "03-protocols/join-path.md" },
-        { "id": "incremental-testing", "title": "Incremental Testing", "file": "03-protocols/incremental-testing.md" }
+        { "id": "incremental-testing", "title": "Incremental Testing", "file": "03-protocols/incremental-testing.md" },
+        { "id": "auto-verify", "title": "Auto-Verify Mode", "file": "03-protocols/auto-verify.md" }
       ]
     },
     {
@@ -64,6 +66,7 @@
         { "id": "code-intel", "title": "Code Intelligence", "file": "04-ui/code-intel.md" },
         { "id": "quick-open-palette", "title": "Quick Open & Command Palette", "file": "04-ui/quick-open-palette.md" },
         { "id": "knowledge-map", "title": "Knowledge Map", "file": "04-ui/knowledge-map.md" },
+        { "id": "sessions", "title": "Sessions Panel", "file": "04-ui/sessions.md" },
         { "id": "settings-permissions", "title": "Settings & Permissions", "file": "04-ui/settings-permissions.md" },
         { "id": "keybindings", "title": "Keybindings Reference", "file": "04-ui/keybindings.md" }
       ]
@@ -90,6 +93,14 @@
         { "id": "deep-study-to-production", "title": "Study → Production ML", "file": "07-workflows/deep-study-to-production.md" },
         { "id": "ai-eval-first", "title": "AI Eval-First", "file": "07-workflows/ai-eval-first.md" },
         { "id": "diverge-exploration", "title": "Parallel Exploration (DIVERGE)", "file": "07-workflows/diverge-exploration.md" }
+      ]
+    },
+    {
+      "id": "integrations",
+      "title": "Integrations",
+      "pages": [
+        { "id": "google-slides", "title": "Google Slides (Syn Slides Mode)", "file": "08-integrations/google-slides.md" },
+        { "id": "claude-code-auto-mode", "title": "Claude Code Auto Mode", "file": "08-integrations/claude-code-auto-mode.md" }
       ]
     }
   ]

@@ -105,6 +105,35 @@ Before the gate, tell the user:
 > Phase 3 remain gated. You can steer the loop at any time by editing
 > `experiments/research_brief.md` — I re-read it every iteration.
 
+### A.6 Optional `/goal` activation
+
+After announcing the behavioral exception and before the per-agent Phase 1
+gate, propose an opt-in `/goal` to drive the Phase 2 loop autonomously without
+per-turn prompts.
+
+Read `.claude/agents/specific_instructions/shared/goal_mode.md` in full and
+follow the **AR condition template**. Compose a candidate condition using the
+Phase 0 parameters (primary metric, target, iteration budget, metric floor)
+and include it as a copy-paste block in the per-agent Phase 1 message,
+immediately before the gate fence.
+
+Tell the user the activation is optional:
+- **With `/goal`:** the loop drives itself turn-by-turn without per-iteration
+  prompts; the evaluator decides when to stop based on the inline iteration
+  summaries the agent prints (see B.4 + B.8 transcript discipline below).
+- **Without `/goal`:** the loop still runs autonomously per §B, and §E
+  convergence + §G safety rails still terminate it. Per-turn prompts may
+  appear depending on the user's permission settings.
+
+Either way, §E convergence and §G safety rails are unchanged. If `/goal` is
+unavailable (old Code version, hooks disabled, command rejected), accept that
+and proceed — the existing stop logic still terminates the loop.
+
+If the user activates `/goal`, the per-iteration **inline summary echo** in
+§B.4 and §B.8 below is mandatory (otherwise the evaluator has nothing to read).
+If the user skips `/goal`, the inline echoes are still recommended — they keep
+the run readable in the transcript.
+
 ---
 
 ## Section B — The Research Loop
@@ -170,6 +199,10 @@ Record `hypothesisSource` in the results entry:
 #### B.4 Announce
 
 Print inline: `[AR] Iteration N: <one-line hypothesis>`
+
+This is the **start-of-iteration** echo. The matching **end-of-iteration** echo
+is required at B.8 below — it's what the `/goal` evaluator (if active) reads
+to decide whether the loop is done.
 
 #### B.5 Implement
 
@@ -247,6 +280,32 @@ the Research Log in `research_brief.md`:
 ## Self-Assessment (populated when reviewer not consulted this iteration)
 <one-line honest read: does this result feel real? methodology concerns?>
 ```
+
+**Inline iteration summary (required when `/goal` is active; recommended
+otherwise).** After writing the iteration file and updating `results.json`,
+print the per-iteration summary inline in the same assistant turn. The `/goal`
+evaluator (per `goal_mode.md`) can only read the transcript, not files —
+without this echo the goal can never resolve. Use this exact format:
+
+```
+[AR] Iteration N complete.
+  Primary metric: <metric_name> <before> → <after> (delta: <+/->)
+  Auto-decision: <GREEN | RED | YELLOW> — <one-sentence reason>
+  Action: <Kept | Reverted | Kept with next-steps>
+```
+
+When a §E stop condition fires later in this iteration (at B.11) **or a §G
+safety rail halts the loop**, additionally print on the same turn:
+
+```
+Convergence detected: <plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | error-limit | timeout-limit>
+```
+
+The enum here matches §E.7's canonical list — §E stop conditions plus §G safety-rail halts.
+
+These echoes carry the same content already written to `results.json` and the
+per-iteration markdown — the inline copy makes the run legible in the
+transcript and is the substrate the `/goal` condition templates anchor to.
 
 #### B.9 Git checkpoint
 
@@ -1100,7 +1159,7 @@ Factual synthesis — no opinions in this file:
 
 ## Convergence
 - **Detected:** Yes | No
-- **Reason:** <plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause>
+- **Reason:** <plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | error-limit | timeout-limit>
 - **Iterations completed:** N of <budget>
 - **Activation floor reached:** Yes | No
 

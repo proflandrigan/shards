@@ -9,14 +9,16 @@
  *   node ui-push.js <panel-type> [options]
  *
  * Panel types:
- *   data-viewer   Interactive data table (Tabulator.js)
- *   dag           Dependency graph
- *   diagram       ER / architecture diagram
- *   chart         Plotly.js chart
- *   diff          Code diff viewer
- *   model-card    Structured model metadata card (Mitchell et al. 2019)
- *   eval-dashboard Live evaluation results dashboard
- *   close         Close a panel by ID
+ *   data-viewer            Interactive data table (Tabulator.js)
+ *   dag                    Dependency graph
+ *   diagram                ER / architecture diagram
+ *   chart                  Plotly.js chart
+ *   diff                   Code diff viewer
+ *   model-card             Structured model metadata card (Mitchell et al. 2019)
+ *   eval-dashboard         Live evaluation results dashboard
+ *   notebook-walkthrough   Interactive cell-by-cell notebook walkthrough
+ *   brainstorm             Live multi-specialist brainstorm fan-out
+ *   close                  Close a panel by ID
  *
  * Options:
  *   --title <string>      Panel tab title
@@ -129,7 +131,7 @@ async function main() {
 
   if (!args.panel) process.exit(0);
 
-  const VALID_PANELS = ['data-viewer', 'dag', 'diagram', 'chart', 'diff', 'model-card', 'experiment-dashboard', 'eval-dashboard', 'prompt-lab', 'pr-review', 'close'];
+  const VALID_PANELS = ['data-viewer', 'dag', 'diagram', 'chart', 'diff', 'model-card', 'experiment-dashboard', 'eval-dashboard', 'prompt-lab', 'pr-review', 'notebook-walkthrough', 'brainstorm', 'close'];
   if (!VALID_PANELS.includes(args.panel)) process.exit(0);
 
   // Resolve source to absolute path if given

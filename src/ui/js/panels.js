@@ -171,6 +171,20 @@ function updatePanelData(panelId, newData) {
     return;
   }
 
+  if (p.panel === 'notebook-walkthrough') {
+    if (typeof cleanupNotebookWalkthrough === 'function') cleanupNotebookWalkthrough(p);
+    if (typeof renderNotebookWalkthrough === 'function') {
+      renderNotebookWalkthrough(document.getElementById('file-rendered-view'), p);
+    }
+    return;
+  }
+
+  if (p.panel === 'brainstorm') {
+    cleanupBrainstorm(p);
+    renderBrainstorm(document.getElementById('file-rendered-view'), p);
+    return;
+  }
+
   if (p.panel === 'data-viewer' && p.tabulatorInstance) {
     var sorters = [];
     try { sorters = p.tabulatorInstance.getSorters() || []; } catch(e) {}
@@ -258,6 +272,18 @@ function renderPanelPane(panelId) {
     tableView.classList.remove('visible');
     renderedView.classList.add('visible');
     renderPRReviewPanel(renderedView, p);
+  } else if (p.panel === 'notebook-walkthrough') {
+    tableView.classList.remove('visible');
+    renderedView.classList.add('visible');
+    if (typeof renderNotebookWalkthrough === 'function') {
+      renderNotebookWalkthrough(renderedView, p);
+    } else {
+      renderedView.innerHTML = '<div class="no-file-msg">notebook-walkthrough renderer not loaded.</div>';
+    }
+  } else if (p.panel === 'brainstorm') {
+    tableView.classList.remove('visible');
+    renderedView.classList.add('visible');
+    renderBrainstorm(renderedView, p);
   } else {
     tableView.classList.remove('visible');
     renderedView.classList.add('visible');
@@ -690,7 +716,7 @@ function renderExperimentDashboard(container, panel) {
 
   // ── Comparison controls ──
   html += '<div class="exp-compare-bar">';
-  html += '<button id="exp-compare-btn-' + panel.panelId + '" disabled onclick="expCompare(\'' + esc(panel.panelId) + '\')">Compare Selected</button>';
+  html += '<button id="exp-compare-btn-' + panel.panelId + '" class="exp-compare-action-btn" data-panel-id="' + esc(panel.panelId) + '" disabled>Compare Selected</button>';
   html += '<span id="exp-compare-count-' + panel.panelId + '" class="exp-compare-hint">Select 2 rows to compare</span>';
   html += '</div>';
   html += '<div id="exp-compare-view-' + panel.panelId + '"></div>';
@@ -700,6 +726,10 @@ function renderExperimentDashboard(container, panel) {
 
   html += '</div>';
   container.innerHTML = html;
+
+  container.querySelectorAll('.exp-compare-action-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { expCompare(btn.dataset.panelId); });
+  });
 
   // ── Render Plotly charts ──
   if (typeof Plotly !== 'undefined' && exps.length > 0) {
@@ -1158,12 +1188,12 @@ function renderEvalDashboard(container, panel) {
       Plotly.newPlot(chartEl, [
         {
           x: metricKeys, y: metricKeys.map(function(k) { return bMetrics[k] || 0; }),
-          type: 'bar', name: esc(baseline.model || 'Baseline'),
+          type: 'bar', name: baseline.model || 'Baseline',
           marker: { color: '#6a6a88' }
         },
         {
           x: metricKeys, y: metricKeys.map(function(k) { return cMetrics[k] || 0; }),
-          type: 'bar', name: esc(bestCandidate.model || 'Best Candidate'),
+          type: 'bar', name: bestCandidate.model || 'Best Candidate',
           marker: { color: '#4a9' }
         }
       ], {
@@ -1417,10 +1447,14 @@ function renderModelCard(container, panel) {
   }
 
   // ── Export button ──
-  html += '<button class="model-card-export-btn" onclick="mcExportMarkdown(\'' + esc(panel.panelId) + '\')">Export as Markdown</button>';
+  html += '<button class="model-card-export-btn" data-panel-id="' + esc(panel.panelId) + '">Export as Markdown</button>';
 
   html += '</div>';
   container.innerHTML = html;
+
+  container.querySelectorAll('.model-card-export-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { mcExportMarkdown(btn.dataset.panelId); });
+  });
 }
 
 // Model card section builder
@@ -1736,7 +1770,7 @@ function renderPromptLab(container, panel) {
 
   // ── Toolbar ──
   html += '<div class="pl-toolbar">';
-  html += '<select id="pl-select-' + esc(pid) + '" onchange="plSelectPrompt(\'' + esc(pid) + '\')">';
+  html += '<select id="pl-select-' + esc(pid) + '" class="pl-select-prompt" data-panel-id="' + esc(pid) + '">';
   for (var i = 0; i < prompts.length; i++) {
     var sel = prompts[i].name === active ? ' selected' : '';
     html += '<option value="' + esc(prompts[i].name) + '"' + sel + '>' + esc(prompts[i].filename) + ' (v' + esc(prompts[i].currentVersion) + ')</option>';
@@ -1747,9 +1781,9 @@ function renderPromptLab(container, panel) {
   html += '<span class="pl-status-badge ' + esc(status) + '">' + esc(status) + '</span>';
   html += '<span class="pl-toolbar-spacer"></span>';
 
-  html += '<button class="pl-btn' + (state.diffMode ? ' active' : '') + '" onclick="plToggleDiff(\'' + esc(pid) + '\')" title="Toggle diff view">Diff</button>';
-  html += '<button class="pl-btn primary" onclick="plRunTest(\'' + esc(pid) + '\')"' + (status !== 'idle' ? ' disabled' : '') + '>Run Test</button>';
-  html += '<button class="pl-btn sync" onclick="plSyncToProject(\'' + esc(pid) + '\')"' + (status !== 'idle' ? ' disabled' : '') + '>Sync to Project</button>';
+  html += '<button class="pl-btn pl-action-diff' + (state.diffMode ? ' active' : '') + '" data-panel-id="' + esc(pid) + '" title="Toggle diff view">Diff</button>';
+  html += '<button class="pl-btn primary pl-action-run" data-panel-id="' + esc(pid) + '"' + (status !== 'idle' ? ' disabled' : '') + '>Run Test</button>';
+  html += '<button class="pl-btn sync pl-action-sync" data-panel-id="' + esc(pid) + '"' + (status !== 'idle' ? ' disabled' : '') + '>Sync to Project</button>';
   html += '</div>';
 
   // ── Body: editor + sidebar ──
@@ -1772,6 +1806,19 @@ function renderPromptLab(container, panel) {
 
   html += '</div>'; // end prompt-lab
   container.innerHTML = html;
+
+  container.querySelectorAll('.pl-select-prompt').forEach(function(el) {
+    el.addEventListener('change', function() { plSelectPrompt(el.dataset.panelId); });
+  });
+  container.querySelectorAll('.pl-action-diff').forEach(function(btn) {
+    btn.addEventListener('click', function() { plToggleDiff(btn.dataset.panelId); });
+  });
+  container.querySelectorAll('.pl-action-run').forEach(function(btn) {
+    btn.addEventListener('click', function() { plRunTest(btn.dataset.panelId); });
+  });
+  container.querySelectorAll('.pl-action-sync').forEach(function(btn) {
+    btn.addEventListener('click', function() { plSyncToProject(btn.dataset.panelId); });
+  });
 
   // Render sidebar
   plRenderVersionSidebar(
@@ -2091,7 +2138,7 @@ function plRenderVersionSidebar(container, prompts, activePrompt, syncHistory, p
   for (var i = 0; i < prompts.length; i++) {
     var pr = prompts[i];
     var isActive = pr.name === activePrompt;
-    html += '<div class="pl-prompt-item' + (isActive ? ' active' : '') + '" onclick="plLoadPrompt(\'' + esc(panelId) + '\', \'' + esc(pr.name) + '\')">';
+    html += '<div class="pl-prompt-item pl-load-prompt' + (isActive ? ' active' : '') + '" data-panel-id="' + esc(panelId) + '" data-prompt-name="' + esc(pr.name) + '">';
     html += '<div class="pl-prompt-name">' + esc(pr.filename) + '</div>';
     html += '<div class="pl-prompt-meta">v' + esc(pr.currentVersion) + ' &middot; ' + esc(pr.model || '') + '</div>';
     html += '</div>';
@@ -2134,6 +2181,10 @@ function plRenderVersionSidebar(container, prompts, activePrompt, syncHistory, p
   }
 
   container.innerHTML = html;
+
+  container.querySelectorAll('.pl-load-prompt').forEach(function(el) {
+    el.addEventListener('click', function() { plLoadPrompt(el.dataset.panelId, el.dataset.promptName); });
+  });
 }
 
 // ─── PR Review Panel ──────────────────────────────────────────────────────────
@@ -2199,7 +2250,7 @@ function renderPRReviewPanel(container, panel) {
   if (reviewDecision) {
     html += '<span class="pr-review-badge ' + decisionClass + '">' + esc(decisionLabel) + '</span>';
   }
-  html += '<button class="pr-btn" onclick="refreshPRReviewPanel(' + JSON.stringify(panel.panelId) + ')">Refresh</button>';
+  html += '<button class="pr-btn pr-refresh-btn" data-panel-id="' + esc(panel.panelId) + '">Refresh</button>';
   html += '</div>';
   html += '</div>';
 
@@ -2242,13 +2293,13 @@ function renderPRReviewPanel(container, panel) {
       html += '<div class="' + threadClass + '" id="pr-thread-' + esc(thread.threadId) + '" data-thread-id="' + esc(thread.threadId) + '">';
 
       // Thread header (file + line, clickable to open file)
-      html += '<div class="pr-thread-header" onclick="prToggleThread(' + JSON.stringify(panel.panelId) + ',' + JSON.stringify(thread.threadId) + ')">';
-      html += '<span class="pr-thread-file" title="Open file at line ' + thread.line + '" onclick="event.stopPropagation();prOpenFileLine(' + JSON.stringify(thread.file) + ',' + thread.line + ')">' + esc(thread.file) + '</span>';
+      html += '<div class="pr-thread-header pr-toggle-thread" data-panel-id="' + esc(panel.panelId) + '" data-thread-id="' + esc(thread.threadId) + '">';
+      html += '<span class="pr-thread-file pr-open-file" title="Open file at line ' + thread.line + '" data-file="' + esc(thread.file) + '" data-line="' + esc(String(thread.line || '')) + '">' + esc(thread.file) + '</span>';
       if (thread.line) html += '<span class="pr-thread-line">:' + thread.line + '</span>';
       html += '<span class="pr-thread-count">' + thread.comments.length + ' comment' + (thread.comments.length !== 1 ? 's' : '') + '</span>';
-      html += '<div class="pr-addressed-toggle" onclick="event.stopPropagation()">';
-      html += '<input type="checkbox" id="pr-addr-' + esc(thread.threadId) + '" ' + (isAddressed ? 'checked' : '') +
-              ' onchange="prToggleAddressed(' + JSON.stringify(panel.panelId) + ',' + JSON.stringify(thread.threadId) + ',this.checked)">';
+      html += '<div class="pr-addressed-toggle pr-stop-propagation">';
+      html += '<input type="checkbox" class="pr-addressed-checkbox" id="pr-addr-' + esc(thread.threadId) + '" ' + (isAddressed ? 'checked' : '') +
+              ' data-panel-id="' + esc(panel.panelId) + '" data-thread-id="' + esc(thread.threadId) + '">';
       html += '<label class="pr-addressed-label" for="pr-addr-' + esc(thread.threadId) + '">Done</label>';
       html += '</div>';
       html += '<span class="pr-thread-collapse-icon">&#9660;</span>';
@@ -2309,6 +2360,27 @@ function renderPRReviewPanel(container, panel) {
   html += '</div>'; // pr-review
 
   container.innerHTML = html;
+
+  container.querySelectorAll('.pr-refresh-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { refreshPRReviewPanel(btn.dataset.panelId); });
+  });
+  container.querySelectorAll('.pr-toggle-thread').forEach(function(el) {
+    el.addEventListener('click', function() { prToggleThread(el.dataset.panelId, el.dataset.threadId); });
+  });
+  container.querySelectorAll('.pr-open-file').forEach(function(el) {
+    el.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      var lineStr = el.dataset.line;
+      var line = lineStr ? parseInt(lineStr, 10) : 0;
+      prOpenFileLine(el.dataset.file, line);
+    });
+  });
+  container.querySelectorAll('.pr-stop-propagation').forEach(function(el) {
+    el.addEventListener('click', function(ev) { ev.stopPropagation(); });
+  });
+  container.querySelectorAll('.pr-addressed-checkbox').forEach(function(el) {
+    el.addEventListener('change', function() { prToggleAddressed(el.dataset.panelId, el.dataset.threadId, el.checked); });
+  });
 }
 
 function prToggleThread(panelId, threadId) {
@@ -2381,4 +2453,229 @@ function renderPRMarkdown(text) {
   }
   // Minimal fallback: escape and preserve newlines
   return '<p>' + esc(text).replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Brainstorm panel — live multi-specialist fan-out from Syn
+// ═══════════════════════════════════════════════════════════════
+//
+// Data shape (written by syn/brainstorm.md to
+//   brainstorm/brainstorm_<project>.state.json):
+//
+// {
+//   "mode": "brainstorm",
+//   "project": "<slug>",
+//   "created": "<ISO>",
+//   "phase": "intake|gathering|synthesis|facilitation",
+//   "problem": "<initial idea>",
+//   "context": { "environment": ..., "data": ..., "compute": ..., "openness": ... },
+//   "specialists": [
+//     { "name": "data-scientist", "status": "queued|thinking|responded|skipped",
+//       "started_at": "...", "responded_at": "...",
+//       "headline": "...", "ideas_count": 3 }
+//   ],
+//   "synthesis": { "quick_wins": [...], "bold_bets": [...], "wildcards": [...],
+//                  "themes": [...], "recommended_start": "...",
+//                  "recommendation_rationale": "..." } | null,
+//   "facilitation_log": [ { "ts": "...", "actor": "...", "text": "..." } ],
+//   "outcome": { "decision": "single|multi-workstream", ... } | null
+// }
+
+function cleanupBrainstorm(panel) {
+  // No persistent sub-components yet (no Tabulator, no Plotly); placeholder for
+  // symmetry with other panel cleanup helpers.
+  return;
+}
+
+function renderBrainstorm(container, panel) {
+  var d = panel.rawData;
+  if (!d) {
+    container.innerHTML = '<div class="no-file-msg">No brainstorm state available yet.</div>';
+    return;
+  }
+
+  // Defensive defaults — agent may write state mid-phase before all fields exist.
+  var phase = d.phase || 'intake';
+  var problem = d.problem || '(problem not captured yet)';
+  var specialists = Array.isArray(d.specialists) ? d.specialists : [];
+  var synthesis = d.synthesis || null;
+  var log = Array.isArray(d.facilitation_log) ? d.facilitation_log : [];
+  var outcome = d.outcome || null;
+  var ctx = d.context || {};
+
+  var html = '<div class="brainstorm-panel">';
+
+  // ── Header ──
+  html += '<div class="brain-header">';
+  html += '<div class="brain-title">' + esc(d.project || 'brainstorm') + '</div>';
+  html += '<div class="brain-phase-pill brain-phase-' + esc(phase) + '">' + esc(phase) + '</div>';
+  html += '</div>';
+
+  html += '<div class="brain-problem"><span class="brain-problem-label">Problem</span>'
+       +  '<div class="brain-problem-body">' + esc(problem) + '</div></div>';
+
+  // ── Context strip (compact) ──
+  var ctxItems = [];
+  if (ctx.environment) ctxItems.push(['env', ctx.environment]);
+  if (ctx.data)        ctxItems.push(['data', ctx.data]);
+  if (ctx.compute)     ctxItems.push(['compute', ctx.compute]);
+  if (ctx.openness)    ctxItems.push(['openness', ctx.openness]);
+  if (ctxItems.length > 0) {
+    html += '<div class="brain-context-strip">';
+    for (var c = 0; c < ctxItems.length; c++) {
+      html += '<div class="brain-context-item">'
+           +  '<span class="brain-context-key">' + esc(ctxItems[c][0]) + '</span>'
+           +  '<span class="brain-context-val">' + esc(String(ctxItems[c][1])) + '</span>'
+           +  '</div>';
+    }
+    html += '</div>';
+  }
+
+  // ── Specialist progress bar ──
+  var total = specialists.length;
+  var done = specialists.filter(function(s) { return s.status === 'responded'; }).length;
+  var pending = specialists.filter(function(s) { return s.status === 'thinking'; }).length;
+  if (total > 0) {
+    html += '<div class="brain-progress">';
+    html += '<div class="brain-progress-label">'
+         +  '<span><strong>' + done + '</strong> / ' + total + ' shards checked in</span>'
+         +  (pending > 0 ? '<span class="brain-progress-pending">' + pending + ' thinking…</span>' : '')
+         +  '</div>';
+    html += '<div class="brain-progress-bar">';
+    for (var i = 0; i < total; i++) {
+      var s = specialists[i];
+      var cls = 'brain-prog-seg ' + (s.status || 'queued');
+      html += '<div class="' + cls + '" title="' + esc(s.name || '') + ' — ' + esc(s.status || '') + '"></div>';
+    }
+    html += '</div></div>';
+  }
+
+  // ── Specialist grid ──
+  html += '<div class="brain-section-label">Specialist input</div>';
+  if (specialists.length === 0) {
+    html += '<div class="brain-empty">Waiting for Syn to spawn the chorus…</div>';
+  } else {
+    html += '<div class="brain-specialist-grid">';
+    for (var si = 0; si < specialists.length; si++) {
+      var sp = specialists[si];
+      var status = sp.status || 'queued';
+      html += '<div class="brain-card brain-card-' + esc(status) + '">';
+      html += '<div class="brain-card-head">';
+      html += '<span class="brain-card-name">' + esc(sp.name || '') + '</span>';
+      html += '<span class="brain-card-status">';
+      if (status === 'thinking') html += '<span class="brain-spinner"></span>';
+      html += esc(status);
+      html += '</span>';
+      html += '</div>';
+      if (sp.headline) {
+        html += '<div class="brain-card-headline">' + esc(sp.headline) + '</div>';
+      } else if (status === 'thinking') {
+        html += '<div class="brain-card-headline brain-card-pending">thinking…</div>';
+      } else if (status === 'queued') {
+        html += '<div class="brain-card-headline brain-card-pending">queued</div>';
+      }
+      if (typeof sp.ideas_count === 'number' && sp.ideas_count > 0) {
+        html += '<div class="brain-card-meta">' + sp.ideas_count + ' idea'
+             + (sp.ideas_count === 1 ? '' : 's') + '</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  // ── Synthesis (appears when phase >= synthesis) ──
+  if (synthesis) {
+    html += '<div class="brain-section-label">Synthesis</div>';
+    html += '<div class="brain-synthesis">';
+    html += brainSynthBucket('Quick wins', 'quick-wins', synthesis.quick_wins);
+    html += brainSynthBucket('Bold bets',  'bold-bets',  synthesis.bold_bets);
+    html += brainSynthBucket('Wildcards',  'wildcards',  synthesis.wildcards);
+    if (Array.isArray(synthesis.themes) && synthesis.themes.length > 0) {
+      html += '<div class="brain-themes"><span class="brain-themes-label">Themes:</span> ';
+      html += synthesis.themes.map(function(t) {
+        return '<span class="brain-theme-chip">' + esc(t) + '</span>';
+      }).join('');
+      html += '</div>';
+    }
+    if (synthesis.recommended_start) {
+      html += '<div class="brain-recommend">';
+      html += '<div class="brain-recommend-label">Recommended starting point</div>';
+      html += '<div class="brain-recommend-title">' + esc(synthesis.recommended_start) + '</div>';
+      if (synthesis.recommendation_rationale) {
+        html += '<div class="brain-recommend-rationale">'
+             +  esc(synthesis.recommendation_rationale) + '</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  // ── Facilitation log (Phase 3) ──
+  if (log.length > 0) {
+    html += '<div class="brain-section-label">Facilitation log</div>';
+    html += '<div class="brain-log">';
+    for (var li = log.length - 1; li >= 0; li--) {
+      var entry = log[li];
+      html += '<div class="brain-log-entry">';
+      html += '<span class="brain-log-actor brain-actor-' + esc(entry.actor || 'syn') + '">'
+           +  esc(entry.actor || '') + '</span>';
+      html += '<span class="brain-log-text">' + esc(entry.text || '') + '</span>';
+      if (entry.ts) {
+        html += '<span class="brain-log-ts">' + esc(brainFormatTs(entry.ts)) + '</span>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  // ── Outcome banner ──
+  if (outcome) {
+    html += '<div class="brain-outcome brain-outcome-' + esc(outcome.decision || 'unknown') + '">';
+    html += '<span class="brain-outcome-label">Outcome</span>';
+    if (outcome.decision === 'single') {
+      html += '<span class="brain-outcome-detail">Escalated to <strong>'
+           +  esc(outcome.direction || '?') + '</strong>';
+      if (outcome.target_dir) html += ' → <code>' + esc(outcome.target_dir) + '</code>';
+      html += '</span>';
+    } else if (outcome.decision === 'multi-workstream') {
+      var n = outcome.workstream_count
+           || (Array.isArray(outcome.workstreams) ? outcome.workstreams.length : 0);
+      html += '<span class="brain-outcome-detail">Multi-workstream — <strong>'
+           +  n + '</strong> workstream' + (n === 1 ? '' : 's') + '</span>';
+    } else {
+      html += '<span class="brain-outcome-detail">' + esc(JSON.stringify(outcome)) + '</span>';
+    }
+    html += '</div>';
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function brainSynthBucket(label, cls, items) {
+  if (!Array.isArray(items) || items.length === 0) return '';
+  var html = '<div class="brain-bucket brain-bucket-' + cls + '">';
+  html += '<div class="brain-bucket-label">' + esc(label) + '</div>';
+  html += '<ul class="brain-bucket-list">';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    if (typeof item === 'string') {
+      html += '<li><strong>' + esc(item) + '</strong></li>';
+    } else {
+      html += '<li>';
+      html += '<strong>' + esc(item.title || '') + '</strong>';
+      if (item.rationale) html += ' — ' + esc(item.rationale);
+      html += '</li>';
+    }
+  }
+  html += '</ul></div>';
+  return html;
+}
+
+function brainFormatTs(iso) {
+  if (!iso) return '';
+  try {
+    var d = new Date(iso);
+    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  } catch (e) { return iso; }
 }

@@ -19,7 +19,7 @@ Before confirming the question, ask yourself: **does this actually need AI?** If
 a simpler solution (rules, regex, a database query, a human process) clearly fits
 the problem, flag it — don't just validate the AI framing.
 
-::GATE:: id=specific-instructions-ai-engineer-advise-phase1 phase=1 kind=phase
+::GATE:: id=ai-engineer-advise-phase-1 phase=1 kind=phase
 Do not proceed until the user confirms the question.
 ::ENDGATE::
 Restate the question in your own words to confirm alignment. Wait for confirmation.
@@ -90,7 +90,7 @@ After the discussion, ask:
 
 > "Want me to write this up as a structured advisory document?"
 
-::GATE:: id=specific-instructions-ai-engineer-advise-phase4 phase=4 kind=final
+::GATE:: id=ai-engineer-advise-phase-4 phase=4 kind=final
 Wait for explicit confirmation before writing anything.
 ::ENDGATE::
 

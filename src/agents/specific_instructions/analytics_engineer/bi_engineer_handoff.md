@@ -15,7 +15,7 @@ This file governs Step 6 of Phase 8 (Deliver and Document) for the Analytics Eng
      Ask the user: "This mart is built for downstream consumption. Do you want a
      `bi_engineer_handoff.md` so the BI Engineer shard can build a dashboard on
      top of it?"
-     ::GATE:: id=specific-instructions-analytics-engineer-bi-engineer-handoff-phase0 phase=0 kind=phase
+     ::GATE:: id=analytics-engineer-bi-engineer-handoff-phase-0 phase=0 kind=phase
 Wait for an explicit yes or no. Do not generate the file unless the user confirms.
 ::ENDGATE::
 

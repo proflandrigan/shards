@@ -40,8 +40,9 @@ transfer occurs.
 ::GATE:: id=specific-instructions-data-scientist-experiment-phase0 phase=0 kind=execute
 Do not proceed to Phase 1 until the user explicitly confirms the outcome
 metric and experiment count.
-::ENDGATE:: If the user modifies any parameter, update before
-proceeding.
+::ENDGATE::
+
+If the user modifies any parameter, update before proceeding.
 
 ---
 
@@ -60,6 +61,38 @@ For each experiment, provide:
 - **Risk level** — Low / Medium / High, with one-line justification
 
 Present the list clearly. Explain your prioritisation rationale briefly.
+
+### Optional `/goal` activation
+
+Read `.claude/agents/specific_instructions/shared/goal_mode.md` in full
+before writing the gate. Compose a candidate `/goal` condition from the
+Phase 0 + Phase 1 settings (outcome metric, success threshold if set, number
+of experiments planned) using the Experiment condition template, and include
+the resulting copy-paste block in the message that precedes the Phase 1 gate:
+
+```text
+/goal The experiment run is complete when ANY of the following is true:
+  (a) the most recent inline experiment summary shows <outcome_metric> has
+      <reached or exceeded <success_threshold> if the metric is being
+       maximized | dropped to or below <success_threshold> if the metric
+       is being minimized>;
+  (b) the agent has printed "Experiment <N> complete" with N == <planned_count>;
+  (c) the agent has begun writing the Phase 3 summary
+      (look for "experiment_summary.md" or "Phase 3").
+Or stop after <planned_count+3> turns.
+```
+
+If no success threshold was set, drop clause (a) and rely on (b) and (c).
+
+Activation is optional. With `/goal`, Phase 2 runs without per-experiment
+prompts — the existing **Step 7 inline summary** is exactly the evidence the
+evaluator reads (already required by the loop, no schema change). Without
+`/goal`, the Phase 2 stop conditions (success threshold reached, user
+intervention, crash) still terminate the loop.
+
+If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
+rejected), accept that and proceed — the loop still runs and terminates per
+the existing logic.
 
 ::GATE:: id=specific-instructions-data-scientist-experiment-phase1 phase=1 kind=execute
 Do not begin any experiment until the user explicitly confirms the plan.
@@ -367,10 +400,10 @@ Read both files back to the user.
 
 ::GATE:: id=specific-instructions-data-scientist-experiment-phase3 phase=3 kind=final validates=data_scientist
 Ask the user:
-::ENDGATE::
 - What do you want to adopt?
 - Do you want to run more experiments?
 - Or should we stop here?
+::ENDGATE::
 
 Wait for their response before taking any further action.
 

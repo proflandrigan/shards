@@ -1,0 +1,271 @@
+/* ─── Notebook Walkthrough Panel ────────────────────────── */
+
+.notebook-walkthrough {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Status strip ── */
+.nw-status-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #1a1a2c;
+  flex-shrink: 0;
+  font-size: 12px;
+  background: #0c0c18;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.nw-strip-left,
+.nw-strip-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nw-strip-left { flex: 1; }
+.nw-nb-name {
+  color: #b0b0c4;
+  font-weight: 600;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nw-cell-counter {
+  color: #80809a;
+  font-variant-numeric: tabular-nums;
+}
+.nw-status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  background: #1a1a2c;
+  color: #b0b0c4;
+}
+.nw-status-running { background: #2a3a5c; color: #8aa6ff; }
+.nw-status-ready { background: #1a3a2a; color: #4a9; }
+.nw-status-error { background: #3a1a2a; color: #e08099; }
+.nw-status-waiting { background: #3a3a1a; color: #d0c060; }
+.nw-status-ended { background: #1a1a2c; color: #80809a; }
+.nw-stale-count {
+  background: #3a2a1a;
+  color: #e0a070;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.nw-strip-btn {
+  background: #1a1a2c;
+  color: #b0b0c4;
+  border: 1px solid #2a2a44;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.nw-strip-btn:hover { background: #25254a; border-color: #3a3a5a; }
+
+/* ── Cells container ── */
+.nw-cells {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+}
+
+/* ── Per-cell ── */
+.nw-cell {
+  border: 1px solid #1a1a2c;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  background: #0a0a14;
+  transition: border-color 0.15s;
+}
+.nw-cell-current {
+  border-color: #4a6ae0;
+  box-shadow: 0 0 0 1px rgba(74, 106, 224, 0.25);
+}
+.nw-cell-stale {
+  opacity: 0.78;
+  border-left: 3px solid #e0a070;
+}
+.nw-cell-executed:not(.nw-cell-stale) {
+  border-left: 3px solid #4a9;
+}
+
+.nw-cell-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #14142a;
+  background: #0c0c18;
+  flex-wrap: wrap;
+}
+.nw-cell-idx {
+  color: #80809a;
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 11px;
+  min-width: 32px;
+}
+.nw-cell-type {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  background: #1a1a2c;
+  color: #80809a;
+}
+.nw-cell-type.code { background: #1a2a3c; color: #6aa8e0; }
+.nw-cell-type.markdown { background: #2a1a3c; color: #b88ae0; }
+
+.nw-cell-flag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.nw-flag-ok { background: #1a3a2a; color: #4a9; }
+.nw-flag-stale { background: #3a2a1a; color: #e0a070; }
+.nw-flag-current { background: #1a2a4c; color: #8aa6ff; }
+
+.nw-cell-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.nw-act-btn {
+  background: #14142a;
+  color: #b0b0c4;
+  border: 1px solid #2a2a44;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.nw-act-btn:hover { background: #25254a; border-color: #3a3a5a; color: #d0d0e8; }
+.nw-act-btn.nw-act-run { background: #1a3a2a; border-color: #2a5a3a; color: #6cd0a0; }
+.nw-act-btn.nw-act-run:hover { background: #204a34; border-color: #3a6a4a; }
+.nw-act-btn.nw-act-delete:hover { background: #3a1a2a; border-color: #5a2a3a; color: #e08099; }
+.nw-act-btn.nw-act-rerun { background: #3a2a1a; border-color: #5a3a2a; color: #e0a070; }
+.nw-act-btn.nw-act-primary { background: #1a3a4a; border-color: #2a5a6a; color: #6ac0e0; }
+.nw-act-btn.nw-act-primary:hover { background: #204a5a; border-color: #3a6a7a; }
+
+.nw-cell-body {
+  padding: 10px 12px;
+}
+.nw-cell-body pre {
+  margin: 0;
+  padding: 8px 10px;
+  background: #08081a;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+.nw-cell-body .file-rendered {
+  font-size: 13px;
+  line-height: 1.55;
+}
+.nw-cell-body .nb-cell-output {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: #06061a;
+  border-left: 2px solid #2a2a44;
+  border-radius: 0 4px 4px 0;
+}
+.nw-cell-body .nb-cell-output pre {
+  background: transparent;
+  padding: 0;
+}
+.nw-cell-body .nb-output-error {
+  border-left-color: #5a2a3a;
+  color: #e08099;
+}
+
+.nw-output-summary {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #0c1a14;
+  border-left: 2px solid #2a5a3a;
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+  color: #b0d0c0;
+}
+.nw-explanation {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: #0c1424;
+  border-left: 2px solid #2a4a6a;
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+  color: #b0c0e0;
+}
+.nw-last-run {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #60607a;
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+}
+.nw-cell-no-source {
+  font-size: 11px;
+  color: #80809a;
+  font-style: italic;
+}
+
+/* ── Inline editor ── */
+.nw-edit-textarea {
+  width: 100%;
+  min-height: 120px;
+  background: #08081a;
+  color: #d0d0e8;
+  border: 1px solid #2a2a44;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.nw-edit-textarea:focus {
+  outline: none;
+  border-color: #5080e0;
+}
+.nw-edit-actions {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+}
+
+/* ── Empty state ── */
+.nw-empty {
+  padding: 30px 20px;
+  text-align: center;
+  color: #80809a;
+  font-size: 13px;
+}
+
+/* ── Light theme overrides ── */
+[data-theme="light"] .nw-status-strip { background: #f4f4f8; }
+[data-theme="light"] .nw-cell { background: #ffffff; border-color: #d0d0d8; }
+[data-theme="light"] .nw-cell-current { border-color: #4a6ae0; }
+[data-theme="light"] .nw-cell-header { background: #f4f4f8; border-bottom-color: #d0d0d8; }
+[data-theme="light"] .nw-cell-body pre { background: #f0f0f4; }
+[data-theme="light"] .nw-cell-body .nb-cell-output { background: #f8f8fc; }
+[data-theme="light"] .nw-edit-textarea { background: #ffffff; color: #1a1a2c; }

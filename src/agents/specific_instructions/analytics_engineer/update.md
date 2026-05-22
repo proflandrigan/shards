@@ -33,7 +33,7 @@ Present a brief summary:
 After presenting the summary, ask:
 "Is this the right artifact? Anything I'm missing or misread about the current state?"
 
-::GATE:: id=specific-instructions-analytics-engineer-update-phase1 phase=1 kind=phase
+::GATE:: id=analytics-engineer-update-phase-1 phase=1 kind=phase
 Do not proceed until the user confirms this is the right artifact and
 the summary is accurate. Wait for explicit confirmation.
 ::ENDGATE::
@@ -68,7 +68,7 @@ If any of these apply: "This is looking like a Build rather than an update —
 the scope has grown significantly. Want to switch to the full Build workflow
 instead? Or narrow the scope so we can handle it as an update?"
 
-::GATE:: id=specific-instructions-analytics-engineer-update-phase2 phase=2 kind=phase
+::GATE:: id=analytics-engineer-update-phase-2 phase=2 kind=phase
 Confirm the proposed change list before writing the spec.
 Do not proceed until the user confirms the scope. Wait for explicit confirmation.
 ::ENDGATE::
@@ -127,7 +127,7 @@ Write `updates/<project_name>/analytics-engineer-update-spec.md` using this temp
 
 Read the spec back to the user in full.
 
-::GATE:: id=specific-instructions-analytics-engineer-update-phase4 phase=4 kind=final
+::GATE:: id=analytics-engineer-update-phase-4 phase=4 kind=final
 Ask the user:
 ::ENDGATE::
 "Ready to implement? Or do you want to adjust the scope first?"

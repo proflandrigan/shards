@@ -131,7 +131,9 @@ Add, edit, or remove? Or confirm to write.
 
 ::GATE:: id=specific-instructions-shared-knowledge-harvest-phase0 phase=0 kind=phase
 Do not write any files until the user confirms.
-::ENDGATE:: The user may edit titles, remove candidates, adjust confidence, or add new ones.
+::ENDGATE::
+
+The user may edit titles, remove candidates, adjust confidence, or add new ones.
 
 ### 4. Create directory structure
 

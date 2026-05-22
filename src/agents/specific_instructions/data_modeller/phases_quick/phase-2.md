@@ -23,6 +23,9 @@ Wait for any signal from the user before beginning build steps.
    joins, run the fan-out check from `join_path_protocol.md` Tier 2+. Run
    `dbt show --select <model> --limit 5` to confirm output looks right.
    If any check fails, fix before proceeding. Skip if no-data environment.
+   **Auto-verify:** if 3+ models are being validated, open
+   `::AUTO-VERIFY:: agent=data-modeller phase=2` before the sweep and
+   `::ENDAUTO::` after. See `specific_instructions/shared/auto_verify_mode.md`.
 5. Summarize what changed
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
@@ -51,7 +54,7 @@ Append to project-specs.md:
 
 Update the specs header status to `Complete`.
 
-::GATE:: id=data-modeller-quick-phase-2 phase=2 kind=phase
+::GATE:: id=data-modeller-quick-phase-2 phase=2 kind=final
 Read this section back to the user. Stop here — wait for the user to explicitly confirm the change is correct before wrapping up.
 ::ENDGATE::
 

@@ -14,3 +14,4 @@ templates/
 # macOS
 .DS_Store
 **/.DS_Store
+__MACOSX/

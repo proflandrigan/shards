@@ -19,6 +19,7 @@ An agent invokes UI mode (via the agent's `[UI]` menu option or a dedicated mode
 | `model-card` | ML Engineer, Deep Learning Engineer, Applied ML Scientist | Model card rendered from `model-card.md` template |
 | `knowledge-map` | Syn (Knowledge mode) | Ledger entries card/graph view |
 | `pr-review` | Syn (PR Review mode) | PR file tree, diff view, threaded comments |
+| `brainstorm` | Syn (`[B]` / `/brainstorm`) | Live multi-specialist fan-out: problem + context, specialist cards (queued → thinking → responded with headlines), synthesis buckets, facilitation log, outcome |
 | `guide` | Guide activity-bar button | This developer guide |
 
 ## Registering a new panel type

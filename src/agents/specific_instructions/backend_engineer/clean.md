@@ -28,7 +28,7 @@ Ask the user:
 
 Summarise the confirmed scope back to the user.
 
-::GATE:: id=specific-instructions-backend-engineer-clean-phase1 phase=1 kind=phase
+::GATE:: id=backend-engineer-clean-phase-1 phase=1 kind=phase
 Do not proceed until the user confirms the scope.
 ::ENDGATE::
 
@@ -69,7 +69,7 @@ Present the full plan before touching any file:
 If a change is genuinely ambiguous, remove it from the plan and flag it in
 the summary rather than guessing.
 
-::GATE:: id=specific-instructions-backend-engineer-clean-phase3 phase=3 kind=phase
+::GATE:: id=backend-engineer-clean-phase-3 phase=3 kind=phase
 Do not touch a single file until the user confirms the plan.
 ::ENDGATE::
 If the user modifies the scope or removes items, update the plan and confirm again.
@@ -142,7 +142,7 @@ functionality. No removed functionality.>
 
 Read the summary back to the user.
 
-::GATE:: id=specific-instructions-backend-engineer-clean-phase5 phase=5 kind=final
+::GATE:: id=backend-engineer-clean-phase-5 phase=5 kind=final
 Ask:
 ::ENDGATE::
 - Anything you'd like to revert or reconsider?

@@ -1,0 +1,258 @@
+/* ─── Sessions sidebar view ─────────────────────────────── */
+
+#sessions-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b0b0c8;
+  border-bottom: 1px solid #1e1e32;
+}
+
+#sessions-view-header .sessions-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.sessions-refresh-btn,
+.sessions-filter-btn {
+  background: none;
+  border: 1px solid #2a2a3e;
+  color: #8a8aa3;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 10px;
+  cursor: pointer;
+}
+.sessions-refresh-btn:hover,
+.sessions-filter-btn:hover {
+  background: #1a1a2e;
+  color: #d0d0e0;
+}
+.sessions-filter-btn.active {
+  background: #2a2a3e;
+  color: #d0d0e0;
+}
+
+#sessions-filter-row {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #14141c;
+  flex-wrap: wrap;
+}
+
+#sessions-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+
+.sessions-project-group {
+  margin-bottom: 8px;
+}
+.sessions-project-label {
+  padding: 6px 10px 2px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6a6a85;
+  font-weight: 600;
+}
+.sessions-project-label.no-project {
+  color: #5a5a70;
+  font-style: italic;
+}
+
+.session-row {
+  padding: 8px 10px;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: background 0.1s;
+}
+.session-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.session-row.live {
+  border-left-color: #4caf50;
+}
+.session-row.ended {
+  border-left-color: #4a4a6a;
+}
+.session-row.abandoned {
+  border-left-color: #8a6a3a;
+}
+
+.session-row-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.session-agent-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.session-agent-label {
+  font-weight: 500;
+  color: #d0d0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-status-pill {
+  margin-left: auto;
+  font-size: 9px;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 8px;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+.session-status-pill.live {
+  background: rgba(76, 175, 80, 0.2);
+  color: #7ed080;
+}
+.session-status-pill.ended {
+  background: rgba(120, 120, 150, 0.15);
+  color: #8a8aa3;
+}
+.session-status-pill.abandoned {
+  background: rgba(170, 120, 60, 0.2);
+  color: #c8995a;
+}
+
+.session-row-meta {
+  font-size: 10px;
+  color: #7a7a95;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.session-row-meta .phase-chip {
+  background: rgba(120, 120, 200, 0.12);
+  color: #9a9ad0;
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.session-row-prompt {
+  font-size: 11px;
+  color: #9a9aa8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+}
+
+#sessions-empty {
+  padding: 20px 14px;
+  font-size: 12px;
+  color: #6a6a85;
+  text-align: center;
+  font-style: italic;
+}
+
+/* ─── End Chat button in header ─────────────────────────── */
+
+#end-session-btn {
+  background: none;
+  border: 1px solid #4a3a4a;
+  color: #c08a8a;
+  padding: 4px 10px;
+  font-size: 11px;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-left: 6px;
+}
+#end-session-btn:hover {
+  background: rgba(192, 138, 138, 0.1);
+  color: #d09a9a;
+}
+#end-session-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Resume confirmation modal ─────────────────────────── */
+
+#resume-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+#resume-modal.visible {
+  display: flex;
+}
+#resume-modal .resume-panel {
+  background: #16161e;
+  border: 1px solid #2a2a3e;
+  border-radius: 6px;
+  padding: 18px 20px;
+  max-width: 480px;
+  width: 90%;
+  color: #d0d0e0;
+}
+#resume-modal h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+#resume-modal .resume-detail {
+  font-size: 12px;
+  color: #9a9ab0;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+#resume-modal .resume-detail strong {
+  color: #d0d0e0;
+}
+#resume-modal .resume-prompt-preview {
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 2px solid #4a4a6a;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: #b0b0c8;
+  font-style: italic;
+  margin: 8px 0 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+#resume-modal .resume-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+#resume-modal button {
+  padding: 6px 14px;
+  font-size: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+#resume-modal .btn-cancel {
+  background: none;
+  border: 1px solid #2a2a3e;
+  color: #9a9aa8;
+}
+#resume-modal .btn-confirm {
+  background: #2a4a3a;
+  border: 1px solid #3a6a4a;
+  color: #c8e8c8;
+}
+#resume-modal .btn-confirm:hover {
+  background: #3a5a4a;
+}

@@ -59,6 +59,12 @@ successfully, run the Tier 2+ verification queries from the join path protocol
 (row count before/after join). If actual fan-out diverges from the predicted
 fan-out in Phase 3, halt and diagnose before advancing to the next model.
 
+**Auto-verify mode**: when the layer has 3+ models with joins, the sweep of
+count-before / count-after queries is the bulk read-only verification pattern
+auto-verify is for. Open `::AUTO-VERIFY:: agent=data-engineer phase=6` before
+the sweep, `::ENDAUTO::` after. See
+`specific_instructions/shared/auto_verify_mode.md`.
+
 **SQL loading rule (Python scripts only)** — dbt model files are `.sql` by nature.
 If any Python scripts are produced (e.g., data loaders, custom macros, orchestration
 helpers), **do NOT embed SQL as Python strings.** Write the SQL to a separate `.sql`

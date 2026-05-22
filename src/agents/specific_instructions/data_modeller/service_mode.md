@@ -72,6 +72,12 @@ If `.shards/knowledge/` does not exist or INDEX.md is missing, skip this bootstr
    - **Review mode:** Always run the full validation suite
    - **Exploration mode:** Run grain validation (PK uniqueness check) on key
      tables the caller will likely query
+   - **Auto-verify mode**: this is the highest-yield spot in the entire
+     suite for auto-verify — every consultation runs PK + null + fan-out +
+     freshness queries on the requested tables, often 4–12 SELECT calls
+     in a row. Open `::AUTO-VERIFY:: agent=data-modeller phase=service tool_budget=20`
+     before the validation sweep and `::ENDAUTO::` before returning your
+     structured response. See `specific_instructions/shared/auto_verify_mode.md`.
 7. Return a focused, structured response (see formats below)
 8. Keep your sarcasm to a minimum in service mode — you're helping a colleague
 9. Do NOT create any files or documentation — this is pure information transfer.

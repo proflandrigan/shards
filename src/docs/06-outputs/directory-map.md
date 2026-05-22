@@ -53,12 +53,19 @@ Where each shard writes. The installer creates these at install time; each proje
 │       └── app.py
 │
 ├── brainstorm/               # Syn brainstorm sessions
-│   └── <session>/
-│       └── brainstorm.md
+│   ├── brainstorm_<session>.md         # living doc — context, specialist input, synthesis, outcome
+│   ├── brainstorm_<session>.state.json # live state for the UI brainstorm panel
+│   └── workstreams.json                # optional — multi-workstream escalation
 │
 ├── fixes/                    # Syn Fixer mode
 │   └── <project>/
 │       └── fix-notes.md
+│
+├── presentations/            # Syn Slides Mode decks
+│   └── <deck>/
+│       ├── presentation-spec.md
+│       ├── slides-url.txt
+│       └── iterations.md     # optional, after revisions
 │
 └── .shards/                  # runtime state, knowledge, UI, hooks
     ├── knowledge/            # Knowledge Ledger — preserved across uninstalls
@@ -93,6 +100,7 @@ Where each shard writes. The installer creates these at install time; each proje
 | Backend Engineer | — | review only |
 | Researcher / Academic | — | review only (Academic has report mode) |
 | Syn Fixer | `fixes/<p>/` | `fix-notes.md` |
+| Syn Slides Mode | `presentations/<deck>/` | `presentation-spec.md` + `slides-url.txt` |
 
 ## Plain-markdown guide location
 

@@ -6,11 +6,12 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const { randomUUID } = require('crypto');
 const { ChatSession, reconnectOrCleanup } = require('./chat-session');
 const symbolIndex = require('./symbol-index');
 const { permissionPattern } = require('./permission-pattern');
+const sessionIndex = require('./session-index');
 
 let PROJECT_DIR = process.cwd();
 let SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
@@ -64,7 +65,64 @@ const TLS_KEY = process.env.SHARDS_TLS_KEY || null;
 const BIND_ADDR = process.env.SHARDS_BIND || '127.0.0.1';
 const TRUST_PROXY = process.env.SHARDS_TRUST_PROXY === '1';
 
+// ─── File-poll guards (see pollFiles / scanDir) ─────────────────────────────
+
+const POLL_MAX_BYTES = Number(process.env.SHARDS_POLL_MAX_BYTES) || 2 * 1024 * 1024; // 2 MB
+const POLL_SKIP_EXT = new Set([
+  // Binary data formats
+  '.pkl', '.pickle', '.parquet', '.feather', '.h5', '.hdf5',
+  '.npy', '.npz', '.arrow', '.orc',
+  // Archives
+  '.zip', '.gz', '.tgz', '.tar', '.bz2', '.xz', '.7z',
+  // Compiled / opaque
+  '.so', '.dylib', '.dll', '.exe', '.bin',
+  // Images & PDFs (served via /browse/file/raw, no need to broadcast)
+  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico', '.svg', '.pdf',
+  // Media
+  '.mp4', '.mov', '.mp3', '.wav',
+]);
+const pollSkipWarned = new Set();
+
 // ─── P3: Session Store ──────────────────────────────────────────────────────
+
+// Output dirs Shards specialists write under — used to derive a project slug
+// from a touched file path (e.g. analysis/churn-q4/queries.sql → "churn-q4").
+const PROJECT_OUTPUT_DIRS = [
+  'analysis', 'studies', 'models', 'services', 'data_models', 'research',
+  'dashboards', 'brainstorm', 'experiments', 'fixes', 'presentations', 'projects',
+];
+const PROJECT_PATH_RE = new RegExp(`^(${PROJECT_OUTPUT_DIRS.join('|')})/([^/]+)/`);
+
+function detectProjectFromRelPath(relPath) {
+  if (!relPath || relPath.startsWith('..')) return null;
+  const norm = relPath.replace(/\\/g, '/');
+  const m = norm.match(PROJECT_PATH_RE);
+  if (!m) return null;
+  return { projectDir: `${m[1]}/${m[2]}`, projectName: m[2] };
+}
+
+// Read the gate state file and reduce it to a (phase, gateOpenAtEnd) snapshot
+// suitable for stamping into the session index. We treat the "current phase"
+// as: the open gate's phase if one is open, otherwise the most recent closed
+// gate's phase. Returns nulls if there's no gate activity to report.
+function readGateSnapshot(shardsDir) {
+  const file = path.join(shardsDir, 'gates', 'state.json');
+  try {
+    const raw = fs.readFileSync(file, 'utf8');
+    const state = JSON.parse(raw);
+    if (state && state.open) {
+      return { phase: typeof state.phase === 'number' ? state.phase : null, gateOpenAtEnd: state.id || null };
+    }
+    const history = Array.isArray(state && state.history) ? state.history : [];
+    for (let i = history.length - 1; i >= 0; i--) {
+      const h = history[i];
+      if (h && typeof h.phase === 'number') return { phase: h.phase, gateOpenAtEnd: null };
+    }
+    return { phase: null, gateOpenAtEnd: null };
+  } catch {
+    return { phase: null, gateOpenAtEnd: null };
+  }
+}
 
 class SessionStore {
   constructor({ sessionId, agent }) {
@@ -76,6 +134,8 @@ class SessionStore {
     this.chatSession = null;
     this.createdAt = new Date();
     this.lastActivityAt = new Date();
+    this.projectName = null;
+    this.projectDir = null;
 
     // Attempt to load existing session data from disk
     try {
@@ -86,6 +146,8 @@ class SessionStore {
         if (data.title) this.title = data.title;
         if (data.createdAt) this.createdAt = new Date(data.createdAt);
         if (data.lastActivityAt) this.lastActivityAt = new Date(data.lastActivityAt);
+        if (data.projectName) this.projectName = data.projectName;
+        if (data.projectDir) this.projectDir = data.projectDir;
       }
     } catch (e) {
       // Ignore errors loading session data — starts fresh
@@ -94,6 +156,16 @@ class SessionStore {
 
   touch() {
     this.lastActivityAt = new Date();
+  }
+
+  // Returns true if projectName/projectDir changed (caller should broadcast).
+  setProjectFromRelPath(relPath) {
+    if (this.projectName) return false;
+    const detected = detectProjectFromRelPath(relPath);
+    if (!detected) return false;
+    this.projectName = detected.projectName;
+    this.projectDir = detected.projectDir;
+    return true;
   }
 
   save() {
@@ -107,6 +179,8 @@ class SessionStore {
         transcript: this.transcript,
         createdAt: this.createdAt,
         lastActivityAt: this.lastActivityAt,
+        projectName: this.projectName,
+        projectDir: this.projectDir,
       }, null, 2));
     } catch (err) {
       log(`Error saving session ${this.sessionId}: ${err.message}`);
@@ -127,11 +201,22 @@ function getSession(sessionId) {
 const permissionRequests = new Map();
 // id → { id, tool, command, sessionId, decision: null|'allow'|'deny', createdAt }
 
+// Pending entries used to be retained indefinitely "in case the user comes
+// back to decide" — but a permission card whose browser session ended (closed
+// tab, refresh, abandoned chat) is never going to be decided. The relay
+// polling that entry will sit in `pending` for its full poll timeout
+// (SHARDS_UI_PERMISSION_TIMEOUT_MS, default 10 min) and the entry itself never
+// frees. Cleanup now removes pending entries that have exceeded the relay's
+// poll timeout — by then the relay has already fallen through to CC's native
+// prompt, so the entry serves no purpose. Decided entries still age out at
+// the 5-minute mark.
+const DECIDED_TTL_MS = 5 * 60 * 1000;
+const PENDING_TTL_MS = 11 * 60 * 1000;  // relay default + 1min buffer
 setInterval(() => {
-  const cutoff = Date.now() - 5 * 60 * 1000;
+  const now = Date.now();
   for (const [id, req] of permissionRequests) {
-    // Only clean up decided requests — never delete pending ones the user hasn't responded to
-    if (req.decision !== null && req.createdAt < cutoff) permissionRequests.delete(id);
+    const ttl = req.decision === null ? PENDING_TTL_MS : DECIDED_TTL_MS;
+    if (now - req.createdAt > ttl) permissionRequests.delete(id);
   }
 }, 60_000);
 
@@ -298,10 +383,35 @@ let files = {};         // relPath -> content
 let panelSources = {};  // panelId -> { filePath, panel, title, agent, lastContent }
 let panelWatchers = {}; // panelId -> fs.FSWatcher
 
+// Dedicated SSE channel for gate-state / gate-block / auto-state events.
+// Kept separate from the main `clients` channel so subscribers that only care
+// about gate transitions don't pay the cost of decoding every tool / file
+// broadcast. Each entry: { res } — no per-session filtering since gates are
+// project-scoped.
+let gateClients = [];
+
+// ─── Gate-mode env vars ─────────────────────────────────────────────────────
+// Captured at server startup. The Claude Code hook processes spawn in their
+// own env (which may or may not inherit these), but the UI server can only
+// honestly report what *it* sees. If the user disables enforcement only in
+// the CC side without also exporting it to the UI server, the banner won't
+// fire — documented in the /gate-mode handler below.
+const GATE_ENFORCE = process.env.SHARDS_GATE_ENFORCE !== '0';
+const CHECKPOINT_ENFORCE = process.env.SHARDS_CHECKPOINT_ENFORCE !== '0';
+const AUTO_VERIFY = process.env.SHARDS_AUTO_VERIFY !== '0';
+
 // ─── Broadcast ───────────────────────────────────────────────────────────────
 
 function broadcast(event) {
-  const data = `data: ${JSON.stringify(event)}\n\n`;
+  let data;
+  try {
+    data = `data: ${JSON.stringify(event)}\n\n`;
+  } catch (err) {
+    const type = event && event.type;
+    const path = event && event.path;
+    console.error(`broadcast: failed to serialize event type=${type} path=${path}: ${err.message}`);
+    return;
+  }
   clients = clients.filter((client) => {
     // If client subscribed to a specific session, only send matching events
     if (client.sessionId && event.sessionId && client.sessionId !== event.sessionId) {
@@ -314,6 +424,167 @@ function broadcast(event) {
       return false;
     }
   });
+}
+
+// ─── Gate SSE broadcast ──────────────────────────────────────────────────────
+//
+// Broadcasts gate-related events (gate-state changes, gate-block reasons,
+// auto-state changes) on a dedicated SSE channel. Replaces the 2s polling the
+// browser previously did on /gate-state — see Bug H2 in the integration audit.
+
+function broadcastGate(event) {
+  let data;
+  try {
+    data = `data: ${JSON.stringify(event)}\n\n`;
+  } catch (err) {
+    log(`broadcastGate: failed to serialize event type=${event && event.type}: ${err.message}`);
+    return;
+  }
+  gateClients = gateClients.filter((client) => {
+    try { client.res.write(data); return true; } catch { return false; }
+  });
+}
+
+// ─── Gate / auto / violations watchers ──────────────────────────────────────
+//
+// fs.watch on the JSON state files (plus violations log). We debounce by 50ms
+// to coalesce mid-write events (atomic-write replaces emit two change events
+// in quick succession on most platforms) and ignore JSON.parse errors so the
+// watcher survives a half-written file — the next change event will retry.
+
+const GATE_STATE_FILE = () => path.join(SHARDS_DIR, 'gates', 'state.json');
+const AUTO_STATE_FILE = () => path.join(SHARDS_DIR, 'auto', 'state.json');
+const VIOLATIONS_FILE = () => path.join(SHARDS_DIR, 'gates', 'violations.jsonl');
+
+let _gateWatchers = [];
+let _gateStateDebounce = null;
+let _autoStateDebounce = null;
+let _violationsDebounce = null;
+let _violationsOffset = 0;
+
+function readGateStateFile() {
+  try {
+    const raw = fs.readFileSync(GATE_STATE_FILE(), 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function readAutoStateFile() {
+  try {
+    const raw = fs.readFileSync(AUTO_STATE_FILE(), 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+// Pull only the bytes appended since we last read (so we don't replay every
+// historical violation each time the file changes).
+function readNewViolations() {
+  const file = VIOLATIONS_FILE();
+  let stat;
+  try { stat = fs.statSync(file); } catch { return []; }
+  if (stat.size < _violationsOffset) {
+    // File was truncated/rotated — reset offset and treat from start.
+    _violationsOffset = 0;
+  }
+  if (stat.size === _violationsOffset) return [];
+  let chunk;
+  try {
+    const fd = fs.openSync(file, 'r');
+    const length = stat.size - _violationsOffset;
+    const buf = Buffer.alloc(length);
+    fs.readSync(fd, buf, 0, length, _violationsOffset);
+    fs.closeSync(fd);
+    chunk = buf.toString('utf8');
+  } catch {
+    return [];
+  }
+  _violationsOffset = stat.size;
+  const out = [];
+  for (const line of chunk.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try { out.push(JSON.parse(trimmed)); } catch { /* skip half-written line; next event retries */ }
+  }
+  return out;
+}
+
+function emitGateState() {
+  const state = readGateStateFile() || { open: false, history: [] };
+  broadcastGate({ type: 'gate-state', state });
+}
+
+function emitAutoState() {
+  const state = readAutoStateFile();
+  if (state) broadcastGate({ type: 'auto-state', state });
+}
+
+function emitViolations() {
+  const entries = readNewViolations();
+  for (const v of entries) {
+    broadcastGate({
+      type: 'gate-block',
+      reason: v.reason || v.type || 'Gate violation',
+      kind: v.type || null,
+      gateId: v.gate_id || null,
+      agent: v.agent || null,
+      phase: v.phase || null,
+      sessionId: v.session_id || null,
+      ts: v.ts || null,
+    });
+  }
+}
+
+function startGateWatchers() {
+  // Initialise violations offset to current size so we don't replay history.
+  try {
+    const stat = fs.statSync(VIOLATIONS_FILE());
+    _violationsOffset = stat.size;
+  } catch {
+    _violationsOffset = 0;
+  }
+
+  const setupWatch = (file, kind) => {
+    try {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+    } catch {}
+    try {
+      const watcher = fs.watch(path.dirname(file), (event, filename) => {
+        if (!filename) return;
+        if (path.basename(file) !== filename) return;
+        if (kind === 'gate') {
+          if (_gateStateDebounce) clearTimeout(_gateStateDebounce);
+          _gateStateDebounce = setTimeout(emitGateState, 50);
+        } else if (kind === 'auto') {
+          if (_autoStateDebounce) clearTimeout(_autoStateDebounce);
+          _autoStateDebounce = setTimeout(emitAutoState, 50);
+        } else if (kind === 'violations') {
+          if (_violationsDebounce) clearTimeout(_violationsDebounce);
+          _violationsDebounce = setTimeout(emitViolations, 50);
+        }
+      });
+      watcher.on('error', (err) => {
+        log(`gate watcher (${kind}) error: ${err.message}`);
+      });
+      _gateWatchers.push(watcher);
+    } catch (err) {
+      log(`gate watcher (${kind}) setup failed: ${err.message}`);
+    }
+  };
+
+  setupWatch(GATE_STATE_FILE(), 'gate');
+  setupWatch(AUTO_STATE_FILE(), 'auto');
+  setupWatch(VIOLATIONS_FILE(), 'violations');
+}
+
+function stopGateWatchers() {
+  for (const w of _gateWatchers) {
+    try { w.close(); } catch {}
+  }
+  _gateWatchers = [];
 }
 
 function stopPanelWatcher(panelId) {
@@ -348,6 +619,10 @@ function startPanelWatcher(panelId, info) {
           }
         }, 100);
       }
+    });
+    watcher.on('error', (err) => {
+      log(`Panel watcher error for ${info.filePath}: ${err.message}`);
+      stopPanelWatcher(panelId);
     });
     panelWatchers[panelId] = watcher;
   } catch (err) {
@@ -439,17 +714,61 @@ function parseDelimited(text, delimiter) {
   return { columns, data };
 }
 
-function scanDir(dir, result) {
+// Cap recursion depth for the 3s output-dir poll. 12 is more permissive than
+// walkSearch's 8 (the user's own output dirs can nest deeper than ad-hoc search
+// scope) but still bounded. Symlinks are skipped outright via lstat to prevent
+// a symlink cycle under analysis/ from re-running pollFiles indefinitely.
+const SCAN_MAX_DEPTH = 12;
+
+function scanDir(dir, result, depth) {
+  if (depth === undefined) depth = 0;
+  if (depth > SCAN_MAX_DEPTH) return;
   try {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        scanDir(fullPath, result);
-      } else {
-        const relPath = path.relative(PROJECT_DIR, fullPath);
-        const content = readFileSafe(fullPath);
-        if (content !== null) result[relPath] = content;
+
+      // Skip symlinks (both file and dir) — prevents infinite recursion via
+      // symlink loops on the 3s poll. Dirent.isSymbolicLink() reflects the
+      // type the OS reported in readdir; lstat is the authoritative check in
+      // case the dirent type wasn't populated by the filesystem.
+      if (entry.isSymbolicLink()) continue;
+      try {
+        if (fs.lstatSync(fullPath).isSymbolicLink()) continue;
+      } catch {
+        continue;
       }
+
+      if (entry.isDirectory()) {
+        scanDir(fullPath, result, depth + 1);
+        continue;
+      }
+
+      const ext = path.extname(entry.name).toLowerCase();
+      if (POLL_SKIP_EXT.has(ext)) {
+        if (!pollSkipWarned.has(fullPath)) {
+          pollSkipWarned.add(fullPath);
+          console.warn(`pollFiles: skipping ${fullPath} (extension ${ext} in skip list)`);
+        }
+        continue;
+      }
+
+      let size;
+      try {
+        size = fs.statSync(fullPath).size;
+      } catch {
+        continue;
+      }
+      if (size > POLL_MAX_BYTES) {
+        if (!pollSkipWarned.has(fullPath)) {
+          pollSkipWarned.add(fullPath);
+          console.warn(`pollFiles: skipping ${fullPath} (${size} bytes > ${POLL_MAX_BYTES})`);
+        }
+        continue;
+      }
+
+      const relPath = path.relative(PROJECT_DIR, fullPath);
+      const content = readFileSafe(fullPath);
+      if (content !== null) result[relPath] = content;
     }
   } catch {}
 }
@@ -503,16 +822,36 @@ function handleEvent(body) {
     return { ack: false };
   }
 
-  const { eventType, seq, ...data } = payload;
+  const { eventType, seq, sessionId: eventSessionId, ...data } = payload;
 
-  // Find the active session for relay events (use the most recently active session)
+  // Prefer the session id carried by the relay event itself (forwarded from
+  // the Claude Code hook's stdin payload — same value as the SessionStore
+  // key for UI-spawned sessions, since we pass --session-id to the CLI). If
+  // a matching store exists, use it directly. This is the fix for two
+  // concurrent sessions seeing each other's events misattributed to "most
+  // recently active session."
+  //
+  // Fall back to the previous "most recently active" heuristic when:
+  //   - the event lacks a sessionId (legacy relay processes before this fix
+  //     ship, or queued events written under the old shape)
+  //   - the event references a session not tracked by this server (claude run
+  //     outside the UI in the same project — hooks still fire)
   let activeStore = null;
   let activeSessionId = null;
-  for (const [id, store] of sessions) {
-    if (store.chatSession && store.chatSession.isRunning) {
-      if (!activeStore || store.lastActivityAt > activeStore.lastActivityAt) {
-        activeStore = store;
-        activeSessionId = id;
+  if (eventSessionId) {
+    const store = sessions.get(eventSessionId);
+    if (store) {
+      activeStore = store;
+      activeSessionId = eventSessionId;
+    }
+  }
+  if (!activeStore) {
+    for (const [id, store] of sessions) {
+      if (store.chatSession && store.chatSession.isRunning) {
+        if (!activeStore || store.lastActivityAt > activeStore.lastActivityAt) {
+          activeStore = store;
+          activeSessionId = id;
+        }
       }
     }
   }
@@ -540,7 +879,26 @@ function handleEvent(body) {
       break;
     case 'file-touched': {
       const relPath = path.relative(PROJECT_DIR, data.filePath);
-      if (activeStore) activeStore.sessionFiles.add(relPath);
+      if (activeStore) {
+        activeStore.sessionFiles.add(relPath);
+        if (activeStore.setProjectFromRelPath(relPath)) {
+          activeStore.save();
+          try {
+            sessionIndex.updateActivity(SESSIONS_DIR, activeSessionId, {
+              projectName: activeStore.projectName,
+              projectDir: activeStore.projectDir,
+            });
+          } catch (err) {
+            log(`session-index updateActivity (file-touched) failed: ${err.message}`);
+          }
+          broadcast({
+            type: 'session-context',
+            sessionId: activeSessionId,
+            projectName: activeStore.projectName,
+            projectDir: activeStore.projectDir,
+          });
+        }
+      }
       broadcast({ type: 'file-touched', path: relPath, sessionId: activeSessionId });
       break;
     }
@@ -695,6 +1053,34 @@ function handleChatExit({ code, sessionId }) {
     // Remove session metadata file
     try { fs.unlinkSync(path.join(SESSIONS_DIR, `${sessionId}.json`)); } catch {}
   }
+
+  // Abort any pending permission requests tied to this session. Without this,
+  // a relay process started by the now-dead chat session keeps polling for a
+  // decision that will never come (the browser card disappeared with the
+  // session). Marking these as denied lets the relay's next poll resolve
+  // immediately and fall through to CC's native permission flow.
+  for (const [id, req] of permissionRequests) {
+    if (req.sessionId === sessionId && req.decision === null) {
+      req.decision = 'deny';
+      req.createdAt = Date.now();  // restart TTL so the entry isn't immediately collected
+      broadcast({ type: 'permission-resolved', id, decision: 'deny', reason: 'session-ended' });
+    }
+  }
+  // Mark ended in the index if not already (covers natural CLI exit, crashes,
+  // and the path where the user closes the browser without hitting End Chat).
+  try {
+    const entry = sessionIndex.getEntry(SESSIONS_DIR, sessionId);
+    if (entry && entry.status === 'active') {
+      const snap = readGateSnapshot(SHARDS_DIR);
+      sessionIndex.markEnded(SESSIONS_DIR, sessionId, {
+        gateOpenAtEnd: snap.gateOpenAtEnd,
+        reason: code === 0 ? 'process_exit' : 'process_crash',
+      });
+      if (typeof snap.phase === 'number') sessionIndex.updatePhase(SESSIONS_DIR, sessionId, snap.phase);
+    }
+  } catch (err) {
+    log(`session-index markEnded (handleChatExit) failed: ${err.message}`);
+  }
   broadcast({ type: 'chat-ended', sessionId, code: code || 0 });
 }
 
@@ -748,6 +1134,16 @@ function startNewChatSession(agent, options = {}) {
 
   const store = new SessionStore({ sessionId, agent });
   sessions.set(sessionId, store);
+
+  try {
+    sessionIndex.appendSession(SESSIONS_DIR, {
+      sessionId,
+      agent,
+      resumedFrom: resumeSessionId || null,
+    });
+  } catch (err) {
+    log(`session-index appendSession failed: ${err.message}`);
+  }
 
   const chatSess = new ChatSession({
     agent,
@@ -1164,9 +1560,37 @@ function createHandler() {
           createdAt: store.createdAt.toISOString(),
           lastActivityAt: store.lastActivityAt.toISOString(),
           messageCount: store.transcript.length,
+          projectName: store.projectName,
+          projectDir: store.projectDir,
         });
       }
       jsonResponse(res, cors, 200, list);
+      return;
+    }
+
+    // ─── Disk-backed session index (includes ended/abandoned) ───
+    if (req.method === 'GET' && parsedUrl.pathname === '/sessions/index') {
+      const project = parsedUrl.searchParams.get('project') || undefined;
+      const agent = parsedUrl.searchParams.get('agent') || undefined;
+      const status = parsedUrl.searchParams.get('status') || undefined;
+      let entries;
+      try {
+        entries = sessionIndex.listSessions(SESSIONS_DIR, { project, agent, status });
+      } catch (err) {
+        jsonResponse(res, cors, 500, { error: err.message });
+        return;
+      }
+      // Annotate each entry with `active: true` if there's a live in-memory
+      // session for it. The disk record may be stale; the in-memory map is
+      // authoritative for "is the process actually running right now."
+      const annotated = entries.map((e) => {
+        const live = sessions.get(e.sessionId);
+        return {
+          ...e,
+          active: !!(live && live.chatSession && live.chatSession.isRunning),
+        };
+      });
+      jsonResponse(res, cors, 200, { version: sessionIndex.INDEX_VERSION, sessions: annotated });
       return;
     }
 
@@ -1523,11 +1947,11 @@ function createHandler() {
         // Try staged diff first, then unstaged
         let diff = '';
         try {
-          diff = execSync(`git diff -- ${JSON.stringify(gitPath)}`, { cwd: repoDir, encoding: 'utf8', timeout: 10000 });
+          diff = execFileSync('git', ['diff', '--', gitPath], { cwd: repoDir, encoding: 'utf8', timeout: 10000 });
         } catch {}
         if (!diff) {
           try {
-            diff = execSync(`git diff --cached -- ${JSON.stringify(gitPath)}`, { cwd: repoDir, encoding: 'utf8', timeout: 10000 });
+            diff = execFileSync('git', ['diff', '--cached', '--', gitPath], { cwd: repoDir, encoding: 'utf8', timeout: 10000 });
           } catch {}
         }
         // For untracked files, show full content as "added"
@@ -1542,7 +1966,7 @@ function createHandler() {
         // Get original (HEAD) content for side-by-side diff
         let original = '';
         try {
-          original = execSync(`git show HEAD:${JSON.stringify(gitPath)}`, { cwd: repoDir, encoding: 'utf8', timeout: 5000 });
+          original = execFileSync('git', ['show', `HEAD:${gitPath}`], { cwd: repoDir, encoding: 'utf8', timeout: 5000 });
         } catch {}
         // Get current working copy
         let modified = '';
@@ -1590,6 +2014,7 @@ function createHandler() {
     if (req.method === 'GET' && parsedUrl.pathname === '/git/pr-comments') {
       const prNumber = parsedUrl.searchParams.get('pr');
       if (!prNumber) { jsonResponse(res, cors, 400, { error: 'Missing pr parameter' }); return; }
+      if (!/^\d+$/.test(prNumber)) { jsonResponse(res, cors, 400, { error: 'Invalid pr parameter' }); return; }
       const { repoDir: prCommentsDir } = getRepoDir(parsedUrl);
       try {
         // Resolve owner/repo from gh CLI
@@ -1834,6 +2259,47 @@ function createHandler() {
       return;
     }
 
+    // GET /gate-state-stream — SSE channel pushing gate-state / gate-block /
+    // auto-state events on file change. Browser uses this in place of the
+    // legacy 2s poll (Bug H2 + H5 in the integration audit). On connect we
+    // immediately send the current gate-state so the client doesn't need a
+    // second /gate-state request to seed initial state.
+    if (req.method === 'GET' && parsedUrl.pathname === '/gate-state-stream') {
+      res.writeHead(200, {
+        ...cors,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      });
+      res.write('data: {"type":"connected"}\n\n');
+      // Seed initial gate state for this client only — broadcast helpers
+      // append to all subscribers, but a fresh subscriber needs the snapshot
+      // before its first change event arrives.
+      const initial = readGateStateFile() || { open: false, history: [] };
+      try { res.write(`data: ${JSON.stringify({ type: 'gate-state', state: initial })}\n\n`); } catch {}
+      gateClients.push({ res });
+      req.on('close', () => {
+        gateClients = gateClients.filter((c) => c.res !== res);
+      });
+      return;
+    }
+
+    // GET /gate-mode — returns enforcement flags as the UI server sees them.
+    // The Claude Code hook process runs in a different env; if the user only
+    // exports SHARDS_GATE_ENFORCE=0 to CC without also exporting it to the UI
+    // server, this endpoint will still report enforcement on. The browser
+    // surfaces a banner reflecting whatever the server reports — accurate for
+    // the common case where both processes are launched from the same shell.
+    if (req.method === 'GET' && parsedUrl.pathname === '/gate-mode') {
+      jsonResponse(res, cors, 200, {
+        enforce: GATE_ENFORCE,
+        checkpointEnforce: CHECKPOINT_ENFORCE,
+        autoVerify: AUTO_VERIFY,
+      });
+      return;
+    }
+
     // ─── Permissions management endpoints ──────────────────────────
 
     // GET /permissions — return current allow/deny lists + available presets
@@ -1922,6 +2388,8 @@ function createHandler() {
             title: store.title,
             transcript: store.transcript,
             startedAt: store.createdAt.toISOString(),
+            projectName: store.projectName,
+            projectDir: store.projectDir,
           });
         }
       }
@@ -1939,7 +2407,7 @@ function createHandler() {
         return;
       }
 
-      const { agent, permissionMode, sessionId: callerSessionId, initialMessage } = params;
+      const { agent, permissionMode, sessionId: callerSessionId, initialMessage, resumeSessionId } = params;
       if (!agent) {
         jsonResponse(res, cors, 400, { error: 'Missing agent parameter' });
         return;
@@ -1951,8 +2419,26 @@ function createHandler() {
         return;
       }
 
-      log(`/chat/start requested for agent="${agent}"`);
-      const result = startNewChatSession(agent, { permissionMode, callerSessionId, initialMessage });
+      // Validate resume target. We allow resuming only sessions that have
+      // ended or been abandoned — resuming a session whose process is still
+      // believed to be live would race with the existing CLI on --session-id.
+      if (resumeSessionId) {
+        const entry = sessionIndex.getEntry(SESSIONS_DIR, resumeSessionId);
+        if (!entry) {
+          jsonResponse(res, cors, 404, { error: `Resume target "${resumeSessionId}" not found in session index` });
+          return;
+        }
+        if (entry.status === 'active') {
+          const live = sessions.get(resumeSessionId);
+          if (live && live.chatSession && live.chatSession.isRunning) {
+            jsonResponse(res, cors, 409, { error: 'Resume target is still active. End it first.' });
+            return;
+          }
+        }
+      }
+
+      log(`/chat/start requested for agent="${agent}"${resumeSessionId ? ` resume="${resumeSessionId}"` : ''}`);
+      const result = startNewChatSession(agent, { permissionMode, callerSessionId, initialMessage, resumeSessionId });
       jsonResponse(res, cors, 200, result);
       return;
     }
@@ -1998,10 +2484,45 @@ function createHandler() {
         return;
       }
 
-      const { message, sessionId: targetSessionId } = params;
-      if (!message) {
+      const { message, sessionId: targetSessionId, attachments: rawAttachments } = params;
+      const attachments = Array.isArray(rawAttachments) ? rawAttachments : [];
+      if (!message && attachments.length === 0) {
         jsonResponse(res, cors, 400, { error: 'Missing message parameter' });
         return;
+      }
+
+      // ─── Attachment validation ──────────────────────────────
+      // Mirrors the client-side checks in chat.js so we don't ship malformed
+      // image blocks to the Claude CLI. Anthropic's Messages API rejects
+      // unsupported MIME types and oversize payloads; better to fail fast here
+      // with a clear error than to surface an opaque CLI error mid-turn.
+      const ATTACH_MAX_COUNT = 5;
+      const ATTACH_MAX_BYTES = 5 * 1024 * 1024;
+      const ATTACH_ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+      if (attachments.length > ATTACH_MAX_COUNT) {
+        jsonResponse(res, cors, 400, { error: `Too many attachments (max ${ATTACH_MAX_COUNT}).` });
+        return;
+      }
+      for (const a of attachments) {
+        if (!a || typeof a !== 'object') {
+          jsonResponse(res, cors, 400, { error: 'Invalid attachment entry' });
+          return;
+        }
+        if (!ATTACH_ALLOWED_MIME.has(a.mediaType)) {
+          jsonResponse(res, cors, 400, { error: `Unsupported attachment mediaType: ${a.mediaType}` });
+          return;
+        }
+        if (typeof a.dataBase64 !== 'string' || a.dataBase64.length === 0) {
+          jsonResponse(res, cors, 400, { error: 'Attachment missing dataBase64' });
+          return;
+        }
+        // Decoded size = ceil(base64_len * 3 / 4) - padding
+        const padding = a.dataBase64.endsWith('==') ? 2 : a.dataBase64.endsWith('=') ? 1 : 0;
+        const decodedBytes = Math.floor(a.dataBase64.length * 3 / 4) - padding;
+        if (decodedBytes > ATTACH_MAX_BYTES) {
+          jsonResponse(res, cors, 400, { error: 'Attachment exceeds 5MB limit' });
+          return;
+        }
       }
 
       // ─── Slash command interception ─────────────────────────
@@ -2128,11 +2649,35 @@ function createHandler() {
       }
 
       try {
-        store.chatSession.send(message);
+        store.chatSession.send(message, attachments);
         const agent = store.agent;
-        store.transcript.push({ role: 'user', content: message, agent, source: 'chat' });
+        // Transcript-form attachments mirror the wire format. We keep
+        // dataBase64 so the chat history can re-render thumbnails on reload;
+        // the alternative (writing files to .shards/sessions/<id>/attachments/)
+        // is worth doing only if transcript sizes start to bite.
+        const transcriptAttachments = attachments.map((a) => ({
+          mediaType: a.mediaType,
+          dataBase64: a.dataBase64,
+          name: a.name,
+          sizeBytes: a.sizeBytes,
+        }));
+        const transcriptEntry = { role: 'user', content: message, agent, source: 'chat' };
+        if (transcriptAttachments.length > 0) transcriptEntry.attachments = transcriptAttachments;
+        store.transcript.push(transcriptEntry);
         store.save();
-        broadcast({ type: 'chat-user-message', content: message, agent, sessionId: store.sessionId });
+        try {
+          sessionIndex.updateActivity(SESSIONS_DIR, store.sessionId, {
+            lastUserPrompt: message,
+            messageCount: store.transcript.length,
+            projectName: store.projectName,
+            projectDir: store.projectDir,
+          });
+        } catch (err) {
+          log(`session-index updateActivity failed: ${err.message}`);
+        }
+        const broadcastMsg = { type: 'chat-user-message', content: message, agent, sessionId: store.sessionId };
+        if (transcriptAttachments.length > 0) broadcastMsg.attachments = transcriptAttachments;
+        broadcast(broadcastMsg);
         jsonResponse(res, cors, 200, { ok: true });
       } catch (err) {
         jsonResponse(res, cors, 500, { error: err.message });
@@ -2163,6 +2708,44 @@ function createHandler() {
       }
 
       jsonResponse(res, cors, 200, { ok: true });
+      return;
+    }
+
+    if (req.method === 'POST' && parsedUrl.pathname === '/chat/end') {
+      const body = await readBody(req);
+      let params = {};
+      try { params = JSON.parse(body); } catch {}
+      const { sessionId: endSessionId } = params;
+      if (!endSessionId) {
+        jsonResponse(res, cors, 400, { error: 'Missing sessionId' });
+        return;
+      }
+
+      const store = getSession(endSessionId);
+      const snap = readGateSnapshot(SHARDS_DIR);
+
+      // Stop the CLI if still running. We intentionally do not mutate
+      // .shards/gates/state.json — gates are project-scoped state and may
+      // still be legitimately open for a future resume of this same project.
+      if (store && store.chatSession && store.chatSession.isRunning) {
+        try { store.chatSession.stop(); } catch (err) { log(`/chat/end stop failed: ${err.message}`); }
+      }
+
+      let entry = null;
+      try {
+        entry = sessionIndex.markEnded(SESSIONS_DIR, endSessionId, {
+          gateOpenAtEnd: snap.gateOpenAtEnd,
+          reason: 'user_ended',
+        });
+        if (typeof snap.phase === 'number') {
+          sessionIndex.updatePhase(SESSIONS_DIR, endSessionId, snap.phase);
+        }
+      } catch (err) {
+        log(`session-index markEnded failed: ${err.message}`);
+      }
+
+      broadcast({ type: 'chat-ended', sessionId: endSessionId, code: 0, ended: true });
+      jsonResponse(res, cors, 200, { ok: true, entry });
       return;
     }
 
@@ -2263,8 +2846,22 @@ function startServer(portIndex, resolve, reject) {
     // P4: Reconnect to orphaned sessions or clean up
     reconnectOrCleanup(SESSIONS_DIR, sessions, SessionStore, handleChatEvent, handleChatExit, PROJECT_DIR);
 
+    // Sweep stale active sessions in INDEX.json. Anything reconnected above
+    // is back in the in-memory map; anything that wasn't and is past the
+    // abandonment window gets reclassified so the picker can show it as
+    // such instead of a phantom "active" row.
+    try {
+      const swept = sessionIndex.sweepAbandoned(SESSIONS_DIR);
+      if (swept > 0) log(`session-index: reclassified ${swept} stale active sessions as abandoned`);
+    } catch (err) {
+      log(`session-index sweep failed: ${err.message}`);
+    }
+
     // Initial file scan then poll
     pollFiles();
+
+    // Start gate / auto / violations watchers (replaces browser-side 2s poll)
+    startGateWatchers();
 
     // Build symbol index asynchronously (reference cache is built lazily on hover)
     setTimeout(() => {
@@ -2295,6 +2892,7 @@ function startServer(portIndex, resolve, reject) {
 // Clean up on exit — don't kill detached chat processes, they survive restarts
 function cleanup() {
   symbolIndex.stopWatcher();
+  stopGateWatchers();
   try { fs.unlinkSync(PORT_FILE); } catch {}
   try { fs.unlinkSync(PID_FILE); } catch {}
 }

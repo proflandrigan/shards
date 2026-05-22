@@ -50,6 +50,9 @@ Syn will greet you, figure out what you need, and summon the right shard.
 | **Syn** | `/shards` | Friendly, structured | Triage, delegation, final review |
 | **Syn (Brainstorm)** | `/brainstorm` | Friendly, structured | Multi-agent ideation, exploration |
 | **Syn (Knowledge)** | `/knowledge` | Friendly, structured | Seed, browse, and manage the Knowledge Ledger |
+| **Syn (PR Review)** | `/review-pr` | Friendly, structured | Walk through GitHub PR review comments, propose and apply fixes |
+| **Syn (Notebook Walkthrough)** | `/notebook-walkthrough` | Friendly, structured | Live cell-by-cell walkthrough of a Jupyter notebook |
+| **Syn (Guide)** | `/shards-guide` | — | Open the Developer Guide in the browser UI |
 | **Data Analyst** | `/data-analyst` | Helpful | Adhoc queries, quick analyses |
 | **Data Scientist** | `/data-scientist` | Condescending | EDA, feature engineering, modeling |
 | **ML Engineer** | `/ml-engineer` | Intense | Recommenders, ranking, production ML systems |
@@ -88,17 +91,24 @@ your-project/
 │   │   ├── researcher.md
 │   │   ├── academic.md
 │   │   └── specific_instructions/  # Deferred phase files per agent
-│   └── commands/               # Slash commands (18 total)
+│   └── commands/               # Slash commands (21 total)
 │       ├── shards.md
 │       ├── brainstorm.md
 │       ├── knowledge.md
 │       ├── shards-ui.md
+│       ├── shards-guide.md
+│       ├── notebook-walkthrough.md
+│       ├── review-pr.md
 │       ├── data-analyst.md
 │       └── ... (one per agent)
 ├── .shards/
 │   ├── ui/                     # Shards web UI (local server + browser client)
 │   │   ├── js/                 # Browser-side ES modules
 │   │   └── css/                # Stylesheets
+│   ├── hooks/
+│   │   └── gate-hook.js        # Stop / PreToolUse / UserPromptSubmit gate enforcer
+│   ├── gates/
+│   │   └── state.json          # Current gate state + full history
 │   └── knowledge/              # Persistent Knowledge Ledger
 │       ├── INDEX.md            # One-line-per-entry index
 │       ├── entities/           # Table quirks, column semantics, grain
@@ -115,6 +125,9 @@ your-project/
 ├── research/                   # Applied ML Scientist novel frameworks
 ├── brainstorm/                 # Syn brainstorm sessions
 ├── fixes/                      # Syn Fixer quick fixes
+├── presentations/              # Syn Slides Mode decks
+├── projects/                   # Syn PM Mode multi-specialist projects
+├── panels/                     # Syn Panel Review reports
 └── CLAUDE.md                   # Updated with Shards docs
 ```
 
@@ -149,6 +162,12 @@ Gates are machine-enforced via `::GATE::` fences and three Claude Code hooks:
 | `Stop` | `.shards/hooks/gate-hook.js stop` | Detects gate fences in the last assistant message; opens `state.json`; blocks if post-fence content violates the gate |
 | `PreToolUse` | `.shards/hooks/gate-hook.js pre-tool-use` | While a gate is open, blocks all tools except `Read`, `Glob`, `Grep` |
 | `UserPromptSubmit` | `.shards/hooks/gate-hook.js user-prompt-submit` | Classifies user prompt as confirm / deny / ambiguous; closes gate on confirm |
+| `Stop` | `.shards/ui/relay.js stop` | UI relay — pushes stop events to the Shards UI |
+| `UserPromptSubmit` | `.shards/ui/relay.js user-prompt` | UI relay — pushes user prompts to the Shards UI |
+| `PreToolUse(Bash)` | `.shards/ui/relay.js pre-tool-use` | UI relay — pushes pre-tool-use events to the Shards UI |
+| `PostToolUse` | `.shards/ui/relay.js post-tool-use` | UI relay — pushes post-tool-use events to the Shards UI |
+
+Hook commands are written using the `$CLAUDE_PROJECT_DIR` placeholder (substituted by Claude Code at hook execution time) so `.claude/settings.json` is portable across developers and machines — no hardcoded absolute paths.
 
 **State file:** `.shards/gates/state.json` — tracks open/closed status, gate id, phase, kind, and full history.
 
@@ -199,20 +218,28 @@ You can type the code to jump to that action. Common modes across agents:
 
 | Code | Mode | Available on | What it does |
 |------|------|-------------|--------------|
-| `[T]` | Triage | All | Scope the request, ask clarifying questions |
-| `[B]` | Build | Specialists | Full phased workflow from triage to execution |
+| `[T]` | Triage | Most specialists | Scope the request, ask clarifying questions |
+| `[B]` | Build | Build specialists | Full phased workflow from triage to execution |
 | `[R]` | Review | All specialists | Evaluate existing work without a full build |
 | `[ADV]` | Advisory | Most specialists | Discuss trade-offs and options without committing |
 | `[U]` | Update | DA, AE, BI | Iterate on an existing analysis or model |
 | `[EX]` | Explain | DA, DS | Walk through a completed analysis retrospectively |
 | `[EX]` | Experiment | ML, AI | Run targeted experiments on an existing model |
 | `[EXP]` | Experiment | DS | Run targeted experiments on an existing study |
+| `[AR]` | Autonomous Research | ML, AI, DS, AMS, DLE | Budget-bounded self-steering research loop |
+| `[NW]` | Notebook Walkthrough | DS, ML, Syn | Live cell-by-cell walkthrough of a Jupyter notebook |
 | `[PL]` | Prompt Lab | AI | Interactive prompt editing, evaluation, versioning via Shards UI |
+| `[CR]` | Critical Review | Researcher, Academic | Adversarial critique pass beyond the default `[R]` review |
+| `[C]` | Create | AMS, DLE | Phased specialist for novel framework / custom DL model |
 | `[F]` | Fix | Syn | Quick fix — Syn handles it directly without specialist handoff |
 | `[S]` | Status | Syn | Check on a current project |
 | `[D]` | Diff | Syn | Compare two projects side by side |
 | `[K]` | Knowledge | Syn | Seed, browse, or manage the Knowledge Ledger |
 | `[B]` | Brainstorm | Syn | Multi-agent ideation session |
+| `[P]` | Project (PM) | Syn | Multi-specialist project orchestration via `project-plan.md` |
+| `[PR]` | Panel Review | Syn | Multi-specialist panel review of any directory |
+| `[SL]` | Slides | Syn | Draft a Google Slides deck via MCP |
+| `[G]` | GitHub PR | Syn | Walk through PR review comments and apply fixes |
 | `[C]` | Clean | BE | Apply structural fixes without changing functionality |
 | `[F]` | FastAPI | BE | Route design, dependency injection, middleware |
 | `[P]` | Pydantic | BE | Model design, validators, schema evolution |
@@ -292,6 +319,56 @@ diverge protocol forks the work into parallel Task branches, each exploring a
 different approach. When branches complete, Syn enters Arbiter mode — reads all
 branch reports, builds a side-by-side leaderboard, and returns an advisory
 recommendation. You make the final call on which branch to promote.
+
+### Autonomous Research
+
+The ML Engineer, AI Engineer, Data Scientist, Applied ML Scientist, and Deep
+Learning Engineer support an `[AR]` Autonomous Research mode: a budget-bounded
+self-steering loop. The agent generates hypotheses, runs experiments, and
+auto-keeps or auto-reverts based on metric movement, all against a steering
+document you can edit mid-loop. Tier 1 agents (ML/AI/DS) render AR runs in the
+Shards UI experiment dashboard with auto-decision colour coding, cost strip,
+and a convergence badge.
+
+### Notebook Walkthrough
+
+Type `[NW]` on the Data Scientist, ML Engineer, or Syn (or run
+`/notebook-walkthrough`) to step through a Jupyter notebook cell by cell. The
+agent executes each cell via a persistent kernel under `.shards/notebooks/`,
+explains what happened, answers questions, and can edit / insert / delete cells
+in place. Interactive only — no phases, no gates. Requires
+`pip install jupyter_client ipykernel`.
+
+### PM Mode
+
+Type `[P]` at Syn's menu to enter Project Manager mode. Syn writes a
+`project-plan.md` to `projects/<name>/` and orchestrates a multi-specialist
+project, delegating each phase to the right specialist. Each specialist still
+produces its own outputs in its own directory; the project plan tracks the
+overall arc.
+
+### Panel Review
+
+Type `[PR]` at Syn's menu for a multi-specialist panel review of any
+directory. Reviewer selection is driven by the cross-product of file types
+found and content tags you declare (not by directory prefix). Syn coalesces
+findings into a single prioritized `panel-report.md` and produces a
+`panel-sequencing-plan.md` that groups fixes so conflicting changes serialize
+and independent ones parallelize. Syn never edits target files; reviewers
+apply fixes via service-mode Tasks.
+
+### Slides Mode
+
+Type `[SL]` at Syn's menu to draft a Google Slides deck via MCP. Syn polls
+specialists in parallel at the outline pre-build and post-build fidelity
+checkpoints. Output lives in `presentations/<deck_slug>/`. Requires a
+user-level Google Slides MCP server.
+
+### GitHub PR Review
+
+Type `[G]` at Syn's menu (or run `/review-pr`) to walk through GitHub PR
+review comments interactively. Syn reads each comment, proposes a change, and
+applies it on your approval.
 
 ### Shards UI
 
@@ -379,6 +456,10 @@ Additionally:
 | Analytics Engineer | `data_models/<name>/` | `project-specs.md` |
 | BI Engineer | `dashboards/<name>/` | `project-specs.md` |
 | Syn (Fixer) | `fixes/<name>/` | `project-specs.md` |
+| Syn (PM Mode) | `projects/<name>/` | `project-plan.md` (specialists still write into their own dirs) |
+| Syn (Slides) | `presentations/<deck_slug>/` | `presentation-spec.md`, deck artifacts |
+| Syn (Panel Review) | `panels/<dirname>/` | `panel-report.md`, `panel-sequencing-plan.md` |
+| Syn (PR Review) | — (operates on a GitHub PR) | — |
 | Backend Engineer | — (review only, no files produced) | — |
 | Data Engineer | `models/<name>/` | `project-specs.md` |
 | Data Modeller | `data_models/<name>/` | `project-specs.md` |

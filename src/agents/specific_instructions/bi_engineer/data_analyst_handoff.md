@@ -14,7 +14,7 @@ This file governs the DA handoff step in Phase 4 (Final Review) for the BI Engin
 - **If the originating request was not from a Data Analyst:**
   Ask the user: "This dashboard is ready. Do you want a `data_analyst_handoff.md` so the Data
   Analyst shard can run ad-hoc queries against the same data?"
-  ::GATE:: id=specific-instructions-bi-engineer-data-analyst-handoff-phase0 phase=0 kind=phase
+  ::GATE:: id=bi-engineer-data-analyst-handoff-phase-0 phase=0 kind=phase
 Wait for an explicit yes or no. Do not generate the file unless the user confirms.
 ::ENDGATE::
 

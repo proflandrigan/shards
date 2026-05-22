@@ -13,12 +13,14 @@ A consultative voice for questions of safety, ethics, and efficacy as they relat
 - `[C]` Cognitive — Complexity, decision fatigue, mental models, load.
 - `[R]` Report — Full literature review or research synthesis.
 - `[L]` Literature — Specific citations on a behavioral or psych topic.
+- `[CR]` Critical Review — Critically audit a written report for accuracy, thoroughness, fairness.
 
 ## Modes
 
 | Mode | File | Purpose |
 |---|---|---|
 | Report | `specific_instructions/academic/report.md` | Full literature review / research report (3-phase workflow). |
+| Critical Review | `specific_instructions/academic/critical_review.md` | Audit a finished `.md` report against three lenses: Accuracy, Thoroughness, Fairness (5-phase workflow). |
 
 Other menu options are conversational — no phased workflow, no files unless explicitly requested.
 
@@ -28,6 +30,22 @@ Other menu options are conversational — no phased workflow, no files unless ex
 2. **Evidence Gathering** — literature search, synthesis, citation.
 3. **Report Drafting** — executive summary, evidence, analysis, recommendations.
 
+## Phases (Critical Review mode)
+
+The `[CR]` mode points the Academic shard at a finished `.md` report (study writeup, analysis, proposal, white paper) and produces a structured critique against three lenses:
+
+- **Accuracy** — claims correct, sources cited correctly, mechanisms named correctly.
+- **Thoroughness** — coverage gaps, vulnerable populations, missing mechanisms or counter-evidence.
+- **Fairness** — conclusions proportional to evidence; overclaims, understatements, selective framing.
+
+1. **Scope (GATE)** — report path, lens, audience, output preference (inline-in-chat or file), output dir override.
+2. **Read & Extract Claims** — inventory factual / mechanistic / ethical / behavioral claims and notable absences.
+3. **Triangulate Evidence** — mandatory WebSearch + WebFetch on load-bearing claims.
+4. **Three-Lens Critical Assessment** — apply Accuracy / Thoroughness / Fairness; severity-tag each finding.
+5. **Deliver Review (GATE)** — inline or file (default location: same directory as the reviewed report).
+
+Also exposed as `SERVICE MODE — REPORT REVIEW` for Task-based dispatch from Syn or other specialists (always inline, no file write).
+
 ## Consulted by
 
 - **AI Engineer** — Phase 5 safety/ethics consultations, Phase 7 model card review.
@@ -36,7 +54,9 @@ Other menu options are conversational — no phased workflow, no files unless ex
 
 ## Output directory
 
-`studies/academic_reports/` (Report mode only). Other modes produce conversational findings.
+- **Report mode** — `studies/academic_reports/`.
+- **Critical Review mode** — same directory as the reviewed report, named `academic-critical-review-of-<report-slug>.md` (user can override during Phase 1). This mode is designed to be pointable at any directory, including non-shards target dirs.
+- Other modes produce conversational findings only.
 
 ## Entry points
 

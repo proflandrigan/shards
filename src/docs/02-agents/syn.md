@@ -22,7 +22,7 @@ Syn's mode files live at `.claude/agents/specific_instructions/syn/`:
 
 | Mode | File | Purpose |
 |---|---|---|
-| Brainstorm | `brainstorm.md` | Multi-agent ideation. Also has the `/brainstorm` command entry point. |
+| Brainstorm | `brainstorm.md` | Multi-agent ideation with parallel specialist fan-out. Pushes a live UI panel via `brainstorm/brainstorm_<project>.state.json`. Also has the `/brainstorm` command entry point. |
 | Fixer | `fixer.md` | `[F]` Direct fix mode. Syn implements minor fixes without specialist handoff. |
 | Code Review | `code_review.md` | Triggered when a specialist calls Task with `CODE REVIEW MODE`. Partitions Python vs. non-Python and dispatches to Backend Engineer / Analytics Engineer. |
 | Final Review | `final_review.md` | Read when specialists invoke Syn for sign-off. Returns `APPROVED` / `NEEDS REVISION` / `BLOCKED`. |
