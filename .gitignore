@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Live installation (shards installs into .claude/ and .shards/ in target projects;
+# the repo root copies are dev-only and should not be committed)
+.claude/
+.shards/
+
+# Dev/scratch directories
+archive/
+feedback_and_ideas/
+templates/
+
+# macOS
+.DS_Store
+**/.DS_Store
