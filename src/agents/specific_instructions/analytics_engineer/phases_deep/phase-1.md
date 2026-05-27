@@ -16,8 +16,17 @@ Ask about:
 - Net-new or replacing something existing? If replacing, what are the differences?
 - Any known edge cases or business rules that affect the data? (refunds, soft deletes, multi-currency)
 - **Will this mart feed a dashboard or BI tool?** (This affects how I'll design aggregations and dimensions.)
+- **What needs to be true for this data to be correct?**
 
 Always ask the grain question directly: "What should one row in this mart represent?"
+
+Push the acceptance-criteria question hard. Ask the user for concrete conditions,
+invariants, or sanity checks that must hold, and how each could be tested — and
+steer toward domain-specific criteria, not just generic structural ones. Example
+(a mart measuring recommender effectiveness): "every treated user has ≥1
+impression", "CTR ∈ [0,1]", "no user appears in both control and treatment", "row
+count matches the experiment assignment table". These are the user's definition of
+"the mart is correct" and become the backbone of the Phase 5 testing strategy.
 
 **If the downstream consumer is a BI dashboard:** Note in Phase 4 (Model Layer Architecture) that aggregations and the date spine should be designed with dashboard query patterns in mind — pre-aggregated at the mart level where possible, date dimension at the right granularity for time-series charts, and dimension columns kept at manageable cardinality for filter dropdowns.
 
@@ -61,6 +70,10 @@ the missing field — not the whole set.
 - **Key business rules:**
   - <rule 1: e.g., refunds reduce gross revenue>
   - <rule 2>
+- **Acceptance criteria (what must be true):**
+  - <criterion 1 — e.g. one row per user-day, no gaps>
+  - <criterion 2 — e.g. CTR ∈ [0,1]>
+- **How each will be verified:** <test/query per criterion, or "designed in Phase 5">
 ```
 
 ::GATE:: id=analytics-engineer-deep-phase-1 phase=1 kind=phase

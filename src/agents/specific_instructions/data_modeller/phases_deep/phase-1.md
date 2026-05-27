@@ -14,6 +14,16 @@ Ask about:
 - Are there existing models in this domain, or is this greenfield?
 - Key business rules that affect entity relationships?
 - Source-of-truth system for key entities?
+- **What needs to be true for this model to be correct?**
+
+Push the acceptance-criteria question hard. Because data-modelling validation is
+structural rather than executable, steer toward model-level invariants the user
+expects to hold — key uniqueness, expected cardinalities, referential integrity,
+and grain. Example (modelling recommender-effectiveness data): "one row per
+user-experiment assignment", "every impression references a valid user", "a user
+maps to exactly one variant", "CTR is derivable from clicks/impressions with no
+divide-by-zero". These become the user's definition of "the model is correct" and
+the basis for the DM-08 stakeholder walkthrough in validation.
 
 ### Document Deep Phase 1
 
@@ -31,6 +41,10 @@ Ask about:
   - <rule 1>
   - <rule 2>
 - **Source of truth:** <system or "reconciliation needed">
+- **Acceptance criteria (invariants that must hold):**
+  - <criterion 1 — e.g. one row per user-experiment assignment>
+  - <criterion 2 — e.g. every impression references a valid user>
+- **How each will be verified:** <walkthrough / structural check per criterion, or "confirmed in validation">
 ```
 
 ::GATE:: id=data-modeller-deep-phase-1 phase=1 kind=phase

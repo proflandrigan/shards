@@ -7,6 +7,9 @@
 
 Goal: Define tests for data quality and regression prevention.
 
+Start from the **Acceptance criteria** recorded in Phase 1 — each one must map to at
+least one test or assertion here. Flag any criterion that can't be tested.
+
 Ask about:
 - Primary keys at each layer?
 - Business rules to encode as tests?

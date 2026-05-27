@@ -9,6 +9,7 @@ Ask about:
 - Which model(s) are affected? (exact file path or model name)
 - Observed behavior vs. expected behavior?
 - Recent changes to upstream models or sources?
+- **What should still be true after this fix?** Ask for specific regression checks / invariants the user expects to hold once the fix lands (e.g. "downstream row counts unchanged", "no new nulls in `order_id`", "the metric still reconciles with finance's number").
 
 Then:
 1. Read the model file and its .yml schema
@@ -29,6 +30,8 @@ Then:
 - **Proposed fix:** <what will be changed>
 - **Upstream impact:** <models affected or "none">
 - **Downstream impact:** <models or consumers affected>
+- **Acceptance criteria (must hold after fix):**
+  - <criterion 1>
 ```
 
 ::GATE:: id=data-engineer-quick-phase-1 phase=1 kind=phase
