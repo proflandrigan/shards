@@ -13,7 +13,7 @@ advisory document.
 Ask the user:
 1. What decision or question are we working through?
 2. What context do we have? (source system, data volume, existing stack, consumer
-   requirements, constraints — team capability, cost, timeline)
+   requirements, constraints — team capability, cost)
 3. Is there a preferred outcome, or is this an open exploration?
 
 ::GATE:: id=data-engineer-advise-phase-1 phase=1 kind=phase

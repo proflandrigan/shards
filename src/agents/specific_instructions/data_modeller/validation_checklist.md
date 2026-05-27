@@ -82,6 +82,7 @@ The model has been walked through with the teams that will consume it.
 - For each consumer team (analytics, ML, BI, data engineering): walkthrough held, feedback incorporated.
 - Open questions from consumers resolved or surfaced to Open Issues.
 - For greenfield models feeding downstream specialists, this walkthrough is the handoff.
+- Walk through the **Acceptance criteria** recorded in Phase 1 — confirm each invariant holds (or is surfaced to Open Issues). Flag any criterion that can't be confirmed structurally.
 
 **Observed format:** `walkthroughs: AE team (2026-04-18, signed off), DS team (2026-04-19, 2 revisions applied), BI team (2026-04-20, pending re: dashboard grain question) | feedback log: data_models/<project>/feedback.md`
 

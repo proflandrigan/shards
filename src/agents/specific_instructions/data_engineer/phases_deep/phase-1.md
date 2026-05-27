@@ -14,6 +14,16 @@ Ask about:
 - Refresh cadence requirement? (real-time, hourly, daily)
 - SLAs or dependencies?
 - Net-new or replacing something existing?
+- **What needs to be true for this data to be correct?**
+
+Push the acceptance-criteria question hard. Ask the user for concrete conditions,
+invariants, or sanity checks that must hold, and how each could be tested — and
+steer toward domain-specific criteria, not just generic structural ones. Example
+(a pipeline feeding recommender-effectiveness analysis): "every treated user has
+≥1 impression", "CTR ∈ [0,1]", "no user appears in both control and treatment",
+"row count matches the experiment assignment table". These are the user's
+definition of "the pipeline is correct" and become the backbone of the Phase 4
+testing strategy.
 
 ### Document Deep Phase 1
 
@@ -29,6 +39,10 @@ Ask about:
 - **Refresh cadence:** Real-time | Hourly | Daily | Weekly
 - **SLA / dependency:** <time constraint or "none">
 - **Replaces existing model:** Yes — <which> | No — net new
+- **Acceptance criteria (what must be true):**
+  - <criterion 1 — e.g. one row per user-day, no gaps>
+  - <criterion 2 — e.g. CTR ∈ [0,1]>
+- **How each will be verified:** <test/query per criterion, or "designed in Phase 4">
 ```
 
 ::GATE:: id=data-engineer-deep-phase-1 phase=1 kind=phase

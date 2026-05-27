@@ -9,6 +9,7 @@ Ask about:
 - Which model(s) and column(s) are affected?
 - Current state vs. desired state?
 - Downstream dependencies?
+- **What should still be true after this change?** Ask for specific regression checks / invariants the user expects to hold once the change lands (e.g. "key uniqueness preserved", "no new nulls in `order_id`", "cardinality to `customers` unchanged").
 
 Then:
 1. Read the model file and its .yml schema
@@ -31,6 +32,8 @@ Append to project-specs.md:
 - **Blast radius:** Isolated | Minor (<3 models) | Significant (3+)
 - **Change plan:**
   - <file>: <what changes>
+- **Acceptance criteria (must hold after change):**
+  - <criterion 1>
 ```
 
 ::GATE:: id=data-modeller-quick-phase-1 phase=1 kind=phase

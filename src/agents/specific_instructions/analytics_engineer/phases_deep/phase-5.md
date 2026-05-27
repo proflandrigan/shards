@@ -9,6 +9,9 @@ Goal: Define comprehensive test coverage for every model. No model ships unteste
 
 "An untested mart is a rumor, not a fact."
 
+Start from the **Acceptance criteria** recorded in Phase 1 — each one must map to at
+least one test or assertion here. Flag any criterion that can't be tested.
+
 For each model: schema tests (unique, not_null, accepted_values, relationships),
 singular tests, source freshness configs.
 

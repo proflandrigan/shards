@@ -11,6 +11,7 @@ Ask about:
 - Which model(s) are affected? (exact file path or model name)
 - Current state vs. desired state?
 - Downstream models that depend on affected columns?
+- **What should still be true after this change?** Ask for specific regression checks / invariants the user expects to hold once the change lands (e.g. "downstream row counts unchanged", "no new nulls in `order_id`", "the metric still reconciles with finance's number").
 
 Then:
 1. Read the model file and its .yml schema
@@ -31,6 +32,8 @@ Then:
 - **Blast radius:** Isolated | Minor (<3 models) | Significant (3+)
 - **Change plan:**
   - <file>: <what changes>
+- **Acceptance criteria (must hold after change):**
+  - <criterion 1>
 ```
 
 ::GATE:: id=analytics-engineer-quick-phase-1 phase=1 kind=phase validates=analytics_engineer
