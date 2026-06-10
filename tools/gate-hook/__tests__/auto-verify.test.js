@@ -75,7 +75,15 @@ function readAutoState() {
 function readGateState() {
   const file = path.join(tmp, '.shards', 'gates', 'state.json');
   if (!fs.existsSync(file)) return { open: false };
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
+  const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+  // v2 per-session shape: reduce to a flat { open, ... } by surfacing any open
+  // session slot (legacy single-slot files just pass through).
+  if (raw && raw.sessions && typeof raw.sessions === 'object') {
+    const open = Object.values(raw.sessions).find(g => g && g.open);
+    return open ? { open: true, ...open, history: raw.history || [] }
+                : { open: false, history: raw.history || [] };
+  }
+  return raw;
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -190,6 +198,9 @@ describe('auto-verify', () => {
     const r = runHook('pre-tool-use', {
       tool_name: 'Bash',
       tool_input: { command: 'dbt show --select my_model' },
+      // Same session that opened the gate — under the v2 per-session model the
+      // gate only blocks its own session, so the session_id must match.
+      session_id: 's1',
     });
     expect(r.parsed && r.parsed.hookSpecificOutput).toBeTruthy();
     expect(r.parsed.hookSpecificOutput.permissionDecision).toBe('deny');

@@ -1666,61 +1666,6 @@ function resolvePermissionCard(id, decision) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Gate pill rendering
-// ═══════════════════════════════════════════════════════════════
-
-var _gatePillDismissed = false;
-var _lastGateId = null;
-
-function renderGatePill(state) {
-  var pill = document.getElementById('gate-pill');
-  if (!pill) return;
-
-  if (!state || !state.open) {
-    pill.style.display = 'none';
-    _gatePillDismissed = false;
-    return;
-  }
-
-  // Reset dismissed flag if gate id changed
-  if (state.id !== _lastGateId) {
-    _lastGateId = state.id;
-    _gatePillDismissed = false;
-  }
-
-  if (_gatePillDismissed) return;
-
-  pill.style.display = 'flex';
-  pill.innerHTML = '';
-
-  var text = document.createElement('span');
-  text.className = 'gate-pill-text';
-  text.textContent = '\uD83D\uDD12 Gate open \u2014 phase ' + (state.phase || '?') + ' (' + (state.kind || 'phase') + ', id: ' + (state.id || '?') + ')';
-  pill.appendChild(text);
-
-  var confirmBtn = document.createElement('button');
-  confirmBtn.className = 'gate-pill-btn gate-pill-confirm';
-  confirmBtn.textContent = 'Confirm';
-  confirmBtn.onclick = function() {
-    var input = document.getElementById('chat-input');
-    if (input) {
-      input.value = 'confirmed';
-      if (typeof sendChatMessage === 'function') sendChatMessage();
-    }
-  };
-  pill.appendChild(confirmBtn);
-
-  var dismissBtn = document.createElement('button');
-  dismissBtn.className = 'gate-pill-btn gate-pill-dismiss';
-  dismissBtn.textContent = 'Dismiss';
-  dismissBtn.onclick = function() {
-    _gatePillDismissed = true;
-    pill.style.display = 'none';
-  };
-  pill.appendChild(dismissBtn);
-}
-
-// ═══════════════════════════════════════════════════════════════
 // Gate block banner (gate hook returned decision:block)
 // ═══════════════════════════════════════════════════════════════
 //

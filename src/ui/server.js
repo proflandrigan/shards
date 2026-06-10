@@ -110,8 +110,12 @@ function readGateSnapshot(shardsDir) {
   try {
     const raw = fs.readFileSync(file, 'utf8');
     const state = JSON.parse(raw);
-    if (state && state.open) {
-      return { phase: typeof state.phase === 'number' ? state.phase : null, gateOpenAtEnd: state.id || null };
+    // Reduce to the single most-recent open gate. Handles both the legacy
+    // single-slot shape ({ open, ... }) and the v2 per-session shape
+    // ({ version: 2, sessions: { ... } }).
+    const open = reduceOpenGate(state);
+    if (open) {
+      return { phase: typeof open.phase === 'number' ? open.phase : null, gateOpenAtEnd: open.id || null };
     }
     const history = Array.isArray(state && state.history) ? state.history : [];
     for (let i = history.length - 1; i >= 0; i--) {
@@ -462,10 +466,52 @@ let _autoStateDebounce = null;
 let _violationsDebounce = null;
 let _violationsOffset = 0;
 
+// Reduce a parsed gate-state object to its single most-recent OPEN gate, or
+// null if none is open. Handles the legacy single-slot shape ({ open, id, ...})
+// and the v2 per-session shape ({ version: 2, sessions: { "<id>": {...} } }).
+function reduceOpenGate(state) {
+  if (!state || typeof state !== 'object') return null;
+  // v2 per-session map.
+  if (state.sessions && typeof state.sessions === 'object') {
+    let best = null;
+    let bestT = -Infinity;
+    for (const g of Object.values(state.sessions)) {
+      if (!g || !g.open) continue;
+      const t = g.opened_at ? Date.parse(g.opened_at) : NaN;
+      const score = Number.isNaN(t) ? -Infinity : t;
+      if (best === null || score > bestT) { best = g; bestT = score; }
+    }
+    return best;
+  }
+  // Legacy single slot.
+  return state.open ? state : null;
+}
+
+// Reduce a parsed gate-state object to the flat shape the browser expects:
+// { open, id, phase, kind, agent, opened_at, history }. The v2 per-session map
+// collapses to the single most-recent open gate; `history` is always the shared
+// top-level array. This preserves the browser-facing JSON contract unchanged.
+function reduceGateState(state) {
+  const history = Array.isArray(state && state.history) ? state.history : [];
+  const open = reduceOpenGate(state);
+  if (!open) return { open: false, history };
+  return {
+    open: true,
+    id: open.id || null,
+    phase: typeof open.phase !== 'undefined' ? open.phase : null,
+    kind: open.kind || null,
+    agent: open.agent || null,
+    opened_at: open.opened_at || null,
+    history,
+  };
+}
+
+// Read state.json and reduce it to the flat browser contract. Returns null only
+// when the file is unreadable (caller substitutes a closed default).
 function readGateStateFile() {
   try {
     const raw = fs.readFileSync(GATE_STATE_FILE(), 'utf8');
-    return JSON.parse(raw);
+    return reduceGateState(JSON.parse(raw));
   } catch {
     return null;
   }
@@ -2252,7 +2298,9 @@ function createHandler() {
       const gateStatePath = path.join(SHARDS_DIR, 'gates', 'state.json');
       try {
         const raw = fs.readFileSync(gateStatePath, 'utf8');
-        jsonResponse(res, cors, 200, JSON.parse(raw));
+        // Collapse the v2 per-session map (or legacy single slot) to the flat
+        // gate object the browser expects. Contract unchanged.
+        jsonResponse(res, cors, 200, reduceGateState(JSON.parse(raw)));
       } catch {
         jsonResponse(res, cors, 200, { open: false, history: [] });
       }

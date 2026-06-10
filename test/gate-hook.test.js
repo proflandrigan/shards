@@ -177,26 +177,80 @@ describe('classify', () => {
 // ─── State tests ──────────────────────────────────────────────────────────────
 
 describe('state', () => {
-  it('returns default state when file missing', () => {
+  it('returns default v2 state when file missing', () => {
     const { read } = require('../tools/gate-hook/state.js');
     const s = read();
-    expect(s.open).toBe(false);
+    expect(s.version).toBe(2);
+    expect(s.sessions).toEqual({});
     expect(Array.isArray(s.history)).toBe(true);
   });
 
-  it('round-trips read/write', () => {
-    const { read, write } = require('../tools/gate-hook/state.js');
-    const data = { open: true, id: 'test-gate', phase: 1, kind: 'phase', history: [] };
-    write(data);
+  it('round-trips read/write through setGate/getGate', () => {
+    const { read, write, setGate, getGate } = require('../tools/gate-hook/state.js');
+    const next = setGate(read(), 'sess-A', {
+      open: true, id: 'test-gate', phase: 1, kind: 'phase', opened_at: new Date().toISOString(),
+    });
+    write(next);
     const result = read();
-    expect(result.open).toBe(true);
-    expect(result.id).toBe('test-gate');
+    const gate = getGate(result, 'sess-A');
+    expect(gate.open).toBe(true);
+    expect(gate.id).toBe('test-gate');
   });
 
   it('creates directory if missing', () => {
     const { write } = require('../tools/gate-hook/state.js');
-    write({ open: false, history: [] });
+    write({ version: 2, sessions: {}, history: [] });
     expect(fs.existsSync(path.join(tmpDir, '.shards', 'gates', 'state.json'))).toBe(true);
+  });
+
+  it('upgrades a legacy single-slot OPEN file to v2 in memory', () => {
+    const { read } = require('../tools/gate-hook/state.js');
+    const gatesDir = path.join(tmpDir, '.shards', 'gates');
+    fs.mkdirSync(gatesDir, { recursive: true });
+    // Legacy v1 shape with an agent field — should key under the agent.
+    fs.writeFileSync(path.join(gatesDir, 'state.json'), JSON.stringify({
+      open: true, id: 'legacy-gate', phase: 3, kind: 'phase',
+      agent: 'ml-engineer', opened_at: new Date().toISOString(), history: [{ id: 'prev' }],
+    }));
+    const s = read();
+    expect(s.version).toBe(2);
+    expect(s.sessions['ml-engineer'].open).toBe(true);
+    expect(s.sessions['ml-engineer'].id).toBe('legacy-gate');
+    expect(s.history).toHaveLength(1);
+  });
+
+  it('keys a legacy OPEN gate without agent under __legacy__', () => {
+    const { read, LEGACY_KEY } = require('../tools/gate-hook/state.js');
+    const gatesDir = path.join(tmpDir, '.shards', 'gates');
+    fs.mkdirSync(gatesDir, { recursive: true });
+    fs.writeFileSync(path.join(gatesDir, 'state.json'), JSON.stringify({
+      open: true, id: 'legacy-gate', phase: 1, kind: 'phase', history: [],
+    }));
+    const s = read();
+    expect(s.sessions[LEGACY_KEY].id).toBe('legacy-gate');
+  });
+
+  it('anyOpen / firstOpen reflect open session slots', () => {
+    const { setGate, anyOpen, firstOpen, read } = require('../tools/gate-hook/state.js');
+    let s = read();
+    expect(anyOpen(s)).toBe(false);
+    expect(firstOpen(s)).toBeNull();
+    s = setGate(s, 'A', { open: true, id: 'gA', opened_at: '2026-01-01T00:00:00Z' });
+    s = setGate(s, 'B', { open: true, id: 'gB', opened_at: '2026-02-01T00:00:00Z' });
+    expect(anyOpen(s)).toBe(true);
+    expect(firstOpen(s).id).toBe('gB'); // most-recently-opened
+  });
+
+  it('clearGate removes only the target session and preserves history', () => {
+    const { setGate, clearGate, getGate, read } = require('../tools/gate-hook/state.js');
+    let s = read();
+    s = setGate(s, 'A', { open: true, id: 'gA', opened_at: '2026-01-01T00:00:00Z' });
+    s = setGate(s, 'B', { open: true, id: 'gB', opened_at: '2026-02-01T00:00:00Z' });
+    s.history.push({ id: 'old' });
+    const cleared = clearGate(s, 'A');
+    expect(getGate(cleared, 'A').open).toBe(false);
+    expect(getGate(cleared, 'B').open).toBe(true);
+    expect(cleared.history).toHaveLength(1);
   });
 });
 
@@ -232,17 +286,18 @@ describe('stop handler', () => {
 
     const gate = gates[0];
     const current = stateModule.read();
-    stateModule.write({
+    stateModule.write(stateModule.setGate(current, 'sess-stop', {
       open: true,
       id: gate.attrs.id,
       phase: gate.attrs.phase,
       kind: gate.attrs.kind,
-      history: current.history || [],
-    });
+      opened_at: new Date().toISOString(),
+    }));
 
     const s = stateModule.read();
-    expect(s.open).toBe(true);
-    expect(s.id).toBe('phase1-framing');
+    const g = stateModule.getGate(s, 'sess-stop');
+    expect(g.open).toBe(true);
+    expect(g.id).toBe('phase1-framing');
   });
 
   it('detects violation when Phase header follows gate', () => {
@@ -257,15 +312,18 @@ describe('stop handler', () => {
 describe('preToolUse handler', () => {
   function setup(open, toolName) {
     const stateModule = require('../tools/gate-hook/state.js');
+    const sessionId = 'sess-pre';
     if (open) {
-      stateModule.write({ open: true, id: 'test-gate', phase: 1, kind: 'phase', opened_at: new Date().toISOString(), history: [] });
+      stateModule.write(stateModule.setGate(stateModule.read(), sessionId, {
+        open: true, id: 'test-gate', phase: 1, kind: 'phase', opened_at: new Date().toISOString(),
+      }));
     } else {
-      stateModule.write({ open: false, history: [] });
+      stateModule.write({ version: 2, sessions: {}, history: [] });
     }
 
     const ALLOWED_TOOLS = new Set(['Read', 'Glob', 'Grep']);
-    const s = stateModule.read();
-    if (!s.open) return { blocked: false };
+    const gate = stateModule.getGate(stateModule.read(), sessionId);
+    if (!gate.open) return { blocked: false };
     if (ALLOWED_TOOLS.has(toolName)) return { blocked: false };
     return { blocked: true };
   }
@@ -308,16 +366,16 @@ describe('preToolUse handler', () => {
 // ─── UserPromptSubmit handler tests ──────────────────────────────────────────
 
 describe('userPromptSubmit handler', () => {
+  const SID = 'sess-ups';
   function setupOpen() {
     const stateModule = require('../tools/gate-hook/state.js');
-    stateModule.write({
+    stateModule.write(stateModule.setGate(stateModule.read(), SID, {
       open: true,
       id: 'phase2-scope',
       phase: 2,
       kind: 'phase',
       opened_at: new Date().toISOString(),
-      history: [],
-    });
+    }));
     return stateModule;
   }
 
@@ -326,11 +384,18 @@ describe('userPromptSubmit handler', () => {
     const { classify } = require('../tools/gate-hook/classify.js');
     const prompt = 'yes, proceed';
     const s = stateModule.read();
-    if (s.open && classify(prompt) === 'confirm') {
-      stateModule.write({ open: false, history: [...s.history, { id: s.id, closed_at: new Date().toISOString() }] });
+    const gate = stateModule.getGate(s, SID);
+    if (gate.open && classify(prompt) === 'confirm') {
+      const cleared = stateModule.clearGate(s, SID);
+      stateModule.write({
+        version: 2,
+        sessions: cleared.sessions,
+        history: [...cleared.history, { id: gate.id, closed_at: new Date().toISOString() }],
+      });
     }
-    expect(stateModule.read().open).toBe(false);
-    expect(stateModule.read().history).toHaveLength(1);
+    const after = stateModule.read();
+    expect(stateModule.getGate(after, SID).open).toBe(false);
+    expect(after.history).toHaveLength(1);
   });
 
   it('keeps gate open on "no, actually..."', () => {
@@ -339,7 +404,7 @@ describe('userPromptSubmit handler', () => {
     const prompt = 'no, actually change the metric';
     const result = classify(prompt);
     expect(result).toBe('deny');
-    expect(stateModule.read().open).toBe(true);
+    expect(stateModule.getGate(stateModule.read(), SID).open).toBe(true);
   });
 
   it('keeps gate open on "hmm" (ambiguous)', () => {
@@ -348,7 +413,7 @@ describe('userPromptSubmit handler', () => {
     const prompt = 'hmm not sure';
     const result = classify(prompt);
     expect(result).toBe('ambiguous');
-    expect(stateModule.read().open).toBe(true);
+    expect(stateModule.getGate(stateModule.read(), SID).open).toBe(true);
   });
 });
 
@@ -356,25 +421,30 @@ describe('userPromptSubmit handler', () => {
 
 describe('atomic state writes', () => {
   it('state.write produces no partial JSON visible to concurrent readers', async () => {
-    const { read, write, STATE } = require('../tools/gate-hook/state.js');
+    const { read, write, setGate, getGate, STATE } = require('../tools/gate-hook/state.js');
     // Bracket many writes interleaved with reads. Under the old bare
     // writeFileSync any partial flush would surface as JSON.parse failures —
-    // the read() catches that and silently returns { open: false } (which is
+    // the read() catches that and silently returns the closed default (which is
     // the bug). With tmp+rename, every read must see either the prior full
     // state or the next full state, never a half-written one.
+    const SID = 'sess-atomic';
     const writes = [];
     const reads = [];
 
     for (let i = 0; i < 20; i++) {
       writes.push((async () => {
-        write({ open: true, id: `gate-${i}`, phase: i, kind: 'phase', history: [{ id: `prev-${i}` }] });
+        const next = setGate({ version: 2, sessions: {}, history: [{ id: `prev-${i}` }] }, SID, {
+          open: true, id: `gate-${i}`, phase: i, kind: 'phase', opened_at: new Date().toISOString(),
+        });
+        write(next);
       })());
       reads.push((async () => {
         // Each read should always parse cleanly.
         const s = read();
-        // If we see a stale default we'd get open:false with no id — that's
+        const g = getGate(s, SID);
+        // If we see a stale/partial slot we'd get open:true with no id — that's
         // the failure mode we're guarding against.
-        if (s.open === true && (!s.id || typeof s.id !== 'string')) {
+        if (g.open === true && (!g.id || typeof g.id !== 'string')) {
           throw new Error('partial state observed');
         }
         return s;
@@ -384,10 +454,10 @@ describe('atomic state writes', () => {
     await Promise.all([...writes, ...reads]);
 
     // Final state must be valid JSON, open=true, and one of the writes' ids.
-    const final = read();
-    expect(final.open).toBe(true);
-    expect(typeof final.id).toBe('string');
-    expect(final.id).toMatch(/^gate-\d+$/);
+    const finalGate = getGate(read(), SID);
+    expect(finalGate.open).toBe(true);
+    expect(typeof finalGate.id).toBe('string');
+    expect(finalGate.id).toMatch(/^gate-\d+$/);
 
     // No stray .tmp files left in the gates dir.
     const dir = path.dirname(STATE);
@@ -487,11 +557,13 @@ describe('kind taxonomy', () => {
     if (NON_ADVANCING_KINDS.has(gateKind) && !CHECKPOINT_ENFORCE) {
       appendHistory({ event: 'advisory', kind: gateKind, gate_id: gate.attrs.id, phase: gate.attrs.phase });
     } else {
-      stateModule.write({ open: true, id: gate.attrs.id, phase: gate.attrs.phase, kind: gateKind, history: [] });
+      stateModule.write(stateModule.setGate(stateModule.read(), 'sess-conf', {
+        open: true, id: gate.attrs.id, phase: gate.attrs.phase, kind: gateKind, opened_at: new Date().toISOString(),
+      }));
     }
 
     const s = stateModule.read();
-    expect(s.open).toBe(false);
+    expect(stateModule.anyOpen(s)).toBe(false);
 
     const file = path.join(tmpDir, '.shards', 'gates', 'gates.jsonl');
     const lines = fs.readFileSync(file, 'utf8').split('\n').filter(Boolean);
@@ -516,12 +588,15 @@ describe('kind taxonomy', () => {
       // Should NOT take this branch — execute is advancing.
       throw new Error('execute incorrectly classified as non-advancing');
     } else {
-      stateModule.write({ open: true, id: gate.attrs.id, phase: gate.attrs.phase, kind: gateKind, history: [] });
+      stateModule.write(stateModule.setGate(stateModule.read(), 'sess-exec', {
+        open: true, id: gate.attrs.id, phase: gate.attrs.phase, kind: gateKind, opened_at: new Date().toISOString(),
+      }));
     }
 
     const s = stateModule.read();
-    expect(s.open).toBe(true);
-    expect(s.kind).toBe('execute');
+    const g = stateModule.getGate(s, 'sess-exec');
+    expect(g.open).toBe(true);
+    expect(g.kind).toBe('execute');
   });
 
   it('parser.parseAutoVerify returns all close markers in `closes` array', () => {
@@ -610,13 +685,14 @@ describe('shards-gates force-close', () => {
       cwd: tmpDir, encoding: 'utf8',
     });
     expect(result.status).toBe(0);
-    expect(result.stdout).toMatch(/Force-closed gate 'stuck-gate'/);
+    expect(result.stdout).toMatch(/Force-closed .*'stuck-gate'/);
     expect(result.stdout).toMatch(/auto-verify block 'auto-123'/);
 
     // Verify both state files now show closed.
     const gateAfter = JSON.parse(fs.readFileSync(path.join(gatesDir, 'state.json'), 'utf8'));
     const autoAfter = JSON.parse(fs.readFileSync(path.join(autoDir, 'state.json'), 'utf8'));
-    expect(gateAfter.open).toBe(false);
+    const gateAnyOpen = Object.values(gateAfter.sessions || {}).some(g => g && g.open);
+    expect(gateAnyOpen).toBe(false);
     expect(autoAfter.open).toBe(false);
     expect(autoAfter.history).toHaveLength(1);
     expect(autoAfter.history[0].closed_reason).toBe('operator-force-close');
@@ -714,57 +790,56 @@ describe('isForceCloseBash', () => {
   });
 });
 
-describe('isStale / sweepStale', () => {
-  let isStale, sweepStale;
+describe('isStaleGate / sweepStaleSessions', () => {
+  let isStaleGate, sweepStaleSessions, stateModule;
   beforeEach(() => {
     process.chdir(tmpDir);
-    ({ isStale, sweepStale } = require('../tools/gate-hook/sweep.js'));
+    ({ isStaleGate, sweepStaleSessions } = require('../tools/gate-hook/sweep.js'));
+    stateModule = require('../tools/gate-hook/state.js');
   });
 
+  // isStaleGate now operates on a SINGLE gate object (one session slot).
   it('treats a gate with missing opened_at as stale', () => {
-    const s = { open: true, id: 'test-gate-1', phase: 1, kind: 'phase', history: [] };
-    expect(isStale(s)).toBe(true);
+    expect(isStaleGate({ open: true, id: 'test-gate-1', phase: 1, kind: 'phase' })).toBe(true);
   });
 
   it('treats a gate with invalid opened_at as stale', () => {
-    const s = { open: true, id: 'g', phase: 1, kind: 'phase', opened_at: 'not-a-date', history: [] };
-    expect(isStale(s)).toBe(true);
+    expect(isStaleGate({ open: true, id: 'g', opened_at: 'not-a-date' })).toBe(true);
   });
 
   it('treats a gate older than 24h as stale', () => {
     const old = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
-    const s = { open: true, id: 'g', phase: 1, kind: 'phase', opened_at: old, history: [] };
-    expect(isStale(s)).toBe(true);
+    expect(isStaleGate({ open: true, id: 'g', opened_at: old })).toBe(true);
   });
 
   it('does NOT sweep a fresh gate', () => {
-    const fresh = new Date().toISOString();
-    const s = { open: true, id: 'g', phase: 1, kind: 'phase', opened_at: fresh, history: [] };
-    expect(isStale(s)).toBe(false);
+    expect(isStaleGate({ open: true, id: 'g', opened_at: new Date().toISOString() })).toBe(false);
   });
 
   it('does NOT sweep a closed gate even with missing opened_at', () => {
-    const s = { open: false, history: [] };
-    expect(isStale(s)).toBe(false);
+    expect(isStaleGate({ open: false })).toBe(false);
   });
 
   it('does NOT sweep at exactly 24h boundary (just under)', () => {
     const justUnder = new Date(Date.now() - (24 * 60 * 60 * 1000 - 1000)).toISOString();
-    const s = { open: true, id: 'g', phase: 1, kind: 'phase', opened_at: justUnder, history: [] };
-    expect(isStale(s)).toBe(false);
+    expect(isStaleGate({ open: true, id: 'g', opened_at: justUnder })).toBe(false);
   });
 
-  it('sweepStale writes closed state and logs violation + history', () => {
-    const stateModule = require('../tools/gate-hook/state.js');
-    const stuck = { open: true, id: 'test-gate-1', phase: 1, kind: 'phase', history: [] };
-    stateModule.write(stuck);
+  // Build a v2 state with a single stale gate under sessionId, sweep it.
+  function staleState(sessionId, gate) {
+    return stateModule.setGate({ version: 2, sessions: {}, history: [] }, sessionId, gate);
+  }
 
-    const after = sweepStale(stuck, 'sess-abc');
+  it('sweepStaleSessions writes closed state and logs violation + history', () => {
+    const s = staleState('sess-abc', { open: true, id: 'test-gate-1', phase: 1, kind: 'phase' });
+    stateModule.write(s);
 
-    // Returned state is closed.
-    expect(after.open).toBe(false);
-    // Persisted state is closed.
-    expect(stateModule.read().open).toBe(false);
+    const after = sweepStaleSessions(s, 'sess-abc');
+
+    // Swept session's slot is gone.
+    expect(stateModule.getGate(after, 'sess-abc').open).toBe(false);
+    // Persisted state has no open gate.
+    expect(stateModule.anyOpen(stateModule.read())).toBe(false);
     // History entry preserves the gate identity and tags the reason.
     expect(after.history).toHaveLength(1);
     const entry = after.history[0];
@@ -790,20 +865,31 @@ describe('isStale / sweepStale', () => {
     expect(history.gate_id).toBe('test-gate-1');
   });
 
-  it('sweepStale tags reason=older-than-24h for an old but well-formed gate', () => {
+  it('tags reason=older-than-24h for an old but well-formed gate', () => {
     const old = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-    const stuck = { open: true, id: 'old-gate', phase: 2, kind: 'phase', opened_at: old, history: [] };
-    const after = sweepStale(stuck, 'sess-old');
+    const s = staleState('sess-old', { open: true, id: 'old-gate', phase: 2, kind: 'phase', opened_at: old });
+    const after = sweepStaleSessions(s, 'sess-old');
     expect(after.history[0].closed_reason).toBe('older-than-24h');
   });
 
-  it('sweepStale preserves prior history entries', () => {
+  it('preserves prior history entries', () => {
     const prior = { id: 'prior-gate', closed_at: '2026-01-01T00:00:00Z' };
-    const stuck = { open: true, id: 'g2', phase: 1, kind: 'phase', history: [prior] };
-    const after = sweepStale(stuck, 'sess');
+    let s = staleState('sess', { open: true, id: 'g2', phase: 1, kind: 'phase' });
+    s.history.push(prior);
+    const after = sweepStaleSessions(s, 'sess');
     expect(after.history).toHaveLength(2);
     expect(after.history[0]).toEqual(prior);
     expect(after.history[1].id).toBe('g2');
+  });
+
+  it('does NOT sweep another session\'s FRESH gate', () => {
+    let s = { version: 2, sessions: {}, history: [] };
+    s = stateModule.setGate(s, 'A', { open: true, id: 'gA', opened_at: 'not-a-date' }); // stale
+    s = stateModule.setGate(s, 'B', { open: true, id: 'gB', opened_at: new Date().toISOString() }); // fresh
+    const after = sweepStaleSessions(s, 'A');
+    // A swept (malformed/abandoned), B untouched.
+    expect(stateModule.getGate(after, 'A').open).toBe(false);
+    expect(stateModule.getGate(after, 'B').open).toBe(true);
   });
 });
 
@@ -840,7 +926,9 @@ describe('hook end-to-end (subprocess)', () => {
     expect(result.stdout || '').not.toMatch(/GATE-BLOCK/);
 
     const after = JSON.parse(fs.readFileSync(path.join(gatesDir, 'state.json'), 'utf8'));
-    expect(after.open).toBe(false);
+    // v2 file: no session slot should be open after the sweep.
+    const anyOpen = Object.values(after.sessions || {}).some(g => g && g.open);
+    expect(anyOpen).toBe(false);
     expect(after.history.at(-1).confirmed_by).toBe('stale-sweep');
   });
 
@@ -898,6 +986,140 @@ describe('hook end-to-end (subprocess)', () => {
       session_id: 'sess-4',
     });
     expect(result.status).toBe(0);
+    expect(result.stdout || '').toMatch(/GATE-BLOCK/);
+  });
+});
+
+// ─── Cross-session isolation (per-session gate slots) ─────────────────────────
+
+describe('cross-session isolation', () => {
+  const { spawnSync } = require('child_process');
+
+  function runHook(event, payload) {
+    const cli = path.resolve(origCwd, 'tools', 'gate-hook.js');
+    return spawnSync(process.execPath, [cli, event], {
+      cwd: tmpDir,
+      input: JSON.stringify(payload),
+      encoding: 'utf8',
+    });
+  }
+
+  function writeV2(sessions, history = []) {
+    const gatesDir = path.join(tmpDir, '.shards', 'gates');
+    fs.mkdirSync(gatesDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(gatesDir, 'state.json'),
+      JSON.stringify({ version: 2, sessions, history })
+    );
+  }
+
+  function readV2() {
+    return JSON.parse(fs.readFileSync(path.join(tmpDir, '.shards', 'gates', 'state.json'), 'utf8'));
+  }
+
+  function freshGate(id, phase) {
+    return { open: true, id, phase, kind: 'phase', agent: id, opened_at: new Date().toISOString() };
+  }
+
+  function writeTranscript(text) {
+    const transcriptPath = path.join(tmpDir, 'transcript.jsonl');
+    fs.writeFileSync(transcriptPath, JSON.stringify({ role: 'assistant', content: [{ type: 'text', text }] }));
+    return transcriptPath;
+  }
+
+  it("case 1: A's open gate does NOT block B's non-allowed tool", () => {
+    writeV2({ 'sess-A': freshGate('gate-A', 5) });
+
+    const result = runHook('pre-tool-use', {
+      tool_name: 'Write',
+      tool_input: { file_path: '/tmp/x', content: 'hi' },
+      session_id: 'sess-B',
+    });
+    expect(result.status).toBe(0);
+    // B is a different session — must NOT be blocked by A's gate.
+    expect(result.stdout || '').not.toMatch(/GATE-BLOCK/);
+
+    // A's gate must still be open afterward.
+    const after = readV2();
+    expect(after.sessions['sess-A'].open).toBe(true);
+  });
+
+  it("case 1b: A's own non-allowed tool IS still blocked", () => {
+    writeV2({ 'sess-A': freshGate('gate-A', 5) });
+    const result = runHook('pre-tool-use', {
+      tool_name: 'Write',
+      tool_input: { file_path: '/tmp/x', content: 'hi' },
+      session_id: 'sess-A',
+    });
+    expect(result.status).toBe(0);
+    expect(result.stdout || '').toMatch(/GATE-BLOCK/);
+  });
+
+  it("case 2: B's confirm does NOT close A's gate", () => {
+    writeV2({ 'sess-A': freshGate('gate-A', 5) });
+
+    const result = runHook('user-prompt-submit', {
+      prompt: 'confirmed, proceed',
+      session_id: 'sess-B',
+    });
+    expect(result.status).toBe(0);
+
+    const after = readV2();
+    // A's gate untouched; B never had one.
+    expect(after.sessions['sess-A'].open).toBe(true);
+    expect(after.sessions['sess-B']).toBeUndefined();
+  });
+
+  it("case 2b: A's own confirm DOES close A's gate", () => {
+    writeV2({ 'sess-A': freshGate('gate-A', 5) });
+    const result = runHook('user-prompt-submit', {
+      prompt: 'confirmed, proceed',
+      session_id: 'sess-A',
+    });
+    expect(result.status).toBe(0);
+    const after = readV2();
+    const aOpen = after.sessions['sess-A'] && after.sessions['sess-A'].open;
+    expect(aOpen).toBeFalsy();
+    // Closed gate moved to shared history.
+    expect(after.history.some(h => h.id === 'gate-A' && h.confirmed_by === 'user-prompt')).toBe(true);
+  });
+
+  it("case 3: B's Stop opens B's gate without discarding A's open gate", () => {
+    writeV2({ 'sess-A': freshGate('gate-A', 5) });
+
+    const transcriptPath = writeTranscript(
+      '::GATE:: id=gate-B phase=2 kind=phase\nStop here and wait.\n::ENDGATE::'
+    );
+    const result = runHook('stop', {
+      transcript_path: transcriptPath,
+      session_id: 'sess-B',
+    });
+    expect(result.status).toBe(0);
+
+    const after = readV2();
+    // Both sessions now hold their own open gate — no discard / overwrite.
+    expect(after.sessions['sess-A'].open).toBe(true);
+    expect(after.sessions['sess-A'].id).toBe('gate-A');
+    expect(after.sessions['sess-B'].open).toBe(true);
+    expect(after.sessions['sess-B'].id).toBe('gate-B');
+  });
+
+  it('case 4: a legacy single-slot OPEN file is read as v2 and still enforces', () => {
+    const gatesDir = path.join(tmpDir, '.shards', 'gates');
+    fs.mkdirSync(gatesDir, { recursive: true });
+    // Legacy v1 shape — agent field present so it keys under that agent.
+    fs.writeFileSync(path.join(gatesDir, 'state.json'), JSON.stringify({
+      open: true, id: 'legacy-gate', phase: 3, kind: 'phase',
+      agent: 'sess-legacy', opened_at: new Date().toISOString(), history: [],
+    }));
+
+    const result = runHook('pre-tool-use', {
+      tool_name: 'Write',
+      tool_input: { file_path: '/tmp/x', content: 'hi' },
+      session_id: 'sess-legacy',
+    });
+    expect(result.status).toBe(0);
+    // The legacy gate, keyed under its agent==session, still blocks that session.
     expect(result.stdout || '').toMatch(/GATE-BLOCK/);
   });
 });
