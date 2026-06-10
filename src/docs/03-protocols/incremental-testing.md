@@ -37,11 +37,15 @@ One notebook cell or a tight group of cells with a shared purpose, one dbt model
 
 ## Techniques per artifact type
 
-- **Notebooks** — execute cells via `jupyter execute … --inplace` with a per-cell timeout; print shapes and heads after every load/transform; never add a cell that depends on an untested predecessor.
+- **Notebooks** — execute cells via `jupyter execute … --inplace` with a per-cell timeout; print shapes and heads after every load/transform; never add a cell that depends on an untested predecessor. Keep outputs clean: never print secrets/tokens, prefer `.head()`/`.shape`/summaries over full DataFrame dumps (they bloat the `.ipynb` and, in walkthrough mode, burn agent context), install with `%pip`/`%conda` not `!pip` so it targets the live kernel, and never overwrite raw data in place — write derived artifacts to a separate path.
 - **SQL** — develop with `LIMIT 100`; run `EXPLAIN` on any 3+ table join; check count-before vs count-after at every join; time out dev queries at 60s.
 - **ML training** — smoke-fit on ≤1% of data for 1–2 epochs before touching the full set; forward-pass a single batch before starting the training loop; overfit a tiny batch on purpose as a sanity check.
 - **Transforms** — `assert` shape/dtype/non-null invariants after every transform.
 - **Pipeline / service code** — dry-run each step in isolation before chaining; `curl` each new endpoint before wiring it up.
+
+## Restart & Run All — the final reproducibility check
+
+Incremental testing proves each component in isolation; it does not prove the notebook runs clean top-to-bottom on a fresh kernel. The closing check — run **once, after every component has passed** — is a fresh-kernel full run. In Notebook Walkthrough mode this is `notebook-kernel.py run-all <session_id>` (restarts the kernel, runs every cell in order, stops at the first failure, returns a per-cell roll-up with the first error); standalone it's `jupyter nbconvert --execute --to notebook --inplace`. Set seeds so the run is deterministic. This is the evidence the Data Scientist's DS-11 check records. Run-all is never a *development* technique — only the final step.
 
 ## Composition
 

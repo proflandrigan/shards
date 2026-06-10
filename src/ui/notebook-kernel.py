@@ -13,6 +13,11 @@ Subcommands:
                                           file on disk.
   restart  <session_id>                   restart the kernel; mark all previously
                                           executed cells stale.
+  run-all  <session_id>                   restart the kernel, then execute every
+                                          code cell top-to-bottom on the fresh
+                                          kernel (the "Restart & Run All"
+                                          reproducibility check); stop at the
+                                          first failing cell.
   stop     <session_id>                   shut the kernel down and clean up.
   status   <session_id>                   print "alive" / "dead" / "missing".
 
@@ -575,6 +580,131 @@ def cmd_restart(session_id: str) -> None:
 
 
 # ────────────────────────────────────────────────────────────────────────────
+# Subcommand: run-all
+# ────────────────────────────────────────────────────────────────────────────
+
+
+def cmd_run_all(session_id: str) -> None:
+    """Restart the kernel, then execute every code cell top-to-bottom against a
+    single fresh kernel — the "Restart & Run All" reproducibility check. This is
+    the only true test that a notebook runs clean from a cold start; incremental
+    `exec` proves cells in isolation but not in order on a fresh kernel. Stops at
+    the first failing cell, writes outputs back into the .ipynb, and updates
+    state.json per cell as it goes."""
+    nb_pf = notebook_path_file(session_id)
+    if not nb_pf.exists():
+        fail("session not started — run `start` first")
+        return
+    nb_path = Path(nb_pf.read_text().strip())
+    if not nb_path.exists():
+        fail(f"notebook missing on disk: {nb_path}")
+        return
+
+    # Fresh kernel — this is what makes the run a true reproducibility check.
+    stop_kernel(session_id)
+    try:
+        pid = spawn_kernel(session_id)
+    except Exception as e:
+        fail(f"failed to respawn kernel: {e}")
+        return
+
+    nb = read_notebook(nb_path)
+    cells = nb.get("cells", []) or []
+
+    state = load_state(session_id)
+    if not state.get("cells") or len(state["cells"]) != len(cells):
+        state["cells"] = cells_summary(nb)
+    state["kernelPid"] = pid
+    state["kernelStartedAt"] = now_iso()
+    # Nothing has run on the fresh kernel yet — clear prior execution flags.
+    for c in state.get("cells", []) or []:
+        c["executed"] = False
+        c["stale"] = False
+
+    per_cell: list = []
+    cells_run = 0
+    cells_passed = 0
+    first_error = None
+
+    try:
+        kc = kernel_client(session_id)
+    except Exception as e:
+        fail(f"failed to connect to kernel: {e}")
+        return
+
+    # One client for the whole run (closer to a real run-all than re-handshaking
+    # per cell, and cheaper). Persist partial progress in the finally block.
+    try:
+        for idx, cell in enumerate(cells):
+            if cell.get("cell_type") != "code":
+                state["cells"][idx]["executed"] = True
+                state["cells"][idx]["stale"] = False
+                state["cells"][idx]["lastRunAt"] = now_iso()
+                state["cells"][idx]["outputSummary"] = "(markdown)"
+                continue
+
+            code = cell_source(cell)
+            msg_id = kc.execute(code, store_history=True)
+            outputs, status, exec_count = capture_outputs(kc, msg_id)
+
+            cell["outputs"] = outputs
+            if exec_count is not None:
+                cell["execution_count"] = exec_count
+            cells[idx] = cell
+
+            summary = short_summary(outputs)
+            state["cells"][idx]["executed"] = True
+            state["cells"][idx]["stale"] = False
+            state["cells"][idx]["lastRunAt"] = now_iso()
+            state["cells"][idx]["outputSummary"] = summary
+            state["currentCellIndex"] = idx
+
+            cells_run += 1
+            per_cell.append({"index": idx, "status": status})
+
+            if status == "ok":
+                cells_passed += 1
+            else:
+                err = next(
+                    (o for o in outputs if o.get("output_type") == "error"), {}
+                )
+                first_error = {
+                    "cellIndex": idx,
+                    "ename": err.get("ename", status),
+                    "evalue": err.get("evalue", "")
+                    if status == "error"
+                    else "execution timed out",
+                }
+                state["status"] = status
+                break
+    finally:
+        try:
+            kc.stop_channels()
+        except Exception:
+            pass
+        # Persist whatever ran into the notebook + state, even on early stop.
+        nb["cells"] = cells
+        write_notebook(nb_path, nb)
+        if first_error is None:
+            state["status"] = "ready"
+        save_state(session_id, state)
+
+    cells_total = sum(1 for c in cells if c.get("cell_type") == "code")
+    emit(
+        {
+            "ok": True,
+            "sessionId": session_id,
+            "restarted": True,
+            "cellsTotal": cells_total,
+            "cellsRun": cells_run,
+            "cellsPassed": cells_passed,
+            "firstError": first_error,
+            "perCell": per_cell,
+        }
+    )
+
+
+# ────────────────────────────────────────────────────────────────────────────
 # Subcommand: stop
 # ────────────────────────────────────────────────────────────────────────────
 
@@ -621,6 +751,9 @@ def main(argv: list[str]) -> int:
     sp_restart = sub.add_parser("restart")
     sp_restart.add_argument("session_id")
 
+    sp_runall = sub.add_parser("run-all")
+    sp_runall.add_argument("session_id")
+
     sp_stop = sub.add_parser("stop")
     sp_stop.add_argument("session_id")
 
@@ -638,6 +771,8 @@ def main(argv: list[str]) -> int:
             cmd_exec(args.session_id, args.cell_index)
         elif args.cmd == "restart":
             cmd_restart(args.session_id)
+        elif args.cmd == "run-all":
+            cmd_run_all(args.session_id)
         elif args.cmd == "stop":
             cmd_stop(args.session_id)
         elif args.cmd == "status":

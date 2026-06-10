@@ -134,6 +134,7 @@ The UI dispatches user actions as chat messages prefixed with
 | `Delete cell <N>` | Delete via NotebookEdit, shift indices, mark downstream stale |
 | `Re-run from cell <N>` | Execute cells N..end, clearing stale flags as you go |
 | `Restart kernel` | Call helper `restart`; mark all executed cells stale |
+| `Restart & run all` | Call helper `run-all`; fresh-kernel top-to-bottom reproducibility check; report per-cell pass/fail and the first error |
 | `End walkthrough` | Call helper `stop`; finalize transcript; offer summary |
 
 In `Insert` and `Edit` payloads, `\n` is the literal escape sequence — replace
@@ -219,6 +220,35 @@ When the user sends `Re-run from cell N`:
 
 ---
 
+## Restart & run all
+
+When the user sends `Restart & run all` (the final reproducibility check —
+does the notebook run clean top-to-bottom on a *fresh* kernel?):
+
+1. Call the helper once:
+   ```bash
+   python .shards/ui/notebook-kernel.py run-all <session_id>
+   ```
+   It restarts the kernel, executes every code cell in order on the fresh
+   kernel, writes outputs back into the `.ipynb`, updates `state.json` per
+   cell, and stops at the first failing cell.
+2. Parse the roll-up: `cellsTotal`, `cellsRun`, `cellsPassed`, `perCell`
+   (`[{index, status}]`), and `firstError` (`{cellIndex, ename, evalue}` or
+   `null`).
+3. Re-read `state.json` and the `.ipynb`, then update
+   `<project_root>/.shards/notebook-walkthrough.json` to mirror the fresh
+   run — every passing cell `executed: true`, `stale: false`.
+4. Report the outcome in chat:
+   - **All passed** (`firstError == null`): say so plainly — the notebook is
+     reproducible from a cold start. This is the evidence DS-11 wants.
+   - **Failed**: name the failing cell, translate `ename`/`evalue` into
+     business/methodology terms, and **stop** (honoring "kernel errors halt
+     progress"). Every cell after `firstError.cellIndex` did not run.
+5. This is an *offer-and-run on request* action — never trigger it on your
+   own; the user clicks "Run All" or types the command.
+
+---
+
 ## Explanations — how to write them
 
 Carried over from the existing Explain mode:
@@ -269,15 +299,21 @@ flow above.
 
 When the user sends `End walkthrough` or otherwise signals completion:
 
-1. Call `python .shards/ui/notebook-kernel.py stop <session_id>`.
-2. Set walkthrough state `status = "ended"` and save.
-3. **Optional artifact:** if the notebook lives under `studies/` (Data
+1. **Optional reproducibility check:** if cells were edited or run during the
+   walkthrough, offer to run `Restart & run all` once before ending — the
+   fresh-kernel top-to-bottom check that proves the notebook still works as a
+   whole. If the user accepts and an artifact is written (step 4), fold the
+   roll-up (`cellsPassed / cellsTotal`, first error if any) into the summary.
+   Offer only — never run it without confirmation.
+2. Call `python .shards/ui/notebook-kernel.py stop <session_id>`.
+3. Set walkthrough state `status = "ended"` and save.
+4. **Optional artifact:** if the notebook lives under `studies/` (Data
    Scientist) or `models/` / `services/` / `research/` (ML Engineer / Syn),
    offer to write a brief transcript summary to
    `<project_dir>/walkthroughs/<session_id>.md` — list of cells walked
    through, key explanations, user questions, and any edits applied.
    Do not write this without explicit user confirmation.
-4. Close the panel:
+5. Close the panel:
    ```bash
    node .shards/ui/ui-push.js close --panel-id "nw-<session_id>"
    ```
@@ -299,6 +335,11 @@ When the user sends `End walkthrough` or otherwise signals completion:
   user sees stale info.
 - **One action at a time.** Don't batch. The walkthrough is conversational.
 - **Kernel errors halt progress** — surface them and wait for the user.
+- **Keep outputs clean.** Every `exec` writes the cell's output back into the
+  `.ipynb` *and* into your context. Before running a cell that would print a
+  secret/token or dump a full DataFrame, suggest a `.head()` / `.shape` /
+  summary edit first — full dumps bloat the notebook and burn context on every
+  state read.
 - **Persona stays in character.** Use the per-agent variant's voice for
   explanations and confirmations. The protocol mechanics here apply
   unchanged across all three agents.

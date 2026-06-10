@@ -45,6 +45,9 @@ When in doubt: **if this piece fails, what would I need to debug in isolation?**
 - **Print shapes and heads** immediately after every data load or transform: `print(df.shape); df.head()`. If the shape isn't what Phase 3 predicted, stop.
 - **Never introduce a new cell that depends on an untested cell.** If cell 3 hasn't been exercised, do not write cell 4.
 - **Watch for the silent-fail pattern.** A cell that runs without raising but whose output is empty (`df` with 0 rows, a plot with no data) counts as a failure — assert row count `> 0` explicitly.
+- **Keep cell outputs clean.** Never print secrets, API keys, tokens, or passwords into a cell — load them from the environment (`os.environ` / a `.env` file) and never echo them; they get committed into the `.ipynb` and, in walkthrough mode, streamed into agent context. Prefer summaries (`df.head()`, `df.shape`, `df.describe()`, `.value_counts().head()`) over dumping a full DataFrame — a full dump bloats the notebook and, because the kernel writes outputs back into the `.ipynb` *and* into the agent's context, is a token cost paid on every state read.
+- **Install with `%pip` / `%conda`, not `!pip`.** The magics install into the running kernel's own environment; `!pip` shells out and may target a different interpreter, leaving imports silently failing on the live kernel.
+- **Never modify or delete raw data in place.** Read source/raw data read-only; write every derived or cleaned artifact to a separate path (`data/derived/`, `results/`). A transform that overwrites its own input is unrecoverable and destroys reproducibility.
 
 ### SQL
 
@@ -109,6 +112,18 @@ The `phase=<N>` attribute matches the current phase number (checkpoints live *wi
 - **Experiment versioning** (`experiment_versioning.md`) — checkpoints are build-time; experiment snapshots are result-time. In `[X]` or `[AR]` modes both apply: snapshot after each experiment result, checkpoint after each component within each experiment.
 - **Gate pattern** — the phase-level `kind=phase` gate still fires at the end of the phase. Checkpoints do not replace it; they punctuate the build leading up to it.
 - **Knowledge checkpoint** (`knowledge_checkpoint.md`) — if a checkpoint surfaces a pattern (known bad distribution, known grain issue), cite it in the Evidence block.
+
+## Restart & Run All — the Final Reproducibility Check
+
+Incremental testing proves each component works *in isolation*. It does **not** prove the notebook runs clean top-to-bottom on a fresh kernel — cells can pass out of order, depend on state left by a since-edited cell, or rely on a variable that no longer exists after a restart. A notebook only truly works if **"Restart Kernel & Run All" completes without error**.
+
+This check runs **once, at the end** — after every component has already passed its checkpoint. It is the final step, never the first execution (see the "Run-all is not a development technique" framing above and the failure mode below).
+
+- **In Notebook Walkthrough mode**, run it via the kernel helper: `python .shards/ui/notebook-kernel.py run-all <session_id>`. The helper restarts the kernel, executes every code cell in order against the fresh kernel, stops at the first failing cell, and returns a per-cell pass/fail roll-up with the first error (`firstError`). Surface the result to the user; on a failure, stop and diagnose — do not declare the notebook done.
+- **Standalone** (no walkthrough session), run `jupyter nbconvert --execute --to notebook --inplace <notebook>` (or `jupyter execute <notebook> --inplace`) and confirm a zero exit code.
+- **Set seeds** (`numpy`, `random`, and any framework — `sklearn`, `torch`) so the fresh run is deterministic and headline metrics reproduce. A run-all that "works" but produces different numbers each time is not reproducible.
+
+For the Data Scientist this is the **DS-11** validation check (`Restart & Run All: N cells, no errors | seed=42 | log: results/notebook_rerun.log`); the `run-all` subcommand is how that evidence is produced. Other notebook-producing agents apply the same check at their final notebook validation.
 
 ## Failure Modes to Avoid
 
