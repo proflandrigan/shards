@@ -17,7 +17,7 @@ const { readLastAssistantMessage } = require(path.join(HOOK_DIR, 'gate-hook', 't
 const { appendViolation, appendHistory, appendAutoHistory } = require(path.join(HOOK_DIR, 'gate-hook', 'log.js'));
 const { isAutoApprovable } = require(path.join(HOOK_DIR, 'gate-hook', 'auto-allowlist.js'));
 const validation = require(path.join(HOOK_DIR, 'gate-hook', 'validation.js'));
-const { isForceCloseBash, isStale, sweepStale } = require(path.join(HOOK_DIR, 'gate-hook', 'sweep.js'));
+const { isForceCloseBash, isStaleGate, sweepStaleSessions } = require(path.join(HOOK_DIR, 'gate-hook', 'sweep.js'));
 
 // Opt-in validation enforcement. Default: off (parse-and-log only).
 // Flip to 1 to have the hook block gates when validation is missing.
@@ -132,10 +132,18 @@ function handleStop(payload) {
   const transcriptPath = payload.transcript_path;
   const sessionId = payload.session_id || 'unknown';
 
-  // Stale-gate sweep — clear before processing this Stop event so a stuck
-  // prior-session gate can't shadow a fresh open below.
+  // Stale-gate sweep — clear stale/abandoned slots before processing this Stop
+  // event so a stuck prior-session gate can't shadow a fresh open below. Only
+  // THIS session's gate (if stale) plus genuinely abandoned (>24h / malformed)
+  // gates from other sessions are swept; other sessions' fresh gates survive.
   const existing = state.read();
-  if (isStale(existing)) sweepStale(existing, sessionId);
+  if (isStaleGate(state.getGate(existing, sessionId)) ||
+      state.anyOpen(existing)) {
+    // sweepStaleSessions is a no-op when nothing is stale, so calling it
+    // whenever any gate is open is safe and keeps the abandoned-other-session
+    // cleanup running.
+    sweepStaleSessions(existing, sessionId);
+  }
 
   const lastMsg = readLastAssistantMessage(transcriptPath);
   if (!lastMsg) return;
@@ -236,9 +244,11 @@ function handleStop(payload) {
     }
   }
 
-  // Open the gate
+  // Open the gate into THIS session's slot. Re-read so we compose against the
+  // freshest state (the sweep above may have written). setGate preserves the
+  // shared history and every other session's slot.
   const current = state.read();
-  const newState = {
+  const gateObj = {
     open: true,
     id,
     phase: phase || null,
@@ -247,9 +257,8 @@ function handleStop(payload) {
     opened_at: new Date().toISOString(),
     opened_in_turn: payload.turn_number || null,
     transcript_ref: transcriptPath || null,
-    history: current.history || [],
   };
-  state.write(newState);
+  state.write(state.setGate(current, sessionId, gateObj));
   appendHistory({ event: 'opened', gate_id: id, kind: gateKind, session_id: sessionId });
 }
 
@@ -261,19 +270,24 @@ function handlePreToolUse(payload) {
   const sessionId = payload.session_id || 'unknown';
 
   // Stale-gate sweep — clear malformed / abandoned gates before the block
-  // check. Catches the test-gate-leftover case where state.json was hand-
-  // written with no opened_at, plus genuinely abandoned gates older than 24h.
-  if (isStale(s)) {
-    s = sweepStale(s, sessionId);
+  // check. Catches the test-gate-leftover case where this session's slot was
+  // hand-written with no opened_at, plus genuinely abandoned gates older than
+  // 24h (any session). Other sessions' FRESH gates are left untouched.
+  if (state.anyOpen(s)) {
+    s = sweepStaleSessions(s, sessionId);
   }
 
-  // Branch 1: a gate is open. Existing block behavior — gates always win,
-  // except for the operator force-close escape hatch.
-  if (s.open) {
+  // Block decision is scoped to THIS session's gate. A different session's
+  // open gate must NOT block this session's tool call.
+  const gate = state.getGate(s, sessionId);
+
+  // Branch 1: this session's gate is open. Existing block behavior — gates
+  // always win, except for the operator force-close escape hatch.
+  if (gate.open) {
     if (ALLOWED_TOOLS.has(toolName)) return;
     if (isForceCloseBash(toolName, payload.tool_input)) return;
 
-    const gateKind = s.kind || 'phase';
+    const gateKind = gate.kind || 'phase';
     const label = (
       gateKind === 'checkpoint' ? 'Checkpoint gate — a component was just tested and awaits user confirmation before the next component can be written.' :
       gateKind === 'confirm'    ? 'Confirm gate — micro-confirmation checkpoint; await explicit user confirmation before continuing.' :
@@ -284,9 +298,9 @@ function handlePreToolUse(payload) {
     );
 
     const msg = [
-      `::GATE-BLOCK:: Gate '${s.id}' (phase ${s.phase}, kind ${gateKind}) is still open.`,
+      `::GATE-BLOCK:: Gate '${gate.id}' (phase ${gate.phase}, kind ${gateKind}) is still open.`,
       label,
-      `Opened at ${s.opened_at}. User must confirm before you can proceed.`,
+      `Opened at ${gate.opened_at}. User must confirm before you can proceed.`,
       `If the user just confirmed, the UserPromptSubmit hook should have closed`,
       `the gate — if it did not, the confirmation language was ambiguous. Ask`,
       `the user for an explicit "confirmed" / "proceed".`,
@@ -381,37 +395,43 @@ function maybeCloseAutoOnPrompt(prompt) {
 
 function handleUserPromptSubmit(payload) {
   const prompt = payload.prompt || '';
+  const sessionId = payload.session_id || 'unknown';
 
   // Auto-verify halt on user dissent — independent of gate state.
   maybeCloseAutoOnPrompt(prompt);
 
   const s = state.read();
-  if (!s.open) return;
+  // Operate on THIS session's gate only — a confirm here must not close some
+  // other concurrent session's open gate.
+  const gate = state.getGate(s, sessionId);
+  if (!gate.open) return;
 
   const result = classify(prompt);
 
   if (result === 'confirm') {
     const closed_at = new Date().toISOString();
     const historyEntry = {
-      id: s.id,
-      phase: s.phase,
-      kind: s.kind,
-      opened_at: s.opened_at,
+      id: gate.id,
+      phase: gate.phase,
+      kind: gate.kind,
+      opened_at: gate.opened_at,
       closed_at,
       confirmed_by: 'user-prompt',
     };
-    const newState = {
-      open: false,
-      history: [...(s.history || []), historyEntry],
-    };
-    state.write(newState);
-    appendHistory({ event: 'closed', gate_id: s.id, kind: s.kind || 'phase', confirmed_by: 'user-prompt' });
+    // Move this session's gate into shared history, then clear its slot.
+    const cleared = state.clearGate(s, sessionId);
+    state.write({
+      version: 2,
+      sessions: cleared.sessions,
+      history: [...cleared.history, historyEntry],
+    });
+    appendHistory({ event: 'closed', gate_id: gate.id, kind: gate.kind || 'phase', confirmed_by: 'user-prompt' });
   } else if (result === 'deny') {
     // Gate stays open — user is asking for a change
   } else {
     // Ambiguous — gate stays open, inject context reminder
     respond({
-      additionalContext: `<system-reminder>\nGate '${s.id}' is still open. The user's message did not contain an explicit confirmation. Do not advance to the next phase. Ask for explicit confirmation or address their message within the current phase.\n</system-reminder>`,
+      additionalContext: `<system-reminder>\nGate '${gate.id}' is still open. The user's message did not contain an explicit confirmation. Do not advance to the next phase. Ask for explicit confirmation or address their message within the current phase.\n</system-reminder>`,
     });
   }
 }

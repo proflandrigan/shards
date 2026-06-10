@@ -12,9 +12,38 @@ const VIOLATIONS_FILE = path.join(GATE_DIR, 'violations.jsonl');
 const HISTORY_FILE = path.join(GATE_DIR, 'gates.jsonl');
 const AUTO_STATE_FILE = path.join(AUTO_DIR, 'state.json');
 
+// Read state.json and normalize to the v2 shape. Backward-compatible: a legacy
+// single-slot object is upgraded in memory (mirrors tools/gate-hook/state.js).
 function readState() {
-  try { return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')); }
-  catch { return { open: false, history: [] }; }
+  let raw;
+  try { raw = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')); }
+  catch { return { version: 2, sessions: {}, history: [] }; }
+  if (!raw || typeof raw !== 'object') return { version: 2, sessions: {}, history: [] };
+  if (raw.version === 2 || raw.sessions) {
+    return {
+      version: 2,
+      sessions: (raw.sessions && typeof raw.sessions === 'object') ? raw.sessions : {},
+      history: Array.isArray(raw.history) ? raw.history : [],
+    };
+  }
+  // Legacy single-slot upgrade.
+  const sessions = {};
+  if (raw.open) {
+    sessions[raw.agent || '__legacy__'] = {
+      open: true,
+      id: raw.id,
+      phase: typeof raw.phase !== 'undefined' ? raw.phase : null,
+      kind: raw.kind || null,
+      agent: raw.agent || null,
+      opened_at: raw.opened_at || null,
+    };
+  }
+  return { version: 2, sessions, history: Array.isArray(raw.history) ? raw.history : [] };
+}
+
+// Open session slots as [sessionId, gate] pairs.
+function openSessions(s) {
+  return Object.entries(s.sessions || {}).filter(([, g]) => g && g.open);
 }
 
 function readAutoState() {
@@ -54,16 +83,20 @@ function formatDate(iso) {
 
 function cmdStatus() {
   const s = readState();
+  const open = openSessions(s);
   console.log('\n── Gate Status ──────────────────────────────');
-  if (s.open) {
-    console.log(`  Status:    OPEN`);
-    console.log(`  Gate ID:   ${s.id}`);
-    console.log(`  Phase:     ${s.phase || '?'}`);
-    console.log(`  Kind:      ${s.kind || '?'}`);
-    console.log(`  Agent:     ${s.agent || '?'}`);
-    console.log(`  Opened at: ${formatDate(s.opened_at)}`);
+  if (open.length > 0) {
+    console.log(`  Status:    OPEN (${open.length} session${open.length === 1 ? '' : 's'})`);
+    for (const [sessionId, g] of open) {
+      console.log(`  ┌─ session ${sessionId}`);
+      console.log(`  │  Gate ID:   ${g.id}`);
+      console.log(`  │  Phase:     ${g.phase || '?'}`);
+      console.log(`  │  Kind:      ${g.kind || '?'}`);
+      console.log(`  │  Agent:     ${g.agent || '?'}`);
+      console.log(`  │  Opened at: ${formatDate(g.opened_at)}`);
+    }
   } else {
-    console.log('  Status:    closed');
+    console.log('  Status:    closed (no session has an open gate)');
   }
 
   const history = (s.history || []).slice(-10);
@@ -173,17 +206,25 @@ function cmdViolations() {
 
 function cmdForceClose() {
   const s = readState();
-  const wasOpen = s.open;
+  // Operator override unsticks EVERYONE — clear all session slots, appending an
+  // operator-force-close history entry per previously-open session.
+  const open = openSessions(s);
+  const wasOpen = open.length > 0;
+  const closed_at = new Date().toISOString();
   const newState = {
-    open: false,
-    history: [...(s.history || []), {
-      id: s.id || 'unknown',
-      phase: s.phase,
-      kind: s.kind,
-      opened_at: s.opened_at,
-      closed_at: new Date().toISOString(),
-      confirmed_by: 'operator-force-close',
-    }],
+    version: 2,
+    sessions: {},
+    history: [
+      ...(s.history || []),
+      ...open.map(([, g]) => ({
+        id: g.id || 'unknown',
+        phase: g.phase,
+        kind: g.kind,
+        opened_at: g.opened_at,
+        closed_at,
+        confirmed_by: 'operator-force-close',
+      })),
+    ],
   };
 
   // Also reset auto-verify state. If an auto-verify block was open, its
@@ -214,19 +255,24 @@ function cmdForceClose() {
     if (autoReset) {
       atomicWriteJson(AUTO_STATE_FILE, autoReset);
     }
-    // Log to violations
-    const entry = JSON.stringify({
-      type: 'operator-force-close',
-      gate_id: s.id || 'unknown',
-      auto_verify_was_open: autoWasOpen,
-      auto_block_id: auto.id || null,
-      reason: 'operator force-close',
-      ts: new Date().toISOString(),
-    });
-    fs.appendFileSync(VIOLATIONS_FILE, entry + '\n');
+    // Log to violations — one entry per previously-open session gate.
+    const ts = new Date().toISOString();
+    const lines = (wasOpen ? open : [[null, { id: 'unknown' }]]).map(([sid, g]) =>
+      JSON.stringify({
+        type: 'operator-force-close',
+        gate_id: g.id || 'unknown',
+        session_id: sid || null,
+        auto_verify_was_open: autoWasOpen,
+        auto_block_id: auto.id || null,
+        reason: 'operator force-close',
+        ts,
+      })
+    );
+    fs.appendFileSync(VIOLATIONS_FILE, lines.join('\n') + '\n');
 
     if (wasOpen) {
-      console.log(`\nForce-closed gate '${s.id}'.`);
+      const ids = open.map(([, g]) => `'${g.id}'`).join(', ');
+      console.log(`\nForce-closed ${open.length} gate${open.length === 1 ? '' : 's'}: ${ids}.`);
     } else {
       console.log('\nGate was already closed.');
     }

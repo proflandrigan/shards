@@ -209,9 +209,6 @@ var _gateReconnectTimer = null;
 
 function _onGateStateUpdate(state) {
   gateState = state || { open: false, history: [] };
-  if (typeof renderGatePill === 'function') {
-    renderGatePill(gateState);
-  }
 }
 
 function _onGateBlock(evt) {
