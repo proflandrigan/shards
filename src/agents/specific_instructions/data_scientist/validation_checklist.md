@@ -123,7 +123,7 @@ Skip with `n/a` if the analysis uses no engineered features.
 The notebook runs top-to-bottom from a clean kernel and produces the same outputs.
 
 - Seeds set where randomness exists (numpy, sklearn, torch).
-- "Restart Kernel & Run All" completes without error.
+- "Restart Kernel & Run All" completes without error. Produce this mechanically: in Notebook Walkthrough mode, `python .shards/ui/notebook-kernel.py run-all <session_id>` (restarts the kernel and runs every cell top-to-bottom, stopping at the first failure); standalone, `jupyter nbconvert --execute --to notebook --inplace <notebook>`.
 - Key output cells (metrics, headline plots) produce byte-identical or deterministic-within-tolerance output on re-run.
 
 **Observed format:** `Restart & Run All: 47 cells, 4m32s, no errors | seed=42 | headline metrics reproduced to 1e-6 | log: results/notebook_rerun.log`

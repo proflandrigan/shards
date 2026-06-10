@@ -65,6 +65,7 @@ function renderNotebookWalkthrough(container, panel) {
   html += '</div>';
   html += '<div class="nw-strip-right">';
   html += '<button class="nw-strip-btn" data-nw-action="send-command" data-nw-command="Restart kernel" title="Restart kernel">Restart</button>';
+  html += '<button class="nw-strip-btn" data-nw-action="send-command" data-nw-command="Restart &amp; run all" title="Restart the kernel and run every cell top-to-bottom (reproducibility check)">Run All</button>';
   html += '<button class="nw-strip-btn" data-nw-action="send-command" data-nw-command="End walkthrough" title="End walkthrough">End</button>';
   html += '</div>';
   html += '</div>';
