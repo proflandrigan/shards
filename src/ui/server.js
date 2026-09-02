@@ -6,6 +6,7 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { execSync, execFileSync } = require('child_process');
 const { randomUUID } = require('crypto');
 const { ChatSession, reconnectOrCleanup } = require('./chat-session');
@@ -92,6 +93,24 @@ const PROJECT_OUTPUT_DIRS = [
   'dashboards', 'brainstorm', 'experiments', 'fixes', 'presentations', 'projects',
 ];
 const PROJECT_PATH_RE = new RegExp(`^(${PROJECT_OUTPUT_DIRS.join('|')})/([^/]+)/`);
+
+const AGENT_META = {
+  'syn':                    { color: '#FFD700', label: 'Syn (Orchestrator)',           category: 'route', keywords: [] },
+  'data-analyst':           { color: '#4CAF50', label: 'Data Analyst',                category: 'analytics',  keywords: ['sql', 'query', 'adhoc'] },
+  'data-scientist':         { color: '#2196F3', label: 'Data Scientist',              category: 'data',  keywords: ['eda', 'exploratory', 'statistical'] },
+  'data-engineer':          { color: '#FF9800', label: 'Data Engineer',               category: 'data',  keywords: ['pipeline', 'etl', 'warehouse'] },
+  'data-modeller':          { color: '#00BCD4', label: 'Data Modeller',               category: 'data',  keywords: ['schema', 'erd', 'dimensional'] },
+  'analytics-engineer':     { color: '#8BC34A', label: 'Analytics Engineer',          category: 'data',  keywords: ['dbt', 'transform', 'staging'] },
+  'ml-engineer':            { color: '#F44336', label: 'ML Engineer',                 category: 'mlai', keywords: ['recommender', 'classification', 'production ml'] },
+  'ai-engineer':            { color: '#9C27B0', label: 'AI Engineer',                 category: 'mlai', keywords: ['llm', 'rag', 'prompt'] },
+  'applied-ml-scientist':   { color: '#673AB7', label: 'Applied ML Scientist',       category: 'mlai', keywords: ['novel', 'research', 'architecture'] },
+  'deep-learning-engineer': { color: '#03A9F4', label: 'Deep Learning Engineer',     category: 'mlai', keywords: ['neural', 'pytorch', 'transformer'] },
+  'mlops-engineer':         { color: '#FF5722', label: 'MLOps Engineer',              category: 'mlai', keywords: ['deploy', 'serving', 'monitoring'] },
+  'bi-engineer':            { color: '#E91E63', label: 'BI Engineer',                 category: 'analytics', keywords: ['dashboard', 'visualization', 'streamlit'] },
+  'backend-engineer':       { color: '#9E9E9E', label: 'Backend Engineer',            category: 'review', keywords: ['python', 'fastapi', 'code review'] },
+  'researcher':             { color: '#795548', label: 'Researcher',                  category: 'review', keywords: ['statistics', 'methodology'] },
+  'academic':               { color: '#607D8B', label: 'Academic',                    category: 'review', keywords: ['safety', 'ethics', 'bias'] },
+};
 
 function detectProjectFromRelPath(relPath) {
   if (!relPath || relPath.startsWith('..')) return null;
@@ -1028,7 +1047,49 @@ function listAgents() {
       agents.push({ name, description });
     }
   } catch {}
+  // Enrich with metadata
+  for (const a of agents) {
+    const meta = AGENT_META[a.name] || {};
+    a.description = a.description || meta.description || '';
+    a.label = meta.label || a.name;
+    a.color = meta.color || '#3860c0';
+    a.category = meta.category || 'other';
+    a.keywords = meta.keywords || [];
+  }
   return agents;
+}
+
+function listSkills() {
+  const roots = [
+    { dir: path.join(PROJECT_DIR, '.claude', 'skills'), scope: 'project' },
+    { dir: path.join(os.homedir(), '.claude', 'skills'), scope: 'user' },
+  ];
+  const seen = new Set();
+  const skills = [];
+
+  for (const { dir, scope } of roots) {
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { continue; }
+
+    for (const entry of entries) {
+      if (!entry.isDirectory() || seen.has(entry.name)) continue;
+      const skillPath = path.join(dir, entry.name, 'SKILL.md');
+      if (!fs.existsSync(skillPath)) continue;
+      const content = readFileSafe(skillPath);
+      if (!content) continue;
+
+      let description = '';
+      const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+      if (fmMatch) {
+        const descMatch = fmMatch[1].match(/description:\s*["']?(.+?)["']?\s*$/m);
+        if (descMatch) description = descMatch[1];
+      }
+
+      seen.add(entry.name);
+      skills.push({ name: entry.name, description, scope });
+    }
+  }
+  return skills;
 }
 
 // ─── Chat session management ────────────────────────────────────────────────
@@ -1154,13 +1215,24 @@ function parseSlashCommand(message) {
 
   // Agent commands — check against installed agents
   const agents = listAgents();
-  const agentNames = agents.map(a => a.name);
-  if (agentNames.includes(cmd)) {
+
+  // Explicit /agent <name> form — always unambiguous
+  if (cmd === 'agent') {
+    const name = trimmed.slice(1 + cmd.length).trim();
+    if (agents.some(a => a.name === name)) {
+      return { type: 'agent', agent: name };
+    }
+    return null;
+  }
+
+  // Bare agent name — backward compatible shortcut
+  if (agents.some(a => a.name === cmd)) {
     return { type: 'agent', agent: cmd };
   }
 
-  // Unknown slash command — pass through
-  return null;
+  // Everything else — skills, project commands, CC builtins we don't
+  // special-case — goes to the CLI verbatim.
+  return { type: 'passthrough' };
 }
 
 // ─── Chat session creation helper ───────────────────────────────────────────
@@ -1206,32 +1278,40 @@ function startNewChatSession(agent, options = {}) {
   store.chatSession = chatSess;
   chatSess.start();
 
-  // Read the command file for this agent
-  const cmdFile = path.join(COMMANDS_DIR, `${agent}.md`);
-  let activationPrompt;
-  try {
-    const raw = fs.readFileSync(cmdFile, 'utf8');
-    activationPrompt = raw.replace(/^---\n[\s\S]*?\n---\n*/, '').trim();
-  } catch {
-    activationPrompt = `You are now activated as the ${agent} agent. Greet the user and display your activation menu.`;
+  // Opening message. For an agent session this is the activation prompt from
+  // .claude/commands/<agent>.md; for a plain session it's the user's own first
+  // message, or nothing at all if they haven't typed yet.
+  let firstMessage = null;
+
+  if (agent) {
+    const cmdFile = path.join(COMMANDS_DIR, `${agent}.md`);
+    try {
+      const raw = fs.readFileSync(cmdFile, 'utf8');
+      firstMessage = raw.replace(/^---\n[\s\S]*?\n---\n*/, '').trim();
+    } catch {
+      firstMessage = `You are now activated as the ${agent} agent. Greet the user and display your activation menu.`;
+    }
+    if (initialMessage) {
+      firstMessage += '\n\nThe user has already provided their request upfront. ' +
+        '**Skip the greeting and activation menu entirely.** Go directly to Phase 0 triage.' +
+        '\n\nUser request:\n\n' + initialMessage;
+    }
+  } else if (initialMessage) {
+    firstMessage = initialMessage;
   }
 
-  // When a prompt is pre-supplied, skip the greeting and go straight to triage
-  if (initialMessage) {
-    activationPrompt = activationPrompt +
-      '\n\nThe user has already provided their request upfront. **Skip the greeting and activation menu entirely.** Go directly to Phase 0 triage.' +
-      '\n\nUser request:\n\n' + initialMessage;
+  if (firstMessage) {
+    try {
+      chatSess.send(firstMessage);
+    } catch (err) {
+      chatSess.stop();
+      sessions.delete(sessionId);
+      broadcast({ type: 'chat-error', error: `Session start failed: ${err.message}`, sessionId });
+      return { sessionId, agent };
+    }
   }
 
-  try {
-    chatSess.send(activationPrompt);
-  } catch (err) {
-    chatSess.stop();
-    sessions.delete(sessionId);
-    broadcast({ type: 'chat-error', error: `Activation failed: ${err.message}`, sessionId });
-  }
-
-  broadcast({ type: 'chat-started', agent, sessionId, autoActivated: true });
+  broadcast({ type: 'chat-started', agent, sessionId, autoActivated: !!agent });
   return { sessionId, agent };
 }
 
@@ -2426,6 +2506,11 @@ function createHandler() {
       return;
     }
 
+    if (req.method === 'GET' && parsedUrl.pathname === '/api/skills') {
+      jsonResponse(res, cors, 200, listSkills());
+      return;
+    }
+
     if (req.method === 'GET' && parsedUrl.pathname === '/chat/status') {
       const activeSessions = [];
       for (const [id, store] of sessions) {
@@ -2455,16 +2540,16 @@ function createHandler() {
         return;
       }
 
-      const { agent, permissionMode, sessionId: callerSessionId, initialMessage, resumeSessionId } = params;
-      if (!agent) {
-        jsonResponse(res, cors, 400, { error: 'Missing agent parameter' });
-        return;
-      }
+      const { agent, permissionMode, sessionId: callerSessionId, initialMessage,
+              resumeSessionId, model } = params;
 
-      const agentFile = path.join(AGENTS_DIR, `${agent}.md`);
-      if (!fs.existsSync(agentFile)) {
-        jsonResponse(res, cors, 404, { error: `Agent "${agent}" not found` });
-        return;
+      // agent is optional — null/omitted starts a plain session.
+      if (agent) {
+        const agentFile = path.join(AGENTS_DIR, `${agent}.md`);
+        if (!fs.existsSync(agentFile)) {
+          jsonResponse(res, cors, 404, { error: `Agent "${agent}" not found` });
+          return;
+        }
       }
 
       // Validate resume target. We allow resuming only sessions that have
@@ -2485,8 +2570,10 @@ function createHandler() {
         }
       }
 
-      log(`/chat/start requested for agent="${agent}"${resumeSessionId ? ` resume="${resumeSessionId}"` : ''}`);
-      const result = startNewChatSession(agent, { permissionMode, callerSessionId, initialMessage, resumeSessionId });
+      log(`/chat/start requested for agent="${agent || '(plain)'}"${resumeSessionId ? ` resume="${resumeSessionId}"` : ''}`);
+      const result = startNewChatSession(agent || null, {
+        permissionMode, callerSessionId, initialMessage, resumeSessionId, model,
+      });
       jsonResponse(res, cors, 200, result);
       return;
     }
@@ -2513,7 +2600,7 @@ function createHandler() {
       if (store && store.chatSession && store.chatSession.isRunning) {
         const agent = store.agent;
         broadcast({ type: 'chat-system-notice', text: 'Switching to **' + mode + '** mode…', sessionId: targetSessionId });
-        const result = startNewChatSession(agent, { callerSessionId: targetSessionId, permissionMode: mode });
+        const result = startNewChatSession(agent, { callerSessionId: targetSessionId, resumeSessionId: targetSessionId, permissionMode: mode });
         jsonResponse(res, cors, 200, { ok: true, switched: true, agent: result.agent, sessionId: result.sessionId });
       } else {
         // No active session — mode will be applied on next session start
@@ -2639,18 +2726,6 @@ function createHandler() {
 
       // ─── Claude Code built-in command handling ─────────────
       if (slashCmd && slashCmd.type === 'builtin') {
-        if (slashCmd.command === 'context') {
-          broadcast({ type: 'chat-system-notice', text: '`/context` is not available in the Shards UI. Use the terminal for token usage.', sessionId: targetSessionId });
-          jsonResponse(res, cors, 200, { ok: true });
-          return;
-        }
-
-        if (slashCmd.command === 'rewind') {
-          broadcast({ type: 'chat-system-notice', text: '`/rewind` is not available in the Shards UI. Use the terminal for rewind support.', sessionId: targetSessionId });
-          jsonResponse(res, cors, 200, { ok: true });
-          return;
-        }
-
         if (slashCmd.command === 'exit') {
           const store = targetSessionId ? getSession(targetSessionId) : null;
           if (store && store.chatSession && store.chatSession.isRunning) {
@@ -2670,7 +2745,7 @@ function createHandler() {
           if (store && store.chatSession && store.chatSession.isRunning) {
             const agent = store.agent;
             broadcast({ type: 'chat-system-notice', text: 'Switching model to `' + slashCmd.args + '`…', sessionId: targetSessionId });
-            const result = startNewChatSession(agent, { callerSessionId: targetSessionId, model: slashCmd.args });
+            const result = startNewChatSession(agent, { callerSessionId: targetSessionId, resumeSessionId: targetSessionId, model: slashCmd.args });
             jsonResponse(res, cors, 200, { ok: true, switched: true, agent: result.agent, sessionId: result.sessionId });
           } else {
             broadcast({ type: 'chat-system-notice', text: 'No active session. Start a session first.', sessionId: targetSessionId });

@@ -247,7 +247,7 @@ async function loadAgentPicker() {
   // Syn hero card (pinned, unaffected by search)
   var synAgent = agentList.find(function(a) { return a.name === 'syn'; });
   if (synAgent) {
-    var synInfo = AGENTS['syn'] || { color: '#FFD700', label: 'Syn (Orchestrator)' };
+    var synInfo = { color: synAgent.color || '#FFD700', label: synAgent.label || 'Syn (Orchestrator)' };
     var hero = document.createElement('div');
     hero.className = 'agent-card agent-card-hero';
     hero.innerHTML =
@@ -258,6 +258,16 @@ async function loadAgentPicker() {
       '</div>';
     hero.addEventListener('click', function() { startNewSession('syn'); });
     picker.appendChild(hero);
+
+    // Plain chat entry (no agent)
+    var plainChatCard = document.createElement('div');
+    plainChatCard.className = 'agent-card agent-card-plain';
+    plainChatCard.innerHTML =
+      '<span class="agent-card-dot" style="background:#3860c0"></span>' +
+      '<span class="agent-card-name">Plain Chat</span>' +
+      '<span class="agent-card-desc">A blank Claude Code session with no agent persona</span>';
+    plainChatCard.addEventListener('click', function() { startNewSession(null); });
+    picker.appendChild(plainChatCard);
   }
 
   // Non-Syn agents grouped by category
@@ -269,9 +279,7 @@ async function loadAgentPicker() {
   for (var i = 0; i < agentList.length; i++) {
     var agent = agentList[i];
     if (agent.name === 'syn') continue;
-    var info = AGENTS[agent.name];
-    if (!info) continue;
-    var cat = info.category || 'review';
+    var cat = agent.category || 'review';
     if (grouped[cat]) grouped[cat].push(agent);
   }
 
@@ -285,13 +293,12 @@ async function loadAgentPicker() {
     picker.appendChild(header);
 
     agents.forEach(function(agent) {
-      var agentInfo = AGENTS[agent.name] || { color: '#666', label: agent.name };
       var card = document.createElement('div');
       card.className = 'agent-card';
       card.innerHTML =
-        '<span class="agent-card-dot" style="background:' + agentInfo.color + '"></span>' +
-        '<span class="agent-card-name">' + esc(agentInfo.label) + '</span>' +
-        '<span class="agent-card-desc">' + esc(agentInfo.desc || agent.description || '') + '</span>';
+        '<span class="agent-card-dot" style="background:' + (agent.color || '#3860c0') + '"></span>' +
+        '<span class="agent-card-name">' + esc(agent.label || agent.name) + '</span>' +
+        '<span class="agent-card-desc">' + esc(agent.description || '') + '</span>';
       card.addEventListener('click', (function(name) { return function() { startNewSession(name); }; })(agent.name));
       picker.appendChild(card);
     });
@@ -327,9 +334,10 @@ function showChatView() {
 async function startNewSession(agentName, initialMessage, options) {
   options = options || {};
   try {
-    var body = { agent: agentName, permissionMode: currentPermissionMode };
+    var body = { agent: agentName || null, permissionMode: currentPermissionMode };
     if (initialMessage) body.initialMessage = initialMessage;
     if (options.resumeSessionId) body.resumeSessionId = options.resumeSessionId;
+    if (options.model) body.model = options.model;
     var res = await authFetch('/chat/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
