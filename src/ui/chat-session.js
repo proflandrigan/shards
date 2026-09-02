@@ -175,9 +175,16 @@ class ChatSession {
     if (type === 'system' && data.subtype === 'init') {
       // When forking, the CLI assigns a new session ID — update ours
       if (this.resumeSessionId && data.session_id) {
+        const oldSessionId = this.sessionId;
         this.sessionId = data.session_id;
+        // Remove stale metadata file keyed by old session ID
+        try { fs.unlinkSync(this._metadataPath(oldSessionId)); } catch {}
+        // Write fresh metadata with the new session ID
+        this._writeMetadata();
+        this.onEvent({ type: 'chat-init', sessionId: this.sessionId, oldSessionId, data });
+      } else {
+        this.onEvent({ type: 'chat-init', sessionId: this.sessionId, data });
       }
-      this.onEvent({ type: 'chat-init', sessionId: this.sessionId, data });
       return;
     }
 
@@ -345,8 +352,8 @@ class ChatSession {
 
   // P4: Session metadata persistence
 
-  _metadataPath() {
-    return path.join(this.sessionsDir, `${this.sessionId}.json`);
+  _metadataPath(sid) {
+    return path.join(this.sessionsDir, `${sid || this.sessionId}.json`);
   }
 
   _writeMetadata() {

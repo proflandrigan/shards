@@ -1139,9 +1139,19 @@ function handleChatEvent(event) {
       broadcast({ type: 'chat-turn-end', sessionId, cost: event.cost, duration: event.duration });
       break;
 
-    case 'chat-init':
+    case 'chat-init': {
+      // When forking, the CLI assigns a new session ID — re-key the store
+      if (event.oldSessionId && event.sessionId !== event.oldSessionId) {
+        const store = sessions.get(event.oldSessionId);
+        if (store) {
+          sessions.delete(event.oldSessionId);
+          sessions.set(event.sessionId, store);
+          store.sessionId = event.sessionId;
+        }
+      }
       broadcast({ type: 'chat-init', sessionId });
       break;
+    }
 
     case 'chat-error':
       broadcast({ type: 'chat-error', error: event.error, sessionId });

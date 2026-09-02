@@ -258,17 +258,17 @@ async function loadAgentPicker() {
       '</div>';
     hero.addEventListener('click', function() { startNewSession('syn'); });
     picker.appendChild(hero);
-
-    // Plain chat entry (no agent)
-    var plainChatCard = document.createElement('div');
-    plainChatCard.className = 'agent-card agent-card-plain';
-    plainChatCard.innerHTML =
-      '<span class="agent-card-dot" style="background:#3860c0"></span>' +
-      '<span class="agent-card-name">Plain Chat</span>' +
-      '<span class="agent-card-desc">A blank Claude Code session with no agent persona</span>';
-    plainChatCard.addEventListener('click', function() { startNewSession(null); });
-    picker.appendChild(plainChatCard);
   }
+
+  // Plain chat entry (no agent) — always available
+  var plainChatCard = document.createElement('div');
+  plainChatCard.className = 'agent-card agent-card-plain';
+  plainChatCard.innerHTML =
+    '<span class="agent-card-dot" style="background:#3860c0"></span>' +
+    '<span class="agent-card-name">Plain Chat</span>' +
+    '<span class="agent-card-desc">A blank Claude Code session with no agent persona</span>';
+  plainChatCard.addEventListener('click', function() { startNewSession(null); });
+  picker.appendChild(plainChatCard);
 
   // Non-Syn agents grouped by category
   var CATEGORY_ORDER = ['data', 'analytics', 'mlai', 'review'];
@@ -747,7 +747,7 @@ function renderSessionTabs() {
     var session = chatSessions[sid];
     if (!session) continue;
 
-    var info = AGENTS[session.agent] || { color: '#666', label: session.agent };
+    var info = AGENTS[session.agent] || { color: '#666', label: session.agent || 'Plain Chat' };
     agentOrdinals[session.agent] = (agentOrdinals[session.agent] || 0) + 1;
     var ordinal = agentOrdinals[session.agent];
     var suffix = deriveTabContext(session, agentCounts, ordinal);
@@ -944,7 +944,7 @@ function startTabRename(sessionId, titleEl) {
   var session = getSessionState(sessionId);
   if (!session) return;
 
-  var info = AGENTS[session.agent] || { label: session.agent };
+  var info = AGENTS[session.agent] || { label: session.agent || 'Plain Chat' };
   var currentTitle = session.title || info.label;
 
   var input = document.createElement('input');
