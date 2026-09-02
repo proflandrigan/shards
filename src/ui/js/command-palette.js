@@ -26,6 +26,35 @@ var commandRegistry = [
   { label: 'Clear All Pins', shortcut: '', action: function() { if (typeof clearAllPins === 'function') clearAllPins(); }, category: 'Chat' },
 ];
 
+var skillsFetched = false;
+
+function fetchAndAddSkillsToPalette() {
+  if (skillsFetched) return;
+  authFetch('/api/skills').then(function(res) {
+    if (!res.ok) return;
+    return res.json();
+  }).then(function(skills) {
+    if (!skills || !skills.length) return;
+    skillsFetched = true;
+    skills.forEach(function(skill) {
+      commandRegistry.push({
+        label: skill.name,
+        shortcut: '',
+        action: function() { sendSlashToActiveSession('/' + skill.name); },
+        category: 'Skills',
+      });
+    });
+  }).catch(function() {});
+}
+
+function sendSlashToActiveSession(text) {
+  var session = getActiveSession();
+  if (!session) return;
+  var input = document.getElementById('chat-input');
+  input.value = text;
+  sendChatMessage();
+}
+
 var cmdPaletteIdx = -1;
 
 function toggleCommandPalette() {
@@ -40,6 +69,7 @@ function toggleCommandPalette() {
   input.value = '';
   input.focus();
   cmdPaletteIdx = -1;
+  fetchAndAddSkillsToPalette();
   renderCommandPaletteResults('');
 }
 

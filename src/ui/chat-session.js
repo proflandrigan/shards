@@ -13,7 +13,7 @@ function log(msg) {
 }
 
 class ChatSession {
-  constructor({ agent, sessionId, resumeSessionId, cwd, sessionsDir, permissionMode, model, onEvent, onExit }) {
+  constructor({ agent, sessionId, resumeSessionId, cwd, sessionsDir, permissionMode, model, onEvent, onExit, addDir, mcpConfig, betas }) {
     this.agent = agent;
     this.sessionId = sessionId || randomUUID();
     this.resumeSessionId = resumeSessionId || null;
@@ -21,6 +21,9 @@ class ChatSession {
     this.sessionsDir = sessionsDir || path.join(this.cwd, '.shards', 'sessions');
     this.permissionMode = permissionMode || 'acceptEdits';
     this.model = model || null;
+    this.addDir = addDir || null;
+    this.mcpConfig = mcpConfig || null;
+    this.betas = betas || null;
     this.onEvent = onEvent || (() => {});
     this.onExit = onExit || (() => {});
     this.child = null;
@@ -36,20 +39,39 @@ class ChatSession {
       '--input-format', 'stream-json',
       '--verbose',
       '--include-partial-messages',
-      '--agent', this.agent,
-      '--session-id', this.sessionId,
+      '--forward-subagent-text',
       '--permission-mode', this.permissionMode,
     ];
 
+    if (this.agent) {
+      args.push('--agent', this.agent);
+    }
+
     if (this.resumeSessionId) {
       args.push('--resume', this.resumeSessionId);
+      args.push('--fork-session');
+      // Omit --session-id when forking; CLI generates the new ID
+    } else {
+      args.push('--session-id', this.sessionId);
     }
 
     if (this.model) {
       args.push('--model', this.model);
     }
 
-    log(`Spawning claude CLI for agent="${this.agent}" session="${this.sessionId}" permissionMode="${this.permissionMode}"${this.resumeSessionId ? ` resume="${this.resumeSessionId}"` : ''}`);
+    if (this.addDir) {
+      args.push('--add-dir', this.addDir);
+    }
+
+    if (this.mcpConfig) {
+      args.push('--mcp-config', this.mcpConfig);
+    }
+
+    if (this.betas) {
+      args.push('--betas', this.betas);
+    }
+
+    log(`Spawning claude CLI for agent="${this.agent || '(plain)'}" session="${this.sessionId}" permissionMode="${this.permissionMode}"${this.resumeSessionId ? ` resume="${this.resumeSessionId}"` : ''}`);
 
     // P4: Spawn detached so process survives server restarts
     this.child = spawn('claude', args, {
@@ -151,6 +173,15 @@ class ChatSession {
     const { type } = data;
 
     if (type === 'system' && data.subtype === 'init') {
+      // When forking, the CLI assigns a new session ID internally. We do NOT
+      // update this.sessionId — the server's sessions map and the browser both
+      // know us by the original randomUUID. If we changed it here, all
+      // subsequent broadcasts would carry the CLI-assigned ID and the browser
+      // would silently drop them because it can't find a matching session.
+      // The CLI's internal ID is irrelevant for in-memory routing; the
+      // metadata file (written by start()) keeps the original ID for
+      // reconnectOrCleanup to find. See the integration audit for the full
+      // trace of why this.sessionId must stay unchanged.
       this.onEvent({ type: 'chat-init', sessionId: this.sessionId, data });
       return;
     }
@@ -172,6 +203,14 @@ class ChatSession {
           this.onEvent({
             type: 'chat-tool-input-delta',
             partial_json: evt.delta.partial_json,
+            index: evt.index,
+            sessionId: this.sessionId,
+          });
+        } else if (evt.delta.type === 'thinking_delta') {
+          this._responding = true;
+          this.onEvent({
+            type: 'chat-thinking-token',
+            text: evt.delta.thinking,
             index: evt.index,
             sessionId: this.sessionId,
           });
@@ -311,8 +350,8 @@ class ChatSession {
 
   // P4: Session metadata persistence
 
-  _metadataPath() {
-    return path.join(this.sessionsDir, `${this.sessionId}.json`);
+  _metadataPath(sid) {
+    return path.join(this.sessionsDir, `${sid || this.sessionId}.json`);
   }
 
   _writeMetadata() {
