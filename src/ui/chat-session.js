@@ -173,18 +173,16 @@ class ChatSession {
     const { type } = data;
 
     if (type === 'system' && data.subtype === 'init') {
-      // When forking, the CLI assigns a new session ID — update ours
-      if (this.resumeSessionId && data.session_id) {
-        const oldSessionId = this.sessionId;
-        this.sessionId = data.session_id;
-        // Remove stale metadata file keyed by old session ID
-        try { fs.unlinkSync(this._metadataPath(oldSessionId)); } catch {}
-        // Write fresh metadata with the new session ID
-        this._writeMetadata();
-        this.onEvent({ type: 'chat-init', sessionId: this.sessionId, oldSessionId, data });
-      } else {
-        this.onEvent({ type: 'chat-init', sessionId: this.sessionId, data });
-      }
+      // When forking, the CLI assigns a new session ID internally. We do NOT
+      // update this.sessionId — the server's sessions map and the browser both
+      // know us by the original randomUUID. If we changed it here, all
+      // subsequent broadcasts would carry the CLI-assigned ID and the browser
+      // would silently drop them because it can't find a matching session.
+      // The CLI's internal ID is irrelevant for in-memory routing; the
+      // metadata file (written by start()) keeps the original ID for
+      // reconnectOrCleanup to find. See the integration audit for the full
+      // trace of why this.sessionId must stay unchanged.
+      this.onEvent({ type: 'chat-init', sessionId: this.sessionId, data });
       return;
     }
 
