@@ -3,30 +3,22 @@
 
 ---
 
-## Deep Phase 1 — Business Requirements
+## Deep Phase 1 — Business Discovery
 
-Goal: Understand who consumes this data and what questions it must answer.
+Goal: Deepen understanding of what the user is building and what questions the data must answer — driven by their intent, not a checklist.
 
-Ask about:
-- Who consumes this mart or pipeline? (analyst, dashboard, ML model, reverse ETL, finance report)
-- What specific business questions does this need to answer?
-- What grain do they need? (one row per what?)
-- Refresh cadence? (real-time, hourly, daily, weekly)
-- SLA or dependency constraints?
-- Net-new or replacing something existing? If replacing, what are the differences?
-- Any known edge cases or business rules that affect the data? (refunds, soft deletes, multi-currency)
-- **Will this mart feed a dashboard or BI tool?** (This affects how I'll design aggregations and dimensions.)
-- **What needs to be true for this data to be correct?**
+Follow the depth probe pattern from `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 1 — Depth Probe).
 
-Always ask the grain question directly: "What should one row in this mart represent?"
+Reference what the user said in Phase 0. Open with a question like:
 
-Push the acceptance-criteria question hard. Ask the user for concrete conditions,
-invariants, or sanity checks that must hold, and how each could be tested — and
-steer toward domain-specific criteria, not just generic structural ones. Example
-(a mart measuring recommender effectiveness): "every treated user has ≥1
-impression", "CTR ∈ [0,1]", "no user appears in both control and treatment", "row
-count matches the experiment assignment table". These are the user's definition of
-"the mart is correct" and become the backbone of the Phase 5 testing strategy.
+"Tell me more about [specific thing they mentioned] — who will use this and how day-to-day?"
+
+Let the conversation flow. Surface these topics naturally when the user's responses lead there:
+- **Consumers:** analyst, dashboard, ML model, reverse ETL, finance report
+- **Grain:** "What's the right level of detail for one row?" — ask when it becomes relevant
+- **Edge cases / unknowns:** refunds, soft deletes, multi-currency — ask "What edge cases or unknowns are you aware of?"
+- **Acceptance criteria:** steer toward domain-specific invariants. Ask "In your world, what needs to be true for this data to be correct?" Example (a mart measuring recommender effectiveness): "every treated user has ≥1 impression", "CTR ∈ [0,1]", "no user appears in both control and treatment", "row count matches the experiment assignment table".
+- **Where to look:** existing models, intake docs, upstream pipelines, stakeholders to consult
 
 **If the downstream consumer is a BI dashboard:** Note in Phase 4 (Model Layer Architecture) that aggregations and the date spine should be designed with dashboard query patterns in mind — pre-aggregated at the mart level where possible, date dimension at the right granularity for time-series charts, and dimension columns kept at manageable cardinality for filter dropdowns.
 
@@ -63,6 +55,8 @@ the missing field — not the whole set.
 - **Business questions this mart answers:**
   - <question 1>
   - <question 2>
+- **Edge cases / unknowns:** <domain-specific edge cases surfaced>
+- **Where to look:** <additional context sources identified>
 - **Required grain:** <one row per ___>
 - **Refresh cadence:** Real-time | Hourly | Daily | Weekly
 - **SLA / dependency:** <time constraint or "none">

@@ -185,16 +185,15 @@ studies/<project_name>/
 
 ---
 
-## Phase 0 — Triage
+## Phase 0 — Intent Discovery
 
-Goal: Confirm this is a deep analysis and set up the project.
+Goal: Uncover what the user needs to understand and where to look.
 
-Ask these questions — and only these questions. Do not ask anything from Phase 1 yet.
-1. **What's the core question you need answered?**
-2. **What does "done" look like — a report, a model, recommendations, all of the above?**
-3. **What should we call this study?** (used for the directory name)
+Follow the intent-driven discovery protocol in `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 0 — Open Probe).
 
-Wait for the user's response before proceeding.
+Open with: "What are you building — what problem are you solving?"
+
+Let the user's intent guide the follow-ups. Probe at the core question, "done" criteria, looking points, and data sources based on what they reveal. 
 
 **Routing check:** If this looks quick (single number, no methodology needed),
 suggest the Data Analyst. Otherwise, proceed as Deep.
@@ -213,6 +212,7 @@ Create or append to `studies/<project_name>/project-specs.md`:
 ## Phase 0: Triage (Data Scientist)
 - **Core question:** <the user's question, refined>
 - **Definition of done:** <report | model | recommendations | all>
+- **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Complexity assessment:** Deep (in scope) | Quick (analyst recommended)
 - **Routing decision:** Proceed as Deep | Recommend Data Analyst
 ### Knowledge Ledger

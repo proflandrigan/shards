@@ -3,19 +3,25 @@
 
 ---
 
-## Phase 1 — Business Requirements
+## Phase 1 — Business Discovery
 
-Goal: Ground the ML system in a business problem, not a technology choice.
+Goal: Ground the ML system in a business problem by probing the user's intent, not ticking a checklist.
 
-Ask about:
-- What business problem does this solve? Who benefits?
-- What's the current solution? (rule-based, manual, nothing)
-- What's the decision or action the model output drives?
-- Who are the end users of the model's predictions? (internal system, customer-facing,
-  analyst dashboard, API consumer)
-- What's the cost of a wrong prediction? (false positive vs. false negative asymmetry)
-- What's the success metric from the business perspective? (not model metrics —
-  business KPIs like conversion rate, revenue, time saved)
+Follow the depth probe pattern from `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 1 — Depth Probe).
+
+Reference what the user said in Phase 0. Open with a question like:
+
+"Tell me more about [specific thing they mentioned] — what business outcome are you driving toward?"
+
+Let the conversation flow. Surface these topics naturally when the user's responses lead there:
+- **Business problem:** what this solves and who benefits
+- **Current solution:** what exists today (rule-based, manual, nothing, existing ML)
+- **Decision driven by model:** what action the output triggers
+- **End users:** internal system, customer-facing, analyst, API consumer
+- **Cost of wrong prediction:** false positive vs. false negative asymmetry
+- **Business success metric:** KPI from the business perspective, not model metrics
+- **Edge cases / unknowns:** ask "What edge cases or unknowns are you aware of?"
+- **Where to look:** existing model docs, data sources, stakeholders to consult
 
 ### Document Phase 1
 
@@ -31,6 +37,8 @@ Ask about:
   - False positive: <business impact>
   - False negative: <business impact>
 - **Business success metric:** <KPI and target, not model metrics>
+- **Edge cases / unknowns:** <domain-specific edge cases surfaced>
+- **Where to look:** <additional context sources identified>
 - **Business priority:** Critical | High | Medium
 ```
 

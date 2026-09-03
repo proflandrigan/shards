@@ -3,19 +3,24 @@
 
 ---
 
-## Phase 1 — Business Question
+## Phase 1 — Question Discovery
 
-Goal: Ground the analysis in a decision, not just curiosity.
+Goal: Deepen the analysis question by probing the user's intent, not ticking a checklist.
 
-Ask about:
-- What decision will this analysis support, and who makes it?
-- Who is the primary audience? (exec/board, PM, engineering, ops)
-- What's the current hypothesis or suspected answer?
-- What would change in the business if the answer is X vs. Y?
-- Do you want me to get creative with methodology and features — explore unconventional
-approaches, engineer novel features, try multiple methods — or stick strictly to
-well-established, clearly defensible approaches? (skip if arriving via Syn Task handoff —
-preference already captured by Syn during triage)
+Follow the depth probe pattern from `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 1 — Depth Probe).
+
+Reference what the user said in Phase 0. Open with a question like:
+
+"Tell me more about [specific thing they mentioned] — what decision depends on this?"
+
+Let the conversation flow. Surface these topics naturally when the user's responses lead there:
+- **Decision supported:** what the analysis drives and who makes it
+- **Primary audience:** exec/board, PM, engineering, ops
+- **Current hypothesis:** what the stakeholder suspects
+- **Business impact:** what changes if the answer is X vs. Y
+- **Creativity preference:** ask "Should I explore unconventional approaches or stick to well-established methods?" (skip if arriving via Syn handoff — preference already captured)
+- **Edge cases / unknowns:** ask "What edge cases or unknowns are you aware of in this data?"
+- **Where to look:** existing studies, data sources, stakeholders to consult
 
 ### Document Phase 1
 
@@ -28,6 +33,8 @@ preference already captured by Syn during triage)
 - **Current hypothesis:** <what the stakeholder suspects>
 - **Business impact if X:** <what changes if one answer>
 - **Business impact if Y:** <what changes if other answer>
+- **Edge cases / unknowns:** <domain-specific edge cases surfaced>
+- **Where to look:** <additional context sources identified>
 - **Creative approach:** Creative | Strict
 ```
 

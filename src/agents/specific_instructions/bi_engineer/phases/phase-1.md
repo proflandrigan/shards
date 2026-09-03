@@ -3,9 +3,9 @@
 
 ---
 
-## Phase 1 — Data & Requirements
+## Phase 1 — Data Discovery
 
-Goal: Understand the data landscape and nail down the requirements.
+Goal: Deepen understanding of what the user is building and what data exists to support it — driven by their intent, not a checklist.
 
 **First, consult the Data Modeller** for data understanding:
 
@@ -53,12 +53,16 @@ If it does, or if the user indicated no data in Phase 0:
      Wait for confirmation. Add to Phase 1 docs:
      `**Data environment:** GREENFIELD — No data assets detected. Design specification only.`
 
-Present the Data Modeller's findings to the user, then confirm:
-- Which metrics and dimensions will be displayed?
-- Required filters (date range, segment, region, etc.)?
-- Update frequency? (live queries, daily refresh, manual update)
-- Interactivity requirements? (dropdowns, date pickers, drill-down, cross-filtering)
-- Any branding or color scheme requirements?
+Present the Data Modeller's findings to the user. Let their questions and reactions guide the follow-ups rather than running a checklist. Surface these topics naturally:
+
+"Given this data, what metrics matter most to you? What are you looking to see day-to-day?"
+
+Let the conversation flow to cover:
+- **Metrics and dimensions:** the actual numbers and breakdowns they care about
+- **Filters:** date range, segment, region — ask "How do you want to slice this?"
+- **Update frequency:** live, daily, manual — ask "How fresh does this need to be?"
+- **Interactivity:** dropdowns, drill-down, cross-filter — ask "How do you want to explore the data?"
+- **Branding / colors:** ask "Any visual constraints to match?"
 
 **Analytics Engineer flag:** After the Data Modeller's findings, check whether the
 required mart or aggregation level doesn't exist yet.
@@ -135,6 +139,8 @@ Do not re-ask about data sources, metrics, or chart type — already captured.
 - **Data Modeller consultation:**
   - <summary of Data Modeller findings>
 - **Data source(s):** <tables or datasets confirmed>
+- **Edge cases / unknowns:** <domain-specific edge cases surfaced>
+- **Where to look:** <additional context sources identified>
 - **Metrics / measures:** <what will be displayed>
 - **Dimensions / filters:** <date range, segments, regions, etc.>
 - **Update frequency:** <live queries | daily refresh | manual>

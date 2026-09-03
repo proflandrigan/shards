@@ -243,25 +243,19 @@ subdirectory the user specifies. Do not create a new top-level `models/` folder.
 
 ---
 
-## Phase 0 — Triage
+## Phase 0 — Intent Discovery
 
-Goal: Classify the project and understand scope.
+Goal: Uncover what the user is building and where to look.
 
-Ask these questions — and only these questions. Do not ask anything from Phase 1 yet.
-1. **What ML system are we building or improving?** (recommender, ranker, classifier,
-   regression model, clustering, anomaly detection, etc.)
-2. **Is this greenfield, iteration, or productionization from a study?** If iteration: what exists today? What's the
-   current performance? What needs to improve? If productionization from a study: ask for the study directory path.
-   Look for `ml_engineer_handoff.md` in that directory and read it if present — it contains the model design,
-   results, and business context from the Data Scientist. Also read `project-specs.md` for full research context.
-   If `ml_engineer_handoff.md` is not found, ask the user to describe the study's key model and feature decisions.
-3. **If iteration — where does the service live?** What is the path to the existing
-   service directory? (This is where `project-specs.md` and artifacts will be written.)
-4. **What does "done" look like?** (trained model, deployed service, performance
-   improvement, full pipeline, design doc)
-5. **What should we call this project?** (directory name, snake_case)
+Follow the intent-driven discovery protocol in `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 0 — Open Probe).
 
-Wait for the user's response before proceeding.
+Open with: "What are you building — what problem are you solving?"
+
+Let the user's intent guide the follow-ups. Probe at scope, looking points, and "done" criteria based on what they reveal. Specifically surface:
+- **Project classification:** Is this greenfield, iteration, or productionization from a study? If iteration: what exists today, what needs improving, where does the service live? If productionization from a study: ask for the study directory path. Look for `ml_engineer_handoff.md` in that directory and read it if present. Also read `project-specs.md` for full research context.
+- **ML system type:** Let the user describe it — classify from their description.
+
+Determine project classification (Greenfield / Iteration / Productionization) and get confirmation.
 
 ### Document Phase 0
 
@@ -295,6 +289,7 @@ Create or append to:
   - Key features from study: <summary from study Phase 4>
   - Study report: <path to report.md>
 - **Definition of done:** <trained model | deployed service | perf improvement | full pipeline | design doc>
+- **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Complexity assessment:** <1-2 sentences on scope and risk>
 ### Knowledge Ledger
 - **Entries checked:** <N> | N/A — ledger not found

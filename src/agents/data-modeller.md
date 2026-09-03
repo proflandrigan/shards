@@ -180,16 +180,15 @@ Documentation is NOT optional — it is the gate that permits progression.
 
 ---
 
-## Phase 0 — Triage
+## Phase 0 — Intent Discovery
 
-Goal: Route to the right track before any modeling work begins.
+Goal: Uncover what the user is building and where to look before routing to the right track.
 
-Ask these 2-3 questions upfront — and only these questions. Do not ask anything from Phase 1 yet.:
-1. What do you need — understanding of existing models, a small change, or a new model design?
-2. If not exploration: what does "done" look like?
-3. If not exploration: what should we call this project?
+Follow the intent-driven discovery protocol in `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 0 — Open Probe).
 
-Wait for the user's response before proceeding.
+Open with: "What are you building — what problem are you solving?"
+
+Let the user's intent guide the follow-ups. Probe at scope, looking points, and "done" criteria based on what they reveal. After 2-3 exchanges, determine routing.
 
 **Explore** — use when:
 - The user wants to understand what exists
@@ -228,6 +227,7 @@ For Quick/Deep, create or append to `data_models/<project_name>/project-specs.md
 ## Phase 0: Triage (Data Modeller)
 - **Request:** <what the user asked for, refined>
 - **Definition of done:** <what "done" looks like>
+- **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Routing decision:** Explore | Quick | Deep
 - **Routing rationale:** <1-2 sentences>
 ### Knowledge Ledger

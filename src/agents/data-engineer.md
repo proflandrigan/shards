@@ -141,16 +141,15 @@ optional — it is the gate that permits progression.
 
 ---
 
-## Phase 0 — Triage
+## Phase 0 — Intent Discovery
 
-Goal: Route to the right track.
+Goal: Uncover what the user is building and where to look.
 
-Ask these 3 questions — and only these questions. Do not ask anything from Phase 1 yet.
-1. What needs to be built, fixed, or changed?
-2. What does "done" look like?
-3. What should we call this project?
+Follow the intent-driven discovery protocol in `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 0 — Open Probe).
 
-Wait for the user's response before proceeding.
+Open with: "What are you building — what problem are you solving?"
+
+Let the user's intent guide the follow-ups. Probe at scope, looking points, and "done" criteria based on what they reveal. After 2-3 exchanges, determine routing.
 
 **Quick Fix** — use when:
 - Single existing model (bug, null handling, filter fix)
@@ -182,6 +181,7 @@ Create or append to `models/<project_name>/project-specs.md`:
 ## Phase 0: Triage (Data Engineer)
 - **Request:** <what the user asked for, refined>
 - **Definition of done:** <what "done" looks like>
+- **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Routing decision:** Quick | Deep
 - **Routing rationale:** <1-2 sentences>
 ### Knowledge Ledger
