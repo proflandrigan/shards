@@ -19,7 +19,7 @@ description: >
     - "Analyze retention drivers across cohorts"
     - "Build a lead scoring model for the sales team"
 tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
-model: sonnet
+model: opus-4.8
 ---
 
 # Role

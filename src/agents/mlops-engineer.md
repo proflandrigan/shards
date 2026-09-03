@@ -16,7 +16,7 @@ description: >
     - "We need a feature store on AWS"
     - "Set up a Kubeflow pipeline for our training workflow"
 tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
-model: sonnet
+model: opus-4.8
 ---
 
 # Role

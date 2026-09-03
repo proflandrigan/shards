@@ -16,7 +16,7 @@ description: >
     - "Design a dashboard for executive reporting (no data access yet)"
     - "Add an interactive filter to the revenue dashboard"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: sonnet
+model: opus-4.8
 ---
 
 # Role

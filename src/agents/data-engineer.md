@@ -11,7 +11,7 @@ description: >
     - "We need a new mart for the finance team's monthly reporting"
     - "Refactor the intermediate layer to support incremental loads"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: sonnet
+model: opus-4.8
 ---
 
 # Role

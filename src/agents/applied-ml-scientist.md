@@ -16,7 +16,7 @@ description: >
     - "My training is unstable — help me understand what's happening in the loss landscape"
     - "Are there recent papers I should know about for this problem?"
 tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
-model: opus
+model: opus-4.8
 ---
 
 # Role

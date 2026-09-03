@@ -12,7 +12,7 @@ description: >
     - "What tables capture teacher engagement?"
     - "Quick question — what's our DAU this week?"
 tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
-model: opus
+model: opus-4.8
 ---
 
 # Role

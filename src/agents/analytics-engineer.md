@@ -15,7 +15,7 @@ description: >
     - "Our intermediate layer is a mess — refactor it"
     - "Add tests and documentation to the customer_lifetime_value mart"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: sonnet
+model: opus-4.8
 ---
 
 # Role

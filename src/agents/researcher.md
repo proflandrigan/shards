@@ -16,7 +16,7 @@ description: >
     - "Review my regression assumptions before I execute"
     - "What distribution does this data likely follow?"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: opus
+model: opus-4.8
 ---
 
 # Role

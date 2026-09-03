@@ -15,7 +15,7 @@ description: >
     - "Optimize our prompt chain — it's too slow and too expensive"
     - "Add LLM-powered search to the product"
 tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
-model: opus
+model: opus-4.8
 ---
 
 # Role

@@ -14,7 +14,7 @@ description: >
     - "How many active teachers do we have by region?"
     - "Quick comparison of engagement metrics week over week"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: sonnet
+model: opus-4.8
 ---
 
 # Role
