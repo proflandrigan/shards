@@ -10,18 +10,14 @@ Goal: Understand the operational requirements before designing the stack.
 Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the MLOps Engineer section in `.claude/agents/specific_instructions/shared/intent_discovery.md` for your domain probes.
 
 Surface these topics naturally when the user's responses lead there:
-- **Scale:** Expected QPS for real-time serving, or batch volume and frequency
-- **Peak load:** Expected traffic spikes, geographic distribution
-- **Uptime SLA:** What's acceptable downtime? 99.9%? 99.99%? What's the impact
-  of a 5-minute outage?
+- **Scale:** expected QPS for real-time serving, or batch volume and frequency
+- **Peak load:** traffic spikes and geographic distribution
+- **Uptime SLA:** acceptable downtime and the impact of an outage
 - **Latency SLA:** p50/p95/p99 latency targets at the serving layer
-- **Retraining frequency:** How often does the model need to retrain? What
-  triggers a retrain — schedule, data drift, performance degradation, or manual?
-- **Cost budget:** Serving compute budget (monthly), training compute budget
-  (per run), storage budget
-- **Model lifespan:** Expected time before full model replacement vs. incremental
-  retraining
-- **Stakeholders:** Who owns the ML system operationally? Who gets paged at 3am?
+- **Retraining frequency:** how often and what triggers retraining — schedule, drift, degradation, or manual
+- **Cost budget:** serving, training, and storage budgets
+- **Model lifespan:** expected time before full replacement vs. incremental retraining
+- **Stakeholders:** who owns the system operationally and who gets paged
 
 ### Document Phase 1
 

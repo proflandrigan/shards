@@ -11,9 +11,9 @@ Continue the discovery rhythm from Phase 0 — open by referencing what the user
 
 Let the conversation flow. Surface these topics naturally when the user's responses lead there:
 - **Consumers:** analyst, dashboard, ML model, reverse ETL, finance report
-- **Grain:** "What's the right level of detail for one row?" — ask when it becomes relevant
-- **Edge cases / unknowns:** refunds, soft deletes, multi-currency — ask "What edge cases or unknowns are you aware of?"
-- **Acceptance criteria:** steer toward domain-specific invariants. Ask "In your world, what needs to be true for this data to be correct?" Example (a mart measuring recommender effectiveness): "every treated user has ≥1 impression", "CTR ∈ [0,1]", "no user appears in both control and treatment", "row count matches the experiment assignment table".
+- **Grain:** probe for the right level of detail when it becomes relevant
+- **Edge cases / unknowns:** refunds, soft deletes, multi-currency — surface what the user knows about edge cases in their domain
+- **Acceptance criteria:** steer toward domain-specific invariants they expect to hold. Example (a mart measuring recommender effectiveness): "every treated user has ≥1 impression", "CTR ∈ [0,1]", "no user appears in both control and treatment", "row count matches the experiment assignment table".
 - **Where to look:** existing models, intake docs, upstream pipelines, stakeholders to consult
 
 **If the downstream consumer is a BI dashboard:** Note in Phase 4 (Model Layer Architecture) that aggregations and the date spine should be designed with dashboard query patterns in mind — pre-aggregated at the mart level where possible, date dimension at the right granularity for time-series charts, and dimension columns kept at manageable cardinality for filter dropdowns.

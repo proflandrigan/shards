@@ -13,8 +13,8 @@ Let the conversation flow. Surface these topics naturally when the user's respon
 - **Consumer(s):** analysts, dashboards, ML pipelines, reverse ETL
 - **Domain boundaries:** what business process this represents, existing vs greenfield
 - **Key business rules:** entity relationships, cardinalities, source-of-truth systems
-- **Edge cases / unknowns:** ask "What edge cases or unknowns are you aware of in this domain?"
-- **Acceptance criteria:** steer toward model-level invariants — key uniqueness, cardinalities, referential integrity, grain. Ask "In your world, what needs to be true for this model to be correct?" Example (modelling recommender-effectiveness data): "one row per user-experiment assignment", "every impression references a valid user", "a user maps to exactly one variant", "CTR is derivable from clicks/impressions with no divide-by-zero".
+- **Edge cases / unknowns:** domain-specific edge cases the user is aware of
+- **Acceptance criteria:** steer toward model-level invariants — key uniqueness, cardinalities, referential integrity, grain. Set an example to calibrate expectations (e.g. for recommender-effectiveness data: "one row per user-experiment assignment", "every impression references a valid user", "a user maps to exactly one variant", "CTR is derivable from clicks/impressions with no divide-by-zero").
 - **Where to look:** existing models, source docs, stakeholders to consult
 
 ### Document Deep Phase 1

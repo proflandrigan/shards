@@ -16,7 +16,7 @@ Let the conversation flow. Surface these topics naturally when the user's respon
 - **End users:** internal system, customer-facing, analyst, API consumer
 - **Cost of wrong prediction:** false positive vs. false negative asymmetry
 - **Business success metric:** KPI from the business perspective, not model metrics
-- **Edge cases / unknowns:** ask "What edge cases or unknowns are you aware of?"
+- **Edge cases / unknowns:** domain-specific edge cases the user is aware of
 - **Where to look:** existing model docs, data sources, stakeholders to consult
 
 ### Document Phase 1

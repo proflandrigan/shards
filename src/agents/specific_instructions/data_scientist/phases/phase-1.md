@@ -14,8 +14,8 @@ Let the conversation flow. Surface these topics naturally when the user's respon
 - **Primary audience:** exec/board, PM, engineering, ops
 - **Current hypothesis:** what the stakeholder suspects
 - **Business impact:** what changes if the answer is X vs. Y
-- **Creativity preference:** ask "Should I explore unconventional approaches or stick to well-established methods?" (skip if arriving via Syn handoff — preference already captured)
-- **Edge cases / unknowns:** ask "What edge cases or unknowns are you aware of in this data?"
+- **Creativity preference:** whether they want creative exploration or strict execution (skip if arriving via Syn handoff — preference already captured)
+- **Edge cases / unknowns:** domain-specific edge cases the user is aware of in the data
 - **Where to look:** existing studies, data sources, stakeholders to consult
 
 ### Document Phase 1

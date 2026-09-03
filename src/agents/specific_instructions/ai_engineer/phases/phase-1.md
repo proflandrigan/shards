@@ -15,10 +15,10 @@ Let the conversation flow. Surface these topics naturally when the user's respon
 - **Decision driven by AI output:** what action the output triggers
 - **End users:** internal tool, customer-facing, API consumer, autonomous agent
 - **Cost of wrong output:** hallucinated content, inappropriate responses, leaked data, confidently wrong answers
-- **Acceptable error rate:** force a real number — "What percentage can be wrong before the system fails?"
+- **Acceptable error rate:** push for a concrete percentage the business can tolerate
 - **Business success metric:** KPI from the business perspective, not model metrics
 - **Human-in-the-loop:** who reviews output before it reaches users
-- **Edge cases / unknowns:** ask "What edge cases or unknowns are you aware of?"
+- **Edge cases / unknowns:** domain-specific edge cases the user is aware of
 - **Where to look:** existing prompts, eval data, stakeholders to consult
 
 ### Document Phase 1

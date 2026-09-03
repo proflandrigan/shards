@@ -11,9 +11,9 @@ Continue the discovery rhythm from Phase 0 — open by referencing what the user
 
 Let the conversation flow. Surface these topics naturally when the user's responses lead there:
 - **Consumers:** analyst, dashboard, ML model, reverse ETL
-- **Grain:** "What's the right level of detail?" — ask when it becomes relevant
-- **Edge cases / unknowns:** ask "What edge cases or unknowns are you aware of?"
-- **Acceptance criteria:** steer toward domain-specific invariants. Ask "In your world, what needs to be true for this data to be correct?" Example (a pipeline feeding recommender-effectiveness analysis): "every treated user has ≥1 impression", "CTR ∈ [0,1]", "no user appears in both control and treatment", "row count matches the experiment assignment table".
+- **Grain:** probe for the right level of detail when it becomes relevant
+- **Edge cases / unknowns:** domain-specific edge cases the user is aware of
+- **Acceptance criteria:** steer toward domain-specific invariants they expect to hold. Example (a pipeline feeding recommender-effectiveness analysis): "every treated user has ≥1 impression", "CTR ∈ [0,1]", "no user appears in both control and treatment", "row count matches the experiment assignment table".
 - **Where to look:** existing pipelines, source systems, upstream data, stakeholders to consult
 
 ### Document Deep Phase 1

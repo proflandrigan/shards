@@ -55,14 +55,14 @@ If it does, or if the user indicated no data in Phase 0:
 
 Present the Data Modeller's findings to the user. Let their questions and reactions guide the follow-ups rather than running a checklist. Surface these topics naturally:
 
-"Given this data, what metrics matter most to you? What are you looking to see day-to-day?"
+Open by referencing the data: "Given this data, what metrics matter most to you?"
 
 Let the conversation flow to cover:
 - **Metrics and dimensions:** the actual numbers and breakdowns they care about
-- **Filters:** date range, segment, region — ask "How do you want to slice this?"
-- **Update frequency:** live, daily, manual — ask "How fresh does this need to be?"
-- **Interactivity:** dropdowns, drill-down, cross-filter — ask "How do you want to explore the data?"
-- **Branding / colors:** ask "Any visual constraints to match?"
+- **Filters:** date range, segment, region — how they want to slice the data
+- **Update frequency:** live, daily, manual — how fresh it needs to be
+- **Interactivity:** dropdowns, drill-down, cross-filter — how they want to explore
+- **Branding / colors:** any visual constraints to match
 
 **Analytics Engineer flag:** After the Data Modeller's findings, check whether the
 required mart or aggregation level doesn't exist yet.
