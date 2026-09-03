@@ -7,7 +7,9 @@
 
 Goal: Understand the operational requirements before designing the stack.
 
-Ask about:
+Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the MLOps Engineer section in `.claude/agents/specific_instructions/shared/intent_discovery.md` for your domain probes.
+
+Surface these topics naturally when the user's responses lead there:
 - **Scale:** Expected QPS for real-time serving, or batch volume and frequency
 - **Peak load:** Expected traffic spikes, geographic distribution
 - **Uptime SLA:** What's acceptable downtime? 99.9%? 99.99%? What's the impact

@@ -176,11 +176,9 @@ These are the conventions you enforce in every model you write:
 
 Goal: Uncover what the user is building and where to look before routing to the right track.
 
-Follow the intent-driven discovery protocol in `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 0 — Open Probe).
+Follow the discovery rhythm for Analytics Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
-Open with: "What are you building — what problem are you solving?"
-
-Let the user's intent guide the follow-ups. Probe at scope, looking points, and "done" criteria based on what they reveal. After 2-3 exchanges, determine routing.
+As you listen, probe at metrics, source tables, and consumers. After 2-3 exchanges, determine routing.
 
 **Explore Track** — use when:
 - The user wants to understand what the transformation layer already contains

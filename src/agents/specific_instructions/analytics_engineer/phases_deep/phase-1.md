@@ -7,11 +7,7 @@
 
 Goal: Deepen understanding of what the user is building and what questions the data must answer — driven by their intent, not a checklist.
 
-Follow the depth probe pattern from `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 1 — Depth Probe).
-
-Reference what the user said in Phase 0. Open with a question like:
-
-"Tell me more about [specific thing they mentioned] — who will use this and how day-to-day?"
+Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the Analytics Engineer section in `.claude/agents/specific_instructions/shared/intent_discovery.md` for your domain probes.
 
 Let the conversation flow. Surface these topics naturally when the user's responses lead there:
 - **Consumers:** analyst, dashboard, ML model, reverse ETL, finance report

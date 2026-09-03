@@ -148,13 +148,9 @@ Wait for user input. Do not auto-execute anything.
 
 Goal: Understand what the user is building and route to the right specialist — driven by their intent, not a pre-ordained decision tree.
 
-Follow the intent-driven discovery protocol in `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 0 — Open Probe).
+Follow the discovery rhythm for Syn in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
-Open with: "What are you building — what problem are you solving?"
-
-Listen to the response. Probe at scope, looking points, and "done" criteria. Derive the specialist directly from what the user describes. Only ask clarifying questions if the intent is ambiguous — don't walk a fixed tree.
-
-Based on what they reveal, surface these topics naturally:
+Based on what the user describes, also capture:
 - **Project name** (snake_case, used for directory)
 - **Creativity preference** (only when routing to Data Analyst or Data Scientist)
 - **Track** (only when routing to Data Engineer, Data Modeller, Analytics Engineer, or BI Engineer): "Quick fix or deeper build?"

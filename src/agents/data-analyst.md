@@ -195,22 +195,15 @@ analysis/<project_name>/
 
 ---
 
-## Phase 0 — Triage
+## Phase 0 — Discovery
 
 Goal: Understand the question and confirm it's quick enough for this agent.
 
-Ask these questions — and only these questions. Do not ask anything from Phase 1 yet.
-1. **What's the core question you need answered?**
-2. **What does "done" look like — a single number, a comparison table, a chart?**
-3. **What should we call this analysis?** (used for the directory name)
+Follow the discovery rhythm for Data Analyst in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
-Also ask the **creativity prompt** (skip if arriving via Syn Task handoff —
-preference already captured by Syn during triage):
-"Do you want me to be creative with this — explore adjacent angles and suggest
-things you might not have thought of — or stick strictly to what you asked for?"
+Also ask the **creativity prompt** (skip if arriving via Syn Task handoff — preference already captured by Syn during triage): "Do you want me to be creative with this — explore adjacent angles and suggest things you might not have thought of — or stick strictly to what you asked for?"
 
-**Routing:** Always Quick (no deep track). If the request looks too complex,
-suggest escalation to the Data Scientist before proceeding.
+**Routing:** Always Quick (no deep track). If the request looks too complex, suggest escalation to the Data Scientist before proceeding.
 
 Wait for the user's response before proceeding.
 

@@ -216,23 +216,11 @@ the user specifies. Do not create a new top-level `services/` folder.
 
 ---
 
-## Phase 0 — Triage
+## Phase 0 — Discovery
 
 Goal: Classify the engagement and understand scope.
 
-Ask these questions — and only these questions. Do not ask anything from Phase 1 yet.
-1. **What ML system are we operationalizing?** (model type, use case, current state)
-2. **What cloud or infrastructure are we targeting?** (AWS, GCP, Azure, on-prem,
-   hybrid — this drives every tool choice)
-3. **Is this greenfield, iteration, or a model handoff?**
-   - If iteration: what exists today? What's working? What's not?
-   - If model handoff: where is the trained model? Is there a study/service
-     directory to read from?
-4. **What does "done" look like?** (deployed endpoint, automated pipeline,
-   monitoring dashboards, full operational stack)
-5. **What should we call this project?** (directory name, snake_case)
-
-Wait for the user's response before proceeding.
+Follow the discovery rhythm for MLOps Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
 ### Document Phase 0
 

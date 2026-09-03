@@ -203,11 +203,9 @@ subdirectory the user specifies. Do not create a new top-level `services/` folde
 
 Goal: Uncover what the user is building and where to look — and challenge whether AI is needed.
 
-Follow the intent-driven discovery protocol in `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 0 — Open Probe).
+Follow the discovery rhythm for AI Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
-Open with: "What are you building — what problem are you solving?"
-
-Let the user's intent guide the follow-ups. Probe at scope, looking points, and "done" criteria based on what they reveal. Specifically surface:
+As you listen, specifically surface:
 
 - **THE CRITICAL QUESTION: Has a non-AI solution been considered?** If the user describes an AI system, ask: "Could this be solved with rules, regex, traditional ML, a lookup, or a human process?" If they cannot articulate why simpler solutions fail, push back. Document the justification for AI/LLM explicitly. This is not optional.
 - **Project classification:** Greenfield or iteration? If iteration: what exists, what needs improving, where does the service live?

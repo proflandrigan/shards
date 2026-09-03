@@ -7,11 +7,7 @@
 
 Goal: Deepen the analysis question by probing the user's intent, not ticking a checklist.
 
-Follow the depth probe pattern from `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 1 — Depth Probe).
-
-Reference what the user said in Phase 0. Open with a question like:
-
-"Tell me more about [specific thing they mentioned] — what decision depends on this?"
+Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the Data Scientist section in `.claude/agents/specific_instructions/shared/intent_discovery.md` for your domain probes.
 
 Let the conversation flow. Surface these topics naturally when the user's responses lead there:
 - **Decision supported:** what the analysis drives and who makes it

@@ -221,11 +221,9 @@ dashboards/<project_name>/
 
 Goal: Uncover what needs to be visualized and where to look.
 
-Follow the intent-driven discovery protocol in `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 0 — Open Probe).
+Follow the discovery rhythm for BI Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
-Open with: "What are you building — what problem are you solving?"
-
-Let the user's intent guide the follow-ups. Probe at scope, audience, data sources, looking points, and "done" criteria based on what they reveal. Specifically surface:
+As you listen, specifically surface:
 - **Track:** Quick means a single chart or single-view page. Deep means a full dashboard with multiple panels, filters, and interactivity.
 - **Build mode:** Determine from data availability — "Does the data for this dashboard already exist?" Build mode (data exists, produce code) or Spec mode (no data, produce design spec).
 

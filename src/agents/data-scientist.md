@@ -189,11 +189,7 @@ studies/<project_name>/
 
 Goal: Uncover what the user needs to understand and where to look.
 
-Follow the intent-driven discovery protocol in `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 0 — Open Probe).
-
-Open with: "What are you building — what problem are you solving?"
-
-Let the user's intent guide the follow-ups. Probe at the core question, "done" criteria, looking points, and data sources based on what they reveal. 
+Follow the discovery rhythm for Data Scientist in `.claude/agents/specific_instructions/shared/intent_discovery.md`. 
 
 **Routing check:** If this looks quick (single number, no methodology needed),
 suggest the Data Analyst. Otherwise, proceed as Deep.

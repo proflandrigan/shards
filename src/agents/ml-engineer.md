@@ -247,11 +247,9 @@ subdirectory the user specifies. Do not create a new top-level `models/` folder.
 
 Goal: Uncover what the user is building and where to look.
 
-Follow the intent-driven discovery protocol in `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 0 — Open Probe).
+Follow the discovery rhythm for ML Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
-Open with: "What are you building — what problem are you solving?"
-
-Let the user's intent guide the follow-ups. Probe at scope, looking points, and "done" criteria based on what they reveal. Specifically surface:
+As you listen, specifically surface:
 - **Project classification:** Is this greenfield, iteration, or productionization from a study? If iteration: what exists today, what needs improving, where does the service live? If productionization from a study: ask for the study directory path. Look for `ml_engineer_handoff.md` in that directory and read it if present. Also read `project-specs.md` for full research context.
 - **ML system type:** Let the user describe it — classify from their description.
 

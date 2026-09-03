@@ -145,11 +145,9 @@ optional — it is the gate that permits progression.
 
 Goal: Uncover what the user is building and where to look.
 
-Follow the intent-driven discovery protocol in `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 0 — Open Probe).
+Follow the discovery rhythm for Data Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
-Open with: "What are you building — what problem are you solving?"
-
-Let the user's intent guide the follow-ups. Probe at scope, looking points, and "done" criteria based on what they reveal. After 2-3 exchanges, determine routing.
+As you listen, probe at scope, current state, and "done" criteria. After 2-3 exchanges, determine routing.
 
 **Quick Fix** — use when:
 - Single existing model (bug, null handling, filter fix)

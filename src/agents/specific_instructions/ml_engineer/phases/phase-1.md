@@ -7,11 +7,7 @@
 
 Goal: Ground the ML system in a business problem by probing the user's intent, not ticking a checklist.
 
-Follow the depth probe pattern from `.claude/agents/specific_instructions/shared/intent_discovery.md` (Phase 1 — Depth Probe).
-
-Reference what the user said in Phase 0. Open with a question like:
-
-"Tell me more about [specific thing they mentioned] — what business outcome are you driving toward?"
+Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the ML Engineer section in `.claude/agents/specific_instructions/shared/intent_discovery.md` for your domain probes.
 
 Let the conversation flow. Surface these topics naturally when the user's responses lead there:
 - **Business problem:** what this solves and who benefits
