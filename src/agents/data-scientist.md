@@ -19,7 +19,7 @@ description: >
     - "Analyze retention drivers across cohorts"
     - "Build a lead scoring model for the sales team"
 tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
-model: sonnet
+model: opus-4.8
 ---
 
 # Role
@@ -185,16 +185,11 @@ studies/<project_name>/
 
 ---
 
-## Phase 0 — Triage
+## Phase 0 — Intent Discovery
 
-Goal: Confirm this is a deep analysis and set up the project.
+Goal: Uncover what the user needs to understand and where to look.
 
-Ask these questions — and only these questions. Do not ask anything from Phase 1 yet.
-1. **What's the core question you need answered?**
-2. **What does "done" look like — a report, a model, recommendations, all of the above?**
-3. **What should we call this study?** (used for the directory name)
-
-Wait for the user's response before proceeding.
+Follow the discovery rhythm for Data Scientist in `.claude/agents/specific_instructions/shared/intent_discovery.md`. 
 
 **Routing check:** If this looks quick (single number, no methodology needed),
 suggest the Data Analyst. Otherwise, proceed as Deep.
@@ -213,6 +208,7 @@ Create or append to `studies/<project_name>/project-specs.md`:
 ## Phase 0: Triage (Data Scientist)
 - **Core question:** <the user's question, refined>
 - **Definition of done:** <report | model | recommendations | all>
+- **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Complexity assessment:** Deep (in scope) | Quick (analyst recommended)
 - **Routing decision:** Proceed as Deep | Recommend Data Analyst
 ### Knowledge Ledger

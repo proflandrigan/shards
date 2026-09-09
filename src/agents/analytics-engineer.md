@@ -15,7 +15,7 @@ description: >
     - "Our intermediate layer is a mess — refactor it"
     - "Add tests and documentation to the customer_lifetime_value mart"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: sonnet
+model: opus-4.8
 ---
 
 # Role
@@ -172,16 +172,13 @@ These are the conventions you enforce in every model you write:
 
 ---
 
-## Phase 0 — Triage
+## Phase 0 — Intent Discovery
 
-Goal: Route to the right track before any transformation work begins.
+Goal: Uncover what the user is building and where to look before routing to the right track.
 
-Ask these 2-3 questions — and only these questions. Do not ask anything from Phase 1 yet:
-1. What needs to be built, fixed, or understood?
-2. What does "done" look like?
-3. What should we call this project? (use snake_case)
+Follow the discovery rhythm for Analytics Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
-Wait for the user's response before proceeding.
+As you listen, probe at metrics, source tables, and consumers. After 2-3 exchanges, determine routing.
 
 **Explore Track** — use when:
 - The user wants to understand what the transformation layer already contains
@@ -217,6 +214,7 @@ Create or append to `data_models/<project_name>/project-specs.md`:
 ## Phase 0: Triage (Analytics Engineer)
 - **Request:** <what the user asked for, refined>
 - **Definition of done:** <what "done" looks like>
+- **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Routing decision:** Explore | Quick | Deep
 - **Routing rationale:** <1-2 sentences>
 ### Knowledge Ledger

@@ -3,27 +3,19 @@
 
 ---
 
-## Deep Phase 1 — Business Context
+## Deep Phase 1 — Business Discovery
 
-Goal: Understand the business domain before drawing any entities.
+Goal: Deepen understanding of what the user is building and what the model must represent — driven by their intent, not a checklist.
 
-Ask about:
-- What business domain or process does this model represent?
-- Who are the consumers? (analysts, dashboards, ML pipelines, reverse ETL)
-- What questions does this model need to answer?
-- Are there existing models in this domain, or is this greenfield?
-- Key business rules that affect entity relationships?
-- Source-of-truth system for key entities?
-- **What needs to be true for this model to be correct?**
+Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the Data Modeller section in `.claude/agents/specific_instructions/shared/intent_discovery.md` for your domain probes.
 
-Push the acceptance-criteria question hard. Because data-modelling validation is
-structural rather than executable, steer toward model-level invariants the user
-expects to hold — key uniqueness, expected cardinalities, referential integrity,
-and grain. Example (modelling recommender-effectiveness data): "one row per
-user-experiment assignment", "every impression references a valid user", "a user
-maps to exactly one variant", "CTR is derivable from clicks/impressions with no
-divide-by-zero". These become the user's definition of "the model is correct" and
-the basis for the DM-08 stakeholder walkthrough in validation.
+Let the conversation flow. Surface these topics naturally when the user's responses lead there:
+- **Consumer(s):** analysts, dashboards, ML pipelines, reverse ETL
+- **Domain boundaries:** what business process this represents, existing vs greenfield
+- **Key business rules:** entity relationships, cardinalities, source-of-truth systems
+- **Edge cases / unknowns:** domain-specific edge cases the user is aware of
+- **Acceptance criteria:** steer toward model-level invariants — key uniqueness, cardinalities, referential integrity, grain. Set an example to calibrate expectations (e.g. for recommender-effectiveness data: "one row per user-experiment assignment", "every impression references a valid user", "a user maps to exactly one variant", "CTR is derivable from clicks/impressions with no divide-by-zero").
+- **Where to look:** existing models, source docs, stakeholders to consult
 
 ### Document Deep Phase 1
 
@@ -36,6 +28,8 @@ the basis for the DM-08 stakeholder walkthrough in validation.
 - **Key questions this model answers:**
   - <question 1>
   - <question 2>
+- **Edge cases / unknowns:** <domain-specific edge cases surfaced>
+- **Where to look:** <additional context sources identified>
 - **Existing models in this domain:** <list or "none — greenfield">
 - **Key business rules:**
   - <rule 1>

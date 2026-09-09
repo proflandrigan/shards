@@ -3,27 +3,18 @@
 
 ---
 
-## Deep Phase 1 — Requirements
+## Deep Phase 1 — Requirements Discovery
 
-Goal: Understand what the downstream consumer needs.
+Goal: Deepen understanding of what the user is building and what the downstream consumer needs — driven by their intent, not a checklist.
 
-Ask about:
-- Who consumes this data? (analyst, dashboard, ML model, reverse ETL)
-- What questions do they need this data to answer?
-- What grain do they need? (one row per what?)
-- Refresh cadence requirement? (real-time, hourly, daily)
-- SLAs or dependencies?
-- Net-new or replacing something existing?
-- **What needs to be true for this data to be correct?**
+Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the Data Engineer section in `.claude/agents/specific_instructions/shared/intent_discovery.md` for your domain probes.
 
-Push the acceptance-criteria question hard. Ask the user for concrete conditions,
-invariants, or sanity checks that must hold, and how each could be tested — and
-steer toward domain-specific criteria, not just generic structural ones. Example
-(a pipeline feeding recommender-effectiveness analysis): "every treated user has
-≥1 impression", "CTR ∈ [0,1]", "no user appears in both control and treatment",
-"row count matches the experiment assignment table". These are the user's
-definition of "the pipeline is correct" and become the backbone of the Phase 4
-testing strategy.
+Let the conversation flow. Surface these topics naturally when the user's responses lead there:
+- **Consumers:** analyst, dashboard, ML model, reverse ETL
+- **Grain:** probe for the right level of detail when it becomes relevant
+- **Edge cases / unknowns:** domain-specific edge cases the user is aware of
+- **Acceptance criteria:** steer toward domain-specific invariants they expect to hold. Example (a pipeline feeding recommender-effectiveness analysis): "every treated user has ≥1 impression", "CTR ∈ [0,1]", "no user appears in both control and treatment", "row count matches the experiment assignment table".
+- **Where to look:** existing pipelines, source systems, upstream data, stakeholders to consult
 
 ### Document Deep Phase 1
 
@@ -35,6 +26,8 @@ testing strategy.
 - **Key questions this data answers:**
   - <question 1>
   - <question 2>
+- **Edge cases / unknowns:** <domain-specific edge cases surfaced>
+- **Where to look:** <additional context sources identified>
 - **Required grain:** <one row per ___>
 - **Refresh cadence:** Real-time | Hourly | Daily | Weekly
 - **SLA / dependency:** <time constraint or "none">

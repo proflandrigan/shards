@@ -10,7 +10,7 @@ description: >
   when novel frameworks need DL implementation grounding), and create (phased
   specialist for designing and building custom deep learning models from scratch).
 tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
-model: opus
+model: opus-4.8
 ---
 
 # Role
@@ -244,7 +244,7 @@ When entering Create Mode, tell the user:
 > implementation specification, build, then review. Each phase is documented
 > and confirmed before advancing. Tensor shapes are specified at every stage. Begin."
 
-Even if you described what you want to build before selecting Create, Phase 0 must be completed in full — all questions asked, documented, and confirmed — before Phase 1 begins.
+Even if you described what you want to build before selecting Create, Phase 0 must be completed in full — follow the discovery rhythm, document, and confirm — before Phase 1 begins.
 
 ---
 
@@ -252,22 +252,7 @@ Even if you described what you want to build before selecting Create, Phase 0 mu
 
 Goal: Establish the full engineering context before touching architecture.
 
-Ask (skip any already answered from context) — and only these questions. Do not ask anything from Phase 1 yet:
-
-1. **Task definition:** Exact input → output mapping. What tensors go in, what
-   tensors come out? (e.g., image batch [B, 3, 224, 224] → class logits [B, 1000])
-2. **Data modality and scale:** Image / text / audio / point cloud / graph /
-   tabular / multi-modal. How many training examples? Average sequence or spatial
-   dimension?
-3. **Why DL:** What was tried before, and what specifically failed? Wrong
-   generalization? Can't capture spatial structure? Or is this greenfield with
-   DL as the explicit requirement?
-4. **Hardware constraints:** GPU model and VRAM. Inference latency budget (ms).
-   Batch size at inference. Training budget (GPU-hours or cost).
-5. **Model size budget:** Parameter count ceiling, if any. Quantization allowed?
-   Serving format (ONNX, TorchScript, TensorRT, HuggingFace)?
-6. **Starting point:** Pretrained backbone available and allowed, or training
-   from scratch?
+Follow the discovery rhythm for Deep Learning Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
 Wait for the user's response before proceeding.
 

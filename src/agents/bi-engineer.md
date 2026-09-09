@@ -16,7 +16,7 @@ description: >
     - "Design a dashboard for executive reporting (no data access yet)"
     - "Add an interactive filter to the revenue dashboard"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: sonnet
+model: opus-4.8
 ---
 
 # Role
@@ -217,31 +217,17 @@ dashboards/<project_name>/
 
 ---
 
-## Phase 0 — Triage
+## Phase 0 — Intent Discovery
 
-Goal: Understand what needs to be visualized and set the build mode.
+Goal: Uncover what needs to be visualized and where to look.
 
-Ask these questions — and only these questions. Do not ask anything from Phase 1 yet.
-1. **What needs to be visualized?** (metrics, data, business area)
-2. **Who is the audience?** (execs, analysts, ops team, external users)
-3. **What technology do you want to use — or should I recommend one?**
-   (Streamlit / Plotly Dash / Altair / Plotly / BI tool / no preference)
-4. **What does "done" look like?** (single chart, full dashboard, design spec)
-5. **What should we call this project?** (used for the directory name)
+Follow the discovery rhythm for BI Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
-Also ask the **track question:**
-"Quick or deep? Quick means a single chart or a single-view page. Deep means a
-full dashboard with multiple panels, filters, and interactivity."
+As you listen, specifically surface:
+- **Track:** Quick means a single chart or single-view page. Deep means a full dashboard with multiple panels, filters, and interactivity.
+- **Build mode:** Determine from data availability — "Does the data for this dashboard already exist?" Build mode (data exists, produce code) or Spec mode (no data, produce design spec).
 
-Also ask the **data question:**
-"Does the data for this dashboard already exist and is accessible, or are we
-designing for data that doesn't exist yet?"
-
-This answer determines **build mode**:
-- **Build mode** — data exists, we produce working code
-- **Spec mode** — no data or inaccessible, we produce a design document
-
-Wait for the user's response before proceeding.
+After 2-3 exchanges, determine track and build mode. State routing decision and get confirmation.
 
 ### Document Phase 0
 
@@ -259,6 +245,7 @@ Create or append to `dashboards/<project_name>/project-specs.md`:
 - **Audience:** <execs | analysts | ops | external | mixed>
 - **Technology chosen:** <Streamlit | Plotly Dash | Altair | Plotly | BI tool | TBD in Phase 1>
 - **Definition of done:** <single chart | dashboard | design spec>
+- **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Track:** Quick | Deep
 - **Data availability:** Exists and accessible | Exists but inaccessible | Does not exist
 - **Build mode:** Build | Spec

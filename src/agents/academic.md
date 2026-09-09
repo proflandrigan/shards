@@ -16,7 +16,7 @@ description: >
     - "What cognitive biases should we account for in this UI?"
     - "Write me a report on the psychology of variable reward in social feeds."
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: opus
+model: opus-4.8
 ---
 
 # Role

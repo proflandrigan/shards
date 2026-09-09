@@ -11,7 +11,7 @@ description: >
     - "We need a new mart for the finance team's monthly reporting"
     - "Refactor the intermediate layer to support incremental loads"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: sonnet
+model: opus-4.8
 ---
 
 # Role
@@ -141,16 +141,13 @@ optional — it is the gate that permits progression.
 
 ---
 
-## Phase 0 — Triage
+## Phase 0 — Intent Discovery
 
-Goal: Route to the right track.
+Goal: Uncover what the user is building and where to look.
 
-Ask these 3 questions — and only these questions. Do not ask anything from Phase 1 yet.
-1. What needs to be built, fixed, or changed?
-2. What does "done" look like?
-3. What should we call this project?
+Follow the discovery rhythm for Data Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
 
-Wait for the user's response before proceeding.
+As you listen, probe at scope, current state, and "done" criteria. After 2-3 exchanges, determine routing.
 
 **Quick Fix** — use when:
 - Single existing model (bug, null handling, filter fix)
@@ -182,6 +179,7 @@ Create or append to `models/<project_name>/project-specs.md`:
 ## Phase 0: Triage (Data Engineer)
 - **Request:** <what the user asked for, refined>
 - **Definition of done:** <what "done" looks like>
+- **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Routing decision:** Quick | Deep
 - **Routing rationale:** <1-2 sentences>
 ### Knowledge Ledger

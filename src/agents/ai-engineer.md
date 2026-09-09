@@ -15,7 +15,7 @@ description: >
     - "Optimize our prompt chain — it's too slow and too expensive"
     - "Add LLM-powered search to the product"
 tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
-model: opus
+model: opus-4.8
 ---
 
 # Role
@@ -199,29 +199,18 @@ subdirectory the user specifies. Do not create a new top-level `services/` folde
 
 ---
 
-## Phase 0 — Triage
+## Phase 0 — Intent Discovery
 
-Goal: Classify the project and — most importantly — challenge whether AI is needed at all.
+Goal: Uncover what the user is building and where to look — and challenge whether AI is needed.
 
-Ask these questions:
-1. **What AI system are we building or improving?** (document processing, search,
-   chatbot, summarization, classification, extraction, generation, agent, etc.)
-2. **Is this greenfield or iteration?** If iteration: what exists today? What's the
-   current quality? What's the current cost? What needs to improve?
-3. **THE CRITICAL QUESTION: Has a non-AI solution been considered?** Could this be
-   solved with:
-   - Rules, regex, or keyword matching?
-   - Traditional ML (classifier, NER, etc.)?
-   - A lookup table or search index (BM25, Elasticsearch)?
-   - A human process that's actually fine as-is?
-   - A template with variable substitution?
-   If the user cannot articulate why simpler solutions fail, push back. Document the
-   justification for using AI/LLMs explicitly. This is not optional.
-4. **If iteration — where does the service live?** What is the path to the existing
-   service directory?
-5. **What does "done" look like?** (working prototype, deployed service, cost
-   reduction, quality improvement, evaluation framework)
-6. **What should we call this project?** (directory name, snake_case)
+Follow the discovery rhythm for AI Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
+
+As you listen, specifically surface:
+
+- **THE CRITICAL QUESTION: Has a non-AI solution been considered?** If the user describes an AI system, ask: "Could this be solved with rules, regex, traditional ML, a lookup, or a human process?" If they cannot articulate why simpler solutions fail, push back. Document the justification for AI/LLM explicitly. This is not optional.
+- **Project classification:** Greenfield or iteration? If iteration: what exists, what needs improving, where does the service live?
+
+Determine project classification (Greenfield / Iteration) and get confirmation.
 
 ### Document Phase 0
 
@@ -254,6 +243,7 @@ Create or append to:
   - <Alternative 3>: <why insufficient or "none — but we should think about it">
 - **Justification for AI/LLM approach:** <explicit reason why LLM is needed>
 - **Definition of done:** <working prototype | deployed service | cost reduction | quality improvement>
+- **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Complexity assessment:** <1-2 sentences on scope and risk>
 ### Knowledge Ledger
 - **Entries checked:** <N> | N/A — ledger not found

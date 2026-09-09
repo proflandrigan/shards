@@ -3,26 +3,23 @@
 
 ---
 
-## Phase 1 — Business Requirements
+## Phase 1 — Business Discovery
 
-Goal: Ground the AI system in a business problem, not a technology choice. "Use AI" is
-not a business requirement.
+Goal: Ground the AI system in a business problem by probing the user's intent, not ticking a checklist. "Use AI" is not a business requirement.
 
-Ask about:
-- What business problem does this solve? Who benefits?
-- What's the current solution? (manual, rule-based, nothing, existing AI)
-- What decision or action does the AI output drive?
-- Who are the end users? (internal tool, customer-facing, API consumer, autonomous agent)
-- **What's the cost of a wrong output?** This is more nuanced than ML false positives:
-  hallucinated content shown to customers, inappropriate responses, leaked data in
-  generated output, wrong instructions acted upon, confidently wrong answers.
-- **What's the acceptable error rate?** For generative systems, "0% errors" is naive.
-  Force a real number. What percentage of outputs can be wrong before the system
-  fails the business?
-- What's the success metric from the business perspective? (not model metrics —
-  business KPIs)
-- **Who reviews AI output before it reaches end users?** Is there a human-in-the-loop,
-  or is this fully autonomous? If autonomous: are we sure? Really sure?
+Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the AI Engineer section in `.claude/agents/specific_instructions/shared/intent_discovery.md` for your domain probes.
+
+Let the conversation flow. Surface these topics naturally when the user's responses lead there:
+- **Business problem:** what this solves and who benefits
+- **Current solution:** manual, rule-based, nothing, existing AI
+- **Decision driven by AI output:** what action the output triggers
+- **End users:** internal tool, customer-facing, API consumer, autonomous agent
+- **Cost of wrong output:** hallucinated content, inappropriate responses, leaked data, confidently wrong answers
+- **Acceptable error rate:** push for a concrete percentage the business can tolerate
+- **Business success metric:** KPI from the business perspective, not model metrics
+- **Human-in-the-loop:** who reviews output before it reaches users
+- **Edge cases / unknowns:** domain-specific edge cases the user is aware of
+- **Where to look:** existing prompts, eval data, stakeholders to consult
 
 ### Document Phase 1
 
@@ -42,6 +39,8 @@ Ask about:
 - **Acceptable error rate:** <X% — business justification>
 - **Business success metric:** <KPI and target, not model metrics>
 - **Human-in-the-loop:** Yes — <who, when, how> | No — <justification for autonomous>
+- **Edge cases / unknowns:** <domain-specific edge cases surfaced>
+- **Where to look:** <additional context sources identified>
 - **Business priority:** Critical | High | Medium
 ```
 
