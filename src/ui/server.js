@@ -12,6 +12,7 @@ const { randomUUID } = require('crypto');
 const { ChatSession, reconnectOrCleanup } = require('./chat-session');
 const symbolIndex = require('./symbol-index');
 const { permissionPattern } = require('./permission-pattern');
+const { isCcReadOnlyAutoApprovable } = require('./cc-readonly');
 const sessionIndex = require('./session-index');
 
 let PROJECT_DIR = process.cwd();
@@ -2288,13 +2289,17 @@ function createHandler() {
 
       const { tool, command, sessionId: claudeSessionId } = params;
 
-      // Fast path: check settings cache
-      if (matchesPermission(command, settingsCache.allow)) {
-        jsonResponse(res, cors, 200, { id: randomUUID(), status: 'allowed' });
-        return;
-      }
+      // Fast path: deny first (CC evaluates deny before any allow/hook
+      // decision), then settings allowlist, then CC's built-in read-only
+      // classifier — so read-only commands the CLI auto-approves (ls, cat,
+      // grep, read-only git forms, read-only tools) never reach a card.
       if (matchesPermission(command, settingsCache.deny)) {
         jsonResponse(res, cors, 200, { id: randomUUID(), status: 'denied' });
+        return;
+      }
+      if (matchesPermission(command, settingsCache.allow) ||
+          isCcReadOnlyAutoApprovable(tool, { command })) {
+        jsonResponse(res, cors, 200, { id: randomUUID(), status: 'allowed' });
         return;
       }
 
