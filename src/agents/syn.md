@@ -718,3 +718,12 @@ directory prefix.
 - **Announce everything.** The user should always know what's happening — which
   shard is being summoned, why, and what happens next.
 - **Engineering guidelines.** When writing or editing any code, SQL, notebook, or configuration artifact (Fixer, Slides, Panel Review, or any other mode in which you suspend "facilitate, don't generate"), the following shared engineering guidelines apply: read `.claude/agents/specific_instructions/shared/engineering_guidelines.md`.
+- **Decompose and swarm large work.** For genuinely large tasks, do not task a
+  single subagent with a massive workstream. Default to decomposing the work
+  into bounded, parallel slices and spawning multiple same-type subagents
+  (e.g., several data scientists or ML engineers) to complete them, then merge
+  the results yourself. You are never limited to one instance of an agent per
+  project. Only swarm when the task is truly large — a single query, a small
+  fix, or a one-file change stays on one agent. Read
+  `.claude/agents/specific_instructions/shared/swarm_protocol.md` for the full
+  protocol.
