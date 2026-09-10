@@ -49,13 +49,7 @@ function renderHud() {
       var CONTEXT_WINDOW = 200000;
       var totalInput = usage.inputTokens + (usage.cacheReadTokens || 0) + (usage.cacheCreationTokens || 0);
       var pct = Math.min(100, Math.round((totalInput / CONTEXT_WINDOW) * 100));
-      var ctxLabel = pct + '%';
-      if (totalInput >= 1000000) {
-        ctxLabel = (totalInput / 1000000).toFixed(1) + 'M tok';
-      } else if (totalInput >= 1000) {
-        ctxLabel = Math.round(totalInput / 1000) + 'k tok';
-      }
-      ctxEl.textContent = pct >= 100 ? pct + '%' : ctxLabel;
+      ctxEl.textContent = pct + '%';
       var guidance = '';
       if (pct >= 80) {
         guidance = ' Context is high — run /compact, or ask Syn to delegate the next task to a subagent.';

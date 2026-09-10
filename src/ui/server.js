@@ -2554,6 +2554,7 @@ function createHandler() {
             startedAt: store.createdAt.toISOString(),
             projectName: store.projectName,
             projectDir: store.projectDir,
+            contextUsage: store.contextUsage,
           });
         }
       }
