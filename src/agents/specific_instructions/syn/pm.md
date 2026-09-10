@@ -88,6 +88,11 @@ For each workstream define:
 - **Outputs** (what it produces for downstream workstreams)
 - **Dependencies** (which workstreams must complete first)
 - **Definition of done** (one sentence)
+- **Scale** (single or swarm) — whether this workstream is small enough for one
+  specialist or large enough to decompose into parallel slices. Default:
+  single. Choose swarm when the workstream is genuinely large — many files,
+  several independent sub-problems, or more work than one specialist should
+  carry. A scaled workstream lists its slices here or in project-plan.md.
 
 Build the **dependency graph** and group workstreams into **execution groups** —
 each group contains workstreams that can run in parallel (no unresolved dependencies):
@@ -237,6 +242,26 @@ WHEN COMPLETE, return a structured report:
   """
 )
 ```
+
+**1b. Swarm a large workstream** — if a workstream is marked Scale: swarm (or
+you judge it genuinely large during execution):
+
+- Read `.claude/agents/specific_instructions/shared/swarm_protocol.md`.
+- Decompose the workstream into bounded slices. Each slice: one specialist
+  type, one clearly-scoped sub-task, its own output directory (e.g.
+  `studies/<name>/slice-<n>/`), and a definition of done.
+- Spawn all slices in parallel via concurrent Task calls, same
+  `subagent_type` repeated across calls. Give each slice its own brief
+  (scope, inputs, outputs, paths, definition of done) using the PM MODE prompt
+  template above, adapted per-slice.
+- Review each slice's output (same APPROVED / NEEDS REVISION / BLOCKED flow as
+  single workstreams, per-slice revision cap applies).
+- **Merge** the approved slices into the workstream's coherent deliverable:
+  reconcile interfaces, write any glue, and update the workstream's
+  `definition_of_done` confirmation in project-plan.md. Then proceed to
+  all-workstreams-in-group completion checks as normal.
+- Track slices in project-plan.md under the workstream's section (and, if
+  helpful, in `workstreams.json` under an optional `slices` array).
 
 **2. Review each specialist's output** as Tasks return:
 
@@ -401,6 +426,10 @@ Do not write to the Knowledge Ledger until the user confirms.
   ]
 }
 ```
+
+Optional: for swarmed workstreams, add a "slices" array to the workstream
+object, each entry { "name": slice slug, "specialist": shard type,
+"directory": path, "definition_of_done": one sentence }.
 
 ---
 

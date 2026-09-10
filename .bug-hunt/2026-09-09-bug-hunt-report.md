@@ -1,126 +1,146 @@
-# Bug Hunt Report: PR #68 — UI read-only permission classifier (`cc-readonly.js`)
+# Bug Hunt Report: PR #69 — Syn Free Form, Decompose-and-Swarm, Real Context HUD
 
 ## Summary
-- Scope reviewed: PR #68 (`fix/ui-permission-classifier`) — new `src/ui/cc-readonly.js` classifier, its wiring into `src/ui/relay.js` (PreToolUse fast path) and `src/ui/server.js` (`/pre-tool-use` handler), the 45-case test suite, and the referenced mirror `tools/gate-hook/auto-allowlist.js`. Full surrounding context read (`server.js` fast paths, `permission-pattern.js`, `install.js` BASE_ALLOW/BASE_DENY, live `.claude/settings.json`).
-- Confirmed findings: 1 Critical, 2 High, 1 Medium (first pass) + 1 High, 1 Medium (second-pass addendum) = 2 Critical-class/High over-approvals, 2 High, 2 Medium.
-- Overall assessment: The PR's intent — stop surfacing permission cards for Claude Code's built-in read-only commands — is sound, but the classifier's "prefix + regex veto" approach is both dangerously over-inclusive and needlessly under-inclusive. It auto-approves destructive commands (`find -delete`, `git branch -D`, `git diff --output=`) with `dangerouslyDisableSandbox: true` and no user consent, while simultaneously vetoing plain read-only invocations (`grep 'rm' file`) — the exact UX defect the PR set out to fix. All four findings were verified with executable repros in a sandbox, and fixes (tests included) are committed.
+- Scope reviewed: all 12 files changed on `feature/free-form-mode` vs `main` — JS changes to
+  `src/ui/chat-session.js`, `src/ui/server.js`, `src/ui/js/{chat,events,hud,state,init}.js` (context-usage
+  feature + Plain Chat card removal), and the new/edited orchestration docs
+  `src/agents/syn.md`, `src/agents/specific_instructions/{shared/swarm_protocol.md, syn/free_form.md,
+  syn/pm.md}`, `src/docs/03-protocols/swarm.md`, `src/docs/manifest.json`.
+- Confirmed findings: 1 High, 1 Medium, 1 Low, 1 Info.
+- Overall assessment: The JS feature-path for context usage is sound — event tracing from the CLI
+  `message_start` stream through `chat-session.js` → `server.js` → SSE → `events.js` → `hud.js`
+  is unbroken, the usage arithmetic matches the documented Anthropic semantics (a suspected
+  cache-token double count was **refuted**), and the Plain Chat removal leaves no dangling
+  references. The real problems sit in the new orchestration docs (a swarm-slice template that can
+  wedge sessions on gate fences, and a skill-spawn instruction the agent isn't granted the tool to
+  perform) plus two self-contained UI logic defects in the new HUD. All confirmed findings were
+  fixed; `npm test` (349 tests) still passes and `node --check` is clean on every edited file.
 
 ## Findings
 
-### Critical — `find` prefix auto-approves `find -delete` / `find -exec … +`, silently deleting or writing files
-- **Location:** `src/ui/cc-readonly.js:18` (`'find'` in `CC_READONLY_BASH_PREFIXES`); approving path at `isCcReadOnlyBash` (now lines 120-137).
-- **Class:** Security — destructive command classified read-only (over-approval in a permission classifier).
+### High — SWARM SLICE template omits gate-fence suppression; swamp slices can block the parent session
+- **Location:** `src/agents/specific_instructions/shared/swarm_protocol.md:68`
+- **Class:** Control-flow / instruction-level contract violation with the gate hook
 - **Confidence:** Confirmed
-- **Description:** Any `Bash` call starting with `find ` is auto-approved unless a veto marker trips. `find . -name '*.tmp' -delete` contains no `rm`, `mv`, `cp -`, `;`, `|`, `$(`, backtick, or redirect — so none of the pre-existing `DESTRUCTIVE_MARKERS` fire and the command is flagged read-only. Same for `find . -exec touch {} +` and `find . -exec rm {} +` (the `-exec … +` form needs no `;` terminator, so the compound veto never trips). On both fast paths (relay.js:271 and server.js:2301) this emits a permission `allow` with `dangerouslyDisableSandbox: true` (`buildBashAllowInput`) — an OS-sandbox-free, consent-free execution path for file deletion/creation.
-- **Evidence / Reproduction:**
-  - Classifier: `isCcReadOnlyBash('find . -name "*.tmp" -delete')` → `true`.
-  - Sandbox run: created files, ran the command, `.tmp` files deleted, `keep.txt` survived:
-    ```
-    $ find . -name '*.tmp' -delete   # inside /tmp sandbox
-    before: sub/junk.tmp sub/deeper.tmp keep.txt
-    after:  keep.txt
-    ```
-  - `isCcReadOnlyBash('find . -name a -exec touch {} +')` → `true` (writes files).
-- **Impact:** A model (or a contaminated prompt/plan) can delete or create arbitrary files with zero user consent and no sandbox, when the UI previously would have surfaced a permission card. This is a brand-new exposure on both fast paths — `find` is deliberately NOT in `install.js` BASE_ALLOW nor in the gate-hook auto-allowlist, so it previously always went to a card.
-- **Remediation:** Veto the destructive `find` primitives in `DESTRUCTIVE_MARKERS` (implemented):
-  ```js
-  /\s-delete\b/,
-  /\s-exec\b/,
-  /\s-execdir\b/,
-  /\s-ok\b/,
-  ```
-  Plain reads (`find . -name '*.py'`, `find . -print`) still auto-approve. Applied to `cc-readonly.js` and, symmetrically, `tools/gate-hook/auto-allowlist.js`. Re-verified: `find . -delete` → `false`, `find . -print` → `true`.
+- **Description:** The SWARM SLICE spawn template told spawned specialist subagents only
+  "Work autonomously. Do not wait for user gates." Specialist phase files (e.g.
+  `src/agents/specific_instructions/data_scientist/phases/phase-1.md:37-38`) mandate emitting a
+  `::GATE:: ... ::ENDGATE::` fence and *stopping to wait for user confirmation*. The pre-existing
+  PM MODE template (`src/agents/specific_instructions/syn/pm.md:211-217`) carries the two
+  load-bearing mitigations the SWARM SLICE template was missing: "Skip your activation menu and
+  Phase 0" and "Execute all phases without waiting for user confirmation at gates. When you would
+  normally gate, document your decision in project-specs.md and continue." Without them, a
+  specialist slice follows its phase file, emits the fence, and stops — whereupon the Stop hook
+  (`tools/gate-hook.js`, `::GATE::` matching) opens a gate for the *parent* session, and the
+  parent's next tool call is denied with `::GATE-BLOCK::` (PreToolUse, `permissionDecision: 'deny'`)
+  until the user confirms a gate they never saw. This is exactly why the fix was applied:
+  the fence never being emitted is the only reliable prevention.
+- **Evidence / Reproduction:** The gate hook has no subagent exemption (no `subagent` branch in
+  `tools/gate-hook/*`, session-scoped `state.js`); a Task subagent shares Syn's session, so its
+  fence opens a visible-to-nobody gate. Trace: slice emits `::GATE:: id=<x>` (per its phase file) →
+  Stop hook records gate open at session level → parent's next PreToolUse returns
+  `::GATE-BLOCK:: Gate '<x>' (phase N, kind phase) is still open.` → user must confirm an invisible
+  gate or the session is wedged.
+- **Impact:** The new decompose-and-swarm default (the headline feature of the PR) can stall on the
+  first slice that reaches a phase gate, blocking the session or forcing the user to confirm gates
+  they never saw.
+- **Remediation:** Added to the SWARM SLICE template: skip activation menu + Phase 0; when a phase
+  file would stop and emit a `::GATE::` fence, do NOT stop and do NOT emit the fence — document the
+  decision for the merge step and continue. The PM path (`pm.md` 1b) was already safe because it
+  reuses the PM MODE template; the standalone template now matches it.
 
-### High — `git branch`/`git tag`/`git remote` prefixes auto-approve ref/config mutation
-- **Location:** `src/ui/cc-readonly.js:18-44` (bare `git branch`, `git tag`, `git remote` prefixes); also `tools/gate-hook/auto-allowlist.js:46` (`'git branch'`).
-- **Class:** Security — state-mutating git commands classified read-only.
+### Medium — Free Form instructs Syn to invoke the `Skill` tool, but Syn is not granted it
+- **Location:** `src/agents/specific_instructions/syn/free_form.md:52-53` and `free_form.md:86-87`
+  vs `src/agents/syn.md:14`
+- **Class:** API / contract misuse (agent tool grant missing)
 - **Confidence:** Confirmed
-- **Description:** Bare prefixes match the destructive subforms: `git branch -D feature`, `git branch -m new`, `git branch feature` (creates a branch), `git tag -d v1.0`, `git tag v1.0` (creates a ref), `git remote add origin …`, `git remote remove origin`, `git remote set-url …` all auto-approve. No veto marker covers `-d/-D/-m/-M`, positional-arg creation, or add/remove/set-url.
-- **Evidence / Reproduction:** In a sandbox git repo, all six were classifier-`true`, and execution showed real mutation: `git tag -d v1.0` → tag gone; `git branch -D feature` → branch deleted; `git remote add origin https://example.com/repo.git` → remote added; `git tag v1.0` → ref created. The gate-hook allowlist (used unconditionally by the relay fast-path) also returned `true` for `git branch -D feature`.
-- **Impact:** Silent, consent-free mutation of repo refs and git config. Note: default `install.js` seeds `Bash(git branch:*)`/`git branch` etc. in BASE_ALLOW, so part of this exposure predates the PR for the *settings* path — but the classifier independently re-authorizes it and is the only gate when settings are pruned, and the relay fast-path inherits it from the gate-hook list regardless.
-- **Remediation:** Replace the ambiguous bare prefixes with read-only subcommand forms only (implemented in both modules — shown for `cc-readonly.js`):
-  ```js
-  'git branch --list', 'git branch -a', 'git branch -r', 'git branch -v',
-  'git branch -vv', 'git branch --remotes', 'git branch --merged',
-  'git branch --no-merged', 'git branch --show-current', 'git branch --contains',
-  'git tag --list', 'git tag -l',
-  'git remote -v', 'git remote get-url', 'git remote show',
-  ```
-  Verified: `git branch -D`, `git tag -d`, `git remote add`, bare-create forms → `false`; `git branch --list`, `git status`, `git remote -v` → `true`.
+- **Description:** Free Form mode two places instructs Syn to load locally-installed skills "via the
+  Skill tool" ("These load through the Skill tool, not Task"). Syn's YAML frontmatter
+  (`src/agents/syn.md:14`) grants only
+  `Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch` — `Skill` is absent,
+  and no other agent in `src/agents/` grants it. The feature's skill-delegation surface is therefore
+  uninvokable as documented.
+- **Evidence / Reproduction:** `grep -rn "Skill" src/agents/*.md` → no `tools:` entry grants it;
+  `free_form.md` is the only file in `src/agents/` that references the Skill tool. Under the agent
+  frontmatter contract, an ungranted tool is not callable.
+- **Impact:** The "Enumerate what is summonable" step promises a skills readout and "Skills … are
+  invoked via the Skill tool" — neither can be performed, silently degrading the advertised Free
+  Form capability.
+- **Remediation:** `syn.md:14` → `tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task,
+  WebSearch, WebFetch, Skill`. Additive grant, no other consumer affected (the UI `AGENTS` map in
+  `src/ui/js/agents.js` does not read `tools:`).
 
-### High — `git diff`/`git show`/`git log` auto-approve `--output=FILE` / `-o FILE`, writing patch files
-- **Location:** `src/ui/cc-readonly.js:26-27` (`git diff`, `git show`, `git log` prefixes); `tools/gate-hook/auto-allowlist.js:44-45`.
-- **Class:** Security — file write classified read-only.
+### Low — HUD context %: `'M tok'` label branch is unreachable and display flips at 99.5%
+- **Location:** `src/ui/js/hud.js:51-58`
+- **Class:** Logic / dead code (unreachable branch)
 - **Confidence:** Confirmed
-- **Description:** `git diff --output=/tmp/x`, `git diff -o /tmp/x`, and `git diff -o/tmp/x` all start with a read-only prefix and trip no existing veto, but `--output=<file>`/`-o<file>` is a genuine diff-interface file write.
-- **Evidence / Reproduction:** In a sandbox repo, `git diff --output=patch.diff HEAD` was classifier-`true` and the run produced a real `patch.diff` on disk (`patch.diff exists: YES`). The gate-hook allowlist alone also returned `true`.
-- **Impact:** Arbitrary (path-controlled) file writes with sandbox disabled.
-- **Remediation:** Add output-writing guards to `DESTRUCTIVE_MARKERS` (implemented; `--output...` refined in the second pass below to not flag the read-only `--output-indicator-*`):
-  ```js
-  /--output(?=\s|=)/,
-  /\bgit\s+(?:diff|show|log)\b[^\n]*\s-o(?=\s|[\/=])/,
-  ```
-  `-o` is scoped to the git diff-family (so `ls -o`, unmatched elsewhere, is unaffected). Verified: `git diff --output=/tmp/x` / `-o`/`-o<f>` → `false`; `git diff --stat HEAD`, `git show HEAD:file` → `true`.
+- **Description:** `pct = Math.min(100, Math.round((totalInput / 200000) * 100))` caps at 100, so
+  any `totalInput ≥ 199,500` renders `'100%'`. The `'M tok'` branch (`totalInput ≥ 1,000,000`) can
+  never be selected — by the time tokens reach 1M the meter is long past "full" — and the `'k tok'`
+  branch silently disappears above ~199.5k, so the meter jumps from `'199k tok'` to `'100%'`.
+  The displayed value is inconsistent with the color coders and the tooltip's "Context: ~N% of the
+  model window used" framing.
+- **Evidence / Reproduction:** For `totalInput ∈ {0, 50k, 150k, 199k, 200k, 250k, 1M, 1.5M}` the
+  old logic rendered `0%, 50k tok, 150k tok, 100%, 100%, 100%, 100%, 100%` — the `1.5M tok` label
+  was impossible; `100%`/`1M tok` never displayed. New logic renders the plain percentage for every
+  input (0%, 25%, 75%, 100%, 100%, 100%, 100%, 100%).
+- **Impact:** Cosmetic but misleading — a user at 95% real fill sees a token count instead of the
+  reported metric, and the dead branch indicates the label/cap interaction was misdesigned, not
+  intended.
+- **Remediation:** Removed the `ctxLabel`/`'M tok'`/`'k tok'` branches; `ctxEl.textContent = pct + '%'`
+  always. Token breakdown remains in the tooltip (`Input: N + cache-read N + cache-create N tokens`),
+  consistent with the displayed `~pct%`.
 
-### Medium — Quoted literal text is falsely vetoed, so the bug the PR claims to fix still occurs for common read-only commands
-- **Location:** `src/ui/cc-readonly.js` DESTRUCTIVE_MARKERS + COMPOUND_SEPARATORS scanning the raw string (original implementation).
-- **Class:** Under-approval / behavioral inconsistency.
+### Info — `contextUsage` is persisted server-side but never restored to the browser on reload
+- **Location:** `src/ui/server.js:207-210` (persist), `:2554-2558` (`/chat/status` payload),
+  `src/ui/js/init.js:263-271` (restore loop)
+- **Class:** State & consistency (dead persistence / stale UI)
 - **Confidence:** Confirmed
-- **Description:** Veto scanners are unanchored regexes over the whole command and ignore shell quoting. `grep 'rm' file`, `grep '>' file`, `find . -name 'rm*'`, `echo "a|b"`, `echo "a;b"`, `echo "a > b"` are all plain read-only commands in CC's built-in set (and thus auto-approved by the CLI), but the classifier vetoes them and sends them to a permission card — precisely the card-surfacing the PR exists to eliminate. Result: CLI auto-approves, UI still cards.
-- **Evidence / Reproduction:** Pre-fix harness: `isCcReadOnlyBash("grep -rn 'rm' .")` → `false`, `isCcReadOnlyBash('echo "a|b"')` → `false`, while `isCcReadOnlyBash('ls')` → `true`.
-- **Impact:** Inconsistent UX (cards for commands CC auto-approves); specialists doing bulk grep/find/echo during verification get card spam — the stated target of the PR — for quoted invocations.
-- **Remediation:** Mask literal quoted spans before the veto scans (implemented): single-quoted spans are literal to bash and always masked; double-quoted spans are masked only when free of `$`, backtick, or backslash (which can still execute expansion/substitution inside quotes). e.g. `maskQuotedRegions` in `src/ui/cc-readonly.js`. Safety verified: `echo "$(rm -rf /)"`, `` echo "`rm`" ``, `cat "$f" > /etc/passwd` all still denied.
-
-## Second-pass addendum (same feature, post-fix review)
-
-A follow-up bug-hunt pass was run against the *post-fix* branch (after both PR commits, with the four findings above remediated). It added 2 confirmed findings — both in the compound-separator / marker logic — plus notes. Fixes committed with regression tests.
-
-### High — Compound separators miss backgrounding `&` and literal newlines, so destructive commands ride along after a read-only prefix
-- **Location:** `src/ui/cc-readonly.js:71` and `tools/gate-hook/auto-allowlist.js` — `COMPOUND_SEPARATORS = /(\&\&|\|\||;|\|(?!\|))/` (pre-fix).
-- **Class:** Security — over-approval in a permission classifier (compound chain bypass).
-- **Confidence:** Confirmed
-- **Description:** The compound veto covered `&&`, `||`, `;`, and `|`, but a lone backgrounding `&` and a literal `\n` are also command separators in bash. Any read-only prefix followed by `& <destructive>` or `\n<destructive>` was auto-approved on both fast paths (relay.js:271 and server.js:2301) with `dangerouslyDisableSandbox: true` and no user consent.
-- **Evidence / Reproduction:**
-  - Classifier pre-fix (both `isCcReadOnlyBash` and gate-hook `isAutoApprovable` returned `true`):
-    ```
-    cat a.txt & git reset --hard HEAD      # wipes uncommitted work
-    cat a.txt & git clean -fd              # deletes untracked files
-    ls & git push origin main              # publishes to remote
-    cat /etc/passwd & cp /etc/passwd /tmp/x  # exfiltration copy
-    cat a.txt\nrmdir subdir                # mutating command on next line
-    wc -l f & touch g                      # file creation
-    ```
-  - Confirmed bash actually executes the post-`&` command: `cat /etc/hostname & mkdir -p .../created_by_background` created the directory; `bash -c "cat /etc/hostname\nmkdir -p .../created_by_newline"` created the second directory (newline-separated execution).
-  - Post-fix re-check: all of the above → `false` on both modules.
-- **Impact:** Silent, consent-free, sandbox-free execution of destructive/mutating commands (worktree wipe, untracked-file delete, git push, file copies/writes) whenever a read-only prefix happens to precede them. This is the same over-approval class as the original Critical, reachable without any exotic `find`/`git branch` syntax.
-- **Remediation:** Extend `COMPOUND_SEPARATORS` in `cc-readonly.js` and `auto-allowlist.js` (implemented):
-  ```js
-  const COMPOUND_SEPARATORS = /(\&\&|\|\||[;&\n]|\|(?!\|))/;
-  ```
-  `&&`/`||` still match their own alternatives first (so `$((a&b))` styled arithmetic corner cases can't double-match); lone `&` and `\n` are now vetoed. Quoted literal `&`/newlines are unaffected because `maskQuotedRegions` runs first in `cc-readonly.js`. Re-verified: `cat x & git reset --hard HEAD` → `false`; `ls`, `cat a.txt`, `echo "a&b"` → `true`.
-
-### Medium — `-output\b` veto marker is over-broad and false-vetoes read-only `git diff --output-indicator-*`
-- **Location:** `src/ui/cc-readonly.js` and `tools/gate-hook/auto-allowlist.js` — `DESTRUCTIVE_MARKERS` (`/-output\b/`), added by commit `9c20b8c`.
-- **Class:** Under-approval / behavioral inconsistency (read-only flagged non-read-only).
-- **Confidence:** Confirmed
-- **Description:** The marker `/-output\b/` was meant to catch `git diff --output=FILE` (a genuine write). But `\b` also matches at `--output-indicator-new/old/context` — the diff *styling* flags, which are pure reads. Those now card (the exact UX defect the PR exists to eliminate) while the space-separated write form `git diff --output FILE` still matched only via the `-o` regex (which it does not cover).
-- **Evidence / Reproduction:**
-  - Pre-fix: `git diff --output-indicator-new=+ HEAD~1 HEAD` executed with exit 0 and wrote no files (read-only), but classifier returned `false` on both modules.
-  - `git diff --output /tmp/space-out.diff HEAD~1 HEAD` exit 0 and created a 114-byte patch file on disk — a genuine write form that the fix must keep vetoed.
-- **Impact:** Minor card-surfacing for an uncommon but legitimate read-only git diff styling flag — under-approval only, no security exposure.
-- **Remediation:** Scope the marker to the actual write forms (implemented in both modules):
-  ```js
-  /--output(?=\s|=)/,
-  ```
-  Matches `--output=FILE` and `--output FILE` (the only file-writing forms git supports), while `--output-indicator-*` (next char `-`) and `-O orderfile` (read-only ordering flag) pass. Re-verified: `git diff --output-indicator-new=+` → `true`; `git diff --output=/tmp/x` and `git diff --output /tmp/x` → `false`.
+- **Description:** The server writes `store.contextUsage` to the session JSON and reloads it into
+  the store, but `/chat/status` did not include it and the client restore loop never applied it —
+  so after a page reload the HUD showed "—" ("waiting for the first turn") until the next
+  `message_start`, and the persisted field was never served to anyone. Noted in the PR body as a
+  known follow-up.
+- **Evidence / Reproduction:** Grep all REST payloads — `/chat/status`, `/sessions`,
+  `/sessions/index`, `/transcript` — none return `contextUsage`; `createSessionState` defaults it to
+  `null`. Reload a live session's page: HUD shows "—" despite stored usage data.
+- **Impact:** Cosmetic; self-corrects on the next turn. Low user impact but made the server-side
+  persistence dead weight.
+- **Remediation:** Added `contextUsage: store.contextUsage` to the `/chat/status` session payload
+  and `sess.contextUsage = s.contextUsage || null;` to the `loadInitial()` restore loop, so a
+  reloaded page renders the last-known usage immediately.
 
 ## Notes & unverified leads
-- **Pre-existing (same class) in `tools/gate-hook/auto-allowlist.js`:** The gate-hook list also lacks the quote-masking of `cc-readonly.js`, so its false-veto of quoted read-only lookups (e.g. `dbt show --inline "SELECT 'rm'"`) remains. Lower priority because auto-verify is scope-bounded and the SQL guard already special-cases quoted `;`. Not changed here to keep the diff focused; adding masking there would be a follow-up.
-- **`isReadOnlyTool` / CC_READONLY_TOOLS branch is effectively dead in the PreToolUse flow:** the relay's PreToolUse hook matcher is `Bash`-only in `install.js`, so `Read`/`Glob`/`Grep`/`WebSearch` never reach the shards hook; they are already auto-approved by CC itself. Kept as-is (harmless, matches stated intent) — no behavioral change.
-- **Pipelines deliberately vetoed:** `pwd | grep home` and `ls | wc -l` are denied by design (compound-separator veto, matching the PR's existing test `vetoes pipes`). Not a bug; noted because a reader might flag `ls | wc -l` as a false negative.
-- **Pre-existing SQL-guard rescue hole (NOT new to this pass):** the gate-hook compound/marker path routes to `sqlGuard.isReadOnlyCliInvocation`, which extracts the SQL argument without anchoring to the end of the command line. Result: `psql -c "SELECT 1" && touch x` and `psql -c "SELECT 1" & touch x` were **already** auto-approved before this pass (`&&`/`;`-with-space chaining already hit the rescue). The `&`/`\n` separator fix does not widen this — `psql -c "SELECT 1" & rm -rf x` was already allowed pre-fix via the `rm` marker + the same rescue. Out of scope: fixing it means anchoring `extractSql`/`extractFlagValue` to consume the whole command (no trailing `& cmd`), a refactor of the gate-hook core beyond this PR's purpose. Flagged here for a follow-up.
+Leads that looked suspicious but could NOT be confirmed against real CLI output — none reported as
+findings:
+
+- **Cache-token double count (REFUTED).** The lead `totalInput = inputTokens + cacheReadTokens +
+  cacheCreationTokens` double-counts was checked against the Anthropic Messages API spec: "Total
+  input tokens in a request is the summation of `input_tokens`, `cache_creation_input_tokens`, and
+  `cache_read_input_tokens`" (with a worked example `cache_creation=2051, cache_read=2051,
+  input_tokens=2095`). The HUD sum is therefore **correct**. Residual risk: if a particular CLI
+  version reports `input_tokens` inclusive of cache tokens, the meter would over-report — requires a
+  real CLI trace to confirm or refute.
+- **`message_start` without `usage` for thinking/extended-thinking requests.** Anthropic streaming
+  examples show `message_start` without a `usage` field for thinking sessions. If the CLI mirrors
+  that, the HUD would silently never render (fails safe, no crash). Unverified without
+  instrumentation.
+- **Under-reporting within multi-request turns.** The meter captures the first `message_start`
+  per turn; a tool-heavy turn makes several API requests whose later context growth
+  (`message_delta.usage` is cumulative, per docs) is not captured until the next turn's
+  `message_start`. Whether the CLI emits `message_start` per request or per turn decides severity.
+- **Startup race dropping early events.** SSE connects before `/chat/status` restore completes, so
+  an early `chat-usage` can be dropped (`events.js:107-109`). Pre-existing pattern shared by all
+  chat events; self-heals next turn.
 
 ## Coverage & limitations
-- Verified behavior by direct module execution (`isCcReadOnlyBash`, `isAutoApprovable`) and by executing the actual dangerous commands inside throwaway `/tmp/opencode/shards-bughunt` sandboxes (file deletion, git ref/config mutation). No production data touched.
-- Did not execute the full shards UI server end-to-end; the relay/server paths are thin OR/orderings over the classifier, and both were read in full. The CC-level deny-before-hook precedence model is the repository's own documented assumption (install.js + relay.js comments) and was not empirically re-verified against a live Claude Code binary.
-- Not covered: semantic parity of the mirror with the exact current CC built-in list (the evidence above shows the classifier's behavior stands on its own regardless of exact CC parity).
+- Covered: full event-path trace of `chat-usage` (CLI → transcript parser → server → SSE → browser →
+  HUD), persistence/restore semantics, HUD arithmetic and display edge cases, Plain Chat removal
+  fallout, menu-token collisions for `[FF]`, install-path correctness for all new files, the full
+  `workstreams.json` `slices` schema extension, cross-file references in the three new/changed
+  protocol docs, gate-hook interactions with swarm spawns, the Anthropic usage-field semantics.
+- Not covered: no live Claude Code CLI run (no real stream-json trace, so the thinking-mode and
+  per-request `usage` leads above remain unverified); no end-to-end UI click-through in a browser;
+  behavioral quality of the swarm/Free Form prompts (unprovable without model sessions).
+- Verification after fixes: `node --check` clean on all edited JS; `npm test` — 349/349 pass;
+  `node tools/install.js` re-run and live `.claude/` copies confirmed to contain every fix.

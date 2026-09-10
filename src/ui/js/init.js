@@ -268,6 +268,7 @@ async function loadInitial() {
         sess.hasMessages = sess.messages.length > 0;
         sess.projectName = s.projectName || null;
         sess.projectDir = s.projectDir || null;
+        sess.contextUsage = s.contextUsage || null;
       }
       // Activate the last (most recent) session and load its workspace
       var lastSession = activeSessions[activeSessions.length - 1];

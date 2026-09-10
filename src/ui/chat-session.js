@@ -240,7 +240,23 @@ class ChatSession {
         return;
       }
 
-      if (evt.type === 'message_start' || evt.type === 'message_delta' || evt.type === 'message_stop') {
+      if (evt.type === 'message_start') {
+        const usage = evt.message && evt.message.usage;
+        if (usage && typeof usage.input_tokens === 'number') {
+          this.onEvent({
+            type: 'chat-usage',
+            sessionId: this.sessionId,
+            usage: {
+              inputTokens: usage.input_tokens,
+              cacheReadTokens: usage.cache_read_input_tokens || 0,
+              cacheCreationTokens: usage.cache_creation_input_tokens || 0,
+              outputTokens: usage.output_tokens || 0,
+            },
+          });
+        }
+        return;
+      }
+      if (evt.type === 'message_delta' || evt.type === 'message_stop') {
         return;
       }
 

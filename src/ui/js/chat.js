@@ -260,16 +260,6 @@ async function loadAgentPicker() {
     picker.appendChild(hero);
   }
 
-  // Plain chat entry (no agent) — always available
-  var plainChatCard = document.createElement('div');
-  plainChatCard.className = 'agent-card agent-card-plain';
-  plainChatCard.innerHTML =
-    '<span class="agent-card-dot" style="background:#3860c0"></span>' +
-    '<span class="agent-card-name">Plain Chat</span>' +
-    '<span class="agent-card-desc">A blank Claude Code session with no agent persona</span>';
-  plainChatCard.addEventListener('click', function() { startNewSession(null); });
-  picker.appendChild(plainChatCard);
-
   // Non-Syn agents grouped by category
   var CATEGORY_ORDER = ['data', 'analytics', 'mlai', 'review'];
   var CATEGORY_LABELS = { data: 'DATA', analytics: 'ANALYTICS', mlai: 'ML / AI', review: 'REVIEW' };
@@ -747,7 +737,7 @@ function renderSessionTabs() {
     var session = chatSessions[sid];
     if (!session) continue;
 
-    var info = AGENTS[session.agent] || { color: '#666', label: session.agent || 'Plain Chat' };
+    var info = AGENTS[session.agent] || { color: '#666', label: session.agent || 'General Session' };
     agentOrdinals[session.agent] = (agentOrdinals[session.agent] || 0) + 1;
     var ordinal = agentOrdinals[session.agent];
     var suffix = deriveTabContext(session, agentCounts, ordinal);
@@ -944,7 +934,7 @@ function startTabRename(sessionId, titleEl) {
   var session = getSessionState(sessionId);
   if (!session) return;
 
-  var info = AGENTS[session.agent] || { label: session.agent || 'Plain Chat' };
+  var info = AGENTS[session.agent] || { label: session.agent || 'General Session' };
   var currentTitle = session.title || info.label;
 
   var input = document.createElement('input');
