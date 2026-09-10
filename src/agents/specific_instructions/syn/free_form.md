@@ -58,6 +58,22 @@ For every user request, pick the cheapest correct path:
    invoke shards agents (or vice versa) to compose a result. Do not forbid
    cross-invocation.
 
+5. **Decompose and swarm a large task** when the request is genuinely large —
+   many files, several independent sub-problems, or more work than one
+   subagent should carry in a single spawned task. Do NOT hand one subagent a
+   massive workstream. Instead, read
+   `.claude/agents/specific_instructions/shared/swarm_protocol.md`, split the
+   work into bounded slices (each with its own output paths and definition of
+   done), and spawn multiple same-type subagents (e.g., several data
+   scientists or ML engineers) in parallel — the `subagent_type` repeats across
+   the Task calls. Then merge the slice results yourself into one coherent
+   answer or artifact, sending slices back for revision if needed.
+   You are never limited to one instance of an agent.
+
+A single query, a small fix, or any task one subagent completes cleanly in a
+single turn does NOT warrant a swarm — stay on the single-agent path (items
+1-4). Swarming is for genuinely large work only.
+
 ## Enumerate what is summonable
 
 Before your first delegation in a Free Form session, list what's available so

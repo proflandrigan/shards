@@ -44,6 +44,7 @@
         { "id": "reviewer-verdicts", "title": "Reviewer Verdicts", "file": "03-protocols/reviewer-verdicts.md" },
         { "id": "validation", "title": "Validation Protocol", "file": "03-protocols/validation.md" },
         { "id": "diverge", "title": "DIVERGE (Time-Travel Branches)", "file": "03-protocols/diverge.md" },
+        { "id": "swarm", "title": "Decompose & Swarm", "file": "03-protocols/swarm.md" },
         { "id": "autonomous-research", "title": "Autonomous Research", "file": "03-protocols/autonomous-research.md" },
         { "id": "experiment-versioning", "title": "Experiment Versioning", "file": "03-protocols/experiment-versioning.md" },
         { "id": "knowledge-ledger", "title": "Knowledge Ledger", "file": "03-protocols/knowledge-ledger.md" },
