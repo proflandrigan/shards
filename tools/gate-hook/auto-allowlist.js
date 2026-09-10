@@ -38,15 +38,30 @@ const READ_ONLY_BASH_PREFIXES = [
   'bq head',
 
   // git — already in the readonly preset, but listed here too as a
-  // belt-and-braces guarantee for users who edited their settings.json
+  // belt-and-braces guarantee for users who edited their settings.json.
+  // Only read-only subcommand forms: bare `git branch`/`git tag`/`git remote`
+  // also match -d/-D/-m/-M, add/remove/set-url, and positional-arg creation.
   'git status',
   'git log',
   'git diff',
   'git show',
-  'git branch',
   'git rev-parse',
+  'git stash list',
+  'git branch --list',
+  'git branch -a',
+  'git branch -r',
+  'git branch -v',
+  'git branch -vv',
+  'git branch --remotes',
+  'git branch --merged',
+  'git branch --no-merged',
+  'git branch --show-current',
+  'git branch --contains',
+  'git tag --list',
+  'git tag -l',
   'git remote -v',
   'git remote show',
+  'git remote get-url',
 
   // python/pip metadata
   'pip list',
@@ -74,6 +89,15 @@ const DESTRUCTIVE_MARKERS = [
   /\|\s*sh\b/, /\|\s*bash\b/,       // pipe-to-shell
   /\$\([^)]/,                       // command substitution — bail (could hide anything)
   /`[^`]/,                          // backtick command substitution
+  // find — -delete and -exec/-execdir/-ok run arbitrary (often destructive)
+  // work with no `rm`/`;` present to trip the other markers
+  /\s-delete\b/,
+  /\s-exec\b/,
+  /\s-execdir\b/,
+  /\s-ok\b/,
+  // git diff/show/log — --output=FILE / -o FILE silently writes a patch file
+  /-output\b/,
+  /\bgit\s+(?:diff|show|log)\b[^\n]*\s-o(?=\s|[\/=])/,
 ];
 
 // Compound separator detection — a single allow shouldn't authorize

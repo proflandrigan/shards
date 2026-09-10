@@ -16,16 +16,32 @@ const CC_READONLY_BASH_PREFIXES = [
   // Bare read-only commands (from the install.js built-ins comment)
   'ls', 'cat', 'echo', 'pwd', 'head', 'tail', 'grep', 'find', 'wc',
   'which', 'diff', 'stat', 'du', 'cd',
-  // Read-only git forms (from READONLY_PRESET)
+  // Read-only git forms (from READONLY_PRESET). Only subcommand forms that
+  // cannot mutate refs/config are listed: bare `git branch`/`git tag`/
+  // `git remote` also match `-d`, `-D`, `-m`, `-M`, `add`, `remove`,
+  // `set-url`, and positional-arg creation, so they must NOT be treated as
+  // read-only.
   'git status',
   'git log',
   'git diff',
   'git show',
-  'git branch',
   'git rev-parse',
-  'git remote',
-  'git tag',
   'git stash list',
+  'git branch --list',
+  'git branch -a',
+  'git branch -r',
+  'git branch -v',
+  'git branch -vv',
+  'git branch --remotes',
+  'git branch --merged',
+  'git branch --no-merged',
+  'git branch --show-current',
+  'git branch --contains',
+  'git tag --list',
+  'git tag -l',
+  'git remote -v',
+  'git remote get-url',
+  'git remote show',
 ];
 
 // Bash patterns that indicate destructive intent. Even if a more permissive
@@ -39,6 +55,15 @@ const DESTRUCTIVE_MARKERS = [
   /\|\s*sh\b/, /\|\s*bash\b/,       // pipe-to-shell
   /\$\([^)]/,                       // command substitution — bail (could hide anything)
   /`[^`]/,                          // backtick command substitution
+  // find — -delete and -exec/-execdir/-ok run arbitrary (often destructive)
+  // work with no `rm`/`;` present to trip the other markers
+  /\s-delete\b/,
+  /\s-exec\b/,
+  /\s-execdir\b/,
+  /\s-ok\b/,
+  // git diff/show/log — --output=FILE / -o FILE silently writes a patch file
+  /-output\b/,
+  /\bgit\s+(?:diff|show|log)\b[^\n]*\s-o(?=\s|[\/=])/,
 ];
 
 // Compound separator detection — a single allow shouldn't authorize
@@ -50,17 +75,60 @@ function isReadOnlyTool(toolName) {
   return CC_READONLY_TOOLS.has(toolName);
 }
 
+// Mask literal quoted spans so the veto scanners don't fire on them (used by
+// isCcReadOnlyBash). Single quotes are fully literal to bash — mask through
+// the closing quote. Double quotes are masked only when the span contains no
+// `$`, backtick, or backslash, since those can still trigger expansion or
+// command substitution inside the quotes.
+function maskQuotedRegions(cmd) {
+  let out = '';
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i];
+    if (ch === "'") {
+      const end = cmd.indexOf("'", i + 1);
+      const stop = end === -1 ? cmd.length : end + 1;
+      out += ' '.repeat(stop - i);
+      i = stop - 1;
+    } else if (ch === '"') {
+      const end = cmd.indexOf('"', i + 1);
+      if (end === -1) {
+        out += ch;
+        continue;
+      }
+      const span = cmd.slice(i + 1, end);
+      if (!/[$`\\]/.test(span)) {
+        out += ' '.repeat(end - i + 1);
+        i = end;
+      } else {
+        out += ch;
+      }
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
 function isCcReadOnlyBash(command) {
   if (typeof command !== 'string') return false;
   const cmd = command.trim();
   if (!cmd) return false;
 
+  // Veto scans run over the whole command string, so skip literal spans:
+  // `grep 'rm' file` and `echo "a|b"` are read-only and must not be vetoed by
+  // word matches inside quoted text. Everything inside single quotes is
+  // literal to bash (mask outright). Double quotes only mask when the span
+  // can't execute anything — a `$`, backtick, or backslash inside double
+  // quotes can still run expansion/command substitution, so those spans stay
+  // visible to the veto scanners.
+  const masked = maskQuotedRegions(cmd);
+
   // Reject compound commands outright.
-  if (COMPOUND_SEPARATORS.test(cmd)) return false;
+  if (COMPOUND_SEPARATORS.test(masked)) return false;
 
   // Destructive markers veto.
   for (const re of DESTRUCTIVE_MARKERS) {
-    if (re.test(cmd)) return false;
+    if (re.test(masked)) return false;
   }
 
   // Prefix match against the read-only list.
@@ -90,4 +158,5 @@ module.exports = {
   isReadOnlyTool,
   isCcReadOnlyBash,
   isCcReadOnlyAutoApprovable,
+  maskQuotedRegions,
 };
