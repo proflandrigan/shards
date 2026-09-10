@@ -32,8 +32,18 @@ happening — nothing is hidden.
 
 ```bash
 cd your-project
+npx @proflandrigan/shards install
+```
+
+Or install directly from the GitHub repo (tracks the latest commit on the default branch):
+
+```bash
 npx github:proflandrigan/shards install
 ```
+
+> `@proflandrigan/shards` is published to the npm registry. The GitHub path
+> installs the same files from source; use it if you want to pin to a branch or
+> tag without waiting for an npm release.
 
 Then open Claude Code and run:
 
@@ -465,6 +475,12 @@ Additionally:
 | Data Modeller | `data_models/<name>/` | `project-specs.md` |
 
 ## Uninstall
+
+```bash
+npx @proflandrigan/shards uninstall
+```
+
+Or from the GitHub source:
 
 ```bash
 npx github:proflandrigan/shards uninstall
