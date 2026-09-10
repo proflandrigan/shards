@@ -232,6 +232,36 @@ describe('find is only read-only when it cannot delete or execute', () => {
     expect(isCcReadOnlyBash('find . -ok rm {} \\;')).toBe(false);
   });
 
+  it('vetoes find -okdir', () => {
+    expect(isCcReadOnlyBash('find . -okdir touch {} +')).toBe(false);
+  });
+
+  it('vetoes find -okdir even without rm in the command', () => {
+    expect(isCcReadOnlyBash('find . -name "a" -okdir chmod 777 file {} +')).toBe(false);
+  });
+
+  it('vetoes find -fprintf (writes a file)', () => {
+    expect(isCcReadOnlyBash("find . -fprintf /tmp/out '%p\\n'")).toBe(false);
+  });
+
+  it('vetoes find -fprint (writes a file)', () => {
+    expect(isCcReadOnlyBash('find . -name "*.tmp" -fprint /tmp/out')).toBe(false);
+  });
+
+  it('vetoes find -fls (writes a file)', () => {
+    expect(isCcReadOnlyBash('find . -fls /tmp/out')).toBe(false);
+  });
+
+  it('still auto-approves find -printf and -ls (stdout-only forms)', () => {
+    expect(isCcReadOnlyBash('find . -printf "%p\\n"')).toBe(true);
+    expect(isCcReadOnlyBash('find . -ls')).toBe(true);
+  });
+
+  it('still auto-approves quoted name lookups that mention the vetoed actions', () => {
+    expect(isCcReadOnlyBash("find . -name '*-okdir*'")).toBe(true);
+    expect(isCcReadOnlyBash("find . -name '*-fprintf*'")).toBe(true);
+  });
+
   it('still auto-approves plain find reads', () => {
     expect(isCcReadOnlyBash('find . -name "*.py"')).toBe(true);
   });

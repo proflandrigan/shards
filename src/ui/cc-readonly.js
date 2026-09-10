@@ -55,12 +55,19 @@ const DESTRUCTIVE_MARKERS = [
   /\|\s*sh\b/, /\|\s*bash\b/,       // pipe-to-shell
   /\$\([^)]/,                       // command substitution — bail (could hide anything)
   /`[^`]/,                          // backtick command substitution
-  // find — -delete and -exec/-execdir/-ok run arbitrary (often destructive)
-  // work with no `rm`/`;` present to trip the other markers
+  // find — -delete and -exec/-execdir/-ok/-okdir run arbitrary (often
+  // destructive) work with no `rm`/`;` present to trip the other markers;
+  // -fprint/-fprintf/-fls write output to a file (path-controlled write).
+  // `-ok` must not match `-okdir` (its exec-per-file prompt sibling), so both
+  // are listed; `-printf`/`-ls` (stdout-only forms) stay read-only.
   /\s-delete\b/,
   /\s-exec\b/,
   /\s-execdir\b/,
   /\s-ok\b/,
+  /\s-okdir\b/,
+  /\s-fprint\b/,
+  /\s-fprintf\b/,
+  /\s-fls\b/,
   // git diff/show/log — --output=FILE / --output FILE / -o FILE silently
   // writes a patch file. `--output-indicator-*` (a read-only diff styling
   // flag) must not match.

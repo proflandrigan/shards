@@ -88,6 +88,15 @@ describe('isAutoApprovable', () => {
       expect(isAutoApprovable('Bash', { command: 'find . -exec touch {} +' })).toBe(false);
     });
 
+    it('vetoes find -okdir', () => {
+      expect(isAutoApprovable('Bash', { command: 'find . -okdir touch {} +' })).toBe(false);
+    });
+
+    it('vetoes find -fprintf and -fprint (file writes)', () => {
+      expect(isAutoApprovable('Bash', { command: "find . -fprintf /tmp/out '%p\\n'" })).toBe(false);
+      expect(isAutoApprovable('Bash', { command: 'find . -name "*.tmp" -fprint /tmp/out' })).toBe(false);
+    });
+
     it('vetoes git branch delete', () => {
       expect(isAutoApprovable('Bash', { command: 'git branch -D feature' })).toBe(false);
     });
