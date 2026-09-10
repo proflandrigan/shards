@@ -248,6 +248,14 @@ describe('find is only read-only when it cannot delete or execute', () => {
     expect(isCcReadOnlyBash('find . -name "*.tmp" -fprint /tmp/out')).toBe(false);
   });
 
+  it('vetoes find -fprint0 (writes a null-delimited file)', () => {
+    expect(isCcReadOnlyBash('find . -name "*.tmp" -fprint0 /tmp/out')).toBe(false);
+  });
+
+  it('vetoes find -fprint0 even without rm in the command', () => {
+    expect(isCcReadOnlyBash('find . -fprint0 out')).toBe(false);
+  });
+
   it('vetoes find -fls (writes a file)', () => {
     expect(isCcReadOnlyBash('find . -fls /tmp/out')).toBe(false);
   });
@@ -461,5 +469,57 @@ describe('git diff --output-indicator flags stay read-only', () => {
 
   it('still vetoes git diff --output FILE (space form)', () => {
     expect(isCcReadOnlyBash('git diff --output /tmp/out HEAD')).toBe(false);
+  });
+});
+
+describe('git -o attached file-value forms', () => {
+  it('vetoes git diff -oHEAD (attached bare-word value)', () => {
+    expect(isCcReadOnlyBash('git diff -oHEAD')).toBe(false);
+  });
+
+  it('vetoes git diff -oout.txt', () => {
+    expect(isCcReadOnlyBash('git diff -oout.txt')).toBe(false);
+  });
+
+  it('vetoes git log -oresult.log', () => {
+    expect(isCcReadOnlyBash('git log -oresult.log')).toBe(false);
+  });
+
+  it('vetoes git show -opatch', () => {
+    expect(isCcReadOnlyBash('git show -opatch')).toBe(false);
+  });
+
+  it('vetoes git diff -oHEAD HEAD', () => {
+    expect(isCcReadOnlyBash('git diff -oHEAD HEAD')).toBe(false);
+  });
+
+  it('still allows the uppercase -O orderfile flag (read-only diff ordering)', () => {
+    expect(isCcReadOnlyBash('git diff -O /tmp/orderfile HEAD')).toBe(true);
+  });
+});
+
+describe('git branch -v/-vv positional would create a branch and is vetoed', () => {
+  it('vetoes git branch -v feature (creates branch)', () => {
+    expect(isCcReadOnlyBash('git branch -v feature')).toBe(false);
+  });
+
+  it('vetoes git branch -vv feature', () => {
+    expect(isCcReadOnlyBash('git branch -vv feature')).toBe(false);
+  });
+
+  it('vetoes git branch -v feature start-point', () => {
+    expect(isCcReadOnlyBash('git branch -v feature HEAD')).toBe(false);
+  });
+
+  it('still auto-approves a pure git branch -v listing', () => {
+    expect(isCcReadOnlyBash('git branch -v')).toBe(true);
+  });
+
+  it('still auto-approves git branch -vv with option args only', () => {
+    expect(isCcReadOnlyBash('git branch -vv --merged main')).toBe(true);
+  });
+
+  it('still auto-approves git branch -a (list flag cannot create)', () => {
+    expect(isCcReadOnlyBash('git branch -a')).toBe(true);
   });
 });

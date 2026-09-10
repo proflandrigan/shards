@@ -57,22 +57,28 @@ const DESTRUCTIVE_MARKERS = [
   /`[^`]/,                          // backtick command substitution
   // find — -delete and -exec/-execdir/-ok/-okdir run arbitrary (often
   // destructive) work with no `rm`/`;` present to trip the other markers;
-  // -fprint/-fprintf/-fls write output to a file (path-controlled write).
-  // `-ok` must not match `-okdir` (its exec-per-file prompt sibling), so both
-  // are listed; `-printf`/`-ls` (stdout-only forms) stay read-only.
+  // -fprint/-fprint0/-fprintf/-fls write output to a file (path-controlled
+  // write). `-ok` must not match `-okdir` (its exec-per-file prompt sibling),
+  // and `-fprint` must not match `-fprintf`, so each is listed separately;
+  // `-printf`/`-ls`/`-print0` (stdout-only forms) stay read-only.
   /\s-delete\b/,
   /\s-exec\b/,
   /\s-execdir\b/,
   /\s-ok\b/,
   /\s-okdir\b/,
-  /\s-fprint\b/,
+  /\s-fprint(?:0)?\b/,
   /\s-fprintf\b/,
   /\s-fls\b/,
+  // git branch — the `-v`/`-vv` listing forms silently become CREATES when a
+  // bare branch name follows (`git branch -v feature` creates `feature`).
+  // Listing with `-v`/`-vv` never takes a positional, so any non-option token
+  // right after them is a create intent.
+  /\bgit\s+branch\s+-v+\s+[^\s-]/,
   // git diff/show/log — --output=FILE / --output FILE / -o FILE silently
   // writes a patch file. `--output-indicator-*` (a read-only diff styling
   // flag) must not match.
   /--output(?=\s|=)/,
-  /\bgit\s+(?:diff|show|log)\b[^\n]*\s-o(?=\s|[\/=])/,
+  /\bgit\s+(?:diff|show|log)\b[^\n]*\s-o(?=\s*\S)/,
 ];
 
 // Compound separator detection — a single allow shouldn't authorize

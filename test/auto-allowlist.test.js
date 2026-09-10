@@ -97,12 +97,50 @@ describe('isAutoApprovable', () => {
       expect(isAutoApprovable('Bash', { command: 'find . -name "*.tmp" -fprint /tmp/out' })).toBe(false);
     });
 
+    it('vetoes find -fprint0 (null-delimited file write)', () => {
+      expect(isAutoApprovable('Bash', { command: 'find . -name "*.tmp" -fprint0 /tmp/out' })).toBe(false);
+    });
+
     it('vetoes git branch delete', () => {
       expect(isAutoApprovable('Bash', { command: 'git branch -D feature' })).toBe(false);
     });
 
     it('vetoes git tag delete', () => {
       expect(isAutoApprovable('Bash', { command: 'git tag -d v1.0' })).toBe(false);
+    });
+  });
+
+  describe('git branch -v/-vv positional create and git -o attached writes are vetoed', () => {
+    it('vetoes git branch -v feature (creates branch)', () => {
+      expect(isAutoApprovable('Bash', { command: 'git branch -v feature' })).toBe(false);
+    });
+
+    it('vetoes git branch -vv feature', () => {
+      expect(isAutoApprovable('Bash', { command: 'git branch -vv feature' })).toBe(false);
+    });
+
+    it('still approves a pure git branch -v listing', () => {
+      expect(isAutoApprovable('Bash', { command: 'git branch -v' })).toBe(true);
+    });
+
+    it('still approves git branch -vv with option args only', () => {
+      expect(isAutoApprovable('Bash', { command: 'git branch -vv --merged main' })).toBe(true);
+    });
+
+    it('vetoes git diff -oout.txt (attached bare-word value)', () => {
+      expect(isAutoApprovable('Bash', { command: 'git diff -oout.txt' })).toBe(false);
+    });
+
+    it('vetoes git log -oresult.log', () => {
+      expect(isAutoApprovable('Bash', { command: 'git log -oresult.log' })).toBe(false);
+    });
+
+    it('vetoes git show -opatch', () => {
+      expect(isAutoApprovable('Bash', { command: 'git show -opatch' })).toBe(false);
+    });
+
+    it('still allows the uppercase -O orderfile flag', () => {
+      expect(isAutoApprovable('Bash', { command: 'git diff -O /tmp/orderfile HEAD' })).toBe(true);
     });
   });
 });
