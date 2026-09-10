@@ -112,6 +112,7 @@ function createSessionState(sid, agent) {
     pinnedItems: [],  // Pinboard: array of { type, path, name, text?, startLine?, endLine? }
     totalCost: 0,       // cumulative USD cost for this session
     totalDuration: 0,   // cumulative ms for this session
+    contextUsage: null, // { inputTokens, cacheReadTokens, cacheCreationTokens, outputTokens } — real per-turn usage from the CLI
     // Buffered tool inputs streaming via chat-tool-input-delta. Keyed by content
     // block index: { id, name, inputBuffer }. Cleared on chat-block-stop after
     // we finalize the timeline entry with a richer label.

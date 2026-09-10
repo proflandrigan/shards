@@ -41,16 +41,38 @@ function renderHud() {
   var session = getActiveSession();
   var ctxEl = document.getElementById('hud-context');
   if (ctxEl && session) {
-    var msgCount = session.messages ? session.messages.length : 0;
-    // Rough heuristic: estimate context window fill based on message count
-    // Claude Code sessions typically auto-compress around 80-100 messages
-    var maxMessages = 100;
-    var pct = Math.min(100, Math.round((msgCount / maxMessages) * 100));
-    ctxEl.textContent = pct + '%';
-    ctxEl.title = 'Estimated context usage: ~' + pct + '% (' + msgCount + ' messages)';
-    // Color coding: green < 50%, yellow 50-80%, red > 80%
-    ctxEl.className = 'hud-context-value' +
-      (pct >= 80 ? ' hud-ctx-high' : pct >= 50 ? ' hud-ctx-mid' : ' hud-ctx-low');
+    var usage = session.contextUsage;
+    if (usage && typeof usage.inputTokens === 'number') {
+      // Model context window. We key a small table off the session model, but
+      // no model field exists in session state yet, so default to 200K (the
+      // Claude Code default for current Claude models). Conservative and clear.
+      var CONTEXT_WINDOW = 200000;
+      var totalInput = usage.inputTokens + (usage.cacheReadTokens || 0) + (usage.cacheCreationTokens || 0);
+      var pct = Math.min(100, Math.round((totalInput / CONTEXT_WINDOW) * 100));
+      var ctxLabel = pct + '%';
+      if (totalInput >= 1000000) {
+        ctxLabel = (totalInput / 1000000).toFixed(1) + 'M tok';
+      } else if (totalInput >= 1000) {
+        ctxLabel = Math.round(totalInput / 1000) + 'k tok';
+      }
+      ctxEl.textContent = pct >= 100 ? pct + '%' : ctxLabel;
+      var guidance = '';
+      if (pct >= 80) {
+        guidance = ' Context is high — run /compact, or ask Syn to delegate the next task to a subagent.';
+      } else if (pct >= 50) {
+        guidance = ' Watch this — consider /compact or a subagent for heavier tasks.';
+      }
+      ctxEl.title = 'Context: ~' + pct + '% of the model window used\n' +
+        'Input: ' + usage.inputTokens + ' + cache-read ' + (usage.cacheReadTokens || 0) +
+        ' + cache-create ' + (usage.cacheCreationTokens || 0) + ' tokens.' + guidance;
+      // Color coding: green < 50%, yellow 50-80%, red > 80%
+      ctxEl.className = 'hud-context-value' +
+        (pct >= 80 ? ' hud-ctx-high' : pct >= 50 ? ' hud-ctx-mid' : ' hud-ctx-low');
+    } else {
+      ctxEl.textContent = '\u2014';
+      ctxEl.title = 'Context usage unavailable — waiting for the first turn';
+      ctxEl.className = 'hud-context-value';
+    }
   } else if (ctxEl) {
     ctxEl.textContent = '\u2014';
     ctxEl.title = 'No active session';

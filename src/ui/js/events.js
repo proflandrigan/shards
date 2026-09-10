@@ -379,6 +379,13 @@ function handleChatEventForSession(data, session, isActive) {
       if (typeof renderTimeline === 'function') renderTimeline();
       break;
 
+    case 'chat-usage':
+      if (session) {
+        session.contextUsage = data.usage || null;
+        if (typeof renderHud === 'function') renderHud();
+      }
+      break;
+
     case 'chat-turn-end':
       session.chatResponding = false;
       session.lastActivityAt = Date.now();

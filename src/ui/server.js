@@ -160,6 +160,7 @@ class SessionStore {
     this.lastActivityAt = new Date();
     this.projectName = null;
     this.projectDir = null;
+    this.contextUsage = null;
 
     // Attempt to load existing session data from disk
     try {
@@ -172,6 +173,7 @@ class SessionStore {
         if (data.lastActivityAt) this.lastActivityAt = new Date(data.lastActivityAt);
         if (data.projectName) this.projectName = data.projectName;
         if (data.projectDir) this.projectDir = data.projectDir;
+        if (data.contextUsage) this.contextUsage = data.contextUsage;
       }
     } catch (e) {
       // Ignore errors loading session data — starts fresh
@@ -205,6 +207,7 @@ class SessionStore {
         lastActivityAt: this.lastActivityAt,
         projectName: this.projectName,
         projectDir: this.projectDir,
+        contextUsage: this.contextUsage,
       }, null, 2));
     } catch (err) {
       log(`Error saving session ${this.sessionId}: ${err.message}`);
@@ -1157,6 +1160,19 @@ function handleChatEvent(event) {
     case 'chat-error':
       broadcast({ type: 'chat-error', error: event.error, sessionId });
       break;
+
+    case 'chat-usage': {
+      if (store && event.usage) {
+        store.contextUsage = event.usage;
+        store.save();
+        broadcast({
+          type: 'chat-usage',
+          sessionId,
+          usage: event.usage,
+        });
+      }
+      break;
+    }
 
     case 'chat-stderr':
       broadcast({ type: 'chat-stderr', text: event.text, sessionId });
