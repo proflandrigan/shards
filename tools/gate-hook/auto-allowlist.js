@@ -38,15 +38,30 @@ const READ_ONLY_BASH_PREFIXES = [
   'bq head',
 
   // git — already in the readonly preset, but listed here too as a
-  // belt-and-braces guarantee for users who edited their settings.json
+  // belt-and-braces guarantee for users who edited their settings.json.
+  // Only read-only subcommand forms: bare `git branch`/`git tag`/`git remote`
+  // also match -d/-D/-m/-M, add/remove/set-url, and positional-arg creation.
   'git status',
   'git log',
   'git diff',
   'git show',
-  'git branch',
   'git rev-parse',
+  'git stash list',
+  'git branch --list',
+  'git branch -a',
+  'git branch -r',
+  'git branch -v',
+  'git branch -vv',
+  'git branch --remotes',
+  'git branch --merged',
+  'git branch --no-merged',
+  'git branch --show-current',
+  'git branch --contains',
+  'git tag --list',
+  'git tag -l',
   'git remote -v',
   'git remote show',
+  'git remote get-url',
 
   // python/pip metadata
   'pip list',
@@ -74,11 +89,39 @@ const DESTRUCTIVE_MARKERS = [
   /\|\s*sh\b/, /\|\s*bash\b/,       // pipe-to-shell
   /\$\([^)]/,                       // command substitution — bail (could hide anything)
   /`[^`]/,                          // backtick command substitution
+  // find — -delete and -exec/-execdir/-ok/-okdir run arbitrary (often
+  // destructive) work with no `rm`/`;` present to trip the other markers;
+  // -fprint/-fprint0/-fprintf/-fls write output to a file (path-controlled
+  // write). `-ok` must not match `-okdir` (its exec-per-file prompt sibling),
+  // and `-fprint` must not match `-fprintf`, so each is listed separately;
+  // `-printf`/`-ls`/`-print0` (stdout-only forms) stay read-only.
+  /\s-delete\b/,
+  /\s-exec\b/,
+  /\s-execdir\b/,
+  /\s-ok\b/,
+  /\s-okdir\b/,
+  /\s-fprint(?:0)?\b/,
+  /\s-fprintf\b/,
+  /\s-fls\b/,
+  // git branch — the `-v`/`-vv` listing forms silently become CREATES when a
+  // bare branch name follows (`git branch -v feature` creates `feature`).
+  // Listing with `-v`/`-vv` never takes a positional, so any non-option token
+  // right after them is a create intent.
+  /\bgit\s+branch\s+-v+\s+[^\s-]/,
+  // git diff/show/log — --output=FILE / --output FILE / -o FILE silently
+  // writes a patch file. `--output-indicator-*` (a read-only diff styling
+  // flag) must not match.
+  /--output(?=\s|=)/,
+  /\bgit\s+(?:diff|show|log)\b[^\n]*\s-o(?=\s*\S)/,
 ];
 
 // Compound separator detection — a single allow shouldn't authorize
 // `safe-cmd && rm -rf /`. If we see compound separators, bail.
-const COMPOUND_SEPARATORS = /(\&\&|\|\||;|\|(?!\|))/;
+// Covers `&&`, `||`, `;`, `|`, a lone backgrounding `&` (`cat x & rm ...`),
+// and a literal newline (a command separator in bash when the model emits a
+// multi-line tool call). `&&`/`||` are matched by their own alternatives so
+// lone `&`/`|` (e.g. inside `$((..))` arithmetic) can't double-match.
+const COMPOUND_SEPARATORS = /(\&\&|\|\||[;&\n]|\|(?!\|))/;
 
 function isAutoApprovable(toolName, toolInput) {
   if (!toolName) return false;

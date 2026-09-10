@@ -18,6 +18,17 @@ try {
   isAutoApprovable = () => false;
 }
 
+// Claude Code's built-in read-only classifier (ls, cat, grep, read-only git
+// forms, read-only tools). Mirrors what the CLI auto-approves in every mode
+// so the UI doesn't surface permission cards for them. Same graceful
+// degradation as above.
+let isCcReadOnly;
+try {
+  ({ isCcReadOnlyAutoApprovable: isCcReadOnly } = require('./cc-readonly.js'));
+} catch (_) {
+  isCcReadOnly = () => false;
+}
+
 const SHARDS_DIR = path.join(process.cwd(), '.shards');
 const PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
 const STATE_FILE = path.join(SHARDS_DIR, 'ui-state.json');
@@ -257,7 +268,7 @@ async function handlePreToolUse(port, token, payload) {
   // just shaves the ~5-50ms POST per call across long specialist sessions.
   // Same authority as a server "allowed" response: deny rules still beat us
   // (CC evaluates deny before any hook decision).
-  if (isAutoApprovable(toolName, toolInput)) {
+  if (isAutoApprovable(toolName, toolInput) || isCcReadOnly(toolName, toolInput)) {
     emitDecision('allow', 'Auto-approved by shards read-only allowlist',
                  buildBashAllowInput(toolName, toolInput));
   }
