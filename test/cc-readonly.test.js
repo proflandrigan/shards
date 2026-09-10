@@ -381,3 +381,55 @@ describe('maskQuotedRegions', () => {
     expect(maskQuotedRegions("grep 'rm")).toBe('grep    ');
   });
 });
+
+describe('compound commands with backgrounding or newline are vetoed', () => {
+  it('vetoes a backgrounding & chain after a read-only prefix', () => {
+    expect(isCcReadOnlyBash('cat a.txt & git reset --hard HEAD')).toBe(false);
+  });
+
+  it('vetoes & chaining a destructive git command', () => {
+    expect(isCcReadOnlyBash('cat a.txt & git clean -fd')).toBe(false);
+  });
+
+  it('vetoes & chaining git push', () => {
+    expect(isCcReadOnlyBash('ls & git push origin main')).toBe(false);
+  });
+
+  it('vetoes & chaining a file copy', () => {
+    expect(isCcReadOnlyBash('cat /etc/passwd & cp /etc/passwd /tmp/x')).toBe(false);
+  });
+
+  it('vetoes a trailing backgrounding &', () => {
+    expect(isCcReadOnlyBash('cat f &')).toBe(false);
+  });
+
+  it('vetoes a newline-separated command after a read-only prefix', () => {
+    expect(isCcReadOnlyBash('cat a.txt\nrmdir subdir')).toBe(false);
+  });
+
+  it('vetoes a newline chaining a mutating git command', () => {
+    expect(isCcReadOnlyBash('cat a.txt\ngit push origin main')).toBe(false);
+  });
+
+  it('vetoes & chaining to a mutating wc/touch', () => {
+    expect(isCcReadOnlyBash('wc -l f & touch g')).toBe(false);
+  });
+});
+
+describe('git diff --output-indicator flags stay read-only', () => {
+  it('allows git diff --output-indicator-new', () => {
+    expect(isCcReadOnlyBash('git diff --output-indicator-new=+ HEAD')).toBe(true);
+  });
+
+  it('allows git diff --output-indicator-context', () => {
+    expect(isCcReadOnlyBash('git diff --output-indicator-context=x HEAD')).toBe(true);
+  });
+
+  it('still vetoes git diff --output=FILE', () => {
+    expect(isCcReadOnlyBash('git diff --output=/tmp/out HEAD')).toBe(false);
+  });
+
+  it('still vetoes git diff --output FILE (space form)', () => {
+    expect(isCcReadOnlyBash('git diff --output /tmp/out HEAD')).toBe(false);
+  });
+});

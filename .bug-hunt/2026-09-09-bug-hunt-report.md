@@ -2,7 +2,7 @@
 
 ## Summary
 - Scope reviewed: PR #68 (`fix/ui-permission-classifier`) — new `src/ui/cc-readonly.js` classifier, its wiring into `src/ui/relay.js` (PreToolUse fast path) and `src/ui/server.js` (`/pre-tool-use` handler), the 45-case test suite, and the referenced mirror `tools/gate-hook/auto-allowlist.js`. Full surrounding context read (`server.js` fast paths, `permission-pattern.js`, `install.js` BASE_ALLOW/BASE_DENY, live `.claude/settings.json`).
-- Confirmed findings: 1 Critical, 2 High, 1 Medium.
+- Confirmed findings: 1 Critical, 2 High, 1 Medium (first pass) + 1 High, 1 Medium (second-pass addendum) = 2 Critical-class/High over-approvals, 2 High, 2 Medium.
 - Overall assessment: The PR's intent — stop surfacing permission cards for Claude Code's built-in read-only commands — is sound, but the classifier's "prefix + regex veto" approach is both dangerously over-inclusive and needlessly under-inclusive. It auto-approves destructive commands (`find -delete`, `git branch -D`, `git diff --output=`) with `dangerouslyDisableSandbox: true` and no user consent, while simultaneously vetoing plain read-only invocations (`grep 'rm' file`) — the exact UX defect the PR set out to fix. All four findings were verified with executable repros in a sandbox, and fixes (tests included) are committed.
 
 ## Findings
@@ -55,9 +55,9 @@
 - **Description:** `git diff --output=/tmp/x`, `git diff -o /tmp/x`, and `git diff -o/tmp/x` all start with a read-only prefix and trip no existing veto, but `--output=<file>`/`-o<file>` is a genuine diff-interface file write.
 - **Evidence / Reproduction:** In a sandbox repo, `git diff --output=patch.diff HEAD` was classifier-`true` and the run produced a real `patch.diff` on disk (`patch.diff exists: YES`). The gate-hook allowlist alone also returned `true`.
 - **Impact:** Arbitrary (path-controlled) file writes with sandbox disabled.
-- **Remediation:** Add output-writing guards to `DESTRUCTIVE_MARKERS` (implemented):
+- **Remediation:** Add output-writing guards to `DESTRUCTIVE_MARKERS` (implemented; `--output...` refined in the second pass below to not flag the read-only `--output-indicator-*`):
   ```js
-  /-output\b/,
+  /--output(?=\s|=)/,
   /\bgit\s+(?:diff|show|log)\b[^\n]*\s-o(?=\s|[\/=])/,
   ```
   `-o` is scoped to the git diff-family (so `ls -o`, unmatched elsewhere, is unaffected). Verified: `git diff --output=/tmp/x` / `-o`/`-o<f>` → `false`; `git diff --stat HEAD`, `git show HEAD:file` → `true`.
@@ -71,10 +71,54 @@
 - **Impact:** Inconsistent UX (cards for commands CC auto-approves); specialists doing bulk grep/find/echo during verification get card spam — the stated target of the PR — for quoted invocations.
 - **Remediation:** Mask literal quoted spans before the veto scans (implemented): single-quoted spans are literal to bash and always masked; double-quoted spans are masked only when free of `$`, backtick, or backslash (which can still execute expansion/substitution inside quotes). e.g. `maskQuotedRegions` in `src/ui/cc-readonly.js`. Safety verified: `echo "$(rm -rf /)"`, `` echo "`rm`" ``, `cat "$f" > /etc/passwd` all still denied.
 
+## Second-pass addendum (same feature, post-fix review)
+
+A follow-up bug-hunt pass was run against the *post-fix* branch (after both PR commits, with the four findings above remediated). It added 2 confirmed findings — both in the compound-separator / marker logic — plus notes. Fixes committed with regression tests.
+
+### High — Compound separators miss backgrounding `&` and literal newlines, so destructive commands ride along after a read-only prefix
+- **Location:** `src/ui/cc-readonly.js:71` and `tools/gate-hook/auto-allowlist.js` — `COMPOUND_SEPARATORS = /(\&\&|\|\||;|\|(?!\|))/` (pre-fix).
+- **Class:** Security — over-approval in a permission classifier (compound chain bypass).
+- **Confidence:** Confirmed
+- **Description:** The compound veto covered `&&`, `||`, `;`, and `|`, but a lone backgrounding `&` and a literal `\n` are also command separators in bash. Any read-only prefix followed by `& <destructive>` or `\n<destructive>` was auto-approved on both fast paths (relay.js:271 and server.js:2301) with `dangerouslyDisableSandbox: true` and no user consent.
+- **Evidence / Reproduction:**
+  - Classifier pre-fix (both `isCcReadOnlyBash` and gate-hook `isAutoApprovable` returned `true`):
+    ```
+    cat a.txt & git reset --hard HEAD      # wipes uncommitted work
+    cat a.txt & git clean -fd              # deletes untracked files
+    ls & git push origin main              # publishes to remote
+    cat /etc/passwd & cp /etc/passwd /tmp/x  # exfiltration copy
+    cat a.txt\nrmdir subdir                # mutating command on next line
+    wc -l f & touch g                      # file creation
+    ```
+  - Confirmed bash actually executes the post-`&` command: `cat /etc/hostname & mkdir -p .../created_by_background` created the directory; `bash -c "cat /etc/hostname\nmkdir -p .../created_by_newline"` created the second directory (newline-separated execution).
+  - Post-fix re-check: all of the above → `false` on both modules.
+- **Impact:** Silent, consent-free, sandbox-free execution of destructive/mutating commands (worktree wipe, untracked-file delete, git push, file copies/writes) whenever a read-only prefix happens to precede them. This is the same over-approval class as the original Critical, reachable without any exotic `find`/`git branch` syntax.
+- **Remediation:** Extend `COMPOUND_SEPARATORS` in `cc-readonly.js` and `auto-allowlist.js` (implemented):
+  ```js
+  const COMPOUND_SEPARATORS = /(\&\&|\|\||[;&\n]|\|(?!\|))/;
+  ```
+  `&&`/`||` still match their own alternatives first (so `$((a&b))` styled arithmetic corner cases can't double-match); lone `&` and `\n` are now vetoed. Quoted literal `&`/newlines are unaffected because `maskQuotedRegions` runs first in `cc-readonly.js`. Re-verified: `cat x & git reset --hard HEAD` → `false`; `ls`, `cat a.txt`, `echo "a&b"` → `true`.
+
+### Medium — `-output\b` veto marker is over-broad and false-vetoes read-only `git diff --output-indicator-*`
+- **Location:** `src/ui/cc-readonly.js` and `tools/gate-hook/auto-allowlist.js` — `DESTRUCTIVE_MARKERS` (`/-output\b/`), added by commit `9c20b8c`.
+- **Class:** Under-approval / behavioral inconsistency (read-only flagged non-read-only).
+- **Confidence:** Confirmed
+- **Description:** The marker `/-output\b/` was meant to catch `git diff --output=FILE` (a genuine write). But `\b` also matches at `--output-indicator-new/old/context` — the diff *styling* flags, which are pure reads. Those now card (the exact UX defect the PR exists to eliminate) while the space-separated write form `git diff --output FILE` still matched only via the `-o` regex (which it does not cover).
+- **Evidence / Reproduction:**
+  - Pre-fix: `git diff --output-indicator-new=+ HEAD~1 HEAD` executed with exit 0 and wrote no files (read-only), but classifier returned `false` on both modules.
+  - `git diff --output /tmp/space-out.diff HEAD~1 HEAD` exit 0 and created a 114-byte patch file on disk — a genuine write form that the fix must keep vetoed.
+- **Impact:** Minor card-surfacing for an uncommon but legitimate read-only git diff styling flag — under-approval only, no security exposure.
+- **Remediation:** Scope the marker to the actual write forms (implemented in both modules):
+  ```js
+  /--output(?=\s|=)/,
+  ```
+  Matches `--output=FILE` and `--output FILE` (the only file-writing forms git supports), while `--output-indicator-*` (next char `-`) and `-O orderfile` (read-only ordering flag) pass. Re-verified: `git diff --output-indicator-new=+` → `true`; `git diff --output=/tmp/x` and `git diff --output /tmp/x` → `false`.
+
 ## Notes & unverified leads
 - **Pre-existing (same class) in `tools/gate-hook/auto-allowlist.js`:** The gate-hook list also lacks the quote-masking of `cc-readonly.js`, so its false-veto of quoted read-only lookups (e.g. `dbt show --inline "SELECT 'rm'"`) remains. Lower priority because auto-verify is scope-bounded and the SQL guard already special-cases quoted `;`. Not changed here to keep the diff focused; adding masking there would be a follow-up.
 - **`isReadOnlyTool` / CC_READONLY_TOOLS branch is effectively dead in the PreToolUse flow:** the relay's PreToolUse hook matcher is `Bash`-only in `install.js`, so `Read`/`Glob`/`Grep`/`WebSearch` never reach the shards hook; they are already auto-approved by CC itself. Kept as-is (harmless, matches stated intent) — no behavioral change.
 - **Pipelines deliberately vetoed:** `pwd | grep home` and `ls | wc -l` are denied by design (compound-separator veto, matching the PR's existing test `vetoes pipes`). Not a bug; noted because a reader might flag `ls | wc -l` as a false negative.
+- **Pre-existing SQL-guard rescue hole (NOT new to this pass):** the gate-hook compound/marker path routes to `sqlGuard.isReadOnlyCliInvocation`, which extracts the SQL argument without anchoring to the end of the command line. Result: `psql -c "SELECT 1" && touch x` and `psql -c "SELECT 1" & touch x` were **already** auto-approved before this pass (`&&`/`;`-with-space chaining already hit the rescue). The `&`/`\n` separator fix does not widen this — `psql -c "SELECT 1" & rm -rf x` was already allowed pre-fix via the `rm` marker + the same rescue. Out of scope: fixing it means anchoring `extractSql`/`extractFlagValue` to consume the whole command (no trailing `& cmd`), a refactor of the gate-hook core beyond this PR's purpose. Flagged here for a follow-up.
 
 ## Coverage & limitations
 - Verified behavior by direct module execution (`isCcReadOnlyBash`, `isAutoApprovable`) and by executing the actual dangerous commands inside throwaway `/tmp/opencode/shards-bughunt` sandboxes (file deletion, git ref/config mutation). No production data touched.

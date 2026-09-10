@@ -95,14 +95,20 @@ const DESTRUCTIVE_MARKERS = [
   /\s-exec\b/,
   /\s-execdir\b/,
   /\s-ok\b/,
-  // git diff/show/log — --output=FILE / -o FILE silently writes a patch file
-  /-output\b/,
+  // git diff/show/log — --output=FILE / --output FILE / -o FILE silently
+  // writes a patch file. `--output-indicator-*` (a read-only diff styling
+  // flag) must not match.
+  /--output(?=\s|=)/,
   /\bgit\s+(?:diff|show|log)\b[^\n]*\s-o(?=\s|[\/=])/,
 ];
 
 // Compound separator detection — a single allow shouldn't authorize
 // `safe-cmd && rm -rf /`. If we see compound separators, bail.
-const COMPOUND_SEPARATORS = /(\&\&|\|\||;|\|(?!\|))/;
+// Covers `&&`, `||`, `;`, `|`, a lone backgrounding `&` (`cat x & rm ...`),
+// and a literal newline (a command separator in bash when the model emits a
+// multi-line tool call). `&&`/`||` are matched by their own alternatives so
+// lone `&`/`|` (e.g. inside `$((..))` arithmetic) can't double-match.
+const COMPOUND_SEPARATORS = /(\&\&|\|\||[;&\n]|\|(?!\|))/;
 
 function isAutoApprovable(toolName, toolInput) {
   if (!toolName) return false;
