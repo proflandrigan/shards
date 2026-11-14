@@ -7,7 +7,8 @@ const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio
 const { ListToolsRequestSchema, CallToolRequestSchema } = require('@modelcontextprotocol/sdk/types.js');
 const { Registry } = require('./registry');
 const { loadTools } = require('./tools');
-const { StateStore, provisionalSessionKey } = require('./state/store');
+const { StateStore } = require('./state/store');
+const { createCorrelator } = require('./session/correlate');
 const { loadOrCreateConfig } = require('./config');
 
 const VERSION = require('../package.json').version;
@@ -21,20 +22,41 @@ function resolveRoot(argv = process.argv.slice(2), env = process.env) {
   return process.cwd();
 }
 
-function createServer({ root, sessionKey } = {}) {
+function createServer({ root, sessionKey, ancestry, env, host } = {}) {
   root = path.resolve(root || resolveRoot());
-  sessionKey = sessionKey || provisionalSessionKey();
-  const state = new StateStore(root, sessionKey);
   const registry = new Registry(loadTools());
   let cached;
   // Lazy + cached. A ConfigError propagates to the handler, which becomes isError.
   const getConfig = () => (cached || (cached = loadOrCreateConfig(root)));
+  const stores = new Map();
+  const storeFor = (key) => {
+    let s = stores.get(key);
+    if (!s) { s = new StateStore(root, key); stores.set(key, s); }
+    return s;
+  };
+
+  let correlator = null;
+  let resolveSession;
+  if (sessionKey) {
+    // Explicit fixed key: behave exactly as before.
+    resolveSession = () => ({ state: storeFor(sessionKey), sessionKey, sessionSource: 'explicit' });
+  } else {
+    correlator = createCorrelator({ root, env: env || process.env, ancestry, host });
+    resolveSession = () => {
+      const r = correlator.resolve();
+      return { state: storeFor(r.key), sessionKey: r.key, sessionSource: r.source };
+    };
+  }
 
   const server = new Server({ name: 'shards-mcp', version: VERSION }, { capabilities: { tools: {} } });
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: registry.list() }));
   server.setRequestHandler(CallToolRequestSchema, async (req) =>
-    registry.call(req.params.name, req.params.arguments, { root, getConfig, state, sessionKey }));
-  return { server, registry, state, root, sessionKey };
+    registry.call(req.params.name, req.params.arguments, { root, getConfig, resolveSession }));
+  return {
+    server, registry, root, correlator,
+    get state() { return resolveSession().state; },
+    get sessionKey() { return resolveSession().sessionKey; },
+  };
 }
 
 async function main() {

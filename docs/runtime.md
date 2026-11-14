@@ -32,7 +32,14 @@ The root is resolved to an absolute path (`resolveRoot` in `server.js`).
 | `runtime/server.js` | Entry point. Resolves the root, builds the MCP `Server` (name `shards-mcp`, tools capability), wires `tools/list` and `tools/call` to the registry, connects a stdio transport. Exports `createServer` and `resolveRoot` for tests. Logs go to stderr only; stdout belongs to the transport. |
 | `runtime/registry.js` | `defineTool()` builds a tool definition and compiles its input schema with ajv. `Registry` stores tools, rejects duplicate names, lists them, and runs calls. Every response, including errors and unknown tools, starts with the state header. |
 | `runtime/tools/index.js` | `loadTools()` requires every `*.js` file in `runtime/tools/` except `index.js`. A file contributes a tool if it exports a tool object (or an array of them, or `{ tool }`). No registry edit is needed to add a tool. |
-| `runtime/tools/shards_status.js` | The one tool today. Reports root, session key, state version, config path, jobs and bindings, gate policy, and active agent. |
+| `runtime/tools/shards_status.js` | Reports root, session key, state version, config path, jobs and bindings, gate policy, and active agent. |
+| `runtime/session/correlate.js` | E2.11 session correlation. `createCorrelator()` maps this MCP process to a host session key: handshake ancestry match first, then a per-process fallback that is refused for hosts without a one-process-per-session guarantee. See section 3. |
+| `runtime/stack.js` | Agent stack over `frames.json`: `pushFrame`, `popFrames`, `pendingGatesFor`. Frame schema and base-frame rules in section 9. |
+| `runtime/agents.js` | Agent catalog. `coreDir()` returns `SHARDS_CORE_DIR` or the repo `core/`. `loadAgents()` reads `<core>/agents/*/agent.yaml` on each call. `readPersonaSummary()` reads an agent's persona summary. |
+| `runtime/tools/list_agents.js` | `list_agents`. Sessionless. Lists agents with role, activation modes, consult entries and output directory. |
+| `runtime/tools/activate.js` | `activate`. `switch` pushes a frame and returns the persona summary. `consult` returns entries and pushes nothing. See section 9. |
+| `runtime/tools/return.js` | `return`. Pops one frame, or pops down to `to`. See section 9. |
+| `runtime/tools/active.js` | `active`. Returns the session's frame stack, top frame and depth. |
 | `runtime/state/store.js` | `StateStore`: reads and locked, atomic writes of the state tree. Also `provisionalSessionKey()` and `sanitizeSessionKey()`. |
 | `runtime/state/append.js` | `lockedAppend(file, line)`: appends one line under a cross-process lock. Building block for JSONL logs (E2.9). Shares `LOCK_OPTS` with the store. |
 | `runtime/header.js` | Builds the one-line state header and derives its fields from the store. |
@@ -59,7 +66,7 @@ Notes on what the code does today:
 
 - Session keys must match `[A-Za-z0-9._-]+`, be at most 128 characters, and must not contain `..`.
 - Missing files read as defaults. A file that exists but does not parse throws `Corrupt state file ... Refusing to overwrite`. The store never overwrites corrupt state.
-- `frames.json` and `gates.json` are read by `shards_status` and the header. No tool in `runtime/tools/` writes them yet. Writers come with the activate and gate work in later stages.
+- `frames.json` is written by `activate` (switch) and `return`, through `runtime/stack.js`, under the same lock. `gates.json` is read by `shards_status`, the header and `pendingGatesFor`, but no tool writes it yet. Gate writers come with the gate work in later stages.
 - `global.json` is part of the layout (`update(name, fn, false)` targets it), but nothing in this slice reads or writes it.
 
 **Locking.** Every write goes through `StateStore.update(name, fn)`:
@@ -73,7 +80,26 @@ Notes on what the code does today:
 
 **Version counter.** Each `update` bumps `version` in `session.json` by one, inside the same lock as the data write. `getVersion()` reads it without the lock. The header shows this number as `v<N>`.
 
-**Session key (provisional).** `provisionalSessionKey()` returns `mcp-<pid>-<6 hex>`, generated once per server process. This is a stand-in. E2.11 (Stage 3) replaces it with a handshake that uses the `session_id` reported by the host hooks, or with process-ancestry correlation. Do not rely on the key format.
+**Session key (E2.11).** `createCorrelator()` in `runtime/session/correlate.js` resolves the key lazily, on every tool call. `server.js` uses it unless `createServer` is given an explicit `sessionKey`, which is used as-is (`sessionSource: 'explicit'`). Resolution tries three sources in order:
+
+1. **Handshake ancestry (`source: 'handshake'`).** The SessionStart hook writes `<root>/.shards/state/handshake/<hook-pid>.json` (section 8). The correlator takes this process's ancestry (`ppidChain(process.ppid)`) and, for each handshake that is under 24 h old, has a valid `session_id`, and has a non-empty `ppid_chain` (pids above 1), finds the nearest ancestor it shares. The handshake whose match is nearest in our ancestry wins. On a tie the newest `ts` wins. A `/clear` keeps the same ancestor and writes a newer handshake, so the session is re-keyed. The key is `toSessionKey(session_id)`.
+   - PID-reuse guard: a handshake older than the matched ancestor's start time is skipped. The guard runs only when the ancestry function exposes `startTimeMs`. The default ancestry does not, so the guard is inactive by default.
+   - The result is cached against the handshake directory's file signatures (name, mtime, size) and the ancestry chain. The directory is re-scanned only when it changes. Refusals are not cached.
+2. **Host session env (`source: 'host-env'`).** `HOST_SESSION_ENV` maps a host to an env var name. It is empty. `docs/compat.md` documents no host session env var, so this step never fires today.
+3. **Fallback process key (`source: 'process'`).** Applies when no handshake matches. Whether it is allowed depends on the detected host (table below). If allowed, the key is `provisionalSessionKey()`, which is `mcp-<pid>-<6 hex>` and generated once per process.
+
+The host is `SHARDS_HOST` when it names a known host other than `unknown`. Otherwise `detectHost()` decides, and anything not detected as Codex counts as `claude-code`.
+
+| Host | Process-key fallback | Reason (from `docs/compat.md`) |
+|------|----------------------|--------------------------------|
+| `claude-code` | allowed | One stdio MCP process per session |
+| `codex` | refused | An app-server may share one MCP process across threads |
+| `t3` | refused | Unverified (T3-4); may share one MCP process across threads |
+| `unknown` | refused | Host not recognised |
+
+A refused fallback throws `SessionCorrelationError` (`code: SESSION_FALLBACK_REFUSED`), which reaches the client as `isError`. Fixes: enable the SessionStart hook so it writes a handshake, or set `SHARDS_ASSUME_ONE_PROCESS_PER_SESSION=1` when you know the host runs one MCP process per session.
+
+Sessionless tools (`list_agents`) still run when resolution fails. Every other tool, including `activate` in both modes, returns the resolution error. Do not rely on the format of process keys.
 
 **Events log (`.shards/events.jsonl`, E2.9).** The `artifact_emit(type, path, meta)` tool (`runtime/tools/artifact_emit.js`, logic in `runtime/lib/events.js`) appends one JSON line per call through `lockedAppend`, replacing the UI's `ui-push` path.
 
@@ -206,3 +232,41 @@ Hook shims live in `hooks/` (see `hooks/README.md`). They write hook-owned state
 Handshake: `{session_id, source (startup|resume|compact|clear), cwd, ts, pid, ppid_chain: [parent, grandparent, ...]}`. `pid` is the hook process; the host process is a common ancestor of the hook and the MCP server, so E2.11 intersects `ppid_chain` with the MCP process's own ancestry and takes the newest `ts`. Windows records `[process.ppid]` only.
 
 Field assumptions from docs only (not seen in real payloads): Codex payloads, Codex `additionalContext` output shape, `permission_mode` on PreToolUse. Claude Code SessionStart and UserPromptSubmit were observed live (headless `claude -p`). Codex live check: OPEN (external), `TODO(owner: proflandrigan)`.
+
+## 9. Registry and agent stack (E2.2)
+
+Every tool response starts with the state header (section 4). Session-bound tools resolve their session as in section 3. `list_agents` is sessionless.
+
+**Tools**
+
+| Tool | Input | Result (`data`) |
+|------|-------|-----------------|
+| `list_agents` | none | `{agents: [{id, display_name, description, role, activation, consult_entries (keys), output_dir}], core_dir}`. An agent whose `agent.yaml` is malformed appears as `{id, error}`. |
+| `activate` | `agent` (required), `mode` (`switch` or `consult`, required), `project?` (must match `^[A-Za-z0-9][A-Za-z0-9._-]*$`), `entry?` (a consult entry key) | Switch: `{agent, mode, frame, persona_summary: {path, content}, output_dir, output_dir_created, stack, reground}`. Consult: `{agent, mode, consult_entries, entry, persona_summary: {path}, note}`. |
+| `return` | `to?` (string), `pop_base?` (boolean) | `{popped, stack, top, persona_summary, state_summary}`. `state_summary` is `{agent, phase, project, pending_gates}` for the new top, or null. |
+| `active` | none | `{stack, top, depth}` |
+
+- `agent` must list the requested mode in its `activation` field.
+- Switch with `project` substitutes it into the agent's `output_dir`, refuses paths that escape the root, and creates the directory if missing. Without `project` it returns `output_dir_template` instead.
+- `reground` is always empty today (E11.7).
+
+**Frame schema.** `frames.json` is `{frames: [...]}`. Index 0 is the base frame and the last element is the top.
+
+```
+{ id: 'f<N>-<agent>', agent, mode: 'switch', phase: 0, track: null,
+  project: string|null, gates: [], opened_at: ISO }
+```
+
+`N` is one more than the highest `N` still on the stack, so ids can repeat after a pop. `push` refuses when the top frame already has the same agent.
+
+**Base frame.** `frames[0]` is whichever frame was pushed first in the session. Nothing enforces that it is `syn`.
+
+- `return()` pops one frame. When only the base remains it is refused unless `pop_base: true`, which empties the stack.
+- `return({to: X})` pops everything above the topmost frame for `X`. `X` stays on top, base included. If `X` is not on the stack it is an error. If `X` is already on top, nothing is popped.
+- `pop_base` cannot be combined with `to`. Returning from an empty stack is an error.
+
+**Pending gates.** A pop is refused while any popped frame owns a pending gate. A gate belongs to a frame when its `frame` field names that frame's id, or, if it has no `frame` field, when its `agent` matches the frame's agent, or when its id is listed in the frame's `gates`. The error names the gates and agents. `TODO(E5.5)`: suspend with human proof instead of refusing.
+
+**Consult** never pushes a frame, touches no state, and holds no gates. Because `activate` is not sessionless, a session resolution failure also blocks consult.
+
+**Catalog location.** `SHARDS_CORE_DIR` sets the core directory (resolved to an absolute path). Without it, the repo's `core/` is used. The catalog is re-read on every call.
