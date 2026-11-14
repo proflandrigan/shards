@@ -32,16 +32,23 @@ below. The user wants to stop the current chat cleanly.
 2. If there is no `project-specs.md` in scope (e.g., the user is in `/shards`
    triage), skip step 1.
 
-3. Tell the user:
+3. Call the `sessions_end` tool. With no `id`, it ends the current session. It
+   replays any pending gate git commits before it closes the session.
 
-   ```
-   Chat ready to end. To pick this up later:
+   - **If it succeeds**, tell the user the session is closed and can be
+     resumed later with `/resume`, or from a shell with
+     `shards sessions list` and `shards sessions resume <prefix>`.
 
-     • In the Shards UI — open the Sessions panel and click this entry.
-     • From a shell  — run `shards-sessions list` then `shards-sessions resume <prefix>`.
+   - **If it refuses**, the session still has suspended or pending gates. The
+     tool lists them. Show the user that list, then say:
 
-   You can exit with /exit when you're ready.
-   ```
+     > This chat cannot close while these gates are open. Resolve them first:
+     > confirm or revise each gate with the operator. If a gate is stuck and
+     > must be closed without resolution, the operator runs
+     > `shards gates force-close` in a shell. I cannot run that for you.
+
+     Do not call any tool that closes or force-closes a gate. Do not retry
+     `sessions_end` in a loop. Stop after showing the refusal.
 
 4. Do not call `/exit` for the user. Let them close the chat themselves so
    they can confirm the hint you wrote.

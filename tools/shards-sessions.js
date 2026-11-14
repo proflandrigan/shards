@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const sessionIndex = require('../src/ui/session-index.js');
+const sessionIndex = require('../runtime/sessions/index.js');
 
 const PROJECT_DIR = process.cwd();
 const SHARDS_DIR = path.join(PROJECT_DIR, '.shards');

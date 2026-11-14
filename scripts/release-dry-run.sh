@@ -148,7 +148,7 @@ legacy_ok() {
   # shards-ui: only verify it can be loaded (status does not start the server)
   (cd "$DOC" && timeout 20 "$BIN/shards-ui" status 2>&1 | head -3) | sed 's/^/    | /'
   node -e 'require("fs").accessSync(process.argv[1])' "$PROJ/node_modules/@proflandrigan/shards/src/ui/server.js"
-  node -e 'require.resolve("../src/ui/session-index.js",{paths:[process.argv[1]+"/tools"]})' "$PROJ/node_modules/@proflandrigan/shards"
+  node -e 'require.resolve("../runtime/sessions/index.js",{paths:[process.argv[1]+"/tools"]})' "$PROJ/node_modules/@proflandrigan/shards"
 }
 step "legacy bins (shards-ui/gates/sessions) resolve their runtime files" legacy_ok
 

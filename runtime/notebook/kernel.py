@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-notebook-kernel.py — agent-driven Jupyter kernel helper for the Notebook
+kernel.py — agent-driven Jupyter kernel helper for the Notebook
 Walkthrough mode.
 
 Subcommands:
@@ -175,6 +175,17 @@ def save_state(session_id: str, state: dict) -> None:
 
 
 def is_pid_alive(pid: int) -> bool:
+    if os.name == "nt":
+        # os.kill(pid, 0) would TERMINATE the process on Windows; probe via the Win32 API.
+        import ctypes
+        k32 = ctypes.windll.kernel32
+        h = k32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not h:
+            return False
+        code = ctypes.c_ulong()
+        ok = k32.GetExitCodeProcess(h, ctypes.byref(code))
+        k32.CloseHandle(h)
+        return bool(ok) and code.value == 259  # STILL_ACTIVE
     try:
         os.kill(pid, 0)
     except OSError:
@@ -211,12 +222,18 @@ def spawn_kernel(session_id: str) -> int:
         "-f",
         str(cf),
     ]
+    popen_kw = {}
+    if os.name == "nt":
+        # detach from this one-shot helper's console/process group (no setsid on Windows)
+        popen_kw["creationflags"] = 0x00000200 | 0x00000008  # NEW_PROCESS_GROUP | DETACHED_PROCESS
+    else:
+        popen_kw["start_new_session"] = True
     proc = subprocess.Popen(
         cmd,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         cwd=str(project_root()),
-        start_new_session=True,
+        **popen_kw,
     )
     pid_file(session_id).write_text(str(proc.pid))
 
@@ -255,7 +272,7 @@ def stop_kernel(session_id: str) -> bool:
             time.sleep(0.1)
         if is_pid_alive(pid):
             try:
-                os.kill(pid, signal.SIGKILL)
+                os.kill(pid, getattr(signal, "SIGKILL", signal.SIGTERM))
             except Exception:
                 pass
     try:

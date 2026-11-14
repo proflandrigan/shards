@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 
 const require = createRequire(import.meta.url);
-const sessionIndex = require('../src/ui/session-index.js');
+const sessionIndex = require('../runtime/sessions/index.js');
 
 const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const SHARDS_SESSIONS_BIN = path.join(REPO_ROOT, 'tools', 'shards-sessions.js');

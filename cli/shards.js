@@ -8,6 +8,7 @@ const COMMANDS = {
   'uninstall-dev': { summary: 'Remove dev build output (adapters/<target>) made by build --dev', run: runUninstallDev },
   gates: { summary: 'Gate status and interim operator confirm (E11.13 replaces this)', run: (argv) => require('./commands/gates').run(argv) },
   doctor: { summary: 'Check prerequisites, config, MCP, hooks, git state and gate permissions', run: (argv) => require('./commands/doctor').run(argv) },
+  sessions: { summary: 'List, show, resume and end sessions without the UI', run: (argv) => require('./commands/sessions').run(argv) },
   // EXTENSION POINT: register doctor / gates / sessions here, e.g.
   //   doctor: { summary: '...', run: (argv) => require('./doctor').run(argv) },
 };
@@ -19,6 +20,7 @@ function usage() {
   lines.push('uninstall-dev options: [--target claude|codex|all] [--out dir]');
   lines.push('gates: gates status [--session k] [--root d] | gates confirm <gate-id> [--session k] [--changes "note"] [--root d]');
   lines.push('doctor: doctor [--root d] [--json] [--fix]');
+  lines.push('sessions: sessions list|show|resume|end [id] [--root d] [--status s] [--limit n] [--json]');
   return lines.join('\n');
 }
 
