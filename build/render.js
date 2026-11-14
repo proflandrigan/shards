@@ -26,14 +26,14 @@ function render(m, target) {
       const file = contentPath(target, `agents/${m.agent}/${m.file}`);
       const task = m.task ? ` Task: ${m.task}.` : '';
       const tail = 'Give it only the task and the record sections it needs. It answers with a verdict (see the reviewer-verdict protocol), holds no gates and consults no one further. Continue with its result.';
-      if (target === 'claude') return `Consult \`${m.agent}\` (entry \`${m.entry}\`): run the \`${m.agent}\` subagent by name. Start its prompt with "Entry ${m.entry}: read ${file} first".${task} ${tail}`;
-      if (target === 'codex') return `Consult \`${m.agent}\` (entry \`${m.entry}\`): spawn the \`${m.agent}\` agent with spawn_agent. Start its message with "Entry ${m.entry}: read ${file} first".${task} ${tail}`;
+      if (target === 'claude') return `Consult \`${m.agent}\` (entry \`${m.entry}\`): run the \`${m.agent}-${m.entry}\` subagent by name. Start its prompt with "Entry ${m.entry}: read ${file} first".${task} ${tail}`;
+      if (target === 'codex') return `Consult \`${m.agent}\` (entry \`${m.entry}\`): spawn the \`${m.agent}-${m.entry}\` agent with spawn_agent. Start its message with "Entry ${m.entry}: read ${file} first".${task} ${tail}`;
       return `Consult \`${m.agent}\` (entry \`${m.entry}\`): invoke the \`${m.agent}\` skill in an isolated context if the host supports it; otherwise call ${T('activate')}(agent=${q(m.agent)}, mode="consult") and follow ${file}, then call ${T('return')}.${task} ${tail}`;
     }
     case 'fanout': {
       const file = contentPath(target, `agents/${m.agent}/${m.file}`);
-      const how = target === 'claude' ? `launch one \`${m.agent}\` subagent per slice in a single message`
-        : target === 'codex' ? `spawn one \`${m.agent}\` agent per slice in parallel with spawn_agent`
+      const how = target === 'claude' ? `launch one \`${m.agent}-${m.entry}\` subagent per slice in a single message`
+        : target === 'codex' ? `spawn one \`${m.agent}-${m.entry}\` agent per slice in parallel with spawn_agent`
           : `invoke the \`${m.agent}\` skill once per slice in isolated contexts`;
       return `Fan out to \`${m.agent}\` workers (slices: ${m.slices}): call ${T('fanout_start')}(agent=${q(m.agent)}, slices=${q(m.slices)}), then ${how}. Each worker starts with "Entry ${m.entry}: read ${file} first" plus its slice. Workers hold no gates, do not change the plan and do not delegate. Collect and verify every result before continuing.`;
     }

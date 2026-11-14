@@ -264,6 +264,9 @@ wrapper but a Researcher-specific prompt body that itemizes notebooks, SQL,
 and reports separately so the Researcher can apply the right lens to each
 artifact type:
 
+Before this consult, collect data-modeller context (grain, entities, relationships) for the data under review: {{consult data-modeller entry=review task="Grain and relationships for the researcher review"}} Pass that context in the task of the researcher consult below.
+
+
 {{consult researcher entry=service task="Panel review for <dirname>"}}
 
 Brief for the consultant (fill the bracketed fields):

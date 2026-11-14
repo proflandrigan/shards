@@ -17,7 +17,7 @@ structured statistical review.
    understanding grain for independence assumptions), consult the Data
    Modeller:
 
-   {{consult data-modeller entry=review task="Understand data structure for statistical review"}}
+**Caller-provided context.** Consults never nest. The caller is expected to have collected data-modeller context (grain, entities, relationships, quality concerns) beforehand and passed it in the task. Use it for the independence and grain assessment; if it is missing and needed, list it as an open question in your verdict.
 
    Brief for the consultant (fill the bracketed fields):
 

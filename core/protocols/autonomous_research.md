@@ -583,6 +583,9 @@ Call the reviewer via Task:
 
 Run this consult (shown for `researcher`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
 
+Before this consult, collect data-modeller context (grain, entities, relationships) for the data under review: {{consult data-modeller entry=review task="Grain and relationships for the researcher review"}} Pass that context in the task of the researcher consult below.
+
+
 {{consult researcher entry=service task="AR iteration N review"}}
 
 Brief for each consultant or worker (fill the angle-bracket fields):

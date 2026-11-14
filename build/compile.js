@@ -10,6 +10,8 @@ const { resolveMacro, fileContext } = require('./resolve');
 const { render, TARGETS } = require('./render');
 const { buildReport, formatTable } = require('./size');
 const { emitTarget } = require('./emit');
+const { checkActivation, checkEmitted } = require('./activation-check');
+const { lintNesting } = require('./lint-nesting');
 
 const ROOT = path.resolve(__dirname, '..');
 const STRICT_PATTERNS = [
@@ -68,7 +70,7 @@ function processFile(core, rel, text, { target, strict }) {
   return { text: out, errors };
 }
 
-function compile({ target, coreDir = path.join(ROOT, 'core'), outDir, dev = false, strict = false }) {
+function compile({ target, coreDir = path.join(ROOT, 'core'), outDir, dev = false, strict = false, defaultAgent }) {
   if (!TARGETS.includes(target)) return { errors: [`unknown target '${target}'; expected ${TARGETS.join('|')}`] };
   coreDir = path.resolve(coreDir);
   const core = loadCore(coreDir);
@@ -102,10 +104,18 @@ function compile({ target, coreDir = path.join(ROOT, 'core'), outDir, dev = fals
   if (strict) {
     for (const [id, a] of core.agents) if (a.doc && 'model' in a.doc) errors.push(`${label(path.join(a.dir, 'agent.yaml'))}:1: --strict: model key in agent.yaml (D7)`);
   }
+  if (!errors.length) {
+    errors.push(...checkActivation(core));
+    errors.push(...lintNesting(core, { target }));
+  }
   if (errors.length) return { errors: [...new Set(errors)] };
 
   const report = buildReport(target, rendered, personas);
-  const files = emitTarget({ target, core, rendered, agentBodies, report, dev, outDir: path.resolve(outDir) });
+  const files = emitTarget({ target, core, rendered, agentBodies, report, dev, outDir: path.resolve(outDir), defaultAgent });
+  if (target === 'claude' || target === 'codex') {
+    const emitErrs = checkEmitted(core, files, target);
+    if (emitErrs.length) return { errors: emitErrs };
+  }
   return { errors: [], files, report, table: formatTable(report) };
 }
 

@@ -18,7 +18,8 @@ describe('compile fixture core', () => {
     const agent = read(out, 'agents/alpha.md');
     expect(agent).toMatch(/^---\nname: alpha\ndescription: Agent alpha\.\ntools: Read, Write\n---/);
     expect(agent).not.toMatch(/model/);
-    expect(agent).toContain('{{PROJECT_NAME}}');
+    expect(agent).not.toContain('{{PROJECT_NAME}}'); // E5.3: general subagent no longer carries the persona
+    expect(read(out, 'agents/alpha-worker.md')).toContain('# Worker');
     expect(read(out, 'skills/alpha/SKILL.md')).toContain('mcp__plugin_shards_shards__activate');
     expect(read(out, 'content/agents/alpha/AGENT.md')).not.toContain('opus');
     expect(fs.existsSync(path.join(out, '.claude-plugin'))).toBe(false);

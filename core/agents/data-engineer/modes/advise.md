@@ -43,20 +43,7 @@ paths and context warrants it, but file reading is not required.
 If the question touches data model design, grain, or entity structure, consult the
 Data Modeller:
 
-{{consult data-modeller entry=advise}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted for a data engineering advisory discussion.
-
-**Question / decision:** <the question the user is working through>
-**Options under consideration:** <brief summary of the options>
-**Specific concern:** <what grain, entity, or schema design angle is needed>
-
-Please give a concise assessment — 3-5 sentences — on the data modeling angle.
-Which option better respects grain and entity boundaries, and why?
-```
+**Caller-provided context.** Consults never nest, so do not consult data-modeller from here. If data-modeller input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

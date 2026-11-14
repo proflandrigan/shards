@@ -43,25 +43,7 @@ Note any files you expected to find but couldn't locate.
 
 **Data Modeller** — if the review touches grain, entity design, or schema correctness:
 
-{{consult data-modeller entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess schema correctness and grain for a pipeline review.
-
-**System under review:** <pipeline name and brief description>
-**Review scope:** <what we're assessing>
-**Key model details:** <summary of model layers, grain statements, join logic,
-  key columns, and any known data quality concerns>
-
-Please assess:
-1. Grain correctness — does the stated grain hold? Are there fan-out or duplication risks?
-2. Entity alignment — are the entities modeled consistently with the broader schema?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult data-modeller from here. If data-modeller input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

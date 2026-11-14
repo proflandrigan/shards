@@ -36,6 +36,9 @@ sources or methodology? Keep the review brief and focused.
 
 Tell the user: "Let me loop in the Researcher to check the statistical assumptions. Quick call, then we'll proceed."
 
+Before this consult, collect data-modeller context (grain, entities, relationships) for the data under review: {{consult data-modeller entry=review task="Grain and relationships for the researcher review"}} Pass that context in the task of the researcher consult below.
+
+
 {{consult researcher entry=service task="Review statistical assumptions for [project]"}}
 
 Brief for the consultant (fill the bracketed fields):

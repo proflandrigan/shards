@@ -43,76 +43,17 @@ Consult reviewers as appropriate:
 
 **Data Engineer** — if the review touches pipeline feasibility, data freshness,
 or infrastructure design:
-{{consult data-engineer entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess pipeline feasibility and infrastructure soundness
-for an ML system review.
-
-**System under review:** <system name and brief description>
-**Review scope:** <what we're assessing>
-**Key pipeline details:** <summary of pipeline design, data sources, transforms>
-
-Please assess:
-1. Pipeline feasibility — are the data sources, transforms, and freshness requirements realistic?
-2. Infrastructure concerns — any obvious risks in the serving or retraining setup?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult data-engineer from here. If data-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 **Data Scientist** — if the review touches methodology, feature engineering,
 or model evaluation approach:
-{{consult data-scientist entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to review the ML methodology for an existing system.
-
-**System under review:** <system name and brief description>
-**Model type / approach:** <architecture, algorithm, or approach>
-**Evaluation setup:** <how the model is evaluated, which metrics, train/test split>
-**Key concerns or observations:** <anything notable from code review>
-
-Please assess:
-1. Methodology soundness — is the modelling approach appropriate for the problem?
-2. Evaluation validity — are there concerns about leakage, distribution shift, or metric choice?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult data-scientist from here. If data-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 **Applied ML Scientist** — if the review touches model architecture, loss function
 design, inductive bias alignment with data structure, or non-standard methodology
 (non-tabular data, custom objectives, self-supervised components, architecture
 search, or any approach the Data Scientist review doesn't adequately cover):
-{{consult applied-ml-scientist entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to review the ML science of an existing system.
-
-**System under review:** <system name and brief description>
-**Problem framing:** <task type, data modality, business goal>
-**Architecture / approach:** <model family, key components, objective function>
-**Data structure:** <modality, scale, key characteristics>
-**Key concerns or observations:** <anything notable from code review>
-
-Please assess:
-1. Problem formulation — is this framed as the right ML problem for the data and goal?
-2. Inductive bias — does the architecture match the structure of the data?
-3. Loss / objective alignment — does the training objective align with what the
-   business actually cares about?
-4. Cutting-edge alternatives — are there methods from recent literature that would
-   meaningfully outperform the current approach?
-5. One or two specific recommendations.
-
-Return your review in the service-mode format. Be concise.
-```
+**Caller-provided context.** Consults never nest, so do not consult applied-ml-scientist from here. If applied-ml-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

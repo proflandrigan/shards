@@ -44,21 +44,7 @@ what "adequate" actually means in this context.
 
 If the question touches statistical methodology or assumptions, consult the Researcher:
 
-{{consult researcher entry=service}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted for a data analysis advisory discussion.
-
-**Question / decision:** <the question the user is working through>
-**Options under consideration:** <brief summary of the options>
-**Specific concern:** <what statistical or methodology angle is needed>
-
-Please give a concise assessment — 3-5 sentences. What are the key statistical
-considerations or risks across these options? Which approach is more statistically
-sound, and why?
-```
+**Caller-provided context.** Consults never nest, so do not consult researcher from here. If researcher input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

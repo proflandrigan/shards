@@ -43,52 +43,12 @@ Note any files you expected to find but couldn't locate.
 **Data Analyst** — if the review touches metric correctness or whether the right
 data is being visualized:
 
-{{consult data-analyst entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess metric correctness for a dashboard review.
-
-**Dashboard under review:** <dashboard name and brief description>
-**Review scope:** <what we're assessing>
-**Key dashboard details:** <summary of the charts, metrics displayed, data sources,
-  filters, and the business question the dashboard is intended to answer>
-
-Please assess:
-1. Metric correctness — are the metrics displayed the right ones for the business
-   question? Are there better or more precise measures?
-2. Data aggregation — are the aggregations and filters used in the queries correct
-   for the intended analysis?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult data-analyst from here. If data-analyst input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 **Analytics Engineer** — if the review touches whether the correct marts are being
 used or whether the data layer is sound:
 
-{{consult analytics-engineer entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess data model correctness for a dashboard review.
-
-**Dashboard under review:** <dashboard name and brief description>
-**Review scope:** <what we're assessing>
-**Key data details:** <the marts or tables being queried, the grain of data used,
-  and any joins or aggregations performed>
-
-Please assess:
-1. Mart correctness — are these the right marts or tables for this dashboard?
-   Are there grain, definition, or data quality concerns?
-2. Query soundness — are there obvious join fan-out risks or aggregation issues
-   in how the dashboard queries the data?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult analytics-engineer from here. If analytics-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

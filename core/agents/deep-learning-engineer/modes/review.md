@@ -46,28 +46,7 @@ Note any files you expected to find but couldn't locate.
 **Applied ML Scientist** — if the review touches theoretical validity, inductive
 bias alignment, or whether the architecture is well-matched to the problem:
 
-{{consult applied-ml-scientist entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess theoretical validity for a deep learning review.
-
-**System under review:** <model name and brief description>
-**Review scope:** <what we're assessing>
-**Key architecture details:** <summary of architecture components, loss function,
-  training procedure, and the problem the model is solving>
-
-Please assess:
-1. Inductive bias alignment — does the architecture encode the right structural
-   prior for this data modality and task type?
-2. Loss function soundness — is the objective well-aligned with what the model
-   actually needs to learn?
-3. Any recent literature that renders this approach significantly suboptimal?
-4. One or two specific recommendations.
-
-Be concise and direct. Focus on theoretical soundness, not implementation details.
-```
+**Caller-provided context.** Consults never nest, so do not consult applied-ml-scientist from here. If applied-ml-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

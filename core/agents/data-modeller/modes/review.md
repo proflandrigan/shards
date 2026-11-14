@@ -47,27 +47,7 @@ Run grain validation where feasible:
 **Analytics Engineer** — if the review touches downstream transformation impact
 or implementation correctness:
 
-{{consult analytics-engineer entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess downstream impact for a data model review.
-
-**Model under review:** <model name and brief description>
-**Review scope:** <what we're assessing>
-**Key model details:** <summary of entity structure, grain, key relationships,
-  and any proposed changes>
-
-Please assess:
-1. Downstream impact — do the intermediate and mart layers built on this model
-   rely on any of the grain or column patterns being reviewed?
-2. Implementation feasibility — would the current transformation layer support
-   changes to this model structure without significant rework?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult analytics-engineer from here. If analytics-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

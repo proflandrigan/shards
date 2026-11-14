@@ -48,20 +48,7 @@ problem, say so — and explain what "adequate" means in this context.
 If the question touches statistical validity, evaluation design, or distributional
 assumptions, consult the Researcher:
 
-{{consult researcher entry=service}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted for an ML science advisory discussion.
-
-**Question / decision:** <the question the user is working through>
-**Options under consideration:** <brief summary of the options>
-**Specific concern:** <what statistical or experimental design angle is needed>
-
-Please give a concise assessment — 3-5 sentences. What are the key statistical
-considerations or experimental validity risks across these options?
-```
+**Caller-provided context.** Consults never nest, so do not consult researcher from here. If researcher input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

@@ -42,56 +42,15 @@ paths and context warrants it, but file reading is not required.
 If the question touches areas outside core ML engineering, consult as appropriate:
 
 **Data Engineer** — infrastructure feasibility, pipeline complexity:
-{{consult data-engineer entry=advise}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted for an ML advisory discussion.
-
-**Question / decision:** <the question the user is working through>
-**Options under consideration:** <brief summary of the options>
-**Specific concern:** <what infrastructure or pipeline feasibility input is needed>
-
-Please give a concise assessment — 3-5 sentences — on the infrastructure and pipeline
-angle. What are the feasibility risks for each option?
-```
+**Caller-provided context.** Consults never nest, so do not consult data-engineer from here. If data-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 **Data Scientist** — methodology, feature engineering, evaluation approach:
-{{consult data-scientist entry=advise}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted for an ML advisory discussion.
-
-**Question / decision:** <the question the user is working through>
-**Options under consideration:** <brief summary of the options>
-**Specific concern:** <what methodology or modelling angle is needed>
-
-Please give a concise assessment — 3-5 sentences — on the methodology angle. Which
-option is more sound from a data science perspective, and why?
-```
+**Caller-provided context.** Consults never nest, so do not consult data-scientist from here. If data-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 **Applied ML Scientist** — architecture choice, loss function design, inductive
 bias alignment, cutting-edge method comparison, or any decision involving
 non-tabular data or non-standard methodology:
-{{consult applied-ml-scientist entry=advise}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted for an ML advisory discussion.
-
-**Question / decision:** <the question the user is working through>
-**Options under consideration:** <brief summary of the options>
-**Data / problem structure:** <modality, scale, task type>
-**Specific concern:** <what ML science angle is needed — architecture, loss, inductive bias, literature alternatives>
-
-Please give a concise assessment — 3-5 sentences — on the ML science angle. Which
-option has the better inductive bias / objective alignment for this problem, and
-are there recent-literature methods we should evaluate before committing?
-```
+**Caller-provided context.** Consults never nest, so do not consult applied-ml-scientist from here. If applied-ml-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

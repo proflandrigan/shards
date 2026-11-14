@@ -72,11 +72,19 @@ module.exports = defineTool({
       const r = await fn('activate', { root: ctx.root, sessionKey: ctx.sessionKey, agent: agent.id, mode: 'switch', frame });
       reground = (r && r.text) || '';
     } catch (_) { /* reground is best-effort */ }
+    // Re-entry: suspended gates left behind by an earlier frame of this agent reappear here.
+    const suspendedGates = Object.values(ctx.state.read('gates').gates || {})
+      .filter((g) => g && g.status === 'suspended' && g.agent === agent.id).map((g) => g.id);
     const data = {
       agent: agent.id, mode: 'switch', frame,
       persona_summary: { path: agent.personaSummaryPath, content: readPersonaSummary(agent) },
       output_dir: outputDir, output_dir_created: created, stack: stackNames(frames), reground,
     };
+    if (suspendedGates.length) {
+      data.suspended_gates = suspendedGates;
+      data.state_summary = { agent: agent.id, suspended_gates: suspendedGates };
+      data.note = `Suspended gate(s) ${suspendedGates.join(', ')} belong to this agent: call gate_resume(id) for each before continuing; a fresh user confirmation message is then required.`;
+    }
     if (outputDirTemplate) data.output_dir_template = outputDirTemplate;
     return { data };
   },

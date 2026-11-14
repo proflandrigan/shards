@@ -184,6 +184,9 @@ online evaluation — consult the Researcher:
 Tell the user: "The evaluation plan involves statistical inference — I'm asking
 the Researcher shard to validate the methodology before we commit to it."
 
+Before this consult, collect data-modeller context (grain, entities, relationships) for the data under review: {{consult data-modeller entry=review task="Grain and relationships for the researcher review"}} Pass that context in the task of the researcher consult below.
+
+
 {{consult researcher entry=service task="Review statistical inference methodology for ML evaluation"}}
 
 Brief for the consultant (fill the bracketed fields):

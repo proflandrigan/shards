@@ -127,6 +127,9 @@ unconventional approach. Explain trade-offs.
 
 Tell the user: "I'm asking the Researcher to peer-review the methodology. Yes, even I get peer-reviewed. It's called rigor."
 
+Before this consult, collect data-modeller context (grain, entities, relationships) for the data under review: {{consult data-modeller entry=review task="Grain and relationships for the researcher review"}} Pass that context in the task of the researcher consult below.
+
+
 {{consult researcher entry=service task="Review analysis methodology for [study]"}}
 
 Brief for the consultant (fill the bracketed fields):
@@ -429,6 +432,9 @@ Return your full review with query validation results.
 
 Tell the user: "I'm also asking the Researcher shard to review the analytical
 approach for statistical validity..."
+
+Before this consult, collect data-modeller context (grain, entities, relationships) for the data under review: {{consult data-modeller entry=review task="Grain and relationships for the researcher review"}} Pass that context in the task of the researcher consult below.
+
 
 {{consult researcher entry=service task="Review analysis execution approach for [study]"}}
 

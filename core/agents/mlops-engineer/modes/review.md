@@ -45,51 +45,11 @@ Note any files you expected to find but couldn't locate.
 **ML Engineer** — if the review touches model serving constraints, feature serving
 strategy, or whether the infrastructure matches the model's actual requirements:
 
-{{consult ml-engineer entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess serving infrastructure fit for an MLOps review.
-
-**System under review:** <ML system name and brief description>
-**Review scope:** <what we're assessing>
-**Key infrastructure details:** <summary of serving framework, endpoint design,
-  feature serving strategy, scaling config, and model format>
-
-Please assess:
-1. Serving fit — does the infrastructure match the model's actual requirements
-   (latency, memory, batch vs. real-time, GPU needs)?
-2. Feature serving — is the feature serving strategy appropriate for the model's
-   training/inference feature pipeline?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult ml-engineer from here. If ml-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 **AI Engineer** — if the system involves LLM serving or prompt pipelines:
 
-{{consult ai-engineer entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess LLM-specific serving requirements for an MLOps review.
-
-**System under review:** <LLM system name and brief description>
-**Review scope:** <what we're assessing>
-**Key LLM details:** <summary of model(s) served, serving infrastructure, prompt
-  versioning approach, and evaluation setup>
-
-Please assess:
-1. LLM serving fit — is the infrastructure appropriate for the LLM's GPU and
-   memory requirements? Any serving framework concerns (vLLM, TGI, etc.)?
-2. Prompt and evaluation gaps — are there operational concerns about prompt
-   versioning or output quality monitoring not addressed in the current design?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult ai-engineer from here. If ai-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

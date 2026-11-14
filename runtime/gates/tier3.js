@@ -86,4 +86,45 @@ async function confirmByReply(session, { id, decision, user_reply } = {}, deps =
   }
 }
 
-module.exports = { markRequest, confirmByReply, FIXED_REFUSAL, SHORT_REFUSAL };
+// Suspend with the same chat-reply proof as a confirmation (E5.5): first, whole, unused user
+// message after the request mark. The reply is consumed; the gate becomes `suspended`.
+async function suspendByReply(session, { id, user_reply } = {}, deps = {}) {
+  const machine = require('./machine');
+  const state = storeOf(session);
+  const sess = { ...session, state };
+  let accepted = null; let refusal = null;
+  await state.update('confirm', (cur) => {
+    cur.marks = cur.marks || {}; cur.used = cur.used || {};
+    const refuse = () => {
+      const m = cur.marks[id] || (cur.marks[id] = { prompt_hwm: null, marked_at: null, refusal_shown: false });
+      const first = !m.refusal_shown;
+      m.refusal_shown = true;
+      refusal = { ok: false, refusal: first ? FIXED_REFUSAL : SHORT_REFUSAL, first };
+      return cur;
+    };
+    const g = machine.getGate(sess, id);
+    if (!g || g.status !== 'pending') return refuse();
+    const mark = cur.marks[id];
+    if (!mark || !Number.isInteger(mark.prompt_hwm)) return refuse();
+    if (typeof user_reply !== 'string') return refuse();
+    const reply = normalizeText(user_reply);
+    if (!reply) return refuse();
+    const cand = readPrompts(state).filter((r) => r.prompt_id > mark.prompt_hwm).sort((a, b) => a.prompt_id - b.prompt_id)[0];
+    if (!cand || cand.text !== reply) return refuse();
+    if (cur.used[String(cand.prompt_id)]) return refuse();
+    const ts = new Date().toISOString();
+    cur.used[String(cand.prompt_id)] = { gate: id, ts };
+    accepted = { prompt_id: cand.prompt_id, sha256: cand.sha256, ts, text: cand.text };
+    return cur;
+  });
+  if (refusal) return refusal;
+  try {
+    const entry = await machine.suspendGate(sess, id, { proof: { tier: 'chat-reply', level: 3, ts: accepted.ts, prompt_id: accepted.prompt_id, sha256: accepted.sha256 } });
+    return { ok: true, entry };
+  } catch (e) {
+    await state.update('confirm', (cur) => { if (cur.used) delete cur.used[String(accepted.prompt_id)]; return cur; });
+    throw e;
+  }
+}
+
+module.exports = { markRequest, confirmByReply, suspendByReply, FIXED_REFUSAL, SHORT_REFUSAL };

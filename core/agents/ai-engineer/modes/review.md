@@ -46,45 +46,10 @@ Consult reviewers as appropriate:
 
 **ML Engineer** — if the review touches production feasibility, infrastructure,
 or model serving:
-{{consult ml-engineer entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess production feasibility for an AI system review.
-
-**System under review:** <system name and brief description>
-**Review scope:** <what we're assessing>
-**Key technical details:** <summary of architecture, serving approach, scale requirements>
-
-Please assess:
-1. Production feasibility — is the architecture viable at the expected scale?
-2. Infrastructure concerns — latency, cost, memory, or serving risks?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult ml-engineer from here. If ml-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 **Academic** — if the review touches safety, ethics, or user impact concerns:
-{{consult academic entry=service}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess safety and ethical considerations for an AI system review.
-
-**System under review:** <system name and brief description>
-**Review scope:** <what we're assessing>
-**User-facing behaviour:** <what the system does and who uses it>
-**Known concerns:** <any safety or ethical questions raised during review>
-
-Please assess:
-1. Safety risks — what could go wrong, and how likely is it?
-2. Ethical considerations — any concerns about user impact, fairness, or harm?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult academic from here. If academic input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

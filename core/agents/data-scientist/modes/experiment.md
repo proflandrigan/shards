@@ -261,6 +261,9 @@ a versioned checkpoint of this experiment's results. If versioning mode is
 
 ### Step 6 — Consult Researcher
 Call:
+Before this consult, collect data-modeller context (grain, entities, relationships) for the data under review: {{consult data-modeller entry=review task="Grain and relationships for the researcher review"}} Pass that context in the task of the researcher consult below.
+
+
 {{consult researcher entry=service}}
 
 Brief for the consultant (fill the bracketed fields):

@@ -100,6 +100,9 @@ Append MLOps Engineer's review to specs.
 Tell the user: "I'm asking the Researcher shard to validate the evaluation
 methodology and results. If the eval is wrong, everything is wrong."
 
+Before this consult, collect data-modeller context (grain, entities, relationships) for the data under review: {{consult data-modeller entry=review task="Grain and relationships for the researcher review"}} Pass that context in the task of the researcher consult below.
+
+
 {{consult researcher entry=service task="Evaluation rigor review for AI system"}}
 
 Brief for the consultant (fill the bracketed fields):

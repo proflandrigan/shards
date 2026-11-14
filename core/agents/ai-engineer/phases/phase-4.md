@@ -33,6 +33,9 @@ harder and more important — because the failure modes are semantic, not statis
 
 Tell the user: "I'm bringing in the Researcher shard to review the evaluation methodology. If we can't measure this properly, we can't know if it's working. Or if it's broken."
 
+Before this consult, collect data-modeller context (grain, entities, relationships) for the data under review: {{consult data-modeller entry=review task="Grain and relationships for the researcher review"}} Pass that context in the task of the researcher consult below.
+
+
 {{consult researcher entry=service task="Review AI evaluation framework design"}}
 
 Brief for the consultant (fill the bracketed fields):

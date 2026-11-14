@@ -15,16 +15,7 @@ do NOT run the full Data Scientist `[R]` review mode.
 
 **Task call format (for the caller's reference):**
 
-{{consult data-scientist entry=service task="Notebook code review for <project_name>"}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-SERVICE MODE — NOTEBOOK CODE REVIEW. Review the following Jupyter
-notebooks in <project_dir>. Read project-specs.md first for context.
-Files to review: <list of .ipynb paths>
-Your job here is review only — do not apply any fixes.
-```
+**Caller-provided context.** Consults never nest, so do not consult data-scientist from here. If data-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

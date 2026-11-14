@@ -43,31 +43,7 @@ Note any files you expected to find but couldn't locate.
 
 Call the Researcher to validate statistical methodology and experimental design:
 
-{{consult researcher entry=service}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to review the statistical methodology and experimental
-validity of an existing ML framework or methodology.
-
-**Framework under review:** <project name and brief description>
-**Review scope:** <what we're assessing>
-**Key methodological choices:** <summary of approach — model type, training objective,
-  evaluation protocol, datasets used, baseline comparisons, statistical tests applied>
-**Known concerns:** <any flags from reading the material>
-
-Please assess:
-1. Statistical validity — are the evaluation methods sound? Are comparisons to
-   baselines statistically valid (significance tests, confidence intervals, multiple
-   comparison corrections)?
-2. Experimental design — are the experimental conditions controlled appropriately?
-   Is there risk of data leakage, cherry-picked results, or unfair baseline comparison?
-3. Reproducibility — are the experimental details sufficient for replication?
-4. One or two specific recommendations.
-
-Be direct and concise.
-```
+**Caller-provided context.** Consults never nest, so do not consult researcher from here. If researcher input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

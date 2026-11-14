@@ -9,12 +9,21 @@ module.exports = defineTool({
   sessionless: true,
   async handler() {
     const core = coreDir();
-    const agents = [...loadAgents(core).values()].map((a) => (a.error
-      ? { id: a.id, error: a.error }
-      : {
+    const agents = [...loadAgents(core).values()].map((a) => {
+      if (a.error) return { id: a.id, error: a.error };
+      const entries = Object.keys(a.consult_entries || {});
+      const act = a.activation || [];
+      const consult = act.includes('consult') ? [a.id, ...entries.map((e) => `${a.id}-${e}`)] : [];
+      const sw = act.includes('switch');
+      return {
         id: a.id, display_name: a.display_name, description: a.description, role: a.role,
-        activation: a.activation, consult_entries: Object.keys(a.consult_entries || {}), output_dir: a.output_dir === undefined ? null : a.output_dir,
-      }));
+        activation: a.activation, modes: act, consult_entries: entries, output_dir: a.output_dir === undefined ? null : a.output_dir,
+        activate: {
+          claude: { switch: sw ? `/shards:${a.id}` : null, consult },
+          codex: { switch: sw ? `$${a.id}` : null, profile: `shards-${a.id}`, consult: consult.slice() },
+        },
+      };
+    });
     return { data: { agents, core_dir: core } };
   },
 });

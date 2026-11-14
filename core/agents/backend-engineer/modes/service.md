@@ -18,15 +18,7 @@ files.
 
 **Task call format (for Syn's reference):**
 
-{{consult backend-engineer entry=service task="Python code review for <project_name>"}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are in SERVICE MODE. Review the following Python files in the
-project at <project_dir>. Read project-specs.md first for context.
-Files to review: <list>
-```
+**Caller-provided context.** Consults never nest, so do not consult backend-engineer from here. If backend-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 **In service mode:**
 

@@ -16,7 +16,7 @@ const COMMANDS = {
 function usage() {
   const lines = ['Usage: shards <command> [options]', '', 'Commands:'];
   for (const [n, c] of Object.entries(COMMANDS)) lines.push(`  ${n.padEnd(14)} ${c.summary}`);
-  lines.push('', 'build options: --target <claude|codex|skills> [--dev] [--out dir] [--strict] [--core dir]');
+  lines.push('', 'build options: --target <claude|codex|skills> [--dev] [--out dir] [--strict] [--default-agent] [--core dir]');
   lines.push('uninstall-dev options: [--target claude|codex|all] [--out dir]');
   lines.push('gates: gates status [--session k] [--root d] | gates confirm <gate-id> [--session k] [--changes "note"] [--root d]');
   lines.push('doctor: doctor [--root d] [--json] [--fix]');
@@ -34,6 +34,7 @@ function parseBuildArgs(argv) {
     else if (a === '--core') o.core = val();
     else if (a === '--dev') o.dev = true;
     else if (a === '--strict') o.strict = true;
+    else if (a === '--default-agent') o.defaultAgent = true;
     else throw new Error(`unknown option '${a}'`);
   }
   if (!o.target) throw new Error('--target <claude|codex|skills> is required');
@@ -76,7 +77,7 @@ function runBuild(argv) {
   try { o = parseBuildArgs(argv); } catch (e) { console.error(`shards build: ${e.message}\n\n${usage()}`); return 2; }
   const { compile } = require('../build/compile');
   const outDir = o.out || defaultOutDir(o.target);
-  const r = compile({ target: o.target, coreDir: o.core, outDir, dev: o.dev, strict: o.strict });
+  const r = compile({ target: o.target, coreDir: o.core, outDir, dev: o.dev, strict: o.strict, defaultAgent: o.defaultAgent });
   if (r.errors.length) {
     for (const e of r.errors) console.error(e);
     console.error(`build failed: ${r.errors.length} error(s)`);

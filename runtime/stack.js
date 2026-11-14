@@ -23,18 +23,21 @@ function frameNum(f) {
 function stackNames(frames) { return frames.map((f) => f.agent); }
 function fmtStack(frames) { return `[${stackNames(frames).join(' > ')}]`; }
 
-function pendingGatesFor(gatesObj, frames) {
+function gatesWithStatus(gatesObj, frames, status) {
   const ids = new Set(frames.map((f) => f.id));
   const agents = new Set(frames.map((f) => f.agent));
   const owned = new Set(frames.flatMap((f) => f.gates || []));
   const out = [];
   for (const [key, g] of Object.entries(gatesObj || {})) {
-    if (!g || g.status !== 'pending') continue;
+    if (!g || g.status !== status) continue;
     const gid = g.id || key;
     if ((g.frame !== undefined && ids.has(g.frame)) || (g.frame === undefined && agents.has(g.agent)) || owned.has(gid) || owned.has(key)) out.push(gid);
   }
   return out;
 }
+
+const pendingGatesFor = (gatesObj, frames) => gatesWithStatus(gatesObj, frames, 'pending');
+const suspendedGatesFor = (gatesObj, frames) => gatesWithStatus(gatesObj, frames, 'suspended');
 
 async function pushFrame(state, fields) {
   let created;
@@ -75,8 +78,8 @@ async function popFrames(state, { to, popBase } = {}) {
     const going = frames.slice(keep);
     if (going.length) {
       const pend = pendingGatesFor(state.read('gates').gates, going);
-      // TODO(E5.5): suspend with human proof instead of refusing
-      if (pend.length) throw new Error(`Cannot return: pending gate(s) ${pend.join(', ')} owned by ${[...new Set(going.map((f) => f.agent))].join(', ')}. Resolve the gate(s) first.`);
+      // Suspended gates (gate_suspend, human proof) do not block leaving; pending ones do.
+      if (pend.length) throw new Error(`Cannot return: pending gate(s) ${pend.join(', ')} owned by ${[...new Set(going.map((f) => f.agent))].join(', ')}. Resolve the gate(s) first, or suspend them with gate_suspend (needs the user's say-so).`);
     }
     popped = going;
     remaining = frames.slice(0, keep);
@@ -86,4 +89,4 @@ async function popFrames(state, { to, popBase } = {}) {
   return { popped, frames: remaining };
 }
 
-module.exports = { pushFrame, popFrames, pendingGatesFor, stackNames, fmtStack };
+module.exports = { pushFrame, popFrames, pendingGatesFor, suspendedGatesFor, stackNames, fmtStack };

@@ -47,7 +47,7 @@ non-empty, call them in parallel.
 
 If any `.sql` files were found:
 
-{{consult analytics-engineer entry=service task="SQL code review for <project_name>"}}
+Do not consult from here (consults never nest). Return this bucket to the caller in the returned plan; the caller runs the consult for `analytics-engineer` (entry `service`, task "SQL code review for <project_name>") with the brief below.
 
 Brief for the consultant (fill the bracketed fields):
 
@@ -62,7 +62,7 @@ Your job here is review only — do not apply any fixes.
 
 If any `.py` files were found:
 
-{{consult backend-engineer entry=service task="Python code review for <project_name>"}}
+Do not consult from here (consults never nest). Return this bucket to the caller in the returned plan; the caller runs the consult for `backend-engineer` (entry `service`, task "Python code review for <project_name>") with the brief below.
 
 Brief for the consultant (fill the bracketed fields):
 
@@ -81,9 +81,9 @@ ML Engineer — see Step 3c.
 If any `.ipynb` files were found, invoke whichever reviewer was picked in
 Step 2a:
 
-Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+For the notebook reviewer picked in Step 2a (shown for `data-scientist`):
 
-{{consult data-scientist entry=service task="Notebook code review for <project_name>"}}
+Do not consult from here (consults never nest). Return this bucket to the caller in the returned plan; the caller runs the consult for `data-scientist` (entry `service`, task "Notebook code review for <project_name>") with the brief below.
 
 Brief for each consultant or worker (fill the angle-bracket fields):
 
@@ -103,7 +103,7 @@ Engineer — that path is deprecated.
 
 If any config/infra files were found:
 
-{{consult mlops-engineer entry=service task="Config/infra code review for <project_name>"}}
+Do not consult from here (consults never nest). Return this bucket to the caller in the returned plan; the caller runs the consult for `mlops-engineer` (entry `service`, task "Config/infra code review for <project_name>") with the brief below.
 
 Brief for the consultant (fill the bracketed fields):
 
@@ -139,7 +139,7 @@ Syn does not call Edit on any project files directly.
 
 If SQL fixes were approved:
 
-{{consult analytics-engineer entry=service task="Apply SQL fixes for <project_name>"}}
+Do not consult from here (consults never nest). Return this bucket to the caller in the returned plan; the caller runs the consult for `analytics-engineer` (entry `service`, task "Apply SQL fixes for <project_name>") with the brief below.
 
 Brief for the consultant (fill the bracketed fields):
 
@@ -155,7 +155,7 @@ was changed.
 
 If Python script fixes were approved:
 
-{{consult backend-engineer entry=service task="Apply Python fixes for <project_name>"}}
+Do not consult from here (consults never nest). Return this bucket to the caller in the returned plan; the caller runs the consult for `backend-engineer` (entry `service`, task "Apply Python fixes for <project_name>") with the brief below.
 
 Brief for the consultant (fill the bracketed fields):
 
@@ -171,9 +171,9 @@ was changed.
 
 If notebook fixes were approved, invoke the same reviewer chosen in Step 2a:
 
-Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+For the notebook reviewer picked in Step 2a (shown for `data-scientist`):
 
-{{consult data-scientist entry=service task="Apply notebook fixes for <project_name>"}}
+Do not consult from here (consults never nest). Return this bucket to the caller in the returned plan; the caller runs the consult for `data-scientist` (entry `service`, task "Apply notebook fixes for <project_name>") with the brief below.
 
 Brief for each consultant or worker (fill the angle-bracket fields):
 
@@ -189,7 +189,7 @@ of what was changed.
 
 If config/infra fixes were approved:
 
-{{consult mlops-engineer entry=service task="Apply config/infra fixes for <project_name>"}}
+Do not consult from here (consults never nest). Return this bucket to the caller in the returned plan; the caller runs the consult for `mlops-engineer` (entry `service`, task "Apply config/infra fixes for <project_name>") with the brief below.
 
 Brief for the consultant (fill the bracketed fields):
 

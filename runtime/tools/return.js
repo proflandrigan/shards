@@ -2,7 +2,7 @@
 const path = require('path');
 const { defineTool } = require('../registry');
 const { coreDir, loadAgents, readPersonaSummary } = require('../agents');
-const { popFrames, pendingGatesFor, stackNames } = require('../stack');
+const { popFrames, pendingGatesFor, suspendedGatesFor, stackNames } = require('../stack');
 
 module.exports = defineTool({
   name: 'return',
@@ -23,11 +23,13 @@ module.exports = defineTool({
       else persona = { path: `agents/${path.basename(top.agent)}/persona-summary.md`, content: '' };
     }
     const pending = top ? pendingGatesFor(ctx.state.read('gates').gates, [top]) : [];
+    const suspended = top ? suspendedGatesFor(ctx.state.read('gates').gates, [top]) : [];
     return {
       data: {
         popped: popped.map((f) => f.agent), stack: stackNames(frames), top: top ? top.agent : null,
         persona_summary: persona,
-        state_summary: top ? { agent: top.agent, phase: top.phase, project: top.project, pending_gates: pending } : null,
+        ...(suspended.length ? { note: `Suspended gate(s) ${suspended.join(', ')} are back in scope: call gate_resume(id) for each, then gate_request/confirm as normal.` } : {}),
+        state_summary: top ? { agent: top.agent, phase: top.phase, project: top.project, pending_gates: pending, suspended_gates: suspended } : null,
       },
     };
   },

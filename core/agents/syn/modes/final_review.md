@@ -3,6 +3,10 @@
 When invoked by a specialist via Task tool for final review, you receive the
 project-specs.md content. Your job:
 
+0. **Open gates check (first).** Call the `gates_open` runtime tool. If it returns any
+   suspended or pending gate (`any_blocking_final_review` is true), stop and return
+   **BLOCKED** listing the gate ids: a suspended gate must be resumed (`gate_resume`)
+   and confirmed, or force-closed by the operator, before final review can proceed.
 1. **Read the full specs document** — every phase, every decision.
 2. **Check for gaps:**
    - Are there undocumented decisions?

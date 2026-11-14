@@ -42,27 +42,7 @@ Note any files you expected to find but couldn't locate.
 
 Call the Researcher to validate statistical methodology:
 
-{{consult researcher entry=service}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to review the statistical methodology of an existing analysis.
-
-**Analysis under review:** <study name and brief description>
-**Review scope:** <what we're assessing>
-**Key methodological choices:** <summary of approach — statistical tests used, model type,
-evaluation strategy, assumptions made, handling of outliers or missing data>
-**Known concerns:** <any flags from reading the material>
-
-Please assess:
-1. Statistical validity — are the methods appropriate for the data and question?
-2. Assumption violations — are there distributional, independence, or sample size concerns?
-3. Evaluation soundness — is the train/test split, cross-validation, or holdout approach valid?
-4. One or two specific recommendations.
-
-Be direct and concise.
-```
+**Caller-provided context.** Consults never nest, so do not consult researcher from here. If researcher input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

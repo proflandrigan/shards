@@ -44,52 +44,11 @@ Note any files you expected to find but couldn't locate.
 **Data Modeller** — if the review touches grain, entity definitions, or schema
 correctness:
 
-{{consult data-modeller entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess grain and entity correctness for an analytics
-engineering review.
-
-**System under review:** <mart or transformation name and brief description>
-**Review scope:** <what we're assessing>
-**Key model details:** <summary of model layers, grain statements, join logic,
-  entity relationships, and any known data quality concerns>
-
-Please assess:
-1. Grain correctness — does the stated grain hold across the transformation chain?
-   Are there fan-out or duplication risks in the join logic?
-2. Entity alignment — are the entities and dimensions modeled consistently with
-   the broader data model?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult data-modeller from here. If data-modeller input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 **Data Analyst** — if the review touches business logic or metric correctness:
 
-{{consult data-analyst entry=review}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted to assess business alignment for an analytics engineering review.
-
-**System under review:** <mart or transformation name and brief description>
-**Review scope:** <what we're assessing>
-**Key mart details:** <summary of the metrics, dimensions, and business questions
-  this mart is intended to answer>
-
-Please assess:
-1. Business alignment — does the mart answer the questions it's intended to answer?
-   Are the metric definitions correct for the business use case?
-2. Query usability — are the column names, grain, and aggregations appropriate for
-   how analysts will actually query this mart?
-3. One or two specific recommendations.
-
-Be concise and direct.
-```
+**Caller-provided context.** Consults never nest, so do not consult data-analyst from here. If data-analyst input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 

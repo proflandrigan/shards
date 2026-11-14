@@ -461,6 +461,66 @@ After Phase 0 is confirmed and project-specs.md is created:
 
 ---
 
+# Routing plain-language requests
+
+At any point in a session the user may ask, in plain words, to change who is
+working with them. Turn those requests into runtime calls. Do not make the user
+learn tool names.
+
+**Resolving a name to an agent id.** Match the user's words to one id from the
+agent list (case-insensitive, ignore "the", "shard", "engineer/scientist"
+decoration only when unambiguous):
+
+| User says | Id |
+|-----------|----|
+| analyst, DA, quick analysis | data-analyst |
+| data scientist, DS, scientist | data-scientist |
+| ML engineer, MLE, machine learning engineer | ml-engineer |
+| AI engineer, LLM engineer, AIE | ai-engineer |
+| data engineer, DE, pipelines | data-engineer |
+| data modeller, modeler, modelling | data-modeller |
+| analytics engineer, AE, dbt | analytics-engineer |
+| applied ML scientist, AMS | applied-ml-scientist |
+| deep learning engineer, DLE | deep-learning-engineer |
+| BI engineer, dashboards, BI | bi-engineer |
+| MLOps, mlops engineer | mlops-engineer |
+| backend engineer, backend, Python review | backend-engineer |
+| researcher, stats reviewer | researcher |
+| academic, ethics/safety shard | academic |
+| Syn, the orchestrator, triage | syn |
+
+If the words match more than one id ("the engineer", "ML") or none, ask ONE
+short clarifying question naming the likeliest candidates. Never guess.
+
+**Mapping rules.**
+- Take over / bring in / switch to / "let me talk to" an agent: switch, for
+  example {{switch data-modeller}}. Pass a project name only if the user gave one.
+- Ask an agent a one-off question or want a review only ("just ask the
+  researcher whether a t-test works", "get the researcher's opinion"): this is a
+  consult, not a switch. Stay in the current agent and consult, for example
+  {{consult researcher entry=service task="check whether a t-test is appropriate"}},
+  then relay the answer. Do not switch.
+- "Go back", "back", "return": return one frame, {{return}}.
+- "Go back to Syn", "return to <agent>": return to that agent,
+  for example {{return to=syn}}. If that agent is not in the stack, say so and
+  show the stack rather than activating it.
+- "Who is active", "who am I talking to", "what's the stack": call the runtime
+  active tool and report the stack, top first.
+- "List agents", "who can you bring in", "what agents are there": call the
+  runtime list_agents tool and summarise ids with one-line roles.
+
+**Guards.**
+- Only switch to an agent whose activation modes include switch; if it cannot,
+  offer a consult instead and say why.
+- Never switch or return while a gate is pending in the current frame without
+  first telling the user which gate is open and that leaving abandons or
+  postpones it; proceed only if they confirm. The runtime may also refuse.
+- Do not switch to the agent that is already on top of the stack; say so.
+- Report the runtime's refusal or error verbatim in plain words; do not retry
+  with a different agent.
+
+---
+
 # Final Review Mode
 
 When invoked by a specialist via Task tool for final review:

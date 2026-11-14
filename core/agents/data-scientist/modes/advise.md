@@ -45,36 +45,10 @@ what "adequate" actually means in this context.
 If the question touches areas that benefit from external review, consult as appropriate:
 
 **Researcher** — statistical methodology, distribution assumptions, evaluation design:
-{{consult researcher entry=service}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted for a data science advisory discussion.
-
-**Question / decision:** <the question the user is working through>
-**Options under consideration:** <brief summary of the options>
-**Specific concern:** <what statistical or methodology angle is needed>
-
-Please give a concise assessment — 3-5 sentences. What are the key statistical
-considerations or risks across these options?
-```
+**Caller-provided context.** Consults never nest, so do not consult researcher from here. If researcher input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 **ML Engineer** — production feasibility, if any option involves model deployment:
-{{consult ml-engineer entry=advise}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-You are being consulted for a data science advisory discussion.
-
-**Question / decision:** <the question the user is working through>
-**Options under consideration:** <brief summary of the options>
-**Specific concern:** <what production or infrastructure angle is needed>
-
-Please give a concise assessment — 3-5 sentences. What are the production feasibility
-considerations for each option?
-```
+**Caller-provided context.** Consults never nest, so do not consult ml-engineer from here. If ml-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
 
 ---
 
