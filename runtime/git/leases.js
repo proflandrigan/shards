@@ -1,8 +1,15 @@
 'use strict';
-// Leased-path hook. E5.9 will replace this with the real lease registry.
-// Returns project-root-relative paths (files or directory prefixes) that other
-// sessions currently hold; commitGate excludes them from a gate commit.
+// Leased-path hook backed by the lease store (runtime/leases, E12.1; E5.9 extends).
+// Returns project-root-relative paths (files or directory prefixes) held by
+// active, non-expired leases in the session; commitGate excludes them from a
+// gate commit. Returns [] when no lease state exists.
 // Callers invoke it via the module object so tests can stub it.
-function getLeasedPaths(_session) { return []; }
+async function getLeasedPaths(session) {
+  if (!session || !session.root || (!session.state && !session.sessionKey)) return [];
+  const { listActive } = require('../leases');
+  const out = new Set();
+  for (const l of listActive(session)) for (const s of l.slices) for (const p of s.paths) out.add(p);
+  return [...out];
+}
 
 module.exports = { getLeasedPaths };

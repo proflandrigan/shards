@@ -10,7 +10,7 @@ const NON_ADVANCING = new Set(['checkpoint', 'confirm']);
 const TRACKS = ['quick', 'deep'];
 const PHASE_RE = /^\d+(-\d+)*$/;
 const NAMES = ['switch', 'consult', 'fanout', 'return', 'phase', 'protocol', 'template', 'gate', 'auto_verify',
-  'record.write', 'tasks.create', 'tasks.update', 'tasks.list', 'tasks.get', 'knowledge.search', 'artifact.emit'];
+  'record.write', 'tasks.create', 'tasks.update', 'tasks.list', 'tasks.get', 'knowledge.search', 'artifact.emit', 'delegate'];
 
 // Derive enclosing context from a path relative to core/ (posix).
 function fileContext(rel) {
@@ -75,6 +75,12 @@ function resolveMacro(macro, core, ctx) {
         }
       }
       Object.assign(model, { agent: vals.agent, entry, slices: vals.slices, task: vals.task });
+      break;
+    }
+    case 'delegate': {
+      if (vals.tasks !== undefined && !vals.tasks.trim()) err('tasks must be a non-empty path in {{delegate}}');
+      if (vals.max_parallel !== undefined && !/^[1-9]\d*$/.test(vals.max_parallel)) err(`invalid value for max_parallel '${vals.max_parallel}': expected positive integer`);
+      Object.assign(model, { tasks: vals.tasks, max_parallel: vals.max_parallel });
       break;
     }
     case 'return':
@@ -188,6 +194,7 @@ const SPECS = {
   'tasks.get': { positional: [], named: ['id'], required: ['id'] },
   'knowledge.search': { positional: [], named: ['query', 'scope'], required: ['query'] },
   'artifact.emit': { positional: [], named: ['type', 'path', 'meta'], required: ['type', 'path'] },
+  delegate: { positional: [], named: ['tasks', 'max_parallel'], required: [] },
 };
 
 module.exports = { resolveMacro, fileContext, NAMES, ENTRIES, KINDS };

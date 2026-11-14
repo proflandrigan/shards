@@ -20,6 +20,7 @@ function makeCore(files = {}) {
     'agents/alpha/agent.yaml': yaml('alpha', 'consult_entries:\n  review: modes/review.md\n  worker: modes/worker.md\n'),
     'agents/alpha/AGENT.md': '---\nname: alpha\ndescription: x\ntools: Read, Write, Task\nmodel: opus-4.8\n---\n\n# Alpha\nPersona {{PROJECT_NAME}}.\n',
     'agents/alpha/modes/review.md': '# Review\n',
+    'agents/alpha/modes/worker.md': '# Worker\n',
     'agents/alpha/phases/index.md': '# Phases\n',
     'agents/alpha/phases/phase-1.md': '# Phase 1\n',
     'agents/alpha/phases/phase-6-5.md': '# Phase 6.5\n',

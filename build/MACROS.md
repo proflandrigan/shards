@@ -125,9 +125,16 @@ Example: `{{artifact.emit type=report path=analysis/churn/report.md}}`
 Args: `type` required (`[a-z][a-z0-9_-]*`), `path` required, `meta` optional.
 Compiles to runtime `artifact_emit(type, path, meta)`, which appends to `.shards/events.jsonl`.
 
+### 3.14 `{{delegate [tasks=<path>] [max_parallel=<n>]}}`
+
+Example: `{{delegate tasks=data_models/foo/tasks.yaml max_parallel=3}}`
+Args: `tasks` (optional non-empty path hint, default `<output_dir>/tasks.yaml`), `max_parallel` (optional positive integer cap on concurrent workers). No required args.
+Validation: args only (the `protocols/plan_drift.md` path is referenced, not checked).
+Compiles to the delegated build loop: `tasks_set` (rejects cycles, overlapping owned paths, missing acceptance checks), `task_dispatch` (ready tasks only, capped), hand each task card to a worker, `task_report` with each result, verify acceptance yourself, dispatch unblocked tasks. Workers hold no gates, never change the plan or delegate; deviations stop dependents and follow plan_drift. The phase gate is raised only when all tasks are done.
+
 ## 4. Runtime tools and bindings
 
-Runtime tools referenced: `activate`, `return`, `load_phase`, `gate_request`, `gate_advance`, `gate_confirm` (the last two are never emitted into agent text: the user side confirms), `auto_verify_start`, `auto_verify_end`, `artifact_emit`, `fanout_start` (E5.9). Binding jobs (from `shards.config.yaml`): `record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`; macros render the job name, not a concrete tool.
+Runtime tools referenced: `activate`, `return`, `load_phase`, `gate_request`, `gate_advance`, `gate_confirm` (the last two are never emitted into agent text: the user side confirms), `auto_verify_start`, `auto_verify_end`, `artifact_emit`, `fanout_start` (E5.9), `tasks_set`, `task_dispatch`, `task_report`, `task_status` (E12, via `delegate`). Binding jobs (from `shards.config.yaml`): `record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`; macros render the job name, not a concrete tool.
 
 ## 5. Rendering table
 
@@ -138,6 +145,7 @@ Tool-name prefix by target (`CLAUDE_TOOL_PREFIX` / `CODEX_TOOL_PREFIX` in `build
 | switch | call `mcp__plugin_shards_shards__activate(agent="a", mode="switch")`, adopt the persona it returns | same with `shards.activate` | same with `activate` |
 | consult | run subagent `a` (plugin agent `agents/a.md`, via the Agent tool, by name); the prompt starts with "Entry `e`: read `${CLAUDE_PLUGIN_ROOT}/content/agents/a/<file>` first" | spawn the Codex agent `a` (`.codex/agents/a.toml`) with a spawn_agent-style call; the message starts with "Entry `e`: read `content/agents/a/<file>` first" | invoke skill `a` in an isolated context if the host has one, else call `activate(agent="a", mode="consult")` and follow `content/agents/a/<file>`, then `return` |
 | fanout | call `mcp__plugin_shards_shards__fanout_start`, then launch one subagent `a` per slice in a single message | `shards.fanout_start`, then one `spawn_agent` per slice in parallel | `fanout_start`, then one isolated skill invocation per slice |
+| delegate | `tasks_set`, `task_dispatch`, `task_report`, `task_status` with the claude prefix; workers are the specialist's own subagents by name, prompt starts "Entry worker: read ..." | same with `shards.` prefix; workers via `spawn_agent` | bare tool names; workers via isolated skill invocation, else inline under the same owned-path rule |
 | return | `mcp__plugin_shards_shards__return(to?)` | `shards.return(to?)` | `return(to?)` |
 | phase | `mcp__plugin_shards_shards__load_phase(agent, n, track?)` + path | `shards.load_phase(...)` | `load_phase(...)` |
 | protocol / template | read `${CLAUDE_PLUGIN_ROOT}/content/protocols/<name>.md` (templates likewise) | read `content/protocols/<name>.md` | read `content/protocols/<name>.md` |

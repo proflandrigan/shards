@@ -37,6 +37,15 @@ function render(m, target) {
           : `invoke the \`${m.agent}\` skill once per slice in isolated contexts`;
       return `Fan out to \`${m.agent}\` workers (slices: ${m.slices}): call ${T('fanout_start')}(agent=${q(m.agent)}, slices=${q(m.slices)}), then ${how}. Each worker starts with "Entry ${m.entry}: read ${file} first" plus its slice. Workers hold no gates, do not change the plan and do not delegate. Collect and verify every result before continuing.`;
     }
+    case 'delegate': {
+      const wf = contentPath(target, 'agents/<worker>/modes/worker.md');
+      const pd = contentPath(target, 'protocols/plan_drift.md');
+      const cap = m.max_parallel ? `the host thread cap or ${m.max_parallel}, whichever is lower` : 'the host thread cap';
+      const hand = target === 'claude' ? `run the specialist's own worker subagent (the worker agent id on the card) by name, starting its prompt with "Entry worker: read ${wf} first" followed by the card JSON`
+        : target === 'codex' ? `spawn the worker agent named on the card with spawn_agent, starting its message with "Entry worker: read ${wf} first" followed by the card JSON`
+          : `invoke the worker skill named on the card in an isolated context if the host supports it, otherwise do the card inline in this session under the same owned-path rule`;
+      return `Run the delegated build loop. (1) Call ${T('tasks_set')}(path=${q(m.tasks || '<output_dir>/tasks.yaml')}) with the approved tasks.yaml; it rejects cycles, overlapping owned paths and missing acceptance checks. (2) Call ${T('task_dispatch')}(ids=<ready tasks>) for ready tasks only, at most ${cap} at once; it returns task cards. (3) Hand each card to a worker: ${hand}. (4) Pass each worker's result JSON to ${T('task_report')}; use ${T('task_status')} to see what is ready. (5) Verify the acceptance check yourself (never accept on the worker's word), then dispatch the tasks it unblocks. (6) Workers hold no gates, never change the plan and never delegate; if a result has deviations, stop dependent tasks and follow the plan_drift protocol (read ${pd}). (7) Raise the phase gate only when every task is done.`;
+    }
     case 'return':
       return m.to ? `Return to \`${m.to}\`: call ${T('return')}(to=${q(m.to)}). Resolve any pending gate first.` : `Return to the previous agent: call ${T('return')}(). Resolve any pending gate first.`;
     case 'phase': {

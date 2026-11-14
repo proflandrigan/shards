@@ -4,8 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const { loadAgents, validateAgents, makeValidator } = require('../scripts/validate-agents.js');
 
-// The one allowed missing consult entry file: E12.2 creates modes/worker.md for each specialist.
-const KNOWN_MISSING = new Set(['worker:modes/worker.md']);
 
 function walk(dir, base = dir) {
   const out = [];
@@ -47,7 +45,7 @@ function loadCore(coreDir) {
     const dir = path.join(agentsDir, a.dir);
     const doc = a.doc || {};
     for (const [entry, rel] of Object.entries(doc.consult_entries || {})) {
-      if (!fs.existsSync(path.join(dir, rel)) && !KNOWN_MISSING.has(`${entry}:${rel}`)) {
+      if (!fs.existsSync(path.join(dir, rel))) {
         errors.push(`${label(path.join(dir, 'agent.yaml'))}:1: consult entry '${entry}' file '${rel}' does not exist`);
       }
     }
@@ -58,4 +56,4 @@ function loadCore(coreDir) {
   return { coreDir, agents, protocols, templates, errors };
 }
 
-module.exports = { loadCore, walk, label, KNOWN_MISSING };
+module.exports = { loadCore, walk, label };
