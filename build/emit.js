@@ -71,8 +71,9 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir }
       out.set('hooks/hooks.json', hooks);
     } else if (target === 'codex') {
       out.set('.codex-plugin/plugin.json', jsonText({ name: 'shards', version: pkg.version, description: pkg.description, skills: './skills/' })); // docs-only, UNVERIFIED
-      // TODO(E8.3): per-tool approval_mode for gate_advance / gate_force_close (Milestone B).
-      out.set('.codex/config.toml', `[mcp_servers.shards]\ncommand = "node"\nargs = [${tomlStr(runtime)}]\n`);
+      // E8.3: per-tool approval_mode (Codex docs-only, UNVERIFIED: compat CX-1).
+      const approvals = ['gate_advance', 'gate_force_close'].map((t) => `[mcp_servers.shards.tools.${t}]\napproval_mode = "prompt"\n`).join('\n');
+      out.set('.codex/config.toml', `[mcp_servers.shards]\ncommand = "node"\nargs = [${tomlStr(runtime)}]\n\n# Per-tool approval_mode below is docs-only / UNVERIFIED (docs/compat.md CX-1).\n${approvals}`);
       out.set('.codex/hooks.json', fs.readFileSync(path.join(REPO, 'hooks', 'codex.hooks.json'), 'utf8').split('{{SHARDS_HOOKS_DIR}}').join(hooksDir));
     }
   }

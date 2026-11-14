@@ -119,11 +119,11 @@ module.exports = defineTool({
     if (!top || top.agent !== agent.id) throw new Error(`load_phase refused: ${agent.id} is not the active agent${top ? ` (top of stack is ${top.agent})` : ' (no active frame)'}. Call activate(agent="${agent.id}", mode="switch") first.`);
 
     // --- gate enforcement ---
-    // TODO(E11.8): policy 'plan' (approve plan + budget once) will relax this; until then it behaves as 'phase'.
+    // Policy 'plan' (E11.8) needs no special case: notices are recorded as confirmed gate entries,
+    // so the previous advancing gate is already confirmed. An unconfirmed previous gate still refuses.
     let policy = 'phase';
     try { const c = ctx.getConfig && ctx.getConfig(); policy = (c && c.config && c.config.gates && c.config.gates.policy) || 'phase'; } catch (_) { /* default */ }
-    if (policy === 'plan') policy = 'phase'; // TODO(E11.8)
-    void policy; // strict and phase both require the previous gate
+    void policy; // all policies require the previous gate to be confirmed
     const session = { root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state };
     const all = gates.listGates(session);
     const idx = order.indexOf(n);

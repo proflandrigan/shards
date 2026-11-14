@@ -65,7 +65,8 @@ describe('dev install: claude', () => {
       expect(re.test(name)).toBe(true);
       expect(host.isGateTool(name)).toBe(true);
     }
-    expect(re.test(`${CLAUDE_TOOL_PREFIX}activate`)).toBe(false);
+    // matcher is now all tools (auto-verify, E11.12); the gate-only filter lives in the shim.
+    expect(re.test(`${CLAUDE_TOOL_PREFIX}activate`)).toBe(true);
     expect(host.isGateTool(`${CLAUDE_TOOL_PREFIX}activate`)).toBe(false);
   });
   it('real core renders the plugin prefix everywhere, never the old one', () => {

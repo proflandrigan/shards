@@ -22,7 +22,7 @@ async function openGate(key, id = 'data-analyst-phase-1') {
 beforeEach(() => { ({ root } = makeRepo()); write(root, 'analysis/p/project-specs.md', '# specs\n'); });
 afterEach(cleanup);
 
-describe('shards gates CLI (interim)', () => {
+describe('shards gates CLI', () => {
   it('status with no sessions runs', () => {
     const r = run(root, 'status', '--root', root);
     expect(r.status).toBe(0);
@@ -77,5 +77,28 @@ describe('shards gates CLI (interim)', () => {
     expect(run(root, 'status', '--wat').status).toBe(2);
     expect(run(root, 'confirm', 'x', '--session', '../bad').status).toBe(2);
     expect(run(root, 'confirm', 'data-analyst-phase-1', '--session', 'sB').status).toBe(0);
+  });
+  it('history, checkpoints, violations, force-close output', async () => {
+    const state = await openGate('sA');
+    const av = require('../runtime/auto-verify');
+    await state.update('auto-verify', () => ({ active: true, agent: 'data-analyst', phase: 1, tool_budget: 5, used: 0, started_at: Date.now(), ttl_s: 600, expires_at: Date.now() + 600000 }));
+    let r = run(root, 'history', '--gate', 'data-analyst-phase-1');
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toContain('(new) -> pending');
+    expect(JSON.parse(run(root, 'history', '--json').stdout)[0].gate).toBe('data-analyst-phase-1');
+    expect(run(root, 'checkpoints').stdout).toContain('no checkpoints');
+    expect(run(root, 'violations').stdout).toContain('no violations');
+    r = run(root, 'force-close', 'data-analyst-phase-1', '--reason', 'stuck');
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toContain('NOT confirmed');
+    const g = gates.getGate({ root, sessionKey: 'sA', state: new StateStore(root, 'sA') }, 'data-analyst-phase-1');
+    expect(g.status).toBe('force_closed');
+    expect(g.force_closed.via).toBe('operator-cli');
+    expect(g.force_closed.reason).toBe('stuck');
+    expect(av.get({ root, sessionKey: 'sA' }).active).toBeFalsy();
+    const log = fs.readFileSync(path.join(root, '.shards', 'state', 'gate-operator.log.jsonl'), 'utf8');
+    expect(log).toContain('"action":"force-close"');
+    expect(run(root, 'force-close', 'nope').status).toBe(1);
+    expect(run(root, 'force-close', '--all').status).toBe(1);
   });
 });

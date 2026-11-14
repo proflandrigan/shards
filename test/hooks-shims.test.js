@@ -92,7 +92,7 @@ describe('UserPromptSubmit recorder', () => {
 describe('PreToolUse shim', () => {
   it('records permission_mode at call time for gate tools', () => {
     const r = run('pre-tool-use.js', fixture('claude-pretool-gate.json'));
-    expect(r.status).toBe(0); expect(r.stdout).toBe('');
+    expect(r.status).toBe(0); expect(JSON.parse(r.stdout).hookSpecificOutput.permissionDecision).toBe('ask');
     const h = JSON.parse(fs.readFileSync(path.join(sdir(C), 'hooks.json'), 'utf8'));
     expect(h.lastGateCall).toMatchObject({ tool: 'mcp__plugin_shards_shards-mcp__gate_advance', permission_mode: 'bypassPermissions', host: 'claude-code', tool_use_id: 'toolu_1' });
     run('pre-tool-use.js', fixture('claude-pretool-gate.json').replace('bypassPermissions', 'default'));

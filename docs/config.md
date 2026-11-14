@@ -39,6 +39,21 @@ Controls how much human confirmation a gate needs. Default: `phase`.
 | `phase` | Default. `phase`, `final`, `execute` and `handoff` gates need a human. `checkpoint` and `confirm` gates are recorded automatically. |
 | `plan` | You approve the plan and budget once; everything after that is recorded and shown as a notice. |
 
+Checkpoint and confirm gates are auto-recorded under `phase` only when the agent passes `evidence: { status: "pass" }` to `gate_request`. A `fail` or `anomaly` status, or no evidence, leaves the gate pending for a human. The auto-recorded proof tier is `auto-evidence`.
+
+Under `plan`, the agent first requests the reserved gate `plan-approval` (kind `phase`, summary = plan plus budget) and a human confirms it. After that, every gate is recorded as a notice (proof tier `plan-notice`, advancing kinds still commit) until evidence is `fail`/`anomaly` or the budget runs out; then the gate stays pending for a human. Without a confirmed `plan-approval`, `plan` behaves like `phase`.
+
+```yaml
+gates:
+  policy: plan
+  budget:
+    max_gates: 100      # notices allowed after plan approval (default 100)
+    max_minutes: 120    # optional wall-clock bound since plan approval
+    max_tool_calls: 500 # optional; enforced only if a tool-call counter is written to the session policy state
+```
+
+`scripts/count-approvals.js` counts human approvals, auto-evidence records and plan notices per kind from a project's gate state.
+
 ### `git`
 
 | Key | Default | Meaning |

@@ -42,6 +42,7 @@ function normalize(payload, env = process.env) {
     source: str(p.source),
     toolName: str(p.tool_name),
     toolUseId: str(p.tool_use_id),
+    toolInput: p.tool_input && typeof p.tool_input === 'object' ? p.tool_input : {},
     permissionMode: str(p.permission_mode), // absent on some events; undefined means "host did not report"
     agentId: str(p.agent_id),     // Claude Code subagents only; absent on Codex PreToolUse (CX-6)
     agentType: str(p.agent_type),

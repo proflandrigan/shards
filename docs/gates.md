@@ -361,3 +361,14 @@ Pending/suspended gates:
 | `version_change` | Not wired | Empty string. `TODO(E11.7)`: once-per-version re-ground. |
 
 Other tool responses carry only the state header (`docs/runtime.md` section 4).
+
+
+## 8. Stage 5 confirmation tiers (E11.3 to E11.13)
+
+- Tier 1: `gate_request` elicits (Approve / Request changes + note) when the client advertises elicitation (`runtime/gates/tier1.js`). Proof `{tier:'elicitation',level:1}`. Interactive Claude Code only (compat CC-1); otherwise the gate stays pending.
+- Tier 2: `gate_advance(id, note?)`. Confirms only if the PreToolUse shim recorded, at call time, `permission_mode` `default` or `plan` and returned `ask` (record `decision:'ask'`), the record is fresh (120 s) and unconsumed, no allow rule covers the tool, and the host is not Codex (tier 2 is off there: use tier 1 or 3). Proof `{tier:'host-prompt',level:2}`.
+- Tier 3: `gate_confirm(id, decision, user_reply)` (`runtime/gates/tier3.js`). `user_reply` must equal the whole, first, previously unused user message after `gate_request`/resume (prompt_id high-water mark in `confirm.json`). One fixed refusal message, shown in full once per gate. Proof `{tier:'chat-reply',level:3}`, reply stored as `gate.reply`.
+- Policies (`runtime/gates/policy.js`): `strict`, `phase` (checkpoint/confirm with `evidence.status:'pass'` auto-recorded), `plan` (after confirmed `plan-approval`, every kind is a notice until failure/anomaly/budget). Counting harness: `scripts/count-approvals.js` (OPEN: live 3/3 runs).
+- Auto-verify: `auto_verify_start/auto_verify_end` tools + `runtime/auto-verify/`; the PreToolUse shim auto-approves allowlisted calls inside the budget/TTL; gates always win.
+- Operator CLI: `shards gates status|history|checkpoints|violations|force-close|confirm`; `gate_force_close` tool follows the tier 2 rule. Force-closed gates are terminal, never count as confirmed, and can be re-requested.
+- Re-ground: `runtime/reground.js` on activate/load_phase/SessionStart compact+resume; fixture `scripts/reground-fixture.js --check` (OPEN: live 3/3 compaction criterion).

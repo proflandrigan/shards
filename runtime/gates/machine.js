@@ -48,7 +48,7 @@ async function requestGate(session, req) {
       existing.updated_at = ts;
       result = 'already_pending'; entry = existing; return cur;
     }
-    if (existing && existing.status === 'changes_requested') {
+    if (existing && (existing.status === 'changes_requested' || existing.status === 'force_closed')) {
       transition(existing, 'pending');
       Object.assign(existing, {
         summary: req.summary !== undefined ? req.summary : existing.summary,
@@ -94,7 +94,7 @@ function defaultResolveOutputDirs(root, entry) {
 function defaultLoadConfig(root) { return require('../config').loadOrCreateConfig(root).config; }
 
 async function confirmGate(session, id, opts = {}, deps = {}) {
-  const { decision, proof, note } = opts;
+  const { decision, proof, note, reply } = opts;
   // TODO(E11.3-E11.5): Stage 5 tiers supply `proof`; there is no agent-callable confirm tool (D8).
   requireProof(proof, 'confirmGate');
   if (decision !== 'confirmed' && decision !== 'changes_requested') throw new Error(`Invalid decision ${JSON.stringify(decision)}`);
@@ -109,6 +109,7 @@ async function confirmGate(session, id, opts = {}, deps = {}) {
     transition(g, decision);
     g.decided_at = ts; g.decision = decision; g.proof = proof;
     if (note !== undefined) g.note = note;
+    if (reply !== undefined) g.reply = reply;
     if (decision === 'confirmed') {
       g.commit = ADVANCING_KINDS.includes(g.kind) ? { outcome: 'in_progress' } : { outcome: 'skipped', reason: 'non_advancing_kind' };
     }
@@ -159,7 +160,28 @@ async function setSuspension(session, id, proof, from, to, what) {
   return entry;
 }
 const suspendGate = (s, id, { proof } = {}) => setSuspension(s, id, proof, 'pending', 'suspended', 'suspendGate');
-const resumeGate = (s, id, { proof } = {}) => setSuspension(s, id, proof, 'suspended', 'pending', 'resumeGate');
+const resumeGate = async (s, id, { proof } = {}) => {
+  const entry = await setSuspension(s, id, proof, 'suspended', 'pending', 'resumeGate');
+  // E11.5: a chat reply sent while suspended can never confirm; move the high-water mark.
+  await require('./tier3').markRequest(s, id);
+  return entry;
+};
+
+// Operator force-close (E11.13): terminal, NOT confirmed (never satisfies a phase gate), not open.
+const FORCE_CLOSABLE = ['pending', 'suspended', 'changes_requested'];
+async function forceCloseGate(session, id, { actor, via, reason } = {}) {
+  let entry;
+  await storeOf(session).update('gates', (cur) => {
+    const g = (cur.gates || {})[id];
+    if (!g) throw new Error(`Unknown gate ${id}`);
+    if (!FORCE_CLOSABLE.includes(g.status)) throw new Error(`Gate ${id} is ${g.status}; only pending, suspended or changes_requested gates can be force-closed`);
+    transition(g, 'force_closed', via || actor);
+    delete g.suspended_from;
+    g.force_closed = { actor: actor || null, via: via || null, ts: now(), reason: reason || null };
+    entry = g; return cur;
+  });
+  return entry;
+}
 
 function formatConfirmedMessage(entry) {
   const c = entry.commit || {};
@@ -187,5 +209,5 @@ function confirmedGates(session) {
 
 module.exports = {
   KINDS, ADVANCING_KINDS, requestGate, getGate, listGates, pendingForFrame, confirmGate,
-  suspendGate, resumeGate, formatConfirmedMessage, describeInterimConfirm, confirmedGates,
+  suspendGate, resumeGate, forceCloseGate, FORCE_CLOSABLE, formatConfirmedMessage, describeInterimConfirm, confirmedGates,
 };

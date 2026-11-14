@@ -123,6 +123,31 @@ const DESTRUCTIVE_MARKERS = [
 // lone `&`/`|` (e.g. inside `$((..))` arithmetic) can't double-match.
 const COMPOUND_SEPARATORS = /(\&\&|\|\||[;&\n]|\|(?!\|))/;
 
+// Mask quoted literal spans so a separator character INSIDE quotes (`--grep='a&b'`)
+// does not trip the compound check. Used for separator detection ONLY; destructive
+// markers still scan the raw command. Safe-direction rules: a backslash anywhere means
+// quoting is ambiguous (`\'` is a literal quote outside quotes), so nothing is masked;
+// double-quoted spans containing `$`/backtick are left visible; unterminated quotes are
+// left unmasked.
+function maskQuotedRegions(cmd) {
+  if (cmd.includes('\\')) return cmd;
+  let out = '';
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i];
+    if (ch === "'" || ch === '"') {
+      const end = cmd.indexOf(ch, i + 1);
+      if (end === -1) { out += cmd.slice(i); break; }
+      const span = cmd.slice(i + 1, end);
+      if (ch === '"' && /[$`]/.test(span)) { out += ch; continue; }
+      out += ' '.repeat(end - i + 1);
+      i = end;
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
 function isAutoApprovable(toolName, toolInput) {
   if (!toolName) return false;
 
@@ -138,7 +163,7 @@ function isAutoApprovable(toolName, toolInput) {
   // Reject compound commands outright. A user-facing rule should match each
   // subcommand independently; we don't try to split-and-recheck because that
   // gets risky. Agents doing verification should run one statement at a time.
-  if (COMPOUND_SEPARATORS.test(cmd)) {
+  if (COMPOUND_SEPARATORS.test(maskQuotedRegions(cmd))) {
     // Special case: SQL guard already handles `;`-separated SELECT statements
     // inside a quoted argument. The compound check fires on bare shell `;`.
     // SQL invocations have the `;` *inside* a quoted SQL string, so the bare
@@ -176,4 +201,4 @@ function isAutoApprovable(toolName, toolInput) {
   return false;
 }
 
-module.exports = { isAutoApprovable, READ_ONLY_BASH_PREFIXES, READ_ONLY_TOOLS };
+module.exports = { isAutoApprovable, maskQuotedRegions, READ_ONLY_BASH_PREFIXES, READ_ONLY_TOOLS };

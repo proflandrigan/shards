@@ -61,3 +61,7 @@ Removes `adapters/<target>` only if it has the `.shards-dev` marker. Claude: not
 - Rebuilding does not delete stale files. Run `uninstall-dev` first, then build again.
 - Hook errors are appended to `<project>/.shards/state/hook-errors.log`. The hooks always exit 0, so check this log when a hook seems silent.
 - MCP server not appearing: confirm the tool prefix in section 3 and that `node` is on PATH.
+
+## 7. Codex gate approval (docs-only, UNVERIFIED)
+
+The generated `.codex/config.toml` also sets `approval_mode = "prompt"` under `[mcp_servers.shards.tools.gate_advance]` and `[mcp_servers.shards.tools.gate_force_close]`. This is the Codex substitute for the Claude `ask` hook decision (Codex PreToolUse cannot `ask`, compat CX-6). The key and value come from Codex docs only (CX-1); Codex is not installed, so this is unverified. Copy those tables along with the `[mcp_servers.shards]` entry.

@@ -6,6 +6,8 @@ const path = require('path');
 const { defineTool } = require('../registry');
 const schema = require('../../core/schema/gate-request.schema.json');
 const gates = require('../gates');
+const tier1 = require('../gates/tier1');
+const policyMod = require('../gates/policy');
 const { parseValidationSection, checkValidation, _internals } = require('../lib/validation');
 
 const { ERROR_DESCRIPTIONS } = _internals;
@@ -89,10 +91,38 @@ module.exports = defineTool({
       if (n) replayed = `replayed ${n} pending commit(s)`;
     } catch (_) { /* best effort */ }
 
-    const how = gates.describeInterimConfirm(entry.id, ctx.sessionKey);
     const advancing = gates.ADVANCING_KINDS.includes(entry.kind);
     const lines = [];
     if (result === 'already_confirmed') return both(gates.formatConfirmedMessage(entry), { result, gate_id: entry.id, kind: entry.kind, phase: entry.phase, status: 'confirmed', commit: entry.commit || null });
+
+    // Gate policy (E11.8): evidence auto-records / plan notices; anything else falls through to a human.
+    let gcfg = {};
+    try { const c = ctx.getConfig && ctx.getConfig(); gcfg = (c && c.config && c.config.gates) || {}; } catch (_) { /* defaults */ }
+    const pol = await policyMod.apply(session, entry, args.evidence, gcfg, ctx.gateDeps || {});
+    if (pol.handled) {
+      const d = pol.entry;
+      const c = pol.commit || d.commit || null;
+      const msg = pol.mode === 'notice' ? 'notice recorded, continue' : 'recorded as evidence, continue';
+      return both(`Gate ${d.id} (${d.kind}) ${msg}.`, { result: pol.mode === 'notice' ? 'notice' : 'recorded_evidence', gate_id: d.id, kind: d.kind, phase: d.phase, status: 'confirmed', commit: c, tier: d.proof && d.proof.tier });
+    }
+
+    // Tier 3 mark (reply must be newer than this request). Missing module is tolerated; other errors are not.
+    let tier3 = null;
+    try { tier3 = require('../gates/tier3'); } catch (e) { if (!(e && e.code === 'MODULE_NOT_FOUND' && /tier3/.test(e.message))) throw e; }
+    if (tier3) await tier3.markRequest(session, entry.id);
+
+    // Tier 1: MCP elicitation form, per call.
+    const el = await tier1.elicitGate(ctx, entry);
+    if (el.outcome === 'approved') {
+      const { entry: done, commit } = await gates.confirmGate(session, entry.id, { decision: 'confirmed', proof: { tier: 'elicitation', level: 1, ts: new Date().toISOString(), action: 'accept' }, ...(el.note ? { note: el.note } : {}) });
+      const c = commit || done.commit || null;
+      return both(`Gate ${done.id} confirmed by the user (form). It is confirmed; proceed with the next phase.${el.note ? `\nUser note: ${el.note}` : ''}`, { result: 'confirmed', gate_id: done.id, kind: done.kind, phase: done.phase, status: 'confirmed', commit: c, tier: 'elicitation' });
+    }
+    if (el.outcome === 'changes') {
+      const { entry: done } = await gates.confirmGate(session, entry.id, { decision: 'changes_requested', note: el.note, proof: { tier: 'elicitation', level: 1, ts: new Date().toISOString(), action: 'accept' } });
+      return both(`The user requested changes to gate ${done.id}. Note: ${el.note}\nRevise the work, then call gate_request again.`, { result: 'changes_requested', gate_id: done.id, kind: done.kind, phase: done.phase, status: done.status, note: el.note, tier: 'elicitation' });
+    }
+    const how = tier1.describeConfirmHow(entry.id, ctx.sessionKey, { elicitation: el.outcome !== 'unsupported', host: ctx.host });
     lines.push(`Gate ${entry.id} is ${result === 'already_pending' ? 'already pending' : result} (kind ${entry.kind}, phase ${entry.phase}).`);
     if (result === 'reopened' && entry.note) lines.push(`Earlier change request note: ${entry.note}`);
     lines.push('', 'STOP now and wait. You cannot confirm this gate yourself; only the user can.',

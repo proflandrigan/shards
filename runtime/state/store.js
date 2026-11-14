@@ -73,7 +73,7 @@ class StateStore {
   }
 
   file(name, sessionScoped = true) {
-    if (!/^[a-z]+$/.test(name)) throw new Error(`Invalid state name ${name}`);
+    if (!/^[a-z]+(-[a-z]+)*$/.test(name)) throw new Error(`Invalid state name ${name}`);
     return path.join(sessionScoped ? this.sessionDir : this.stateDir, `${name}.json`);
   }
 

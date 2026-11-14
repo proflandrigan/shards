@@ -51,7 +51,11 @@ function createServer({ root, sessionKey, ancestry, env, host } = {}) {
   const server = new Server({ name: 'shards-mcp', version: VERSION }, { capabilities: { tools: {} } });
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: registry.list() }));
   server.setRequestHandler(CallToolRequestSchema, async (req) =>
-    registry.call(req.params.name, req.params.arguments, { root, getConfig, resolveSession }));
+    registry.call(req.params.name, req.params.arguments, {
+      root, getConfig, resolveSession,
+      elicit: (params, opts) => server.elicitInput(params, opts),
+      clientCapabilities: () => server.getClientCapabilities(),
+    }));
   return {
     server, registry, root, correlator,
     get state() { return resolveSession().state; },

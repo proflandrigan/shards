@@ -23,7 +23,17 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "policy": { "enum": ["strict", "phase", "plan"], "default": "phase" }
+        "policy": { "enum": ["strict", "phase", "plan"], "default": "phase" },
+        "budget": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Plan-policy budget, approved once with the plan. Omitted = unbounded, except max_gates (default 100).",
+          "properties": {
+            "max_gates": { "type": "integer", "minimum": 1 },
+            "max_tool_calls": { "type": "integer", "minimum": 1 },
+            "max_minutes": { "type": "integer", "minimum": 1 }
+          }
+        }
       }
     },
     "git": {

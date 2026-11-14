@@ -30,7 +30,7 @@ const DEFAULT_CONFIG = Object.freeze({
     artifacts: { binding: 'git', options: { path: '{output_dir}' } },
     presentation: { binding: 'git', options: {} },
   },
-  gates: { policy: 'phase' },
+  gates: { policy: 'phase', budget: { max_gates: 100 } },
   git: {
     commit: true,
     push: false,
@@ -152,6 +152,10 @@ jobs:
 # Gate policy: strict (human on every gate) | phase (default) | plan (approve plan + budget once)
 gates:
   policy: phase
+  # budget:            # plan policy only; null/omitted = unbounded (max_gates defaults to 100)
+  #   max_gates: 100
+  #   max_tool_calls: 500
+  #   max_minutes: 120
 
 git:
   commit: true         # commit confirmed-gate output paths on the current branch

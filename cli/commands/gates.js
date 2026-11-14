@@ -1,7 +1,7 @@
 'use strict';
-// INTERIM operator CLI for gates (Milestone A). Replaced by E11.13; the confirmation tiers
-// of Stage 5 (E11.3-E11.5) supersede the operator-cli proof used here. D8: the agent has no
-// tool that confirms a gate; the human runs this command out of band.
+// Operator CLI for gates (E11.13): status | history | checkpoints | violations | force-close | confirm.
+// The human runs this out of band (operator-cli proof tier). force-close ends a stuck gate as
+// 'force_closed' (never confirmed), resets auto-verify and logs to gate-operator.log.jsonl.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -14,6 +14,10 @@ function parse(argv) {
     if (a === '--session') o.session = val();
     else if (a === '--root') o.root = val();
     else if (a === '--changes') o.changes = val();
+    else if (a === '--gate') o.gate = val();
+    else if (a === '--reason') o.reason = val();
+    else if (a === '--all') o.all = true;
+    else if (a === '--json') o.json = true;
     else if (a.startsWith('--')) throw new Error(`unknown option '${a}'`);
     else o._.push(a);
   }
@@ -22,8 +26,12 @@ function parse(argv) {
 
 function usage() {
   return [
-    'Usage: shards gates <status|confirm> [options]   (INTERIM operator CLI; E11.13 replaces this)',
+    'Usage: shards gates <status|history|checkpoints|violations|force-close|confirm> [options]',
     '  gates status [--session <key>] [--root <dir>]',
+    '  gates history [--session <key>] [--gate <id>] [--json] [--root <dir>]',
+    '  gates checkpoints [--session <key>] [--json] [--root <dir>]',
+    '  gates violations [--json] [--root <dir>]',
+    '  gates force-close <gate-id> | --all [--session <key>] [--reason "<text>"] [--root <dir>]',
     '  gates confirm <gate-id> [--session <key>] [--changes "<note>"] [--root <dir>]',
   ].join('\n');
 }
@@ -61,6 +69,13 @@ async function run(argv) {
         console.log(`session ${k}  gate ${g.id}  status ${g.status}  kind ${g.kind}  agent ${g.agent}  commit ${commitText(g.commit)}`);
       }
     }
+    for (const k of keys) {
+      try {
+        const av = require('../../runtime/auto-verify').get({ root, sessionKey: k });
+        if (av && av.active) console.log(`session ${k}: auto-verify ACTIVE  agent ${av.agent}  used ${av.used}/${av.tool_budget}`);
+        else if (av && av.ended_at) console.log(`session ${k}: auto-verify inactive (ended: ${av.end_reason || '-'})`);
+      } catch (_) { /* ignore */ }
+    }
     try {
       const pend = require('../../runtime/git').listPending(root);
       if (pend.length) {
@@ -68,6 +83,53 @@ async function run(argv) {
         for (const r of pend) console.log(`  gate ${r.gate}  status ${r.status}  reason ${r.reason || '-'}  tries ${r.tries}`);
       } else console.log('pending git commits: none');
     } catch (e) { console.log(`pending git commits: unavailable (${e.message})`); }
+    return 0;
+  }
+
+  if (sub === 'history' || sub === 'checkpoints') {
+    if (rest.length) { console.error(usage()); return 2; }
+    const keys = o.session ? [o.session] : sessionKeys(root);
+    const rows = [];
+    for (const k of keys) {
+      for (const g of gates.listGates({ root, sessionKey: k })) {
+        if (o.gate && g.id !== o.gate) continue;
+        if (sub === 'checkpoints' && !(g.kind === 'checkpoint' || g.kind === 'confirm' || g.evidence)) continue;
+        rows.push({ session: k, gate: g.id, kind: g.kind, status: g.status, tier: (g.proof && g.proof.tier) || null,
+          ...(sub === 'checkpoints' ? { evidence: g.evidence || null } : { history: g.history || [] }) });
+      }
+    }
+    if (o.json) { console.log(JSON.stringify(rows, null, 2)); return 0; }
+    if (!rows.length) { console.log(sub === 'history' ? 'no gate history' : 'no checkpoints'); return 0; }
+    for (const r of rows) {
+      console.log(`session ${r.session}  gate ${r.gate}  kind ${r.kind}  status ${r.status}  proof ${r.tier || '-'}`);
+      if (sub === 'history') for (const h of r.history) console.log(`  ${h.ts}  ${h.from || '(new)'} -> ${h.to}${h.by ? `  by ${h.by}` : ''}`);
+      else if (r.evidence) console.log(`  evidence: ${typeof r.evidence === 'string' ? r.evidence : JSON.stringify(r.evidence)}`);
+    }
+    return 0;
+  }
+
+  if (sub === 'violations') {
+    if (rest.length) { console.error(usage()); return 2; }
+    const op = require('../../runtime/gates/operator');
+    const viol = op.readJsonl(op.violationsFile(root));
+    const refused = op.readJsonl(op.operatorLogFile(root)).filter((r) => r.refused || r.action === 'refused');
+    const all = [...viol, ...refused];
+    if (o.json) { console.log(JSON.stringify(all, null, 2)); return 0; }
+    if (!all.length) { console.log('no violations'); return 0; }
+    for (const v of all) console.log(`${v.ts}  ${v.tool || v.action || 'violation'}  session ${v.session || '-'}  gate ${v.gate || '-'}  ${v.reason || v.kind || ''}`);
+    return 0;
+  }
+
+  if (sub === 'force-close') {
+    const id = o.all ? 'all' : rest[0];
+    if (!id || rest.length > (o.all ? 0 : 1)) { console.error(usage()); return 2; }
+    let user = 'unknown';
+    try { user = os.userInfo().username; } catch (_) { /* ignore */ }
+    const op = require('../../runtime/gates/operator');
+    let closed;
+    try { closed = await op.forceClose(root, o.session || null, id, { actor: user, via: 'operator-cli', ...(o.reason ? { reason: o.reason } : {}) }); } catch (e) { console.error(`shards gates force-close: ${e.message}`); return 1; }
+    if (!closed.length) { console.error(`shards gates force-close: no open gate ${id === 'all' ? '' : `'${id}' `}found under ${root}`); return 1; }
+    for (const c of closed) console.log(`gate ${c.gate} (session ${c.session}): force-closed (was ${c.from}); NOT confirmed`);
     return 0;
   }
 

@@ -201,11 +201,11 @@ describe('load_phase', () => {
 });
 
 describe('reground', () => {
-  it('stays empty without a session; full for load_phase/activate; empty for compact', async () => {
+  it('stays empty without a session; full for load_phase/activate; full for compact', async () => {
     expect(await regroundHook('activate', {})).toEqual({ event: 'activate', text: '' });
     await pushFrame(store('s1'), { agent: 'syn' });
     const a = await regroundHook('activate', { root, sessionKey: 's1' });
     expect(a.text).toContain('--- Re-ground ---');
-    expect((await regroundHook('compact', { root, sessionKey: 's1' })).text).toBe('');
+    expect((await regroundHook('compact', { root, sessionKey: 's1' })).text).toContain('--- Re-ground ---');
   });
 });
