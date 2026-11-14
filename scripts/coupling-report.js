@@ -80,7 +80,7 @@ function walk(dir, out) {
     if (SKIP.has(e.name)) continue;
     const p = path.join(dir, e.name);
     if (e.isDirectory()) walk(p, out);
-    else if (e.isFile() && EXTS.has(path.extname(e.name))) out.push(p);
+    else if (e.isFile() && EXTS.has(path.extname(e.name)) && e.name !== 'INVENTORY.md') out.push(p); // INVENTORY.md lists legacy file names by design
   }
 }
 
@@ -146,7 +146,7 @@ function computeReport(opts) {
     const o = count(/::AUTO-VERIFY::/g, text), c = count(/::ENDAUTO::/g, text);
     if (o || c) { av.opens += o; av.closes += c; av.files.push(rel); }
 
-    if (/(^|\/)agents\/[^/]+\.md$/.test(rel)) {
+    if (/(^|\/)agents\/[^/]+\.md$/.test(rel) || /(^|\/)agents\/[^/]+\/AGENT\.md$/.test(rel)) {
       const fm = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
       if (fm && /^model:/m.test(fm[1])) { pins.count++; pins.files.push(rel); }
     }

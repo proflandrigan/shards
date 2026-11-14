@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/proflandrigan/shards/core/schema/agent.schema.json",
+  "title": "Shards agent.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "display_name", "description", "role", "activation", "reviewers", "output_dir", "jobs"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "description": "kebab-case; must equal the agent directory name"
+    },
+    "display_name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "role": { "enum": ["orchestrator", "specialist", "reviewer"] },
+    "activation": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["switch", "consult", "fanout_worker"] }
+    },
+    "consult_entries": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "review": { "$ref": "#/$defs/relpath" },
+        "advise": { "$ref": "#/$defs/relpath" },
+        "service": { "$ref": "#/$defs/relpath" },
+        "final_review": { "$ref": "#/$defs/relpath" },
+        "arbiter": { "$ref": "#/$defs/relpath" },
+        "worker": { "$ref": "#/$defs/relpath" }
+      }
+    },
+    "reviewers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" }
+    },
+    "output_dir": {
+      "type": ["string", "null"],
+      "description": "Created on first activation; also the git commit path list. e.g. analysis/{project}/"
+    },
+    "model_tier": {
+      "type": "string",
+      "enum": ["small", "standard", "large"],
+      "not": { "pattern": "([Oo][Pp][Uu][Ss]|[Ss][Oo][Nn][Nn][Ee][Tt]|[Hh][Aa][Ii][Kk][Uu]|[Gg][Pp][Tt]|[Cc][Ll][Aa][Uu][Dd][Ee])" },
+      "description": "Tier hint only. Never a literal model id (D7)."
+    },
+    "jobs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["record", "tasks", "knowledge", "review", "artifacts", "presentation"] }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "activation": { "contains": { "const": "consult" } } }, "required": ["activation"] },
+      "then": { "required": ["consult_entries"], "properties": { "consult_entries": { "minProperties": 1 } } }
+    }
+  ],
+  "$defs": {
+    "relpath": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*\\.\\.)[^\\s]+\\.md$",
+      "description": "Path relative to the agent dir, e.g. modes/review.md"
+    }
+  }
+}

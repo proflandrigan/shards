@@ -12,9 +12,15 @@ const SRC_DIR = path.join(PACKAGE_ROOT, "src");
 const PROJECT_DIR = process.cwd();
 const CLAUDE_DIR = path.join(PROJECT_DIR, ".claude");
 
-const AGENTS_SRC = path.join(SRC_DIR, "agents");
+const CORE_DIR = path.join(PACKAGE_ROOT, "core");
+// v1 layout is rebuilt from core/ (see tools/legacy-layout.js) into a temp dir.
+const { stageLegacyAgents } = require("./legacy-layout");
+const AGENTS_SRC = stageLegacyAgents(CORE_DIR);
+process.on("exit", () => {
+  try { fs.rmSync(AGENTS_SRC, { recursive: true, force: true }); } catch (e) { /* best effort */ }
+});
 const COMMANDS_SRC = path.join(SRC_DIR, "commands");
-const TEMPLATES_SRC = path.join(SRC_DIR, "templates");
+const TEMPLATES_SRC = path.join(CORE_DIR, "templates");
 const UI_SRC = path.join(SRC_DIR, "ui");
 const DOCS_SRC = path.join(SRC_DIR, "docs");
 
@@ -163,6 +169,13 @@ function uninstall() {
     console.log("  ✓ Removed .shards/hooks/");
   }
 
+  // Remove .shards/runtime/ (hook support libs); other files were removed via the manifest.
+  const runtimeDir = path.join(PROJECT_DIR, ".shards", "runtime");
+  if (fs.existsSync(runtimeDir)) {
+    fs.rmSync(runtimeDir, { recursive: true });
+    console.log("  ✓ Removed .shards/runtime/");
+  }
+
   fs.unlinkSync(manifestPath);
   console.log(`\n✅ Uninstalled ${removed} files.`);
   console.log(`  ℹ  .shards/knowledge/ preserved (persistent workspace memory)\n`);
@@ -240,6 +253,19 @@ function install() {
   fs.copyFileSync(gateHookSrc, gateHookDest);
   copyDir(gateHookDirSrc, gateHookDirDest);
   console.log(`  ✓ .shards/hooks/gate-hook.js`);
+
+  // tools/gate-hook/{validation,auto-allowlist,sql-guard}.js are shims that
+  // require('../../runtime/lib/<name>'); from .shards/hooks/gate-hook/ that
+  // resolves to .shards/runtime/lib/. Install only the libs the shims need
+  // (events.js has heavier deps and is not used by the hook).
+  const RUNTIME_LIBS = ["validation.js", "auto-allowlist.js", "sql-guard.js"];
+  const runtimeLibDest = path.join(SHARDS_DIR, "runtime", "lib");
+  fs.mkdirSync(runtimeLibDest, { recursive: true });
+  for (const f of RUNTIME_LIBS) {
+    const src = path.join(PACKAGE_ROOT, "runtime", "lib", f);
+    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(runtimeLibDest, f));
+  }
+  console.log(`  ✓ .shards/runtime/lib/ (${RUNTIME_LIBS.join(", ")})`);
 
   // 6. Seed .claude/settings.json with readonly preset and PreToolUse hook.
   //
@@ -643,6 +669,9 @@ function install() {
     ...uiFiles.map((f) => `.shards/ui/${f}`),
     ...docFiles.map((f) => `.shards/ui/docs/${f}`),
     ...docFiles.map((f) => `docs/shards-guide/${f}`),
+    ...["validation.js", "auto-allowlist.js", "sql-guard.js"]
+      .filter((f) => fs.existsSync(path.join(SHARDS_DIR, "runtime", "lib", f)))
+      .map((f) => `.shards/runtime/lib/${f}`),
   ];
   const manifest = {
     version: require(path.join(PACKAGE_ROOT, "package.json")).version,
@@ -825,7 +854,7 @@ explicit user approval regardless of permission mode.
     // code samples and silently skips the install. Only the actual marker
     // section header (or source-repo detection) is load-bearing.
     const isSourceRepo  = fs.existsSync(path.join(PROJECT_DIR, "tools", "install.js")) &&
-                          fs.existsSync(path.join(PROJECT_DIR, "src", "agents")) &&
+                          fs.existsSync(path.join(PROJECT_DIR, "core", "agents")) &&
                           fs.existsSync(path.join(PROJECT_DIR, "package.json")) &&
                           path.resolve(PROJECT_DIR) === path.resolve(PACKAGE_ROOT);
     const hasAgentSuite  = content.includes("## Shards — Agent Suite");

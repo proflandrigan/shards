@@ -1,0 +1,17 @@
+# Sources:
+#   - src/agents/specific_instructions/bi_engineer/{review,advise}.md
+#   - legacy Task() consult calls in AGENT.md and modes/ (provenance)
+#   - src/agents/bi-engineer.md (frontmatter, persona)
+#   - CLAUDE.md output directory table, shards-agent-suite-plan.md E1.1/E5.1/E12.2
+id: bi-engineer
+display_name: "BI Engineer"
+description: "Dashboards and visualizations in Streamlit, Plotly Dash, Altair, Plotly and BI tools such as Superset, Grafana and Metabase. Produces detailed chart designs when no data exists yet."
+role: specialist
+activation: [switch, consult, fanout_worker]
+consult_entries:
+  review: modes/review.md
+  advise: modes/advise.md
+  worker: modes/worker.md
+reviewers: [data-modeller, data-analyst, analytics-engineer, syn]
+output_dir: "dashboards/{project}/"
+jobs: [record, tasks, knowledge, review, artifacts]

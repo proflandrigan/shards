@@ -9,10 +9,13 @@ node_modules/
 # Dev/scratch directories
 archive/
 feedback_and_ideas/
-templates/
+/templates/
 
 # macOS
 .DS_Store
 **/.DS_Store
 __MACOSX/
 test/golden/runs/
+
+# Generated build output (shards build)
+adapters/

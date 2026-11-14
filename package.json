@@ -21,12 +21,21 @@
   },
   "scripts": {
     "test": "vitest run",
+    "mcp": "node runtime/server.js",
+    "validate:agents": "node scripts/validate-agents.js",
     "coupling": "node scripts/coupling-report.js",
-    "coupling:ratchet": "node scripts/coupling-ratchet.js"
+    "coupling:ratchet": "node scripts/coupling-ratchet.js",
+    "build:claude": "node cli/shards.js build --target claude",
+    "build:codex": "node cli/shards.js build --target codex",
+    "build:skills": "node cli/shards.js build --target skills",
+    "build:all": "npm run build:claude && npm run build:codex && npm run build:skills"
   },
   "files": [
     "src/",
+    "core/",
+    "runtime/",
     "tools/install.js",
+    "tools/legacy-layout.js",
     "tools/gate-hook.js",
     "tools/gate-hook/",
     "tools/shards-gates.js",
