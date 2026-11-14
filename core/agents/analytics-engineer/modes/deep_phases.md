@@ -262,14 +262,9 @@ Present as a text DAG in chat:
 [source: system_b] → [stg_b_events]  → [int_ab_joined] → [fct_target_mart]
 ```
 
-**If UI-Aware Mode is active**, also push the DAG as an interactive Mermaid diagram to the browser. Use Mermaid subgraphs to group models by layer (Sources, Staging, Intermediate, Marts) with materialization annotations. Use a stable `--panel-id` (e.g., `dag-<project_name>`) so the DAG can be updated in place during Phase 7:
-```bash
-node .shards/ui/ui-push.js dag \
-  --title "DAG: <project_name>" \
-  --agent "analytics-engineer" \
-  --panel-id "dag-<project_name>" \
-  --data '<mermaid_syntax_string>'
-```
+Also write the DAG as Mermaid graph syntax (e.g. `graph LR ...`) to `data_models/<project_name>/dag.mmd`. Use Mermaid subgraphs to group models by layer (Sources, Staging, Intermediate, Marts) with materialization annotations (e.g. `stg_orders[stg_orders\nview]`). Then emit it (stable `panel_id` so Phase 7 updates it in place):
+
+{{artifact.emit type=dag path=data_models/<project_name>/dag.mmd meta="title=DAG: <project_name> panel_id=dag-<project_name>"}}
 
 For each model: model name, layer, grain (confirmed in Phase 3), materialization
 strategy, incremental config if applicable, key columns, key joins.
@@ -433,7 +428,8 @@ For each model:
 - Write the schema file (model description, column descriptions, all required tests)
 - Run the stack's build/validate command (e.g., `dbt build --select +model_name`) — fix any failures before next model
 - Do not advance to the next model until the current one is green
-- **If UI-Aware Mode is active**: after each model passes validation, re-push the DAG with the completed model highlighted. Use the same `--panel-id` from Phase 4 (e.g., `dag-<project_name>`) so it updates in place. Apply a Mermaid `style` to mark green models (e.g., `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`)
+- After each model passes validation, update the DAG file with the completed model highlighted (e.g. `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`) and re-emit with the same `panel_id` from Phase 4 so it updates in place:
+  {{artifact.emit type=dag path=data_models/<project_name>/dag.mmd meta="title=DAG: <project_name> panel_id=dag-<project_name>"}}
 - **Post-build validation (per model, after `dbt build` passes):** Run the
   applicable checks below using `dbt show` or the warehouse CLI. If any check
   fails, halt and diagnose before advancing to the next model. In a contract-first

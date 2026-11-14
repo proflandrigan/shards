@@ -85,10 +85,30 @@ AR runs in one of two presets:
   - Raw data, eval harness, study spec itself (`project-specs.md`)
   - For causal studies: any variable included as an outcome or treatment
 
-### UI detection
+### Research dashboard
 
-If `.shards/ui.port` exists, read
-[`modes/research ui mode.md`](research_ui_mode.md) in full.
+Agents always emit the research dashboard, whether or not a UI exists. The panel
+type remains `experiment-dashboard`: the renderer detects `mode: "autonomous-research"`
+in `results.json` and adjusts the view (iteration budget, color-coded auto-decisions,
+cost strip). Emit once after the Phase 1 brief is confirmed, then keep rewriting
+`experiments/results.json` (after each iteration result, after git checkpoint success,
+after each reviewer verdict, after Phase 3 finalization); re-emit with the same
+`panel_id` after significant transitions (iteration complete, convergence detected,
+reviewer verdict received) to update it in place.
+
+{{artifact.emit type=experiment-dashboard path=experiments/results.json meta="title=AR: <project_name> panel_id=ar-<project_name>"}}
+
+Update `results.json.status` at each transition: `"setup"` after the Phase 1 brief;
+`"running"` plus `"currentExperiment": N` when starting each iteration; `"reviewing"`
+during Phase 3 summary writing; `"complete"` after Phase 3 finalization.
+
+**Fan-out sessions.** Emit one panel per branch, using the branch slug in the
+`panel_id` (each branch's `results.json.branchContext` identifies it). After
+arbitration and promotion, emit a final converged panel for the main project file:
+
+{{artifact.emit type=experiment-dashboard path=.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+
+{{artifact.emit type=experiment-dashboard path=<project_dir>/experiments/results.json meta="title=AR: <project_name> (converged) panel_id=ar-<project_name>-converged"}}
 
 ### Document Phase 0
 

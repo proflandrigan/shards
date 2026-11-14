@@ -219,15 +219,9 @@ Then:
      populate with numeric/string values (not `null`) for any LLM-backed
      system — cost visibility is a non-negotiable for AI systems.
 
-   If the Shards UI is active (`.shards/ui.port` file exists), push the model
-   card panel:
-   ```bash
-   node .shards/ui/ui-push.js model-card \
-     --title "Model Card: <project_name>" \
-     --agent "ai-engineer" \
-     --panel-id "mc-<project_name>" \
-     --source "<path_to>/model-card.json"
-   ```
+   Always emit the model card panel:
+
+   {{artifact.emit type=model-card path=<path_to>/model-card.json meta="title=Model Card: <project_name> panel_id=mc-<project_name>"}}
 
 2. **Write a report** to:
    - Greenfield: `services/<name>/report.md`

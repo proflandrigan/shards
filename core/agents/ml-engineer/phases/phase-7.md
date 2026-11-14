@@ -241,15 +241,9 @@ Then:
    - `modelDetails.type`: e.g. `"LightGBM classifier"`, `"XGBoost regressor"`,
      `"scikit-learn pipeline"`.
 
-   If the Shards UI is active (`.shards/ui.port` file exists), push the model
-   card panel:
-   ```bash
-   node .shards/ui/ui-push.js model-card \
-     --title "Model Card: <project_name>" \
-     --agent "ml-engineer" \
-     --panel-id "mc-<project_name>" \
-     --source "<path_to>/model-card.json"
-   ```
+   Emit the model card (agents always emit, whether or not a UI exists):
+
+   {{artifact.emit type=model-card path=<path_to>/model-card.json meta="title=Model Card: <project_name> panel_id=mc-<project_name>"}}
 
 2. **Write a report** to:
    - Greenfield: `models/<name>/report.md`

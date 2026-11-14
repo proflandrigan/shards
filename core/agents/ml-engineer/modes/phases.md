@@ -774,15 +774,10 @@ Return your full review with query validation results.
    `status: "complete"`, populate all metrics, compute `summary.overallVerdict`
    (PASS if all dimensions pass, FAIL if any fail, PARTIAL if mixed).
 
-   If the Shards UI is active (`.shards/ui.port` file exists), push the eval
-   dashboard panel:
-   ```bash
-   node .shards/ui/ui-push.js eval-dashboard \
-     --title "Eval: <project_name>" \
-     --agent "ml-engineer" \
-     --panel-id "eval-<project_name>" \
-     --source "<path_to>/eval-results.json"
-   ```
+   Emit the eval dashboard (agents always emit, whether or not a UI exists). Emit
+   once; afterwards keep rewriting `eval-results.json` and the panel updates in place:
+
+   {{artifact.emit type=eval-dashboard path=<path_to>/eval-results.json meta="title=Eval: <project_name> panel_id=eval-<project_name>"}}
 
 ### Document Phase 6
 
@@ -975,15 +970,9 @@ Then:
    - `modelDetails.type`: e.g. `"LightGBM classifier"`, `"XGBoost regressor"`,
      `"scikit-learn pipeline"`.
 
-   If the Shards UI is active (`.shards/ui.port` file exists), push the model
-   card panel:
-   ```bash
-   node .shards/ui/ui-push.js model-card \
-     --title "Model Card: <project_name>" \
-     --agent "ml-engineer" \
-     --panel-id "mc-<project_name>" \
-     --source "<path_to>/model-card.json"
-   ```
+   Emit the model card (agents always emit, whether or not a UI exists):
+
+   {{artifact.emit type=model-card path=<path_to>/model-card.json meta="title=Model Card: <project_name> panel_id=mc-<project_name>"}}
 
 2. **Write a report** to:
    - Greenfield: `models/<name>/report.md`

@@ -57,9 +57,11 @@ handle the evaluation and sync mechanics behind the scenes.
 }
 ```
 
-6. Push the Prompt Lab panel to the Shards UI. Read
-   [`modes/prompt lab ui mode.md`](prompt_lab_ui_mode.md) for the
-   push command.
+6. Always emit the Prompt Lab panel once, after writing the initial
+   `prompt-lab.json` (no re-emit needed; rewrite the file for later updates):
+
+   {{artifact.emit type=prompt-lab path=<project_dir>/prompt-lab.json meta="title=Prompt Lab: <project_name> panel_id=pl-<project_name>"}}
+
 7. Tell the user the Prompt Lab is ready. Explain the three controls:
    - **Diff** — toggle side-by-side diff between original and edited prompt
    - **Run Test** — evaluate the edited prompt against the project's test set

@@ -253,7 +253,8 @@ information about the existing transformation layer.
                                     ↓
    [source_b] → [stg_b] → [int_ab_joined] → [fct_output]
    ```
-   If UI-Aware Mode is active, also push the DAG as an interactive Mermaid diagram to the browser (see `ui_mode.md`).
+   Also write the DAG as Mermaid graph syntax (`graph LR`, subgraphs per layer: sources, staging, intermediate, marts) to a text file in the current output location (e.g. `data_models/<project_name>/dag.mmd`; Explore track writes no spec, so use a scratch name like `data_models/explore/dag.mmd`), then emit it:
+   {{artifact.emit type=dag path=data_models/<project_name>/dag.mmd meta="title=DAG: <descriptive_title> panel_id=dag-<project_name>"}}
 
 ## Greenfield Handling (Explore Track)
 
@@ -270,12 +271,6 @@ fresh, or is this a planning conversation before data arrives?"
 - Offer to escalate if exploration reveals changes are needed.
 - **No spec file.** Do not create or write to any documentation in this track.
 
-
-# UI-Aware Mode
-
-Before beginning Phase 1, run `cat .shards/ui.port 2>/dev/null`. If the file exists, the UI is live — read [`modes/ui mode.md`](modes/ui_mode.md) in full and follow its instructions. If the file does not exist, skip all `ui-push.js` calls and proceed normally.
-
----
 
 # Phase Progression
 

@@ -95,10 +95,14 @@ AR runs in one of two presets:
   - Eval harness, metric implementations
   - Dataset splits (train/val/test indices)
 
-### UI detection
+### Research dashboard
 
-If `.shards/ui.port` exists, push per the AR UI protocol with
-`--agent "deep-learning-engineer"`.
+Always emit the AR dashboard after the brief is confirmed (write the initial
+`experiments/results.json` first, with `mode: "autonomous-research"`,
+`status: "setup"`), then rewrite that file each iteration; re-emit with the same
+`panel_id` after notable transitions (reviewer verdict, cost warning, convergence):
+
+{{artifact.emit type=experiment-dashboard path=experiments/results.json meta="title=AR: <project_name> panel_id=ar-<project_name>"}}
 
 ### Document Phase 0
 

@@ -32,10 +32,19 @@ transfer occurs.
      experiment reaches this threshold, flag it and ask the user whether to stop early
      or continue with remaining experiments.
 
-8. **UI detection:** Check if `.shards/ui.port` exists. If it does, Read
-   [`modes/experiment ui mode.md`](experiment_ui_mode.md) in full
-   and follow its instructions for pushing experiment data to the browser throughout
-   the session. This is the same pattern used by the Data Analyst's UI mode.
+8. **Experiment dashboard:** Agents always emit the dashboard, whether or not a UI
+   exists. Experiment data lives in `experiments/results.json` (the file the panel
+   reads). Emit once, after the Setup plan is confirmed, then keep rewriting the file:
+   the panel picks up changes automatically. Re-emit with the same `panel_id` after
+   significant updates (experiment completion, status change) to update it in place.
+
+   {{artifact.emit type=experiment-dashboard path=experiments/results.json meta="title=Experiments: <project_name> panel_id=exp-<project_name>"}}
+
+   Update `results.json` `status` at each transition: `"setup"` after the plan is
+   written (Phase 1); `"running"` plus `"currentExperiment": N` when starting each
+   experiment (Phase 2); `"reviewing"` during Phase 3 summary writing; `"complete"`
+   after Phase 3 finalization. Write the result of each experiment to `results.json`
+   as soon as it is recorded (Phase 2 Step 5).
 
 {{gate kind=execute phase=0 id=specific-instructions-data-scientist-experiment-phase0}}
 

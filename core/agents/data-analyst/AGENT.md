@@ -237,9 +237,16 @@ If escalation is recommended and user agrees, stop here and suggest running
 
 ---
 
-# UI-Aware Mode
+# Emitting Results
 
-Before beginning Phase 1, run `cat .shards/ui.port 2>/dev/null`. If the file exists, the UI is live — read [`modes/ui mode.md`](modes/ui_mode.md) in full and follow its instructions. If the file does not exist, skip all `ui-push.js` calls and proceed normally.
+During Phase 3 (Execute), emit each query's results as a separate panel so the user can compare them side by side. Agents always emit, whether or not a UI exists.
+
+- **Table or metrics results:** write the rows to `analysis/<project_name>/<query_slug>.csv` (or a JSON array of row objects), then emit:
+  {{artifact.emit type=data-viewer path=analysis/<project_name>/<query_slug>.csv meta="title=<descriptive_title>"}}
+- **Chart output** (when the definition of done includes a chart): build a Plotly JSON object with `data` and `layout` keys from the query results, write it to `analysis/<project_name>/<chart_slug>.json`, then emit:
+  {{artifact.emit type=chart path=analysis/<project_name>/<chart_slug>.json meta="title=<chart_title> chart_type=<bar|line|scatter|pie>"}}
+
+If multiple queries feed one visualization, emit both the raw results table and the chart. Never write these files outside the project's output directory.
 
 ---
 

@@ -115,10 +115,32 @@ AR runs in one of two presets:
   - Eval harness and eval set (do NOT modify what you're measuring against)
   - Production deployment manifests
 
-### UI detection
+### Research dashboard
 
-If `.shards/ui.port` exists, read
-[`modes/research ui mode.md`](research_ui_mode.md) in full.
+Always emit the AR dashboard after the Phase 1 brief is confirmed (write the
+initial `experiments/results.json` first, with `mode: "autonomous-research"`
+and `status: "setup"`):
+
+{{artifact.emit type=experiment-dashboard path=experiments/results.json meta="title=AR: <project_name> panel_id=ar-<project_name>"}}
+
+Emit once, then rewrite `results.json` after each iteration result, git
+checkpoint, reviewer verdict, and cost-accounting update; the panel updates in
+place. Re-emit with the same `panel_id` after notable transitions (iteration
+complete, reviewer verdict, cost warning, convergence). Status values:
+`"setup"` after the brief, `"running"` + `"currentExperiment": N` each iteration,
+`"reviewing"` in Phase 3, `"complete"` after Phase 3.
+
+**Cost visibility.** After every iteration update `results.json.costAccounting`
+(tokens, dollars, reviewer tasks spawned); the dashboard renders it as a running
+strip. When cost reaches 50% / 80% of the ceiling, re-emit explicitly so the
+warning shows.
+
+**Fan-out sessions.** Emit one panel per branch, using the branch slug:
+
+{{artifact.emit type=experiment-dashboard path=.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+
+After arbitration/promotion, re-emit the main `panel_id` with the converged
+`results.json`.
 
 ### Document Phase 0
 

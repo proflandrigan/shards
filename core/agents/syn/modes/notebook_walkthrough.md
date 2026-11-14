@@ -17,7 +17,7 @@ in full and follow it exactly. The protocol owns:
 
 - The bootstrap sequence (kernel start, panel push, initial state JSON)
 - The `[NOTEBOOK-WALKTHROUGH]` message protocol
-- Cell execution via `python .shards/ui/notebook-kernel.py`
+- Cell execution via the `notebook_start` / `notebook_exec` / `notebook_run_all` / `notebook_stop` tools
 - Cell mutation via `NotebookEdit`
 - Staleness rules and re-run flow
 - The walkthrough state JSON schema

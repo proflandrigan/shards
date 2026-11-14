@@ -31,10 +31,18 @@ an existing AI system. You are the AI Engineer throughout. No persona transfer o
      experiment reaches this threshold, flag it and ask the user whether to stop early
      or continue with remaining experiments.
 
-8. **UI detection:** Check if `.shards/ui.port` exists. If it does, Read
-   [`modes/experiment ui mode.md`](experiment_ui_mode.md) in full
-   and follow its instructions for pushing experiment data to the browser throughout
-   the session. This is the same pattern used by the Data Analyst's UI mode.
+8. **Experiment dashboard:** Always emit the experiment dashboard once the Phase 1
+   plan is confirmed, pointing at `experiments/results.json` (write the initial
+   file with `status: "setup"` first):
+
+   {{artifact.emit type=experiment-dashboard path=experiments/results.json meta="title=Experiments: <project_name> panel_id=exp-<project_name>"}}
+
+   Emit once; afterwards just rewrite `results.json` and the panel updates in
+   place. Update its `status` at each transition: `"setup"` after the plan
+   (Phase 1), `"running"` + `"currentExperiment": N` when starting each experiment
+   (Phase 2), `"reviewing"` during Phase 3 summary writing, `"complete"` after
+   Phase 3 finalization. Re-emit with the same `panel_id` after significant
+   updates (experiment completion, status change) if an immediate refresh is wanted.
 
 9. **Prompt Lab alternative:** If the user's experiments are primarily about prompt
    iteration (wording, few-shots, system prompt changes), mention that the Prompt

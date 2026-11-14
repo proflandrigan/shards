@@ -52,7 +52,8 @@ For each model:
 - Write the schema file (model description, column descriptions, all required tests)
 - Run the stack's build/validate command (e.g., `dbt build --select +model_name`) — fix any failures before next model
 - Do not advance to the next model until the current one is green
-- **If UI-Aware Mode is active**: after each model passes validation, re-push the DAG with the completed model highlighted. Use the same `--panel-id` from Phase 4 (e.g., `dag-<project_name>`) so it updates in place. Apply a Mermaid `style` to mark green models (e.g., `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`)
+- After each model passes validation, update the DAG file with the completed model highlighted (e.g. `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`) and re-emit with the same `panel_id` from Phase 4 so it updates in place:
+  {{artifact.emit type=dag path=data_models/<project_name>/dag.mmd meta="title=DAG: <project_name> panel_id=dag-<project_name>"}}
 - **Post-build validation (per model, after `dbt build` passes):** Run the
   applicable checks below using `dbt show` or the warehouse CLI. If any check
   fails, halt and diagnose before advancing to the next model. In a contract-first

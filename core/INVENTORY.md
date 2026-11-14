@@ -38,7 +38,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 17 | `src/agents/specific_instructions/ai_engineer/advise.md` | `core/agents/ai-engineer/modes/advise.md` |  |
 | 18 | `src/agents/specific_instructions/ai_engineer/bi_engineer_handoff.md` | `core/agents/ai-engineer/modes/bi_engineer_handoff.md` |  |
 | 19 | `src/agents/specific_instructions/ai_engineer/experiment.md` | `core/agents/ai-engineer/modes/experiment.md` |  |
-| 20 | `src/agents/specific_instructions/ai_engineer/experiment_ui_mode.md` | `core/agents/ai-engineer/modes/experiment_ui_mode.md` |  |
+| 20 | `src/agents/specific_instructions/ai_engineer/experiment_ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
 | 21 | `src/agents/specific_instructions/ai_engineer/phases.md` | `core/agents/ai-engineer/modes/phases.md` |  |
 | 22 | `src/agents/specific_instructions/ai_engineer/phases/index.md` | `core/agents/ai-engineer/phases/index.md` |  |
 | 23 | `src/agents/specific_instructions/ai_engineer/phases/phase-1.md` | `core/agents/ai-engineer/phases/phase-1.md` |  |
@@ -49,9 +49,9 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 28 | `src/agents/specific_instructions/ai_engineer/phases/phase-6.md` | `core/agents/ai-engineer/phases/phase-6.md` |  |
 | 29 | `src/agents/specific_instructions/ai_engineer/phases/phase-7.md` | `core/agents/ai-engineer/phases/phase-7.md` |  |
 | 30 | `src/agents/specific_instructions/ai_engineer/prompt_lab.md` | `core/agents/ai-engineer/modes/prompt_lab.md` |  |
-| 31 | `src/agents/specific_instructions/ai_engineer/prompt_lab_ui_mode.md` | `core/agents/ai-engineer/modes/prompt_lab_ui_mode.md` |  |
+| 31 | `src/agents/specific_instructions/ai_engineer/prompt_lab_ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
 | 32 | `src/agents/specific_instructions/ai_engineer/research.md` | `core/agents/ai-engineer/modes/research.md` |  |
-| 33 | `src/agents/specific_instructions/ai_engineer/research_ui_mode.md` | `core/agents/ai-engineer/modes/research_ui_mode.md` |  |
+| 33 | `src/agents/specific_instructions/ai_engineer/research_ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
 | 34 | `src/agents/specific_instructions/ai_engineer/review.md` | `core/agents/ai-engineer/modes/review.md` |  |
 | 35 | `src/agents/specific_instructions/ai_engineer/validation_checklist.md` | `core/agents/ai-engineer/modes/validation_checklist.md` |  |
 | 36 | `src/agents/specific_instructions/analytics_engineer/advise.md` | `core/agents/analytics-engineer/modes/advise.md` |  |
@@ -73,7 +73,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 52 | `src/agents/specific_instructions/analytics_engineer/quick_phases.md` | `core/agents/analytics-engineer/modes/quick_phases.md` |  |
 | 53 | `src/agents/specific_instructions/analytics_engineer/review.md` | `core/agents/analytics-engineer/modes/review.md` |  |
 | 54 | `src/agents/specific_instructions/analytics_engineer/service_mode.md` | `core/agents/analytics-engineer/modes/service.md` |  |
-| 55 | `src/agents/specific_instructions/analytics_engineer/ui_mode.md` | `core/agents/analytics-engineer/modes/ui_mode.md` |  |
+| 55 | `src/agents/specific_instructions/analytics_engineer/ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
 | 56 | `src/agents/specific_instructions/analytics_engineer/update.md` | `core/agents/analytics-engineer/modes/update.md` |  |
 | 57 | `src/agents/specific_instructions/analytics_engineer/validation_checklist.md` | `core/agents/analytics-engineer/modes/validation_checklist.md` |  |
 | 58 | `src/agents/specific_instructions/applied_ml_scientist/advise.md` | `core/agents/applied-ml-scientist/modes/advise.md` |  |
@@ -113,7 +113,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 92 | `src/agents/specific_instructions/data_analyst/phases/phase-3.md` | `core/agents/data-analyst/phases/phase-3.md` |  |
 | 93 | `src/agents/specific_instructions/data_analyst/phases/phase-4.md` | `core/agents/data-analyst/phases/phase-4.md` |  |
 | 94 | `src/agents/specific_instructions/data_analyst/review.md` | `core/agents/data-analyst/modes/review.md` |  |
-| 95 | `src/agents/specific_instructions/data_analyst/ui_mode.md` | `core/agents/data-analyst/modes/ui_mode.md` |  |
+| 95 | `src/agents/specific_instructions/data_analyst/ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
 | 96 | `src/agents/specific_instructions/data_analyst/update.md` | `core/agents/data-analyst/modes/update.md` |  |
 | 97 | `src/agents/specific_instructions/data_analyst/validation_checklist.md` | `core/agents/data-analyst/modes/validation_checklist.md` |  |
 | 98 | `src/agents/specific_instructions/data_engineer/advise.md` | `core/agents/data-engineer/modes/advise.md` |  |
@@ -150,7 +150,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 129 | `src/agents/specific_instructions/data_scientist/advise.md` | `core/agents/data-scientist/modes/advise.md` |  |
 | 130 | `src/agents/specific_instructions/data_scientist/bi_engineer_handoff.md` | `core/agents/data-scientist/modes/bi_engineer_handoff.md` |  |
 | 131 | `src/agents/specific_instructions/data_scientist/experiment.md` | `core/agents/data-scientist/modes/experiment.md` |  |
-| 132 | `src/agents/specific_instructions/data_scientist/experiment_ui_mode.md` | `core/agents/data-scientist/modes/experiment_ui_mode.md` |  |
+| 132 | `src/agents/specific_instructions/data_scientist/experiment_ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
 | 133 | `src/agents/specific_instructions/data_scientist/explain.md` | `core/agents/data-scientist/modes/explain.md` |  |
 | 134 | `src/agents/specific_instructions/data_scientist/greenfield_data.md` | `core/agents/data-scientist/modes/greenfield_data.md` |  |
 | 135 | `src/agents/specific_instructions/data_scientist/ml_engineer_handoff.md` | `core/agents/data-scientist/modes/ml_engineer_handoff.md` |  |
@@ -165,7 +165,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 144 | `src/agents/specific_instructions/data_scientist/phases/phase-6.md` | `core/agents/data-scientist/phases/phase-6.md` |  |
 | 145 | `src/agents/specific_instructions/data_scientist/phases/phase-7.md` | `core/agents/data-scientist/phases/phase-7.md` |  |
 | 146 | `src/agents/specific_instructions/data_scientist/research.md` | `core/agents/data-scientist/modes/research.md` |  |
-| 147 | `src/agents/specific_instructions/data_scientist/research_ui_mode.md` | `core/agents/data-scientist/modes/research_ui_mode.md` |  |
+| 147 | `src/agents/specific_instructions/data_scientist/research_ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
 | 148 | `src/agents/specific_instructions/data_scientist/review.md` | `core/agents/data-scientist/modes/review.md` |  |
 | 149 | `src/agents/specific_instructions/data_scientist/service_mode.md` | `core/agents/data-scientist/modes/service.md` |  |
 | 150 | `src/agents/specific_instructions/data_scientist/validation_checklist.md` | `core/agents/data-scientist/modes/validation_checklist.md` |  |
@@ -183,7 +183,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 162 | `src/agents/specific_instructions/ml_engineer/advise.md` | `core/agents/ml-engineer/modes/advise.md` |  |
 | 163 | `src/agents/specific_instructions/ml_engineer/bi_engineer_handoff.md` | `core/agents/ml-engineer/modes/bi_engineer_handoff.md` |  |
 | 164 | `src/agents/specific_instructions/ml_engineer/experiment.md` | `core/agents/ml-engineer/modes/experiment.md` |  |
-| 165 | `src/agents/specific_instructions/ml_engineer/experiment_ui_mode.md` | `core/agents/ml-engineer/modes/experiment_ui_mode.md` |  |
+| 165 | `src/agents/specific_instructions/ml_engineer/experiment_ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
 | 166 | `src/agents/specific_instructions/ml_engineer/notebook_walkthrough.md` | `core/agents/ml-engineer/modes/notebook_walkthrough.md` |  |
 | 167 | `src/agents/specific_instructions/ml_engineer/phases.md` | `core/agents/ml-engineer/modes/phases.md` |  |
 | 168 | `src/agents/specific_instructions/ml_engineer/phases/index.md` | `core/agents/ml-engineer/phases/index.md` |  |
@@ -196,7 +196,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 175 | `src/agents/specific_instructions/ml_engineer/phases/phase-6.md` | `core/agents/ml-engineer/phases/phase-6.md` |  |
 | 176 | `src/agents/specific_instructions/ml_engineer/phases/phase-7.md` | `core/agents/ml-engineer/phases/phase-7.md` |  |
 | 177 | `src/agents/specific_instructions/ml_engineer/research.md` | `core/agents/ml-engineer/modes/research.md` |  |
-| 178 | `src/agents/specific_instructions/ml_engineer/research_ui_mode.md` | `core/agents/ml-engineer/modes/research_ui_mode.md` |  |
+| 178 | `src/agents/specific_instructions/ml_engineer/research_ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
 | 179 | `src/agents/specific_instructions/ml_engineer/review.md` | `core/agents/ml-engineer/modes/review.md` |  |
 | 180 | `src/agents/specific_instructions/ml_engineer/service_mode.md` | `core/agents/ml-engineer/modes/service.md` |  |
 | 181 | `src/agents/specific_instructions/ml_engineer/validation_checklist.md` | `core/agents/ml-engineer/modes/validation_checklist.md` |  |

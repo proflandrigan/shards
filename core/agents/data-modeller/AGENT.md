@@ -278,30 +278,15 @@ information about existing data models.
 
 ---
 
-# UI-Aware Mode
+# Emitting Sample Data
 
-Before beginning Phase 1, check if the Shards UI is running:
+Agents always emit, whether or not a UI exists.
 
-```bash
-cat .shards/ui.port 2>/dev/null
-```
+- **Explore track:** after pulling sample rows from a table, write them to `data_models/<project_name>/sample_<table_name>.csv` (or a JSON array of row objects) and emit immediately:
+  {{artifact.emit type=data-viewer path=data_models/<project_name>/sample_<table_name>.csv meta="title=Sample: <table_name>"}}
+- **Deep track (Phase 2, entity design):** after each entity is confirmed, write and emit sample data for that entity the same way if available from the source schema.
 
-If the file exists, the UI is live. In **UI-Aware Mode**, push sample data to the browser as you work:
-
-- **Explore track** — after pulling sample rows from a table, push them immediately:
-  ```bash
-  node .shards/ui/ui-push.js data-viewer \
-    --title "Sample: <table_name>" \
-    --agent "data-modeller" \
-    --data '<json_array_of_row_objects>'
-  ```
-  Use inline `--data` for results under 100 rows (as a JSON array). For larger datasets, write a CSV to the project's `data_models/<project_name>/` directory and use `--source <path>`. Never write UI data files outside the project's output directory.
-
-- **Deep track (Phase 2 — entity design)** — after each entity is confirmed, push sample data for that entity if available from the source schema.
-
-If `.shards/ui.port` does not exist, skip all `ui-push.js` calls and proceed normally — no errors, no change in behavior.
-
-**Important:** The `node .shards/ui/ui-push.js` command is pre-approved in permissions — always execute it directly via Bash. Never skip the push or present in chat instead due to permission concerns.
+Never write these files outside the project's output directory.
 
 ---
 

@@ -154,15 +154,10 @@ the bulk queries.
    `status: "complete"`, populate all metrics, compute `summary.overallVerdict`
    (PASS if all dimensions pass, FAIL if any fail, PARTIAL if mixed).
 
-   If the Shards UI is active (`.shards/ui.port` file exists), push the eval
-   dashboard panel:
-   ```bash
-   node .shards/ui/ui-push.js eval-dashboard \
-     --title "Eval: <project_name>" \
-     --agent "ml-engineer" \
-     --panel-id "eval-<project_name>" \
-     --source "<path_to>/eval-results.json"
-   ```
+   Emit the eval dashboard (agents always emit, whether or not a UI exists). Emit
+   once; afterwards keep rewriting `eval-results.json` and the panel updates in place:
+
+   {{artifact.emit type=eval-dashboard path=<path_to>/eval-results.json meta="title=Eval: <project_name> panel_id=eval-<project_name>"}}
 
 6. **Applied ML Scientist results review** — After baseline and candidate models
    are trained and evaluated, consult the Applied ML Scientist to review the

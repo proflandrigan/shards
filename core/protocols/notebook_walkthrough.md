@@ -20,18 +20,18 @@ Three pieces:
 
 1. **The notebook on disk** (`.ipynb`) — the source of truth for cell source
    and cell outputs. Mutated only via `NotebookEdit` (for source) or via the
-   kernel helper's `exec` subcommand (for outputs after execution).
+   `notebook_exec` tool (for outputs after execution).
 2. **The walkthrough state JSON** — the agent's view of the walkthrough
    (current cell, which cells are stale, transcript of explanations and
    user questions). Lives at:
    `<project_root>/.shards/notebook-walkthrough.json`
-   The Shards UI watches this file via the panel's `--source` flag and
-   re-renders on every change.
-3. **The kernel helper** — `python .shards/ui/notebook-kernel.py` keeps a
+   The panel reads this file and re-renders on every change.
+3. **The kernel** — the `notebook_*` tools (`notebook_start`, `notebook_exec`,
+   `notebook_run_all`, `notebook_stop`) keep a
    persistent Jupyter kernel alive between agent invocations. Connection
    files live under `.shards/notebooks/<session_id>/`.
 
-The agent owns the choreography between the three. The UI is read-mostly:
+The agent owns the choreography between the three. The panel is read-mostly:
 it shows the current state and dispatches user actions back as chat messages.
 
 ---
@@ -42,25 +42,18 @@ it shows the current state and dispatches user actions back as chat messages.
    `.ipynb`. (If invoked via `/notebook-walkthrough` slash command, the path
    may already be in the user's first message.)
 
-2. **Generate a session id**:
-   ```bash
-   python .shards/ui/notebook-kernel.py new-session
-   ```
-   The helper prints `{"ok": true, "sessionId": "<uuid>"}`. Capture the
-   sessionId — every subsequent helper call needs it.
+2. **Start the kernel** by calling `notebook_start` with `notebook` = the
+   notebook path (optionally `session`). Capture the returned session id —
+   every subsequent `notebook_*` call needs it.
 
-3. **Start the kernel**:
-   ```bash
-   python .shards/ui/notebook-kernel.py start <session_id> <notebook_path>
-   ```
-   Helper writes the connection file, spawns ipykernel, and creates the
+3. **Kernel state**: the tool writes the connection file, spawns ipykernel, and creates the
    initial walkthrough state at `.shards/notebooks/<session_id>/state.json`.
    On success the response includes `cellCount` and `stateFile`.
 
 4. **Read** the notebook from disk so you have the cell sources in
-   memory. Read both `<notebook_path>` and the helper's `state.json`.
+   memory. Read both `<notebook_path>` and the session's `state.json`.
 
-5. **Compose** the UI-facing walkthrough state JSON. Required shape:
+5. **Compose** the panel-facing walkthrough state JSON. Required shape:
    ```json
    {
      "sessionId": "<uuid>",
@@ -85,25 +78,22 @@ it shows the current state and dispatches user actions back as chat messages.
      "transcript": []
    }
    ```
-   - `cells[].*` is per-cell walkthrough state (the helper's `state.json`
+   - `cells[].*` is per-cell walkthrough state (the session `state.json`
      already gives you this — copy it forward).
    - `notebookCells` is a flat snapshot of the on-disk `.ipynb` cells. The
-     UI uses this to render cell source and existing outputs without making
+     panel uses this to render cell source and existing outputs without making
      a separate file fetch.
    - `transcript` accumulates `{ role, kind, cellIndex, text }` entries.
 
    Write this JSON to `<project_root>/.shards/notebook-walkthrough.json`.
 
-6. **Push the panel** to the UI:
-   ```bash
-   node .shards/ui/ui-push.js notebook-walkthrough \
-     --title "Walkthrough: <notebook_basename>" \
-     --agent "<agent-name>" \
-     --panel-id "nw-<session_id>" \
-     --source "<project_root>/.shards/notebook-walkthrough.json"
-   ```
-   The `--source` flag tells the server to watch the file. Subsequent state
-   updates need only re-write the file — no further pushes required.
+6. **Emit the panel** (always, whether or not a UI exists), substituting the
+   notebook basename and session id:
+
+   {{artifact.emit type=notebook-walkthrough path=.shards/notebook-walkthrough.json meta="title=Walkthrough: <notebook_basename> panel_id=nw-<session_id>"}}
+
+   Subsequent state updates need only re-write the file; re-emit with the
+   same `panel_id` only to update in place.
 
 7. **Explain cell 0** to the user in chat. Set `cells[0].explained = true`
    and append an entry to `transcript`. Update the state JSON.
@@ -111,21 +101,16 @@ it shows the current state and dispatches user actions back as chat messages.
 8. **Wait** for the user to send a `[NOTEBOOK-WALKTHROUGH] ...` message or
    to reply in chat.
 
-If the UI is not running, the `ui-push.js` call exits silently — that is
-fine, the walkthrough still works in chat-only mode (the user just won't
-see the panel; they can still read explanations and request actions in plain
-chat).
-
 ---
 
 ## Message protocol
 
-The UI dispatches user actions as chat messages prefixed with
+User actions arrive as chat messages prefixed with
 `[NOTEBOOK-WALKTHROUGH]`. Recognize and handle:
 
 | Pattern | Action |
 |---|---|
-| `Run cell <N>` | Execute cell N via the kernel helper, update state |
+| `Run cell <N>` | Execute cell N via `notebook_exec`, update state |
 | `Next cell` | Advance `currentCellIndex` by 1, explain the new cell |
 | `Re-explain cell <N>` | Generate a fresh explanation for cell N |
 | `Question on cell <N>: <text>` | Answer in chat; record in transcript; do not advance |
@@ -133,9 +118,9 @@ The UI dispatches user actions as chat messages prefixed with
 | `Insert cell after <N> (<type>): <content>` | Insert a cell, shift indices, update state |
 | `Delete cell <N>` | Delete via NotebookEdit, shift indices, mark downstream stale |
 | `Re-run from cell <N>` | Execute cells N..end, clearing stale flags as you go |
-| `Restart kernel` | Call helper `restart`; mark all executed cells stale |
-| `Restart & run all` | Call helper `run-all`; fresh-kernel top-to-bottom reproducibility check; report per-cell pass/fail and the first error |
-| `End walkthrough` | Call helper `stop`; finalize transcript; offer summary |
+| `Restart kernel` | Call `notebook_start` again for a fresh kernel; mark all executed cells stale |
+| `Restart & run all` | Call `notebook_run_all`; fresh-kernel top-to-bottom reproducibility check; report per-cell pass/fail and the first error |
+| `End walkthrough` | Call `notebook_stop`; finalize transcript; offer summary |
 
 In `Insert` and `Edit` payloads, `\n` is the literal escape sequence — replace
 `\n` with newline before applying.
@@ -148,32 +133,29 @@ relevant ones in the transcript with `kind: "question"`.
 
 ## Cell execution
 
-Always go through the helper:
+Always go through the `notebook_exec` tool (`session` = the session id,
+`cell` = the cell index).
 
-```bash
-python .shards/ui/notebook-kernel.py exec <session_id> <cell_index>
-```
-
-The helper:
+The tool:
 - Reads cell source from the `.ipynb` on disk (so any prior `NotebookEdit`
   is picked up automatically).
 - Sends the source to the live kernel.
 - Captures stream/result/error outputs.
 - Writes outputs back into the `.ipynb` file (so the file pane reflects the
   fresh outputs).
-- Updates the helper's `state.json` with `executed`, `lastRunAt`, and
+- Updates the session `state.json` with `executed`, `lastRunAt`, and
   `outputSummary` for that cell.
 
 After every `exec` call:
-1. Re-read the helper's `state.json` (or just the relevant cell entry).
-2. Re-read the relevant `.ipynb` cell so `notebookCells` in the UI state JSON
+1. Re-read the session `state.json` (or just the relevant cell entry).
+2. Re-read the relevant `.ipynb` cell so `notebookCells` in the walkthrough state JSON
    reflects the new outputs.
 3. Update `<project_root>/.shards/notebook-walkthrough.json`. Set
    `currentCellIndex` to the cell that just ran.
 4. Explain the result in chat — what the cell did, what to read in the
    output, anything surprising.
 
-If `status` in the helper response is `"error"`, do not advance to the next
+If `status` in the tool response is `"error"`, do not advance to the next
 cell. Explain the error in business/methodology terms and ask the user how
 to proceed.
 
@@ -214,7 +196,7 @@ When the user sends `Re-run from cell N`:
 2. For each `i`, call `exec <session_id> <i>`.
 3. After each successful run, clear `stale` and update `lastRunAt` /
    `outputSummary`. Save the walkthrough state JSON between iterations so
-   the UI shows progress.
+   the panel shows progress.
 4. If any cell errors, **stop** the loop, leave subsequent stale flags
    intact, explain the error, and ask the user.
 
@@ -225,10 +207,7 @@ When the user sends `Re-run from cell N`:
 When the user sends `Restart & run all` (the final reproducibility check —
 does the notebook run clean top-to-bottom on a *fresh* kernel?):
 
-1. Call the helper once:
-   ```bash
-   python .shards/ui/notebook-kernel.py run-all <session_id>
-   ```
+1. Call the `notebook_run_all` tool once (`session` = the session id).
    It restarts the kernel, executes every code cell in order on the fresh
    kernel, writes outputs back into the `.ipynb`, updates `state.json` per
    cell, and stops at the first failing cell.
@@ -305,7 +284,7 @@ When the user sends `End walkthrough` or otherwise signals completion:
    whole. If the user accepts and an artifact is written (step 4), fold the
    roll-up (`cellsPassed / cellsTotal`, first error if any) into the summary.
    Offer only — never run it without confirmation.
-2. Call `python .shards/ui/notebook-kernel.py stop <session_id>`.
+2. Call the `notebook_stop` tool (`session` = the session id).
 3. Set walkthrough state `status = "ended"` and save.
 4. **Optional artifact:** if the notebook lives under `studies/` (Data
    Scientist) or `models/` / `services/` / `research/` (ML Engineer / Syn),
@@ -314,9 +293,8 @@ When the user sends `End walkthrough` or otherwise signals completion:
    through, key explanations, user questions, and any edits applied.
    Do not write this without explicit user confirmation.
 5. Close the panel:
-   ```bash
-   node .shards/ui/ui-push.js close --panel-id "nw-<session_id>"
-   ```
+
+   {{artifact.emit type=close path=.shards/notebook-walkthrough.json meta="panel_id=nw-<session_id>"}}
 
 ---
 
@@ -331,7 +309,7 @@ When the user sends `End walkthrough` or otherwise signals completion:
 - **Never silently skip a stale cell.** If the user asks to advance past
   a stale cell, point it out and ask whether to re-run it first.
 - **Save the walkthrough state JSON after every state-changing action.**
-  The UI is read-only — if you forget to write, the UI goes stale and the
+  The panel is read-only — if you forget to write, it goes stale and the
   user sees stale info.
 - **One action at a time.** Don't batch. The walkthrough is conversational.
 - **Kernel errors halt progress** — surface them and wait for the user.
@@ -354,13 +332,12 @@ the agent activates:
 1. Offer to **resume** the existing session, with the same notebook and
    `currentCellIndex`. State which cell you'd resume on and how many cells
    are stale.
-2. If the user agrees, check the kernel:
-   ```bash
-   python .shards/ui/notebook-kernel.py status <session_id>
-   ```
-   - If `alive`: re-push the panel pointed at the existing state JSON,
-     re-explain the current cell, wait.
-   - If `dead` or `missing`: ask whether to **restart** (fresh kernel, all
+2. If the user agrees, check the kernel by calling `notebook_exec` on the
+   current cell only if the user asks to run it; otherwise call `notebook_start`
+   with the existing session id.
+   - If the session resumes with state intact: re-emit the panel with the same
+     `panel_id` (same macro as step 6), re-explain the current cell, wait.
+   - If the kernel is gone or state is lost: ask whether to **restart** (fresh kernel, all
      executed cells become stale) or **start over** (new session id, drop
      existing state).
 3. If the user prefers a fresh walkthrough, run the bootstrap sequence

@@ -213,19 +213,9 @@ PR Review Complete
 > Modified files:
 > \<bullet list of changed files\>"
 
-Then ask:
-> "Want me to push the PR comment view to the Shards UI so you can see the full
-> thread state? (y/n)"
+Then write the full thread data from Step 2 to `.shards/pr-review-<number>.json` as `{pr, threads, generalComments, reviews}`, annotating each thread with `"addressed": true/false` based on what was applied vs. skipped during the session, and emit it:
 
-If yes, push to the UI:
-```
-node .shards/ui/ui-push.js pr-review \
-  --title "PR #<number>" \
-  --data '<json payload>'
-```
-
-The JSON payload should contain the full thread data from Step 2 annotated with
-`"addressed": true/false` based on what was applied vs. skipped during the session.
+{{artifact.emit type=pr-review path=.shards/pr-review-<number>.json meta="title=PR #<number> pr=<number>"}}
 
 ---
 

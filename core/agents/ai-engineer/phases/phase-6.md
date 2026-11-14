@@ -126,15 +126,10 @@ If a checkpoint fails, diagnose, fix, and call `gate_request` again with updated
    `summary.passed`, `summary.failed`, and `summary.overallVerdict`
    (PASS if all pass, FAIL if any fail, PARTIAL if mixed).
 
-   If the Shards UI is active (`.shards/ui.port` file exists), push the eval
-   dashboard panel:
-   ```bash
-   node .shards/ui/ui-push.js eval-dashboard \
-     --title "Eval: <project_name>" \
-     --agent "ai-engineer" \
-     --panel-id "eval-<project_name>" \
-     --source "<path_to>/eval-results.json"
-   ```
+   Always emit the eval dashboard panel (emit once; the file is rewritten as
+   dimensions complete):
+
+   {{artifact.emit type=eval-dashboard path=<path_to>/eval-results.json meta="title=Eval: <project_name> panel_id=eval-<project_name>"}}
 
 ### Document Phase 6
 

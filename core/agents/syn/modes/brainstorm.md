@@ -53,7 +53,7 @@ As soon as they respond with any description (even vague), do three things immed
 ```
 
 3. Create `brainstorm/brainstorm_<project_name>.state.json` — the live state file
-   that powers the Shards UI brainstorm panel. Schema:
+   that powers the brainstorm panel. Schema:
 
 ```json
 {
@@ -139,26 +139,12 @@ Before issuing any Task calls, do all three steps in a single assistant turn:
    Deep-dive entries (Phase 3) use a distinct `id` and `kind: "deep-dive"` — see
    Phase 3 for the schema.
 
-2. **Push the brainstorm panel to the UI** via Bash:
-   ```
-   node .shards/ui/ui-push.js brainstorm \
-     --title "Brainstorm: <project_name>" \
-     --agent syn \
-     --panel-id brainstorm-<project_name> \
-     --source brainstorm/brainstorm_<project_name>.state.json
-   ```
-   `ui-push.js` exits silently if the UI isn't running — never gate on its
-   success and never surface its output to the user.
+2. **Emit the brainstorm panel** (once; afterwards just rewrite the state file, the panel is watched):
+   {{artifact.emit type=brainstorm path=brainstorm/brainstorm_<project_name>.state.json meta="title=Brainstorm: <project_name> panel_id=brainstorm-<project_name> project=<project_name>"}}
 
-3. **Announce to the user** (use this verbatim, or a paraphrase that preserves
-   the UI-aware framing and the no-panel fallback):
-   > "Opening the brainstorm panel and polling every relevant shard in parallel.
-   > Watch the room fill up as each one checks in. No panel running? They'll
-   > still land in the brainstorm doc as they return."
-
-   If the previous installation predates the Shards UI, the bash push in step 2
-   will no-op silently — the announcement still reads fine because the doc-write
-   fallback is real.
+3. **Announce to the user** (use this verbatim, or a paraphrase):
+   > "Polling every relevant shard in parallel. They'll land in the brainstorm
+   > doc as they return."
 
 ### Parallel Task spawn
 
@@ -204,7 +190,7 @@ Keep it tight. No preamble. Just ideas.
 At the very end of your response, on a single line, emit:
   HEADLINE: <one-line preview of your strongest idea, ≤120 chars>
 
-Syn parses this line to populate the brainstorm UI panel — do not omit it.
+Syn parses this line to populate the brainstorm panel — do not omit it.
 ```
 
 ### As each specialist Task returns
@@ -289,7 +275,7 @@ new entry to `facilitation_log` after each meaningful turn:
 {"ts": "<ISO 8601>", "actor": "user|syn|<specialist>", "text": "<≤200 chars summary>"}
 ```
 
-Keep entries short — this is a summary log for the UI panel, not the full
+Keep entries short — this is a summary log for the panel, not the full
 transcript. The brainstorm doc remains the source of truth for full content.
 
 Respond to any of the following naturally:
@@ -313,7 +299,7 @@ Respond to any of the following naturally:
     "ideas_count": 1
   }
   ```
-  This makes the deep dive visible in the UI panel without overwriting the
+  This makes the deep dive visible in the panel without overwriting the
   original specialist card. The stable `id` prevents collisions when the same
   specialist is asked for multiple deep dives.
 
@@ -532,7 +518,7 @@ explicitly closes it.
 - Append to the doc continuously throughout the session. Every specialist response,
   deep-dive, and synthesis goes in. The file is the memory of the session.
 - Rewrite the state JSON in full at every phase transition and after every
-  specialist Task return. The Shards UI brainstorm panel watches this file and
+  specialist Task return. The brainstorm panel watches this file and
   re-renders on each change — the state file IS the UI experience. Keep the
   rewrites cheap by storing only headlines and counts, not full responses.
 - Keep Task prompts focused — specialists should feel constrained to brainstorm,

@@ -117,7 +117,7 @@ Incremental testing proves each component works *in isolation*. It does **not** 
 
 This check runs **once, at the end** — after every component has already passed its checkpoint. It is the final step, never the first execution (see the "Run-all is not a development technique" framing above and the failure mode below).
 
-- **In Notebook Walkthrough mode**, run it via the kernel helper: `python .shards/ui/notebook-kernel.py run-all <session_id>`. The helper restarts the kernel, executes every code cell in order against the fresh kernel, stops at the first failing cell, and returns a per-cell pass/fail roll-up with the first error (`firstError`). Surface the result to the user; on a failure, stop and diagnose — do not declare the notebook done.
+- **In Notebook Walkthrough mode**, run it with the `notebook_run_all` tool (`session` = the walkthrough session id). The tool restarts the kernel, executes every code cell in order against the fresh kernel, stops at the first failing cell, and returns a per-cell pass/fail roll-up with the first error (`firstError`). Surface the result to the user; on a failure, stop and diagnose — do not declare the notebook done.
 - **Standalone** (no walkthrough session), run `jupyter nbconvert --execute --to notebook --inplace <notebook>` (or `jupyter execute <notebook> --inplace`) and confirm a zero exit code.
 - **Set seeds** (`numpy`, `random`, and any framework — `sklearn`, `torch`) so the fresh run is deterministic and headline metrics reproduce. A run-all that "works" but produces different numbers each time is not reproducible.
 
