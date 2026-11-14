@@ -1,0 +1,104 @@
+{
+  "id": "03-pr-review",
+  "title": "Syn PR review walkthrough",
+  "description": "/review-pr: Syn loads PR comments, proposes a fix per comment, applies on approval. No project directory is produced.",
+  "agent_entry": "/review-pr",
+  "output_dir_glob": ".",
+  "forced_compactions": 0,
+  "user_turns": [
+    {
+      "text": "PR 42 in this repo.",
+      "kind": "request"
+    },
+    {
+      "text": "Yes, those are all the threads, go ahead.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Looks right, apply it.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Yes but change the variable name to retry_limit.",
+      "kind": "revise"
+    },
+    {
+      "text": "Skip this one, it is out of scope.",
+      "kind": "answer"
+    },
+    {
+      "text": "Apply it.",
+      "kind": "confirm"
+    },
+    {
+      "text": "That is all, wrap up.",
+      "kind": "confirm"
+    }
+  ],
+  "expected_routing": [
+    "syn"
+  ],
+  "expected_artifacts": [
+    {
+      "path": ".shards/gates/state.json",
+      "required": false
+    }
+  ],
+  "expected_gates": [
+    {
+      "id": "specific-instructions-syn-pr-review-phase0",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "specific-instructions-syn-pr-review-phase0-2",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "specific-instructions-syn-pr-review-phase0-3",
+      "kind": "final",
+      "min": 1
+    }
+  ],
+  "forbidden": [
+    {
+      "id": "agent-approves-own-gate",
+      "type": "gate_self_approval",
+      "description": "Agent emits a phase/final/execute gate and proceeds to the next gate without a human turn in between"
+    },
+    {
+      "id": "reask-confirmed-gate",
+      "type": "gate_reask",
+      "description": "Agent re-emits a gate the user already confirmed (e.g. after compaction); only gates listed in allowed_reemits may repeat",
+      "allowed_reemits": {
+        "specific-instructions-syn-pr-review-phase0-2": 1
+      }
+    },
+    {
+      "id": "specialist-handoff",
+      "type": "forbidden_agents",
+      "agents": [
+        "data-analyst",
+        "data-scientist",
+        "ml-engineer"
+      ],
+      "description": "PR review is done by Syn directly"
+    },
+    {
+      "id": "applies-without-approval",
+      "type": "forbidden_text",
+      "pattern": "(?i)applied .* without (your )?approval",
+      "description": "Must not apply a change before the user approves"
+    }
+  ],
+  "weights": {
+    "artifacts": 30,
+    "gates": 30,
+    "routing": 20,
+    "forbidden": 20
+  },
+  "next_build_targets": {
+    "max_human_approvals_total": 7
+  }
+}

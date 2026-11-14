@@ -1,0 +1,33 @@
+{"type":"system","subtype":"init","session_id":"fixture-session"}
+{"type":"user","message":{"role":"user","content":"/shards"}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Syn here. What are we working on?"}]}}
+{"type":"user","message":{"role":"user","content":"What is the weekly active teacher count by region for last quarter? Quick question, warehouse is Snowflake."}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_akhd54","name":"Read","input":{"file_path":"/proj/.claude/agents/syn.md"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"x","content":"ok"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_t179h8","name":"Write","input":{"file_path":"/proj/analysis/weekly_active_teachers/project-specs.md","content":"# specs"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"x","content":"ok"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Quick analysis, Data Analyst fits. Specs written. Run /compact when ready."}]}}
+{"type":"user","message":{"role":"user","content":"Great, go ahead."}}
+{"type":"user","message":{"role":"user","content":"Ready, continue (compact done)."}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_jnx904","name":"Read","input":{"file_path":"/proj/.claude/agents/data-analyst.md"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"x","content":"ok"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_q0cpah","name":"Read","input":{"file_path":"/proj/.claude/agents/specific_instructions/data_analyst/phases/index.md"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"x","content":"ok"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Question: weekly active teachers by region, last quarter.\n\n::GATE:: id=data-analyst-phase-1 phase=1 kind=phase\nSummary written to project-specs.md. Stop here — await explicit confirmation.\n::ENDGATE::"}]}}
+{"type":"user","message":{"role":"user","content":"Yes, that framing is right. Active means at least one login."}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Plan: one query, CSV plus a chart.\n\n::GATE:: id=data-analyst-phase-2 phase=2 kind=phase\nSummary written to project-specs.md. Stop here — await explicit confirmation.\n::ENDGATE::"}]}}
+{"type":"user","message":{"role":"user","content":"Yes but change the output to a CSV plus a short summary, no chart."}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Revised plan: one query, CSV plus summary.\n\n::GATE:: id=data-analyst-phase-2 phase=2 kind=phase\nSummary written to project-specs.md. Stop here — await explicit confirmation.\n::ENDGATE::"}]}}
+{"type":"user","message":{"role":"user","content":"Looks good, run it."}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_eoboql","name":"Write","input":{"file_path":"/proj/analysis/weekly_active_teachers/weekly_active.sql","content":"select 1"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"x","content":"ok"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Results: 4 regions, counts reconcile with total.\n\n::GATE:: id=data-analyst-phase-3 phase=3 kind=phase\nSummary written to project-specs.md. Stop here — await explicit confirmation.\n::ENDGATE::"}]}}
+{"type":"user","message":{"role":"user","content":"Results make sense, approved."}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_ugujwf","name":"Task","input":{"subagent_type":"analytics-engineer","description":"review SQL","prompt":"Review the query"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"x","content":"ok"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_2y2drn","name":"Task","input":{"subagent_type":"syn","description":"final review","prompt":"Sign off"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"x","content":"ok"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Syn verdict: APPROVED.\n\n::GATE:: id=data-analyst-phase-4 phase=4 kind=final\nSummary written to project-specs.md. Stop here — await explicit confirmation.\n::ENDGATE::"}]}}
+{"type":"user","message":{"role":"user","content":"Approved, wrap it up."}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Done."}]}}
+{"type":"result","subtype":"success"}

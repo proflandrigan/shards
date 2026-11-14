@@ -1,7 +1,7 @@
 # Bug Hunt Report (pass 3): PR #68 — UI read-only permission classifier (`cc-readonly.js`)
 
 ## Summary
-- Scope reviewed: third-pass review of the post-fix branch for PR #68 (`fix/ui-permission-classifier`), after the first two passes documented in `.bug-hunt/2026-09-09-bug-hunt-report.md`. Focus: the `find` veto block added by passing commit `9c20b8c` in `src/ui/cc-readonly.js` and its mirror `tools/gate-hook/auto-allowlist.js`.
+- Scope reviewed: third-pass review of the post-fix branch for PR #68 (`fix/ui-permission-classifier`), after the first two passes documented in `docs/history/2026-09-09-bug-hunt-report.md`. Focus: the `find` veto block added by passing commit `9c20b8c` in `src/ui/cc-readonly.js` and its mirror `tools/gate-hook/auto-allowlist.js`.
 - Confirmed findings: 2 High (over-approvals in the read-only classifier).
 - Overall assessment: The remediation of the original `find` Critical (`-delete`/`-exec`/`-execdir`/`-ok`) is incomplete. GNU find exposes additional action primitives not covered by the four veto markers, and the `-ok` marker itself has a word-boundary bug that lets its prompt-per-file sibling `-okdir` through. Both gaps were verified by executing the classifiers and the actual commands in a sandbox; fixes (markers + regression tests) are committed below.
 

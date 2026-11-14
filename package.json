@@ -20,7 +20,9 @@
     "shards-sessions": "tools/shards-sessions.js"
   },
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "coupling": "node scripts/coupling-report.js",
+    "coupling:ratchet": "node scripts/coupling-ratchet.js"
   },
   "files": [
     "src/",

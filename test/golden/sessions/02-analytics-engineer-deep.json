@@ -1,0 +1,154 @@
+{
+  "id": "02-analytics-engineer-deep",
+  "title": "Analytics Engineer deep track: new revenue mart",
+  "description": "Direct /analytics-engineer session building a mart on the deep track (8 phases) with a mid-build checkpoint and consultations.",
+  "agent_entry": "/analytics-engineer",
+  "output_dir_glob": "data_models/*",
+  "forced_compactions": 0,
+  "user_turns": [
+    {
+      "text": "Build a monthly revenue mart for finance, orders and refunds in dbt on Snowflake. Go deep.",
+      "kind": "request"
+    },
+    {
+      "text": "Yes, finance owns it; monthly grain by customer segment.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Sources look right, go ahead.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Yes but change the grain to month x segment x currency.",
+      "kind": "revise"
+    },
+    {
+      "text": "Great, go ahead.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Test plan approved.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Docs plan approved.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Build looks good, proceed.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Approved, hand it off.",
+      "kind": "confirm"
+    }
+  ],
+  "expected_routing": [
+    "analytics-engineer",
+    "data-modeller",
+    "data-engineer",
+    "data-analyst",
+    "syn"
+  ],
+  "expected_artifacts": [
+    {
+      "path": "project-specs.md",
+      "required": true
+    },
+    {
+      "path": "models/**/*.sql",
+      "required": true
+    },
+    {
+      "path": "models/**/*.yml",
+      "required": true
+    },
+    {
+      "path": "review.md",
+      "required": false
+    }
+  ],
+  "expected_gates": [
+    {
+      "id": "analytics-engineer-deep-phase-1",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "analytics-engineer-deep-phase-2",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "analytics-engineer-deep-phase-3",
+      "kind": "phase",
+      "min": 1,
+      "allowed_reemits": 1
+    },
+    {
+      "id": "analytics-engineer-deep-phase-4",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "analytics-engineer-deep-phase-5",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "analytics-engineer-deep-phase-6",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "analytics-engineer-deep-phase-7",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "analytics-engineer-deep-phase-8",
+      "kind": "final",
+      "min": 1
+    },
+    {
+      "id": "analytics-engineer-deep-phase-7-checkpoint-*",
+      "kind": "checkpoint",
+      "min": 1,
+      "max_human_approvals": 0
+    }
+  ],
+  "forbidden": [
+    {
+      "id": "agent-approves-own-gate",
+      "type": "gate_self_approval",
+      "description": "Agent emits a phase/final/execute gate and proceeds to the next gate without a human turn in between"
+    },
+    {
+      "id": "reask-confirmed-gate",
+      "type": "gate_reask",
+      "description": "Agent re-emits a gate the user already confirmed (e.g. after compaction); only gates listed in allowed_reemits may repeat",
+      "allowed_reemits": {
+        "analytics-engineer-deep-phase-3": 1
+      }
+    },
+    {
+      "id": "wrong-specialist",
+      "type": "forbidden_agents",
+      "agents": [
+        "data-scientist",
+        "ml-engineer",
+        "bi-engineer"
+      ],
+      "description": "dbt mart work stays with the AE and its reviewers"
+    }
+  ],
+  "weights": {
+    "artifacts": 30,
+    "gates": 30,
+    "routing": 20,
+    "forbidden": 20
+  },
+  "next_build_targets": {
+    "max_human_approvals_total": 9
+  }
+}

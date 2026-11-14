@@ -1,0 +1,22 @@
+{
+  "auto_verify": 28,
+  "auto_verify.closes": 16,
+  "auto_verify.opens": 12,
+  "claude_dir_refs": 502,
+  "compact": 51,
+  "gate_fences": 333,
+  "gate_fences.by_kind": {
+    "checkpoint": 14,
+    "confirm": 3,
+    "execute": 16,
+    "final": 68,
+    "phase": 195,
+    "unspecified": 37
+  },
+  "ledger_refs": 262,
+  "missing_templates": 4,
+  "model_pins": 15,
+  "subagent_type": 241,
+  "ui_mode_files": 9,
+  "ui_refs": 102
+}

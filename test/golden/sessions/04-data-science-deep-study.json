@@ -1,0 +1,202 @@
+{
+  "id": "04-data-science-deep-study",
+  "title": "Data Science deep study with two experiments and two forced compactions",
+  "description": "E11.7/E11.8 reference scenario. /data-scientist runs the 7-phase deep study, with two experiment execute gates and checkpoint gates in phase 6, and the user forcing /compact twice (after phase 2 and after the first experiment). Under the Next build `phase` policy this needs <=10 human approvals; `plan` policy needs 1.",
+  "agent_entry": "/data-scientist",
+  "output_dir_glob": "studies/*",
+  "forced_compactions": 2,
+  "experiments": 2,
+  "user_turns": [
+    {
+      "text": "Build a churn model for our SMB segment; we want drivers and a scored list.",
+      "kind": "request"
+    },
+    {
+      "text": "Yes, churn = no activity for 60 days. Go ahead.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Data sources are right, go ahead.",
+      "kind": "confirm"
+    },
+    {
+      "text": "/compact",
+      "kind": "compact"
+    },
+    {
+      "text": "Continue where we left off.",
+      "kind": "resume"
+    },
+    {
+      "text": "Methodology approved.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Yes but change the model comparison to include gradient boosting.",
+      "kind": "revise"
+    },
+    {
+      "text": "Great, go ahead.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Notebook plus report is the right output.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Run experiment 1, logistic baseline.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Experiment 1 result accepted, keep it.",
+      "kind": "confirm"
+    },
+    {
+      "text": "/compact",
+      "kind": "compact"
+    },
+    {
+      "text": "Continue where we left off.",
+      "kind": "resume"
+    },
+    {
+      "text": "Run experiment 2, gradient boosting.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Experiment 2 result accepted, keep it.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Execution looks good, proceed.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Approved, finish up and hand off.",
+      "kind": "confirm"
+    }
+  ],
+  "expected_routing": [
+    "syn",
+    "data-scientist",
+    "data-modeller",
+    "researcher",
+    "ml-engineer",
+    "syn"
+  ],
+  "expected_artifacts": [
+    {
+      "path": "project-specs.md",
+      "required": true
+    },
+    {
+      "path": "notebooks/*.ipynb",
+      "required": true
+    },
+    {
+      "path": "sql/*.sql",
+      "required": false
+    },
+    {
+      "path": "report.md",
+      "required": true
+    },
+    {
+      "path": "results.json",
+      "required": false
+    },
+    {
+      "path": "ml_engineer_handoff.md",
+      "required": false
+    }
+  ],
+  "expected_gates": [
+    {
+      "id": "data-scientist-phase-1",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "data-scientist-phase-2",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "data-scientist-phase-3",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "data-scientist-phase-4",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "data-scientist-phase-5",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "data-scientist-phase-6",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "data-scientist-phase-7",
+      "kind": "final",
+      "min": 1
+    },
+    {
+      "id": "data-scientist-phase-6-checkpoint-*",
+      "kind": "checkpoint",
+      "min": 2,
+      "max_human_approvals": 0
+    },
+    {
+      "id": "specific-instructions-data-scientist-experiment-phase*",
+      "kind": "execute",
+      "min": 2,
+      "max_human_approvals": 2
+    }
+  ],
+  "forbidden": [
+    {
+      "id": "agent-approves-own-gate",
+      "type": "gate_self_approval",
+      "description": "Agent emits a phase/final/execute gate and proceeds to the next gate without a human turn in between"
+    },
+    {
+      "id": "reask-confirmed-gate",
+      "type": "gate_reask",
+      "description": "Agent re-emits a gate the user already confirmed (e.g. after compaction); only gates listed in allowed_reemits may repeat",
+      "allowed_reemits": {
+        "data-scientist-phase-4": 1
+      }
+    },
+    {
+      "id": "persona-loss-after-compact",
+      "type": "forbidden_text",
+      "pattern": "(?i)i am (claude|an ai assistant), (and )?i (don.t|do not) have (the )?context",
+      "description": "Agent loses persona or context after a forced compaction"
+    },
+    {
+      "id": "wrong-specialist",
+      "type": "forbidden_agents",
+      "agents": [
+        "data-analyst"
+      ],
+      "description": "Deep study must not downgrade to the quick analyst"
+    }
+  ],
+  "weights": {
+    "artifacts": 30,
+    "gates": 30,
+    "routing": 20,
+    "forbidden": 20
+  },
+  "next_build_targets": {
+    "max_human_approvals_phase_policy": 10,
+    "max_human_approvals_plan_policy": 1,
+    "reasks_after_compaction": 0
+  }
+}

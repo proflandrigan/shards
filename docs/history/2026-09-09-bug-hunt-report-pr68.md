@@ -7,7 +7,7 @@
   (`fix/ui-permission-classifier`):
   `src/ui/cc-readonly.js`, `src/ui/relay.js`, `src/ui/server.js`,
   `tools/gate-hook/auto-allowlist.js`, `test/cc-readonly.test.js`,
-  `test/auto-allowlist.test.js`. Not covered: the two `.bug-hunt/*.md` report
+  `test/auto-allowlist.test.js`. Not covered: the two `docs/history/*.md` report
   files in the PR and any behavior of the installer/UI unrelated to the
   classifier.
 - Confirmed findings: 3 High (all write-capable commands auto-approved by the
