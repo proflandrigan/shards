@@ -1,0 +1,26 @@
+name: runtime
+
+# E2.1 exit criterion: `shards-mcp` starts on Linux, macOS and Windows.
+# TODO(owner: proflandrigan): this workflow has never run (repo work is local only);
+# the macOS and Windows legs are OPEN (external) until it is pushed and observed green.
+on:
+  push:
+    branches: [next, main]
+  pull_request:
+
+jobs:
+  runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [18, 20, 22]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      - name: Runtime tests (real stdio MCP handshake, locked state, events)
+        run: npx vitest run test/runtime-

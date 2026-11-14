@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { isAutoApprovable } = require('../tools/gate-hook/auto-allowlist.js');
+const { isAutoApprovable } = require('../runtime/lib/auto-allowlist.js');
 
 describe('isAutoApprovable', () => {
   describe('read-only operations still auto-approve', () => {

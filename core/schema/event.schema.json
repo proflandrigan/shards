@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shards.dev/schema/event.schema.json",
+  "title": "Shards artifact event (v1)",
+  "type": "object",
+  "required": ["v", "ts", "session", "agent", "type", "path", "meta"],
+  "additionalProperties": false,
+  "properties": {
+    "v": { "const": 1 },
+    "ts": { "type": "string", "format": "date-time" },
+    "session": { "type": "string" },
+    "agent": { "type": ["string", "null"] },
+    "type": {
+      "enum": ["data-viewer", "chart", "dag", "experiment-dashboard", "eval-dashboard", "model-card", "prompt-lab", "brainstorm", "pr-review", "notebook-walkthrough", "close"]
+    },
+    "path": { "type": ["string", "null"] },
+    "meta": { "type": "object" }
+  },
+  "if": { "properties": { "type": { "not": { "const": "close" } } } },
+  "then": { "properties": { "path": { "type": "string", "minLength": 1 } } }
+}
