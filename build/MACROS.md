@@ -131,19 +131,19 @@ Runtime tools referenced: `activate`, `return`, `load_phase`, `gate_request`, `g
 
 ## 5. Rendering table
 
-Tool-name prefix by target: **claude** `mcp__shards__<tool>`; **codex** `shards.<tool>` (the `shards` MCP server's tool); **skills** bare `<tool>`.
+Tool-name prefix by target (`CLAUDE_TOOL_PREFIX` / `CODEX_TOOL_PREFIX` in `build/render.js`): **claude** `mcp__plugin_shards_shards__<tool>` (the real name inside a Claude Code plugin: `mcp__plugin_<plugin>_<server>__<tool>`); **codex** `shards.<tool>` (the `shards` MCP server's tool); **skills** bare `<tool>`.
 
 | Macro | claude | codex | skills |
 |---|---|---|---|
-| switch | call `mcp__shards__activate(agent="a", mode="switch")`, adopt the persona it returns | same with `shards.activate` | same with `activate` |
+| switch | call `mcp__plugin_shards_shards__activate(agent="a", mode="switch")`, adopt the persona it returns | same with `shards.activate` | same with `activate` |
 | consult | run subagent `a` (plugin agent `agents/a.md`, via the Agent tool, by name); the prompt starts with "Entry `e`: read `${CLAUDE_PLUGIN_ROOT}/content/agents/a/<file>` first" | spawn the Codex agent `a` (`.codex/agents/a.toml`) with a spawn_agent-style call; the message starts with "Entry `e`: read `content/agents/a/<file>` first" | invoke skill `a` in an isolated context if the host has one, else call `activate(agent="a", mode="consult")` and follow `content/agents/a/<file>`, then `return` |
-| fanout | call `mcp__shards__fanout_start`, then launch one subagent `a` per slice in a single message | `shards.fanout_start`, then one `spawn_agent` per slice in parallel | `fanout_start`, then one isolated skill invocation per slice |
-| return | `mcp__shards__return(to?)` | `shards.return(to?)` | `return(to?)` |
-| phase | `mcp__shards__load_phase(agent, n, track?)` + path | `shards.load_phase(...)` + path | `load_phase(...)` + path |
+| fanout | call `mcp__plugin_shards_shards__fanout_start`, then launch one subagent `a` per slice in a single message | `shards.fanout_start`, then one `spawn_agent` per slice in parallel | `fanout_start`, then one isolated skill invocation per slice |
+| return | `mcp__plugin_shards_shards__return(to?)` | `shards.return(to?)` | `return(to?)` |
+| phase | `mcp__plugin_shards_shards__load_phase(agent, n, track?)` + path | `shards.load_phase(...)` + path | `load_phase(...)` + path |
 | protocol / template | read `${CLAUDE_PLUGIN_ROOT}/content/protocols/<name>.md` (templates likewise) | read `content/protocols/<name>.md` | read `content/protocols/<name>.md` |
-| gate | `mcp__shards__gate_request(id, kind, phase, summary, record_ref, validates?)` | `shards.gate_request(...)` | `gate_request(...)` |
-| auto_verify | `mcp__shards__auto_verify_start/_end` | `shards.auto_verify_start/_end` | `auto_verify_start/_end` |
-| artifact.emit | `mcp__shards__artifact_emit(type, path, meta)` | `shards.artifact_emit(...)` | `artifact_emit(...)` |
+| gate | `mcp__plugin_shards_shards__gate_request(id, kind, phase, summary, record_ref, validates?)` | `shards.gate_request(...)` | `gate_request(...)` |
+| auto_verify | `mcp__plugin_shards_shards__auto_verify_start/_end` | `shards.auto_verify_start/_end` | `auto_verify_start/_end` |
+| artifact.emit | `mcp__plugin_shards_shards__artifact_emit(type, path, meta)` | `shards.artifact_emit(...)` | `artifact_emit(...)` |
 | record / tasks / knowledge | binding job instruction (identical text on every target) | same | same |
 
 Design choice, consult on Claude Code: a named subagent invocation ("run subagent `a`") is used rather than a skill invocation or a `Task(subagent_type=...)` literal. Subagents give an isolated context and cannot hold gates (D2), and no deprecated call syntax is baked into text. The instruction deliberately names the tool role, not the literal API, so it survives host renames.
@@ -155,9 +155,13 @@ Design choice, consult on Claude Code: a named subagent invocation ("run subagen
 <out>/content/protocols/*.md   rendered
 <out>/content/templates/*      rendered (.md) or verbatim (.json)
 <out>/size-report.json
-claude : agents/<id>.md  skills/<id>/SKILL.md          (--dev: .claude-plugin/plugin.json, .mcp.json, hooks/hooks.json)
-codex  : .codex/agents/<id>.toml  skills/<id>/SKILL.md (--dev: .codex/config.toml)
-skills : skills/<id>/SKILL.md
+claude : agents/<id>.md  skills/<id>/SKILL.md  skills/agents/SKILL.md
+         (--dev: .shards-dev, .claude-plugin/plugin.json, .mcp.json, hooks/hooks.json)
+codex  : .codex/agents/<id>.toml  skills/<id>/SKILL.md  skills/agents/SKILL.md
+         (--dev: .shards-dev, .codex-plugin/plugin.json, .codex/config.toml, .codex/hooks.json)
+skills : skills/<id>/SKILL.md  skills/agents/SKILL.md
 ```
 
 All content paths in rendered text are relative to the package root (`<out>`); claude prefixes `${CLAUDE_PLUGIN_ROOT}/`. No `model` key is ever emitted (D7). Agent frontmatter keeps `name`, `description` (from agent.yaml) and, for claude, `tools` from the original AGENT.md (minus `Task`: consults cannot nest; TODO(E5.3)).
+
+`skills/agents/SKILL.md` is a plain skill (`/shards:agents` on Claude, `$agents` on Codex) that calls the runtime `list_agents` tool and prints a table; emitted in every build, and `agents` is not a valid agent id. `--dev` writes absolute paths to this repo's `runtime/server.js` and `hooks/` (edits apply without a rebuild) and a `.shards-dev` marker that `shards uninstall-dev` requires before removing a directory.

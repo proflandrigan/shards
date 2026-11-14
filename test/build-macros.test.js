@@ -48,7 +48,7 @@ describe('macro expansion', () => {
   const ok = (src, target, rel, opts) => { const r = run(src, target, rel, opts); expect(r.errors).toEqual([]); return r.text; };
 
   it('switch', () => {
-    expect(ok('{{switch beta}}', 'claude')).toContain('mcp__shards__activate');
+    expect(ok('{{switch beta}}', 'claude')).toContain('mcp__plugin_shards_shards__activate');
     expect(ok('{{switch beta}}', 'codex')).toContain('shards.activate');
     expect(ok('{{switch beta}}', 'skills')).toMatch(/`activate`\(agent="beta", mode="switch"\)/);
   });
@@ -67,12 +67,12 @@ describe('macro expansion', () => {
     expect(ok('{{consult alpha entry=worker}}', 'claude')).toContain('modes/worker.md');
   });
   it('fanout', () => {
-    expect(ok('{{fanout alpha slices=a,b}}', 'claude')).toContain('mcp__shards__fanout_start');
+    expect(ok('{{fanout alpha slices=a,b}}', 'claude')).toContain('mcp__plugin_shards_shards__fanout_start');
     expect(ok('{{fanout alpha slices=3}}', 'codex')).toContain('spawn_agent');
     expect(ok('{{fanout alpha slices=3}}', 'skills')).toContain('`fanout_start`');
   });
   it('return', () => {
-    expect(ok('{{return}}', 'claude')).toContain('mcp__shards__return');
+    expect(ok('{{return}}', 'claude')).toContain('mcp__plugin_shards_shards__return');
     expect(ok('{{return to=beta}}', 'codex')).toContain('shards.return');
   });
   it('phase incl. 6-5 and tracks', () => {
@@ -86,7 +86,7 @@ describe('macro expansion', () => {
     expect(ok('{{template schema.json}}', 'codex')).toContain('templates/schema.json');
   });
   it('gate derives id and renders a tool call on all targets', () => {
-    for (const [t, name] of [['claude', 'mcp__shards__gate_request'], ['codex', 'shards.gate_request'], ['skills', '`gate_request`']]) {
+    for (const [t, name] of [['claude', 'mcp__plugin_shards_shards__gate_request'], ['codex', 'shards.gate_request'], ['skills', '`gate_request`']]) {
       const g = ok('{{gate kind=phase validates=beta}}', t);
       expect(g).toContain(name);
       expect(g).toContain('"alpha-phase-1"');
@@ -103,7 +103,7 @@ describe('macro expansion', () => {
     expect(run('{{gate kind=execute}}', 'claude', 'agents/alpha/modes/review.md').errors[0]).toMatch(/requires phase=N/);
   });
   it('auto_verify', () => {
-    expect(ok('{{auto_verify start tool_budget=5 ttl=60}}', 'claude')).toContain('mcp__shards__auto_verify_start');
+    expect(ok('{{auto_verify start tool_budget=5 ttl=60}}', 'claude')).toContain('mcp__plugin_shards_shards__auto_verify_start');
     expect(ok('{{auto_verify end}}', 'codex')).toContain('shards.auto_verify_end');
   });
   it('binding macros', () => {
@@ -115,7 +115,7 @@ describe('macro expansion', () => {
     expect(ok('{{knowledge.search query="grain"}}')).toContain('`knowledge` job');
   });
   it('artifact.emit', () => {
-    expect(ok('{{artifact.emit type=report path=a/b.md}}', 'claude')).toContain('mcp__shards__artifact_emit');
+    expect(ok('{{artifact.emit type=report path=a/b.md}}', 'claude')).toContain('mcp__plugin_shards_shards__artifact_emit');
     expect(ok('{{artifact.emit type=report path=a/b.md}}', 'skills')).toContain('`artifact_emit`');
   });
 });

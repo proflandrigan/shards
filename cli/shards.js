@@ -5,14 +5,16 @@ const path = require('path');
 
 const COMMANDS = {
   build: { summary: 'Compile core/ into a target package (claude|codex|skills)', run: runBuild },
+  'uninstall-dev': { summary: 'Remove dev build output (adapters/<target>) made by build --dev', run: runUninstallDev },
   // EXTENSION POINT: register doctor / gates / sessions here, e.g.
   //   doctor: { summary: '...', run: (argv) => require('./doctor').run(argv) },
 };
 
 function usage() {
   const lines = ['Usage: shards <command> [options]', '', 'Commands:'];
-  for (const [n, c] of Object.entries(COMMANDS)) lines.push(`  ${n.padEnd(8)} ${c.summary}`);
+  for (const [n, c] of Object.entries(COMMANDS)) lines.push(`  ${n.padEnd(14)} ${c.summary}`);
   lines.push('', 'build options: --target <claude|codex|skills> [--dev] [--out dir] [--strict] [--core dir]');
+  lines.push('uninstall-dev options: [--target claude|codex|all] [--out dir]');
   return lines.join('\n');
 }
 
@@ -32,11 +34,42 @@ function parseBuildArgs(argv) {
   return o;
 }
 
+// Default out dir: adapters/<claude-code|codex|skills>.
+const OUT_NAMES = { claude: 'claude-code', codex: 'codex', skills: 'skills' };
+function defaultOutDir(target) { return path.join(process.cwd(), 'adapters', OUT_NAMES[target] || target); }
+
+function printDevHint(target, outDir) {
+  if (target === 'claude') console.log(`\nInstall (dev): claude --plugin-dir ${outDir}\n  skills: /shards:agents`);
+  else if (target === 'codex') {
+    console.log(`\nInstall (dev, UNVERIFIED, docs-only): Codex plugin loading is not confirmed. Options:\n  - add the MCP entry: cat ${path.join(outDir, '.codex', 'config.toml')} >> ~/.codex/config.toml\n  - copy or symlink hooks: ${path.join(outDir, '.codex', 'hooks.json')} -> <project>/.codex/hooks.json\n  - copy or symlink skills: ${path.join(outDir, 'skills')} -> ~/.codex/skills (or a local plugin marketplace pointing at ${outDir})\n  skills: $agents`);
+  }
+}
+
+function runUninstallDev(argv) {
+  let target = 'all'; let out;
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--target' && argv[i + 1]) target = argv[++i];
+    else if (argv[i] === '--out' && argv[i + 1]) out = argv[++i];
+    else { console.error(`shards uninstall-dev: unknown option '${argv[i]}'\n\n${usage()}`); return 2; }
+  }
+  const targets = target === 'all' ? ['claude', 'codex'] : [target];
+  if (!targets.every((t) => t === 'claude' || t === 'codex')) { console.error(`shards uninstall-dev: --target must be claude|codex|all`); return 2; }
+  const fs = require('fs');
+  for (const t of targets) {
+    const dir = out && targets.length === 1 ? path.resolve(out) : defaultOutDir(t);
+    if (!fs.existsSync(path.join(dir, '.shards-dev'))) { console.log(`skip ${dir} (no .shards-dev marker)`); continue; }
+    fs.rmSync(dir, { recursive: true, force: true });
+    console.log(`removed ${dir}`);
+  }
+  console.log('Reminders: claude --plugin-dir is not persistent (just stop passing it). Codex: remove any symlink or copied files and the [mcp_servers.shards] entry you added to ~/.codex/config.toml.');
+  return 0;
+}
+
 function runBuild(argv) {
   let o;
   try { o = parseBuildArgs(argv); } catch (e) { console.error(`shards build: ${e.message}\n\n${usage()}`); return 2; }
   const { compile } = require('../build/compile');
-  const outDir = o.out || path.join(process.cwd(), 'adapters', o.target);
+  const outDir = o.out || defaultOutDir(o.target);
   const r = compile({ target: o.target, coreDir: o.core, outDir, dev: o.dev, strict: o.strict });
   if (r.errors.length) {
     for (const e of r.errors) console.error(e);
@@ -45,6 +78,7 @@ function runBuild(argv) {
   }
   console.log(r.table);
   console.log(`\nbuilt ${o.target} -> ${outDir} (${r.files.length} files)`);
+  if (o.dev) printDevHint(o.target, path.resolve(outDir));
   return 0;
 }
 

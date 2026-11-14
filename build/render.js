@@ -2,10 +2,13 @@
 // Renders a resolved macro model to text for a target (claude | codex | skills). See MACROS.md section 5.
 
 const TARGETS = ['claude', 'codex', 'skills'];
+// Real tool name inside a Claude Code plugin: mcp__plugin_<plugin>_<server>__<tool> (verified live: plugin 'shards', server 'shards').
+const CLAUDE_TOOL_PREFIX = 'mcp__plugin_shards_shards__';
+const CODEX_TOOL_PREFIX = 'shards.';
 
 function tool(target, t) {
-  if (target === 'claude') return `mcp__shards__${t}`;
-  if (target === 'codex') return `shards.${t}`;
+  if (target === 'claude') return `${CLAUDE_TOOL_PREFIX}${t}`;
+  if (target === 'codex') return `${CODEX_TOOL_PREFIX}${t}`;
   return t;
 }
 function contentPath(target, rel) {
@@ -72,4 +75,4 @@ function render(m, target) {
   }
 }
 
-module.exports = { render, tool, contentPath, TARGETS };
+module.exports = { render, tool, CLAUDE_TOOL_PREFIX, CODEX_TOOL_PREFIX, contentPath, TARGETS };

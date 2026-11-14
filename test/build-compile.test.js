@@ -19,7 +19,7 @@ describe('compile fixture core', () => {
     expect(agent).toMatch(/^---\nname: alpha\ndescription: Agent alpha\.\ntools: Read, Write\n---/);
     expect(agent).not.toMatch(/model/);
     expect(agent).toContain('{{PROJECT_NAME}}');
-    expect(read(out, 'skills/alpha/SKILL.md')).toContain('mcp__shards__activate');
+    expect(read(out, 'skills/alpha/SKILL.md')).toContain('mcp__plugin_shards_shards__activate');
     expect(read(out, 'content/agents/alpha/AGENT.md')).not.toContain('opus');
     expect(fs.existsSync(path.join(out, '.claude-plugin'))).toBe(false);
   });
