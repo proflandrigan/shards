@@ -66,7 +66,7 @@ and report:
 - Match against the Phase 3 grain and join path documented in project-specs.md
 
 The LIMIT 100 sweep is a read-only validation — feel free to open an
-::AUTO-VERIFY:: marker if it speeds up your run.
+auto-verify block (`{{auto_verify start tool_budget=20 ttl=600}}` ... `{{auto_verify end}}`) if it speeds up your run.
 
 Your job here is review + validation only — do not apply any fixes.
 ```
@@ -196,9 +196,7 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-::GATE:: id=data-scientist-phase-7 phase=7 kind=final
-Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
-::ENDGATE::
+{{gate kind=final}}
 
 ---
 

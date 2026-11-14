@@ -81,10 +81,7 @@ using the `templates/panel-report.md` template, filling Phase 0 metadata:
 
 Read this section back to the user.
 
-::GATE:: id=specific-instructions-syn-panel-review-phase0 phase=0 kind=phase
-Stop here. Do not proceed to Phase 1 until the user explicitly confirms the
-intake. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=0 id=specific-instructions-syn-panel-review-phase0}}
 
 ---
 
@@ -208,10 +205,7 @@ Read this section back to the user. If any bucket is `(needs second lens?)`,
 explicitly ask: *"This bucket only has one reviewer. Add a secondary, or proceed
 with one?"*
 
-::GATE:: id=specific-instructions-syn-panel-review-phase1 phase=1 kind=phase
-Stop here. Do not dispatch any reviewer Tasks until the user confirms the panel
-composition (or provides edits).
-::ENDGATE::
+{{gate kind=phase phase=1 id=specific-instructions-syn-panel-review-phase1}}
 
 ---
 
@@ -457,15 +451,15 @@ For each cross-group dependency, name the trigger:
 Append a `## Phase 4 — Sequencing Plan` section to `panel-report.md` with the
 group counts and a pointer to `sequencing-plan.md`. Read both back to the user.
 
-::GATE:: id=specific-instructions-syn-panel-review-phase4 phase=4 kind=phase
+Gate readback (pass this as the `summary`):
+
 Read the coalesced findings and the sequencing plan back to the user. If any
 findings have `Owning specialist = unowned`, list them explicitly and ask the
 user to assign a specialist (or skip them). Then ask:
 "Apply fixes in this order? (y to execute, n to stop, or list specific fix IDs
 to apply only those)"
-Stop here — do not dispatch any apply-fix Tasks until the user explicitly responds.
-Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+
+{{gate kind=phase phase=4 id=specific-instructions-syn-panel-review-phase4}}
 
 ---
 

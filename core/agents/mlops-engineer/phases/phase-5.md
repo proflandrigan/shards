@@ -95,9 +95,7 @@ Design decisions to make:
 - **Dashboard locations:** <links or "TBD">
 ```
 
-::GATE:: id=mlops-engineer-phase-5 phase=5 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase}}
 
 ---
 

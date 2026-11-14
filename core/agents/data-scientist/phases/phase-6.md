@@ -84,19 +84,11 @@ Apply the Reviewer Verdict Protocol independently for each reviewer (see shared 
 
 ### Reviewer-verdict checkpoint
 
-After both reviewers return and you have applied the Reviewer Verdict Protocol to each, emit the gate below. **Do not begin writing SQL or notebook cells until the user confirms this gate.** This applies regardless of verdict tier — even when both reviewers return clean "Proceed", the user must explicitly confirm before build begins.
+After both reviewers return and you have applied the Reviewer Verdict Protocol to each, call `gate_request` as below. **Do not begin writing SQL or notebook cells until the user confirms this gate.** This applies regardless of verdict tier — even when both reviewers return clean "Proceed", the user must explicitly confirm before build begins.
 
-```
-::GATE:: id=data-scientist-phase-6-checkpoint-reviewers phase=6 kind=checkpoint
-Component: Reviewer verdicts (Data Modeller + Researcher)
-Data Modeller verdict: <Proceed | Proceed with caveats | Halt> — <one-line summary>
-Researcher verdict: <Proceed | Proceed with caveats | Halt> — <one-line summary>
-Resolution: <action taken for each — e.g., "Both Proceed; no fixes needed" or "DM raised grain concern → switched to teacher-week grain; Researcher Proceed">
-Status: PASS — ready to build
-Next: SQL queries (build step 1)
-Stop here — await explicit confirmation before writing the next component.
-::ENDGATE::
-```
+Pass `evidence={status: pass, checks: [...]}` with: the Data Modeller verdict (Proceed | Proceed with caveats | Halt) and one-line summary; the Researcher verdict and one-line summary; the resolution for each (e.g., "Both Proceed; no fixes needed" or "DM raised grain concern → switched to teacher-week grain"). Next: SQL queries (build step 1).
+
+{{gate kind=checkpoint name=reviewers}}
 
 ### Build scope
 
@@ -104,54 +96,25 @@ The deliverables are SQL files under `studies/<name>/queries/` and a notebook un
 
 ### Incremental testing — checkpoint gates between components
 
-{{protocol incremental_testing}} during this build. Each numbered build step below ends with a `kind=checkpoint` gate emission — after you write the component, emit the gate fence and wait for user confirmation before starting the next component. The "test" in this build-only phase is structural — you read back what you wrote and confirm it matches the Phase 3 plan; you do not execute it.
+{{protocol incremental_testing}} during this build. Each numbered build step below ends with a `kind=checkpoint` gate — after you write the component, call `gate_request` and wait for the user before starting the next component. The "test" in this build-only phase is structural — you read back what you wrote and confirm it matches the Phase 3 plan; you do not execute it.
 
-**Worked example — emit checkpoint gates in exactly this shape.** Both `::GATE::` and `::ENDGATE::` fences are required. All readback lives *inside* the fence body. No prose above `::GATE::` and no prose after `::ENDGATE::` — the fence is the entire emission.
+**Checkpoint evidence.** Each checkpoint is a `kind=checkpoint` gate with a `name=` slug (name is `[a-z0-9-]+`, unique within the file, no `validates=`). Pass `evidence={status: pass|fail, checks: [...]}` naming the component, the verification action (here: "structural read-back against Phase 3 plan"; for build-and-run phases, the exact test command), and measured facts. Under the default `phase` policy a passing checkpoint is recorded automatically and blocks only on fail or anomaly.
 
-```
-::GATE:: id=data-scientist-phase-6-checkpoint-notebook phase=6 kind=checkpoint
-Component: Jupyter notebook (full)
-Verification: structural read-back against Phase 3 cell-list plan (no execution)
-Evidence:
-  - Path: studies/teacher_churn/notebooks/teacher_churn.ipynb
-  - Cells written: 22 (4 markdown headers, 18 code) across Overview / Setup / Data load / EDA / Analysis / Results / Caveats
-  - SQL files referenced: queries/01_feature_extraction.sql, queries/02_cohort_definition.sql (loaded via Path.read_text())
-  - SQL-loading-rule compliance: PASS — no embedded SQL strings
-  - Phase 3 plan match: 22/22 sections present; one deviation noted (split EDA section into 2 sub-blocks for readability)
-Status: PASS — notebook structure matches Phase 3 plan, ready for Phase 7 review
-Next: Phase 7 documentation and code review fan-out
-Stop here — await explicit confirmation before writing the next component.
-::ENDGATE::
-```
+Worked example for the notebook component (illustrative values; substitute real measurements):
 
-The values above are illustrative — substitute real measurements from your actual run. The *shape* (id / Component / Verification / Evidence / Status / Next / Stop here / ENDGATE) is fixed.
+- Component: Jupyter notebook (full); verification: structural read-back against Phase 3 cell-list plan (no execution).
+- Checks: path `studies/teacher_churn/notebooks/teacher_churn.ipynb`; 22 cells written (4 markdown headers, 18 code) across Overview / Setup / Data load / EDA / Analysis / Results / Caveats; SQL files referenced `queries/01_feature_extraction.sql`, `queries/02_cohort_definition.sql` (loaded via `Path.read_text()`); SQL-loading-rule compliance PASS (no embedded SQL strings); Phase 3 plan match 22/22 sections, one deviation noted (split EDA section into 2 sub-blocks).
+- Next: Phase 7 documentation and code review fan-out.
 
-For reference the abstract schema is:
 
-```
-::GATE:: id=<agent-name>-phase-<N>-checkpoint-<component> phase=<N> kind=checkpoint
-Component: <human-readable name>
-Verification: <the verification action you took — for build-only phases this is "structural read-back against [plan]"; for build-and-run phases this is the exact command you ran>
-Evidence:
-  - <measured fact 1>
-  - <measured fact 2>
-  - <measured fact 3>
-Status: PASS | FAIL — <one-line summary>
-Next: <what you'll build after this is confirmed>
-Stop here — await explicit confirmation before writing the next component.
-::ENDGATE::
-```
+**Common deviations to avoid.** Do not:
 
-**Common deviations to avoid.** The gate hook requires both `::GATE::` and `::ENDGATE::` to match — a bare `::GATE::` line with no closing fence emits zero enforcement. Do not:
-
-- Put decision summaries, context bullets, or component descriptions *outside* the fence (above `::GATE::` or below `::ENDGATE::`). All readback content lives inside the fence body.
-- Replace the `Component / Verification / Evidence / Status / Next` body with free prose or an open question. The user confirms by reading the fence body itself.
-- Append "Good to proceed?" after `::ENDGATE::`. The "Stop here — await explicit confirmation" line built into the fence body is sufficient. Post-fence prose either trips the hook's post-fence violation check (>40 words or phase-advance phrasing) or muddles the readback the user is supposed to confirm — neither is wanted.
-- Invent a gate ID outside the per-step IDs called out in the build steps below (e.g., `...checkpoint-sql` instead of `...checkpoint-queries`). The IDs are part of the contract.
+- Replace the component / verification / evidence structure with free prose or an open question. The user confirms by reading the evidence you pass.
+- Invent a checkpoint name outside the per-step names called out in the build steps below (e.g., `sql` instead of `queries`). The names are part of the contract.
 - Run the SQL or execute the notebook to gather evidence. Phase 6 is write-only. SQL is run under `LIMIT 100` by the Analytics Engineer in Phase 7; the notebook is run by the user or via `/notebook-walkthrough` outside this flow.
-- Emit a checkpoint for a script that isn't part of the build plan. If you find yourself wanting to checkpoint a `load_data.py`, stop — that script shouldn't exist (see Build scope above).
+- Checkpoint a script that isn't part of the build plan. If you find yourself wanting to checkpoint a `load_data.py`, stop — that script shouldn't exist (see Build scope above).
 
-The hook blocks all non-read tools while a checkpoint is open. If a checkpoint fails (e.g., structural review reveals a missing section vs. the Phase 3 plan), fix the artifact and re-emit with updated evidence before advancing.
+Never confirm your own checkpoint. If a checkpoint fails (e.g., structural review reveals a missing section vs. the Phase 3 plan), fix the artifact and call `gate_request` again with updated evidence before advancing.
 
 ### Then build (each step ends with its own checkpoint gate)
 
@@ -167,7 +130,7 @@ The hook blocks all non-read tools while a checkpoint is open. If a checkpoint f
      -- Output grain: one row per <entity>
      ```
    - Verify structurally: every query has the header block; the join path in each query matches the trace you presented under the join-path self-check; every required table from the Phase 2 data sources is referenced.
-   - Emit the gate `::GATE:: id=data-scientist-phase-6-checkpoint-queries phase=6 kind=checkpoint` with structural evidence: file paths and counts, header-comment compliance, one-line join-path summary per query, any deviations from Phase 3 plan.
+   - Checkpoint: `{{gate kind=checkpoint name=queries}}` with structural evidence: file paths and counts, header-comment compliance, one-line join-path summary per query, any deviations from Phase 3 plan.
    - Wait for user confirmation before step 2.
 
 **2. Notebook — write, then checkpoint.** Create the notebook at `studies/<name>/notebooks/<study>.ipynb` using NotebookEdit. Write all sections in this single step:
@@ -190,7 +153,7 @@ The hook blocks all non-read tools while a checkpoint is open. If a checkpoint f
 
    Verify structurally: every section listed above is present; the section list matches the Phase 3 plan; every `.sql` file under `queries/` is loaded by at least one cell via `Path.read_text()`; no SQL is embedded as Python strings; no stray `.py` loaders were created.
 
-   Emit the gate `::GATE:: id=data-scientist-phase-6-checkpoint-notebook phase=6 kind=checkpoint` with structural evidence: notebook path, total cell count and per-section breakdown, SQL files referenced, SQL-loading-rule compliance status, deviations from the Phase 3 plan if any.
+   Checkpoint: `{{gate kind=checkpoint name=notebook}}` with structural evidence: notebook path, total cell count and per-section breakdown, SQL files referenced, SQL-loading-rule compliance status, deviations from the Phase 3 plan if any.
 
    Wait for user confirmation before step 3.
 
@@ -231,9 +194,7 @@ Roll up the structural evidence from the three in-phase checkpoint gates. Copy t
 | notebook | PASS \| FAIL | <notebook path>; <cell count and per-section breakdown>; <SQL files referenced>; <SQL-loading-rule compliance>; <Phase 3 plan match> |
 ```
 
-::GATE:: id=data-scientist-phase-6 phase=6 kind=phase validates=data_scientist
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase validates=data-scientist}}
 
 ---
 

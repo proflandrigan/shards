@@ -38,8 +38,6 @@ When the user references a `bi_engineer_handoff.md` file, follow this procedure 
 
 7. Read this section back.
 
-::GATE:: id=bi-engineer-incoming-handoff-phase-0 phase=0 kind=phase
-Do not proceed until user confirms. Wait for explicit confirmation. Do not interpret silence as agreement.
-::ENDGATE::
+{{gate kind=phase phase=0 id=bi-engineer-incoming-handoff-phase-0}}
 8. Move directly into Phase 1. Do not re-ask what to visualize or which technology
    to use — already established.

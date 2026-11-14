@@ -15,9 +15,7 @@ Ask the user:
    constraints — team capability, timeline, interpretability requirements)
 3. Is there a preferred outcome, or is this an open exploration?
 
-::GATE:: id=data-scientist-advise-phase-1 phase=1 kind=phase
-Do not proceed until the user confirms the question.
-::ENDGATE::
+{{gate kind=phase phase=1 id=data-scientist-advise-phase-1}}
 Restate the question in your own words to confirm alignment. Wait for confirmation.
 
 ---
@@ -58,9 +56,7 @@ After the discussion, ask:
 
 > "Want me to write this up as a structured advisory document?"
 
-::GATE:: id=data-scientist-advise-phase-4 phase=4 kind=final
-Wait for explicit confirmation before writing anything.
-::ENDGATE::
+{{gate kind=final phase=4 id=data-scientist-advise-phase-4}}
 
 If the user says yes, write `advisory/<topic_name>/data-scientist-advisory.md` using
 this template exactly:

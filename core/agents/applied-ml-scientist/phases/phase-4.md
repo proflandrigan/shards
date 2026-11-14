@@ -19,33 +19,21 @@ Wait for any signal from the user before beginning build steps.
 
 ### Incremental testing — checkpoint gates between components
 
-{{protocol incremental_testing}} during this build. Each component below is a checkpoint seam — after you write and execute a component, emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before starting the next component. Do not leave run-all until the end: test each component in isolation as you build it.
+{{protocol incremental_testing}} during this build. Each component below is a checkpoint seam — after you write and execute a component, call `gate_request` with a `kind=checkpoint` gate (macro below) before starting the next component. Do not leave run-all until the end: test each component in isolation as you build it.
 
-Checkpoint gate fence — emit exactly this shape. Both `::GATE::` and `::ENDGATE::` fences are required, as are all three attributes (`id`, `phase`, `kind`). No prose outside the fence.
+Checkpoint gate — pass `evidence={status: pass|fail, checks: [...]}`: put the component name, the exact test command you ran, and the measured facts (e.g. `df.shape = (48211, 47)`, output shapes, loss values) in `checks`. Under the default `phase` policy a passing checkpoint is recorded automatically and blocks only on fail/anomaly. Never confirm your own gate.
 
-```
-::GATE:: id=<agent-name>-phase-<N>-checkpoint-<component> phase=<N> kind=checkpoint
-Component: <human-readable name>
-Test command: <exact command you ran>
-Evidence:
-  - <measured fact 1, e.g. "df.shape = (48211, 47)">
-  - <measured fact 2, e.g. "null rate on join key = 0.00%">
-  - <measured fact 3, e.g. "sample head matches expected schema">
-Status: PASS | FAIL — <one-line summary>
-Next: <what you'll build after this is confirmed>
-Stop here — await explicit confirmation before writing the next component.
-::ENDGATE::
-```
+{{gate kind=checkpoint name=component-slug}}
 
-Expected checkpoint gate IDs for this phase (emit in order as you build):
+Expected checkpoint names for this phase (use as `name`, in order as you build):
 
-- `applied-ml-scientist-phase-4-checkpoint-data` — data / synthetic-data cell produces expected shape; a sample inspection confirms structure.
-- `applied-ml-scientist-phase-4-checkpoint-components` — each framework component forward-passes on dummy input with correct output shape and dtype.
-- `applied-ml-scientist-phase-4-checkpoint-smoke-train` — training loop runs for 10-50 steps on a tiny batch; loss decreases (not flat, not NaN).
-- `applied-ml-scientist-phase-4-checkpoint-full-train` — full training completes; loss curve plotted; convergence direction matches prediction.
-- `applied-ml-scientist-phase-4-checkpoint-eval` — evaluation vs baselines runs; metric table coherent; ablation (if feasible) logged.
+- `data` — data / synthetic-data cell produces expected shape; a sample inspection confirms structure.
+- `components` — each framework component forward-passes on dummy input with correct output shape and dtype.
+- `smoke-train` — training loop runs for 10-50 steps on a tiny batch; loss decreases (not flat, not NaN).
+- `full-train` — full training completes; loss curve plotted; convergence direction matches prediction.
+- `eval` — evaluation vs baselines runs; metric table coherent; ablation (if feasible) logged.
 
-The hook blocks all non-read tools while a checkpoint is open. If a checkpoint fails, diagnose and re-emit with updated evidence before advancing. Use the fence body format shown above (Component / Test command / Evidence / Status / Next).
+If a checkpoint fails, diagnose, fix, and call `gate_request` again with updated evidence before advancing.
 
 **Create `research/<project_name>/notebooks/framework_prototype.ipynb`:**
 
@@ -93,9 +81,7 @@ Append to `project-specs.md`:
 - **Ablation results (if run):** <summary>
 ```
 
-::GATE:: id=applied-ml-scientist-phase-4 phase=4 kind=phase validates=applied_ml_scientist
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase validates=applied-ml-scientist}}
 
 ---
 

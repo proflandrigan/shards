@@ -124,9 +124,8 @@ If after > before: fan-out is occurring. Confirm it is expected. If unexpected,
 diagnose before writing the query.
 
 **Auto-verify**: when a query has 3+ joins and you're running this sweep
-once per join, that's the bulk read-only pattern auto-verify is for. Open
-`::AUTO-VERIFY:: agent=<your-agent> phase=<N>` before the sweep and
-`::ENDAUTO::` after. See [`protocols/auto_verify_mode.md`](auto_verify_mode.md).
+once per join, that's the bulk read-only pattern auto-verify is for. Call
+the `auto_verify_start` tool before the sweep and `auto_verify_end` after. See [`protocols/auto_verify_mode.md`](auto_verify_mode.md).
 
 ## Escalation Triggers
 

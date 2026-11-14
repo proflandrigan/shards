@@ -147,10 +147,7 @@ Append to `project-specs.md`:
   - <title> (<feature_type>, grain: <grain>, verified by: <agent> in <project>)
 ```
 
-::GATE:: id=specific-instructions-ml-engineer-research-phase0 phase=0 kind=execute
-Read this section back to the user. Stop here — do not begin Phase 1 until the
-user confirms. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=execute phase=0 id=specific-instructions-ml-engineer-research-phase0}}
 
 ---
 
@@ -202,47 +199,26 @@ Before the gate, announce:
 > time by editing `experiments/research_brief.md` — I re-read it every
 > iteration. Phase 0, Phase 1, and Phase 3 remain gated.
 
-### Optional `/goal` activation
+### Optional unattended Phase 2 (plan approval)
 
 {{protocol goal_mode}} in full before
-writing the gate. Compose a candidate `/goal` condition from this run's
-Phase 0 settings (primary metric, direction, target if set, iteration budget,
-metric floor) using the AR condition template, and include the resulting
-copy-paste block in the message that precedes the Phase 1 gate:
-
-```text
-/goal The AR loop is complete when ANY of the following is true:
-  (a) the most recent inline iteration summary shows <primary_metric> has
-      <crossed target X in the maximize direction
-       | dropped below target X in the minimize direction>;
-  (b) the most recent iteration summary or status line contains
-      "Convergence detected" with reason in {plateau, diminishing-returns,
-      budget-exhausted, cost-ceiling, consecutive-failures,
-      metric-floor-breach, user-interrupt, reviewer-pause,
-      scope-violation, error-limit, timeout-limit};
-  (c) the agent has begun writing the Phase 3 research summary
-      (look for "Phase 3" or "research_summary.md").
-Or stop after <budget+5> turns.
-```
-
-If no target was set, drop clause (a). Activation is optional:
-- **With `/goal`:** Phase 2 runs without per-iteration prompts. Transcript
-  discipline (`autonomous_research.md` §B.4/B.8) is mandatory — the evaluator
-  reads only the conversation, not files.
-- **Without `/goal`:** §E convergence and §G safety rails still terminate
-  the loop. Per-iteration echoes remain recommended for readability.
-
-If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
-rejected), accept that and proceed — the loop still runs and terminates per
-the existing logic.
+raising the gate. Goal mode is the `plan` gate policy (`autonomous_research.md`
+§A.6): in the message that precedes the Phase 1 gate, offer an unattended Phase
+2 and present the plan and budget (primary metric, direction, target if set,
+iteration budget, cost ceiling, metric floor). Raise the gate as a
+`plan-approval` gate via `gate_request`, then STOP and wait for the user; never
+confirm it yourself. Activation is optional:
+- **With plan approval:** Phase 2 runs without per-iteration prompts. Later
+  gates become notices: keep calling `gate_request` with `evidence` each
+  iteration and keep looping. Failure, anomaly, or budget exhaustion stops the
+  loop and the next gate waits for the user.
+- **Without it:** each gate waits for the user. §E convergence and §G safety
+  rails still terminate the loop. Per-iteration echoes remain recommended for
+  readability.
 
 ### Gate
 
-::GATE:: id=specific-instructions-ml-engineer-research-phase1 phase=1 kind=execute
-Read the brief back to the user. This is the last human checkpoint before the
-autonomous loop runs. Wait for explicit confirmation to proceed. Do not
-interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=execute phase=1 id=specific-instructions-ml-engineer-research-phase1}}
 
 ### If fan-out confirmed
 
@@ -397,12 +373,14 @@ f. Write the consolidated `research_summary.md` covering all branches, not
 
 ### Phase 3 gate
 
-::GATE:: id=specific-instructions-ml-engineer-research-phase3 phase=3 kind=final validates=ml_engineer
+Gate readback (pass this as the `summary`):
+
 Ask the user:
 - What do you want to adopt from this AR run?
 - Do you want to run another budget (fresh AR session)?
 - Or should we stop here?
-::ENDGATE::
+
+{{gate kind=final phase=3 validates=ml-engineer id=specific-instructions-ml-engineer-research-phase3}}
 
 Wait for their decision before taking further action.
 

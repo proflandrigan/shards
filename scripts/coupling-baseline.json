@@ -1,19 +1,15 @@
 {
-  "auto_verify": 28,
-  "auto_verify.closes": 16,
-  "auto_verify.opens": 12,
+  "auto_verify": 6,
+  "auto_verify.closes": 4,
+  "auto_verify.opens": 2,
   "claude_dir_refs": 66,
   "compact": 3,
-  "gate_fences": 328,
+  "gate_fences": 11,
   "gate_fences.by_kind": {
-    "checkpoint": 14,
-    "confirm": 3,
-    "execute": 16,
-    "final": 68,
-    "phase": 195,
-    "unspecified": 32
+    "checkpoint": 1,
+    "unspecified": 10
   },
-  "ledger_refs": 253,
+  "ledger_refs": 251,
   "missing_templates": 0,
   "model_pins": 0,
   "subagent_type": 2,

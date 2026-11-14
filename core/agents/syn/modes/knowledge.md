@@ -323,9 +323,7 @@ Total: N candidates across M categories.
 Add, edit, remove, or adjust confidence? Or confirm to write.
 ```
 
-::GATE:: id=specific-instructions-syn-knowledge-phase0 phase=0 kind=phase
-Do not write any files until the user confirms.
-::ENDGATE::
+{{gate kind=phase phase=0 id=specific-instructions-syn-knowledge-phase0}}
 
 ### Step 6 — Write
 
@@ -368,9 +366,7 @@ Here's what I'll record:
 Write it? (y/n) Or edit something first.
 ```
 
-::GATE:: id=specific-instructions-syn-knowledge-phase0-2 phase=0 kind=phase
-Do not write until the user confirms.
-::ENDGATE::
+{{gate kind=phase phase=0 id=specific-instructions-syn-knowledge-phase0-2}}
 
 ### Step 3 — Write
 
@@ -438,9 +434,7 @@ Pruning candidates:
 Remove all recommended? Or pick which to keep/remove.
 ```
 
-::GATE:: id=specific-instructions-syn-knowledge-phase0-3 phase=0 kind=final
-Do not delete until the user confirms.
-::ENDGATE::
+{{gate kind=final phase=0 id=specific-instructions-syn-knowledge-phase0-3}}
 
 ### Step 3 — Execute
 

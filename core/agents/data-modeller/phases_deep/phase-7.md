@@ -125,9 +125,7 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-::GATE:: id=data-modeller-deep-phase-7 phase=7 kind=final
-Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
-::ENDGATE::
+{{gate kind=final}}
 
 ---
 

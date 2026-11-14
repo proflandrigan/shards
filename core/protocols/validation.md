@@ -8,7 +8,7 @@ type: reference
 
 Validation is a universal contract across all specialist agents. Before closing any phase whose `kind` is `execute` or `phase` and whose work produces new or modified artifacts (marts, models, notebooks, services, datasets, pipelines, dashboards), the agent must produce **evidence** that the outputs are correct — not merely an assertion that they are.
 
-This protocol defines *what* validation means and *where* evidence lands. Each specialist has a domain-specific `validation_checklist.md` that defines *which* checks apply. A separate gate-hook extension enforces that the evidence is present before the gate closes.
+This protocol defines *what* validation means and *where* evidence lands. Each specialist has a domain-specific `validation_checklist.md` that defines *which* checks apply. The `gate_request` tool enforces that the evidence is present before the gate opens.
 
 ## The Contract
 
@@ -36,7 +36,7 @@ When the observed value cannot be measured (e.g., a qualitative downstream check
 
 ## Specs Section Schema
 
-Render this section into `project-specs.md`. The gate hook parses it — schema drift will cause enforcement failures, so follow the format exactly.
+Render this section into `project-specs.md`. The `gate_request` tool parses it — schema drift will cause enforcement failures, so follow the format exactly.
 
 ```markdown
 ## Validation
@@ -69,8 +69,8 @@ Render this section into `project-specs.md`. The gate hook parses it — schema 
 
 Two orthogonal fields describe a validation instance:
 
-- **Track** — depth indicator. Universal vocabulary: `quick | deep | fixer`. The hook validates this strictly. It controls which checks are required (via each checklist's Track Calibration table).
-- **Mode** — flavor of work. Agent-specific, free-form string. Optional — omit the line entirely if not meaningful for the agent. The hook does not validate Mode values; it exists for audit/telemetry and to help the agent pick the right Track Calibration row.
+- **Track** — depth indicator. Universal vocabulary: `quick | deep | fixer`. The tool validates this strictly. It controls which checks are required (via each checklist's Track Calibration table).
+- **Mode** — flavor of work. Agent-specific, free-form string. Optional — omit the line entirely if not meaningful for the agent. The tool does not validate Mode values; it exists for audit/telemetry and to help the agent pick the right Track Calibration row.
 
 Examples:
 - ML Engineer building a new recommender from scratch → `Track: deep`, `Mode: greenfield`
@@ -84,7 +84,7 @@ Examples:
 
 - **✓** — check ran, result met the expected value or condition.
 - **✗** — check ran, result did not meet expectation. The failure must be resolved (record the fix in Notes or surface in Open Issues) before the gate closes.
-- **n/a** — the check is not applicable to this work (e.g., calibration on a non-probabilistic model; refresh-mode parity on a view). The Notes cell **must** contain a non-empty justification. The hook blocks `n/a` with an empty Notes cell.
+- **n/a** — the check is not applicable to this work (e.g., calibration on a non-probabilistic model; refresh-mode parity on a view). The Notes cell **must** contain a non-empty justification. The tool rejects `n/a` with an empty Notes cell.
 
 Unresolved checks ("I'm not sure if this passed") are not a valid Pass/Fail state. Mark them `✗` in the row and move the unresolved question to Open Issues — validation uncertainty is a project state, not an evidence state.
 
@@ -119,7 +119,7 @@ Mode selects *which row of the checklist's Track Calibration table* applies with
 
 ## Composition with Other Protocols
 
-- **Gate pattern:** The Validate step sits before the gate fence. Write the `## Validation` section → re-read it to the user → emit the gate fence. Same discipline as every other phase.
+- **Gate pattern:** The Validate step sits before the gate request. Write the `## Validation` section → re-read it to the user → call `gate_request`. Same discipline as every other phase.
 - **Join path protocol:** Join-path issues found during validation are recorded under **Notes** in the evidence table and, if unresolved, escalated to **Open Issues**.
 - **Knowledge retrieval:** If the Knowledge Ledger has a relevant pattern (e.g., known bad distribution, historical grain issue), cite it in **Notes**.
 - **Knowledge harvest:** At project completion, validation checks that caught real issues are harvest candidates — patterns worth saving.
@@ -128,7 +128,7 @@ Mode selects *which row of the checklist's Track Calibration table* applies with
 
 ## Failure Modes to Avoid
 
-- **Box-ticking theater.** Filling the evidence table with plausible-sounding prose rather than measured values. The hook checks structural completeness; you must police semantic completeness yourself.
+- **Box-ticking theater.** Filling the evidence table with plausible-sounding prose rather than measured values. The tool checks structural completeness; you must police semantic completeness yourself.
 - **Code-runs-conflation.** "The query executed without error" is not validation. Execution is a precondition; correctness is the check.
 - **Retroactive validation.** Validating after the user has accepted the result and moved on. Validation comes *before* the gate, not after.
 - **Self-satisfying tests.** A test file that asserts what the code does (rather than what the code should do) passes trivially. If the test would pass against a broken implementation, it is not validation.

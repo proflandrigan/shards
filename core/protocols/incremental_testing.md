@@ -6,7 +6,7 @@ type: reference
 
 # Incremental Testing Protocol
 
-When building notebooks, pipelines, or multi-step scripts, you do not write more than one component ahead of your last passing test. After each component, you execute it in isolation, record the evidence (shape, row count, error or success), and emit a machine-enforced **checkpoint gate** for the user to confirm before you write the next component.
+When building notebooks, pipelines, or multi-step scripts, you do not write more than one component ahead of your last passing test. After each component, you execute it in isolation, record the evidence (shape, row count, error or success), and record the result with a **checkpoint gate** (`gate_request(kind=checkpoint, evidence={status, checks})`) before you write the next component.
 
 This is what stops a notebook from "hanging" in cell 12 when it actually died silently in cell 2, and what prevents a bad join from running for ten minutes before you realize it needs a `LIMIT`. Run-all is not a development technique — it is the last step after every component has already passed in isolation.
 
@@ -14,10 +14,10 @@ This is what stops a notebook from "hanging" in cell 12 when it actually died si
 
 Every build phase eligible for this protocol produces:
 
-1. **One tested component at a time.** You do not write component N+1 until component N has been executed, produced observable evidence, and been confirmed at a checkpoint gate.
-2. **A visible test command.** The exact command you ran to exercise the component is recorded in the checkpoint readback. No "I tested it in my head."
+1. **One tested component at a time.** You do not write component N+1 until component N has been executed, produced observable evidence, and been recorded at a checkpoint gate.
+2. **A visible test command.** The exact command you ran to exercise the component is recorded in the checkpoint evidence. No "I tested it in my head."
 3. **Evidence, not assertion.** Shape, row count, loss value, returned status code, sample output — a measured fact, not a claim. (Mirrors the evidence discipline in `validation_protocol.md`.)
-4. **A `kind=checkpoint` gate fence.** Machine-enforced — the gate hook blocks all tools except Read/Glob/Grep until the user confirms.
+4. **A `gate_request(kind=checkpoint, ...)` call.** Under the default `phase` policy a passing checkpoint is recorded automatically and you continue; a `fail` status or an anomaly blocks until a human confirms. Under the `strict` policy a human confirms every checkpoint, so STOP and wait each time.
 
 If any of the four is missing, you are not following the protocol — you are writing-then-running, which is the failure mode this protocol exists to prevent.
 
@@ -75,33 +75,31 @@ When in doubt: **if this piece fails, what would I need to debug in isolation?**
 
 ## Checkpoint Gate Usage
 
-After every component passes its test, emit a checkpoint gate. Format:
+After every component passes its test, call `gate_request` with `kind=checkpoint`. Use a gate name that is kebab-case, agent name + phase number + short component slug (for example `ml-engineer-phase-6-checkpoint-data`, `analytics-engineer-phase-7-checkpoint-staging`, `deep-learning-engineer-phase-4-checkpoint-smoke-fit`).
+
+The call carries an `evidence` object:
 
 ```
-::GATE:: id=<agent-name>-phase-<N>-checkpoint-<component> phase=<N> kind=checkpoint
-Component: <human-readable name>
-Test command: <exact command you ran>
-Evidence:
-  - <measured fact 1, e.g. "df.shape = (48211, 47)">
-  - <measured fact 2, e.g. "null rate on join key = 0.00%">
-  - <measured fact 3, e.g. "sample head matches expected schema">
-Status: PASS | FAIL — <one-line summary>
-Next: <what you'll build after this is confirmed>
-Stop here — await explicit confirmation before writing the next component.
-::ENDGATE::
+evidence = {
+  status: "pass" | "fail",
+  checks: [
+    { check: "<what you measured>", observed: "<measured value>", pass: true|false },
+    ...
+  ]
+}
 ```
 
-**Gate ID scheme.** Kebab-case, agent name + phase number + short component slug:
-- `ml-engineer-phase-6-checkpoint-data`
-- `data-scientist-phase-6-checkpoint-notebook`
-- `analytics-engineer-phase-7-checkpoint-staging`
-- `deep-learning-engineer-phase-4-checkpoint-smoke-fit`
+Include in `checks` the component name, the exact test command you ran, and the measured facts (for example `df.shape = (48211, 47)`, `null rate on join key = 0.00%`, `sample head matches expected schema`). Also state in the summary what you will build next.
 
-The `phase=<N>` attribute matches the current phase number (checkpoints live *within* a phase — they do not advance it). The `kind=checkpoint` attribute is what distinguishes this from a `kind=phase` transition gate.
+The checkpoint lives *within* a phase and does not advance it. `kind=checkpoint` is what distinguishes it from the `kind=phase` transition gate.
 
-**What to read back to the user.** The fence body itself — component name, test command, evidence, status, next step. No additional prose outside the fence. The user confirms with any standard affirmative ("ok", "yes", "proceed") or explicitly via `::GATE-CONFIRM:: <id>`.
+**What happens next depends on the gate policy.**
 
-**When a checkpoint fails.** If Status is FAIL, do not write the next component. Diagnose, fix, re-run the test, and re-emit the checkpoint with the updated evidence. A FAIL checkpoint is a stopping point, not a formality to announce before pressing on.
+- `phase` (default): a checkpoint with `evidence.status: "pass"` is recorded automatically and you continue to the next component. A `fail` status or an anomaly opens a pending gate: STOP and wait for the user.
+- `strict`: every checkpoint opens a pending gate. STOP and wait for the user each time. Never confirm your own gate; the user confirms via the in-host prompt or by replying in chat.
+- `plan`: after the user approved the plan, checkpoints are notices; the loop stops on failure, anomaly, or budget.
+
+**When a checkpoint fails.** If `evidence.status` is `fail`, do not write the next component. Diagnose, fix, re-run the test, and call `gate_request(kind=checkpoint)` again with the updated evidence. A `fail` checkpoint is a stopping point, not a formality to announce before pressing on.
 
 **How many checkpoints per phase.** Usually 2-5. Fewer than 2 means you are batching too much and will rediscover the run-all pathology. More than 5 usually means you are checkpointing individual cells rather than components — combine them.
 
@@ -132,8 +130,8 @@ For the Data Scientist this is the **DS-11** validation check (`Restart & Run Al
 - **Training on full data before a smoke fit.** "It'll probably work" is how you discover at hour three that the loss has been NaN since step 1.
 - **Swallowing exceptions with bare `try/except`.** A cell that catches everything and prints "done" is indistinguishable from a cell that silently failed. Let errors propagate during development.
 - **Skipping checkpoints because "this one's obviously fine."** The checkpoint that feels unnecessary is often the one that catches the bug. If it's truly trivial, combine it with the next component — don't skip it.
-- **Emitting a checkpoint without running the test.** The fence's Evidence block must reflect a real execution. Writing "Evidence: looks good" makes the checkpoint theater.
+- **Requesting a checkpoint without running the test.** The `evidence` must reflect a real execution. Writing "Evidence: looks good" makes the checkpoint theater.
 
 ## Escape Hatch
 
-The `SHARDS_CHECKPOINT_ENFORCE=0` environment variable downgrades checkpoint gates to advisory — they are printed but do not block tool use. The `SHARDS_GATE_ENFORCE=0` variable continues to disable all gate enforcement (phase gates included). Do not default to either. The escape hatches exist for harness issues, not for skipping incremental testing under time pressure — skipping is exactly how you end up debugging at 2am.
+Under the `phase` policy passing checkpoints already cost the user nothing. Do not skip checkpoints under time pressure; skipping is exactly how you end up debugging at 2am. Operators who need different behavior change `gates.policy` in `shards.config.yaml`.

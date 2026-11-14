@@ -1,5 +1,7 @@
 # Gate mechanism audit — June 2026
 
+> Note: the files audited here (`tools/gate-hook*`, `tools/migrate-gates.js`) were removed in E11.9. Kept as history.
+
 Branch: `deep-phase-gate-audit`. Audit of the Shards gate enforcement system
 (`tools/gate-hook*`, `.shards/gates/state.json`, UI gate rendering) prompted by
 reports of (a) gates from one agent interfering with another when two agents run

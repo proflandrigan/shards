@@ -1080,7 +1080,7 @@ function stripGateFence(content) {
 function isGateMessage(content) {
   if (!content) return false;
   // Require a real ::GATE:: ... ::ENDGATE:: fence — the same syntax parsed
-  // authoritatively by tools/gate-hook/parser.js and emitted by agents per
+  // authoritatively by the legacy gate parser (tools/gate-hook/parser.js, removed in E11.9) and emitted by agents per
   // src/agents/specific_instructions/shared/behavioral_rules.md. Substring
   // heuristics on words like "confirm" or "proceed" false-positive on agent
   // narration (e.g. "Confirmed — X is not present in Y").

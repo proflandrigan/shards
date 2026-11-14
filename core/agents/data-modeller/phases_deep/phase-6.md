@@ -33,8 +33,8 @@ fails, halt and diagnose before advancing to the next model. In a contract-first
 to validate" in the build log.
 
 > **Auto-verify mode**: this is a bulk read-only verification stretch — the
-> kind that otherwise spams permission prompts. Open `::AUTO-VERIFY:: agent=data-modeller phase=6 tool_budget=<N> ttl_minutes=<N>`
-> at the start of the post-build sweep and `::ENDAUTO::` at the end. The hook
+> kind that otherwise spams permission prompts. Open `{{auto_verify start tool_budget=40 ttl=900}}`
+> at the start of the post-build sweep and `{{auto_verify end}}` at the end. The runtime
 > auto-approves `dbt show`, `dbt ls`, and SELECT-only warehouse-CLI queries while
 > the block is open; `dbt build` and any write still prompt as normal. See
 > [`protocols/auto_verify_mode.md`](../../../protocols/auto_verify_mode.md).
@@ -94,9 +94,7 @@ models get the full suite.
   ```
 ```
 
-::GATE:: id=data-modeller-deep-phase-6 phase=6 kind=phase validates=data_modeller
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase validates=data-modeller}}
 
 ---
 

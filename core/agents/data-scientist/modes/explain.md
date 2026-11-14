@@ -37,9 +37,7 @@ Surface the following from the loaded files:
 Keep the tone grounded: "Let me confirm we're looking at the right thing before I
 explain the wrong study."
 
-::GATE:: id=data-scientist-explain-phase-0 phase=0 kind=phase
-Do not proceed to Phase 1 until the user confirms the orientation is correct.
-::ENDGATE::
+{{gate kind=phase phase=0 id=data-scientist-explain-phase-0}}
 If the user corrects something (wrong project, wrong question), reload the right files
 and re-surface Phase 0 before advancing.
 

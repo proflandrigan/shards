@@ -102,9 +102,7 @@ if any findings require revisions to the entity list before documenting.
   - **Entity list revised:** Yes / No — <if yes, what changed>
 ```
 
-::GATE:: id=data-modeller-deep-phase-2 phase=2 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase}}
 
 ---
 

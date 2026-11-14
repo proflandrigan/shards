@@ -230,9 +230,7 @@ Create or append to `analysis/<project_name>/project-specs.md`:
 - **Or:** No relevant entries found
 ```
 
-::GATE:: id=data-analyst-phase-0 phase=0 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=0}}
 
 If escalation is recommended and user agrees, stop here and suggest running
 `/data-scientist` or `/shards` to route to the scientist.

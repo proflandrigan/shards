@@ -17,33 +17,21 @@ Wait for any signal from the user before beginning build steps.
 
 ### Incremental testing — checkpoint gates between layers
 
-{{protocol incremental_testing}} during this build. Each layer below is a checkpoint seam — after a layer's models all build green and their post-build validation (grain, fan-out, nulls, sample) passes, emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before advancing to the next layer. Do not batch the entire DAG into a single build and eyeball a pass/fail at the end.
+{{protocol incremental_testing}} during this build. Each layer below is a checkpoint seam — after a layer's models all build green and their post-build validation (grain, fan-out, nulls, sample) passes, call `gate_request` with a `kind=checkpoint` gate (macro below) before advancing to the next layer. Do not batch the entire DAG into a single build and eyeball a pass/fail at the end.
 
-Checkpoint gate fence — emit exactly this shape. Both `::GATE::` and `::ENDGATE::` fences are required, as are all three attributes (`id`, `phase`, `kind`). No prose outside the fence.
+Checkpoint gate — pass `evidence={status: pass|fail, checks: [...]}`: put the layer name, the exact test command you ran, and the measured facts (e.g. row counts, `null rate on join key = 0.00%`, grain check result) in `checks`. Under the default `phase` policy a passing checkpoint is recorded automatically and blocks only on fail/anomaly. Never confirm your own gate.
 
-```
-::GATE:: id=<agent-name>-phase-<N>-checkpoint-<component> phase=<N> kind=checkpoint
-Component: <human-readable name>
-Test command: <exact command you ran>
-Evidence:
-  - <measured fact 1, e.g. "df.shape = (48211, 47)">
-  - <measured fact 2, e.g. "null rate on join key = 0.00%">
-  - <measured fact 3, e.g. "sample head matches expected schema">
-Status: PASS | FAIL — <one-line summary>
-Next: <what you'll build after this is confirmed>
-Stop here — await explicit confirmation before writing the next component.
-::ENDGATE::
-```
+{{gate kind=checkpoint name=component-slug}}
 
-Expected checkpoint gate IDs for this phase (emit in order as you build):
+Expected checkpoint names for this phase (use as `name`, in order as you build):
 
-- `analytics-engineer-deep-phase-7-checkpoint-sources` — sources.yml updates validate; source freshness passes.
-- `analytics-engineer-deep-phase-7-checkpoint-staging` — all staging models build green; grain + sample inspection pass per the post-build rubric.
-- `analytics-engineer-deep-phase-7-checkpoint-intermediate` — intermediate models build green; fan-out verification matches Phase 3 predictions.
-- `analytics-engineer-deep-phase-7-checkpoint-marts` — mart/fact models build green; grain / fan-out / PK-FK null / sample checks all pass.
-- `analytics-engineer-deep-phase-7-checkpoint-tests` — singular tests and snapshot models (if present) run green.
+- `sources` — sources.yml updates validate; source freshness passes.
+- `staging` — all staging models build green; grain + sample inspection pass per the post-build rubric.
+- `intermediate` — intermediate models build green; fan-out verification matches Phase 3 predictions.
+- `marts` — mart/fact models build green; grain / fan-out / PK-FK null / sample checks all pass.
+- `tests` — singular tests and snapshot models (if present) run green.
 
-The hook blocks all non-read tools while a checkpoint is open. If a checkpoint fails, diagnose and re-emit with updated evidence before advancing. Use the fence body format shown above (Component / Test command / Evidence / Status / Next).
+If a checkpoint fails, diagnose, fix, and call `gate_request` again with updated evidence before advancing.
 
 Build in this order:
 1. Source definitions (sources.yml updates)
@@ -72,11 +60,11 @@ For each model:
   queries and note "THEORETICAL — no data to validate" in the build log.
 
   **Auto-verify mode**: each layer's post-build sweep is a bulk read-only
-  verification stretch. Open `::AUTO-VERIFY:: agent=analytics-engineer phase=7 tool_budget=<N>`
-  at the start of the layer's validation pass and `::ENDAUTO::` before
-  emitting the layer's checkpoint gate. The hook will auto-approve `dbt show`
-  and SELECT-only warehouse-CLI queries while the block is open; `dbt build`
-  and writes still prompt. See [`protocols/auto_verify_mode.md`](../../../protocols/auto_verify_mode.md).
+  verification stretch. Open the block with `{{auto_verify start tool_budget=30 ttl=900}}`
+  at the start of the layer's validation pass and close it with `{{auto_verify end}}` before
+  the layer's checkpoint gate. While it is open, `dbt show`
+  and SELECT-only warehouse-CLI queries are auto-approved; `dbt build`
+  and writes still prompt, and gates always win. See [`protocols/auto_verify_mode.md`](../../../protocols/auto_verify_mode.md).
 
   1. **Grain validation** (every model with a stated PK):
      ```sql
@@ -224,9 +212,7 @@ select * from final
 - **Performance notes:** <run time, row counts, anything notable>
 ```
 
-::GATE:: id=analytics-engineer-deep-phase-7 phase=7 kind=phase validates=analytics_engineer
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase validates=analytics-engineer}}
 
 ---
 

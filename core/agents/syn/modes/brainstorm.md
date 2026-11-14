@@ -98,9 +98,7 @@ AND update the corresponding field under `context` in the state JSON.
 
 After all context is gathered, read the full Context section back to the user.
 
-::GATE:: id=specific-instructions-syn-brainstorm-phase0 phase=0 kind=phase
-Do not proceed to Phase 1 until the user confirms the context is right.
-::ENDGATE::
+{{gate kind=phase phase=0 id=specific-instructions-syn-brainstorm-phase0}}
 
 ---
 

@@ -93,8 +93,8 @@ Please:
      the source counts and applied filters, so the analyst has something
      to compare actual results against once they run the queries.
    **Auto-verify**: this sanity-check sweep is exactly the bulk read-only
-   pattern auto-verify is for. Open `::AUTO-VERIFY:: agent=data-analyst phase=3`
-   before the sweep, `::ENDAUTO::` after. See
+   pattern auto-verify is for. Open `{{auto_verify start tool_budget=20 ttl=600}}`
+   before the sweep, `{{auto_verify end}}` after. Read-only only; gates always win. See
    `../../../protocols/auto_verify_mode.md`.
 5. Return a verdict: Sound / Concerns / Revise — with specific issues
    ordered by severity, plus the expected row counts from step 4.
@@ -254,9 +254,7 @@ After delivering query results, provide visualization guidance:
 - **Follow-up needed:** Yes / No — <if yes, describe>
 ```
 
-::GATE:: id=data-analyst-phase-3 phase=3 kind=phase validates=data_analyst
-Read this section back to the user. Stop here — wait for the user to explicitly confirm the results answer the question before wrapping up.
-::ENDGATE::
+{{gate kind=phase validates=data-analyst}}
 
 ---
 

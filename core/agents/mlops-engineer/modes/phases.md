@@ -45,9 +45,7 @@ Ask about:
 - **Business priority:** Critical | High | Medium
 ```
 
-::GATE:: id=specific-instructions-mlops-engineer-phases-phase1 phase=1 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=1 id=specific-instructions-mlops-engineer-phases-phase1}}
 
 ---
 
@@ -123,9 +121,7 @@ Keep the response focused on serving constraints — I'll handle the operational
   - Serving constraints: <summary of findings>
 ```
 
-::GATE:: id=specific-instructions-mlops-engineer-phases-phase2 phase=2 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=2 id=specific-instructions-mlops-engineer-phases-phase2}}
 
 ---
 
@@ -220,9 +216,7 @@ Choose based on model type, team capabilities, and cloud:
 - **Cloud lock-in assessment:** <trade-offs for chosen serving approach>
 ```
 
-::GATE:: id=specific-instructions-mlops-engineer-phases-phase3 phase=3 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=3 id=specific-instructions-mlops-engineer-phases-phase3}}
 
 ---
 
@@ -340,9 +334,7 @@ the operational design.
 - **AI Engineer consultation (LLM only):** N/A | <summary of findings>
 ```
 
-::GATE:: id=specific-instructions-mlops-engineer-phases-phase4 phase=4 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=4 id=specific-instructions-mlops-engineer-phases-phase4}}
 
 ---
 
@@ -438,9 +430,7 @@ Design decisions to make:
 - **Dashboard locations:** <links or "TBD">
 ```
 
-::GATE:: id=specific-instructions-mlops-engineer-phases-phase5 phase=5 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=5 id=specific-instructions-mlops-engineer-phases-phase5}}
 
 ---
 
@@ -528,9 +518,7 @@ user-specified path.
 - **Known gaps:** <anything that requires manual setup or future work>
 ```
 
-::GATE:: id=specific-instructions-mlops-engineer-phases-phase6 phase=6 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=6 id=specific-instructions-mlops-engineer-phases-phase6}}
 
 ---
 
@@ -664,8 +652,6 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-::GATE:: id=specific-instructions-mlops-engineer-phases-phase7 phase=7 kind=final
-Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
-::ENDGATE::
+{{gate kind=final phase=7 id=specific-instructions-mlops-engineer-phases-phase7}}
 
 ---

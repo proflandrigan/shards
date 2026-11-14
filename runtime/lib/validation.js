@@ -1,6 +1,6 @@
 // Validation section parser + checker for the gate hook.
 // Implements src/agents/specific_instructions/shared/validation_protocol.md
-// and tools/gate-hook/VALIDATION_SPEC.md.
+// and runtime/lib/VALIDATION_SPEC.md.
 'use strict';
 
 const fs = require('fs');

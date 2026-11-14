@@ -129,9 +129,7 @@ Knowledge harvest — candidates for the Knowledge Ledger:
 Add, edit, or remove? Or confirm to write.
 ```
 
-::GATE:: id=specific-instructions-shared-knowledge-harvest-phase0 phase=0 kind=phase
-Do not write any files until the user confirms.
-::ENDGATE::
+Call `gate_request(kind=phase)` with the candidate list as the `summary`, STOP and wait. Do not write any files until the user confirms.
 
 The user may edit titles, remove candidates, adjust confidence, or add new ones.
 

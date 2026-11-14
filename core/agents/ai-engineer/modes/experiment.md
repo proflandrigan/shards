@@ -41,10 +41,7 @@ an existing AI system. You are the AI Engineer throughout. No persona transfer o
    Laboratory (`[PL]`) offers an interactive editor for this. Do not switch — just
    inform. If the user wants to switch, tell them to re-invoke with `[PL]`.
 
-::GATE:: id=specific-instructions-ai-engineer-experiment-phase0 phase=0 kind=execute
-Do not proceed to Phase 1 until the user explicitly confirms the outcome
-metric and experiment count.
-::ENDGATE::
+{{gate kind=execute phase=0 id=specific-instructions-ai-engineer-experiment-phase0}}
 
 If the user modifies any parameter, update before proceeding.
 
@@ -98,9 +95,7 @@ If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
 rejected), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
-::GATE:: id=specific-instructions-ai-engineer-experiment-phase1 phase=1 kind=execute
-Do not begin any experiment until the user explicitly confirms the plan.
-::ENDGATE::
+{{gate kind=execute phase=1 id=specific-instructions-ai-engineer-experiment-phase1}}
 Wait for confirmation. If the user modifies the plan, update it before proceeding.
 
 ### Write experiment plan file
@@ -399,12 +394,14 @@ if the user wants to keep going. Written in your voice, opinionated.>
 ### Present to user
 Read both files back to the user.
 
-::GATE:: id=specific-instructions-ai-engineer-experiment-phase3 phase=3 kind=final validates=ai_engineer
+Gate readback (pass this as the `summary`):
+
 Ask the user:
 - What do you want to adopt?
 - Do you want to run more experiments?
 - Or should we stop here?
-::ENDGATE::
+
+{{gate kind=final phase=3 validates=ai-engineer id=specific-instructions-ai-engineer-experiment-phase3}}
 
 Wait for their response before taking any further action.
 

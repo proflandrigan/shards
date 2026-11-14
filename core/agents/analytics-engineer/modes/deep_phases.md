@@ -67,9 +67,7 @@ the missing field — not the whole set.
   - <rule 2>
 ```
 
-::GATE:: id=specific-instructions-analytics-engineer-deep-phases-phase0 phase=0 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=0 id=specific-instructions-analytics-engineer-deep-phases-phase0}}
 
 ---
 
@@ -164,9 +162,7 @@ If it does:
 - **Data environment:** <not greenfield | Staging exists, transform layer missing | GREENFIELD — no transformation layer detected. Contract-first design only>
 ```
 
-::GATE:: id=specific-instructions-analytics-engineer-deep-phases-phase0-2 phase=0 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=0 id=specific-instructions-analytics-engineer-deep-phases-phase0-2}}
 **If Insufficient, do not proceed. Discuss alternatives.**
 
 ---
@@ -250,9 +246,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `data-modeller` row
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 ```
 
-::GATE:: id=specific-instructions-analytics-engineer-deep-phases-phase0-3 phase=0 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=0 id=specific-instructions-analytics-engineer-deep-phases-phase0-3}}
 
 ---
 
@@ -321,9 +315,7 @@ Materialization guidance (state your reasoning, not just the choice):
 - **Naming conventions confirmed:** Yes | No — <deviations from project standard>
 ```
 
-::GATE:: id=specific-instructions-analytics-engineer-deep-phases-phase0-4 phase=0 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=0 id=specific-instructions-analytics-engineer-deep-phases-phase0-4}}
 
 ---
 
@@ -371,9 +363,7 @@ Ask about:
 - **Test coverage:** Full | Partial — <gaps and rationale>
 ```
 
-::GATE:: id=specific-instructions-analytics-engineer-deep-phases-phase0-5 phase=0 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=0 id=specific-instructions-analytics-engineer-deep-phases-phase0-5}}
 
 ---
 
@@ -408,9 +398,7 @@ Ask about:
 - **External documentation:** <wiki, README, or "none">
 ```
 
-::GATE:: id=specific-instructions-analytics-engineer-deep-phases-phase0-6 phase=0 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=0 id=specific-instructions-analytics-engineer-deep-phases-phase0-6}}
 
 ---
 
@@ -598,9 +586,7 @@ select * from final
 - **Performance notes:** <run time, row counts, anything notable>
 ```
 
-::GATE:: id=specific-instructions-analytics-engineer-deep-phases-phase0-7 phase=0 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=0 id=specific-instructions-analytics-engineer-deep-phases-phase0-7}}
 
 ---
 
@@ -811,8 +797,6 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-::GATE:: id=specific-instructions-analytics-engineer-deep-phases-phase0-8 phase=0 kind=final
-Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
-::ENDGATE::
+{{gate kind=final phase=0 id=specific-instructions-analytics-engineer-deep-phases-phase0-8}}
 
 ---

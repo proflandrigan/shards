@@ -1,6 +1,6 @@
 # Gate Hook — Validation Enforcement Spec
 
-Design spec for extending the gate hook (`tools/gate-hook.js` + `tools/gate-hook/*.js`) to enforce the shared validation protocol (`src/agents/specific_instructions/shared/validation_protocol.md`).
+Design spec for extending the legacy gate hook (removed in E11.9; was `tools/gate-hook.js` + `tools/gate-hook/*.js`) to enforce the shared validation protocol (`src/agents/specific_instructions/shared/validation_protocol.md`).
 
 Status: draft — not yet implemented. Companion to the protocol and per-agent checklists.
 
@@ -66,7 +66,7 @@ The hook then looks for the most recent `## Validation` section within that file
 
 ### Parser sketch
 
-New module: `tools/gate-hook/validation.js`.
+New module: `runtime/lib/validation.js` (was `tools/gate-hook/validation.js` before E11.9).
 
 ```js
 // Pseudocode

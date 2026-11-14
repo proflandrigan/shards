@@ -70,8 +70,8 @@ of a larger task that Syn orchestrated.
 **Definition of done:** <one sentence>
 
 Work autonomously. Do not wait for user gates. When a phase file would stop
-and emit a `::GATE::` fence waiting for user confirmation, do NOT stop and do
-NOT emit the fence — document your decision for the merge step and continue to
+and call `gate_request` waiting for user confirmation, do NOT stop and do
+NOT call it — document your decision for the merge step and continue to
 the next phase. Skip your activation menu and Phase 0 — Syn has already scoped
 your work. Do not invoke Syn for review. Return a concise report: artifacts
 produced, key decisions, issues, confidence, and anything the merge step needs

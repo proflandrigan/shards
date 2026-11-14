@@ -32,10 +32,7 @@ Present a brief summary:
 After presenting the summary, ask:
 "Is this the right dashboard? Anything I'm missing or misread?"
 
-::GATE:: id=bi-engineer-update-phase-1 phase=1 kind=phase
-Do not proceed until the user confirms this is the right artifact and
-the summary is accurate. Wait for explicit confirmation.
-::ENDGATE::
+{{gate kind=phase phase=1 id=bi-engineer-update-phase-1}}
 
 ---
 
@@ -67,10 +64,7 @@ If any of these apply: "This is looking like a Build rather than an update —
 the scope has grown significantly. Want to switch to the full Build workflow
 instead? Or narrow the scope so we can handle it as an update?"
 
-::GATE:: id=bi-engineer-update-phase-2 phase=2 kind=phase
-Confirm the proposed change list before writing the spec.
-Do not proceed until the user confirms the scope. Wait for explicit confirmation.
-::ENDGATE::
+{{gate kind=phase phase=2 id=bi-engineer-update-phase-2}}
 
 ---
 
@@ -120,9 +114,11 @@ Write `updates/<project_name>/bi-engineer-update-spec.md` using this template:
 
 Read the spec back to the user in full.
 
-::GATE:: id=bi-engineer-update-phase-4 phase=4 kind=final
+Gate readback (pass this as the `summary`):
+
 Ask the user:
-::ENDGATE::
+
+{{gate kind=final phase=4 id=bi-engineer-update-phase-4}}
 "Ready to implement? Or do you want to adjust the scope first?"
 
 Wait for their response before taking any further action.

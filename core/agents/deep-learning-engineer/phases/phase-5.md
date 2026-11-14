@@ -281,9 +281,7 @@ weight decay; Goyal et al., 2017 for LR scaling, etc.)>
 {{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
-::GATE:: id=deep-learning-engineer-phase-5 phase=5 kind=final
-Read Phase 5 summary to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
-::ENDGATE::
+{{gate kind=final}}
 
 ---
 

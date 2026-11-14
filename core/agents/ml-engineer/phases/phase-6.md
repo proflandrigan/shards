@@ -221,25 +221,13 @@ the bulk queries.
 
 ### Incremental testing — checkpoint gates between components
 
-{{protocol incremental_testing}} during this build. Each component above is a checkpoint seam — after you write and execute a component, emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before starting the next component. Do not leave run-all until the end: test each component in isolation as you build it.
+{{protocol incremental_testing}} during this build. Each component above is a checkpoint seam — after you write and execute a component, raise a `kind=checkpoint` gate (macro below) with evidence before starting the next component. Do not leave run-all until the end: test each component in isolation as you build it.
 
-Checkpoint gate fence — emit exactly this shape. Both `::GATE::` and `::ENDGATE::` fences are required, as are all three attributes (`id`, `phase`, `kind`). No prose outside the fence.
+{{gate kind=checkpoint name=queries}}
 
-```
-::GATE:: id=<agent-name>-phase-<N>-checkpoint-<component> phase=<N> kind=checkpoint
-Component: <human-readable name>
-Test command: <exact command you ran>
-Evidence:
-  - <measured fact 1, e.g. "df.shape = (48211, 47)">
-  - <measured fact 2, e.g. "null rate on join key = 0.00%">
-  - <measured fact 3, e.g. "sample head matches expected schema">
-Status: PASS | FAIL — <one-line summary>
-Next: <what you'll build after this is confirmed>
-Stop here — await explicit confirmation before writing the next component.
-::ENDGATE::
-```
+The macro above shows the first component (`name=queries`). For each later component call `gate_request` the same way with `kind=checkpoint` and that component's slug as the name (no `validates=`). Pass `evidence={status: pass|fail, checks: [...]}` with the component name, the exact test command you ran, and measured facts (for example `df.shape = (48211, 47)`, `null rate on join key = 0.00%`, `sample head matches expected schema`). Under the default `phase` policy a passing checkpoint is recorded automatically and you continue to the next component; a failing or anomalous one blocks and waits for the user.
 
-Expected checkpoint gate IDs for this phase (emit in order as you build):
+Expected checkpoint components for this phase (slugs are the suffix after `checkpoint-`; build in this order):
 
 - `ml-engineer-phase-6-checkpoint-queries` — each feature query returns expected shape under `LIMIT 100`; row counts before/after joins match Phase 3 prediction.
 - `ml-engineer-phase-6-checkpoint-data` — notebook data-load + EDA cells produce expected shape; target distribution matches prior knowledge.
@@ -247,7 +235,7 @@ Expected checkpoint gate IDs for this phase (emit in order as you build):
 - `ml-engineer-phase-6-checkpoint-candidate` — candidate model smoke-fits on ≤1% of data first (loss decreasing), then full fit; eval metrics beat baseline floor.
 - `ml-engineer-phase-6-checkpoint-infra` — model size, inference latency, memory measured against Phase 5 budget.
 
-The hook blocks all non-read tools while a checkpoint is open. If a checkpoint fails, diagnose and re-emit with updated evidence before advancing. Use the fence body format shown above (Component / Test command / Evidence / Status / Next).
+If a checkpoint fails, it blocks until the user responds: STOP and wait, never confirm it yourself. After the user replies, diagnose, fix, and re-run the test, then call `gate_request` again with updated evidence before advancing.
 
 ### Document Phase 6
 
@@ -284,9 +272,7 @@ The hook blocks all non-read tools while a checkpoint is open. If a checkpoint f
 - **Surprising findings:** <anything unexpected>
 ```
 
-::GATE:: id=ml-engineer-phase-6 phase=6 kind=phase validates=ml_engineer
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase validates=ml-engineer}}
 
 ---
 

@@ -76,11 +76,9 @@ so you can pick the winner.
   the project slug). This is required to avoid collision with planning-phase
   IDs when both DIVERGE forms occur in the same project's state file.
 
-Example (planning-phase form):
+Example (planning-phase form), as prose:
 
-::GATE:: id=specific-instructions-shared-diverge-protocol-phase0 phase=0 kind=phase
-
-::ENDGATE::
+Then call `gate_request(kind=phase)` with the proposal above as the `summary`, STOP and wait for the user. Never confirm the gate yourself.
 
 The user must explicitly confirm DIVERGE. If they pick a single approach, proceed with the standard phased workflow — no fork. If they confirm DIVERGE, continue to Section C.
 
@@ -300,11 +298,9 @@ instructions to produce a leaderboard and comparison.
   `specific-instructions-shared-diverge-protocol-ar-<project>-converge` to
   avoid collision with the planning-phase convergence ID.
 
-Example (planning-phase form):
+Example (planning-phase form), as prose:
 
-::GATE:: id=specific-instructions-shared-diverge-protocol-phase0-2 phase=0 kind=final
-
-::ENDGATE::
+Then call `gate_request(kind=final)` with the plan above as the `summary`, STOP and wait for the user.
 
 Wait for user to select a winner before proceeding.
 

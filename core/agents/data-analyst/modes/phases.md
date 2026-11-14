@@ -150,9 +150,7 @@ Document in Phase 1 specs:
 - **AE intake file written:** Not applicable | Yes — analysis/<project_name>/ae-intake.md
 ```
 
-::GATE:: id=specific-instructions-data-analyst-phases-phase1 phase=1 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=1 id=specific-instructions-data-analyst-phases-phase1}}
 
 ---
 
@@ -257,9 +255,7 @@ tell the user: "The Data Scientist thinks this needs more depth. Should we escal
 - **Escalation recommended:** No | Yes — <reason>
 ```
 
-::GATE:: id=specific-instructions-data-analyst-phases-phase2 phase=2 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=2 id=specific-instructions-data-analyst-phases-phase2}}
 
 ---
 
@@ -405,9 +401,7 @@ After delivering query results, provide visualization guidance:
 - **Follow-up needed:** Yes / No — <if yes, describe>
 ```
 
-::GATE:: id=specific-instructions-data-analyst-phases-phase3 phase=3 kind=phase
-Read this section back to the user. Stop here — wait for the user to explicitly confirm the results answer the question before wrapping up.
-::ENDGATE::
+{{gate kind=phase phase=3 id=specific-instructions-data-analyst-phases-phase3}}
 
 ---
 
@@ -497,8 +491,6 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-::GATE:: id=specific-instructions-data-analyst-phases-phase4 phase=4 kind=final
-Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
-::ENDGATE::
+{{gate kind=final phase=4 id=specific-instructions-data-analyst-phases-phase4}}
 
 ---

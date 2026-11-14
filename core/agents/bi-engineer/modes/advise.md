@@ -16,9 +16,7 @@ Ask the user:
    budget, team skills, deployment environment)
 3. Is there a preferred outcome, or is this an open exploration?
 
-::GATE:: id=bi-engineer-advise-phase-1 phase=1 kind=phase
-Do not proceed until the user confirms the question.
-::ENDGATE::
+{{gate kind=phase phase=1 id=bi-engineer-advise-phase-1}}
 Restate the question in your own words to confirm alignment. Wait for confirmation.
 
 ---
@@ -66,9 +64,7 @@ After the discussion, ask:
 
 > "Want me to write this up as a structured advisory document?"
 
-::GATE:: id=bi-engineer-advise-phase-4 phase=4 kind=final
-Wait for explicit confirmation before writing anything.
-::ENDGATE::
+{{gate kind=final phase=4 id=bi-engineer-advise-phase-4}}
 
 If the user says yes, write `advisory/<topic_name>/bi-engineer-advisory.md` using
 this template exactly:

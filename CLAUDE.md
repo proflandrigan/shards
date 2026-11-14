@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **shards** source repository — a suite of data-focused Claude Code agents published as an npm package. Users install it into their own projects with `npx github:proflandrigan/shards install`, which copies files from `src/` into their project's `.claude/` directory.
 
-There are no build steps and no compiled output. There is a vitest test suite under `test/` (`test/gate-hook.test.js`, `test/permission-pattern.test.js`, `test/session-index.test.js`, plus `tools/gate-hook/__tests__/auto-verify.test.js`) — run it with `npm test` (`vitest run`).
+There are no build steps and no compiled output. There is a vitest test suite under `test/` (e.g. `test/permission-pattern.test.js`, `test/session-index.test.js`; the gate-hook tests were removed in E11.9) — run it with `npm test` (`vitest run`).
 
-The executables are `tools/install.js`, `tools/shards-ui.js`, `tools/shards-gates.js`, and `tools/shards-sessions.js` (Node.js v18+). All four are registered as bin commands in `package.json` (`shards`, `shards-ui`, `shards-gates`, `shards-sessions`). A separate `tools/migrate-gates.js` script is available for one-off gate-state migrations but is not exposed as a bin.
+The executables are `tools/install.js`, `tools/shards-ui.js`, `tools/shards-gates.js`, and `tools/shards-sessions.js` (Node.js v18+). All four are registered as bin commands in `package.json` (`shards`, `shards-ui`, `shards-gates`, `shards-sessions`).
 
 ## Running the tools
 
@@ -28,7 +28,7 @@ node tools/shards-gates.js force-close   # operator override when a gate is stuc
 npm test                       # run the vitest suite
 ```
 
-The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.claude/commands/`, `core/templates/` → `templates/`, `src/ui/` → `.shards/ui/`, and `src/docs/` → both `.shards/ui/docs/` (served by the UI guide panel) and `docs/shards-guide/` (plain-markdown copy at the project root) in the target project. It also creates output directories (`analysis/`, `studies/`, `models/`, `data_models/`, `services/`, `research/`, `dashboards/`, `brainstorm/`, `fixes/`, `presentations/`, `projects/`, `panels/`), sets up the Knowledge Ledger at `.shards/knowledge/` (with `entities/`, `infrastructure/`, `patterns/`, `features/` subdirectories and an `INDEX.md`), installs gate-enforcement hooks under `.shards/hooks/gate-hook.js` (wired into `.claude/settings.json` via the `Stop`, `PreToolUse`, and `UserPromptSubmit` events), writes a manifest to `.claude/.shards-manifest.json` for uninstall tracking, and appends a Shards section to CLAUDE.md.
+The installer copies `src/agents/` → `.claude/agents/`, `src/commands/` → `.claude/commands/`, `core/templates/` → `templates/`, `src/ui/` → `.shards/ui/`, and `src/docs/` → both `.shards/ui/docs/` (served by the UI guide panel) and `docs/shards-guide/` (plain-markdown copy at the project root) in the target project. It also creates output directories (`analysis/`, `studies/`, `models/`, `data_models/`, `services/`, `research/`, `dashboards/`, `brainstorm/`, `fixes/`, `presentations/`, `projects/`, `panels/`), sets up the Knowledge Ledger at `.shards/knowledge/` (with `entities/`, `infrastructure/`, `patterns/`, `features/` subdirectories and an `INDEX.md`), writes a manifest to `.claude/.shards-manifest.json` for uninstall tracking, and appends a Shards section to CLAUDE.md.
 
 The `.claude/` directory at the repo root is a live installation used when working on shards itself. After editing source files, re-run `node tools/install.js` from the repo root to update it.
 
@@ -50,7 +50,7 @@ The `.claude/` directory at the repo root is a live installation used when worki
 - `ui-push.js` — thin client run by hooks; POSTs events to the relay.
 - `spawn-server.js` / `open-browser.js` — called by the `/shards-ui` slash command to start the server and open the browser.
 - `symbol-index.js` — ctags-based symbol indexing engine (with regex fallback) for code intelligence features in the UI. Builds and watches an in-memory index of symbols across the project.
-- `permission-pattern.js` — parses and normalises Claude Code permission patterns (e.g., `Bash(python3:*)`) for the Permissions settings panel. Shared with `tools/gate-hook/` so the gate hook and UI agree on what is read-only.
+- `permission-pattern.js` — parses and normalises Claude Code permission patterns (e.g., `Bash(python3:*)`) for the Permissions settings panel. Originally shared with the legacy `tools/gate-hook/` (removed in E11.9).
 - `session-index.js` — durable session index at `.shards/sessions/INDEX.json`. Records every chat (active / ended / abandoned) with agent, project, phase, last prompt, gate-open-at-end, etc. Read/written by `server.js` and the `shards-sessions` bin; powers the Sessions sidebar panel and the `/resume` and `/end` slash commands. Uses atomic-write (tmp + rename) and runs an abandonment sweep on server startup that reclassifies stale active rows past 24h.
 - `notebook-kernel.py` — persistent Jupyter kernel helper used by Notebook Walkthrough mode (executes cells under `.shards/notebooks/<session>/`).
 - `js/` — browser-side ES modules: `state.js`, `events.js`, `chat.js`, `agents.js`, `panels.js`, `tabs.js`, `explorer.js`, `file-view.js`, `table.js`, `tabular.js`, `notebook.js`, `notebook-walkthrough.js`, `monaco.js`, `markdown.js`, `split-view.js`, `command-palette.js`, `quick-open.js`, `settings.js`, `init.js`, `utils.js`, `bookmarks.js`, `code-intel.js`, `git.js`, `pinboard.js`, `selection-context.js`, `guide.js`, `hud.js`, `knowledge-map.js`, `terminal.js`, `timeline.js`, `sessions.js`.
@@ -73,7 +73,7 @@ Every specialist phase ends with the same sequence:
 2. Read the section back to the user
 3. Wait for confirmation before advancing
 
-Gates are machine-enforced via `::GATE:: ... ::ENDGATE::` fences parsed by three Claude Code hooks (`Stop`, `PreToolUse`, `UserPromptSubmit`) installed under `.shards/hooks/gate-hook.js`. The hook implementation lives in `tools/gate-hook.js` (entry point) and `tools/gate-hook/` (modules: `parser.js`, `classify.js`, `state.js`, `auto-state.js`, `auto-allowlist.js`, `validation.js`, `transcript.js`, `sql-guard.js`, `log.js`, plus `VALIDATION_SPEC.md`). State is tracked in `.shards/gates/state.json` (atomic tmp+rename writes so concurrent UI polls / hook invocations never observe partial JSON). Use `shards-gates status` for diagnostics and `shards-gates force-close` to unstick a session (also resets any open auto-verify block). Set `SHARDS_GATE_ENFORCE=0` to disable enforcement entirely.
+Gates use `::GATE:: ... ::ENDGATE::` fences. The legacy gate hook (`.shards/hooks/gate-hook.js`, `tools/gate-hook.js`, `tools/gate-hook/`, `tools/migrate-gates.js`) was removed in E11.9; the validation spec now lives at `runtime/lib/VALIDATION_SPEC.md`. Use `shards-gates status` (alias for `shards gates status`) for diagnostics and `shards-gates force-close --all` to unstick sessions (also resets any open auto-verify block).
 
 **Gate kinds.** Every gate carries a `kind=` attribute drawn from this enum:
 

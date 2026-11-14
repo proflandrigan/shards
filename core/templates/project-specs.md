@@ -33,7 +33,7 @@
   and the agent's own:
     the agent's modes/validation_checklist.md
 
-  The schema the gate hook expects:
+  The schema `gate_request` validates against:
 
     ## Validation
 
@@ -61,7 +61,7 @@
     <2-4 sentences on what was validated, what failed and was fixed, residual risk>
 
   If multiple phases produce validation sections, overwrite rather than append —
-  the gate hook uses the last ## Validation section in the file.
+  validation uses the last ## Validation section in the file.
 
   Incremental testing (build phases only):
   Notebook- and pipeline-producing specialists emit a `kind=checkpoint` gate
@@ -75,7 +75,7 @@
     |-----------|--------------|----------|--------|
     | <name>    | <cmd>        | <facts>  | PASS / FAIL |
 
-  This table mirrors what the gate hook already records in
+  This table mirrors what the gate runtime already records in
   `.shards/gates/gates.jsonl` — including it in project-specs is optional but
   useful when the user wants the audit trail alongside the rest of the spec.
 -->

@@ -17,9 +17,7 @@ Ask the user:
 4. Are there specific researchers, papers, or schools of thought you want me to
    include or prioritize?
 
-::GATE:: id=specific-instructions-academic-report-phase1 phase=1 kind=phase
-Do not proceed until the user confirms the report scope.
-::ENDGATE::
+{{gate kind=phase phase=1 id=specific-instructions-academic-report-phase1}}
 Summarize the scope and the key themes you'll explore. Wait for explicit confirmation.
 
 ---
@@ -87,9 +85,11 @@ Use the following template:
 
 Read the report back to the user in full.
 
-::GATE:: id=specific-instructions-academic-report-phase4 phase=4 kind=final
+Gate readback (pass this as the `summary`):
+
 Ask the user:
-::ENDGATE::
+
+{{gate kind=final phase=4 id=specific-instructions-academic-report-phase4}}
 - Does this report accurately capture the evidence and analysis needed?
 - Are there any sections that require more depth or clarification?
 - Or is this report complete?

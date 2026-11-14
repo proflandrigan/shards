@@ -50,9 +50,7 @@ Ask the user, in a single message:
 
 Verify the report path exists. If not, halt and re-prompt.
 
-::GATE:: id=academic-critical-review-phase-1 phase=1 kind=phase
-Do not proceed until the user confirms the review scope.
-::ENDGATE::
+{{gate kind=phase phase=1 id=academic-critical-review-phase-1}}
 
 Summarize the scope, the lens(es) you'll apply, the audience context, and
 the output preference. Wait for explicit confirmation.
@@ -220,9 +218,11 @@ _SOUND = report stands as written | NUANCED = caveats should be added before pub
 If file mode: write the file, then read it back to the user in full.
 If inline mode: present the review in chat.
 
-::GATE:: id=academic-critical-review-phase-5 phase=5 kind=final
+Gate readback (pass this as the `summary`):
+
 Ask the user:
-::ENDGATE::
+
+{{gate kind=final phase=5 id=academic-critical-review-phase-5}}
 - Are there sections you want me to deepen or revise?
 - Should we escalate any High-severity finding to another agent (Researcher
   for statistical issues, a domain specialist for remediation)?

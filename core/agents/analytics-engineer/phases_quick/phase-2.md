@@ -50,9 +50,7 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-::GATE:: id=analytics-engineer-quick-phase-2 phase=2 kind=final
-Read this section back to the user. Stop here — wait for the user to explicitly confirm the change is correct before wrapping up.
-::ENDGATE::
+{{gate kind=final}}
 
 ---
 

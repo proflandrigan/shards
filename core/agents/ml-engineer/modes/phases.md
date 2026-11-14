@@ -36,9 +36,7 @@ Ask about:
 - **Business priority:** Critical | High | Medium
 ```
 
-::GATE:: id=specific-instructions-ml-engineer-phases-phase1 phase=1 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=1 id=specific-instructions-ml-engineer-phases-phase1}}
 
 ---
 
@@ -103,9 +101,7 @@ Keep the response focused and practical.
   - <summary of pipeline feasibility findings>
 ```
 
-::GATE:: id=specific-instructions-ml-engineer-phases-phase2 phase=2 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=2 id=specific-instructions-ml-engineer-phases-phase2}}
 
 ---
 
@@ -219,9 +215,7 @@ Present findings, then ask:
 - **Data environment:** <not greenfield | Feature data exists but inaccessible — candidates user-described, not verified | GREENFIELD — No data assets detected. Theoretical ML design only>
 ```
 
-::GATE:: id=specific-instructions-ml-engineer-phases-phase3 phase=3 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=3 id=specific-instructions-ml-engineer-phases-phase3}}
 
 ---
 
@@ -481,9 +475,7 @@ Define:
 
 **DIVERGE check:** If you identified 2-3 mutually exclusive model architectures or approaches (e.g., different model families, fundamentally different serving paradigms) that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
 
-::GATE:: id=specific-instructions-ml-engineer-phases-phase4 phase=4 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=4 id=specific-instructions-ml-engineer-phases-phase4}}
 
 ---
 
@@ -633,9 +625,7 @@ Address any concerns raised by either review before finalizing the infrastructur
   - Backward compatibility: <ensured | breaking — migration plan>
 ```
 
-::GATE:: id=specific-instructions-ml-engineer-phases-phase5 phase=5 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=5 id=specific-instructions-ml-engineer-phases-phase5}}
 
 ---
 
@@ -822,9 +812,7 @@ Return your full review with query validation results.
 - **Surprising findings:** <anything unexpected>
 ```
 
-::GATE:: id=specific-instructions-ml-engineer-phases-phase6 phase=6 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=6 id=specific-instructions-ml-engineer-phases-phase6}}
 
 ---
 
@@ -1064,8 +1052,6 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-::GATE:: id=specific-instructions-ml-engineer-phases-phase7 phase=7 kind=final
-Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
-::ENDGATE::
+{{gate kind=final phase=7 id=specific-instructions-ml-engineer-phases-phase7}}
 
 ---

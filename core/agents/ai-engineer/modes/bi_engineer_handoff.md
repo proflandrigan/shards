@@ -14,9 +14,7 @@ This file governs Step 6 of Phase 7 (Deliver and Document) for the AI Engineer s
    For iteration projects where a monitoring dashboard already exists, only
    ask if this iteration added new metrics or changed monitoring scope.
 
-   ::GATE:: id=ai-engineer-bi-engineer-handoff-phase-0 phase=0 kind=phase
-Wait for an explicit yes or no. Do not generate the file unless the user confirms.
-::ENDGATE::
+   {{gate kind=phase phase=0 id=ai-engineer-bi-engineer-handoff-phase-0}}
 
    If yes, write `services/<project_name>/bi_engineer_handoff.md`:
 

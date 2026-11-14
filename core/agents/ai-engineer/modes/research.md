@@ -152,9 +152,7 @@ Append to `project-specs.md`:
 - **Or:** No relevant entries found
 ```
 
-::GATE:: id=specific-instructions-ai-engineer-research-phase0 phase=0 kind=execute
-Read this section back. Stop here. Wait for the user to confirm.
-::ENDGATE::
+{{gate kind=execute phase=0 id=specific-instructions-ai-engineer-research-phase0}}
 
 ---
 
@@ -238,10 +236,7 @@ the existing logic.
 
 ### Gate
 
-::GATE:: id=specific-instructions-ai-engineer-research-phase1 phase=1 kind=execute
-Read the brief back. Last checkpoint before the autonomous loop. Wait for
-explicit confirmation.
-::ENDGATE::
+{{gate kind=execute phase=1 id=specific-instructions-ai-engineer-research-phase1}}
 
 ---
 
@@ -356,12 +351,14 @@ If fan-out: arbitrate before writing the consolidated summary. Standard
 
 ### Phase 3 gate
 
-::GATE:: id=specific-instructions-ai-engineer-research-phase3 phase=3 kind=final validates=ai_engineer
+Gate readback (pass this as the `summary`):
+
 Ask the user:
 - Which iteration (or Pareto point) do you want to adopt?
 - Do you want to run another budget?
 - Or should we stop here?
-::ENDGATE::
+
+{{gate kind=final phase=3 validates=ai-engineer id=specific-instructions-ai-engineer-research-phase3}}
 
 ### If adopting
 

@@ -13,9 +13,7 @@ Ask the user: "Every production model benefits from a monitoring dashboard.
 Do you want a `bi_engineer_handoff.md` so the BI Engineer shard can build
 performance monitoring on top of this model?"
 
-::GATE:: id=ml-engineer-bi-engineer-handoff-phase-7 phase=7 kind=phase
-Wait for an explicit yes or no. Do not generate the file unless the user confirms.
-::ENDGATE::
+{{gate kind=phase phase=7 id=ml-engineer-bi-engineer-handoff-phase-7}}
 
 If yes, write `models/<project_name>/bi_engineer_handoff.md`:
 

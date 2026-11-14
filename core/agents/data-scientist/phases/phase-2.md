@@ -55,9 +55,7 @@ Flag early if data appears insufficient.
 - **Data environment:** <not greenfield | Data exists but inaccessible — sources user-described, not verified | GREENFIELD — No data assets detected. Theoretical study design only>
 ```
 
-::GATE:: id=data-scientist-phase-2 phase=2 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase}}
 **If Insufficient, do not proceed. Discuss alternatives.**
 
 ---

@@ -12,12 +12,13 @@ const cmds = (s) => (Object.values(s.hooks || {}).flat().flatMap((e) => (e.hooks
 const BAD = /relay\.js|ui-push|\.shards\/ui/;
 
 describe('installer without UI', () => {
-  it('fresh install has gate hooks and no UI traces', () => {
+  it('fresh install wires no gate hooks and has no UI traces', () => {
     const dir = tmp();
     const r = run(dir);
     expect(r.status, r.stderr).toBe(0);
     const s = JSON.parse(fs.readFileSync(path.join(dir, '.claude/settings.json'), 'utf8'));
-    expect(cmds(s).filter((c) => /gate-hook\.js/.test(c)).length).toBe(3);
+    expect(cmds(s).filter((c) => /gate-hook\.js/.test(c)).length).toBe(0);
+    expect(fs.existsSync(path.join(dir, '.shards/hooks/gate-hook.js'))).toBe(false);
     expect(cmds(s).some((c) => BAD.test(c))).toBe(false);
     expect([...(s.permissions.allow || []), ...(s.permissions.deny || []), ...(s.permissions.ask || [])].some((p) => BAD.test(p))).toBe(false);
     expect(fs.existsSync(path.join(dir, '.shards/ui'))).toBe(false);
@@ -25,12 +26,13 @@ describe('installer without UI', () => {
     expect(fs.existsSync(path.join(dir, '.claude/commands/shards-guide.md'))).toBe(false);
   });
 
-  it('re-install strips legacy relay hooks and ui permissions', () => {
+  it('re-install strips legacy relay and gate-hook wiring and ui permissions', () => {
     const dir = tmp();
     fs.mkdirSync(path.join(dir, '.claude'));
     const relay = (c) => ({ matcher: '', hooks: [{ type: 'command', command: `node $CLAUDE_PROJECT_DIR/.shards/ui/relay.js ${c}` }] });
+    const gate = (c) => ({ matcher: '', hooks: [{ type: 'command', command: `node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js ${c}` }] });
     fs.writeFileSync(path.join(dir, '.claude/settings.json'), JSON.stringify({
-      hooks: { Stop: [relay('stop')], PostToolUse: [relay('post-tool-use')], PreToolUse: [{ matcher: 'Bash', hooks: [{ type: 'command', command: 'node $CLAUDE_PROJECT_DIR/.shards/ui/relay.js pre-tool-use' }] }] },
+      hooks: { Stop: [relay('stop'), gate('stop')], PostToolUse: [relay('post-tool-use')], PreToolUse: [{ matcher: 'Bash', hooks: [{ type: 'command', command: 'node $CLAUDE_PROJECT_DIR/.shards/ui/relay.js pre-tool-use' }] }] },
       permissions: { allow: ['Bash(node .shards/ui/ui-push.js:*)', 'Bash(ls:*)'] },
     }));
     const r = run(dir);
@@ -38,7 +40,7 @@ describe('installer without UI', () => {
     const s = JSON.parse(fs.readFileSync(path.join(dir, '.claude/settings.json'), 'utf8'));
     expect(cmds(s).some((c) => BAD.test(c))).toBe(false);
     expect(s.hooks.PostToolUse).toBeUndefined();
-    expect(cmds(s).filter((c) => /gate-hook\.js/.test(c)).length).toBe(3);
+    expect(cmds(s).filter((c) => /gate-hook\.js/.test(c)).length).toBe(0);
     expect(s.permissions.allow.some((p) => BAD.test(p))).toBe(false);
     expect(s.permissions.allow).toContain('Bash(ls:*)');
   });

@@ -37,10 +37,7 @@ transfer occurs.
    and follow its instructions for pushing experiment data to the browser throughout
    the session. This is the same pattern used by the Data Analyst's UI mode.
 
-::GATE:: id=specific-instructions-ml-engineer-experiment-phase0 phase=0 kind=execute
-Do not proceed to Phase 1 until the user explicitly confirms the outcome
-metric and experiment count.
-::ENDGATE::
+{{gate kind=execute phase=0 id=specific-instructions-ml-engineer-experiment-phase0}}
 
 If the user modifies any parameter, update before proceeding.
 
@@ -62,41 +59,24 @@ For each experiment, provide:
 
 Present the list clearly. Explain your prioritisation rationale briefly.
 
-### Optional `/goal` activation
+### Optional unattended Phase 2 (plan approval)
 
-{{protocol goal_mode}} in full
-before writing the gate. Compose a candidate `/goal` condition from the
-Phase 0 + Phase 1 settings (outcome metric, success threshold if set, number
-of experiments planned) using the Experiment condition template, and include
-the resulting copy-paste block in the message that precedes the Phase 1 gate:
+{{protocol goal_mode}} in full before
+raising the gate. Goal mode is the `plan` gate policy: in the message that
+precedes the Phase 1 gate, offer an unattended Phase 2 and present the plan and
+budget (number of experiments planned, outcome metric, success threshold if
+set). Raise the gate as a `plan-approval` gate via `gate_request`, then STOP and
+wait for the user; never confirm it yourself.
 
-```text
-/goal The experiment run is complete when ANY of the following is true:
-  (a) the most recent inline experiment summary shows <outcome_metric> has
-      <reached or exceeded <success_threshold> if the metric is being
-       maximized | dropped to or below <success_threshold> if the metric
-       is being minimized>;
-  (b) the agent has printed "Experiment <N> complete" with N == <planned_count>;
-  (c) the agent has begun writing the Phase 3 summary
-      (look for "experiment_summary.md" or "Phase 3").
-Or stop after <planned_count+3> turns.
-```
+Activation is optional. With plan approval, Phase 2 runs without
+per-experiment prompts: later gates become notices (keep calling `gate_request`
+with `evidence` after each experiment) and the existing **Step 7 inline
+summary** continues each iteration. Without it, each gate waits for the user.
+Either way, the Phase 2 stop conditions (success threshold reached, user
+intervention, crash) still terminate the loop, and a failure or anomaly blocks
+until the user responds.
 
-If no success threshold was set, drop clause (a) and rely on (b) and (c).
-
-Activation is optional. With `/goal`, Phase 2 runs without per-experiment
-prompts — the existing **Step 7 inline summary** is exactly the evidence the
-evaluator reads (already required by the loop, no schema change). Without
-`/goal`, the Phase 2 stop conditions (success threshold reached, user
-intervention, crash) still terminate the loop.
-
-If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
-rejected), accept that and proceed — the loop still runs and terminates per
-the existing logic.
-
-::GATE:: id=specific-instructions-ml-engineer-experiment-phase1 phase=1 kind=execute
-Do not begin any experiment until the user explicitly confirms the plan.
-::ENDGATE::
+{{gate kind=execute phase=1 id=specific-instructions-ml-engineer-experiment-phase1}}
 Wait for confirmation. If the user modifies the plan, update it before proceeding.
 
 ### Write experiment plan file
@@ -396,12 +376,14 @@ if the user wants to keep going. Written in your voice, opinionated.>
 ### Present to user
 Read both files back to the user.
 
-::GATE:: id=specific-instructions-ml-engineer-experiment-phase3 phase=3 kind=final validates=ml_engineer
+Gate readback (pass this as the `summary`):
+
 Ask the user:
 - What do you want to adopt?
 - Do you want to run more experiments?
 - Or should we stop here?
-::ENDGATE::
+
+{{gate kind=final phase=3 validates=ml-engineer id=specific-instructions-ml-engineer-experiment-phase3}}
 
 Wait for their response before taking any further action.
 

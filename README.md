@@ -115,8 +115,6 @@ your-project/
 │   ├── ui/                     # Shards web UI (local server + browser client)
 │   │   ├── js/                 # Browser-side ES modules
 │   │   └── css/                # Stylesheets
-│   ├── hooks/
-│   │   └── gate-hook.js        # Stop / PreToolUse / UserPromptSubmit gate enforcer
 │   ├── gates/
 │   │   └── state.json          # Current gate state + full history
 │   └── knowledge/              # Persistent Knowledge Ledger
@@ -165,13 +163,10 @@ Gates are machine-enforced via `::GATE::` fences and three Claude Code hooks:
 ::ENDGATE::
 ```
 
-**Hooks installed by the shards installer:**
+**Hooks installed by the shards installer** (the v1 gate hooks were removed in E11.9 and are no longer installed):
 
 | Hook | File | Behavior |
 |------|------|----------|
-| `Stop` | `.shards/hooks/gate-hook.js stop` | Detects gate fences in the last assistant message; opens `state.json`; blocks if post-fence content violates the gate |
-| `PreToolUse` | `.shards/hooks/gate-hook.js pre-tool-use` | While a gate is open, blocks all tools except `Read`, `Glob`, `Grep` |
-| `UserPromptSubmit` | `.shards/hooks/gate-hook.js user-prompt-submit` | Classifies user prompt as confirm / deny / ambiguous; closes gate on confirm |
 | `Stop` | `.shards/ui/relay.js stop` | UI relay — pushes stop events to the Shards UI |
 | `UserPromptSubmit` | `.shards/ui/relay.js user-prompt` | UI relay — pushes user prompts to the Shards UI |
 | `PreToolUse(Bash)` | `.shards/ui/relay.js pre-tool-use` | UI relay — pushes pre-tool-use events to the Shards UI |

@@ -110,9 +110,7 @@ For each chart or panel, document:
   - <suggestion or "none">
 ```
 
-::GATE:: id=bi-engineer-phase-3 phase=3 kind=phase validates=bi_engineer
-Read this section back to the user. Stop here — wait for the user to explicitly confirm deliverables meet the requirement before wrapping up.
-::ENDGATE::
+{{gate kind=phase validates=bi-engineer}}
 
 ---
 

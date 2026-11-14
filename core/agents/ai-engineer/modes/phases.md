@@ -95,9 +95,7 @@ Ask about:
 - **Business priority:** Critical | High | Medium
 ```
 
-::GATE:: id=specific-instructions-ai-engineer-phases-phase1 phase=1 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=1 id=specific-instructions-ai-engineer-phases-phase1}}
 
 ---
 
@@ -173,9 +171,7 @@ Keep the response focused and practical — I'll handle the AI/LLM design.
   - <summary of infrastructure feasibility findings>
 ```
 
-::GATE:: id=specific-instructions-ai-engineer-phases-phase2 phase=2 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=2 id=specific-instructions-ai-engineer-phases-phase2}}
 
 ---
 
@@ -261,9 +257,7 @@ Design decisions to make:
 
 **DIVERGE check:** If you identified 2-3 mutually exclusive architectural approaches (e.g., different positions on the Simplicity Ladder, fundamentally different system designs) that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
 
-::GATE:: id=specific-instructions-ai-engineer-phases-phase3 phase=3 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=3 id=specific-instructions-ai-engineer-phases-phase3}}
 
 ---
 
@@ -394,9 +388,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 - **Evaluation cadence:** <on every prompt change | weekly | before each deploy>
 ```
 
-::GATE:: id=specific-instructions-ai-engineer-phases-phase4 phase=4 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=4 id=specific-instructions-ai-engineer-phases-phase4}}
 
 ---
 
@@ -543,9 +535,7 @@ Return your assessment using the standard Academic review format.
   - Prevention: <post-incident review process>
 ```
 
-::GATE:: id=specific-instructions-ai-engineer-phases-phase5 phase=5 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=5 id=specific-instructions-ai-engineer-phases-phase5}}
 
 ---
 
@@ -701,9 +691,7 @@ Goal: Build the prompts, evaluation harness, integration code, and safety layer.
 - **Surprising findings:** <anything unexpected>
 ```
 
-::GATE:: id=specific-instructions-ai-engineer-phases-phase6 phase=6 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase phase=6 id=specific-instructions-ai-engineer-phases-phase6}}
 
 ---
 
@@ -1009,9 +997,7 @@ the protocol. Present candidates to the user for confirmation before writing.
 
 Update specs header status to `Complete`.
 
-::GATE:: id=specific-instructions-ai-engineer-phases-phase7 phase=7 kind=final
-Read this final section back to the user. Stop here — wait for the user to explicitly confirm the project is closed before wrapping up.
-::ENDGATE::
+{{gate kind=final phase=7 id=specific-instructions-ai-engineer-phases-phase7}}
 
 ---
 

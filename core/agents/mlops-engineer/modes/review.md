@@ -18,9 +18,7 @@ Ask the user:
    or ask them to paste key files)
 4. Are there any known concerns or hypotheses going in? (or is this an open review?)
 
-::GATE:: id=mlops-engineer-review-phase-1 phase=1 kind=phase
-Do not proceed until the user confirms the review scope.
-::ENDGATE::
+{{gate kind=phase phase=1 id=mlops-engineer-review-phase-1}}
 Summarise what you're reviewing and what you'll assess. Wait for explicit confirmation.
 
 ---
@@ -100,9 +98,11 @@ _SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant
 
 Read the review file back to the user in full.
 
-::GATE:: id=mlops-engineer-review-phase-5 phase=5 kind=final
+Gate readback (pass this as the `summary`):
+
 Ask the user:
-::ENDGATE::
+
+{{gate kind=final phase=5 id=mlops-engineer-review-phase-5}}
 - Do you want to adopt any of these recommendations now?
 - Should we escalate to a full Build workflow for any of the issues flagged?
 - Or is this review complete?

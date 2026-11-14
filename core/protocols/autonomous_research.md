@@ -105,34 +105,29 @@ Before the gate, tell the user:
 > Phase 3 remain gated. You can steer the loop at any time by editing
 > `experiments/research_brief.md` — I re-read it every iteration.
 
-### A.6 Optional `/goal` activation
+### A.6 Unattended loops: the `plan` gate policy
 
-After announcing the behavioral exception and before the per-agent Phase 1
-gate, propose an opt-in `/goal` to drive the Phase 2 loop autonomously without
-per-turn prompts.
-
-{{protocol goal_mode}} in full and
-follow the **AR condition template**. Compose a candidate condition using the
-Phase 0 parameters (primary metric, target, iteration budget, metric floor)
-and include it as a copy-paste block in the per-agent Phase 1 message,
-immediately before the gate fence.
+Goal mode is the `plan` gate policy (see `goal_mode.md`). At the per-agent
+Phase 1 gate, offer the user an unattended Phase 2 loop. Present the plan and
+budget (iteration budget, cost ceiling, primary metric, target, metric floor)
+and call `gate_request` for a `plan-approval` gate. Then STOP and wait for the
+user; never confirm it yourself. The user confirms via the in-host prompt or by
+replying in chat.
 
 Tell the user the activation is optional:
-- **With `/goal`:** the loop drives itself turn-by-turn without per-iteration
-  prompts; the evaluator decides when to stop based on the inline iteration
-  summaries the agent prints (see B.4 + B.8 transcript discipline below).
-- **Without `/goal`:** the loop still runs autonomously per §B, and §E
-  convergence + §G safety rails still terminate it. Per-turn prompts may
-  appear depending on the user's permission settings.
+- **With plan approval:** after the user confirms, every later gate kind
+  (`confirm`, `checkpoint`, `execute`) becomes a notice. Keep calling
+  `gate_request` with `evidence` each iteration and keep looping. The loop
+  stops on failure, anomaly, or budget exhaustion, and the next gate waits for
+  a human again.
+- **Without it (default `phase` policy):** the loop still runs autonomously
+  per §B. `confirm`/`checkpoint` gates with `evidence.status: "pass"` are
+  recorded automatically; a failure or anomaly blocks until the user confirms.
+  Under `strict`, a human confirms every gate.
 
-Either way, §E convergence and §G safety rails are unchanged. If `/goal` is
-unavailable (old Code version, hooks disabled, command rejected), accept that
-and proceed — the existing stop logic still terminates the loop.
-
-If the user activates `/goal`, the per-iteration **inline summary echo** in
-§B.4 and §B.8 below is mandatory (otherwise the evaluator has nothing to read).
-If the user skips `/goal`, the inline echoes are still recommended — they keep
-the run readable in the transcript.
+Either way, §E convergence and §G safety rails are unchanged. The per-iteration
+**inline summary echo** in §B.4 and §B.8 stays recommended: it keeps the run
+readable in the transcript.
 
 ---
 
@@ -201,8 +196,7 @@ Record `hypothesisSource` in the results entry:
 Print inline: `[AR] Iteration N: <one-line hypothesis>`
 
 This is the **start-of-iteration** echo. The matching **end-of-iteration** echo
-is required at B.8 below — it's what the `/goal` evaluator (if active) reads
-to decide whether the loop is done.
+is recommended at B.8 below — it keeps the loop legible in the transcript.
 
 #### B.5 Implement
 
@@ -281,11 +275,8 @@ the Research Log in `research_brief.md`:
 <one-line honest read: does this result feel real? methodology concerns?>
 ```
 
-**Inline iteration summary (required when `/goal` is active; recommended
-otherwise).** After writing the iteration file and updating `results.json`,
-print the per-iteration summary inline in the same assistant turn. The `/goal`
-evaluator (per `goal_mode.md`) can only read the transcript, not files —
-without this echo the goal can never resolve. Use this exact format:
+**Inline iteration summary (recommended).** After writing the iteration file and updating `results.json`,
+print the per-iteration summary inline in the same assistant turn. Use this format:
 
 ```
 [AR] Iteration N complete.
@@ -305,7 +296,7 @@ The enum here matches §E.7's canonical list — §E stop conditions plus §G sa
 
 These echoes carry the same content already written to `results.json` and the
 per-iteration markdown — the inline copy makes the run legible in the
-transcript and is the substrate the `/goal` condition templates anchor to.
+transcript.
 
 #### B.9 Git checkpoint
 
@@ -345,27 +336,22 @@ Update `results.json.costAccounting`:
 Check against the cost ceiling (Section G.5). If at 50% or 80% of ceiling emit
 a soft warning; at 100% hard-stop the loop.
 
-**Micro-gate (opt-in, overnight preset):** micro-gates are designed as a
-user-interrupt window emitted every K iterations (default K=5). They are
-currently **disabled by default** because the gate hook does not yet
-support auto-close — a micro-gate blocks the loop until the user confirms,
-which defeats the overnight preset's purpose.
+**Micro-gate (opt-in, overnight preset):** micro-gates are a user-interrupt
+window requested every K iterations (default K=5) with
+`gate_request(kind=confirm, evidence={status, checks})`. Under the default
+`phase` policy a `confirm` gate with `evidence.status: "pass"` is recorded
+automatically and does not block, so it is not an interrupt window. Under
+`strict` it blocks until the user confirms. Under `plan` it is a notice.
 
-**Default behavior:** do NOT emit micro-gates during Phase 2 unless the user
-has explicitly opted in at Phase 0 with the understanding that the loop will
-block at each micro-gate.
+**Default behavior:** do NOT request micro-gates during Phase 2 unless the user
+has explicitly opted in at Phase 0 with the understanding that, under `strict`,
+the loop will block at each one.
 
-**If the user opts in,** emit a `::GATE::` fence with `kind=confirm` every K
-iterations:
-
-```
-::GATE:: id=specific-instructions-shared-autonomous-research-micro-<project>-<N> phase=2 kind=confirm
-Iteration N complete. Reply "continue" to proceed, or give steering notes.
-::ENDGATE::
-```
-
-Note the ID includes the iteration number so each micro-gate has a unique ID
-per the harness's "never duplicate gate ids" rule.
+**If the user opts in,** call `gate_request(kind=confirm)` every K iterations
+with a name that includes the iteration number (for example
+`autonomous-research-micro-<project>-<N>`), evidence summarizing the iteration,
+and the summary "Iteration N complete. Reply \"continue\" to proceed, or give
+steering notes." If the gate is pending, STOP and wait for the user.
 
 **Alternative for unattended overnight runs:** rely on the user editing
 `research_brief.md` Steering Notes mid-run as the interrupt mechanism
@@ -477,14 +463,13 @@ based on data leakage or a methodology flaw), execute:
 
 1. Mark `results.json.experiments[M].retroInvalidated = true` and set
    `retroInvalidationReason` to the reviewer's explanation.
-2. **Prompt the user via a micro-gate** — retro-reverts are destructive enough
+2. **Prompt the user via a confirm gate** — retro-reverts are destructive enough
    to warrant explicit confirmation even in overnight mode:
-   ```
-   ::GATE:: id=specific-instructions-shared-autonomous-research-retro-<project>-<N> phase=2 kind=confirm
-   Reviewer flagged iteration M's GREEN as invalid (<reason>). Rolling back to
-   iteration M-1's state will discard iterations M..<current>. Confirm?
-   ::ENDGATE::
-   ```
+   Call `gate_request(kind=confirm)` with `evidence.status: "fail"` (the
+   reviewer flagged an anomaly, so it blocks under every policy) and the
+   summary "Reviewer flagged iteration M's GREEN as invalid (<reason>). Rolling
+   back to iteration M-1's state will discard iterations M..<current>.
+   Confirm?". Then STOP and wait for the user.
 3. On confirm: revert all commits after iteration M-1's `lastGreenCommit`
    using the file-level checkout protocol in C.3, expanded to cover the full
    range (M..HEAD).
@@ -522,7 +507,7 @@ Constraints:
 - Minimum: headline metric value, at-most-one component test or smoke-check result, one-sentence summary.
 - No `## Validation` section is written to `project-specs.md` during the AR loop — the Phase 3 research summary (Section I) consolidates validation across kept iterations.
 
-The gate hook does **not** enforce this per-iteration block because AR iterations do not emit gate fences. Discipline is on the AR loop itself; the Phase 3 consolidation is where structural enforcement resumes.
+The runtime does **not** enforce this per-iteration block. Discipline is on the AR loop itself; the Phase 3 consolidation is where structural enforcement resumes. Per-iteration `gate_request` calls carry the same summary as `evidence` (`status` plus `checks`).
 
 ---
 
@@ -987,8 +972,8 @@ transcripts.>
 ## Your Task
 
 Execute Sections A-G of the shared AR protocol autonomously inside this branch
-directory. **Do not emit `::GATE::` fences** — sub-agents invoked via Task must
-not emit gates (harness rule). Phase 0 is already set up by this spawn prompt.
+directory. **Do not call `gate_request`** — sub-agents invoked via Task must
+not request gates. Phase 0 is already set up by this spawn prompt.
 Phase 1 writes the branch-local research_brief.md without a gate. Phase 2 runs
 gate-free as designed. Phase 3 is truncated to writing `branch-report.md` only
 (no user-facing summary gate).
@@ -1076,7 +1061,7 @@ a safety rail. **Branches do not wait for each other.** The parent specialist
 ### H.8 Branch gate policy
 
 Branches are Task-invoked sub-agents. Per `syn/arbiter.md` and the harness
-sub-agent rule, sub-agents **must not emit `::GATE::` fences**. All
+sub-agent rule, sub-agents **must not call `gate_request`**. All
 human-facing gates live in the parent's Phase 3 (arbitration + consolidated
 summary).
 
@@ -1253,7 +1238,7 @@ Append / update the `## Autonomous Research` section in `project-specs.md`:
 - **Recommendations:** `experiments/research_recommendations.md`
 ```
 
-Also write a consolidated `## Validation` section to `project-specs.md` per `shared/validation_protocol.md`. The Phase 3 gate is validation-eligible (the AR run produces a durable set of kept iterations / final artifact), and the gate hook enforces the schema at Phase 3.
+Also write a consolidated `## Validation` section to `project-specs.md` per `shared/validation_protocol.md`. The Phase 3 gate is validation-eligible (the AR run produces a durable set of kept iterations / final artifact), and `gate_request` checks the schema at Phase 3.
 
 Consolidation rules:
 - **Track:** `deep` (Phase 3 is the deep gate; per-iteration blocks were already Fixer-level)
@@ -1263,7 +1248,7 @@ Consolidation rules:
 - **Downstream Impact:** consumers of the final artifact (services, marts, reports) — same analysis the agent would do in a normal deep-track phase
 - **Summary:** two to four sentences on what was validated across the kept iterations, what residual risk exists, and what would need a fuller validation pass if this is productionized
 
-This section is machine-readable by the gate hook when Phase 3 emits its gate with `validates=<agent>`. Per-agent `research.md` files are responsible for including that attribute on their Phase 3 gate fence.
+This section is machine-readable by `gate_request` when Phase 3 requests its gate with `validates=<agent>`. Per-agent `research.md` files are responsible for setting that attribute on their Phase 3 gate.
 
 ### I.5 Knowledge harvest
 
@@ -1276,10 +1261,10 @@ promotion (see Section H.10).
 Read both the summary and recommendations back to the user.
 
 **The Phase 3 gate is owned by the per-agent `research.md` file**, not by this
-shared protocol. Each agent emits its own Phase 3 gate with its
+shared protocol. Each agent requests its own Phase 3 gate with its
 agent-specific ID (e.g., `specific-instructions-ml-engineer-research-phase3`
 for ML Engineer, `specific-instructions-ai-engineer-research-phase3` for AI
-Engineer, etc.). Do **not** emit a shared-protocol Phase 3 gate here — doing
+Engineer, etc.). Do **not** request a shared-protocol Phase 3 gate here — doing
 so would duplicate the gate or orphan the ID namespace.
 
 The typical gate body is:

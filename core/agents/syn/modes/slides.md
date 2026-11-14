@@ -23,8 +23,8 @@ better fits.
 - Gate before destructive action — exactly two gates (Step 4 pre-build,
   Step 7 pre-iteration). MCP calls modify the user's Google Drive, so they
   get gated.
-- Sub-agent verdicts — specialists return verdict strings, not `::GATE::`
-  fences. See [`modes/final_review.md`](final_review.md).
+- Sub-agent verdicts — specialists return verdict strings, and do not
+  call `gate_request`. See [`modes/final_review.md`](final_review.md).
 
 ---
 
@@ -228,9 +228,11 @@ If the user accepts the markdown-only fallback, finalize `presentation-spec.md`
 3. The MCP tool that will be called (the exact tool name you detected, e.g.
    `mcp__google_workspace__create_presentation`)
 
-::GATE:: id=specific-instructions-syn-slides-phase0 phase=0 kind=phase
+Gate readback (pass this as the `summary`):
+
 "Build the deck? (y/n)"
-::ENDGATE::
+
+{{gate kind=phase phase=0 id=specific-instructions-syn-slides-phase0}}
 
 Do not call any MCP tool until this gate is confirmed. The MCP write modifies
 the user's Google Drive — gate is mandatory.
@@ -355,9 +357,11 @@ revisions:
 > - Slide 3: [revision]
 > - Slide 7: [revision]"
 
-::GATE:: id=specific-instructions-syn-slides-phase0-2 phase=0 kind=phase
+Gate readback (pass this as the `summary`):
+
 "Apply these revisions? (y/n) — or 'skip' to ship as-is"
-::ENDGATE::
+
+{{gate kind=phase phase=0 id=specific-instructions-syn-slides-phase0-2}}
 
 - **y** → apply each revision via `batch_update_presentation`. After all
   revisions are applied, re-fetch via `get_presentation`, append a

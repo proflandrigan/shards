@@ -44,9 +44,7 @@ Present as a DAG:
 - **Naming conventions confirmed:** Yes | No — <deviations>
 ```
 
-::GATE:: id=data-engineer-deep-phase-3 phase=3 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase}}
 
 ---
 

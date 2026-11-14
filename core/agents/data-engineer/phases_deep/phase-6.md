@@ -17,32 +17,18 @@ Wait for any signal from the user before beginning build steps.
 
 ### Incremental testing — checkpoint gates between layers
 
-{{protocol incremental_testing}} during this build. Each layer below is a checkpoint seam — after a layer's models all build green and their tests pass, emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before advancing to the next layer. Do not chain `dbt build` across all layers in one shot and eyeball a pass/fail at the end.
+{{protocol incremental_testing}} during this build. Each layer below is a checkpoint seam — after a layer's models all build green and their tests pass, call `gate_request` for a `kind=checkpoint` gate and wait for the user before advancing to the next layer. Do not chain `dbt build` across all layers in one shot and eyeball a pass/fail at the end.
 
-Checkpoint gate fence — emit exactly this shape. Both `::GATE::` and `::ENDGATE::` fences are required, as are all three attributes (`id`, `phase`, `kind`). No prose outside the fence.
+Each checkpoint is a `kind=checkpoint` gate with a `name=` slug, one per layer below (name is `[a-z0-9-]+`, unique within the file, no `validates=`). Pass `evidence={status: pass|fail, checks: [...]}` with the component name, the exact test command you ran, and measured facts (e.g. "df.shape = (48211, 47)", "null rate on join key = 0.00%", "sample head matches expected schema"). Under the default `phase` policy a passing checkpoint is recorded automatically and blocks only on fail or anomaly.
 
-```
-::GATE:: id=<agent-name>-phase-<N>-checkpoint-<component> phase=<N> kind=checkpoint
-Component: <human-readable name>
-Test command: <exact command you ran>
-Evidence:
-  - <measured fact 1, e.g. "df.shape = (48211, 47)">
-  - <measured fact 2, e.g. "null rate on join key = 0.00%">
-  - <measured fact 3, e.g. "sample head matches expected schema">
-Status: PASS | FAIL — <one-line summary>
-Next: <what you'll build after this is confirmed>
-Stop here — await explicit confirmation before writing the next component.
-::ENDGATE::
-```
+Expected checkpoint names for this phase (in order as you build):
 
-Expected checkpoint gate IDs for this phase (emit in order as you build):
+- `{{gate kind=checkpoint name=sources}}` — source definitions compile; `dbt source freshness` (or equivalent) passes.
+- `{{gate kind=checkpoint name=staging}}` — all staging models build green; schema tests pass; row counts match source expectations.
+- `{{gate kind=checkpoint name=intermediate}}` — intermediate models build green; join fan-out verification queries match Phase 3 predictions.
+- `{{gate kind=checkpoint name=marts}}` — mart models build green; grain-uniqueness tests pass; sample output inspected.
 
-- `data-engineer-deep-phase-6-checkpoint-sources` — source definitions compile; `dbt source freshness` (or equivalent) passes.
-- `data-engineer-deep-phase-6-checkpoint-staging` — all staging models build green; schema tests pass; row counts match source expectations.
-- `data-engineer-deep-phase-6-checkpoint-intermediate` — intermediate models build green; join fan-out verification queries match Phase 3 predictions.
-- `data-engineer-deep-phase-6-checkpoint-marts` — mart models build green; grain-uniqueness tests pass; sample output inspected.
-
-The hook blocks all non-read tools while a checkpoint is open. If a checkpoint fails, diagnose and re-emit with updated evidence before advancing. Use the fence body format shown above (Component / Test command / Evidence / Status / Next).
+If a checkpoint fails, diagnose and call `gate_request` again with updated evidence before advancing. Never confirm your own checkpoint.
 
 Build in order:
 1. Source definitions
@@ -61,8 +47,8 @@ fan-out in Phase 3, halt and diagnose before advancing to the next model.
 
 **Auto-verify mode**: when the layer has 3+ models with joins, the sweep of
 count-before / count-after queries is the bulk read-only verification pattern
-auto-verify is for. Open `::AUTO-VERIFY:: agent=data-engineer phase=6` before
-the sweep, `::ENDAUTO::` after. See
+auto-verify is for. Open `{{auto_verify start tool_budget=20 ttl=600}}` before
+the sweep, `{{auto_verify end}}` after (read-only only; gates always win). See
 [`protocols/auto_verify_mode.md`](../../../protocols/auto_verify_mode.md).
 
 **SQL loading rule (Python scripts only)** — dbt model files are `.sql` by nature.
@@ -91,9 +77,7 @@ sql = Path("models/marts/mart_name.sql").read_text()
 - **Performance notes:** <run time, row counts, anything notable>
 ```
 
-::GATE:: id=data-engineer-deep-phase-6 phase=6 kind=phase validates=data_engineer
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase validates=data-engineer}}
 
 ---
 

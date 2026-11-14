@@ -37,9 +37,7 @@ Define: schema tests (.yml), custom data tests (tests/), source freshness.
 - **Test coverage:** Full | Partial — <gaps>
 ```
 
-::GATE:: id=data-engineer-deep-phase-4 phase=4 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase}}
 
 ---
 

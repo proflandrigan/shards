@@ -28,7 +28,6 @@ const COMMANDS_DEST = path.join(CLAUDE_DIR, "commands");
 const TEMPLATES_DEST = path.join(PROJECT_DIR, "templates");
 const SHARDS_DIR = path.join(PROJECT_DIR, ".shards");
 const DOCS_DEST = path.join(PROJECT_DIR, "docs", "shards-guide");
-const HOOKS_DEST = path.join(SHARDS_DIR, "hooks");
 
 const MANIFEST_NAME = ".shards-manifest.json";
 
@@ -240,30 +239,6 @@ function install() {
     console.log(`  ✓ docs/shards-guide/ (${docFiles.length} files, plain-markdown copy)`);
   }
 
-  // 5b. Copy gate-hook.js + gate-hook/ into .shards/hooks/
-  console.log("\n📦 Installing gate hooks...");
-  fs.mkdirSync(HOOKS_DEST, { recursive: true });
-  const gateHookSrc = path.join(PACKAGE_ROOT, "tools", "gate-hook.js");
-  const gateHookDirSrc = path.join(PACKAGE_ROOT, "tools", "gate-hook");
-  const gateHookDest = path.join(HOOKS_DEST, "gate-hook.js");
-  const gateHookDirDest = path.join(HOOKS_DEST, "gate-hook");
-  fs.copyFileSync(gateHookSrc, gateHookDest);
-  copyDir(gateHookDirSrc, gateHookDirDest);
-  console.log(`  ✓ .shards/hooks/gate-hook.js`);
-
-  // tools/gate-hook/{validation,auto-allowlist,sql-guard}.js are shims that
-  // require('../../runtime/lib/<name>'); from .shards/hooks/gate-hook/ that
-  // resolves to .shards/runtime/lib/. Install only the libs the shims need
-  // (events.js has heavier deps and is not used by the hook).
-  const RUNTIME_LIBS = ["validation.js", "auto-allowlist.js", "sql-guard.js"];
-  const runtimeLibDest = path.join(SHARDS_DIR, "runtime", "lib");
-  fs.mkdirSync(runtimeLibDest, { recursive: true });
-  for (const f of RUNTIME_LIBS) {
-    const src = path.join(PACKAGE_ROOT, "runtime", "lib", f);
-    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(runtimeLibDest, f));
-  }
-  console.log(`  ✓ .shards/runtime/lib/ (${RUNTIME_LIBS.join(", ")})`);
-
   // 6. Seed .claude/settings.json with readonly preset and PreToolUse hook.
   //
   // Hook commands use `$CLAUDE_PROJECT_DIR` (substituted by Claude Code at
@@ -271,30 +246,9 @@ function install() {
   // settings.json is portable across developers and machines. See:
   // https://code.claude.com/docs/en/hooks
   const settingsPath = path.join(CLAUDE_DIR, "settings.json");
-  const gateCmd = (subcmd) =>
-    `node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js ${subcmd}`;
-
-  // Gate hooks — enforce the ::GATE:: workflow pattern.
-  const gateStopHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: gateCmd("stop") }],
-  };
-  const gatePreToolUseHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: gateCmd("pre-tool-use") }],
-  };
-  const gateUserPromptSubmitHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: gateCmd("user-prompt-submit") }],
-  };
-
-  // Flat list of (event, matcher, command) triples recorded in the manifest
-  // so uninstall can surgically remove ONLY the entries the installer wrote.
-  const installedHookEntries = [
-    { event: "PreToolUse", matcher: "", command: gateCmd("pre-tool-use") },
-    { event: "Stop", matcher: "", command: gateCmd("stop") },
-    { event: "UserPromptSubmit", matcher: "", command: gateCmd("user-prompt-submit") },
-  ];
+  // The v1 gate hooks (Stop/PreToolUse/UserPromptSubmit) are no longer installed.
+  // The manifest keeps an empty hookEntries list so its shape is stable.
+  const installedHookEntries = [];
 
   // Permission rules for shards specialists.
   //
@@ -417,11 +371,6 @@ function install() {
 
   if (!fs.existsSync(settingsPath)) {
     const defaultSettings = {
-      hooks: {
-        Stop: [gateStopHook],
-        PreToolUse: [gatePreToolUseHook],
-        UserPromptSubmit: [gateUserPromptSubmitHook],
-      },
       permissions: {
         allow: BASE_ALLOW,
         deny: BASE_DENY,
@@ -437,43 +386,15 @@ function install() {
     if (!settings.hooks) settings.hooks = {};
     let changed = false;
 
-    // Generic dedup: add `entry` under settings.hooks[eventName] unless an
-    // entry with the same matcher + same `command` (exact match OR substring
-    // match against `dedupSubstring` so legacy absolute-path entries are
-    // recognized as already-present) is already there. Matcher comparison
-    // normalizes case+whitespace so a user-edited "Bash " or "bash" still
-    // recognises the installer-shipped "Bash" — without this, re-install would
-    // happily append a duplicate hook for the same logical (event, matcher,
-    // command) triple, multiplying the per-tool-call hook firing.
-    const normMatcher = (m) => String(m || "").trim().toLowerCase();
-    const ensureHookEntry = (eventName, entry, dedupSubstring) => {
-      if (!Array.isArray(settings.hooks[eventName])) settings.hooks[eventName] = [];
-      const targetCmd = entry.hooks[0].command;
-      const targetMatcher = normMatcher(entry.matcher);
-      const exists = settings.hooks[eventName].some((existing) => {
-        if (normMatcher(existing.matcher) !== targetMatcher) return false;
-        if (!Array.isArray(existing.hooks)) return false;
-        return existing.hooks.some((h) => {
-          if (!h.command) return false;
-          if (h.command === targetCmd) return true;
-          // Recognize legacy variants (absolute paths, alternate quoting) so
-          // we don't double-register on re-install.
-          return dedupSubstring && h.command.includes(dedupSubstring);
-        });
-      });
-      if (!exists) {
-        settings.hooks[eventName].push(entry);
-        changed = true;
-      }
-    };
-
     // Strip legacy relay hooks (UI bridge from older installs; the UI moved to Studio).
     const isLegacyUi = (c) => typeof c === "string" && /relay\.js|ui-push|\.shards\/ui/.test(c);
+    // Strip gate-hook wiring left by pre-E11.9 installs (the hook is no longer shipped).
+    const isLegacyGate = (c) => typeof c === "string" && /gate-hook\.js/.test(c);
     for (const ev of Object.keys(settings.hooks)) {
       if (!Array.isArray(settings.hooks[ev])) continue;
       const before = settings.hooks[ev].length;
       settings.hooks[ev] = settings.hooks[ev].filter(
-        (e) => !(Array.isArray(e && e.hooks) && e.hooks.some((h) => isLegacyUi(h && h.command)))
+        (e) => !(Array.isArray(e && e.hooks) && e.hooks.some((h) => isLegacyUi(h && h.command) || isLegacyGate(h && h.command)))
       );
       if (settings.hooks[ev].length !== before) changed = true;
       if (settings.hooks[ev].length === 0) { delete settings.hooks[ev]; changed = true; }
@@ -486,11 +407,6 @@ function install() {
         if (settings.permissions[k].length !== before) changed = true;
       }
     }
-
-    // Gate hooks.
-    ensureHookEntry("Stop", gateStopHook, "gate-hook.js stop");
-    ensureHookEntry("PreToolUse", gatePreToolUseHook, "gate-hook.js pre-tool-use");
-    ensureHookEntry("UserPromptSubmit", gateUserPromptSubmitHook, "gate-hook.js user-prompt-submit");
 
     // Merge missing permission patterns (non-destructive — only adds, never removes).
     // Existing user-added entries and legacy entries are preserved as-is; only the
@@ -571,7 +487,7 @@ function install() {
 
     if (changed) {
       fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-      console.log("\n🔐 Updated .claude/settings.json with gate enforcement hooks");
+      console.log("\n🔐 Updated .claude/settings.json");
     } else {
       console.log("\n🔐 .claude/settings.json already exists (preserved)");
     }
@@ -644,9 +560,6 @@ function install() {
     ...cmdFiles.map((f) => `.claude/commands/${f}`),
     ...tplFiles.map((f) => `templates/${f}`),
     ...docFiles.map((f) => `docs/shards-guide/${f}`),
-    ...["validation.js", "auto-allowlist.js", "sql-guard.js"]
-      .filter((f) => fs.existsSync(path.join(SHARDS_DIR, "runtime", "lib", f)))
-      .map((f) => `.shards/runtime/lib/${f}`),
   ];
   const manifest = {
     version: require(path.join(PACKAGE_ROOT, "package.json")).version,
@@ -791,7 +704,7 @@ The following commands are part of routine validation and execution flow:
 ### Workflow gates vs. safety boundaries
 
 Phase transitions in a Shards session are paced by \`::GATE:: ... ::ENDGATE::\`
-fences enforced by a local hook at \`.shards/hooks/gate-hook.js\`. These gates
+fences tracked by the Shards runtime (\`shards gates status\`). These gates
 are **workflow checkpoints** — they pause the agent so the user can review the
 phase before advancing. They are not safety boundaries. Safety is enforced by
 the permission allow/deny rules in \`.claude/settings.json\` and, when active,

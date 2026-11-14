@@ -63,7 +63,7 @@ omit the Code Review section entirely.
 The specialist will append this to the project-specs.md and present it to the
 user for final sign-off before execution.
 
-**Sub-agent gate rule:** Do not emit `::GATE::` fences. Gate enforcement only
-applies to the main session. If you need the caller to stop, return a verdict
-string (`NEEDS REVISION`, `BLOCKED`) per the reviewer verdict protocol — the
-calling specialist's next turn will open its own gate.
+**Sub-agent gate rule:** Do not call `gate_request`. Gates apply only to the
+main session. If you need the caller to stop, return a verdict string
+(`NEEDS REVISION`, `BLOCKED`) per the reviewer verdict protocol — the calling
+specialist's next turn will raise its own gate.

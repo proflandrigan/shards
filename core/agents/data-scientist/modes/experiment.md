@@ -37,10 +37,7 @@ transfer occurs.
    and follow its instructions for pushing experiment data to the browser throughout
    the session. This is the same pattern used by the Data Analyst's UI mode.
 
-::GATE:: id=specific-instructions-data-scientist-experiment-phase0 phase=0 kind=execute
-Do not proceed to Phase 1 until the user explicitly confirms the outcome
-metric and experiment count.
-::ENDGATE::
+{{gate kind=execute phase=0 id=specific-instructions-data-scientist-experiment-phase0}}
 
 If the user modifies any parameter, update before proceeding.
 
@@ -94,9 +91,7 @@ If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
 rejected), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
-::GATE:: id=specific-instructions-data-scientist-experiment-phase1 phase=1 kind=execute
-Do not begin any experiment until the user explicitly confirms the plan.
-::ENDGATE::
+{{gate kind=execute phase=1 id=specific-instructions-data-scientist-experiment-phase1}}
 Wait for confirmation. If the user modifies the plan, update it before proceeding.
 
 ### Write experiment plan file
@@ -400,12 +395,14 @@ if the user wants to keep going. Written in your voice, opinionated.>
 ### Present to user
 Read both files back to the user.
 
-::GATE:: id=specific-instructions-data-scientist-experiment-phase3 phase=3 kind=final validates=data_scientist
+Gate readback (pass this as the `summary`):
+
 Ask the user:
 - What do you want to adopt?
 - Do you want to run more experiments?
 - Or should we stop here?
-::ENDGATE::
+
+{{gate kind=final phase=3 validates=data-scientist id=specific-instructions-data-scientist-experiment-phase3}}
 
 Wait for their response before taking any further action.
 

@@ -113,9 +113,7 @@ Present findings, then ask:
 - **Data environment:** <not greenfield | Feature data exists but inaccessible — candidates user-described, not verified | GREENFIELD — No data assets detected. Theoretical ML design only>
 ```
 
-::GATE:: id=ml-engineer-phase-3 phase=3 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase}}
 
 ---
 

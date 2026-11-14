@@ -159,9 +159,11 @@ NOW present the plan to the user. Include:
    "Analytics Engineer flagged a concern: [concern]."
 3. **Any adjustments** made based on the specialist's review
 
-::GATE:: id=specific-instructions-syn-fixer-phase0 phase=0 kind=phase
+Gate readback (pass this as the `summary`):
+
 "Apply the fix? (y/n)"
-::ENDGATE::
+
+{{gate kind=phase phase=0 id=specific-instructions-syn-fixer-phase0}}
 
 If the specialist returned TOO COMPLEX and the user hasn't already decided:
 > "[Specialist] thinks this is bigger than a quick fix: [reason]. Want me to

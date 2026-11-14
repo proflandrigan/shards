@@ -209,9 +209,9 @@ Use a temp directory for `--root` so the test does not touch the repo's `.shards
 
 Each module's header comment describes its contract. The library internals were not reviewed in this write-up. `test/auto-allowlist.test.js` imports `runtime/lib/auto-allowlist.js` directly.
 
-The legacy hook still uses them through shims. `tools/gate-hook/validation.js`, `tools/gate-hook/sql-guard.js` and `tools/gate-hook/auto-allowlist.js` each contain one line that re-exports from `../../runtime/lib/...`. The shims stay until E11.9 deletes the legacy gate hook.
+The legacy gate hook and its re-export shims (`tools/gate-hook/validation.js`, `sql-guard.js`, `auto-allowlist.js`) were removed in E11.9.
 
-**Install breakage.** `tools/install.js` copies `tools/gate-hook/` to `.shards/hooks/gate-hook/` in a target project. From there, `../../runtime/lib/` resolves to `.shards/runtime/lib/`, which the installer does not create. Installed legacy hooks would fail to load these modules. The fix is for `tools/install.js` to also copy `runtime/lib/` into the target, for example to `.shards/runtime/lib/`, so the relative path resolves. `install.js` is owned outside this change, so this is not done here.
+**Install breakage (resolved in E11.9).** The installer used to copy `tools/gate-hook/` to `.shards/hooks/gate-hook/` in a target project. From there, `../../runtime/lib/` resolves to `.shards/runtime/lib/`, which the installer did not create. The installer no longer copies the legacy hook, so this path no longer applies.
 
 ## 8. Hooks (E11.0)
 

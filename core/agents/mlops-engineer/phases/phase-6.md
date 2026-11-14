@@ -19,25 +19,13 @@ Goal: Build all IaC, configs, pipeline definitions, and monitoring setup.
 
 ### Incremental testing — checkpoint gates between components
 
-{{protocol incremental_testing}} during this build. Each component below is a checkpoint seam — after you write and validate a component (plan, lint, dry-run, or container-build as appropriate), emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before advancing. Do not stack unvalidated IaC / serving / pipeline configs and attempt to apply them at the end.
+{{protocol incremental_testing}} during this build. Each component below is a checkpoint seam — after you write and validate a component (plan, lint, dry-run, or container-build as appropriate), raise a `kind=checkpoint` gate (macro below) with evidence before advancing. Do not stack unvalidated IaC / serving / pipeline configs and attempt to apply them at the end.
 
-Checkpoint gate fence — emit exactly this shape. Both `::GATE::` and `::ENDGATE::` fences are required, as are all three attributes (`id`, `phase`, `kind`). No prose outside the fence.
+{{gate kind=checkpoint name=iac}}
 
-```
-::GATE:: id=<agent-name>-phase-<N>-checkpoint-<component> phase=<N> kind=checkpoint
-Component: <human-readable name>
-Test command: <exact command you ran>
-Evidence:
-  - <measured fact 1, e.g. "df.shape = (48211, 47)">
-  - <measured fact 2, e.g. "null rate on join key = 0.00%">
-  - <measured fact 3, e.g. "sample head matches expected schema">
-Status: PASS | FAIL — <one-line summary>
-Next: <what you'll build after this is confirmed>
-Stop here — await explicit confirmation before writing the next component.
-::ENDGATE::
-```
+The macro above shows the first component (`name=iac`). For each later component call `gate_request` the same way with `kind=checkpoint` and that component's slug as the name (no `validates=`). Pass `evidence={status: pass|fail, checks: [...]}` with the component name, the exact test command you ran, and measured facts (for example `df.shape = (48211, 47)`, `null rate on join key = 0.00%`, `sample head matches expected schema`). Under the default `phase` policy a passing checkpoint is recorded automatically and you continue to the next component; a failing or anomalous one blocks and waits for the user.
 
-Expected checkpoint gate IDs for this phase (emit in order as you build):
+Expected checkpoint components for this phase (slugs are the suffix after `checkpoint-`; build in this order):
 
 - `mlops-engineer-phase-6-checkpoint-iac` — `terraform plan` or `aws cloudformation validate-template` runs clean; diff previews only expected resources.
 - `mlops-engineer-phase-6-checkpoint-serving` — serving config loads (`bentoml build` / container image builds); smoke invocation against a local model returns a valid response.
@@ -45,7 +33,7 @@ Expected checkpoint gate IDs for this phase (emit in order as you build):
 - `mlops-engineer-phase-6-checkpoint-monitoring` — monitoring config validates; alert rules and baselines compile; a simulated drift event triggers the expected rule.
 - `mlops-engineer-phase-6-checkpoint-runbook` — runbook rollback procedure walked through against the staging environment (or manually verified on the sandbox).
 
-The hook blocks all non-read tools while a checkpoint is open. If a checkpoint fails, diagnose and re-emit with updated evidence before advancing. Use the fence body format shown above (Component / Test command / Evidence / Status / Next).
+If a checkpoint fails, it blocks until the user responds: STOP and wait, never confirm it yourself. After the user replies, diagnose, fix, and re-run the test, then call `gate_request` again with updated evidence before advancing.
 
 **Build in this order:**
 
@@ -117,9 +105,7 @@ user-specified path.
 - **Known gaps:** <anything that requires manual setup or future work>
 ```
 
-::GATE:: id=mlops-engineer-phase-6 phase=6 kind=phase validates=mlops_engineer
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase validates=mlops-engineer}}
 
 ---
 

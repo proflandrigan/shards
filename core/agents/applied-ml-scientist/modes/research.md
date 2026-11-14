@@ -141,9 +141,7 @@ Append to `project-specs.md`:
 - **Or:** No relevant entries found
 ```
 
-::GATE:: id=specific-instructions-applied-ml-scientist-research-phase0 phase=0 kind=execute
-Read this section back. Stop here. Wait for confirmation.
-::ENDGATE::
+{{gate kind=execute phase=0 id=specific-instructions-applied-ml-scientist-research-phase0}}
 
 ---
 
@@ -227,9 +225,7 @@ the existing logic.
 
 ### Gate
 
-::GATE:: id=specific-instructions-applied-ml-scientist-research-phase1 phase=1 kind=execute
-Read the brief back. Wait for explicit confirmation.
-::ENDGATE::
+{{gate kind=execute phase=1 id=specific-instructions-applied-ml-scientist-research-phase1}}
 
 ---
 
@@ -345,12 +341,14 @@ If fan-out: arbitrate before summary.
 
 ### Phase 3 gate
 
-::GATE:: id=specific-instructions-applied-ml-scientist-research-phase3 phase=3 kind=final validates=applied_ml_scientist
+Gate readback (pass this as the `summary`):
+
 Ask the user:
 - What do you want to adopt?
 - Do you want to run another budget?
 - Or should we stop here?
-::ENDGATE::
+
+{{gate kind=final phase=3 validates=applied-ml-scientist id=specific-instructions-applied-ml-scientist-research-phase3}}
 
 ### If adopting
 

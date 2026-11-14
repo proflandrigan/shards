@@ -14,8 +14,8 @@ fail() { echo "FAIL  $1"; FAILS=$((FAILS + 1)); }
 step() { local name="$1"; shift; if "$@"; then pass "$name"; else fail "$name"; fi; }
 
 # ---- Explicit expected tarball contents (top-level path globs, relative to package/) ----
-ROOT_ALLOWED='package.json README.md cli/* build/* core/* hooks/* runtime/* bindings/* scripts/validate-agents.js src/* tools/install.js tools/legacy-layout.js tools/gate-hook.js tools/gate-hook/* tools/shards-ui.js tools/shards-gates.js tools/shards-sessions.js'
-ROOT_REQUIRED='package.json README.md cli/shards.js build/compile.js build/activation-inventory.js core/agents runtime/server.js hooks/session-start.js bindings/README.md scripts/validate-agents.js src/ui/chat-session.js tools/shards-ui.js tools/shards-gates.js tools/shards-sessions.js tools/gate-hook.js tools/install.js'
+ROOT_ALLOWED='package.json README.md cli/* build/* core/* hooks/* runtime/* bindings/* scripts/validate-agents.js src/* tools/install.js tools/legacy-layout.js tools/shards-ui.js tools/shards-gates.js tools/shards-sessions.js'
+ROOT_REQUIRED='package.json README.md cli/shards.js build/compile.js build/activation-inventory.js core/agents runtime/server.js hooks/session-start.js bindings/README.md scripts/validate-agents.js src/ui/chat-session.js tools/shards-ui.js tools/shards-gates.js tools/shards-sessions.js tools/install.js'
 MCP_ALLOWED='package.json runtime/* core/* bindings/* hooks/lib/* build/* scripts/validate-agents.js'
 MCP_REQUIRED='package.json runtime/server.js runtime/tools core/agents core/schema hooks/lib/host.js hooks/lib/common.js build/core.js build/compile.js build/activation-inventory.js scripts/validate-agents.js bindings/README.md'
 

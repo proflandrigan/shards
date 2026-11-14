@@ -41,9 +41,7 @@ Let the conversation flow. Surface these topics naturally when the user's respon
 - **How each will be verified:** <walkthrough / structural check per criterion, or "confirmed in validation">
 ```
 
-::GATE:: id=data-modeller-deep-phase-1 phase=1 kind=phase
-Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
-::ENDGATE::
+{{gate kind=phase}}
 
 ---
 
