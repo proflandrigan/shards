@@ -9,6 +9,9 @@ A gate is a human checkpoint at the end of a phase. The agent asks for one with 
 | File | Role |
 |------|------|
 | `runtime/tools/gate_request.js` | MCP tool `gate_request`. Opens or reopens a gate on the top frame. Validates the record when `validates` is set. |
+| `runtime/tools/load_phase.js` | MCP tool `load_phase`. Serves a phase file and refuses until the previous phase's gate is confirmed. Reads gates, never writes them. Section 9. |
+| `runtime/reground.js` | Re-ground block builder used by `activate` and `load_phase`. |
+| `cli/commands/doctor.js` | `shards doctor`: git and gate-tool permission checks, `--fix` for `.gitignore` and stuck commits. See `docs/doctor.md`. |
 | `core/schema/gate-request.schema.json` | Input schema for `gate_request`. |
 | `runtime/gates/machine.js` | State machine: `requestGate`, `confirmGate`, `suspendGate` and `resumeGate` (internal), `getGate`, `listGates`, `pendingForFrame`. `runtime/gates/index.js` re-exports it. |
 | `runtime/git/index.js` | Gate commits: `commitGate`, `replayPending`, `listPending`, `gitState`, `gateRef`, `makeDenyMatcher`. |
@@ -181,8 +184,8 @@ Snapshot refs are `refs/shards/pending/<gate>`. Characters outside `[A-Za-z0-9._
 - The first record that is not `done` becomes a blocker. Later records are skipped with `blocked_by_<gate>`, so gate N never lands before N-1.
 - Counted failures are `hook_failed`, `hook_timeout` and `commit_failed` (the `git commit` step). Backoff is 60 s, 300 s, 900 s, 3600 s. The fifth counted failure sets `status: stuck`.
 - Precondition waits (`no_repo`, `detached_head`, merge/rebase/cherry-pick/revert in progress, `signing_required`, `commit_disabled`, `head_moved`) retry every 60 s and are not counted.
-- A `stuck` record blocks every later gate commit in that project. Nothing clears it. `replayPending(..., {force: true})` retries it, but no production caller passes `force`, and no CLI command exposes it. `TODO(owner: proflandrigan)`.
-- Replay at session end and from `doctor` is not implemented. `TODO(owner: proflandrigan)`.
+- A `stuck` record blocks every later gate commit in that project. Nothing clears it automatically. `replayPending(..., {force: true})` retries it. The only production caller that passes `force` is `shards doctor --fix` (`docs/doctor.md`). No other CLI command exposes it. `TODO(owner: proflandrigan)`.
+- Replay at session end is not implemented. `TODO(owner: proflandrigan)`.
 
 ### 6.7 Fallbacks
 
@@ -201,7 +204,7 @@ Snapshot refs are `refs/shards/pending/<gate>`. Characters outside `[A-Za-z0-9._
 | Older record still failing | `blocked_by_<gate>` | Kept | Clears when the blocker is `done`. |
 | `commitGate` throws | `commit_error: <message>` (gate entry only) | No pending record. A snapshot ref may remain. | Not handled. `TODO(owner: proflandrigan)`. |
 
-`doctor` warnings for these states are not implemented. `TODO(owner: proflandrigan)`.
+`doctor` reports no repo, detached HEAD, merge or rebase in progress, stuck records and waiting records (`git.*` checks). It does not report `signing_required`, `commit_disabled`, hook failures or `commit_error`. `TODO(owner: proflandrigan)`.
 
 ### 6.8 Denylist
 
@@ -253,11 +256,108 @@ Exit codes: 0 success, 1 gate or confirm error, 2 usage error.
 | Replacement of the interim CLI | Not started | `TODO(E11.13)` |
 | Suspend and resume exposed to any caller | Internal only | `TODO(E5.5)` |
 | Suspended gates block frame `return`. Today only `pending` gates do (`runtime/stack.js` `pendingGatesFor`), so a suspended gate does not stop a pop. | Gap | `TODO(E5.5)` |
-| `load_phase` enforcement | Not implemented. `runtime/reground.js` is a stub. | `TODO(E2.3)` |
+| `load_phase` compaction and version-change re-ground | Not built. Only `activate` and `load_phase` return a re-ground block. | `TODO(E11.7)` (section 9) |
 | Copy queue. `copy_queue` is always `[]`. | Not started | `TODO(E6.8)` |
 | Hook enforcement (block tool calls while a gate is pending). `hooks/` does not read gates. | Not started | `TODO(E11.6)` |
 | Lease exclusion. `getLeasedPaths` returns `[]`. | Stub | `TODO(E5.9)` |
-| `doctor`, `sessions_end` and replay at session end | Not implemented. No such export or command exists. | `TODO(owner: proflandrigan)` |
-| Recovery for `stuck` records and `commit_error` gaps | Not implemented | `TODO(owner: proflandrigan)` |
+| Replay at session end | Not implemented. `shards doctor` exists (`docs/doctor.md`); `doctor --fix` replays stuck records. | `TODO(owner: proflandrigan)` |
+| Recovery for `stuck` records and `commit_error` gaps | Partly: `doctor --fix` force-replays stuck records. `commit_error` has no recovery. | `TODO(owner: proflandrigan)` |
 | Push | Not implemented | Section 6.9 |
-| `.shards/` in target project `.gitignore` | OPEN. The legacy installer (`tools/install.js`) appends only commented output-directory entries and does not add `.shards/`. The repo root `.gitignore` already ignores `.shards/`, for the shards repo only. | OPEN (installer and doctor) |
+| `.shards/` in target project `.gitignore` | OPEN for the legacy installer (`tools/install.js`), which does not add `.shards/`. `shards doctor` reports it (`git.ignore`) and `doctor --fix` appends it. The repo root `.gitignore` already ignores `.shards/`, for the shards repo only. | OPEN (installer) |
+
+## 9. `load_phase` gate enforcement (E2.3)
+
+`runtime/tools/load_phase.js`. Serves the rendered text of one phase file for the active agent and enforces the gate chain. Inputs: `agent` (required), `n` (required: digits such as `3` or `6-5`, or an integer `>= 0`), `track` (`quick|deep`; required for dual-track agents, refused for single-track).
+
+### 9.1 Check order
+
+| # | Check | Refusal text |
+|---|-------|--------------|
+| 1 | Session resolved | `load_phase requires a resolved session` |
+| 2 | `n` matches `^\d+(-\d+)*$` | `Invalid phase "<n>": expected digits like 3 or 6-5` |
+| 3 | Agent exists and loads | `Unknown agent "<agent>". Valid agents: ...` |
+| 4 | Track matches the agent | `Agent <a> is dual-track: pass track=quick\|deep`, `has no <t> track. Valid tracks: ...`, or `is single-track; do not pass track` |
+| 5 | Phase is in the track's order | `Unknown phase "<n>" for <a>[ (<track> track)]. Valid phases: ...` |
+| 6 | Agent is the top frame | `load_phase refused: <a> is not the active agent (top of stack is <x>)` or `(no active frame)`, each followed by `Call activate(agent="<a>", mode="switch") first.` |
+| 7 | Gate chain (9.2) | Refusal below |
+| 8 | Render (9.3) | `Failed to render <path>:` plus the build errors |
+| 9 | Frame update (9.4) | `load_phase refused: <a> is no longer the top frame` if the stack moved |
+| 10 | Re-ground block appended (9.5) | Omitted silently if the builder throws |
+
+Consult and fan-out workers never hold a frame, so they cannot load phases.
+
+### 9.2 Gate rule
+
+Loading phase N requires the advancing gate of the phase immediately before N, in the track's order.
+
+- Order is the row order of `core/agents/<agent>/phases/index.md` (or `phases_quick/`, `phases_deep/`). The File column gives `phase-<n>.md`. Sub-phases such as `6-5` sit in their index position.
+- If the index is missing or lists no rows, the order is empty. Every load then falls through to the phase-0 rule below.
+
+| Requested phase | Gate required |
+|-----------------|---------------|
+| Index position > 0, and the preceding phase file has an advancing gate | That gate's id |
+| Index position > 0, and the preceding phase file has no advancing gate ("unguarded") | None |
+| Index position 0 (or not found in the index) | `<agent>-phase-0` (dual-track: also `<agent>-<track>-phase-0`), **only if a gate record with that id already exists** in `gates.json`. Otherwise none. |
+
+- **Advancing kinds** are `phase`, `final`, `execute` and `handoff`. `checkpoint` and `confirm` never count.
+- **Which gate in a file.** The first advancing gate in the phase file's source wins. Two forms are read: the `::GATE:: id=... kind=...` fence (what core phase files use today) and the `{{gate ...}}` macro (no core file uses it yet). A fence needs an `id` without `<` or `>`. A macro's id is `<agent>[-<track>]-phase-<N>` unless `id=` is given.
+- **Dual-track ids** are used verbatim from the fence, for example `data-engineer-quick-phase-1`.
+- **Confirmed** means a record with the id (or, failing an id match, the same agent, phase, and a matching or absent track) has `status: confirmed`. Among candidates a confirmed one wins. Otherwise the first candidate's status is reported. No record gives `missing`.
+- **Refusal text** (exact form; `prev` is the preceding phase, `0` for the first-phase rule, and `status` is `missing`, `pending`, `changes_requested` or `suspended`):
+
+  ```
+  load_phase refused: gate <gate-id> for phase <prev> is not confirmed (status: <status>). Ask the user to confirm it: node cli/shards.js gates confirm <gate-id> --session <session-key>
+  ```
+
+  The agent cannot confirm the gate itself (D8). The user runs the command.
+- **Policy.** `gates.policy` in `shards.config.yaml` is read. `strict` and `phase` behave identically here. `plan` is treated as `phase`. `TODO(E11.8)`.
+
+Example: `data-engineer` quick phase 2 requires `data-engineer-quick-phase-1` to be confirmed, because `phases_quick/phase-1.md` declares that `::GATE:: kind=phase` fence.
+
+### 9.3 Host-target rendering
+
+- Target is `codex` when the session's host is Codex, otherwise `claude`. The host comes from session correlation (`docs/runtime.md` section 3). `skills` is not used here.
+- The phase file is rendered with the build compiler (`build/compile.js`, `processFile`), `strict: false`. Frontmatter is stripped. Macros expand to the target's tool names (`docs/runtime.md`, `build/MACROS.md` section 5): `mcp__plugin_shards_shards__<tool>` on claude, `shards.<tool>` on codex.
+- Phase files reference other phases with `{{phase N}}`. The rendered text tells the agent to call `load_phase`, not to read a file.
+
+### 9.4 State change
+
+On success, only the top frame's `phase` and `track` change:
+
+- `phase`: a Number for digit-only `n` (`3`), otherwise the string (`"6-5"`).
+- `track`: `quick`, `deep`, or `null` for single-track agents.
+
+No gate is written. `gates.json` is only read.
+
+### 9.5 Re-ground block
+
+Appended to the returned text after a blank line. Built by `buildReground` in `runtime/reground.js`, after the frame update, so it shows the new phase:
+
+```
+--- Re-ground ---
+Agent: <id>
+Persona summary:
+<contents of persona-summary.md>
+Current phase: <N> (track <t>)
+Project: <project>            (only when the frame has a project)
+Confirmed gates:
+  - <gate-id> sha=<first 12 chars> outcome=<outcome>
+  (none)
+Pending/suspended gates:
+  - <gate-id> (<status>, kind <kind>, phase <N>)
+  (none)
+```
+
+- The `sha=` and `outcome=` parts appear only when the gate has a commit object.
+- The copy queue is not included. `TODO(E6.8)`.
+
+### 9.6 Re-ground events
+
+| Event | Where it runs | Content |
+|-------|---------------|---------|
+| `activate` (switch) | `runtime/tools/activate.js`, returned in its `reground` field | Full block (9.5) |
+| `load_phase` | Appended to the phase text | Full block (9.5) |
+| `compact` | Not wired | Empty string. `TODO(E11.7)`: SessionStart compact/resume shim and trimmed block. |
+| `version_change` | Not wired | Empty string. `TODO(E11.7)`: once-per-version re-ground. |
+
+Other tool responses carry only the state header (`docs/runtime.md` section 4).

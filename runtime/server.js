@@ -39,12 +39,12 @@ function createServer({ root, sessionKey, ancestry, env, host } = {}) {
   let resolveSession;
   if (sessionKey) {
     // Explicit fixed key: behave exactly as before.
-    resolveSession = () => ({ state: storeFor(sessionKey), sessionKey, sessionSource: 'explicit' });
+    resolveSession = () => ({ state: storeFor(sessionKey), sessionKey, sessionSource: 'explicit', host });
   } else {
     correlator = createCorrelator({ root, env: env || process.env, ancestry, host });
     resolveSession = () => {
       const r = correlator.resolve();
-      return { state: storeFor(r.key), sessionKey: r.key, sessionSource: r.source };
+      return { state: storeFor(r.key), sessionKey: r.key, sessionSource: r.source, host: r.host || host };
     };
   }
 

@@ -41,7 +41,7 @@ function render(m, target) {
       return m.to ? `Return to \`${m.to}\`: call ${T('return')}(to=${q(m.to)}). Resolve any pending gate first.` : `Return to the previous agent: call ${T('return')}(). Resolve any pending gate first.`;
     case 'phase': {
       const tr = m.track ? `, track=${q(m.track)}` : '';
-      return `Load phase ${m.n}${m.track ? ` (${m.track} track)` : ''}: call ${T('load_phase')}(agent=${q(m.agent)}, n=${q(m.n)}${tr}). It is refused until the previous gate is confirmed. Phase file: ${contentPath(target, `agents/${m.agent}/${m.file}`)}`;
+      return `Load phase ${m.n}${m.track ? ` (${m.track} track)` : ''}: call ${T('load_phase')}(agent=${q(m.agent)}, n=${q(m.n)}${tr}) and follow the phase text it returns. The tool is refused until the preceding phase's gate is confirmed; do not read phase files directly.`;
     }
     case 'protocol':
       return `Read the \`${m.name}\` protocol now and follow it: ${contentPath(target, `protocols/${m.file}`)}`;

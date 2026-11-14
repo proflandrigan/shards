@@ -77,7 +77,7 @@ Args: `to` (optional; agent id, must exist). Compiles to runtime `return(to?)`: 
 Example: `{{phase 6-5}}` or `{{phase 2 track=deep}}`
 Args: `N` (positional, required; `\d+(-\d+)*`), `track` (optional), `agent` (optional; default enclosing agent, else required).
 Validation: file exists as `phases/phase-N.md`; for dual-track agents (`phases_quick/`+`phases_deep/`) the track is `track=` or the enclosing file's track and is required; `track=` on a single-track agent is an error.
-Compiles to runtime `load_phase(agent, n, track?)`, which refuses until the previous gate is confirmed (D2). The rendered text also names the content file for hosts without the runtime.
+Compiles to runtime `load_phase(agent, n, track?)`, which refuses until the previous gate is confirmed (D2). The rendered text instructs a `load_phase` tool call (per-target tool name) and does not name a phase file: phase content is served by the runtime tool for the host target, rendered by the same build modules.
 
 ### 3.6 `{{protocol <name>}}`
 
@@ -139,7 +139,7 @@ Tool-name prefix by target (`CLAUDE_TOOL_PREFIX` / `CODEX_TOOL_PREFIX` in `build
 | consult | run subagent `a` (plugin agent `agents/a.md`, via the Agent tool, by name); the prompt starts with "Entry `e`: read `${CLAUDE_PLUGIN_ROOT}/content/agents/a/<file>` first" | spawn the Codex agent `a` (`.codex/agents/a.toml`) with a spawn_agent-style call; the message starts with "Entry `e`: read `content/agents/a/<file>` first" | invoke skill `a` in an isolated context if the host has one, else call `activate(agent="a", mode="consult")` and follow `content/agents/a/<file>`, then `return` |
 | fanout | call `mcp__plugin_shards_shards__fanout_start`, then launch one subagent `a` per slice in a single message | `shards.fanout_start`, then one `spawn_agent` per slice in parallel | `fanout_start`, then one isolated skill invocation per slice |
 | return | `mcp__plugin_shards_shards__return(to?)` | `shards.return(to?)` | `return(to?)` |
-| phase | `mcp__plugin_shards_shards__load_phase(agent, n, track?)` + path | `shards.load_phase(...)` + path | `load_phase(...)` + path |
+| phase | `mcp__plugin_shards_shards__load_phase(agent, n, track?)` + path | `shards.load_phase(...)` | `load_phase(...)` |
 | protocol / template | read `${CLAUDE_PLUGIN_ROOT}/content/protocols/<name>.md` (templates likewise) | read `content/protocols/<name>.md` | read `content/protocols/<name>.md` |
 | gate | `mcp__plugin_shards_shards__gate_request(id, kind, phase, summary, record_ref, validates?)` | `shards.gate_request(...)` | `gate_request(...)` |
 | auto_verify | `mcp__plugin_shards_shards__auto_verify_start/_end` | `shards.auto_verify_start/_end` | `auto_verify_start/_end` |

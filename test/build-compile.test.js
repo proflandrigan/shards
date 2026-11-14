@@ -97,7 +97,7 @@ describe('cli', () => {
     const r = spawnSync('node', ['cli/shards.js', 'nope'], { encoding: 'utf8' });
     expect(r.status).toBe(2);
     expect(r.stderr).toMatch(/Commands:\n\s+build/);
-    expect(r.stderr).not.toMatch(/doctor/);
+    expect(r.stderr).toMatch(/doctor/);
   });
   it('build exits 1 with file:line on errors', () => {
     const core = makeCore({ 'agents/alpha/phases/phase-1.md': '{{switch ghost}}\n' });

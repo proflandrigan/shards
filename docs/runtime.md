@@ -43,7 +43,8 @@ The root is resolved to an absolute path (`resolveRoot` in `server.js`).
 | `runtime/state/store.js` | `StateStore`: reads and locked, atomic writes of the state tree. Also `provisionalSessionKey()` and `sanitizeSessionKey()`. |
 | `runtime/state/append.js` | `lockedAppend(file, line)`: appends one line under a cross-process lock. Building block for JSONL logs (E2.9). Shares `LOCK_OPTS` with the store. |
 | `runtime/header.js` | Builds the one-line state header and derives its fields from the store. |
-| `runtime/reground.js` | Re-grounding hook. Stub: returns empty text. Real behavior is E11.7. |
+| `runtime/reground.js` | Re-ground block builder (section 4). Used by `activate` (switch) and `load_phase`. `compact` and `version_change` return empty text until E11.7. |
+| `runtime/tools/load_phase.js` | `load_phase`. Serves a phase file for the active agent, refused until the previous gate is confirmed. See `docs/gates.md` section 9. |
 | `runtime/config/index.js` | `shards.config.yaml`: YAML parse, ajv schema validation (`core/schema/shards-config.schema.json`), model-name guard, defaults merge, first-use creation, `resolveJob`. `runtime/config/bindings.js` is a separate module not covered here. |
 | `runtime/lib/` | `validation.js`, `auto-allowlist.js`, `sql-guard.js`. Moved from the legacy gate hook (E2.5). See section 7. |
 
@@ -66,7 +67,7 @@ Notes on what the code does today:
 
 - Session keys must match `[A-Za-z0-9._-]+`, be at most 128 characters, and must not contain `..`.
 - Missing files read as defaults. A file that exists but does not parse throws `Corrupt state file ... Refusing to overwrite`. The store never overwrites corrupt state.
-- `frames.json` is written by `activate` (switch) and `return`, through `runtime/stack.js`, under the same lock. `gates.json` is read by `shards_status`, the header and `pendingGatesFor`, but no tool writes it yet. Gate writers come with the gate work in later stages.
+- `frames.json` is written by `activate` (switch), `return` and `load_phase` (which sets `phase` and `track` on the top frame), through `runtime/stack.js` and under the same lock. `gates.json` is written only by the gate machine (`gate_request`, `node cli/shards.js gates confirm`; see `docs/gates.md`). `shards_status`, the header, `pendingGatesFor` and `load_phase` read it.
 - `global.json` is part of the layout (`update(name, fn, false)` targets it), but nothing in this slice reads or writes it.
 
 **Locking.** Every write goes through `StateStore.update(name, fn)`:
@@ -134,7 +135,7 @@ Rules:
 - The header is computed after the handler runs, so it reflects any state change the handler made.
 - The header is present on success, on unknown tools, on argument validation failures, and on handler exceptions. Those responses set `isError: true`.
 
-Re-ground hooks (`runtime/reground.js`) are named for four events: `activate`, `load_phase`, `compact`, `version_change`. `regroundHook` is a stub that returns empty text. Nothing calls it yet, apart from being attached to the handler context. The real behavior is E11.7.
+Re-ground (`runtime/reground.js`) has four event names: `activate`, `load_phase`, `compact`, `version_change`. `activate` (switch) and `load_phase` return the full block: `--- Re-ground ---`, the agent id and persona summary, current phase and track, project, confirmed gates with commit SHAs, and pending or suspended gates. Layout is in `docs/gates.md` section 9.5. `regroundHook` returns empty text for `compact` and `version_change`, which are not wired. `TODO(E11.7)`: trimmed compaction re-ground and once-per-version re-ground. The copy queue is not included (`TODO(E6.8)`).
 
 ## 5. How to add a tool
 
@@ -245,10 +246,13 @@ Every tool response starts with the state header (section 4). Session-bound tool
 | `activate` | `agent` (required), `mode` (`switch` or `consult`, required), `project?` (must match `^[A-Za-z0-9][A-Za-z0-9._-]*$`), `entry?` (a consult entry key) | Switch: `{agent, mode, frame, persona_summary: {path, content}, output_dir, output_dir_created, stack, reground}`. Consult: `{agent, mode, consult_entries, entry, persona_summary: {path}, note}`. |
 | `return` | `to?` (string), `pop_base?` (boolean) | `{popped, stack, top, persona_summary, state_summary}`. `state_summary` is `{agent, phase, project, pending_gates}` for the new top, or null. |
 | `active` | none | `{stack, top, depth}` |
+| `load_phase` | `agent`, `n`, `track?` (`quick`\|`deep`) | `{text}`: rendered phase body plus the re-ground block. Refused until the previous phase's gate is confirmed; the rules and refusal text are in `docs/gates.md` section 9. Sets the top frame's `phase` and `track`. |
+
+Other registered tools: `gate_request` (`docs/gates.md` section 5) and `artifact_emit` (section 3). `shards_status` and `list_agents` are listed in section 2.
 
 - `agent` must list the requested mode in its `activation` field.
 - Switch with `project` substitutes it into the agent's `output_dir`, refuses paths that escape the root, and creates the directory if missing. Without `project` it returns `output_dir_template` instead.
-- `reground` is always empty today (E11.7).
+- `reground` holds the full re-ground block on switch (section 4). It is empty for other events until E11.7.
 
 **Frame schema.** `frames.json` is `{frames: [...]}`. Index 0 is the base frame and the last element is the top.
 

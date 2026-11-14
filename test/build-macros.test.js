@@ -77,7 +77,9 @@ describe('macro expansion', () => {
   });
   it('phase incl. 6-5 and tracks', () => {
     expect(ok('{{phase 6-5}}', 'claude')).toContain('load_phase');
-    expect(ok('{{phase 2 track=deep agent=beta}}', 'skills')).toContain('phases_deep/phase-2.md');
+    const r = ok('{{phase 2 track=deep agent=beta}}', 'skills');
+    expect(r).toContain('load_phase`(agent="beta", n="2", track="deep")');
+    expect(r).not.toContain('phase-2.md');
     expect(ok('{{phase 1}}', 'skills', 'agents/beta/phases_quick/phase-1.md')).toContain('track="quick"');
   });
   it('protocol and template', () => {
