@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/proflandrigan/shards/core/schema/shards-config.schema.json",
+  "title": "shards.config.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1, "default": 1 },
+    "jobs": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Maps each job to a binding (bindings/<name>.md). Value is a binding name or { binding, options }.",
+      "properties": {
+        "record": { "$ref": "#/$defs/jobBinding" },
+        "tasks": { "$ref": "#/$defs/jobBinding" },
+        "knowledge": { "$ref": "#/$defs/jobBinding" },
+        "review": { "$ref": "#/$defs/jobBinding" },
+        "artifacts": { "$ref": "#/$defs/jobBinding" },
+        "presentation": { "$ref": "#/$defs/jobBinding" }
+      }
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy": { "enum": ["strict", "phase", "plan"], "default": "phase" }
+      }
+    },
+    "git": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "commit": { "type": "boolean", "default": true },
+        "push": { "type": "boolean", "default": false },
+        "denylist": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "globs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "max_file_size_bytes": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "tiers": {
+      "type": "object",
+      "description": "Optional user-written map from tier hint to a model string. The only place a model name may appear.",
+      "additionalProperties": false,
+      "properties": {
+        "small": { "type": "string", "minLength": 1 },
+        "standard": { "type": "string", "minLength": 1 },
+        "large": { "type": "string", "minLength": 1 }
+      }
+    },
+    "bindings": {
+      "type": "object",
+      "description": "Per-binding settings, keyed by binding name (see each binding's required_settings).",
+      "additionalProperties": { "type": "object" }
+    }
+  },
+  "$defs": {
+    "bindingName": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+    "jobBinding": {
+      "oneOf": [
+        { "$ref": "#/$defs/bindingName" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["binding"],
+          "properties": {
+            "binding": { "$ref": "#/$defs/bindingName" },
+            "options": { "type": "object" }
+          }
+        }
+      ]
+    }
+  }
+}
