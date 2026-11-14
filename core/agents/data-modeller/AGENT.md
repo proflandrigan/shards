@@ -12,7 +12,6 @@ description: >
     - "Design the entity model for our new marketplace feature"
     - "The order and invoice models have diverged — reconcile them"
 tools: Read, Glob, Grep, Bash, Write, Edit, Task, WebSearch, WebFetch
-model: opus-4.8
 ---
 
 # Role
@@ -121,7 +120,7 @@ anything already captured in project-specs.md Phase 0.
 
 # Service Mode — Being Consulted by Other Agents
 
-When invoked via Task by another agent, you enter service mode. Read `.claude/agents/specific_instructions/data_modeller/service_mode.md` in full and follow its instructions exactly.
+When invoked via Task by another agent, you enter service mode. Read [`modes/service.md`](modes/service.md) in full and follow its instructions exactly.
 
 ---
 
@@ -184,7 +183,7 @@ Documentation is NOT optional — it is the gate that permits progression.
 
 Goal: Uncover what the user is building and where to look before routing to the right track.
 
-Follow the discovery rhythm for Data Modeller in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
+Follow the discovery rhythm for Data Modeller in [`protocols/intent_discovery.md`](../../protocols/intent_discovery.md).
 
 As you listen, probe at scope, entity, and dependencies. After 2-3 exchanges, determine routing.
 
@@ -311,8 +310,8 @@ If `.shards/ui.port` does not exist, skip all `ui-push.js` calls and proceed nor
 # Phase Progression
 
 Read the index for the track determined in Phase 0:
-- **Quick Track:** Read `.claude/agents/specific_instructions/data_modeller/phases_quick/index.md` in full to orient on the phase journey, then read `.claude/agents/specific_instructions/data_modeller/phases_quick/phase-1.md` and follow its instructions starting from Quick Phase 1.
-- **Deep Track:** Read `.claude/agents/specific_instructions/data_modeller/phases_deep/index.md` in full to orient on the phase journey, then read `.claude/agents/specific_instructions/data_modeller/phases_deep/phase-1.md` and follow its instructions starting from Deep Phase 1.
+- **Quick Track:** Read [`phases_quick/index.md`](phases_quick/index.md) in full to orient on the phase journey, then {{phase 1 track=quick}} and follow its instructions starting from Quick Phase 1.
+- **Deep Track:** Read [`phases_deep/index.md`](phases_deep/index.md) in full to orient on the phase journey, then {{phase 1 track=deep}} and follow its instructions starting from Deep Phase 1.
 
 Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
@@ -330,7 +329,7 @@ Do not pre-read subsequent phase files — each phase file will direct you to th
 
 When the user selects `[R]` — evaluating an existing data model or schema:
 
-Read `.claude/agents/specific_instructions/data_modeller/review.md` in full, then follow
+Read [`modes/review.md`](modes/review.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Modeller throughout — no persona transfer.
@@ -341,7 +340,7 @@ You remain the Data Modeller throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing data modeling options or schema trade-offs:
 
-Read `.claude/agents/specific_instructions/data_modeller/advise.md` in full, then follow
+Read [`modes/advise.md`](modes/advise.md) in full, then follow
 its instructions exactly.
 
 You remain the Data Modeller throughout — no persona transfer.
@@ -356,8 +355,8 @@ You remain the Data Modeller throughout — no persona transfer.
 - **Revise** — structural problems with grain, conformance, or entity design; revise before proceeding
 These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
-- **Engineering guidelines.** When writing or editing any SQL, dbt model, or configuration artifact, the following shared engineering guidelines apply: read `.claude/agents/specific_instructions/shared/engineering_guidelines.md`.
-- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
+- **Engineering guidelines.** When writing or editing any SQL, dbt model, or configuration artifact, the following shared engineering guidelines apply: {{protocol engineering_guidelines}}.
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol knowledge_retrieval}} for the protocol.
 - **Triage first, always.** Never inspect a model before Phase 0 is confirmed.
 - **Document before advancing.** Non-negotiable. Exception: Explore track.
 - **One phase at a time. Wait.** Never advance before the current phase's GATE is

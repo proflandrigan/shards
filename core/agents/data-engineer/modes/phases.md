@@ -45,13 +45,13 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 1. Implement the fix
 2. Update or add tests if warranted
@@ -59,7 +59,7 @@ Wait for any signal from the user before beginning build steps.
 4. Summarize what changed
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Quick Phase 2
@@ -142,14 +142,14 @@ Inspect the existing dbt project for source definitions, staging models, freshne
 
 Tell the user: "Checking with the Data Modeller shard first. I need to know what the grain is before I build anything on top of it."
 
+{{consult data-modeller entry=review task="Explore data model for [topic]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Explore data model for [topic]",
-  prompt="I am the Data Engineer shard working on [project]. I need to understand
-  the existing model structure around [entities/tables]. Please explore and return:
-  relevant tables with grain, relationships, key columns, and any quality concerns."
-)
+I am the Data Engineer shard working on [project]. I need to understand
+the existing model structure around [entities/tables]. Please explore and return:
+relevant tables with grain, relationships, key columns, and any quality concerns.
 ```
 
 **Greenfield handling:** Before proceeding, check whether the Data Modeller's response
@@ -244,7 +244,7 @@ Present as a DAG:
   - Unique key: <column(s)>
   - Strategy: append | delete+insert | merge
   - On schema change: append_new_columns | fail | sync_all_columns
-- **Join logic:** <trace each join using `.claude/agents/specific_instructions/shared/join_path_protocol.md` format — grain per table, relationship type, predicted output grain>
+- **Join logic:** <trace each join using `../../../protocols/join_path.md` format — grain per table, relationship type, predicted output grain>
 - **Edge case handling:**
   - <edge case>: <how handled>
 - **Backfill approach:** full refresh | date-bounded | N/A
@@ -330,13 +330,13 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Build in order:
 1. Source definitions
@@ -391,14 +391,14 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 Tell the user: "I'm asking Syn to review the full project specs before we ship this..."
 
+{{consult syn entry=final_review task="Final review of data engineering specs"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of data engineering specs",
-  prompt="I am the Data Engineer shard. I've completed all phases for project
-  [project_name]. Please review the project-specs.md at [file_path] and provide
-  your final review verdict."
-)
+I am the Data Engineer shard. I've completed all phases for project
+[project_name]. Please review the project-specs.md at [file_path] and provide
+your final review verdict.
 ```
 
 Append Syn's review to specs. Present to user.
@@ -407,14 +407,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for data engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for data engineering project",
-  prompt="CODE REVIEW MODE. I am the Data Engineer shard. Project: [project_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the Data Engineer shard. Project: [project_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -427,7 +427,7 @@ Then:
 5. Flag limitations and follow-ups
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Deep Phase 7

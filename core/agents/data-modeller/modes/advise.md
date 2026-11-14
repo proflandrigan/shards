@@ -43,10 +43,11 @@ paths and context warrants it, but file reading is not required.
 If the question touches implementation feasibility or downstream transformation
 patterns, consult the Analytics Engineer:
 
+{{consult analytics-engineer entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="analytics-engineer",
-  prompt="""
 You are being consulted for a data modeling advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -56,8 +57,6 @@ You are being consulted for a data modeling advisory discussion.
 Please give a concise assessment — 3-5 sentences — on the analytics engineering
 angle. Which option is easier to implement in the transformation layer, and what
 dbt patterns would each require?
-  """
-)
 ```
 
 ---

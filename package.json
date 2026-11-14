@@ -25,6 +25,7 @@
     "validate:agents": "node scripts/validate-agents.js",
     "coupling": "node scripts/coupling-report.js",
     "coupling:ratchet": "node scripts/coupling-ratchet.js",
+    "lint:models": "node scripts/lint-models.js",
     "build:claude": "node cli/shards.js build --target claude",
     "build:codex": "node cli/shards.js build --target codex",
     "build:skills": "node cli/shards.js build --target skills",

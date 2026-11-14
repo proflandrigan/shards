@@ -7,19 +7,19 @@
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Goal: Write the queries, get them reviewed, fix anything flagged, then run them
 and show results. Queries are NOT executed before the Analytics Engineer review.
 
 **Join path trace:** Before writing any query that joins tables, trace the join
-path following `.claude/agents/specific_instructions/shared/join_path_protocol.md`.
+path following [`protocols/join_path.md`](../../../protocols/join_path.md).
 Present the trace to the user. If the trace reveals fan-out risk or uncertain
 grain, invoke the Data Modeller for validation before writing the query.
 
@@ -63,41 +63,41 @@ Tell the user: "Queries are written but not executed yet. Sending them to the
 Analytics Engineer for source tracing and a sanity-check sweep on the upstream
 tables — I'd rather catch SQL or layer issues before we run anything. One sec..."
 
+{{consult analytics-engineer entry=service task="Pre-execution query review for adhoc analysis"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="analytics-engineer",
-  description="Pre-execution query review for adhoc analysis",
-  prompt="SERVICE MODE — PRE-EXECUTION QUERY REVIEW. I am the Data Analyst
-  shard. I've written Phase 3 queries for project [project_name] but have
-  NOT executed them yet — your review gates execution.
+SERVICE MODE — PRE-EXECUTION QUERY REVIEW. I am the Data Analyst
+shard. I've written Phase 3 queries for project [project_name] but have
+NOT executed them yet — your review gates execution.
 
-  - project-specs.md: [file_path]
-  - Queries directory: analysis/[project_name]/queries/
-  - Data environment: [not greenfield | inaccessible | GREENFIELD]
+- project-specs.md: [file_path]
+- Queries directory: analysis/[project_name]/queries/
+- Data environment: [not greenfield | inaccessible | GREENFIELD]
 
-  Please:
-  1. Read each .sql file in the queries directory
-  2. Trace ref()/source() (or raw table references) so we have a clear
-     picture of upstream lineage — staging vs intermediate vs mart, and
-     whether the analyst picked the right layer
-  3. Review the SQL for correctness, quality, performance, and domain fit
-     against the project's business question
-  4. Run upstream sanity checks (skip if environment is greenfield/inaccessible):
-     - Row counts on each upstream source table referenced
-     - Distinct-key counts on the join keys used
-     - Null % on any column used in WHERE filters or join conditions
-     - A structural join fan-out check for any query joining two or more
-       tables (based on key cardinality of the upstream tables)
-     - Provide an *expected* result row count (or order of magnitude) given
-       the source counts and applied filters, so the analyst has something
-       to compare actual results against once they run the queries.
-     **Auto-verify**: this sanity-check sweep is exactly the bulk read-only
-     pattern auto-verify is for. Open `::AUTO-VERIFY:: agent=data-analyst phase=3`
-     before the sweep, `::ENDAUTO::` after. See
-     `specific_instructions/shared/auto_verify_mode.md`.
-  5. Return a verdict: Sound / Concerns / Revise — with specific issues
-     ordered by severity, plus the expected row counts from step 4."
-)
+Please:
+1. Read each .sql file in the queries directory
+2. Trace ref()/source() (or raw table references) so we have a clear
+   picture of upstream lineage — staging vs intermediate vs mart, and
+   whether the analyst picked the right layer
+3. Review the SQL for correctness, quality, performance, and domain fit
+   against the project's business question
+4. Run upstream sanity checks (skip if environment is greenfield/inaccessible):
+   - Row counts on each upstream source table referenced
+   - Distinct-key counts on the join keys used
+   - Null % on any column used in WHERE filters or join conditions
+   - A structural join fan-out check for any query joining two or more
+     tables (based on key cardinality of the upstream tables)
+   - Provide an *expected* result row count (or order of magnitude) given
+     the source counts and applied filters, so the analyst has something
+     to compare actual results against once they run the queries.
+   **Auto-verify**: this sanity-check sweep is exactly the bulk read-only
+   pattern auto-verify is for. Open `::AUTO-VERIFY:: agent=data-analyst phase=3`
+   before the sweep, `::ENDAUTO::` after. See
+   `../../../protocols/auto_verify_mode.md`.
+5. Return a verdict: Sound / Concerns / Revise — with specific issues
+   ordered by severity, plus the expected row counts from step 4.
 ```
 
 Append the AE's review verbatim to the Phase 3 specs section. Present the
@@ -262,4 +262,4 @@ Read this section back to the user. Stop here — wait for the user to explicitl
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_analyst/phases/phase-4.md` in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.
+{{phase 4}} in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.

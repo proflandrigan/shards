@@ -18,7 +18,7 @@ an existing AI system. You are the AI Engineer throughout. No persona transfer o
    if no baseline is documented.
 5. Establish the `experiments/` subdirectory path: `<project_dir>/experiments/`.
 6. **Versioning detection:** Read
-   `.claude/agents/specific_instructions/shared/experiment_versioning.md` in full
+   [`protocols/experiment_versioning.md`](../../../protocols/experiment_versioning.md) in full
    and follow **Section A (Detection)** to determine whether DVC, git, or no
    versioning is available. Announce the result to the user.
 7. Agree on experiment parameters with the user. Present and confirm:
@@ -32,7 +32,7 @@ an existing AI system. You are the AI Engineer throughout. No persona transfer o
      or continue with remaining experiments.
 
 8. **UI detection:** Check if `.shards/ui.port` exists. If it does, Read
-   `.claude/agents/specific_instructions/ai_engineer/experiment_ui_mode.md` in full
+   [`modes/experiment ui mode.md`](experiment_ui_mode.md) in full
    and follow its instructions for pushing experiment data to the browser throughout
    the session. This is the same pattern used by the Data Analyst's UI mode.
 
@@ -68,7 +68,7 @@ Present the list clearly. Explain your prioritisation rationale briefly.
 
 ### Optional `/goal` activation
 
-Read `.claude/agents/specific_instructions/shared/goal_mode.md` in full
+{{protocol goal_mode}} in full
 before writing the gate. Compose a candidate `/goal` condition from the
 Phase 0 + Phase 1 settings (outcome metric, success threshold if set, number
 of experiments planned) using the Experiment condition template, and include
@@ -256,17 +256,18 @@ After the DS consultation, update the experiment entry's `dsVerdict` field.
 ### Step 5.5 — Checkpoint (if versioning enabled)
 
 Follow **Section B** of
-`.claude/agents/specific_instructions/shared/experiment_versioning.md` to create
+[`protocols/experiment_versioning.md`](../../../protocols/experiment_versioning.md) to create
 a versioned checkpoint of this experiment's results. If versioning mode is
 `none`, skip this step silently. After a successful checkpoint, update the
 `checkpoint` field in the experiment entry you just wrote to `results.json`.
 
 ### Step 6 — Consult Data Scientist
 Call:
+{{consult data-scientist entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-scientist",
-  prompt="""
 You are being consulted mid-experiment to review results and suggest next steps.
 
 **Project context:**
@@ -288,8 +289,6 @@ Please provide:
 2. 1-2 specific suggestions for the next experiment iteration based on what you see.
 
 Keep your response concise and actionable.
-  """
-)
 ```
 
 After receiving the DS response, fill in the `## Data Scientist Review` section of
@@ -365,7 +364,7 @@ Factual synthesis only — no opinions here. Include:
 ### Append versioning summary
 
 If versioning mode is not `none`, append the versioning section from **Section E**
-of `.claude/agents/specific_instructions/shared/experiment_versioning.md` to
+of [`protocols/experiment_versioning.md`](../../../protocols/experiment_versioning.md) to
 `experiments/experiment_summary.md`.
 
 ### Write `experiments/final_recommendations.md`

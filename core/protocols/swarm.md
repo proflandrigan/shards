@@ -46,15 +46,19 @@ chunk.
 
 ## Spawn mechanics
 
-Spawn all slices in a single parallel fan-out: one Task call per slice, all in
-the same message. The `subagent_type` repeats across the calls — that is
+Spawn all slices in a single parallel fan-out: one worker per slice, all in
+the same message. The same agent repeats across the calls — that is
 expected and correct; same-type instances simply get different slice briefs.
 
+Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
+
+{{fanout ml-engineer slices=slice_a,slice_b}}
+
+Per-slice task: Slice: <slice-slug>
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<specialist>",
-  description="Slice: <slice-slug>",
-  prompt="""
 SWARM SLICE — You are one of N parallel same-type subagents executing a slice
 of a larger task that Syn orchestrated.
 
@@ -72,8 +76,6 @@ the next phase. Skip your activation menu and Phase 0 — Syn has already scoped
 your work. Do not invoke Syn for review. Return a concise report: artifacts
 produced, key decisions, issues, confidence, and anything the merge step needs
 to know.
-  """
-)
 ```
 
 ## Review and merge

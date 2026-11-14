@@ -45,10 +45,11 @@ Note any files you expected to find but couldn't locate.
 **ML Engineer** — if the review touches model serving constraints, feature serving
 strategy, or whether the infrastructure matches the model's actual requirements:
 
+{{consult ml-engineer entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  prompt="""
 You are being consulted to assess serving infrastructure fit for an MLOps review.
 
 **System under review:** <ML system name and brief description>
@@ -64,16 +65,15 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 **AI Engineer** — if the system involves LLM serving or prompt pipelines:
 
+{{consult ai-engineer entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ai-engineer",
-  prompt="""
 You are being consulted to assess LLM-specific serving requirements for an MLOps review.
 
 **System under review:** <LLM system name and brief description>
@@ -89,8 +89,6 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 ---

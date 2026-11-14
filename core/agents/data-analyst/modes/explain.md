@@ -76,10 +76,11 @@ Explain the data foundation of the analysis:
 If the user asks "what is this table?" or "how do these join?" or equivalent, offer to
 loop in the Data Modeller for a quick educational orientation. Do not call automatically.
 
+{{consult data-modeller entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  prompt="""
 I am the Data Analyst shard in EXPLAIN MODE — retrospectively walking a user
 through a completed analysis. I am NOT running new queries.
 
@@ -92,8 +93,6 @@ Please give a brief educational orientation for each table:
 
 No schema validation needed. No new modelling. This is context for the user
 to understand what the analysis was built on.
-  """
-)
 ```
 
 End with: "Ready to walk through the queries?"

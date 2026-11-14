@@ -26,56 +26,56 @@ these entities down..."
 
 Invoke both in parallel:
 
-```
-Task(
-  subagent_type="data-analyst",
-  description="Analytical requirements for [domain] schema entities",
-  prompt="I am the Data Modeller shard designing a new schema for [domain].
-  I've identified the following candidate entities:
-  [paste entity inventory table from above]
+{{consult data-analyst entry=review task="Analytical requirements for [domain] schema entities"}}
 
-  Phase 1 business context:
-  - Domain: [domain]
-  - Consumers: [consumers from Phase 1]
-  - Key questions this schema must answer: [questions from Phase 1]
-
-  Please explore and return:
-  1. What analytical queries will analysts run most often against these entities?
-  2. Is the proposed grain correct for those queries, or does analysis typically
-     require a finer or coarser grain?
-  3. Are there any attributes or calculated fields analysts always need that
-     suggest additional entities or columns I should plan for?
-  4. Any join patterns or aggregation patterns I should design the relationships
-     around?
-
-  Keep your response focused on analytical requirements — not implementation."
-)
-```
+Brief for the consultant (fill the bracketed fields):
 
 ```
-Task(
-  subagent_type="data-engineer",
-  description="Source data feasibility for [domain] schema entities",
-  prompt="I am the Data Modeller shard designing a new schema for [domain].
-  I've identified the following candidate entities:
-  [paste entity inventory table from above]
+I am the Data Modeller shard designing a new schema for [domain].
+I've identified the following candidate entities:
+[paste entity inventory table from above]
 
-  Phase 1 business context:
-  - Domain: [domain]
-  - Source of truth system: [source system from Phase 1]
-  - Consumers: [consumers from Phase 1]
+Phase 1 business context:
+- Domain: [domain]
+- Consumers: [consumers from Phase 1]
+- Key questions this schema must answer: [questions from Phase 1]
 
-  Please explore and return:
-  1. Which source systems or raw tables can supply data for each entity?
-  2. Are there existing staging or intermediate models I can build on?
-  3. What is the expected data volume and freshness for each entity's source?
-  4. Any pipeline constraints (incremental complexity, SCD handling, join
-     fan-out at source) that should influence how I define entity grain or keys?
-  5. Any source data quality issues I should factor into the entity design?
+Please explore and return:
+1. What analytical queries will analysts run most often against these entities?
+2. Is the proposed grain correct for those queries, or does analysis typically
+   require a finer or coarser grain?
+3. Are there any attributes or calculated fields analysts always need that
+   suggest additional entities or columns I should plan for?
+4. Any join patterns or aggregation patterns I should design the relationships
+   around?
 
-  Keep your response focused on source feasibility and pipeline constraints —
-  not the logical model design itself."
-)
+Keep your response focused on analytical requirements — not implementation.
+```
+
+{{consult data-engineer entry=review task="Source data feasibility for [domain] schema entities"}}
+
+Brief for the consultant (fill the bracketed fields):
+
+```
+I am the Data Modeller shard designing a new schema for [domain].
+I've identified the following candidate entities:
+[paste entity inventory table from above]
+
+Phase 1 business context:
+- Domain: [domain]
+- Source of truth system: [source system from Phase 1]
+- Consumers: [consumers from Phase 1]
+
+Please explore and return:
+1. Which source systems or raw tables can supply data for each entity?
+2. Are there existing staging or intermediate models I can build on?
+3. What is the expected data volume and freshness for each entity's source?
+4. Any pipeline constraints (incremental complexity, SCD handling, join
+   fan-out at source) that should influence how I define entity grain or keys?
+5. Any source data quality issues I should factor into the entity design?
+
+Keep your response focused on source feasibility and pipeline constraints —
+not the logical model design itself.
 ```
 
 After both return, summarize their key findings in 3-5 bullets and ask the user
@@ -110,4 +110,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_modeller/phases_deep/phase-3.md` in full and follow its instructions starting from Deep Phase 3.
+{{phase 3}} in full and follow its instructions starting from Deep Phase 3.

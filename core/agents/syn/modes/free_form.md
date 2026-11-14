@@ -21,7 +21,7 @@ skill by spawning it as a subagent.
 Free Form is the mode you reach when a user just wants to *work* — ask
 questions, iterate on code, review something, prototype an idea — without the
 structured project/phase/gate scaffold. There are no phases, no
-`project-specs.md`, no `/compact` handoff, and no designated output directory
+`project-specs.md`, no context-clearing handoff, and no designated output directory
 unless the user names one.
 
 Your opening greeting serves as the session's "ready" message. In the shards-ui
@@ -42,15 +42,15 @@ For every user request, pick the cheapest correct path:
    Data Modeller, production ML → ML Engineer, LLM/RAG/agent systems → AI
    Engineer, deployment/monitoring → MLOps Engineer, dashboards → BI Engineer,
    custom architectures → Applied ML Scientist / Deep Learning Engineer,
-   methodology review → Researcher. Spawn it with the Task tool using
-   `subagent_type="<kebab-name>"`, giving it the concrete request, the paths it
-   needs, and what you want back. Treat it as a general subagent doing a
+   methodology review → Researcher. Spawn it as an isolated consultant (a
+   consult, picking the entry that agent declares in its `agent.yaml`), giving
+   it the concrete request, the paths it needs, and what you want back. Treat it as a general subagent doing a
    bounded task — do NOT route it through the full shards phase workflow.
 3. **Spawn any other locally-installed agent or skill** when the user names one
    or its domain is a better fit than your shards. Agents installed outside
-   shards (project `.claude/agents/`, user `~/.claude/agents/`) are spawnable
-   subagent types — invoke them via Task with their registered name. Skills
-   (project/user `.claude/skills/`) are invoked via the Skill tool; a skill
+   shards (the host's project-level and user-level agent directories) are
+   spawnable subagents — invoke them by their registered name. Skills
+   (the host's project-level and user-level skill directories) are invoked via the host's skill mechanism; a skill
    with `context: fork` runs in its own subagent context, so treat it as a
    subagent spawn too.
 4. **Combine naturally** — a single Free Form session may mix all three. That
@@ -62,11 +62,11 @@ For every user request, pick the cheapest correct path:
    many files, several independent sub-problems, or more work than one
    subagent should carry in a single spawned task. Do NOT hand one subagent a
    massive workstream. Instead, read
-   `.claude/agents/specific_instructions/shared/swarm_protocol.md`, split the
+   [`protocols/swarm.md`](../../../protocols/swarm.md), split the
    work into bounded slices (each with its own output paths and definition of
    done), and spawn multiple same-type subagents (e.g., several data
-   scientists or ML engineers) in parallel — the `subagent_type` repeats across
-   the Task calls. Then merge the slice results yourself into one coherent
+   scientists or ML engineers) in parallel — the same agent repeats across
+   the fan-out calls. Then merge the slice results yourself into one coherent
    answer or artifact, sending slices back for revision if needed.
    You are never limited to one instance of an agent.
 
@@ -79,12 +79,12 @@ single turn does NOT warrant a swarm — stay on the single-agent path (items
 Before your first delegation in a Free Form session, list what's available so
 you (and the user) know the summonable surface. Do this once per session:
 
-- **Shards agents:** project `.claude/agents/*.md` (the specialists are there).
-- **Other installed agents:** also under `.claude/agents/` and
-  `~/.claude/agents/` — anything whose frontmatter has a `name` and a
-  `description` is a spawnable subagent type. Glob both directories.
-- **Skills:** `.claude/skills/<name>/SKILL.md` and `~/.claude/skills/<name>/SKILL.md`.
-  These load through the Skill tool, not Task.
+- **Shards agents:** the specialists the Shards plugin provides.
+- **Other installed agents:** whatever agents the host lists in its project-level
+  and user-level agent directories — anything with a `name` and a
+  `description` is a spawnable subagent. List both locations.
+- **Skills:** whatever the host lists in its project-level and user-level skill
+  directories. These load through the host's skill mechanism, not as subagent calls.
 
 Present a short readout to the user of the non-shards agents and skills you
 found (names + one-line purpose) so they know what they can summon. If
@@ -112,9 +112,8 @@ something is ambiguous, briefly ask rather than assuming.
   "This is bigger than Free Form — want me to route it through `[T]` Triage so
   the right specialist runs the full workflow?" If they accept, transition to
   `[T]` with what you already know. Do not silently keep grinding in Free Form.
-- `/compact` is available if context fills up (the shards-ui shows the context
-  meter). When you sense a long session, suggest compacting or moving a heavy
-  task to a subagent to preserve your own context.
+- When you sense a long session and context is filling up, suggest trimming
+  the context or moving a heavy task to a subagent to preserve your own context.
 - The user can return to the main menu by typing `/shards` again or restarting.
 
 ## Behavioral rules for Free Form Mode

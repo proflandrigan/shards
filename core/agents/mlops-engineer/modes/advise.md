@@ -45,10 +45,11 @@ tightly coupled. Say that clearly. Let the user decide with full information.
 If the question touches model architecture constraints or what the model actually needs
 at serving time, consult the ML Engineer:
 
+{{consult ml-engineer entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  prompt="""
 You are being consulted for an MLOps advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -57,8 +58,6 @@ You are being consulted for an MLOps advisory discussion.
 
 Please give a concise assessment — 3-5 sentences — on the ML engineering angle.
 What are the serving and infrastructure feasibility considerations for each option?
-  """
-)
 ```
 
 ---

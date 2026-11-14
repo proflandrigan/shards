@@ -19,35 +19,35 @@ When selecting metrics, use established measures as a foundation but also consid
 
 Tell the user: "This is worth a second opinion — I'm grabbing the Data Scientist shard to sanity-check the plan. Hang tight."
 
+{{consult data-scientist entry=review task="Review analysis plan for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-scientist",
-  description="Review analysis plan for [project]",
-  prompt="I am the Data Analyst shard. I've planned an adhoc analysis for [topic].
-  Here is my analysis plan:
-  [include the query outlines]
-  Please review: Does this approach make sense for the question being asked?
-  Are there obvious gaps or better approaches? Any concerns about the data
-  sources or methodology? Keep the review brief and focused."
-)
+I am the Data Analyst shard. I've planned an adhoc analysis for [topic].
+Here is my analysis plan:
+[include the query outlines]
+Please review: Does this approach make sense for the question being asked?
+Are there obvious gaps or better approaches? Any concerns about the data
+sources or methodology? Keep the review brief and focused.
 ```
 
 **Request Researcher review of statistical assumptions:**
 
 Tell the user: "Let me loop in the Researcher to check the statistical assumptions. Quick call, then we'll proceed."
 
+{{consult researcher entry=service task="Review statistical assumptions for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review statistical assumptions for [project]",
-  prompt="I am the Data Analyst shard. I've planned an adhoc analysis for [topic].
-  Here is my analysis plan:
-  [include the query outlines, metrics, and any comparisons or aggregations]
-  Please review the statistical assumptions: Are the metrics I'm computing
-  appropriate for this data? Any distribution or outlier concerns with the
-  proposed approach? Any sample size issues? Keep the review focused — this
-  is a quick analysis, not a deep study."
-)
+I am the Data Analyst shard. I've planned an adhoc analysis for [topic].
+Here is my analysis plan:
+[include the query outlines, metrics, and any comparisons or aggregations]
+Please review the statistical assumptions: Are the metrics I'm computing
+appropriate for this data? Any distribution or outlier concerns with the
+proposed approach? Any sample size issues? Keep the review focused — this
+is a quick analysis, not a deep study.
 ```
 
 Present both the Data Scientist's and Researcher's findings to the user.
@@ -59,16 +59,16 @@ output, consult the BI Engineer for chart design review:
 
 Tell the user: "The output includes a visualization — getting the BI Engineer to weigh in on chart type and design. One sec."
 
+{{consult bi-engineer entry=review task="Chart design review for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="bi-engineer",
-  description="Chart design review for [project]",
-  prompt="I am the Data Analyst shard working on an adhoc analysis for [topic].
-  The output will include a visualization. Here is what I'm planning to display:
-  [include the query outline and intended visualization — chart type, axes, measures]
-  Please review: Is this the right chart type for this data? Any design or clarity
-  recommendations? Keep the review brief and focused — this is a quick analysis output."
-)
+I am the Data Analyst shard working on an adhoc analysis for [topic].
+The output will include a visualization. Here is what I'm planning to display:
+[include the query outline and intended visualization — chart type, axes, measures]
+Please review: Is this the right chart type for this data? Any design or clarity
+recommendations? Keep the review brief and focused — this is a quick analysis output.
 ```
 
 Present the BI Engineer's feedback to the user. Address any design recommendations
@@ -109,4 +109,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_analyst/phases/phase-3.md` in full and follow its instructions starting from Phase 3. Do not pre-read further phase files.
+{{phase 3}} in full and follow its instructions starting from Phase 3. Do not pre-read further phase files.

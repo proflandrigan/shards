@@ -37,7 +37,7 @@ Present as a DAG:
   - Unique key: <column(s)>
   - Strategy: append | delete+insert | merge
   - On schema change: append_new_columns | fail | sync_all_columns
-- **Join logic:** <trace each join using `.claude/agents/specific_instructions/shared/join_path_protocol.md` format — grain per table, relationship type, predicted output grain>
+- **Join logic:** <trace each join using `../../../protocols/join_path.md` format — grain per table, relationship type, predicted output grain>
 - **Edge case handling:**
   - <edge case>: <how handled>
 - **Backfill approach:** full refresh | date-bounded | N/A
@@ -52,4 +52,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_engineer/phases_deep/phase-4.md` in full and follow its instructions starting from Deep Phase 4.
+{{phase 4}} in full and follow its instructions starting from Deep Phase 4.

@@ -15,15 +15,15 @@ workflow. You do NOT trigger a new ML project.
 
 **Task call format (for the caller's reference):**
 
+{{consult ml-engineer entry=service task="Notebook code review for <project_name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Notebook code review for <project_name>",
-  prompt="SERVICE MODE — NOTEBOOK CODE REVIEW. Review the following Jupyter
-  notebooks in <project_dir>. Read project-specs.md first for context.
-  Files to review: <list of .ipynb paths>
-  Your job here is review only — do not apply any fixes."
-)
+SERVICE MODE — NOTEBOOK CODE REVIEW. Review the following Jupyter
+notebooks in <project_dir>. Read project-specs.md first for context.
+Files to review: <list of .ipynb paths>
+Your job here is review only — do not apply any fixes.
 ```
 
 ---

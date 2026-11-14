@@ -8,18 +8,18 @@
 **Context checkpoint:** Before building, prompt the user:
 
 "Okay. Everything is planned. I'm still stressed, but the stress is now organized.
-Good moment to run `/compact` or `/clear` before we start executing — I'll be
+Good moment to trim or reset your context before we start executing — I'll be
 working from project-specs.md from here. Say the word when you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Goal: Build all IaC, configs, pipeline definitions, and monitoring setup.
 
 ### Incremental testing — checkpoint gates between components
 
-Follow `.claude/agents/specific_instructions/shared/incremental_testing.md` during this build. Each component below is a checkpoint seam — after you write and validate a component (plan, lint, dry-run, or container-build as appropriate), emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before advancing. Do not stack unvalidated IaC / serving / pipeline configs and attempt to apply them at the end.
+{{protocol incremental_testing}} during this build. Each component below is a checkpoint seam — after you write and validate a component (plan, lint, dry-run, or container-build as appropriate), emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before advancing. Do not stack unvalidated IaC / serving / pipeline configs and attempt to apply them at the end.
 
 Checkpoint gate fence — emit exactly this shape. Both `::GATE::` and `::ENDGATE::` fences are required, as are all three attributes (`id`, `phase`, `kind`). No prose outside the fence.
 
@@ -125,4 +125,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/mlops_engineer/phases/phase-7.md` in full and follow its instructions starting from Phase 7. Do not pre-read further phase files.
+{{phase 7}} in full and follow its instructions starting from Phase 7. Do not pre-read further phase files.

@@ -7,18 +7,18 @@
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 building. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning Phase 6. "Beginning Phase 6" includes the reviewer Task calls below — do not fire them until the user signals readiness.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Goal: Write the SQL queries and the notebook. **No execution.** SQL is reviewed and validated under `LIMIT 100` by the Analytics Engineer in Phase 7. The notebook is run by the user (or via the `/notebook-walkthrough` mode) outside the build flow. Phase 6 is a write-only phase.
 
 **Join path self-check:** Before requesting the Data Modeller review, trace the
-join path for each query following `.claude/agents/specific_instructions/shared/join_path_protocol.md`.
+join path for each query following [`protocols/join_path.md`](../../../protocols/join_path.md).
 Present the trace to the user. Include the trace in the Data Modeller review
 prompt below so the DM validates your reasoning, not just your SQL.
 
@@ -26,29 +26,29 @@ prompt below so the DM validates your reasoning, not just your SQL.
 
 Tell the user: "Asking the Data Modeller to verify sql queries (i.e. joins and grain before writing them out)."
 
+{{consult data-modeller entry=review task="Review queries for [study]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Review queries for [study]",
-  prompt="I am the Data Scientist shard. I've drafted queries for study [name].
-  The project specs are at: studies/[name]/project-specs.md
+I am the Data Scientist shard. I've drafted queries for study [name].
+The project specs are at: studies/[name]/project-specs.md
 
-  Here are the queries:
-  [include query outlines or key SQL]
+Here are the queries:
+[include query outlines or key SQL]
 
-  Please REVIEW (not just explore): Do the joins make sense given the data model
-  grain? Are there grain fan-out risks? Am I using the right tables?
+Please REVIEW (not just explore): Do the joins make sense given the data model
+grain? Are there grain fan-out risks? Am I using the right tables?
 
-  Run validation queries to check:
-  1. PK uniqueness on all tables I'm joining
-  2. Null rates on my join keys and critical filter columns
-  3. Join fan-out: row counts before/after my key joins
-  4. Data freshness on the tables I'm querying
+Run validation queries to check:
+1. PK uniqueness on all tables I'm joining
+2. Null rates on my join keys and critical filter columns
+3. Join fan-out: row counts before/after my key joins
+4. Data freshness on the tables I'm querying
 
-  Cross-reference the validation results against the study requirements in
-  project-specs.md (especially the grain and data sources from Phase 2).
-  Return your full review with query validation results."
-)
+Cross-reference the validation results against the study requirements in
+project-specs.md (especially the grain and data sources from Phase 2).
+Return your full review with query validation results.
 ```
 
 The Data Modeller will run a bulk read-only validation sweep — that's an
@@ -60,21 +60,21 @@ for the Task call itself.
 Tell the user: "I'm also asking the Researcher shard to review the analytical
 approach for statistical validity..."
 
+{{consult researcher entry=service task="Review analysis approach for [study]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review analysis approach for [study]",
-  prompt="I am the Data Scientist shard preparing study [name]. Here is the
-  analytical approach I'm about to encode in queries and notebook cells:
-  - Methodology: [from Phase 3]
-  - Queries: [include query outlines or key SQL]
-  - Feature engineering: [if applicable, key transformations]
-  - Evaluation approach: [metrics, validation strategy]
-  Please review: Any concerns about how the methodology is being implemented?
-  Outlier handling appropriate? Transformations sound? Statistical tests valid
-  for the data characteristics? Keep review focused on what gets written into
-  the queries and notebook."
-)
+I am the Data Scientist shard preparing study [name]. Here is the
+analytical approach I'm about to encode in queries and notebook cells:
+- Methodology: [from Phase 3]
+- Queries: [include query outlines or key SQL]
+- Feature engineering: [if applicable, key transformations]
+- Evaluation approach: [metrics, validation strategy]
+Please review: Any concerns about how the methodology is being implemented?
+Outlier handling appropriate? Transformations sound? Statistical tests valid
+for the data characteristics? Keep review focused on what gets written into
+the queries and notebook.
 ```
 
 Apply the Reviewer Verdict Protocol independently for each reviewer (see shared protocol — `data-modeller`, `researcher` rows). Address all Halt-tier verdicts before proceeding to build.
@@ -101,7 +101,7 @@ The deliverables are SQL files under `studies/<name>/queries/` and a notebook un
 
 ### Incremental testing — checkpoint gates between components
 
-Follow `.claude/agents/specific_instructions/shared/incremental_testing.md` during this build. Each numbered build step below ends with a `kind=checkpoint` gate emission — after you write the component, emit the gate fence and wait for user confirmation before starting the next component. The "test" in this build-only phase is structural — you read back what you wrote and confirm it matches the Phase 3 plan; you do not execute it.
+{{protocol incremental_testing}} during this build. Each numbered build step below ends with a `kind=checkpoint` gate emission — after you write the component, emit the gate fence and wait for user confirmation before starting the next component. The "test" in this build-only phase is structural — you read back what you wrote and confirm it matches the Phase 3 plan; you do not execute it.
 
 **Worked example — emit checkpoint gates in exactly this shape.** Both `::GATE::` and `::ENDGATE::` fences are required. All readback lives *inside* the fence body. No prose above `::GATE::` and no prose after `::ENDGATE::` — the fence is the entire emission.
 
@@ -236,4 +236,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_scientist/phases/phase-7.md` in full and follow its instructions starting from Phase 7. Do not pre-read further phase files.
+{{phase 7}} in full and follow its instructions starting from Phase 7. Do not pre-read further phase files.

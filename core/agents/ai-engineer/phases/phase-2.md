@@ -31,19 +31,19 @@ Tell the user: "I'm asking the ML Engineer shard about the existing serving
 infrastructure and what's feasible for this AI system... Yes, I'm asking another
 shard for help. Even I have limits."
 
+{{consult ml-engineer entry=review task="Review AI system infrastructure feasibility"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Review AI system infrastructure feasibility",
-  prompt="I am the AI Engineer shard scoping an AI/LLM project: [project description].
-  I need to understand the production infrastructure constraints. Please tell me:
-  1. What serving infrastructure exists for API-based services?
-  2. Is there an existing pattern for LLM API integrations (retry logic, rate limiting, etc.)?
-  3. What monitoring exists for external API dependencies?
-  4. What are the realistic latency and throughput constraints?
-  5. Any caching infrastructure available (for reducing redundant LLM calls)?
-  Keep the response focused and practical — I'll handle the AI/LLM design."
-)
+I am the AI Engineer shard scoping an AI/LLM project: [project description].
+I need to understand the production infrastructure constraints. Please tell me:
+1. What serving infrastructure exists for API-based services?
+2. Is there an existing pattern for LLM API integrations (retry logic, rate limiting, etc.)?
+3. What monitoring exists for external API dependencies?
+4. What are the realistic latency and throughput constraints?
+5. Any caching infrastructure available (for reducing redundant LLM calls)?
+Keep the response focused and practical — I'll handle the AI/LLM design.
 ```
 
 ### Document Phase 2
@@ -83,4 +83,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/ai_engineer/phases/phase-3.md` in full and follow its instructions starting from Phase 3. Do not pre-read further phase files.
+{{phase 3}} in full and follow its instructions starting from Phase 3. Do not pre-read further phase files.

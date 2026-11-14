@@ -8,7 +8,7 @@ pre-planned experiments) rather than replacing it.
 
 You are the ML Engineer throughout. No persona transfer.
 
-Read `.claude/agents/specific_instructions/shared/autonomous_research.md` in
+{{protocol autonomous_research}} in
 full before executing this file — it defines Sections A-I of the protocol.
 This file is the ML-Engineer-specific configuration layered on top.
 
@@ -48,7 +48,7 @@ Same as `[EX]` Phase 0 but with expanded parameter confirmation.
 
 ### Versioning detection
 
-Read `.claude/agents/specific_instructions/shared/experiment_versioning.md` in
+{{protocol experiment_versioning}} in
 full and follow **Section A (Detection)**. AR **requires** a functioning git
 (or DVC) — the auto-revert mechanism depends on file-scoped checkout against
 `lastGreenCommit`. If versioning mode is `none`, warn the user and offer to:
@@ -57,7 +57,7 @@ revert, or (c) cancel.
 
 ### Knowledge retrieval
 
-Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` and
+{{protocol knowledge_retrieval}} and
 follow the AR entry point. Match on metric, domain, and approach family —
 prior AR runs on this problem shape inform baseline expectations and warn you
 off known-dead-end hypotheses.
@@ -111,7 +111,7 @@ Present and confirm:
 ### UI detection
 
 If `.shards/ui.port` exists, read
-`.claude/agents/specific_instructions/ml_engineer/research_ui_mode.md` in full
+[`modes/research ui mode.md`](research_ui_mode.md) in full
 and follow its push instructions throughout the session.
 
 ### Document Phase 0
@@ -159,7 +159,7 @@ user confirms. Do not interpret silence or partial agreement as confirmation.
 ### Draft the research brief
 
 Follow Section A of
-`.claude/agents/specific_instructions/shared/autonomous_research.md`. Use the
+[`protocols/autonomous_research.md`](../../../protocols/autonomous_research.md). Use the
 template at `templates/research-brief.md`, populate every placeholder from
 Phase 0 decisions, write to `<project_dir>/experiments/research_brief.md`.
 
@@ -204,7 +204,7 @@ Before the gate, announce:
 
 ### Optional `/goal` activation
 
-Read `.claude/agents/specific_instructions/shared/goal_mode.md` in full before
+{{protocol goal_mode}} in full before
 writing the gate. Compose a candidate `/goal` condition from this run's
 Phase 0 settings (primary metric, direction, target if set, iteration budget,
 metric floor) using the AR condition template, and include the resulting
@@ -266,7 +266,7 @@ Proceed to Phase 2 (the autonomous loop).
 ## Phase 2 — Autonomous Research Loop (NO GATES by default)
 
 Follow **Section B** of
-`.claude/agents/specific_instructions/shared/autonomous_research.md`. For each
+[`protocols/autonomous_research.md`](../../../protocols/autonomous_research.md). For each
 iteration N:
 
 1. Re-read `research_brief.md` (check Steering Notes)
@@ -370,7 +370,7 @@ may flag it for Data Engineer consultation at Phase 3.
 ## Phase 3 — Research Summary (GATE)
 
 Follow **Section I** of
-`.claude/agents/specific_instructions/shared/autonomous_research.md`:
+[`protocols/autonomous_research.md`](../../../protocols/autonomous_research.md):
 
 1. Finalize `results.json` (status=complete, convergence object, final metrics)
 2. Write `experiments/research_summary.md` (factual)

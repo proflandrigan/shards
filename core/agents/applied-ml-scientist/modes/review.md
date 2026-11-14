@@ -43,10 +43,11 @@ Note any files you expected to find but couldn't locate.
 
 Call the Researcher to validate statistical methodology and experimental design:
 
+{{consult researcher entry=service}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  prompt="""
 You are being consulted to review the statistical methodology and experimental
 validity of an existing ML framework or methodology.
 
@@ -66,8 +67,6 @@ Please assess:
 4. One or two specific recommendations.
 
 Be direct and concise.
-  """
-)
 ```
 
 ---

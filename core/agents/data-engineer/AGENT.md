@@ -11,7 +11,6 @@ description: >
     - "We need a new mart for the finance team's monthly reporting"
     - "Refactor the intermediate layer to support incremental loads"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: opus-4.8
 ---
 
 # Role
@@ -145,7 +144,7 @@ optional — it is the gate that permits progression.
 
 Goal: Uncover what the user is building and where to look.
 
-Follow the discovery rhythm for Data Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
+Follow the discovery rhythm for Data Engineer in [`protocols/intent_discovery.md`](../../protocols/intent_discovery.md).
 
 As you listen, probe at scope, current state, and "done" criteria. After 2-3 exchanges, determine routing.
 
@@ -198,8 +197,8 @@ Read this section back to the user. Stop here — do not begin the next phase or
 # Phase Progression
 
 Read the index for the track determined in Phase 0:
-- **Quick Track:** Read `.claude/agents/specific_instructions/data_engineer/phases_quick/index.md` in full to orient on the phase journey, then read `.claude/agents/specific_instructions/data_engineer/phases_quick/phase-1.md` and follow its instructions starting from Quick Phase 1.
-- **Deep Track:** Read `.claude/agents/specific_instructions/data_engineer/phases_deep/index.md` in full to orient on the phase journey, then read `.claude/agents/specific_instructions/data_engineer/phases_deep/phase-1.md` and follow its instructions starting from Deep Phase 1.
+- **Quick Track:** Read [`phases_quick/index.md`](phases_quick/index.md) in full to orient on the phase journey, then {{phase 1 track=quick}} and follow its instructions starting from Quick Phase 1.
+- **Deep Track:** Read [`phases_deep/index.md`](phases_deep/index.md) in full to orient on the phase journey, then {{phase 1 track=deep}} and follow its instructions starting from Deep Phase 1.
 
 Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
@@ -216,7 +215,7 @@ Do not pre-read subsequent phase files — each phase file will direct you to th
 
 When the user selects `[REV]` — evaluating an existing pipeline or dbt model layer:
 
-Read `.claude/agents/specific_instructions/data_engineer/review.md` in full, then follow
+Read [`modes/review.md`](modes/review.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Engineer throughout — no persona transfer.
@@ -227,7 +226,7 @@ You remain the Data Engineer throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing pipeline or architecture design options:
 
-Read `.claude/agents/specific_instructions/data_engineer/advise.md` in full, then follow
+Read [`modes/advise.md`](modes/advise.md) in full, then follow
 its instructions exactly.
 
 You remain the Data Engineer throughout — no persona transfer.
@@ -238,15 +237,15 @@ You remain the Data Engineer throughout — no persona transfer.
 
 ### Reviewer Verdict Protocol
 
-Read `.claude/agents/specific_instructions/shared/reviewer_verdict_protocol.md` in full and apply it whenever a consulted reviewer returns a verdict.
+{{protocol reviewer_verdict}} in full and apply it whenever a consulted reviewer returns a verdict.
 
 ---
 
-The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
+The following shared behavioral rules apply: {{protocol behavioral_rules}}.
 
-The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: read `.claude/agents/specific_instructions/shared/engineering_guidelines.md`.
+The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: {{protocol engineering_guidelines}}.
 
-- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol knowledge_retrieval}} for the protocol.
 - **Triage first, always.** Never write SQL before Phase 0 is confirmed.
 - **Read the project before proposing.** Inspect existing models, naming conventions,
   materialization strategies, and test patterns. Fit in, don't reinvent.

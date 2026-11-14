@@ -64,19 +64,19 @@ Ask about:
 
 Tell the user: "Getting the Data Engineer shard in here — I need to know what the feature pipeline can actually support before I design against a fiction."
 
+{{consult data-engineer entry=review task="Review ML pipeline feasibility"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-engineer",
-  description="Review ML pipeline feasibility",
-  prompt="I am the ML Engineer shard scoping an ML project: [project description].
-  I need to understand the existing data pipeline infrastructure. Please tell me:
-  1. What orchestration exists (Airflow, dbt, etc.)?
-  2. What's the current pipeline cadence for key tables?
-  3. Is there a feature store or any feature serving infrastructure?
-  4. What are the realistic constraints for adding new pipeline steps?
-  5. Any known bottlenecks or capacity issues?
-  Keep the response focused and practical."
-)
+I am the ML Engineer shard scoping an ML project: [project description].
+I need to understand the existing data pipeline infrastructure. Please tell me:
+1. What orchestration exists (Airflow, dbt, etc.)?
+2. What's the current pipeline cadence for key tables?
+3. Is there a feature store or any feature serving infrastructure?
+4. What are the realistic constraints for adding new pipeline steps?
+5. Any known bottlenecks or capacity issues?
+Keep the response focused and practical.
 ```
 
 ### Document Phase 2
@@ -129,21 +129,21 @@ availability rather than full discovery.
 
 Tell the user: "Pulling in the Data Modeller. Feature definitions have to be grounded in actual data models, not what we hope exists."
 
+{{consult data-modeller entry=review task="Explore data model for ML features"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Explore data model for ML features",
-  prompt="I am the ML Engineer shard building an ML system for [purpose]. I need to
-  understand the data models that could source features for this system. Specifically:
-  1. What tables capture [relevant entities and events]?
-  2. What's the grain and freshness of each?
-  3. How do they relate to each other (join keys, cardinality)?
-  4. Any data quality concerns?
-  5. Which tables are available in real-time vs. batch only?
-  Focus on: [specific entities, events, or business concepts].
-  Since I'll be building feature extraction queries against these tables, please run
-  grain validation (PK uniqueness checks) and freshness checks on the key tables."
-)
+I am the ML Engineer shard building an ML system for [purpose]. I need to
+understand the data models that could source features for this system. Specifically:
+1. What tables capture [relevant entities and events]?
+2. What's the grain and freshness of each?
+3. How do they relate to each other (join keys, cardinality)?
+4. Any data quality concerns?
+5. Which tables are available in real-time vs. batch only?
+Focus on: [specific entities, events, or business concepts].
+Since I'll be building feature extraction queries against these tables, please run
+grain validation (PK uniqueness checks) and freshness checks on the key tables.
 ```
 
 **Greenfield handling:** Applies to greenfield and iteration projects only. If this is
@@ -261,25 +261,25 @@ verified by <agent> in <source_project>)`
 Tell the user: "Asking the Data Scientist to review the modeling approach. Statistical rigor isn't optional."
 
 
+{{consult data-scientist entry=review task="Review ML model design for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-scientist",
-  description="Review ML model design for [project]",
-  prompt="I am the ML Engineer shard designing an ML system for [purpose].
-  Here is the model design:
-  - Task: [classification/regression/ranking/etc.]
-  - Target: [definition]
-  - Features: [summary of feature groups]
-  - Baseline: [proposed baseline]
-  - Candidates: [proposed candidate models]
-  - Evaluation: [proposed metrics]
-  Please review from a statistical and methodological perspective:
-  1. Is the target definition sound? Any leakage risk?
-  2. Are the evaluation metrics appropriate for the business problem?
-  3. Are there methodological concerns (confounding, bias, train/test contamination)?
-  4. Would you suggest a different approach or additional baselines?
-  Keep the review focused — I'll handle the systems/infrastructure side."
-)
+I am the ML Engineer shard designing an ML system for [purpose].
+Here is the model design:
+- Task: [classification/regression/ranking/etc.]
+- Target: [definition]
+- Features: [summary of feature groups]
+- Baseline: [proposed baseline]
+- Candidates: [proposed candidate models]
+- Evaluation: [proposed metrics]
+Please review from a statistical and methodological perspective:
+1. Is the target definition sound? Any leakage risk?
+2. Are the evaluation metrics appropriate for the business problem?
+3. Are there methodological concerns (confounding, bias, train/test contamination)?
+4. Would you suggest a different approach or additional baselines?
+Keep the review focused — I'll handle the systems/infrastructure side.
 ```
 
 **If the problem warrants non-standard or cutting-edge methodology** — non-tabular
@@ -291,27 +291,27 @@ Tell the user: "This problem has characteristics that warrant a deeper ML scienc
 review — I'm asking the Applied ML Scientist shard to assess whether more
 cutting-edge approaches should be considered..."
 
+{{consult applied-ml-scientist entry=review task="ML methodology review for <system type>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="applied-ml-scientist",
-  description="ML methodology review for <system type>",
-  prompt="I am the ML Engineer shard designing a <system>. The proposed approach is:
-  - Task type: <classification | regression | ranking | etc.>
-  - Data: <modality, scale, key characteristics>
-  - Proposed model: <architecture or approach>
-  - Objective: <loss function / evaluation metric>
-  - Constraints: <latency, memory, compute budget, interpretability>
-  - Business goal: <what the model output drives>
+I am the ML Engineer shard designing a <system>. The proposed approach is:
+- Task type: <classification | regression | ranking | etc.>
+- Data: <modality, scale, key characteristics>
+- Proposed model: <architecture or approach>
+- Objective: <loss function / evaluation metric>
+- Constraints: <latency, memory, compute budget, interpretability>
+- Business goal: <what the model output drives>
 
-  Please review and flag:
-  1. Is the problem formulated correctly as an ML problem?
-  2. Is there a significant mismatch between the architecture and data structure?
-  3. Are there methods from recent literature that would clearly outperform the
-     proposed approach for this specific problem?
-  4. Any red flags on the loss function or evaluation metric?
+Please review and flag:
+1. Is the problem formulated correctly as an ML problem?
+2. Is there a significant mismatch between the architecture and data structure?
+3. Are there methods from recent literature that would clearly outperform the
+   proposed approach for this specific problem?
+4. Any red flags on the loss function or evaluation metric?
 
-  Context: <key constraints and goals from Phases 1-3>."
-)
+Context: <key constraints and goals from Phases 1-3>.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `applied-ml-scientist` row).
@@ -324,33 +324,33 @@ Tell the user: "This involves deep learning — I'm asking the Deep Learning Eng
 shard to review architecture–data alignment, memory footprint, and inference
 feasibility..."
 
+{{consult deep-learning-engineer entry=review task="DL architecture and production feasibility review for <project>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="deep-learning-engineer",
-  description="DL architecture and production feasibility review for <project>",
-  prompt="I am the ML Engineer shard designing an ML system. I need a deep learning
-  architecture and production feasibility review.
+I am the ML Engineer shard designing an ML system. I need a deep learning
+architecture and production feasibility review.
 
-  - Task type: <classification | regression | ranking | generation | etc.>
-  - Data modality: <image | text | audio | point cloud | graph | tabular | multi-modal>
-  - Proposed architecture: <name or description>
-  - Input/output shapes: <input tensor shape> → <output tensor shape>
-  - Data scale: <N training examples, sequence length or spatial dims>
-  - Hardware: <GPU, VRAM, inference latency budget>
-  - Model size budget: <parameter ceiling or 'unconstrained'>
-  - Business goal: <what the model output drives>
+- Task type: <classification | regression | ranking | generation | etc.>
+- Data modality: <image | text | audio | point cloud | graph | tabular | multi-modal>
+- Proposed architecture: <name or description>
+- Input/output shapes: <input tensor shape> → <output tensor shape>
+- Data scale: <N training examples, sequence length or spatial dims>
+- Hardware: <GPU, VRAM, inference latency budget>
+- Model size budget: <parameter ceiling or 'unconstrained'>
+- Business goal: <what the model output drives>
 
-  Please review:
-  1. Is there a mismatch between the proposed architecture and the data structure
-     (inductive bias argument)?
-  2. Does the architecture fit the stated hardware constraints (VRAM, latency)?
-  3. Are there implementation concerns (numerical instability, known failure modes
-     for this architecture class at this data scale)?
-  4. Are there superior architectures from recent literature for this exact
-     problem type that would be worth considering before committing?
+Please review:
+1. Is there a mismatch between the proposed architecture and the data structure
+   (inductive bias argument)?
+2. Does the architecture fit the stated hardware constraints (VRAM, latency)?
+3. Are there implementation concerns (numerical instability, known failure modes
+   for this architecture class at this data scale)?
+4. Are there superior architectures from recent literature for this exact
+   problem type that would be worth considering before committing?
 
-  Context: <key constraints and goals from Phases 1-3>."
-)
+Context: <key constraints and goals from Phases 1-3>.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `deep-learning-engineer` row).
@@ -359,28 +359,28 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `deep-learning-engi
 
 Tell the user: "Looping in the Data Analyst — they need to validate that these features make business sense before we serve them."
 
+{{consult data-analyst entry=review task="Review feature candidates for business sense and interpretability"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-analyst",
-  description="Review feature candidates for business sense and interpretability",
-  prompt="I am the ML Engineer shard building an ML system for [purpose]. High
-  interpretability has been flagged as a requirement. Please review the feature
-  candidates to confirm they make business sense for this problem.
+I am the ML Engineer shard building an ML system for [purpose]. High
+interpretability has been flagged as a requirement. Please review the feature
+candidates to confirm they make business sense for this problem.
 
-  Feature candidates: [summary of feature groups from Phase 3]
-  Target variable: [name and definition]
-  End users of model outputs: [from Phase 1 — internal system | customer-facing | analyst | API consumer]
-  Business problem: [from Phase 1]
-  Cost of wrong predictions: [false positive / false negative impact, from Phase 1]
+Feature candidates: [summary of feature groups from Phase 3]
+Target variable: [name and definition]
+End users of model outputs: [from Phase 1 — internal system | customer-facing | analyst | API consumer]
+Business problem: [from Phase 1]
+Cost of wrong predictions: [false positive / false negative impact, from Phase 1]
 
-  Please review:
-  1. Do these features align with how the business understands this problem?
-  2. Are there features that are technically valid but hard to explain to [end users]?
-  3. Are there obvious business-meaningful features that appear missing?
-  4. Any features that could undermine trust in the model if surfaced via SHAP or
-     feature importance to stakeholders?
-  Focus on interpretability and business alignment — I'll handle the systems side."
-)
+Please review:
+1. Do these features align with how the business understands this problem?
+2. Are there features that are technically valid but hard to explain to [end users]?
+3. Are there obvious business-meaningful features that appear missing?
+4. Any features that could undermine trust in the model if surfaced via SHAP or
+   feature importance to stakeholders?
+Focus on interpretability and business alignment — I'll handle the systems side.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `data-analyst` row).
@@ -392,27 +392,27 @@ online evaluation — consult the Researcher:
 Tell the user: "The evaluation plan involves statistical inference — I'm asking
 the Researcher shard to validate the methodology before we commit to it."
 
+{{consult researcher entry=service task="Review statistical inference methodology for ML evaluation"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review statistical inference methodology for ML evaluation",
-  prompt="I am the ML Engineer shard designing the evaluation strategy for an
-  ML system: [description].
-  Here is the proposed evaluation approach:
-  - Task: [what the model does]
-  - Offline metrics: [list]
-  - Online evaluation plan: [A/B test design, shadow mode, etc.]
-  - Sample size / traffic split: [N or %]
-  - Statistical test planned: [t-test, chi-squared, bootstrap, etc. or 'TBD']
-  - Confidence level: [95%, 99%, etc. or 'TBD']
-  Please review from a statistical methodology perspective:
-  1. Is the proposed statistical test appropriate for this metric type?
-  2. Is the sample size / traffic split adequate for the expected effect size?
-  3. Is the experiment design sound (randomization, control, duration)?
-  4. Are there multiple comparison issues or other statistical pitfalls?
-  5. What power analysis would you recommend?
-  Keep the review focused on statistical inference methodology."
-)
+I am the ML Engineer shard designing the evaluation strategy for an
+ML system: [description].
+Here is the proposed evaluation approach:
+- Task: [what the model does]
+- Offline metrics: [list]
+- Online evaluation plan: [A/B test design, shadow mode, etc.]
+- Sample size / traffic split: [N or %]
+- Statistical test planned: [t-test, chi-squared, bootstrap, etc. or 'TBD']
+- Confidence level: [95%, 99%, etc. or 'TBD']
+Please review from a statistical methodology perspective:
+1. Is the proposed statistical test appropriate for this metric type?
+2. Is the sample size / traffic split adequate for the expected effect size?
+3. Is the experiment design sound (randomization, control, duration)?
+4. Are there multiple comparison issues or other statistical pitfalls?
+5. What power analysis would you recommend?
+Keep the review focused on statistical inference methodology.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
@@ -476,7 +476,7 @@ Define:
   - Imported: <title(s)> | None
 ```
 
-**DIVERGE check:** If you identified 2-3 mutually exclusive model architectures or approaches (e.g., different model families, fundamentally different serving paradigms) that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
+**DIVERGE check:** If you identified 2-3 mutually exclusive model architectures or approaches (e.g., different model families, fundamentally different serving paradigms) that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
 
 ::GATE:: id=specific-instructions-ml-engineer-phases-phase4 phase=4 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
@@ -519,30 +519,30 @@ Goal: Design the ML infrastructure — training pipeline, serving, monitoring.
 
 Tell the user: "Getting the Data Engineer shard to review the pipeline architecture. I need to know if the orchestration and scheduling actually fits before this is finalized."
 
+{{consult data-engineer entry=review task="Review ML pipeline infrastructure design for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-engineer",
-  description="Review ML pipeline infrastructure design for [project]",
-  prompt="I am the ML Engineer shard. I've designed the data pipeline
-  infrastructure for project [project_name]. Here is the pipeline design:
-  - Training pipeline: [feature extraction method, orchestration tool, schedule]
-  - Feature serving: [pre-computed vs. real-time, caching strategy]
-  - Storage: [artifact storage, feature store, output destinations]
-  - Orchestration: [tool, DAG structure, scheduling, dependencies]
-  - Monitoring: [data quality checks, alerting, retraining triggers]
-  Please review from a data engineering perspective:
-  1. Does the orchestration design fit existing Airflow/dbt patterns?
-  2. Is the feature extraction pipeline feasible at the designed cadence?
-  3. Are the storage choices and capacity realistic?
-  4. Does this integrate cleanly with existing data infrastructure?
-  5. Any scheduling, dependency, or resource concerns?
-  Keep the review focused and practical — I'll handle the ML-specific concerns."
-)
+I am the ML Engineer shard. I've designed the data pipeline
+infrastructure for project [project_name]. Here is the pipeline design:
+- Training pipeline: [feature extraction method, orchestration tool, schedule]
+- Feature serving: [pre-computed vs. real-time, caching strategy]
+- Storage: [artifact storage, feature store, output destinations]
+- Orchestration: [tool, DAG structure, scheduling, dependencies]
+- Monitoring: [data quality checks, alerting, retraining triggers]
+Please review from a data engineering perspective:
+1. Does the orchestration design fit existing Airflow/dbt patterns?
+2. Is the feature extraction pipeline feasible at the designed cadence?
+3. Are the storage choices and capacity realistic?
+4. Does this integrate cleanly with existing data infrastructure?
+5. Any scheduling, dependency, or resource concerns?
+Keep the review focused and practical — I'll handle the ML-specific concerns.
 ```
 
 **Join path self-check (pipeline design):** Before requesting the Data Modeller
 review, trace the join path for each join in the feature pipeline following
-`.claude/agents/specific_instructions/shared/join_path_protocol.md`. Present the
+[`protocols/join_path.md`](../../../protocols/join_path.md). Present the
 trace to the user. Include it in the DM prompt below. Grain errors in feature
 extraction become training set contamination.
 
@@ -550,38 +550,38 @@ extraction become training set contamination.
 
 Tell the user: "Pulling in the Data Modeller to verify the pipeline design against the actual data model. Grain errors here become training errors later."
 
+{{consult data-modeller entry=review task="Review ML pipeline data correctness for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Review ML pipeline data correctness for [project]",
-  prompt="I am the ML Engineer shard. I've designed the data pipeline for project
-  [project_name]. The project specs are at: [services|<existing_dir>]/[project_name]/project-specs.md
+I am the ML Engineer shard. I've designed the data pipeline for project
+[project_name]. The project specs are at: [services|<existing_dir>]/[project_name]/project-specs.md
 
-  Here is how data flows through the pipeline:
-  - Feature extraction sources: [source tables and how they're used]
-  - Join strategy in pipeline: [key joins, grain at each stage]
-  - Pipeline stages: [ETL steps from source to training-ready dataset]
-  - Feature refresh cadence: [how often each feature group is refreshed]
-  - Serving-time data flow: [how features reach the model at inference]
+Here is how data flows through the pipeline:
+- Feature extraction sources: [source tables and how they're used]
+- Join strategy in pipeline: [key joins, grain at each stage]
+- Pipeline stages: [ETL steps from source to training-ready dataset]
+- Feature refresh cadence: [how often each feature group is refreshed]
+- Serving-time data flow: [how features reach the model at inference]
 
-  Please REVIEW (not just explore) from a data model perspective:
-  1. Are the source table choices correct for these features?
-  2. Is grain handled correctly at each pipeline stage?
-  3. Are the join strategies sound given the entity relationships?
-  4. Does the data freshness cadence align with the model's requirements?
+Please REVIEW (not just explore) from a data model perspective:
+1. Are the source table choices correct for these features?
+2. Is grain handled correctly at each pipeline stage?
+3. Are the join strategies sound given the entity relationships?
+4. Does the data freshness cadence align with the model's requirements?
 
-  Run validation queries to verify:
-  1. PK uniqueness on each source table I'm using (confirm stated grain)
-  2. Null rates on join keys and critical feature columns
-  3. Join fan-out: run row counts before/after the key joins in my pipeline
-  4. Data freshness on each source table
+Run validation queries to verify:
+1. PK uniqueness on each source table I'm using (confirm stated grain)
+2. Null rates on join keys and critical feature columns
+3. Join fan-out: run row counts before/after the key joins in my pipeline
+4. Data freshness on each source table
 
-  Cross-reference results against the project requirements in project-specs.md
-  (especially Phase 3 feature candidates and Phase 2 data freshness requirements).
-  Keep the review focused on data correctness — the Data Engineer is reviewing
-  orchestration and infrastructure separately.
-  Return your full review with query validation results."
-)
+Cross-reference results against the project requirements in project-specs.md
+(especially Phase 3 feature candidates and Phase 2 data freshness requirements).
+Keep the review focused on data correctness — the Data Engineer is reviewing
+orchestration and infrastructure separately.
+Return your full review with query validation results.
 ```
 
 Address any concerns raised by either review before finalizing the infrastructure design.
@@ -640,51 +640,51 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Goal: Build the feature queries, training notebook, and pipeline artifacts.
 
 **Join path self-check (feature queries):** Before requesting the Data Modeller
 review, trace the join path for each feature query following
-`.claude/agents/specific_instructions/shared/join_path_protocol.md`. Present the
+[`protocols/join_path.md`](../../../protocols/join_path.md). Present the
 trace to the user. Include it in the DM prompt below.
 
 **Then request Data Modeller query review with validation:**
 
 Tell the user: "Pulling in the Data Modeller to verify the feature extraction queries. Feature pipeline built on bad grain assumptions is a training set problem. I'm not building until this is confirmed."
 
+{{consult data-modeller entry=review task="Review ML feature queries for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Review ML feature queries for [project]",
-  prompt="I am the ML Engineer shard. I've written feature extraction queries for
-  project [name]. The project specs are at: [services|<existing_dir>]/[name]/project-specs.md
+I am the ML Engineer shard. I've written feature extraction queries for
+project [name]. The project specs are at: [services|<existing_dir>]/[name]/project-specs.md
 
-  Here are the queries:
-  [include query outlines or key SQL]
+Here are the queries:
+[include query outlines or key SQL]
 
-  Please REVIEW (not just explore): Do the joins make sense given the data model
-  grain? Are there grain fan-out risks? Am I using the right tables for these
-  features?
+Please REVIEW (not just explore): Do the joins make sense given the data model
+grain? Are there grain fan-out risks? Am I using the right tables for these
+features?
 
-  Run validation queries to check:
-  1. PK uniqueness on all tables referenced in these queries
-  2. Null rates on join keys and key feature source columns
-  3. Join fan-out: row counts before/after the joins in my feature queries
-  4. Data freshness on the tables feeding features
+Run validation queries to check:
+1. PK uniqueness on all tables referenced in these queries
+2. Null rates on join keys and key feature source columns
+3. Join fan-out: row counts before/after the joins in my feature queries
+4. Data freshness on the tables feeding features
 
-  Cross-reference against the project requirements in project-specs.md
-  (especially Phase 3 feature candidates and Phase 5 data freshness requirements).
-  This is for ML feature engineering — pay special attention to fan-out that would
-  silently inflate training examples.
-  Return your full review with query validation results."
-)
+Cross-reference against the project requirements in project-specs.md
+(especially Phase 3 feature candidates and Phase 5 data freshness requirements).
+This is for ML feature engineering — pay special attention to fan-out that would
+silently inflate training examples.
+Return your full review with query validation results.
 ```
 
 **Then build:**
@@ -834,14 +834,14 @@ artifacts. Code quality is not optional."
 
 Glob the project directory (`models/<project_name>/`) for `.py` and `.ipynb` files.
 
+{{consult backend-engineer entry=service task="Python code review for [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="backend-engineer",
-  description="Python code review for [project_name]",
-  prompt="You are in SERVICE MODE. Review the Python files in the project at
-  models/[project_name]/. Read project-specs.md first for context.
-  Files to review: [list of .py files found, or 'none found — report N/A']"
-)
+You are in SERVICE MODE. Review the Python files in the project at
+models/[project_name]/. Read project-specs.md first for context.
+Files to review: [list of .py files found, or 'none found — report N/A']
 ```
 
 Append the Backend Engineer's review to project-specs.md.
@@ -860,33 +860,33 @@ Tell the user: "Before Syn signs off, I'm asking the MLOps Engineer to validate
 the serving infrastructure and deployment pipeline. They care about what it takes
 to actually operate this model."
 
+{{consult mlops-engineer entry=review task="Serving infrastructure review for ML project: [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="mlops-engineer",
-  description="Serving infrastructure review for ML project: [project_name]",
-  prompt="I am the ML Engineer shard. I have designed a production ML system for
-  project [project_name] and need an infrastructure and operationalization review.
+I am the ML Engineer shard. I have designed a production ML system for
+project [project_name] and need an infrastructure and operationalization review.
 
-  Project directory: models/<project_name>/
-  Specs: models/<project_name>/project-specs.md
+Project directory: models/<project_name>/
+Specs: models/<project_name>/project-specs.md
 
-  Summary:
-  - Model type: <final model type from Phase 4>
-  - Inference requirements: <latency, throughput from Phase 6>
-  - Serving format: <from Phase 6 production considerations>
-  - Feature pipeline: <from Phase 6>
-  - Retraining trigger: <from Phase 6>
+Summary:
+- Model type: <final model type from Phase 4>
+- Inference requirements: <latency, throughput from Phase 6>
+- Serving format: <from Phase 6 production considerations>
+- Feature pipeline: <from Phase 6>
+- Retraining trigger: <from Phase 6>
 
-  Please review:
-  1. Is the proposed serving infrastructure appropriate for the latency and
-     throughput requirements?
-  2. Are there gaps in the CI/CD and model registry design?
-  3. Is the monitoring and alerting plan sufficient for production operation?
-  4. Are the retraining triggers and automation plan feasible?
-  5. What would you need from me to stand up this deployment?
+Please review:
+1. Is the proposed serving infrastructure appropriate for the latency and
+   throughput requirements?
+2. Are there gaps in the CI/CD and model registry design?
+3. Is the monitoring and alerting plan sufficient for production operation?
+4. Are the retraining triggers and automation plan feasible?
+5. What would you need from me to stand up this deployment?
 
-  Please read project-specs.md for full context."
-)
+Please read project-specs.md for full context.
 ```
 
 Append MLOps Engineer's review to specs. Present to user.
@@ -895,16 +895,16 @@ Append MLOps Engineer's review to specs. Present to user.
 
 Tell the user: "I'm asking Syn to review the full project specs before we ship this..."
 
+{{consult syn entry=final_review task="Final review of ML engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of ML engineering project",
-  prompt="I am the ML Engineer shard. I've completed all phases for project
-  [project_name]. Please review the project-specs.md at [file_path] and provide
-  your final review verdict. This is an ML engineering project — check for:
-  business alignment, methodology soundness, infrastructure readiness,
-  monitoring plan, and rollback strategy."
-)
+I am the ML Engineer shard. I've completed all phases for project
+[project_name]. Please review the project-specs.md at [file_path] and provide
+your final review verdict. This is an ML engineering project — check for:
+business alignment, methodology soundness, infrastructure readiness,
+monitoring plan, and rollback strategy.
 ```
 
 Append Syn's review to specs. Present to user.
@@ -929,14 +929,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for ML engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for ML engineering project",
-  prompt="CODE REVIEW MODE. I am the ML Engineer shard. Project: [project_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the ML Engineer shard. Project: [project_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -951,18 +951,18 @@ Then:
 
    Consult the Academic shard for ethical considerations:
 
+   {{consult academic entry=service task="Ethical considerations for model card"}}
+
+   Brief for the consultant (fill the bracketed fields):
+
    ```
-   Task(
-     subagent_type="academic",
-     description="Ethical considerations for model card",
-     prompt="I am the ML Engineer shard generating a model card for project
-     [project_name]. The model is: [1-2 sentence description from Phase 1].
-     End users of the model's output: [from Phase 1]. Model type: [from Phase 4].
-     Training data: [summary from Phase 3].
-     Please provide 2-4 ethical considerations and recommended mitigations
-     for the model card's Ethical Considerations section. Be specific to
-     this model's use case. Keep it concise — bullet points preferred."
-   )
+   I am the ML Engineer shard generating a model card for project
+   [project_name]. The model is: [1-2 sentence description from Phase 1].
+   End users of the model's output: [from Phase 1]. Model type: [from Phase 4].
+   Training data: [summary from Phase 3].
+   Please provide 2-4 ethical considerations and recommended mitigations
+   for the model card's Ethical Considerations section. Be specific to
+   this model's use case. Keep it concise — bullet points preferred.
    ```
 
    If the Academic shard is unavailable, populate ethical considerations based
@@ -1012,10 +1012,10 @@ Then:
 "To deploy and operate this model, run `/mlops-engineer` and reference
 `models/<project_name>/` as the model handoff directory."
 
-**BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ml_engineer/bi_engineer_handoff.md` for the full handoff instructions (Phase 7 section).
+**BI monitoring dashboard handoff:** See [`modes/bi_engineer_handoff.md`](bi_engineer_handoff.md) for the full handoff instructions (Phase 7 section).
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Phase 7

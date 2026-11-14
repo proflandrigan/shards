@@ -16,41 +16,41 @@ Tell the user: "This framework has deep learning implementation requirements —
 I'm asking the Deep Learning Engineer shard to review implementation fidelity,
 tensor operations, and numerical stability before we close..."
 
+{{consult deep-learning-engineer entry=review task="DL implementation review for novel ML framework: <project name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="deep-learning-engineer",
-  description="DL implementation review for novel ML framework: <project name>",
-  prompt="I am the Applied ML Scientist shard. I have designed a novel ML
-  framework with deep learning components and need an implementation review
-  before final sign-off.
+I am the Applied ML Scientist shard. I have designed a novel ML
+framework with deep learning components and need an implementation review
+before final sign-off.
 
-  Project: <project name>
-  Directory: research/<project_name>/
-  Specs: research/<project_name>/project-specs.md
+Project: <project name>
+Directory: research/<project_name>/
+Specs: research/<project_name>/project-specs.md
 
-  Framework summary:
-  - Novel contribution: <core hypothesis from Phase 1>
-  - Core DL components: <custom architectures or mechanisms from Phase 2>
-  - Training objective: <loss function formula from Phase 2>
-  - Framework: <PyTorch | JAX from Phase 3>
-  - Data modality: <from Phase 0>
-  - Scale: <N examples, sequence/spatial dims>
+Framework summary:
+- Novel contribution: <core hypothesis from Phase 1>
+- Core DL components: <custom architectures or mechanisms from Phase 2>
+- Training objective: <loss function formula from Phase 2>
+- Framework: <PyTorch | JAX from Phase 3>
+- Data modality: <from Phase 0>
+- Scale: <N examples, sequence/spatial dims>
 
-  Please review for implementation fidelity:
-  1. Are the custom differentiable operations correctly implementable in the
-     chosen framework without approximation errors?
-  2. Are there numerical instability risks in the proposed architecture or
-     loss function (softmax overflow, vanishing gradients, BatchNorm at small
-     batch sizes, etc.)?
-  3. Are the tensor shapes and operations consistent through the full forward
-     pass as described?
-  4. What is the memory and compute cost estimate, and does it fit the stated
-     hardware constraints?
-  5. Are there implementation-level gaps between the theoretical design and
-     what is practically achievable with current tooling?
+Please review for implementation fidelity:
+1. Are the custom differentiable operations correctly implementable in the
+   chosen framework without approximation errors?
+2. Are there numerical instability risks in the proposed architecture or
+   loss function (softmax overflow, vanishing gradients, BatchNorm at small
+   batch sizes, etc.)?
+3. Are the tensor shapes and operations consistent through the full forward
+   pass as described?
+4. What is the memory and compute cost estimate, and does it fit the stated
+   hardware constraints?
+5. Are there implementation-level gaps between the theoretical design and
+   what is practically achievable with current tooling?
 
-  Please read project-specs.md for full context."
-)
+Please read project-specs.md for full context.
 ```
 
 Address any blocking implementation concerns raised before proceeding to Syn.
@@ -63,14 +63,14 @@ If any are found:
 Tell the user: "Before Syn signs off, the Backend Engineer is reviewing the
 Python artifacts. Code quality is not optional."
 
+{{consult backend-engineer entry=service task="Python code review for [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="backend-engineer",
-  description="Python code review for [project_name]",
-  prompt="You are in SERVICE MODE. Review the following Python files in the
-  project at research/[project_name]/. Read project-specs.md first for context.
-  Files to review: [list of .py and .ipynb files found]"
-)
+You are in SERVICE MODE. Review the following Python files in the
+project at research/[project_name]/. Read project-specs.md first for context.
+Files to review: [list of .py and .ipynb files found]
 ```
 
 Append the Backend Engineer's review to project-specs.md. If no Python files are
@@ -81,27 +81,27 @@ found, skip this step.
 Tell the user: "I'm asking Syn to review the framework design and results
 before we close..."
 
+{{consult syn entry=final_review task="Final review of novel ML framework: <project name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of novel ML framework: <project name>",
-  prompt="I am the Applied ML Scientist shard. I have completed a novel ML
-  framework research project. Please review and provide APPROVED / NEEDS
-  REVISION / BLOCKED.
+I am the Applied ML Scientist shard. I have completed a novel ML
+framework research project. Please review and provide APPROVED / NEEDS
+REVISION / BLOCKED.
 
-  Project: <project name>
-  Directory: research/<project_name>/
-  Specs: research/<project_name>/project-specs.md
+Project: <project name>
+Directory: research/<project_name>/
+Specs: research/<project_name>/project-specs.md
 
-  Summary:
-  - Problem: <one sentence from Phase 0>
-  - Novel contribution: <core hypothesis from Phase 1>
-  - Architecture: <key components from Phase 2>
-  - Results: <baseline comparison summary from Phase 4>
-  - Known limitations: <from Phase 4>
+Summary:
+- Problem: <one sentence from Phase 0>
+- Novel contribution: <core hypothesis from Phase 1>
+- Architecture: <key components from Phase 2>
+- Results: <baseline comparison summary from Phase 4>
+- Known limitations: <from Phase 4>
 
-  Please read project-specs.md for full context."
-)
+Please read project-specs.md for full context.
 ```
 
 **Create `research/<project_name>/report.md`:**
@@ -142,7 +142,7 @@ scale constraints, data quality assumptions>
 ```
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ::GATE:: id=applied-ml-scientist-phase-5 phase=5 kind=final

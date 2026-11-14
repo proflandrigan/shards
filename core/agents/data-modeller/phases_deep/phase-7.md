@@ -9,14 +9,14 @@
 
 Tell the user: "I'm asking Syn to review the full project specs before we close this out..."
 
+{{consult syn entry=final_review task="Final review of data model specs"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of data model specs",
-  prompt="I am the Data Modeller shard. I've completed all phases for project
-  [project_name]. Please review the project-specs.md at [file_path] and provide
-  your final review verdict. Check for gaps, consistency, and completeness."
-)
+I am the Data Modeller shard. I've completed all phases for project
+[project_name]. Please review the project-specs.md at [file_path] and provide
+your final review verdict. Check for gaps, consistency, and completeness.
 ```
 
 Append Syn's review to the specs. Present it to the user.
@@ -25,14 +25,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for data model"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for data model",
-  prompt="CODE REVIEW MODE. I am the Data Modeller shard. Project: [project_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the Data Modeller shard. Project: [project_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -49,32 +49,32 @@ intermediate transforms, mart SQL, tests, and documentation)?
 
 If user says (a), invoke:
 
+{{consult analytics-engineer entry=review task="Physical dbt implementation of logical model: [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="analytics-engineer",
-  description="Physical dbt implementation of logical model: [project_name]",
-  prompt="I am the Data Modeller shard. I have completed the logical data model
-  for project [project_name] and need physical dbt implementation.
+I am the Data Modeller shard. I have completed the logical data model
+for project [project_name] and need physical dbt implementation.
 
-  Model specs: data_models/<project_name>/project-specs.md
+Model specs: data_models/<project_name>/project-specs.md
 
-  Summary:
-  - Entities modeled: <entity list from Phase 3>
-  - Source tables: <source list from Phase 1>
-  - Grain definitions: <from Phase 2>
-  - Key relationships: <from Phase 3>
-  - Proposed mart structure: <from Phase 4>
+Summary:
+- Entities modeled: <entity list from Phase 3>
+- Source tables: <source list from Phase 1>
+- Grain definitions: <from Phase 2>
+- Key relationships: <from Phase 3>
+- Proposed mart structure: <from Phase 4>
 
-  Please implement:
-  1. Staging models for each source
-  2. Intermediate transforms as needed
-  3. Mart models matching the logical model's entity grain
-  4. dbt schema tests (uniqueness, not-null, accepted values, relationships)
-  5. Column-level documentation
+Please implement:
+1. Staging models for each source
+2. Intermediate transforms as needed
+3. Mart models matching the logical model's entity grain
+4. dbt schema tests (uniqueness, not-null, accepted values, relationships)
+5. Column-level documentation
 
-  Please read data_models/<project_name>/project-specs.md for full context and the
-  complete ER diagram."
-)
+Please read data_models/<project_name>/project-specs.md for full context and the
+complete ER diagram.
 ```
 
 Document the outcome in Phase 7 specs.
@@ -90,7 +90,7 @@ Then:
 8. Ask if consumer needs a handoff artifact
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Deep Phase 7

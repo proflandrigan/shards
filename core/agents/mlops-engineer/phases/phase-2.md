@@ -26,22 +26,22 @@ Ask about:
 
 Tell the user: "Getting the ML Engineer in here — I need to know what the model actually requires before I design serving infrastructure around assumptions."
 
+{{consult ml-engineer entry=review task="Review model architecture constraints for MLOps serving design"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Review model architecture constraints for MLOps serving design",
-  prompt="I am the MLOps Engineer shard scoping an MLOps project for: [project description].
-  I need to understand the model architecture constraints that affect my serving and
-  infrastructure design. Please tell me:
-  1. What is the model framework and format (scikit-learn, XGBoost, PyTorch, TensorFlow, etc.)?
-  2. What are the model size and memory requirements (serialized size, memory at inference)?
-  3. What are the serving-time feature requirements (features needed at inference, latency sensitivity)?
-  4. Does the model support batch inference, online inference, or both?
-  5. Are there GPU requirements for inference?
-  6. Any known serving constraints or failure modes for this model type?
-  7. What's the expected retraining cadence and artifact size?
-  Keep the response focused on serving constraints — I'll handle the operational design."
-)
+I am the MLOps Engineer shard scoping an MLOps project for: [project description].
+I need to understand the model architecture constraints that affect my serving and
+infrastructure design. Please tell me:
+1. What is the model framework and format (scikit-learn, XGBoost, PyTorch, TensorFlow, etc.)?
+2. What are the model size and memory requirements (serialized size, memory at inference)?
+3. What are the serving-time feature requirements (features needed at inference, latency sensitivity)?
+4. Does the model support batch inference, online inference, or both?
+5. Are there GPU requirements for inference?
+6. Any known serving constraints or failure modes for this model type?
+7. What's the expected retraining cadence and artifact size?
+Keep the response focused on serving constraints — I'll handle the operational design.
 ```
 
 ### Document Phase 2
@@ -83,4 +83,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/mlops_engineer/phases/phase-3.md` in full and follow its instructions starting from Phase 3. Do not pre-read further phase files.
+{{phase 3}} in full and follow its instructions starting from Phase 3. Do not pre-read further phase files.

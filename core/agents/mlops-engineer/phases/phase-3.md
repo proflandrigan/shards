@@ -102,4 +102,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/mlops_engineer/phases/phase-4.md` in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.
+{{phase 4}} in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.

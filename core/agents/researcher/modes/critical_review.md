@@ -97,7 +97,7 @@ accurately describes what was actually done.
 
 ## Phase 3 — Apply Statistical Checklist (no gate)
 
-Read `.claude/agents/specific_instructions/researcher/review_checklist.md`
+Read [`modes/review_checklist.md`](review_checklist.md)
 in full. Apply every section systematically to the report:
 
 - Distributions — what does the report claim or imply about the data
@@ -117,15 +117,15 @@ in full. Apply every section systematically to the report:
 independence claims hinge on data structure you can't verify from the
 report or its referenced artifacts alone, announce and issue:
 
+{{consult data-modeller entry=review task="Understand data structure for report critique"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Understand data structure for report critique",
-  prompt="I am the Researcher shard auditing a report about [topic].
-  I need to understand: [specific data structure question relevant to
-  the independence / grain assessment]. Please return the grain, key
-  relationships, and any quality concerns."
-)
+I am the Researcher shard auditing a report about [topic].
+I need to understand: [specific data structure question relevant to
+the independence / grain assessment]. Please return the grain, key
+relationships, and any quality concerns.
 ```
 
 Most reports won't need this. Don't reach for it reflexively.
@@ -236,14 +236,14 @@ extension). Example: `studies/ab_test/study-report.md` →
 - **Low:** {{...}}
 
 ## Recommendations
-1. {{specific, actionable}}
+1. {{SPECIFIC_ACTION}}
 2. ...
 
 ## Referenced artifacts spot-read
-- {{path — what was checked, what was found}}
+- {{PATH_AND_FINDING}}
 
 ## Verdict
-**{{SOUND | CONSIDER ALTERNATIVES | REVISE}}** — {{one-line summary}}
+**{{SOUND | CONSIDER ALTERNATIVES | REVISE}}** — {{SUMMARY}}
 
 _SOUND = methodology supports the conclusions | CONSIDER ALTERNATIVES = methodology has issues that should be acknowledged or mitigated | REVISE = significant methodological problems; rework before publication_
 ```

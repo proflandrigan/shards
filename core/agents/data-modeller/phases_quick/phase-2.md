@@ -7,13 +7,13 @@
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 1. Implement the change in model SQL and .yml schema
 2. Update any downstream models that reference changed columns
@@ -25,11 +25,11 @@ Wait for any signal from the user before beginning build steps.
    If any check fails, fix before proceeding. Skip if no-data environment.
    **Auto-verify:** if 3+ models are being validated, open
    `::AUTO-VERIFY:: agent=data-modeller phase=2` before the sweep and
-   `::ENDAUTO::` after. See `specific_instructions/shared/auto_verify_mode.md`.
+   `::ENDAUTO::` after. See [`protocols/auto_verify_mode.md`](../../../protocols/auto_verify_mode.md).
 5. Summarize what changed
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Quick Phase 2
@@ -62,4 +62,4 @@ Read this section back to the user. Stop here — wait for the user to explicitl
 
 ## When this gate is confirmed
 
-This is the final phase of the Quick Track. If escalation to Deep Track is required, read `.claude/agents/specific_instructions/data_modeller/phases_deep/index.md` and continue from there. Otherwise, the project is complete.
+This is the final phase of the Quick Track. If escalation to Deep Track is required, read [`phases_deep/index.md`](../phases_deep/index.md) and continue from there. Otherwise, the project is complete.

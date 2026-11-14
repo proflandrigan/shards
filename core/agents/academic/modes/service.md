@@ -69,7 +69,7 @@ of the `[CR]` Critical Review menu mode.
 
 **What to do:**
 1. Read the target report at the provided path.
-2. Apply Phases 2–4 of `.claude/agents/specific_instructions/academic/critical_review.md`
+2. Apply Phases 2–4 of [`modes/critical_review.md`](critical_review.md)
    (Read & Extract Claims → Triangulate Evidence → Three-Lens Critical
    Assessment). WebSearch / WebFetch are mandatory in Phase 3.
 3. Return findings **inline** using the Critical Review output template

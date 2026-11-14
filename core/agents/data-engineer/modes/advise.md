@@ -43,10 +43,11 @@ paths and context warrants it, but file reading is not required.
 If the question touches data model design, grain, or entity structure, consult the
 Data Modeller:
 
+{{consult data-modeller entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  prompt="""
 You are being consulted for a data engineering advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -55,8 +56,6 @@ You are being consulted for a data engineering advisory discussion.
 
 Please give a concise assessment — 3-5 sentences — on the data modeling angle.
 Which option better respects grain and entity boundaries, and why?
-  """
-)
 ```
 
 ---

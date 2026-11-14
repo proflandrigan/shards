@@ -42,4 +42,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_engineer/phases_quick/phase-2.md` in full and follow its instructions starting from Quick Phase 2.
+{{phase 2}} in full and follow its instructions starting from Quick Phase 2.

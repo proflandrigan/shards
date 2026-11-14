@@ -27,29 +27,29 @@ Tell the user: "The evaluation protocol involves statistical inference — I'm
 asking the Researcher shard to validate the experimental design before we
 commit to it."
 
+{{consult researcher entry=service task="Review experimental design for novel ML framework evaluation"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review experimental design for novel ML framework evaluation",
-  prompt="I am the Applied ML Scientist shard designing the evaluation protocol
-  for a novel ML framework: [description].
-  Here is the proposed evaluation approach:
-  - Core hypothesis: [from Phase 1]
-  - Primary metric: [metric and success threshold]
-  - Baselines: [list of comparison methods]
-  - Ablation plan: [which components are ablated]
-  - Statistical test planned: [t-test, bootstrap, paired test, etc. or 'TBD']
-  - Number of runs / seeds: [N or 'TBD']
-  - Confidence level: [95%, 99%, etc. or 'TBD']
-  Please review from a statistical methodology perspective:
-  1. Is the proposed comparison method appropriate (paired vs unpaired, parametric
-     vs non-parametric)?
-  2. Is the number of runs / seeds adequate to claim significance?
-  3. Are there multiple comparison issues across ablations?
-  4. Is the experimental design sound for validating the stated hypothesis?
-  5. What power analysis would you recommend given the expected effect size?
-  Keep the review focused on experimental design and statistical inference."
-)
+I am the Applied ML Scientist shard designing the evaluation protocol
+for a novel ML framework: [description].
+Here is the proposed evaluation approach:
+- Core hypothesis: [from Phase 1]
+- Primary metric: [metric and success threshold]
+- Baselines: [list of comparison methods]
+- Ablation plan: [which components are ablated]
+- Statistical test planned: [t-test, bootstrap, paired test, etc. or 'TBD']
+- Number of runs / seeds: [N or 'TBD']
+- Confidence level: [95%, 99%, etc. or 'TBD']
+Please review from a statistical methodology perspective:
+1. Is the proposed comparison method appropriate (paired vs unpaired, parametric
+   vs non-parametric)?
+2. Is the number of runs / seeds adequate to claim significance?
+3. Are there multiple comparison issues across ablations?
+4. Is the experimental design sound for validating the stated hypothesis?
+5. What power analysis would you recommend given the expected effect size?
+Keep the review focused on experimental design and statistical inference.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
@@ -100,7 +100,7 @@ N/A — no statistical inference in evaluation | <summary if consulted>
 capture the essential properties needed to test the hypothesis?>
 ```
 
-**DIVERGE check:** If you identified 2-3 mutually exclusive framework architectures or methodological approaches that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
+**DIVERGE check:** If you identified 2-3 mutually exclusive framework architectures or methodological approaches that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
 
 ::GATE:: id=applied-ml-scientist-phase-3 phase=3 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
@@ -110,4 +110,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/applied_ml_scientist/phases/phase-4.md` in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.
+{{phase 4}} in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.

@@ -45,10 +45,11 @@ what "adequate" actually means in this context.
 If the question touches areas that benefit from external review, consult as appropriate:
 
 **Researcher** — statistical methodology, distribution assumptions, evaluation design:
+{{consult researcher entry=service}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  prompt="""
 You are being consulted for a data science advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -57,15 +58,14 @@ You are being consulted for a data science advisory discussion.
 
 Please give a concise assessment — 3-5 sentences. What are the key statistical
 considerations or risks across these options?
-  """
-)
 ```
 
 **ML Engineer** — production feasibility, if any option involves model deployment:
+{{consult ml-engineer entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  prompt="""
 You are being consulted for a data science advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -74,8 +74,6 @@ You are being consulted for a data science advisory discussion.
 
 Please give a concise assessment — 3-5 sentences. What are the production feasibility
 considerations for each option?
-  """
-)
 ```
 
 ---

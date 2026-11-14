@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ENTRIES = ['review', 'advise', 'service', 'final_review', 'arbiter', 'worker'];
+const ENTRIES = ['review', 'advise', 'service', 'final_review', 'arbiter', 'code_review', 'worker'];
 const KINDS = ['phase', 'final', 'execute', 'handoff', 'checkpoint', 'confirm'];
 const NON_ADVANCING = new Set(['checkpoint', 'confirm']);
 const TRACKS = ['quick', 'deep'];

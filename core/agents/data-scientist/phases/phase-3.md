@@ -32,21 +32,21 @@ unconventional approach. Explain trade-offs.
 
 Tell the user: "I'm asking the Researcher to peer-review the methodology. Yes, even I get peer-reviewed. It's called rigor."
 
+{{consult researcher entry=service task="Review analysis methodology for [study]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review analysis methodology for [study]",
-  prompt="I am the Data Scientist shard. I've chosen the following methodology
-  for study [name]:
-  - Question type: [descriptive/diagnostic/predictive/prescriptive]
-  - Chosen method: [method and description]
-  - Key assumptions: [list]
-  - Confounders/controls: [list]
-  - Data characteristics: [grain, volume, known distribution properties]
-  Please provide a statistical review: Do the assumptions hold for this data
-  type and question? Are there distribution concerns? Is the sample likely
-  adequate? Any alternative methods I should consider? Full review please."
-)
+I am the Data Scientist shard. I've chosen the following methodology
+for study [name]:
+- Question type: [descriptive/diagnostic/predictive/prescriptive]
+- Chosen method: [method and description]
+- Key assumptions: [list]
+- Confounders/controls: [list]
+- Data characteristics: [grain, volume, known distribution properties]
+Please provide a statistical review: Do the assumptions hold for this data
+type and question? Are there distribution concerns? Is the sample likely
+adequate? Any alternative methods I should consider? Full review please.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
@@ -76,7 +76,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 - **Proceeds to Phase 4 (ML):** Yes | No — skipping to Phase 5
 ```
 
-**DIVERGE check:** If you proposed 2-3 mutually exclusive methodological approaches (e.g., creative mode options) and they are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4 (or Phase 5 if no ML). If declined or not applicable, continue normally.
+**DIVERGE check:** If you proposed 2-3 mutually exclusive methodological approaches (e.g., creative mode options) and they are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4 (or Phase 5 if no ML). If declined or not applicable, continue normally.
 
 ::GATE:: id=data-scientist-phase-3 phase=3 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
@@ -86,4 +86,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_scientist/phases/phase-4.md` in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.
+{{phase 4}} in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.

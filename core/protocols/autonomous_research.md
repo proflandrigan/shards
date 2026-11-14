@@ -38,7 +38,7 @@ has been gated and confirmed.
 ### A.1 Knowledge retrieval
 
 Before writing the brief, read
-`.claude/agents/specific_instructions/shared/knowledge_retrieval.md` in full and
+[`protocols/knowledge retrieval.md`](knowledge_retrieval.md) in full and
 follow the AR entry point (Step 2 under AR Phase 0 / pre-brief context).
 
 Match criteria most useful for AR:
@@ -111,7 +111,7 @@ After announcing the behavioral exception and before the per-agent Phase 1
 gate, propose an opt-in `/goal` to drive the Phase 2 loop autonomously without
 per-turn prompts.
 
-Read `.claude/agents/specific_instructions/shared/goal_mode.md` in full and
+{{protocol goal_mode}} in full and
 follow the **AR condition template**. Compose a candidate condition using the
 Phase 0 parameters (primary metric, target, iteration budget, metric floor)
 and include it as a copy-paste block in the per-agent Phase 1 message,
@@ -309,7 +309,7 @@ transcript and is the substrate the `/goal` condition templates anchor to.
 
 #### B.9 Git checkpoint
 
-Follow **Section B** of `.claude/agents/specific_instructions/shared/experiment_versioning.md`
+Follow **Section B** of [`protocols/experiment_versioning.md`](experiment_versioning.md)
 with these AR-specific conventions:
 
 - **Tag prefix:** `research/<project_name>/<N>-<name>` (not `exp/<...>`).
@@ -581,11 +581,13 @@ rather than dropping one reviewer — both perspectives matter.
 
 Call the reviewer via Task:
 
+Run this consult (shown for `researcher`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+
+{{consult researcher entry=service task="AR iteration N review"}}
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<reviewer>",
-  description="AR iteration N review",
-  prompt="""
 You are being consulted mid-AR-loop to review this iteration's result and the
 run's trajectory so far.
 
@@ -613,8 +615,6 @@ Please respond with:
 5. **If PAUSE:** what concern the user needs to see
 
 Keep it concise and actionable.
-  """
-)
 ```
 
 Apply the standard reviewer verdict protocol afterward (`reviewer_verdict_protocol.md`).
@@ -942,11 +942,15 @@ The user confirms one of:
 If fan-out confirmed, spawn K parallel Task calls in a single message (not
 sequentially). Each Task is:
 
-```python
-Task(
-  subagent_type="<specialist>",
-  description="AR fan-out branch: <branch-slug>",
-  prompt="""
+Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
+
+{{fanout ml-engineer slices=approach_a,approach_b}}
+
+Per-slice task: AR fan-out branch: <branch-slug>
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
+```
 You are in BRANCH + AR MODE — an isolated Time-Travel branch running the
 autonomous research protocol.
 
@@ -993,8 +997,6 @@ Produce:
 2. A final `<branch_dir>/branch-report.md` summarizing the branch's best state
    per the DIVERGE branch-report template (`diverge_protocol.md` Section E).
 3. Git commits on the chosen git strategy (H.5).
-  """
-)
 ```
 
 ### H.4 Per-branch file layout
@@ -1262,7 +1264,7 @@ This section is machine-readable by the gate hook when Phase 3 emits its gate wi
 
 ### I.5 Knowledge harvest
 
-Run `.claude/agents/specific_instructions/shared/knowledge_harvest.md` per its
+Run [`protocols/knowledge harvest.md`](knowledge_harvest.md) per its
 protocol. In fan-out contexts, only the initiating parent runs harvest after
 promotion (see Section H.10).
 

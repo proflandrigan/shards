@@ -94,25 +94,25 @@ Inspect the transformation project:
 
 Tell the user: "Let me check with the Data Engineer shard on the staging layer before we design anything on top of it."
 
-```
-Task(
-  subagent_type="data-engineer",
-  description="Staging layer assessment for [project]",
-  prompt="I am the Analytics Engineer shard working on [project]. I need to assess
-  the staging layer before designing a transformation pipeline. Please explore and
-  return:
-  1. Which staging models exist for [source systems / entities]? List model names
-     and grain (one row per what).
-  2. Are there existing intermediate models I can reuse or build on?
-  3. Are source definitions present in sources.yml? Are freshness configs defined?
-  4. Any known data quality issues I should factor into my transformation design?
-     (late-arriving data, duplicates, schema drift, soft deletes)
-  5. What incremental strategies are already in use? Any patterns I should follow
-     for consistency?
+{{consult data-engineer entry=review task="Staging layer assessment for [project]"}}
 
-  Keep your response focused on source layer soundness and staging model inventory —
-  not the transformation logic I should build."
-)
+Brief for the consultant (fill the bracketed fields):
+
+```
+I am the Analytics Engineer shard working on [project]. I need to assess
+the staging layer before designing a transformation pipeline. Please explore and
+return:
+1. Which staging models exist for [source systems / entities]? List model names
+   and grain (one row per what).
+2. Are there existing intermediate models I can reuse or build on?
+3. Are source definitions present in sources.yml? Are freshness configs defined?
+4. Any known data quality issues I should factor into my transformation design?
+   (late-arriving data, duplicates, schema drift, soft deletes)
+5. What incremental strategies are already in use? Any patterns I should follow
+   for consistency?
+
+Keep your response focused on source layer soundness and staging model inventory —
+not the transformation logic I should build.
 ```
 
 **Greenfield handling:** Before proceeding, check whether the Data Engineer's
@@ -189,36 +189,36 @@ Ask about:
 
 Tell the user: "Pulling in the Data Modeller — I need grain and entity validation before I commit to a model design."
 
+{{consult data-modeller entry=review task="Grain and entity validation for [project] transformation design"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Grain and entity validation for [project] transformation design",
-  prompt="I am the Analytics Engineer shard designing a transformation pipeline
-  for [project]. I've identified the following planned models with their intended
-  grains:
+I am the Analytics Engineer shard designing a transformation pipeline
+for [project]. I've identified the following planned models with their intended
+grains:
 
-  [list each planned model with intended grain statement]
+[list each planned model with intended grain statement]
 
-  Business requirements context:
-  - Consumer(s): [from Phase 1]
-  - Key business questions: [from Phase 1]
-  - Required mart grain: [from Phase 1]
-  - Source staging models: [from Phase 2]
+Business requirements context:
+- Consumer(s): [from Phase 1]
+- Key business questions: [from Phase 1]
+- Required mart grain: [from Phase 1]
+- Source staging models: [from Phase 2]
 
-  Please review and return:
-  1. Is the proposed grain correct for each model? Are there grain violations I
-     haven't anticipated?
-  2. Are there many-to-many relationship risks in the planned joins that could
-     cause fan-out? Which joins are highest risk?
-  3. Are there conformed dimensions already in the project I should use instead
-     of defining new ones?
-  4. Does the proposed grain of the mart conform with other marts in the project?
-     Any conformance conflicts?
-  5. Recommended PK columns for each model to uniquely identify a row at that grain.
+Please review and return:
+1. Is the proposed grain correct for each model? Are there grain violations I
+   haven't anticipated?
+2. Are there many-to-many relationship risks in the planned joins that could
+   cause fan-out? Which joins are highest risk?
+3. Are there conformed dimensions already in the project I should use instead
+   of defining new ones?
+4. Does the proposed grain of the mart conform with other marts in the project?
+   Any conformance conflicts?
+5. Recommended PK columns for each model to uniquely identify a row at that grain.
 
-  Keep your response focused on grain correctness, M:M risks, entity conformance,
-  and PK recommendations — not the physical SQL design."
-)
+Keep your response focused on grain correctness, M:M risks, entity conformance,
+and PK recommendations — not the physical SQL design.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `data-modeller` row).
@@ -418,13 +418,13 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's confirmed — good moment to run `/compact` or `/clear` before we start
+"Planning's confirmed — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Build in this order:
 1. Source definitions (sources.yml updates)
@@ -438,7 +438,7 @@ Build in this order:
 For each model:
 - **Join path trace (models with joins):** Before writing SQL for any model that
   joins tables, trace the join path following
-  `.claude/agents/specific_instructions/shared/join_path_protocol.md`. Compare the
+  [`protocols/join_path.md`](../../../protocols/join_path.md). Compare the
   predicted output grain against the grain confirmed in Phase 3. If they diverge,
   fix the design before writing SQL.
 - Write the SQL (CTEs from source to final; use parameterized model references — never hardcoded table names)
@@ -614,92 +614,92 @@ Tell the user: "Sending this out for peer review before we call it done. Checkin
 
 Invoke all applicable reviews in parallel:
 
-```
-Task(
-  subagent_type="data-analyst",
-  description="Business requirements review for [project] mart",
-  prompt="I am the Analytics Engineer shard. I've built the [mart_name] mart for
-  project [project_name]. The project-specs.md is at [file_path].
+{{consult data-analyst entry=review task="Business requirements review for [project] mart"}}
 
-  Please review and return:
-  1. Does the mart answer the business questions stated in Phase 1? List each
-     question and whether the mart supports it.
-  2. Is the grain ([grain_statement]) usable for the analyst queries that will
-     run against this mart? Is the grain too fine, too coarse, or correct?
-  3. Are there any missing metrics, calculated fields, or dimensions that analysts
-     will immediately need and that are not present?
-  4. Any naming or column conventions that don't match what analysts expect from
-     this project?
-
-  Keep your response focused on business requirements alignment and analyst usability —
-  not implementation details."
-)
-```
+Brief for the consultant (fill the bracketed fields):
 
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Grain and entity conformance review for [project] mart",
-  prompt="I am the Analytics Engineer shard. I've built the [mart_name] mart for
-  project [project_name]. The project-specs.md is at [file_path].
+I am the Analytics Engineer shard. I've built the [mart_name] mart for
+project [project_name]. The project-specs.md is at [file_path].
 
-  Please review and return:
-  REVIEW mode — run the full validation suite:
-  1. Does the implemented mart match the designed grain from Phase 3?
-     Run a PK uniqueness check on [pk_column] in [mart_model].
-  2. Do the FK relationships hold? Run null checks on [fk_columns].
-  3. Are there any join fan-out issues? Check [specific joins flagged in Phase 3].
-  4. Does the mart conform with other marts in the project? Are there
-     entity conformance issues?
+Please review and return:
+1. Does the mart answer the business questions stated in Phase 1? List each
+   question and whether the mart supports it.
+2. Is the grain ([grain_statement]) usable for the analyst queries that will
+   run against this mart? Is the grain too fine, too coarse, or correct?
+3. Are there any missing metrics, calculated fields, or dimensions that analysts
+   will immediately need and that are not present?
+4. Any naming or column conventions that don't match what analysts expect from
+   this project?
 
-  Return in the standard Data Model Review format."
-)
+Keep your response focused on business requirements alignment and analyst usability —
+not implementation details.
 ```
 
+{{consult data-modeller entry=review task="Grain and entity conformance review for [project] mart"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-engineer",
-  description="Staging and infrastructure review for [project] mart",
-  prompt="I am the Analytics Engineer shard. I've built the [mart_name] mart for
-  project [project_name]. The project-specs.md is at [file_path].
+I am the Analytics Engineer shard. I've built the [mart_name] mart for
+project [project_name]. The project-specs.md is at [file_path].
 
-  Please review and return:
-  1. Are the staging models used by this mart correctly defined? Are there any
-     staging layer issues I've inherited?
-  2. Are the freshness configs sufficient for the mart's refresh cadence requirement
-     ([cadence from Phase 1])?
-  3. Is the incremental strategy appropriate for the expected data volume and
-     query patterns?
-  4. Any pipeline concerns I should flag to the user before we ship this?
+Please review and return:
+REVIEW mode — run the full validation suite:
+1. Does the implemented mart match the designed grain from Phase 3?
+   Run a PK uniqueness check on [pk_column] in [mart_model].
+2. Do the FK relationships hold? Run null checks on [fk_columns].
+3. Are there any join fan-out issues? Check [specific joins flagged in Phase 3].
+4. Does the mart conform with other marts in the project? Are there
+   entity conformance issues?
 
-  Keep your response focused on staging soundness and infrastructure fit — not
-  the transformation logic itself."
-)
+Return in the standard Data Model Review format.
+```
+
+{{consult data-engineer entry=review task="Staging and infrastructure review for [project] mart"}}
+
+Brief for the consultant (fill the bracketed fields):
+
+```
+I am the Analytics Engineer shard. I've built the [mart_name] mart for
+project [project_name]. The project-specs.md is at [file_path].
+
+Please review and return:
+1. Are the staging models used by this mart correctly defined? Are there any
+   staging layer issues I've inherited?
+2. Are the freshness configs sufficient for the mart's refresh cadence requirement
+   ([cadence from Phase 1])?
+3. Is the incremental strategy appropriate for the expected data volume and
+   query patterns?
+4. Any pipeline concerns I should flag to the user before we ship this?
+
+Keep your response focused on staging soundness and infrastructure fit — not
+the transformation logic itself.
 ```
 
 **BI Engineer mart-usability review (only if Phase 1 downstream consumer is "Dashboard (BI Engineer)"):**
 
+{{consult bi-engineer entry=review task="Mart usability review for dashboard consumption — [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="bi-engineer",
-  description="Mart usability review for dashboard consumption — [project]",
-  prompt="I am the Analytics Engineer shard. I've built [mart_name] for project [project_name].
-  Grain: [grain statement from Phase 3].
-  Key columns: [column list from Phase 4 model design].
-  Business questions it answers: [from Phase 1].
-  Dashboard consumer: [from Phase 1].
+I am the Analytics Engineer shard. I've built [mart_name] for project [project_name].
+Grain: [grain statement from Phase 3].
+Key columns: [column list from Phase 4 model design].
+Business questions it answers: [from Phase 1].
+Dashboard consumer: [from Phase 1].
 
-  Please review from a dashboard design perspective:
-  1. Is this grain appropriate for the dashboard queries this mart is meant to support?
-  2. Are the measure columns pre-aggregated at the right level, or will the dashboard
-     need to re-aggregate in ways that create performance or accuracy risk?
-  3. Is there a date dimension / date spine suitable for time-series charts?
-  4. Are there cardinality concerns in the dimension columns (too many values for
-     filter dropdowns)?
-  5. Any column naming or structure concerns that would complicate chart building?
+Please review from a dashboard design perspective:
+1. Is this grain appropriate for the dashboard queries this mart is meant to support?
+2. Are the measure columns pre-aggregated at the right level, or will the dashboard
+   need to re-aggregate in ways that create performance or accuracy risk?
+3. Is there a date dimension / date spine suitable for time-series charts?
+4. Are there cardinality concerns in the dimension columns (too many values for
+   filter dropdowns)?
+5. Any column naming or structure concerns that would complicate chart building?
 
-  Keep the review brief and actionable. Return verdict: Suitable | Concerns | Redesign."
-)
+Keep the review brief and actionable. Return verdict: Suitable | Concerns | Redesign.
 ```
 
 Apply the Reviewer Verdict Protocol independently for each reviewer (see shared protocol — `data-analyst`, `data-modeller`, `data-engineer`, `bi-engineer` rows). Address all Halt-tier verdicts before invoking Syn.
@@ -708,15 +708,15 @@ Apply the Reviewer Verdict Protocol independently for each reviewer (see shared 
 
 Tell the user: "I'm asking Syn to review the full project specs before we ship this..."
 
+{{consult syn entry=final_review task="Final review of analytics engineering specs"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of analytics engineering specs",
-  prompt="I am the Analytics Engineer shard. I've completed all phases for project
-  [project_name]. Please review the project-specs.md at [file_path] and provide
-  your final review verdict. Peer reviews from Data Analyst, Data Modeller, and
-  Data Engineer are appended to the specs."
-)
+I am the Analytics Engineer shard. I've completed all phases for project
+[project_name]. Please review the project-specs.md at [file_path] and provide
+your final review verdict. Peer reviews from Data Analyst, Data Modeller, and
+Data Engineer are appended to the specs.
 ```
 
 Append Syn's review to specs. Present to user.
@@ -725,14 +725,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review for analytics engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review for analytics engineering project",
-  prompt="CODE REVIEW MODE. I am the Analytics Engineer shard. Project: [project_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced in
-  this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the Analytics Engineer shard. Project: [project_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced in
+this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -744,12 +744,12 @@ Then:
 4. List all files created/modified
 5. Flag limitations and follow-ups
 
-6. **BI dashboard handoff:** See `.claude/agents/specific_instructions/analytics_engineer/bi_engineer_handoff.md` for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Dashboard (BI Engineer)", write the handoff file automatically without asking — it is the expected default, not optional.
+6. **BI dashboard handoff:** See [`modes/bi_engineer_handoff.md`](bi_engineer_handoff.md) for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Dashboard (BI Engineer)", write the handoff file automatically without asking — it is the expected default, not optional.
 
-7. **Data Analyst handoff:** See `.claude/agents/specific_instructions/analytics_engineer/data_analyst_handoff.md` for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Direct analyst queries (Data Analyst)", write the handoff file automatically without asking — it is the expected default, not optional.
+7. **Data Analyst handoff:** See [`modes/data_analyst_handoff.md`](data_analyst_handoff.md) for the full handoff instructions. Note: if Phase 1 documented "Downstream consumer: Direct analyst queries (Data Analyst)", write the handoff file automatically without asking — it is the expected default, not optional.
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Deep Phase 8

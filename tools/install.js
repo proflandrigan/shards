@@ -183,7 +183,20 @@ function uninstall() {
 
 // ─── Install ─────────────────────────────────────────────────────────────────
 
+function printLegacyDeprecation() {
+  console.warn(`
+  ⚠  DEPRECATED: this is the legacy v1 installer.
+     Agent content in core/ now uses Shards v2 template macros ({{consult}}, {{switch}},
+     {{phase}}, {{protocol}}, ...) that this installer does NOT expand. A v1 install made
+     from this branch will contain unexpanded macros and will not work as expected.
+       - For a working v1 install:   git checkout v-legacy   (then run the installer there)
+       - For v2:                     shards build --dev   (coming in E1.10; today:
+                                     node cli/shards.js build --target claude)
+`);
+}
+
 function install() {
+  printLegacyDeprecation();
   console.log(`
 ╔══════════════════════════════════════════╗
 ║       shards — installer                 ║

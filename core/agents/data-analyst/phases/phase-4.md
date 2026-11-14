@@ -11,15 +11,15 @@ Goal: Get Syn's sign-off and close the analysis.
 
 Tell the user: "Let me get Syn to do a final review of this analysis..."
 
+{{consult syn entry=final_review task="Final review of adhoc analysis"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of adhoc analysis",
-  prompt="I am the Data Analyst shard. I've completed an adhoc analysis for
-  project [project_name]. Please review the project-specs.md at [file_path]
-  and provide your final review verdict. This was a quick analysis — check
-  that the question was answered, the approach was sound, and nothing was missed."
-)
+I am the Data Analyst shard. I've completed an adhoc analysis for
+project [project_name]. Please review the project-specs.md at [file_path]
+and provide your final review verdict. This was a quick analysis — check
+that the question was answered, the approach was sound, and nothing was missed.
 ```
 
 Append Syn's review to the specs. Present to user.
@@ -44,14 +44,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for adhoc analysis"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for adhoc analysis",
-  prompt="CODE REVIEW MODE. I am the Data Analyst shard. Project: [project_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the Data Analyst shard. Project: [project_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -63,7 +63,7 @@ Summarize:
 4. Suggested follow-ups (if any)
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Phase 4

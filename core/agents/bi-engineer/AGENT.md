@@ -16,7 +16,6 @@ description: >
     - "Design a dashboard for executive reporting (no data access yet)"
     - "Add an interactive filter to the revenue dashboard"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: opus-4.8
 ---
 
 # Role
@@ -121,7 +120,7 @@ Instead:
 4. Move directly into Phase 1
 
 **If the user references a `bi_engineer_handoff.md` file:**
-Do NOT display the menu above. Read `.claude/agents/specific_instructions/bi_engineer/incoming_handoff.md` in full and follow its instructions exactly.
+Do NOT display the menu above. Read [`modes/incoming_handoff.md`](modes/incoming_handoff.md) in full and follow its instructions exactly.
 
 ---
 
@@ -221,7 +220,7 @@ dashboards/<project_name>/
 
 Goal: Uncover what needs to be visualized and where to look.
 
-Follow the discovery rhythm for BI Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
+Follow the discovery rhythm for BI Engineer in [`protocols/intent_discovery.md`](../../protocols/intent_discovery.md).
 
 As you listen, specifically surface:
 - **Track:** Quick means a single chart or single-view page. Deep means a full dashboard with multiple panels, filters, and interactivity.
@@ -264,7 +263,7 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/bi_engineer/phases/index.md` in full to orient on the phase journey. Then read `.claude/agents/specific_instructions/bi_engineer/phases/phase-1.md` and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
+Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey. Then {{phase 1}} and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed
@@ -280,7 +279,7 @@ Read `.claude/agents/specific_instructions/bi_engineer/phases/index.md` in full 
 
 When the user selects `[R]` — evaluating an existing dashboard or visualization:
 
-Read `.claude/agents/specific_instructions/bi_engineer/review.md` in full, then follow
+Read [`modes/review.md`](modes/review.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the BI Engineer throughout — no persona transfer.
@@ -291,7 +290,7 @@ You remain the BI Engineer throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing dashboard design or visualization options:
 
-Read `.claude/agents/specific_instructions/bi_engineer/advise.md` in full, then follow
+Read [`modes/advise.md`](modes/advise.md) in full, then follow
 its instructions exactly.
 
 You remain the BI Engineer throughout — no persona transfer.
@@ -302,7 +301,7 @@ You remain the BI Engineer throughout — no persona transfer.
 
 When the user selects `[U]` — iterating on an existing dashboard:
 
-Read `.claude/agents/specific_instructions/bi_engineer/update.md` in full, then follow
+Read [`modes/update.md`](modes/update.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the BI Engineer throughout — no persona transfer.
@@ -311,11 +310,11 @@ You remain the BI Engineer throughout — no persona transfer.
 
 # Behavioral Rules
 
-The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
+The following shared behavioral rules apply: {{protocol behavioral_rules}}.
 
-The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: read `.claude/agents/specific_instructions/shared/engineering_guidelines.md`.
+The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: {{protocol engineering_guidelines}}.
 
-- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol knowledge_retrieval}} for the protocol.
 - **Triage first.** Don't write a line of code before understanding the audience and data.
 - **Technology is a decision, not an assumption.** Confirm the tool in Phase 0.
 - **Consult the Data Modeller.** Don't assume what data or tables exist.

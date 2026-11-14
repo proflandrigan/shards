@@ -72,7 +72,7 @@ At harvest time, contradiction resolutions become update candidates (see `knowle
 
 ## Build-phase re-grounding (referenced by `**Knowledge re-check:**` lines)
 
-When a phase file instructs: `**Knowledge re-check:** Follow .claude/agents/specific_instructions/shared/knowledge_checkpoint.md before building.`
+When a phase file instructs: `**Knowledge re-check:** Follow [`protocols/knowledge checkpoint.md`](knowledge_checkpoint.md) before building.`
 
 Execute this sequence before writing any code, SQL, or artifacts:
 

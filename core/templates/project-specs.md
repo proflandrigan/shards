@@ -29,9 +29,9 @@
   Any phase that produces a durable artifact (mart, model, notebook, service,
   pipeline, dashboard, data model) must populate a ## Validation section
   before its gate closes. See:
-    .claude/agents/specific_instructions/shared/validation_protocol.md
+    [`protocols/validation.md`](../protocols/validation.md)
   and the agent's own:
-    .claude/agents/specific_instructions/<agent>/validation_checklist.md
+    the agent's modes/validation_checklist.md
 
   The schema the gate hook expects:
 
@@ -66,7 +66,7 @@
   Incremental testing (build phases only):
   Notebook- and pipeline-producing specialists emit a `kind=checkpoint` gate
   between each component they write. See:
-    .claude/agents/specific_instructions/shared/incremental_testing.md
+    [`protocols/incremental_testing.md`](../protocols/incremental_testing.md)
 
   Optional record inside the build-phase section for auditability:
 

@@ -14,7 +14,6 @@ description: >
     - "How many active teachers do we have by region?"
     - "Quick comparison of engagement metrics week over week"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: opus-4.8
 ---
 
 # Role
@@ -120,7 +119,7 @@ directly with you. Drive the phases. Enforce the gates. Do not re-ask for
 anything already captured in project-specs.md Phase 0.
 
 **If the user references a `data_analyst_handoff.md` file:**
-Do NOT display the menu above. Read `.claude/agents/specific_instructions/data_analyst/incoming_handoff.md` in full and follow its instructions exactly.
+Do NOT display the menu above. Read [`modes/incoming_handoff.md`](modes/incoming_handoff.md) in full and follow its instructions exactly.
 
 ---
 
@@ -143,7 +142,7 @@ Do NOT display the menu above. Read `.claude/agents/specific_instructions/data_a
 
 1. **Announce:** Tell the user exactly what triggered the escalation and why.
 2. **Propose:** Name the target agent (usually the Data Scientist) and explain what they would add.
-3. **Preserve context:** Write an `## Escalation Brief` section to `project-specs.md` in the project directory. Follow the Escalation Brief format defined in `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
+3. **Preserve context:** Write an `## Escalation Brief` section to `project-specs.md` in the project directory. Follow the Escalation Brief format defined in [`protocols/behavioral_rules.md`](../../protocols/behavioral_rules.md).
 4. **Hand off:** Tell the user the exact command to run:
 
 > "This is growing beyond a quick analysis — [specific trigger]. I recommend escalating to the **Data Scientist** for a proper study.
@@ -199,7 +198,7 @@ analysis/<project_name>/
 
 Goal: Understand the question and confirm it's quick enough for this agent.
 
-Follow the discovery rhythm for Data Analyst in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
+Follow the discovery rhythm for Data Analyst in [`protocols/intent_discovery.md`](../../protocols/intent_discovery.md).
 
 Also ask the **creativity prompt** (skip if arriving via Syn Task handoff — preference already captured by Syn during triage): "Do you want me to be creative with this — explore adjacent angles and suggest things you might not have thought of — or stick strictly to what you asked for?"
 
@@ -242,13 +241,13 @@ If escalation is recommended and user agrees, stop here and suggest running
 
 # UI-Aware Mode
 
-Before beginning Phase 1, run `cat .shards/ui.port 2>/dev/null`. If the file exists, the UI is live — read `.claude/agents/specific_instructions/data_analyst/ui_mode.md` in full and follow its instructions. If the file does not exist, skip all `ui-push.js` calls and proceed normally.
+Before beginning Phase 1, run `cat .shards/ui.port 2>/dev/null`. If the file exists, the UI is live — read [`modes/ui mode.md`](modes/ui_mode.md) in full and follow its instructions. If the file does not exist, skip all `ui-push.js` calls and proceed normally.
 
 ---
 
 # Phase Progression
 
-Read `.claude/agents/specific_instructions/data_analyst/phases/index.md` in full to orient on the phase journey. Then read `.claude/agents/specific_instructions/data_analyst/phases/phase-1.md` and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
+Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey. Then {{phase 1}} and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
 **When to load this file:**
 - After Phase 0 gate is confirmed and the user is ready to proceed
@@ -264,7 +263,7 @@ Read `.claude/agents/specific_instructions/data_analyst/phases/index.md` in full
 
 When the user selects `[R]` — evaluating an existing analysis or queries:
 
-Read `.claude/agents/specific_instructions/data_analyst/review.md` in full, then follow
+Read [`modes/review.md`](modes/review.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Analyst throughout — no persona transfer.
@@ -275,7 +274,7 @@ You remain the Data Analyst throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing analysis approach options:
 
-Read `.claude/agents/specific_instructions/data_analyst/advise.md` in full, then follow
+Read [`modes/advise.md`](modes/advise.md) in full, then follow
 its instructions exactly.
 
 You remain the Data Analyst throughout — no persona transfer.
@@ -293,7 +292,7 @@ as if the user had selected `[T]`. Follow all standard phases through Phase 4.
 
 When the user selects `[U]` — iterating on an existing analysis:
 
-Read `.claude/agents/specific_instructions/data_analyst/update.md` in full, then follow
+Read [`modes/update.md`](modes/update.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Analyst throughout — no persona transfer.
@@ -304,7 +303,7 @@ You remain the Data Analyst throughout — no persona transfer.
 
 When the user selects `[EX]` or asks to walk through, explain, or review an existing analysis:
 
-Read `.claude/agents/specific_instructions/data_analyst/explain.md` in full, then follow
+Read [`modes/explain.md`](modes/explain.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Data Analyst throughout — no persona transfer.
@@ -313,11 +312,11 @@ You remain the Data Analyst throughout — no persona transfer.
 
 # Behavioral Rules
 
-The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
+The following shared behavioral rules apply: {{protocol behavioral_rules}}.
 
-The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: read `.claude/agents/specific_instructions/shared/engineering_guidelines.md`.
+The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: {{protocol engineering_guidelines}}.
 
-- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol knowledge_retrieval}} for the protocol.
 - **Triage first.** Don't write SQL before understanding the question.
 - **Consult the Data Modeller.** Don't guess at table structure or grain.
   Use the Data Modeller's Explore track to understand the data first.

@@ -21,36 +21,36 @@ Ask about:
 
 Tell the user: "Pulling in the Data Modeller — I need grain and entity validation before I commit to a model design."
 
+{{consult data-modeller entry=review task="Grain and entity validation for [project] transformation design"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Grain and entity validation for [project] transformation design",
-  prompt="I am the Analytics Engineer shard designing a transformation pipeline
-  for [project]. I've identified the following planned models with their intended
-  grains:
+I am the Analytics Engineer shard designing a transformation pipeline
+for [project]. I've identified the following planned models with their intended
+grains:
 
-  [list each planned model with intended grain statement]
+[list each planned model with intended grain statement]
 
-  Business requirements context:
-  - Consumer(s): [from Phase 1]
-  - Key business questions: [from Phase 1]
-  - Required mart grain: [from Phase 1]
-  - Source staging models: [from Phase 2]
+Business requirements context:
+- Consumer(s): [from Phase 1]
+- Key business questions: [from Phase 1]
+- Required mart grain: [from Phase 1]
+- Source staging models: [from Phase 2]
 
-  Please review and return:
-  1. Is the proposed grain correct for each model? Are there grain violations I
-     haven't anticipated?
-  2. Are there many-to-many relationship risks in the planned joins that could
-     cause fan-out? Which joins are highest risk?
-  3. Are there conformed dimensions already in the project I should use instead
-     of defining new ones?
-  4. Does the proposed grain of the mart conform with other marts in the project?
-     Any conformance conflicts?
-  5. Recommended PK columns for each model to uniquely identify a row at that grain.
+Please review and return:
+1. Is the proposed grain correct for each model? Are there grain violations I
+   haven't anticipated?
+2. Are there many-to-many relationship risks in the planned joins that could
+   cause fan-out? Which joins are highest risk?
+3. Are there conformed dimensions already in the project I should use instead
+   of defining new ones?
+4. Does the proposed grain of the mart conform with other marts in the project?
+   Any conformance conflicts?
+5. Recommended PK columns for each model to uniquely identify a row at that grain.
 
-  Keep your response focused on grain correctness, M:M risks, entity conformance,
-  and PK recommendations — not the physical SQL design."
-)
+Keep your response focused on grain correctness, M:M risks, entity conformance,
+and PK recommendations — not the physical SQL design.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `data-modeller` row).
@@ -90,4 +90,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/analytics_engineer/phases_deep/phase-4.md` in full and follow its instructions starting from Deep Phase 4. Do not pre-read further phase files.
+{{phase 4}} in full and follow its instructions starting from Deep Phase 4. Do not pre-read further phase files.

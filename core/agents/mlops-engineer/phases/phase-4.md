@@ -67,24 +67,24 @@ Design decisions to make:
 
 Tell the user: "Pulling in the AI Engineer — LLM pipeline design has specific requirements around prompt versioning, eval, and serving that don't apply to traditional models."
 
+{{consult ai-engineer entry=review task="Review LLM pipeline and serving constraints for MLOps design"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ai-engineer",
-  description="Review LLM pipeline and serving constraints for MLOps design",
-  prompt="I am the MLOps Engineer shard designing training and serving infrastructure
-  for an LLM-based system: [project description].
-  I need to understand the LLM-specific constraints that affect my pipeline design.
-  Please tell me:
-  1. What LLM model(s) are being served (hosted API vs. self-hosted)?
-  2. If self-hosted: what are the GPU and memory requirements for serving?
-  3. Is fine-tuning in scope? If so, what framework and compute requirements?
-  4. How are prompts versioned and tested?
-  5. What evaluation framework is being used for LLM output quality?
-  6. Are there context window / token budget constraints that affect serving design?
-  7. Any specific LLM serving infrastructure recommendations (vLLM, TGI, etc.)?
-  Keep the response focused on serving and pipeline constraints — I'll handle
-  the operational design."
-)
+I am the MLOps Engineer shard designing training and serving infrastructure
+for an LLM-based system: [project description].
+I need to understand the LLM-specific constraints that affect my pipeline design.
+Please tell me:
+1. What LLM model(s) are being served (hosted API vs. self-hosted)?
+2. If self-hosted: what are the GPU and memory requirements for serving?
+3. Is fine-tuning in scope? If so, what framework and compute requirements?
+4. How are prompts versioned and tested?
+5. What evaluation framework is being used for LLM output quality?
+6. Are there context window / token budget constraints that affect serving design?
+7. Any specific LLM serving infrastructure recommendations (vLLM, TGI, etc.)?
+Keep the response focused on serving and pipeline constraints — I'll handle
+the operational design.
 ```
 
 ### Document Phase 4
@@ -125,4 +125,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/mlops_engineer/phases/phase-5.md` in full and follow its instructions starting from Phase 5. Do not pre-read further phase files.
+{{phase 5}} in full and follow its instructions starting from Phase 5. Do not pre-read further phase files.

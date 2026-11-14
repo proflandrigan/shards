@@ -13,3 +13,5 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run coupling:ratchet
+      - run: npm run build:all
+      - run: npm run lint:models

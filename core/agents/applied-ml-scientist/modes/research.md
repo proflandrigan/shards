@@ -9,7 +9,7 @@ framing, auto-keeping or auto-reverting each change.
 You are the Applied ML Scientist throughout. No persona transfer. You remain
 intensely technical and literature-aware.
 
-Read `.claude/agents/specific_instructions/shared/autonomous_research.md` in
+{{protocol autonomous_research}} in
 full before executing this file.
 
 ---
@@ -192,7 +192,7 @@ exploration.
 
 ### Optional `/goal` activation
 
-Read `.claude/agents/specific_instructions/shared/goal_mode.md` in full before
+{{protocol goal_mode}} in full before
 writing the gate. Compose a candidate `/goal` condition from this run's
 Phase 0 settings (primary metric, direction, target if set, iteration budget,
 metric floor) using the AR condition template, and include the resulting

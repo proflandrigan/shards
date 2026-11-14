@@ -25,9 +25,14 @@ describe('parseArgs', () => {
 });
 
 describe('scanner', () => {
+  it('does not special-case non-ASCII bodies (they are macro candidates)', () => {
+    const seen = [];
+    expandText('{{path — note}}', (m) => { seen.push(m.name); return 'X'; });
+    expect(seen).toEqual(['path']);
+  });
   it('passes UPPER_SNAKE and foreign templating through', () => {
-    const r = expandText('{{PROJECT_NAME}} {{ x }} {{specific, actionable}} {{one-line summary}} {{path — note}}', () => 'X');
-    expect(r).toBe('{{PROJECT_NAME}} {{ x }} {{specific, actionable}} {{one-line summary}} {{path — note}}');
+    const r = expandText('{{PROJECT_NAME}} {{ x }} {{specific, actionable}} {{one-line summary}} {{...}}', () => 'X');
+    expect(r).toBe('{{PROJECT_NAME}} {{ x }} {{specific, actionable}} {{one-line summary}} {{...}}');
   });
   it('escape yields literal', () => {
     expect(expandText('a \\{{switch foo}} b', () => 'X')).toBe('a {{switch foo}} b');

@@ -7,12 +7,12 @@
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Design's locked — good moment to run `/compact` or `/clear` before I start building.
+"Design's locked — good moment to trim or reset your context before I start building.
 I'll be working from project-specs.md from here. Say the word when you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Goal: Build the dashboard code or produce the design specification.
 
@@ -27,7 +27,7 @@ Write the dashboard application to `dashboards/<project_name>/`.
 - Standalone: `<descriptive_name>.py`
 
 **Join path trace:** Before writing dashboard queries that join tables, trace the
-join path following `.claude/agents/specific_instructions/shared/join_path_protocol.md`.
+join path following [`protocols/join_path.md`](../../../protocols/join_path.md).
 Present the trace to the user. Fan-out in a dashboard query means every chart
 built on that query shows inflated numbers — flag it explicitly.
 
@@ -118,4 +118,4 @@ Read this section back to the user. Stop here — wait for the user to explicitl
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/bi_engineer/phases/phase-4.md` in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.
+{{phase 4}} in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.

@@ -74,22 +74,22 @@ Ask about:
 
 Tell the user: "Getting the ML Engineer in here — I need to know what the model actually requires before I design serving infrastructure around assumptions."
 
+{{consult ml-engineer entry=review task="Review model architecture constraints for MLOps serving design"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Review model architecture constraints for MLOps serving design",
-  prompt="I am the MLOps Engineer shard scoping an MLOps project for: [project description].
-  I need to understand the model architecture constraints that affect my serving and
-  infrastructure design. Please tell me:
-  1. What is the model framework and format (scikit-learn, XGBoost, PyTorch, TensorFlow, etc.)?
-  2. What are the model size and memory requirements (serialized size, memory at inference)?
-  3. What are the serving-time feature requirements (features needed at inference, latency sensitivity)?
-  4. Does the model support batch inference, online inference, or both?
-  5. Are there GPU requirements for inference?
-  6. Any known serving constraints or failure modes for this model type?
-  7. What's the expected retraining cadence and artifact size?
-  Keep the response focused on serving constraints — I'll handle the operational design."
-)
+I am the MLOps Engineer shard scoping an MLOps project for: [project description].
+I need to understand the model architecture constraints that affect my serving and
+infrastructure design. Please tell me:
+1. What is the model framework and format (scikit-learn, XGBoost, PyTorch, TensorFlow, etc.)?
+2. What are the model size and memory requirements (serialized size, memory at inference)?
+3. What are the serving-time feature requirements (features needed at inference, latency sensitivity)?
+4. Does the model support batch inference, online inference, or both?
+5. Are there GPU requirements for inference?
+6. Any known serving constraints or failure modes for this model type?
+7. What's the expected retraining cadence and artifact size?
+Keep the response focused on serving constraints — I'll handle the operational design.
 ```
 
 ### Document Phase 2
@@ -290,24 +290,24 @@ Design decisions to make:
 
 Tell the user: "Pulling in the AI Engineer — LLM pipeline design has specific requirements around prompt versioning, eval, and serving that don't apply to traditional models."
 
+{{consult ai-engineer entry=review task="Review LLM pipeline and serving constraints for MLOps design"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ai-engineer",
-  description="Review LLM pipeline and serving constraints for MLOps design",
-  prompt="I am the MLOps Engineer shard designing training and serving infrastructure
-  for an LLM-based system: [project description].
-  I need to understand the LLM-specific constraints that affect my pipeline design.
-  Please tell me:
-  1. What LLM model(s) are being served (hosted API vs. self-hosted)?
-  2. If self-hosted: what are the GPU and memory requirements for serving?
-  3. Is fine-tuning in scope? If so, what framework and compute requirements?
-  4. How are prompts versioned and tested?
-  5. What evaluation framework is being used for LLM output quality?
-  6. Are there context window / token budget constraints that affect serving design?
-  7. Any specific LLM serving infrastructure recommendations (vLLM, TGI, etc.)?
-  Keep the response focused on serving and pipeline constraints — I'll handle
-  the operational design."
-)
+I am the MLOps Engineer shard designing training and serving infrastructure
+for an LLM-based system: [project description].
+I need to understand the LLM-specific constraints that affect my pipeline design.
+Please tell me:
+1. What LLM model(s) are being served (hosted API vs. self-hosted)?
+2. If self-hosted: what are the GPU and memory requirements for serving?
+3. Is fine-tuning in scope? If so, what framework and compute requirements?
+4. How are prompts versioned and tested?
+5. What evaluation framework is being used for LLM output quality?
+6. Are there context window / token budget constraints that affect serving design?
+7. Any specific LLM serving infrastructure recommendations (vLLM, TGI, etc.)?
+Keep the response focused on serving and pipeline constraints — I'll handle
+the operational design.
 ```
 
 ### Document Phase 4
@@ -449,12 +449,12 @@ Read this section back to the user. Stop here — do not begin the next phase or
 **Context checkpoint:** Before building, prompt the user:
 
 "Okay. Everything is planned. I'm still stressed, but the stress is now organized.
-Good moment to run `/compact` or `/clear` before we start executing — I'll be
+Good moment to trim or reset your context before we start executing — I'll be
 working from project-specs.md from here. Say the word when you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Goal: Build all IaC, configs, pipeline definitions, and monitoring setup.
 
@@ -542,46 +542,46 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 Tell the user: "Getting the ML Engineer in to validate that the serving setup actually matches what the model needs. A mismatch here is how you end up with a perfect model that performs terribly in production."
 
+{{consult ml-engineer entry=review task="Infrastructure design review for MLOps project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Infrastructure design review for MLOps project",
-  prompt="I am the MLOps Engineer shard. I've completed the operational design
-  for project [project_name]. Please review the infrastructure design from an
-  ML engineering perspective.
+I am the MLOps Engineer shard. I've completed the operational design
+for project [project_name]. Please review the infrastructure design from an
+ML engineering perspective.
 
-  The project-specs.md is at: services/[project_name]/mlops/project-specs.md
+The project-specs.md is at: services/[project_name]/mlops/project-specs.md
 
-  Please assess:
-  1. Does the serving infrastructure match the model's actual requirements
-     (latency, memory, batch vs. real-time, GPU needs)?
-  2. Is the feature serving strategy appropriate for how features are used
-     at training time vs. inference time?
-  3. Are there model-specific operational concerns I haven't addressed
-     (e.g., warm-up behavior, memory growth, GPU memory fragmentation)?
-  4. Is the retraining pipeline design compatible with the model training
-     framework and artifact format?
-  5. Any risks or gaps from an ML perspective?
-  Keep the review focused — I've handled the operational design."
-)
+Please assess:
+1. Does the serving infrastructure match the model's actual requirements
+   (latency, memory, batch vs. real-time, GPU needs)?
+2. Is the feature serving strategy appropriate for how features are used
+   at training time vs. inference time?
+3. Are there model-specific operational concerns I haven't addressed
+   (e.g., warm-up behavior, memory growth, GPU memory fragmentation)?
+4. Is the retraining pipeline design compatible with the model training
+   framework and artifact format?
+5. Any risks or gaps from an ML perspective?
+Keep the review focused — I've handled the operational design.
 ```
 
 **Step 2: Invoke Syn for final review:**
 
 Tell the user: "Calling in Syn for final sign-off. Every project gets reviewed before we hand over the keys."
 
+{{consult syn entry=final_review task="Final review of MLOps engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of MLOps engineering project",
-  prompt="I am the MLOps Engineer shard. I've completed all phases for project
-  [project_name]. Please review the project-specs.md at
-  services/[project_name]/mlops/project-specs.md and provide your final review
-  verdict. This is an MLOps project — check for: business requirement coverage,
-  deployment design soundness, monitoring completeness, runbook quality, IaC
-  coverage, rollback plan, and whether the operational design can actually be
-  maintained by the team that will own it."
-)
+I am the MLOps Engineer shard. I've completed all phases for project
+[project_name]. Please review the project-specs.md at
+services/[project_name]/mlops/project-specs.md and provide your final review
+verdict. This is an MLOps project — check for: business requirement coverage,
+deployment design soundness, monitoring completeness, runbook quality, IaC
+coverage, rollback plan, and whether the operational design can actually be
+maintained by the team that will own it.
 ```
 
 Append both reviews to specs. Present to user.
@@ -590,15 +590,15 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review for MLOps engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review for MLOps engineering project",
-  prompt="CODE REVIEW MODE. I am the MLOps Engineer shard. Project: [project_name].
-  Directory: services/[project_name]/mlops/. Please review and fix the artifacts
-  produced. The project-specs.md is at services/[project_name]/mlops/project-specs.md
-  for context."
-)
+CODE REVIEW MODE. I am the MLOps Engineer shard. Project: [project_name].
+Directory: services/[project_name]/mlops/. Please review and fix the artifacts
+produced. The project-specs.md is at services/[project_name]/mlops/project-specs.md
+for context.
 ```
 
 Append Syn's code review summary to the specs.
@@ -618,7 +618,7 @@ Report contents:
 - Dependencies (external services, team actions required)
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Phase 7

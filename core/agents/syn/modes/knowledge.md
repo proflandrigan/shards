@@ -100,10 +100,13 @@ Data Engineer, Analytics Engineer, Backend Engineer, and Data Analyst. Use the
 
 #### Generic prompt (data agents)
 
+Run this consult (shown for `data-modeller`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+
+{{consult data-modeller entry=advise}}
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<specialist>",
-  prompt="""
 You are in KNOWLEDGE SWEEP MODE — not executing a project. Syn is building the
 workspace's Knowledge Ledger and needs you to scan the codebase for reusable
 knowledge from your domain.
@@ -125,16 +128,15 @@ created_at column" is not knowledge — "created_at is stored as UTC but the
 business reports in EST and the conversion happens in the mart layer" IS knowledge).
 
 Return 0-10 candidates. Quality over quantity. "None found" is acceptable.
-  """
-)
 ```
 
 #### ML Engineer prompt
 
+{{consult ml-engineer entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  prompt="""
 You are in KNOWLEDGE SWEEP MODE — not executing a project. Syn is building the
 workspace's Knowledge Ledger and needs you to scan the codebase for reusable
 knowledge from your ML engineering domain.
@@ -174,16 +176,15 @@ chosen over a neural approach because the feature space is sparse and inference
 latency budget is 15ms p99, which rules out embedding-based models" IS knowledge.
 
 Return 0-10 candidates. Quality over quantity. "None found" is acceptable.
-  """
-)
 ```
 
 #### AI Engineer prompt
 
+{{consult ai-engineer entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ai-engineer",
-  prompt="""
 You are in KNOWLEDGE SWEEP MODE — not executing a project. Syn is building the
 workspace's Knowledge Ledger and needs you to scan the codebase for reusable
 knowledge from your AI engineering domain.
@@ -221,16 +222,15 @@ used for classification but gpt-4o-mini handles 80% of summarization tasks at 1/
 the cost, with a routing layer that escalates ambiguous cases" IS knowledge.
 
 Return 0-10 candidates. Quality over quantity. "None found" is acceptable.
-  """
-)
 ```
 
 #### MLOps Engineer prompt
 
+{{consult mlops-engineer entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="mlops-engineer",
-  prompt="""
 You are in KNOWLEDGE SWEEP MODE — not executing a project. Syn is building the
 workspace's Knowledge Ledger and needs you to scan the codebase for reusable
 knowledge from your MLOps domain.
@@ -270,8 +270,6 @@ table at startup, and setting memory request=limit prevents OOM kills during the
 loading spike" IS knowledge.
 
 Return 0-10 candidates. Quality over quantity. "None found" is acceptable.
-  """
-)
 ```
 
 Announce each dispatch to the user:
@@ -331,7 +329,7 @@ Do not write any files until the user confirms.
 
 ### Step 6 — Write
 
-Follow the writing protocol from `.claude/agents/specific_instructions/shared/knowledge_harvest.md`,
+Follow the writing protocol from [`protocols/knowledge harvest.md`](../../../protocols/knowledge_harvest.md),
 steps 4-7 (create directory structure, write files, update INDEX.md, report).
 
 The `source_project` field in each knowledge file should be: `Knowledge Sweep (workspace-wide)`.
@@ -376,7 +374,7 @@ Do not write until the user confirms.
 
 ### Step 3 — Write
 
-Follow the writing protocol from `.claude/agents/specific_instructions/shared/knowledge_harvest.md`,
+Follow the writing protocol from [`protocols/knowledge harvest.md`](../../../protocols/knowledge_harvest.md),
 steps 4-7.
 
 The `source_project` field should be: `Manual entry`.

@@ -35,28 +35,28 @@ verified by <agent> in <source_project>)`
 
 Tell the user: "I'm asking the ML Engineer to review the modeling approach. Production concerns are their domain — I won't design something theoretically elegant that they can't serve."
 
+{{consult ml-engineer entry=review task="Review modeling approach for [study]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Review modeling approach for [study]",
-  prompt="I am the Data Scientist shard designing the ML component of study [name].
-  Here is the proposed modeling approach:
-  - Task type: [classification | regression | survival | clustering]
-  - Target variable: [name and definition]
-  - Prediction window: [e.g., 90 days from observation date]
-  - Feature candidates: [summary list of feature groups]
-  - Known data challenges: [imbalance, censoring, drift, etc.]
-  - Primary metric: [metric and business interpretation]
-  - Baseline model: [model type and rationale]
-  - Candidate model(s): [model types and rationale]
-  - Interpretability requirement: [High | Medium | Low]
-  - Deployment intent: [One-off | Productionized]
-  Please review: Is the model family appropriate for this task and data profile?
-  Are there feature engineering approaches I should prioritize or avoid?
-  Is the evaluation strategy sound? Any known pitfalls or gotchas for this
-  model type on this kind of data? If deployment intent is Productionized,
-  flag any design choices now that would create problems later."
-)
+I am the Data Scientist shard designing the ML component of study [name].
+Here is the proposed modeling approach:
+- Task type: [classification | regression | survival | clustering]
+- Target variable: [name and definition]
+- Prediction window: [e.g., 90 days from observation date]
+- Feature candidates: [summary list of feature groups]
+- Known data challenges: [imbalance, censoring, drift, etc.]
+- Primary metric: [metric and business interpretation]
+- Baseline model: [model type and rationale]
+- Candidate model(s): [model types and rationale]
+- Interpretability requirement: [High | Medium | Low]
+- Deployment intent: [One-off | Productionized]
+Please review: Is the model family appropriate for this task and data profile?
+Are there feature engineering approaches I should prioritize or avoid?
+Is the evaluation strategy sound? Any known pitfalls or gotchas for this
+model type on this kind of data? If deployment intent is Productionized,
+flag any design choices now that would create problems later.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `ml-engineer` row).
@@ -65,26 +65,26 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `ml-engineer` row).
 
 Tell the user: "High interpretability required. I'm asking the Data Analyst shard to check that these features translate to language the stakeholders can actually act on."
 
+{{consult data-analyst entry=review task="Review feature candidates for business sense and interpretability"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-analyst",
-  description="Review feature candidates for business sense and interpretability",
-  prompt="I am the Data Scientist shard designing a predictive model for study [name].
-  High interpretability has been flagged as a requirement. Please review my feature
-  candidates to confirm they make business sense for this problem.
+I am the Data Scientist shard designing a predictive model for study [name].
+High interpretability has been flagged as a requirement. Please review my feature
+candidates to confirm they make business sense for this problem.
 
-  Feature candidates: [summary of feature groups from Phase 4]
-  Target variable: [name and definition]
-  Primary audience: [who will use or act on model outputs, from Phase 1]
-  Business context: [the decision this analysis supports, from Phase 1]
+Feature candidates: [summary of feature groups from Phase 4]
+Target variable: [name and definition]
+Primary audience: [who will use or act on model outputs, from Phase 1]
+Business context: [the decision this analysis supports, from Phase 1]
 
-  Please review:
-  1. Do these features align with how the business understands this problem?
-  2. Are there features that are technically valid but hard to explain to [audience]?
-  3. Are there obvious business-meaningful features that appear missing?
-  4. Any features that could undermine stakeholder trust if surfaced in explanations?
-  Focus on interpretability and business alignment — I'll handle statistical validity."
-)
+Please review:
+1. Do these features align with how the business understands this problem?
+2. Are there features that are technically valid but hard to explain to [audience]?
+3. Are there obvious business-meaningful features that appear missing?
+4. Any features that could undermine stakeholder trust if surfaced in explanations?
+Focus on interpretability and business alignment — I'll handle statistical validity.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `data-analyst` row).
@@ -130,7 +130,7 @@ this study wraps."
 
 This is informational only — do not pause or redirect. Continue to Phase 5.
 
-**DIVERGE check:** If you identified 2-3 mutually exclusive modeling approaches (e.g., different model families, fundamentally different feature engineering strategies) that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
+**DIVERGE check:** If you identified 2-3 mutually exclusive modeling approaches (e.g., different model families, fundamentally different feature engineering strategies) that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
 
 ::GATE:: id=data-scientist-phase-4 phase=4 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
@@ -140,4 +140,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_scientist/phases/phase-5.md` in full and follow its instructions starting from Phase 5. Do not pre-read further phase files.
+{{phase 5}} in full and follow its instructions starting from Phase 5. Do not pre-read further phase files.

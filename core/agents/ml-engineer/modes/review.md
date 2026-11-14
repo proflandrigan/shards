@@ -43,10 +43,11 @@ Consult reviewers as appropriate:
 
 **Data Engineer** — if the review touches pipeline feasibility, data freshness,
 or infrastructure design:
+{{consult data-engineer entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-engineer",
-  prompt="""
 You are being consulted to assess pipeline feasibility and infrastructure soundness
 for an ML system review.
 
@@ -60,16 +61,15 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 **Data Scientist** — if the review touches methodology, feature engineering,
 or model evaluation approach:
+{{consult data-scientist entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-scientist",
-  prompt="""
 You are being consulted to review the ML methodology for an existing system.
 
 **System under review:** <system name and brief description>
@@ -83,18 +83,17 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 **Applied ML Scientist** — if the review touches model architecture, loss function
 design, inductive bias alignment with data structure, or non-standard methodology
 (non-tabular data, custom objectives, self-supervised components, architecture
 search, or any approach the Data Scientist review doesn't adequately cover):
+{{consult applied-ml-scientist entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="applied-ml-scientist",
-  prompt="""
 You are being consulted to review the ML science of an existing system.
 
 **System under review:** <system name and brief description>
@@ -113,8 +112,6 @@ Please assess:
 5. One or two specific recommendations.
 
 Return your review in the service-mode format. Be concise.
-  """
-)
 ```
 
 ---

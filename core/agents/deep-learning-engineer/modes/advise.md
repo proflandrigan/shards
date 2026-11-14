@@ -48,10 +48,11 @@ If the question touches theoretical soundness, inductive bias alignment, or whet
 a recent research approach would clearly outperform the options, consult the Applied
 ML Scientist:
 
+{{consult applied-ml-scientist entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="applied-ml-scientist",
-  prompt="""
 You are being consulted for a deep learning advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -61,8 +62,6 @@ You are being consulted for a deep learning advisory discussion.
 Please give a concise assessment — 3-5 sentences. From a methodology perspective,
 which option has the stronger inductive bias argument for this data type, and are
 there recent methods that clearly dominate these options?
-  """
-)
 ```
 
 ---

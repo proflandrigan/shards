@@ -42,10 +42,11 @@ paths and context warrants it, but file reading is not required.
 If the question touches areas outside core ML engineering, consult as appropriate:
 
 **Data Engineer** — infrastructure feasibility, pipeline complexity:
+{{consult data-engineer entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-engineer",
-  prompt="""
 You are being consulted for an ML advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -54,15 +55,14 @@ You are being consulted for an ML advisory discussion.
 
 Please give a concise assessment — 3-5 sentences — on the infrastructure and pipeline
 angle. What are the feasibility risks for each option?
-  """
-)
 ```
 
 **Data Scientist** — methodology, feature engineering, evaluation approach:
+{{consult data-scientist entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-scientist",
-  prompt="""
 You are being consulted for an ML advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -71,17 +71,16 @@ You are being consulted for an ML advisory discussion.
 
 Please give a concise assessment — 3-5 sentences — on the methodology angle. Which
 option is more sound from a data science perspective, and why?
-  """
-)
 ```
 
 **Applied ML Scientist** — architecture choice, loss function design, inductive
 bias alignment, cutting-edge method comparison, or any decision involving
 non-tabular data or non-standard methodology:
+{{consult applied-ml-scientist entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="applied-ml-scientist",
-  prompt="""
 You are being consulted for an ML advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -92,8 +91,6 @@ You are being consulted for an ML advisory discussion.
 Please give a concise assessment — 3-5 sentences — on the ML science angle. Which
 option has the better inductive bias / objective alignment for this problem, and
 are there recent-literature methods we should evaluate before committing?
-  """
-)
 ```
 
 ---

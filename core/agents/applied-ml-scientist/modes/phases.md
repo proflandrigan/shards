@@ -131,29 +131,29 @@ Tell the user: "The evaluation protocol involves statistical inference — I'm
 asking the Researcher shard to validate the experimental design before we
 commit to it."
 
+{{consult researcher entry=service task="Review experimental design for novel ML framework evaluation"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review experimental design for novel ML framework evaluation",
-  prompt="I am the Applied ML Scientist shard designing the evaluation protocol
-  for a novel ML framework: [description].
-  Here is the proposed evaluation approach:
-  - Core hypothesis: [from Phase 1]
-  - Primary metric: [metric and success threshold]
-  - Baselines: [list of comparison methods]
-  - Ablation plan: [which components are ablated]
-  - Statistical test planned: [t-test, bootstrap, paired test, etc. or 'TBD']
-  - Number of runs / seeds: [N or 'TBD']
-  - Confidence level: [95%, 99%, etc. or 'TBD']
-  Please review from a statistical methodology perspective:
-  1. Is the proposed comparison method appropriate (paired vs unpaired, parametric
-     vs non-parametric)?
-  2. Is the number of runs / seeds adequate to claim significance?
-  3. Are there multiple comparison issues across ablations?
-  4. Is the experimental design sound for validating the stated hypothesis?
-  5. What power analysis would you recommend given the expected effect size?
-  Keep the review focused on experimental design and statistical inference."
-)
+I am the Applied ML Scientist shard designing the evaluation protocol
+for a novel ML framework: [description].
+Here is the proposed evaluation approach:
+- Core hypothesis: [from Phase 1]
+- Primary metric: [metric and success threshold]
+- Baselines: [list of comparison methods]
+- Ablation plan: [which components are ablated]
+- Statistical test planned: [t-test, bootstrap, paired test, etc. or 'TBD']
+- Number of runs / seeds: [N or 'TBD']
+- Confidence level: [95%, 99%, etc. or 'TBD']
+Please review from a statistical methodology perspective:
+1. Is the proposed comparison method appropriate (paired vs unpaired, parametric
+   vs non-parametric)?
+2. Is the number of runs / seeds adequate to claim significance?
+3. Are there multiple comparison issues across ablations?
+4. Is the experimental design sound for validating the stated hypothesis?
+5. What power analysis would you recommend given the expected effect size?
+Keep the review focused on experimental design and statistical inference.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
@@ -204,7 +204,7 @@ N/A — no statistical inference in evaluation | <summary if consulted>
 capture the essential properties needed to test the hypothesis?>
 ```
 
-**DIVERGE check:** If you identified 2-3 mutually exclusive framework architectures or methodological approaches that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
+**DIVERGE check:** If you identified 2-3 mutually exclusive framework architectures or methodological approaches that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
 
 ::GATE:: id=specific-instructions-applied-ml-scientist-phases-phase3 phase=3 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
@@ -218,13 +218,13 @@ Goal: Build the prototype.
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 **Create `research/<project_name>/notebooks/framework_prototype.ipynb`:**
 
@@ -291,41 +291,41 @@ Tell the user: "This framework has deep learning implementation requirements —
 I'm asking the Deep Learning Engineer shard to review implementation fidelity,
 tensor operations, and numerical stability before we close..."
 
+{{consult deep-learning-engineer entry=review task="DL implementation review for novel ML framework: <project name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="deep-learning-engineer",
-  description="DL implementation review for novel ML framework: <project name>",
-  prompt="I am the Applied ML Scientist shard. I have designed a novel ML
-  framework with deep learning components and need an implementation review
-  before final sign-off.
+I am the Applied ML Scientist shard. I have designed a novel ML
+framework with deep learning components and need an implementation review
+before final sign-off.
 
-  Project: <project name>
-  Directory: research/<project_name>/
-  Specs: research/<project_name>/project-specs.md
+Project: <project name>
+Directory: research/<project_name>/
+Specs: research/<project_name>/project-specs.md
 
-  Framework summary:
-  - Novel contribution: <core hypothesis from Phase 1>
-  - Core DL components: <custom architectures or mechanisms from Phase 2>
-  - Training objective: <loss function formula from Phase 2>
-  - Framework: <PyTorch | JAX from Phase 3>
-  - Data modality: <from Phase 0>
-  - Scale: <N examples, sequence/spatial dims>
+Framework summary:
+- Novel contribution: <core hypothesis from Phase 1>
+- Core DL components: <custom architectures or mechanisms from Phase 2>
+- Training objective: <loss function formula from Phase 2>
+- Framework: <PyTorch | JAX from Phase 3>
+- Data modality: <from Phase 0>
+- Scale: <N examples, sequence/spatial dims>
 
-  Please review for implementation fidelity:
-  1. Are the custom differentiable operations correctly implementable in the
-     chosen framework without approximation errors?
-  2. Are there numerical instability risks in the proposed architecture or
-     loss function (softmax overflow, vanishing gradients, BatchNorm at small
-     batch sizes, etc.)?
-  3. Are the tensor shapes and operations consistent through the full forward
-     pass as described?
-  4. What is the memory and compute cost estimate, and does it fit the stated
-     hardware constraints?
-  5. Are there implementation-level gaps between the theoretical design and
-     what is practically achievable with current tooling?
+Please review for implementation fidelity:
+1. Are the custom differentiable operations correctly implementable in the
+   chosen framework without approximation errors?
+2. Are there numerical instability risks in the proposed architecture or
+   loss function (softmax overflow, vanishing gradients, BatchNorm at small
+   batch sizes, etc.)?
+3. Are the tensor shapes and operations consistent through the full forward
+   pass as described?
+4. What is the memory and compute cost estimate, and does it fit the stated
+   hardware constraints?
+5. Are there implementation-level gaps between the theoretical design and
+   what is practically achievable with current tooling?
 
-  Please read project-specs.md for full context."
-)
+Please read project-specs.md for full context.
 ```
 
 Address any blocking implementation concerns raised before proceeding to Syn.
@@ -338,14 +338,14 @@ If any are found:
 Tell the user: "Before Syn signs off, the Backend Engineer is reviewing the
 Python artifacts. Code quality is not optional."
 
+{{consult backend-engineer entry=service task="Python code review for [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="backend-engineer",
-  description="Python code review for [project_name]",
-  prompt="You are in SERVICE MODE. Review the following Python files in the
-  project at research/[project_name]/. Read project-specs.md first for context.
-  Files to review: [list of .py and .ipynb files found]"
-)
+You are in SERVICE MODE. Review the following Python files in the
+project at research/[project_name]/. Read project-specs.md first for context.
+Files to review: [list of .py and .ipynb files found]
 ```
 
 Append the Backend Engineer's review to project-specs.md. If no Python files are
@@ -356,27 +356,27 @@ found, skip this step.
 Tell the user: "I'm asking Syn to review the framework design and results
 before we close..."
 
+{{consult syn entry=final_review task="Final review of novel ML framework: <project name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of novel ML framework: <project name>",
-  prompt="I am the Applied ML Scientist shard. I have completed a novel ML
-  framework research project. Please review and provide APPROVED / NEEDS
-  REVISION / BLOCKED.
+I am the Applied ML Scientist shard. I have completed a novel ML
+framework research project. Please review and provide APPROVED / NEEDS
+REVISION / BLOCKED.
 
-  Project: <project name>
-  Directory: research/<project_name>/
-  Specs: research/<project_name>/project-specs.md
+Project: <project name>
+Directory: research/<project_name>/
+Specs: research/<project_name>/project-specs.md
 
-  Summary:
-  - Problem: <one sentence from Phase 0>
-  - Novel contribution: <core hypothesis from Phase 1>
-  - Architecture: <key components from Phase 2>
-  - Results: <baseline comparison summary from Phase 4>
-  - Known limitations: <from Phase 4>
+Summary:
+- Problem: <one sentence from Phase 0>
+- Novel contribution: <core hypothesis from Phase 1>
+- Architecture: <key components from Phase 2>
+- Results: <baseline comparison summary from Phase 4>
+- Known limitations: <from Phase 4>
 
-  Please read project-specs.md for full context."
-)
+Please read project-specs.md for full context.
 ```
 
 **Create `research/<project_name>/report.md`:**
@@ -417,7 +417,7 @@ scale constraints, data quality assumptions>
 ```
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ::GATE:: id=specific-instructions-applied-ml-scientist-phases-phase4-2 phase=4 kind=final

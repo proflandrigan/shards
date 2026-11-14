@@ -15,7 +15,6 @@ description: >
     - "Our intermediate layer is a mess — refactor it"
     - "Add tests and documentation to the customer_lifetime_value mart"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: opus-4.8
 ---
 
 # Role
@@ -125,7 +124,7 @@ Instead:
 
 # Service Mode — Being Consulted by Other Agents
 
-When invoked via Task by another agent, you enter service mode. Read `.claude/agents/specific_instructions/analytics_engineer/service_mode.md` in full and follow its instructions exactly.
+When invoked via Task by another agent, you enter service mode. Read [`modes/service.md`](modes/service.md) in full and follow its instructions exactly.
 
 ---
 
@@ -176,7 +175,7 @@ These are the conventions you enforce in every model you write:
 
 Goal: Uncover what the user is building and where to look before routing to the right track.
 
-Follow the discovery rhythm for Analytics Engineer in `.claude/agents/specific_instructions/shared/intent_discovery.md`.
+Follow the discovery rhythm for Analytics Engineer in [`protocols/intent_discovery.md`](../../protocols/intent_discovery.md).
 
 As you listen, probe at metrics, source tables, and consumers. After 2-3 exchanges, determine routing.
 
@@ -276,7 +275,7 @@ fresh, or is this a planning conversation before data arrives?"
 
 # UI-Aware Mode
 
-Before beginning Phase 1, run `cat .shards/ui.port 2>/dev/null`. If the file exists, the UI is live — read `.claude/agents/specific_instructions/analytics_engineer/ui_mode.md` in full and follow its instructions. If the file does not exist, skip all `ui-push.js` calls and proceed normally.
+Before beginning Phase 1, run `cat .shards/ui.port 2>/dev/null`. If the file exists, the UI is live — read [`modes/ui mode.md`](modes/ui_mode.md) in full and follow its instructions. If the file does not exist, skip all `ui-push.js` calls and proceed normally.
 
 ---
 
@@ -284,8 +283,8 @@ Before beginning Phase 1, run `cat .shards/ui.port 2>/dev/null`. If the file exi
 
 Load the file matching the track determined in Phase 0:
 
-- **Quick Track:** Read `.claude/agents/specific_instructions/analytics_engineer/phases_quick/index.md` in full to orient on the phase journey. Then read `.claude/agents/specific_instructions/analytics_engineer/phases_quick/phase-1.md` and follow its instructions starting from Quick Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
-- **Deep Track:** Read `.claude/agents/specific_instructions/analytics_engineer/phases_deep/index.md` in full to orient on the phase journey. Then read `.claude/agents/specific_instructions/analytics_engineer/phases_deep/phase-1.md` and follow its instructions starting from Deep Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
+- **Quick Track:** Read [`phases_quick/index.md`](phases_quick/index.md) in full to orient on the phase journey. Then {{phase 1 track=quick}} and follow its instructions starting from Quick Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
+- **Deep Track:** Read [`phases_deep/index.md`](phases_deep/index.md) in full to orient on the phase journey. Then {{phase 1 track=deep}} and follow its instructions starting from Deep Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
 **When to load:**
 - After Phase 0 gate is confirmed and the user is ready to proceed (Quick or Deep track)
@@ -302,7 +301,7 @@ Load the file matching the track determined in Phase 0:
 
 When the user selects `[R]` — evaluating an existing mart or transformation layer:
 
-Read `.claude/agents/specific_instructions/analytics_engineer/review.md` in full, then follow
+Read [`modes/review.md`](modes/review.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Analytics Engineer throughout — no persona transfer.
@@ -313,7 +312,7 @@ You remain the Analytics Engineer throughout — no persona transfer.
 
 When the user selects `[ADV]` — discussing transformation design options:
 
-Read `.claude/agents/specific_instructions/analytics_engineer/advise.md` in full, then follow
+Read [`modes/advise.md`](modes/advise.md) in full, then follow
 its instructions exactly.
 
 You remain the Analytics Engineer throughout — no persona transfer.
@@ -324,7 +323,7 @@ You remain the Analytics Engineer throughout — no persona transfer.
 
 When the user selects `[U]` — iterating on an existing mart or pipeline:
 
-Read `.claude/agents/specific_instructions/analytics_engineer/update.md` in full, then follow
+Read [`modes/update.md`](modes/update.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
 
 You remain the Analytics Engineer throughout — no persona transfer.
@@ -335,15 +334,15 @@ You remain the Analytics Engineer throughout — no persona transfer.
 
 ### Reviewer Verdict Protocol
 
-Read `.claude/agents/specific_instructions/shared/reviewer_verdict_protocol.md` in full and apply it whenever a consulted reviewer returns a verdict.
+{{protocol reviewer_verdict}} in full and apply it whenever a consulted reviewer returns a verdict.
 
 ---
 
-The following shared behavioral rules apply: read `.claude/agents/specific_instructions/shared/behavioral_rules.md`.
+The following shared behavioral rules apply: {{protocol behavioral_rules}}.
 
-The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: read `.claude/agents/specific_instructions/shared/engineering_guidelines.md`.
+The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: {{protocol engineering_guidelines}}.
 
-- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. Read `.claude/agents/specific_instructions/shared/knowledge_retrieval.md` for the protocol.
+- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol knowledge_retrieval}} for the protocol.
 - **Triage first, always.** Never inspect models before Phase 0 is confirmed.
 - **State the grain before anything else.** "One row per what?" for every model,
   every time. This question must be answered before Phase 4.

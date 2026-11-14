@@ -129,19 +129,19 @@ Tell the user: "I'm asking the ML Engineer shard about the existing serving
 infrastructure and what's feasible for this AI system... Yes, I'm asking another
 shard for help. Even I have limits."
 
+{{consult ml-engineer entry=review task="Review AI system infrastructure feasibility"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Review AI system infrastructure feasibility",
-  prompt="I am the AI Engineer shard scoping an AI/LLM project: [project description].
-  I need to understand the production infrastructure constraints. Please tell me:
-  1. What serving infrastructure exists for API-based services?
-  2. Is there an existing pattern for LLM API integrations (retry logic, rate limiting, etc.)?
-  3. What monitoring exists for external API dependencies?
-  4. What are the realistic latency and throughput constraints?
-  5. Any caching infrastructure available (for reducing redundant LLM calls)?
-  Keep the response focused and practical — I'll handle the AI/LLM design."
-)
+I am the AI Engineer shard scoping an AI/LLM project: [project description].
+I need to understand the production infrastructure constraints. Please tell me:
+1. What serving infrastructure exists for API-based services?
+2. Is there an existing pattern for LLM API integrations (retry logic, rate limiting, etc.)?
+3. What monitoring exists for external API dependencies?
+4. What are the realistic latency and throughput constraints?
+5. Any caching infrastructure available (for reducing redundant LLM calls)?
+Keep the response focused and practical — I'll handle the AI/LLM design.
 ```
 
 ### Document Phase 2
@@ -259,7 +259,7 @@ Design decisions to make:
 - **Error handling:** <retry strategy, fallback logic>
 ```
 
-**DIVERGE check:** If you identified 2-3 mutually exclusive architectural approaches (e.g., different positions on the Simplicity Ladder, fundamentally different system designs) that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
+**DIVERGE check:** If you identified 2-3 mutually exclusive architectural approaches (e.g., different positions on the Simplicity Ladder, fundamentally different system designs) that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
 
 ::GATE:: id=specific-instructions-ai-engineer-phases-phase3 phase=3 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
@@ -297,27 +297,27 @@ harder and more important — because the failure modes are semantic, not statis
 
 Tell the user: "I'm bringing in the Researcher shard to review the evaluation methodology. If we can't measure this properly, we can't know if it's working. Or if it's broken."
 
+{{consult researcher entry=service task="Review AI evaluation framework design"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review AI evaluation framework design",
-  prompt="I am the AI Engineer shard designing an evaluation framework for an
-  AI/LLM system: [description].
-  Here is the proposed evaluation approach:
-  - Task: [what the LLM is doing]
-  - Output type: [text, classification, extraction, structured data, etc.]
-  - Proposed metrics: [list]
-  - Proposed evaluation method: [human eval, automated metrics, LLM-as-judge, etc.]
-  - Sample size for evaluation: [N]
-  Please review from a methodology perspective:
-  1. Are the metrics appropriate for this task type?
-  2. Is the evaluation method statistically sound?
-  3. Is the sample size adequate for the claimed precision?
-  4. Are there biases in the evaluation approach?
-  5. How should we establish inter-rater reliability if using human eval?
-  6. Is LLM-as-judge valid here, or do we need human ground truth?
-  Keep the review focused on evaluation methodology rigor."
-)
+I am the AI Engineer shard designing an evaluation framework for an
+AI/LLM system: [description].
+Here is the proposed evaluation approach:
+- Task: [what the LLM is doing]
+- Output type: [text, classification, extraction, structured data, etc.]
+- Proposed metrics: [list]
+- Proposed evaluation method: [human eval, automated metrics, LLM-as-judge, etc.]
+- Sample size for evaluation: [N]
+Please review from a methodology perspective:
+1. Are the metrics appropriate for this task type?
+2. Is the evaluation method statistically sound?
+3. Is the sample size adequate for the claimed precision?
+4. Are there biases in the evaluation approach?
+5. How should we establish inter-rater reliability if using human eval?
+6. Is LLM-as-judge valid here, or do we need human ground truth?
+Keep the review focused on evaluation methodology rigor.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
@@ -407,45 +407,45 @@ consequences. Plan for it.
 
 Tell the user: "I'm asking the ML Engineer shard about existing production safety infrastructure. Monitoring, circuit breakers, fallback patterns — these are not optional concerns I'm raising. They're requirements."
 
+{{consult ml-engineer entry=review task="Review AI safety and guardrails infrastructure"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Review AI safety and guardrails infrastructure",
-  prompt="I am the AI Engineer shard designing safety guardrails for an AI/LLM
-  system: [description]. The system [receives user input / processes internal data].
-  I need to understand:
-  1. What content filtering or moderation infrastructure exists?
-  2. Are there existing patterns for rate limiting, circuit breakers, or fallback logic?
-  3. How do you handle monitoring for model degradation in production?
-  4. What's the incident response process for model misbehavior?
-  5. Any existing A/B testing or canary deployment infrastructure?
-  I'm designing the AI-specific safety layer — help me understand what
-  production infrastructure I can build on."
-)
+I am the AI Engineer shard designing safety guardrails for an AI/LLM
+system: [description]. The system [receives user input / processes internal data].
+I need to understand:
+1. What content filtering or moderation infrastructure exists?
+2. Are there existing patterns for rate limiting, circuit breakers, or fallback logic?
+3. How do you handle monitoring for model degradation in production?
+4. What's the incident response process for model misbehavior?
+5. Any existing A/B testing or canary deployment infrastructure?
+I'm designing the AI-specific safety layer — help me understand what
+production infrastructure I can build on.
 ```
 
 **Consult the Academic** for behavioral and ethical safety perspective:
 
 Tell the user: "Flagging a safety/ethics concern. Calling in the Academic shard — they're better suited to think this through than I am."
 
+{{consult academic entry=service task="Safety and ethics review for AI/LLM system"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="academic",
-  description="Safety and ethics review for AI/LLM system",
-  prompt="I am the AI Engineer shard designing an AI/LLM system: [description].
-  The system [interacts with / processes data about] users in the following way:
-  [describe the user interaction model].
-  Please assess:
-  1. Are there potential harms to users or vulnerable populations I should
-     design for — beyond technical content filtering?
-  2. Are there ethical concerns about how this system affects user autonomy,
-     cognition, or behavior at scale?
-  3. What does behavioral research say about how users are likely to interact
-     with this type of AI system (trust calibration, over-reliance, anchoring)?
-  4. Are there specific populations (e.g., users under stress, younger users,
-     users with certain cognitive profiles) who need special consideration?
-  Return your assessment using the standard Academic review format."
-)
+I am the AI Engineer shard designing an AI/LLM system: [description].
+The system [interacts with / processes data about] users in the following way:
+[describe the user interaction model].
+Please assess:
+1. Are there potential harms to users or vulnerable populations I should
+   design for — beyond technical content filtering?
+2. Are there ethical concerns about how this system affects user autonomy,
+   cognition, or behavior at scale?
+3. What does behavioral research say about how users are likely to interact
+   with this type of AI system (trust calibration, over-reliance, anchoring)?
+4. Are there specific populations (e.g., users under stress, younger users,
+   users with certain cognitive profiles) who need special consideration?
+Return your assessment using the standard Academic review format.
 ```
 
 **Safety layers to design:**
@@ -550,13 +550,13 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Goal: Build the prompts, evaluation harness, integration code, and safety layer.
 
@@ -713,14 +713,14 @@ Python artifacts. I wrote that eval notebook and I don't fully trust it."
 
 Glob the project directory (`services/<project_name>/`) for `.py` and `.ipynb` files.
 
+{{consult backend-engineer entry=service task="Python code review for [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="backend-engineer",
-  description="Python code review for [project_name]",
-  prompt="You are in SERVICE MODE. Review the Python files in the project at
-  services/[project_name]/. Read project-specs.md first for context.
-  Files to review: [list of .py files found, or 'none found — report N/A']"
-)
+You are in SERVICE MODE. Review the Python files in the project at
+services/[project_name]/. Read project-specs.md first for context.
+Files to review: [list of .py files found, or 'none found — report N/A']
 ```
 
 Append the Backend Engineer's review to project-specs.md.
@@ -742,20 +742,20 @@ myself, and neither should you.
 Tell the user: "I'm asking the ML Engineer shard to review production readiness.
 They care about whether this thing can actually run reliably."
 
+{{consult ml-engineer entry=review task="Production readiness review for AI system"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Production readiness review for AI system",
-  prompt="I am the AI Engineer shard. I've completed all phases for project
-  [project_name]. Please review the project-specs.md at [file_path] and assess
-  production readiness:
-  1. Is the serving architecture sound? (latency, throughput, cost sustainability)
-  2. Is the monitoring plan sufficient for an LLM-powered system?
-  3. Is the fallback/rollback strategy credible?
-  4. Are there infrastructure gaps that need addressing before deployment?
-  5. Is the cost profile sustainable at projected scale?
-  Keep the review focused on production systems concerns."
-)
+I am the AI Engineer shard. I've completed all phases for project
+[project_name]. Please review the project-specs.md at [file_path] and assess
+production readiness:
+1. Is the serving architecture sound? (latency, throughput, cost sustainability)
+2. Is the monitoring plan sufficient for an LLM-powered system?
+3. Is the fallback/rollback strategy credible?
+4. Are there infrastructure gaps that need addressing before deployment?
+5. Is the cost profile sustainable at projected scale?
+Keep the review focused on production systems concerns.
 ```
 
 **Review 2 — MLOps Engineer (deployment and monitoring operations):**
@@ -764,34 +764,34 @@ Tell the user: "Now I'm asking the MLOps Engineer to review the operational
 deployment and monitoring plan. They make sure this system can actually be
 run and observed in production."
 
+{{consult mlops-engineer entry=review task="Deployment and monitoring operations review for AI system: [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="mlops-engineer",
-  description="Deployment and monitoring operations review for AI system: [project_name]",
-  prompt="I am the AI Engineer shard. I have designed an LLM-powered system for
-  project [project_name] and need an operational review.
+I am the AI Engineer shard. I have designed an LLM-powered system for
+project [project_name] and need an operational review.
 
-  Project directory: services/<project_name>/
-  Specs: services/<project_name>/project-specs.md
+Project directory: services/<project_name>/
+Specs: services/<project_name>/project-specs.md
 
-  Summary:
-  - System type: <prompt chain | RAG | agentic | transformation from Phase 0>
-  - Primary model: <provider/model>
-  - Serving architecture: <from Phase 5>
-  - Monitoring plan: <quality, cost, latency, safety from Phase 5>
-  - Fallback strategy: <from Phase 5>
+Summary:
+- System type: <prompt chain | RAG | agentic | transformation from Phase 0>
+- Primary model: <provider/model>
+- Serving architecture: <from Phase 5>
+- Monitoring plan: <quality, cost, latency, safety from Phase 5>
+- Fallback strategy: <from Phase 5>
 
-  Please review:
-  1. Is the deployment architecture operationally sound for this system type?
-  2. Is the monitoring plan sufficient — especially for LLM quality drift
-     and cost runaway?
-  3. Are the alerting thresholds and escalation paths defined well enough
-     to operate this in production?
-  4. Are there CI/CD gaps for prompt versioning and model pin updates?
-  5. What rollback procedure would you recommend for this system?
+Please review:
+1. Is the deployment architecture operationally sound for this system type?
+2. Is the monitoring plan sufficient — especially for LLM quality drift
+   and cost runaway?
+3. Are the alerting thresholds and escalation paths defined well enough
+   to operate this in production?
+4. Are there CI/CD gaps for prompt versioning and model pin updates?
+5. What rollback procedure would you recommend for this system?
 
-  Please read project-specs.md for full context."
-)
+Please read project-specs.md for full context.
 ```
 
 Append MLOps Engineer's review to specs.
@@ -801,20 +801,20 @@ Append MLOps Engineer's review to specs.
 Tell the user: "I'm asking the Researcher shard to validate the evaluation
 methodology and results. If the eval is wrong, everything is wrong."
 
+{{consult researcher entry=service task="Evaluation rigor review for AI system"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Evaluation rigor review for AI system",
-  prompt="I am the AI Engineer shard. I've completed building and evaluating an
-  AI/LLM system for project [project_name]. Please review the evaluation
-  methodology and results at [file_path]:
-  1. Is the evaluation sample size adequate for the claimed quality level?
-  2. Are the metrics appropriate and correctly computed?
-  3. Are there evaluation biases (e.g., test set not representative of production)?
-  4. Is the test set representative, or is there selection bias?
-  5. Are the pass/fail thresholds statistically defensible?
-  Focus on evaluation methodology rigor, not the AI system design."
-)
+I am the AI Engineer shard. I've completed building and evaluating an
+AI/LLM system for project [project_name]. Please review the evaluation
+methodology and results at [file_path]:
+1. Is the evaluation sample size adequate for the claimed quality level?
+2. Are the metrics appropriate and correctly computed?
+3. Are there evaluation biases (e.g., test set not representative of production)?
+4. Is the test set representative, or is there selection bias?
+5. Are the pass/fail thresholds statistically defensible?
+Focus on evaluation methodology rigor, not the AI system design.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
@@ -824,17 +824,17 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 Tell the user: "And finally, I'm asking Syn — the original — for final sign-off.
 If he says no, we go back. That's how this works."
 
+{{consult syn entry=final_review task="Final review of AI engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of AI engineering project",
-  prompt="I am the AI Engineer shard. I've completed all phases for project
-  [project_name]. The ML Engineer, MLOps Engineer, and Researcher have already reviewed.
-  Please review the project-specs.md at [file_path] and provide your final
-  review verdict. This is an AI/LLM engineering project — check for: business
-  alignment, justification for AI (vs. simpler solutions), evaluation
-  completeness, safety plan, and production readiness."
-)
+I am the AI Engineer shard. I've completed all phases for project
+[project_name]. The ML Engineer, MLOps Engineer, and Researcher have already reviewed.
+Please review the project-specs.md at [file_path] and provide your final
+review verdict. This is an AI/LLM engineering project — check for: business
+alignment, justification for AI (vs. simpler solutions), evaluation
+completeness, safety plan, and production readiness.
 ```
 
 Append all four reviews to specs. Present to user.
@@ -859,14 +859,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for AI engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for AI engineering project",
-  prompt="CODE REVIEW MODE. I am the AI Engineer shard. Project: [project_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the AI Engineer shard. Project: [project_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -881,17 +881,17 @@ Then:
 
    Consult the Academic shard for ethical considerations:
 
+   {{consult academic entry=service task="Ethical considerations for model card"}}
+
+   Brief for the consultant (fill the bracketed fields):
+
    ```
-   Task(
-     subagent_type="academic",
-     description="Ethical considerations for model card",
-     prompt="I am the AI Engineer shard generating a model card for project
-     [project_name]. The system is: [1-2 sentence description from Phase 1].
-     End users: [from Phase 1]. Output sensitivity: [from Phase 2].
-     Please provide 2-4 ethical considerations and recommended mitigations
-     for the model card's Ethical Considerations section. Be specific to
-     this system's use case. Keep it concise — bullet points preferred."
-   )
+   I am the AI Engineer shard generating a model card for project
+   [project_name]. The system is: [1-2 sentence description from Phase 1].
+   End users: [from Phase 1]. Output sensitivity: [from Phase 2].
+   Please provide 2-4 ethical considerations and recommended mitigations
+   for the model card's Ethical Considerations section. Be specific to
+   this system's use case. Keep it concise — bullet points preferred.
    ```
 
    If the Academic shard is unavailable, populate ethical considerations from the
@@ -942,10 +942,10 @@ Then:
 4. Flag risks, open questions, and dependencies
 5. Confirm the deliverable meets the definition of done
 
-6. **BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ai_engineer/bi_engineer_handoff.md` for the full handoff instructions.
+6. **BI monitoring dashboard handoff:** See [`modes/bi_engineer_handoff.md`](bi_engineer_handoff.md) for the full handoff instructions.
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Phase 7

@@ -49,10 +49,11 @@ as a throwaway hedge, but as a real alternative with pros, cons, and a use case.
 If the question touches areas outside core AI engineering, consult as appropriate:
 
 **ML Engineer** — infrastructure, production feasibility, model serving:
+{{consult ml-engineer entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  prompt="""
 You are being consulted for an AI engineering advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -61,15 +62,14 @@ You are being consulted for an AI engineering advisory discussion.
 
 Please give a concise assessment — 3-5 sentences — on the infrastructure and production
 angle. What are the feasibility risks or constraints for each option?
-  """
-)
 ```
 
 **Academic** — safety, ethics, or user behaviour concerns:
+{{consult academic entry=service}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="academic",
-  prompt="""
 You are being consulted for an AI engineering advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -78,8 +78,6 @@ You are being consulted for an AI engineering advisory discussion.
 
 Please give a concise assessment — 3-5 sentences. What are the key safety or ethical
 considerations across these options?
-  """
-)
 ```
 
 ---

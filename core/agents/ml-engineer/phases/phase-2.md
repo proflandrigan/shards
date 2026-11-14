@@ -25,19 +25,19 @@ Ask about:
 
 Tell the user: "Getting the Data Engineer shard in here — I need to know what the feature pipeline can actually support before I design against a fiction."
 
+{{consult data-engineer entry=review task="Review ML pipeline feasibility"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-engineer",
-  description="Review ML pipeline feasibility",
-  prompt="I am the ML Engineer shard scoping an ML project: [project description].
-  I need to understand the existing data pipeline infrastructure. Please tell me:
-  1. What orchestration exists (Airflow, dbt, etc.)?
-  2. What's the current pipeline cadence for key tables?
-  3. Is there a feature store or any feature serving infrastructure?
-  4. What are the realistic constraints for adding new pipeline steps?
-  5. Any known bottlenecks or capacity issues?
-  Keep the response focused and practical."
-)
+I am the ML Engineer shard scoping an ML project: [project description].
+I need to understand the existing data pipeline infrastructure. Please tell me:
+1. What orchestration exists (Airflow, dbt, etc.)?
+2. What's the current pipeline cadence for key tables?
+3. Is there a feature store or any feature serving infrastructure?
+4. What are the realistic constraints for adding new pipeline steps?
+5. Any known bottlenecks or capacity issues?
+Keep the response focused and practical.
 ```
 
 ### Document Phase 2
@@ -72,4 +72,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/ml_engineer/phases/phase-3.md` in full and follow its instructions starting from Phase 3. Do not pre-read further phase files.
+{{phase 3}} in full and follow its instructions starting from Phase 3. Do not pre-read further phase files.

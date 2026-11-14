@@ -38,30 +38,30 @@ Goal: Design the ML infrastructure — training pipeline, serving, monitoring.
 
 Tell the user: "Getting the Data Engineer shard to review the pipeline architecture. I need to know if the orchestration and scheduling actually fits before this is finalized."
 
+{{consult data-engineer entry=review task="Review ML pipeline infrastructure design for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-engineer",
-  description="Review ML pipeline infrastructure design for [project]",
-  prompt="I am the ML Engineer shard. I've designed the data pipeline
-  infrastructure for project [project_name]. Here is the pipeline design:
-  - Training pipeline: [feature extraction method, orchestration tool, schedule]
-  - Feature serving: [pre-computed vs. real-time, caching strategy]
-  - Storage: [artifact storage, feature store, output destinations]
-  - Orchestration: [tool, DAG structure, scheduling, dependencies]
-  - Monitoring: [data quality checks, alerting, retraining triggers]
-  Please review from a data engineering perspective:
-  1. Does the orchestration design fit existing Airflow/dbt patterns?
-  2. Is the feature extraction pipeline feasible at the designed cadence?
-  3. Are the storage choices and capacity realistic?
-  4. Does this integrate cleanly with existing data infrastructure?
-  5. Any scheduling, dependency, or resource concerns?
-  Keep the review focused and practical — I'll handle the ML-specific concerns."
-)
+I am the ML Engineer shard. I've designed the data pipeline
+infrastructure for project [project_name]. Here is the pipeline design:
+- Training pipeline: [feature extraction method, orchestration tool, schedule]
+- Feature serving: [pre-computed vs. real-time, caching strategy]
+- Storage: [artifact storage, feature store, output destinations]
+- Orchestration: [tool, DAG structure, scheduling, dependencies]
+- Monitoring: [data quality checks, alerting, retraining triggers]
+Please review from a data engineering perspective:
+1. Does the orchestration design fit existing Airflow/dbt patterns?
+2. Is the feature extraction pipeline feasible at the designed cadence?
+3. Are the storage choices and capacity realistic?
+4. Does this integrate cleanly with existing data infrastructure?
+5. Any scheduling, dependency, or resource concerns?
+Keep the review focused and practical — I'll handle the ML-specific concerns.
 ```
 
 **Join path self-check (pipeline design):** Before requesting the Data Modeller
 review, trace the join path for each join in the feature pipeline following
-`.claude/agents/specific_instructions/shared/join_path_protocol.md`. Present the
+[`protocols/join_path.md`](../../../protocols/join_path.md). Present the
 trace to the user. Include it in the DM prompt below. Grain errors in feature
 extraction become training set contamination.
 
@@ -69,38 +69,38 @@ extraction become training set contamination.
 
 Tell the user: "Pulling in the Data Modeller to verify the pipeline design against the actual data model. Grain errors here become training errors later."
 
+{{consult data-modeller entry=review task="Review ML pipeline data correctness for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Review ML pipeline data correctness for [project]",
-  prompt="I am the ML Engineer shard. I've designed the data pipeline for project
-  [project_name]. The project specs are at: [services|<existing_dir>]/[project_name]/project-specs.md
+I am the ML Engineer shard. I've designed the data pipeline for project
+[project_name]. The project specs are at: [services|<existing_dir>]/[project_name]/project-specs.md
 
-  Here is how data flows through the pipeline:
-  - Feature extraction sources: [source tables and how they're used]
-  - Join strategy in pipeline: [key joins, grain at each stage]
-  - Pipeline stages: [ETL steps from source to training-ready dataset]
-  - Feature refresh cadence: [how often each feature group is refreshed]
-  - Serving-time data flow: [how features reach the model at inference]
+Here is how data flows through the pipeline:
+- Feature extraction sources: [source tables and how they're used]
+- Join strategy in pipeline: [key joins, grain at each stage]
+- Pipeline stages: [ETL steps from source to training-ready dataset]
+- Feature refresh cadence: [how often each feature group is refreshed]
+- Serving-time data flow: [how features reach the model at inference]
 
-  Please REVIEW (not just explore) from a data model perspective:
-  1. Are the source table choices correct for these features?
-  2. Is grain handled correctly at each pipeline stage?
-  3. Are the join strategies sound given the entity relationships?
-  4. Does the data freshness cadence align with the model's requirements?
+Please REVIEW (not just explore) from a data model perspective:
+1. Are the source table choices correct for these features?
+2. Is grain handled correctly at each pipeline stage?
+3. Are the join strategies sound given the entity relationships?
+4. Does the data freshness cadence align with the model's requirements?
 
-  Run validation queries to verify:
-  1. PK uniqueness on each source table I'm using (confirm stated grain)
-  2. Null rates on join keys and critical feature columns
-  3. Join fan-out: run row counts before/after the key joins in my pipeline
-  4. Data freshness on each source table
+Run validation queries to verify:
+1. PK uniqueness on each source table I'm using (confirm stated grain)
+2. Null rates on join keys and critical feature columns
+3. Join fan-out: run row counts before/after the key joins in my pipeline
+4. Data freshness on each source table
 
-  Cross-reference results against the project requirements in project-specs.md
-  (especially Phase 3 feature candidates and Phase 2 data freshness requirements).
-  Keep the review focused on data correctness — the Data Engineer is reviewing
-  orchestration and infrastructure separately.
-  Return your full review with query validation results."
-)
+Cross-reference results against the project requirements in project-specs.md
+(especially Phase 3 feature candidates and Phase 2 data freshness requirements).
+Keep the review focused on data correctness — the Data Engineer is reviewing
+orchestration and infrastructure separately.
+Return your full review with query validation results.
 ```
 
 Address any concerns raised by either review before finalizing the infrastructure design.
@@ -157,4 +157,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/ml_engineer/phases/phase-6.md` in full and follow its instructions starting from Phase 6. Do not pre-read further phase files.
+{{phase 6}} in full and follow its instructions starting from Phase 6. Do not pre-read further phase files.

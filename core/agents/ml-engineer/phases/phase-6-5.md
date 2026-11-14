@@ -86,11 +86,11 @@ Wait for the user's selection.
 
 **[A] Solo AR on leading candidate:**
 1. Pre-flight: verify git (or DVC) is available per
-   `.claude/agents/specific_instructions/shared/experiment_versioning.md`
+   [`protocols/experiment_versioning.md`](../../../protocols/experiment_versioning.md)
    Section A. If unavailable, refuse and offer `[D]` instead.
 2. Determine the leading candidate (same selection logic as `[D]`). If no
    candidate has been evaluated, use the Phase 4 candidate the user identifies.
-3. Read `.claude/agents/specific_instructions/ml_engineer/research.md` and
+3. Read [`modes/research.md`](../modes/research.md) and
    execute Sections A-G with abbreviated setup:
    - Primary metric, direction, target: inherit from Phase 4
    - Baseline value: the leading candidate's current metric (from Phase 6)
@@ -106,7 +106,7 @@ Wait for the user's selection.
 2. Identify 2-3 approach families from Phase 4 candidates. Confirm mutual
    exclusivity and genuine viability with the user.
 3. Follow
-   `.claude/agents/specific_instructions/shared/diverge_protocol.md` Section B
+   [`protocols/diverge.md`](../../../protocols/diverge.md) Section B
    (DIVERGE proposal gate — use ID
    `specific-instructions-shared-diverge-protocol-ar-<project>`).
 4. On confirmation, follow `autonomous_research.md` Section H:
@@ -167,4 +167,4 @@ Read this section back to the user. Stop here — do not begin Phase 7 or output
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/ml_engineer/phases/phase-7.md` in full and follow its instructions starting from Phase 7.
+{{phase 7}} in full and follow its instructions starting from Phase 7.

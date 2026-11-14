@@ -7,17 +7,17 @@
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's confirmed — good moment to run `/compact` or `/clear` before we start
+"Planning's confirmed — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 ### Incremental testing — checkpoint gates between layers
 
-Follow `.claude/agents/specific_instructions/shared/incremental_testing.md` during this build. Each layer below is a checkpoint seam — after a layer's models all build green and their post-build validation (grain, fan-out, nulls, sample) passes, emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before advancing to the next layer. Do not batch the entire DAG into a single build and eyeball a pass/fail at the end.
+{{protocol incremental_testing}} during this build. Each layer below is a checkpoint seam — after a layer's models all build green and their post-build validation (grain, fan-out, nulls, sample) passes, emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before advancing to the next layer. Do not batch the entire DAG into a single build and eyeball a pass/fail at the end.
 
 Checkpoint gate fence — emit exactly this shape. Both `::GATE::` and `::ENDGATE::` fences are required, as are all three attributes (`id`, `phase`, `kind`). No prose outside the fence.
 
@@ -57,7 +57,7 @@ Build in this order:
 For each model:
 - **Join path trace (models with joins):** Before writing SQL for any model that
   joins tables, trace the join path following
-  `.claude/agents/specific_instructions/shared/join_path_protocol.md`. Compare the
+  [`protocols/join_path.md`](../../../protocols/join_path.md). Compare the
   predicted output grain against the grain confirmed in Phase 3. If they diverge,
   fix the design before writing SQL.
 - Write the SQL (CTEs from source to final; use parameterized model references — never hardcoded table names)
@@ -76,7 +76,7 @@ For each model:
   at the start of the layer's validation pass and `::ENDAUTO::` before
   emitting the layer's checkpoint gate. The hook will auto-approve `dbt show`
   and SELECT-only warehouse-CLI queries while the block is open; `dbt build`
-  and writes still prompt. See `specific_instructions/shared/auto_verify_mode.md`.
+  and writes still prompt. See [`protocols/auto_verify_mode.md`](../../../protocols/auto_verify_mode.md).
 
   1. **Grain validation** (every model with a stated PK):
      ```sql
@@ -232,4 +232,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/analytics_engineer/phases_deep/phase-8.md` in full and follow its instructions starting from Deep Phase 8. Do not pre-read further phase files.
+{{phase 8}} in full and follow its instructions starting from Deep Phase 8. Do not pre-read further phase files.

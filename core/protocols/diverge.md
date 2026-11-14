@@ -127,18 +127,22 @@ Spawn one Task per branch. **All branch Tasks must be called in parallel** — d
 
 **Specialist type across branches:**
 - A fork initiated by a specialist typically spawns branches of the same specialist type (a data-scientist fork spawns data-scientist branches).
-- **AR fan-out explicitly allows multiple branches of the same specialist type**, each constrained to a different approach family. Example slugs for an ML Engineer AR fan-out: `ml-xgboost`, `ml-neural-net`, `ml-linear-baseline`. The `subagent_type` repeats across the parallel Task calls — that is expected and correct.
+- **AR fan-out explicitly allows multiple branches of the same specialist type**, each constrained to a different approach family. Example slugs for an ML Engineer AR fan-out: `ml-xgboost`, `ml-neural-net`, `ml-linear-baseline`. The same agent repeats across the parallel branch calls — that is expected and correct.
 - A Syn-initiated fork may mix specialist types across branches (e.g., one `ml-engineer` branch + one `ai-engineer` branch, each with its own approach). Arbitration (Section F) handles mixed-type comparison by reading `branch-report.md` files regardless of which specialist produced them.
 
 **Branch slug conventions:**
 - Lowercase, hyphenated, descriptive.
 - AR fan-out slugs should reflect the approach family, not the specialist type (since multiple branches share the specialist). Examples: `xgboost-raw-features`, `transformer-architecture`, `rule-based-baseline`, `ml-linear-baseline`, `ml-neural-net`.
 
-```python
-Task(
-  subagent_type="<your specialist type>",
-  description="Time-Travel branch: <branch-slug>",
-  prompt="""
+Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
+
+{{fanout ml-engineer slices=branch_a,branch_b}}
+
+Per-slice task: Time-Travel branch: <branch-slug>
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
+````
 You are in BRANCH MODE — an isolated Time-Travel branch execution.
 
 **Branch name:** <branch-slug>
@@ -199,9 +203,7 @@ confirmation. Work efficiently and produce results.
 ## Artifacts Summary
 <list of all files in the branch directory with paths>
 ```
-  """
-)
-```
+````
 
 After spawning all branch Tasks, wait for all of them to complete before proceeding.
 
@@ -258,11 +260,11 @@ After ALL branch Tasks have completed:
 
 2. Call Syn in Arbiter Mode:
 
-```python
-Task(
-  subagent_type="syn",
-  description="ARBITER MODE: Time-Travel branch comparison",
-  prompt="""
+{{consult syn entry=arbiter task="ARBITER MODE: Time-Travel branch comparison"}}
+
+Brief for the consultant (fill the bracketed fields):
+
+```
 ARBITER MODE
 
 Compare the following Time-Travel branches for project: <project_name>
@@ -274,8 +276,6 @@ Compare the following Time-Travel branches for project: <project_name>
 
 Read all branch reports and the project-specs.md, then follow your Arbiter Mode
 instructions to produce a leaderboard and comparison.
-  """
-)
 ```
 
 3. Present Syn's leaderboard and recommendation to the user.

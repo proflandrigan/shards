@@ -7,13 +7,13 @@
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 1. Implement the fix
 2. Update or add tests if warranted
@@ -21,7 +21,7 @@ Wait for any signal from the user before beginning build steps.
 4. Summarize what changed
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Quick Phase 2
@@ -51,4 +51,4 @@ Read this section back to the user. Stop here — wait for the user to explicitl
 
 ## When this gate is confirmed
 
-This is the final phase of the Quick Track. If escalation to Deep Track is required, read `.claude/agents/specific_instructions/data_engineer/phases_deep/index.md` and continue from there. Otherwise, the project is complete.
+This is the final phase of the Quick Track. If escalation to Deep Track is required, read [`phases_deep/index.md`](../phases_deep/index.md) and continue from there. Otherwise, the project is complete.

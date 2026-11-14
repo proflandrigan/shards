@@ -205,14 +205,14 @@ extension). Example: `studies/onboarding/study-report.md` →
 - **Low:** {{...}}
 
 ## Recommendations
-1. {{specific, actionable}}
+1. {{SPECIFIC_ACTION}}
 2. ...
 
 ## References checked
-- {{citation, with WebSearch/WebFetch result}}
+- {{CITATION}}
 
 ## Verdict
-**{{SOUND | NUANCED | CONCERNS}}** — {{one-line summary}}
+**{{SOUND | NUANCED | CONCERNS}}** — {{SUMMARY}}
 
 _SOUND = report stands as written | NUANCED = caveats should be added before publication | CONCERNS = revise before publication_
 ```

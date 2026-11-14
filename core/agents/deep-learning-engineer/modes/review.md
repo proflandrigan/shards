@@ -46,10 +46,11 @@ Note any files you expected to find but couldn't locate.
 **Applied ML Scientist** — if the review touches theoretical validity, inductive
 bias alignment, or whether the architecture is well-matched to the problem:
 
+{{consult applied-ml-scientist entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="applied-ml-scientist",
-  prompt="""
 You are being consulted to assess theoretical validity for a deep learning review.
 
 **System under review:** <model name and brief description>
@@ -66,8 +67,6 @@ Please assess:
 4. One or two specific recommendations.
 
 Be concise and direct. Focus on theoretical soundness, not implementation details.
-  """
-)
 ```
 
 ---

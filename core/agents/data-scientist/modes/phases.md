@@ -47,22 +47,22 @@ Goal: Understand what data exists and whether it's fit for purpose.
 
 In character and using your conversation styal tell the user you are consulting with the data modeller.
 
+{{consult data-modeller entry=review task="Explore data model for [study topic]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Explore data model for [study topic]",
-  prompt="I am the Data Scientist shard conducting a study on [topic]. I need to
-  understand the data model around [entities/concepts]. Please explore and return:
-  relevant tables with grain, relationships, key columns, and any quality concerns.
-  Focus on: [specific tables, entities, or business concepts].
-  Since I'll be building queries against these tables, please run grain validation
-  (PK uniqueness checks) on the key tables so I know the grain holds in practice."
-)
+I am the Data Scientist shard conducting a study on [topic]. I need to
+understand the data model around [entities/concepts]. Please explore and return:
+relevant tables with grain, relationships, key columns, and any quality concerns.
+Focus on: [specific tables, entities, or business concepts].
+Since I'll be building queries against these tables, please run grain validation
+(PK uniqueness checks) on the key tables so I know the grain holds in practice.
 ```
 
 **Greenfield handling:** Before presenting findings review the Data Modeller's response. 
 
-If it contains "NO DATA ENVIRONMENT DETECTED" follow the guidelines set in `.claude/agents/specific_instructions/data_scientist/greenfield_data.md` otherwise proceed with phase 2.
+If it contains "NO DATA ENVIRONMENT DETECTED" follow the guidelines set in [`modes/greenfield_data.md`](greenfield_data.md) otherwise proceed with phase 2.
 
 Present findings to the user, then ask:
 - What data sources are available? (intermediate, mart, source)
@@ -127,21 +127,21 @@ unconventional approach. Explain trade-offs.
 
 Tell the user: "I'm asking the Researcher to peer-review the methodology. Yes, even I get peer-reviewed. It's called rigor."
 
+{{consult researcher entry=service task="Review analysis methodology for [study]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review analysis methodology for [study]",
-  prompt="I am the Data Scientist shard. I've chosen the following methodology
-  for study [name]:
-  - Question type: [descriptive/diagnostic/predictive/prescriptive]
-  - Chosen method: [method and description]
-  - Key assumptions: [list]
-  - Confounders/controls: [list]
-  - Data characteristics: [grain, volume, known distribution properties]
-  Please provide a statistical review: Do the assumptions hold for this data
-  type and question? Are there distribution concerns? Is the sample likely
-  adequate? Any alternative methods I should consider? Full review please."
-)
+I am the Data Scientist shard. I've chosen the following methodology
+for study [name]:
+- Question type: [descriptive/diagnostic/predictive/prescriptive]
+- Chosen method: [method and description]
+- Key assumptions: [list]
+- Confounders/controls: [list]
+- Data characteristics: [grain, volume, known distribution properties]
+Please provide a statistical review: Do the assumptions hold for this data
+type and question? Are there distribution concerns? Is the sample likely
+adequate? Any alternative methods I should consider? Full review please.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
@@ -171,7 +171,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 - **Proceeds to Phase 4 (ML):** Yes | No — skipping to Phase 5
 ```
 
-**DIVERGE check:** If you proposed 2-3 mutually exclusive methodological approaches (e.g., creative mode options) and they are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4 (or Phase 5 if no ML). If declined or not applicable, continue normally.
+**DIVERGE check:** If you proposed 2-3 mutually exclusive methodological approaches (e.g., creative mode options) and they are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4 (or Phase 5 if no ML). If declined or not applicable, continue normally.
 
 ::GATE:: id=specific-instructions-data-scientist-phases-phase3 phase=3 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
@@ -211,28 +211,28 @@ verified by <agent> in <source_project>)`
 
 Tell the user: "I'm asking the ML Engineer to review the modeling approach. Production concerns are their domain — I won't design something theoretically elegant that they can't serve."
 
+{{consult ml-engineer entry=review task="Review modeling approach for [study]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Review modeling approach for [study]",
-  prompt="I am the Data Scientist shard designing the ML component of study [name].
-  Here is the proposed modeling approach:
-  - Task type: [classification | regression | survival | clustering]
-  - Target variable: [name and definition]
-  - Prediction window: [e.g., 90 days from observation date]
-  - Feature candidates: [summary list of feature groups]
-  - Known data challenges: [imbalance, censoring, drift, etc.]
-  - Primary metric: [metric and business interpretation]
-  - Baseline model: [model type and rationale]
-  - Candidate model(s): [model types and rationale]
-  - Interpretability requirement: [High | Medium | Low]
-  - Deployment intent: [One-off | Productionized]
-  Please review: Is the model family appropriate for this task and data profile?
-  Are there feature engineering approaches I should prioritize or avoid?
-  Is the evaluation strategy sound? Any known pitfalls or gotchas for this
-  model type on this kind of data? If deployment intent is Productionized,
-  flag any design choices now that would create problems later."
-)
+I am the Data Scientist shard designing the ML component of study [name].
+Here is the proposed modeling approach:
+- Task type: [classification | regression | survival | clustering]
+- Target variable: [name and definition]
+- Prediction window: [e.g., 90 days from observation date]
+- Feature candidates: [summary list of feature groups]
+- Known data challenges: [imbalance, censoring, drift, etc.]
+- Primary metric: [metric and business interpretation]
+- Baseline model: [model type and rationale]
+- Candidate model(s): [model types and rationale]
+- Interpretability requirement: [High | Medium | Low]
+- Deployment intent: [One-off | Productionized]
+Please review: Is the model family appropriate for this task and data profile?
+Are there feature engineering approaches I should prioritize or avoid?
+Is the evaluation strategy sound? Any known pitfalls or gotchas for this
+model type on this kind of data? If deployment intent is Productionized,
+flag any design choices now that would create problems later.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `ml-engineer` row).
@@ -241,26 +241,26 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `ml-engineer` row).
 
 Tell the user: "High interpretability required. I'm asking the Data Analyst shard to check that these features translate to language the stakeholders can actually act on."
 
+{{consult data-analyst entry=review task="Review feature candidates for business sense and interpretability"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-analyst",
-  description="Review feature candidates for business sense and interpretability",
-  prompt="I am the Data Scientist shard designing a predictive model for study [name].
-  High interpretability has been flagged as a requirement. Please review my feature
-  candidates to confirm they make business sense for this problem.
+I am the Data Scientist shard designing a predictive model for study [name].
+High interpretability has been flagged as a requirement. Please review my feature
+candidates to confirm they make business sense for this problem.
 
-  Feature candidates: [summary of feature groups from Phase 4]
-  Target variable: [name and definition]
-  Primary audience: [who will use or act on model outputs, from Phase 1]
-  Business context: [the decision this analysis supports, from Phase 1]
+Feature candidates: [summary of feature groups from Phase 4]
+Target variable: [name and definition]
+Primary audience: [who will use or act on model outputs, from Phase 1]
+Business context: [the decision this analysis supports, from Phase 1]
 
-  Please review:
-  1. Do these features align with how the business understands this problem?
-  2. Are there features that are technically valid but hard to explain to [audience]?
-  3. Are there obvious business-meaningful features that appear missing?
-  4. Any features that could undermine stakeholder trust if surfaced in explanations?
-  Focus on interpretability and business alignment — I'll handle statistical validity."
-)
+Please review:
+1. Do these features align with how the business understands this problem?
+2. Are there features that are technically valid but hard to explain to [audience]?
+3. Are there obvious business-meaningful features that appear missing?
+4. Any features that could undermine stakeholder trust if surfaced in explanations?
+Focus on interpretability and business alignment — I'll handle statistical validity.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `data-analyst` row).
@@ -306,7 +306,7 @@ this study wraps."
 
 This is informational only — do not pause or redirect. Continue to Phase 5.
 
-**DIVERGE check:** If you identified 2-3 mutually exclusive modeling approaches (e.g., different model families, fundamentally different feature engineering strategies) that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
+**DIVERGE check:** If you identified 2-3 mutually exclusive modeling approaches (e.g., different model families, fundamentally different feature engineering strategies) that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
 
 ::GATE:: id=specific-instructions-data-scientist-phases-phase4 phase=4 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
@@ -326,28 +326,28 @@ Ask about:
 
 Tell the user: "Visuals matter. Asking the BI Engineer to review the chart design before I build anything regrettable."
 
+{{consult bi-engineer entry=review task="Chart design review for [study]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="bi-engineer",
-  description="Chart design review for [study]",
-  prompt="I am the Data Scientist shard. I am about to build visualizations for study [name].
-  Please review the planned chart types and suggest improvements before I build them.
-  This is a design review only — I will implement.
+I am the Data Scientist shard. I am about to build visualizations for study [name].
+Please review the planned chart types and suggest improvements before I build them.
+This is a design review only — I will implement.
 
-  Study context:
-  - Business question: [from Phase 1]
-  - Primary audience: [from Phase 1]
-  - Visualisation style preference: [Clean/minimal | Exploratory, from Phase 5]
-  - Planned visualizations: [list chart types, what each shows, data basis — e.g.,
-    'line chart of monthly churn rate by cohort', 'bar chart of feature importances']
+Study context:
+- Business question: [from Phase 1]
+- Primary audience: [from Phase 1]
+- Visualisation style preference: [Clean/minimal | Exploratory, from Phase 5]
+- Planned visualizations: [list chart types, what each shows, data basis — e.g.,
+  'line chart of monthly churn rate by cohort', 'bar chart of feature importances']
 
-  Please review:
-  1. Are the chart types appropriate for the data and this audience?
-  2. Are there better alternatives I should use?
-  3. Any design or layout recommendations given the intended audience?
-  4. Any visualizations I should add that would strengthen the findings?
-  Return your review as: Approved (proceed as planned) | Concerns raised (flag issues)."
-)
+Please review:
+1. Are the chart types appropriate for the data and this audience?
+2. Are there better alternatives I should use?
+3. Any design or layout recommendations given the intended audience?
+4. Any visualizations I should add that would strengthen the findings?
+Return your review as: Approved (proceed as planned) | Concerns raised (flag issues).
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `bi-engineer` row).
@@ -381,18 +381,18 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Goal: Build the notebook, queries, and report.
 
 **Join path self-check:** Before requesting the Data Modeller review, trace the
-join path for each query following `.claude/agents/specific_instructions/shared/join_path_protocol.md`.
+join path for each query following [`protocols/join_path.md`](../../../protocols/join_path.md).
 Present the trace to the user. Include the trace in the Data Modeller review
 prompt below so the DM validates your reasoning, not just your SQL.
 
@@ -400,29 +400,29 @@ prompt below so the DM validates your reasoning, not just your SQL.
 
 Tell the user: "Asking the Data Modeller to verify sql queries (i.e. joins and grain before execution)."
 
+{{consult data-modeller entry=review task="Review queries for [study]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Review queries for [study]",
-  prompt="I am the Data Scientist shard. I've written queries for study [name].
-  The project specs are at: studies/[name]/project-specs.md
+I am the Data Scientist shard. I've written queries for study [name].
+The project specs are at: studies/[name]/project-specs.md
 
-  Here are the queries:
-  [include query outlines or key SQL]
+Here are the queries:
+[include query outlines or key SQL]
 
-  Please REVIEW (not just explore): Do the joins make sense given the data model
-  grain? Are there grain fan-out risks? Am I using the right tables?
+Please REVIEW (not just explore): Do the joins make sense given the data model
+grain? Are there grain fan-out risks? Am I using the right tables?
 
-  Run validation queries to check:
-  1. PK uniqueness on all tables I'm joining
-  2. Null rates on my join keys and critical filter columns
-  3. Join fan-out: row counts before/after my key joins
-  4. Data freshness on the tables I'm querying
+Run validation queries to check:
+1. PK uniqueness on all tables I'm joining
+2. Null rates on my join keys and critical filter columns
+3. Join fan-out: row counts before/after my key joins
+4. Data freshness on the tables I'm querying
 
-  Cross-reference the validation results against the study requirements in
-  project-specs.md (especially the grain and data sources from Phase 2).
-  Return your full review with query validation results."
-)
+Cross-reference the validation results against the study requirements in
+project-specs.md (especially the grain and data sources from Phase 2).
+Return your full review with query validation results.
 ```
 
 **Also request Researcher review of the analysis approach:**
@@ -430,20 +430,20 @@ Task(
 Tell the user: "I'm also asking the Researcher shard to review the analytical
 approach for statistical validity..."
 
+{{consult researcher entry=service task="Review analysis execution approach for [study]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review analysis execution approach for [study]",
-  prompt="I am the Data Scientist shard executing study [name]. Here is the
-  analytical approach I'm about to implement:
-  - Methodology: [from Phase 3]
-  - Queries: [include query outlines or key SQL]
-  - Feature engineering: [if applicable, key transformations]
-  - Evaluation approach: [metrics, validation strategy]
-  Please review: Any concerns about how the methodology is being implemented?
-  Outlier handling appropriate? Transformations sound? Statistical tests valid
-  for the data characteristics? Keep review focused on execution specifics."
-)
+I am the Data Scientist shard executing study [name]. Here is the
+analytical approach I'm about to implement:
+- Methodology: [from Phase 3]
+- Queries: [include query outlines or key SQL]
+- Feature engineering: [if applicable, key transformations]
+- Evaluation approach: [metrics, validation strategy]
+Please review: Any concerns about how the methodology is being implemented?
+Outlier handling appropriate? Transformations sound? Statistical tests valid
+for the data characteristics? Keep review focused on execution specifics.
 ```
 
 Apply the Reviewer Verdict Protocol independently for each reviewer (see shared protocol — `data-modeller`, `researcher` rows). Address all Halt-tier verdicts before proceeding to build.
@@ -526,14 +526,14 @@ Python scripts. Peer review is good science."
 
 Glob the project directory (`studies/<study_name>/`) for `.py` files only (not `.ipynb`).
 
+{{consult backend-engineer entry=service task="Python code review for [study_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="backend-engineer",
-  description="Python code review for [study_name]",
-  prompt="You are in SERVICE MODE. Review the Python scripts in the project at
-  studies/[study_name]/. Read project-specs.md first for context.
-  Files to review: [list of .py files found, or 'none found — report N/A']"
-)
+You are in SERVICE MODE. Review the Python scripts in the project at
+studies/[study_name]/. Read project-specs.md first for context.
+Files to review: [list of .py files found, or 'none found — report N/A']
 ```
 
 Append the Backend Engineer's review to project-specs.md.
@@ -550,15 +550,15 @@ Append the Backend Engineer's review to project-specs.md.
 
 Tell the user: "I'm asking Syn to review the full project specs before we wrap this up..."
 
+{{consult syn entry=final_review task="Final review of data science study"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of data science study",
-  prompt="I am the Data Scientist shard. I've completed all phases for study
-  [study_name]. Please review the project-specs.md at [file_path] and provide
-  your final review verdict. Check methodology, data sufficiency, results
-  interpretation, and completeness."
-)
+I am the Data Scientist shard. I've completed all phases for study
+[study_name]. Please review the project-specs.md at [file_path] and provide
+your final review verdict. Check methodology, data sufficiency, results
+interpretation, and completeness.
 ```
 
 Append Syn's review to specs. Present to user.
@@ -583,14 +583,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for data science study"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for data science study",
-  prompt="CODE REVIEW MODE. I am the Data Scientist shard. Project: [study_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the Data Scientist shard. Project: [study_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -606,12 +606,12 @@ Then:
 4. Flag open questions or follow-up analyses
 5. Ask if the result answered the original decision question
 
-6. **If Deployment intent was "Productionized"** see `.claude/agents/specific_instructions/data_scientist/ml_engineer_handoff.md` for the full handoff instructions (Phase 7, Step 6 section).
+6. **If Deployment intent was "Productionized"** see [`modes/ml_engineer_handoff.md`](ml_engineer_handoff.md) for the full handoff instructions (Phase 7, Step 6 section).
 
-7. **BI dashboard handoff (recurring visualizations):** See `.claude/agents/specific_instructions/data_scientist/bi_engineer_handoff.md` for the full handoff instructions (Phase 7, Step 7 section).
+7. **BI dashboard handoff (recurring visualizations):** See [`modes/bi_engineer_handoff.md`](bi_engineer_handoff.md) for the full handoff instructions (Phase 7, Step 7 section).
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Phase 7

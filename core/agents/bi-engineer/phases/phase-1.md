@@ -11,20 +11,20 @@ Goal: Deepen understanding of what the user is building and what data exists to 
 
 Tell the user: "Let me check with the Data Modeller on what data actually exists. Exciting stuff."
 
+{{consult data-modeller entry=review task="Explore data model for [dashboard topic]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Explore data model for [dashboard topic]",
-  prompt="I am the BI Engineer shard working on a dashboard about [topic].
-  I need to understand the relevant data models. Please explore and return:
-  relevant tables with grain, relationships, key columns, available aggregations,
-  and any quality concerns.
-  Focus on: [specific tables or business concepts].
-  Since I'll be querying these tables for a dashboard, please also confirm:
-  - Which tables have pre-aggregated mart models vs. raw tables?
-  - Are there any known freshness issues that would affect dashboard accuracy?
-  Run a quick grain validation (PK uniqueness check) on the key tables you identify."
-)
+I am the BI Engineer shard working on a dashboard about [topic].
+I need to understand the relevant data models. Please explore and return:
+relevant tables with grain, relationships, key columns, available aggregations,
+and any quality concerns.
+Focus on: [specific tables or business concepts].
+Since I'll be querying these tables for a dashboard, please also confirm:
+- Which tables have pre-aggregated mart models vs. raw tables?
+- Are there any known freshness issues that would affect dashboard accuracy?
+Run a quick grain validation (PK uniqueness check) on the key tables you identify.
 ```
 
 **Greenfield / no-data handling:** Before presenting findings, check whether the
@@ -161,4 +161,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/bi_engineer/phases/phase-2.md` in full and follow its instructions starting from Phase 2. Do not pre-read further phase files.
+{{phase 2}} in full and follow its instructions starting from Phase 2. Do not pre-read further phase files.

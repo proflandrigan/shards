@@ -13,17 +13,17 @@ Goal: Understand what data is available and what filters are needed.
 
 Tell the user: "Before I start querying, let me get the Data Modeller shard to sketch out what we're working with. One sec..."
 
+{{consult data-modeller entry=review task="Explore data model for [analysis topic]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Explore data model for [analysis topic]",
-  prompt="I am the Data Analyst shard working on an adhoc analysis about [topic].
-  I need to understand the relevant data models. Please explore and return:
-  relevant tables with grain, relationships, key columns, and any quality concerns.
-  Focus on: [specific tables or business concepts].
-  Since I'll be querying these tables, please also run a quick grain validation
-  (PK uniqueness check) on the key tables you identify."
-)
+I am the Data Analyst shard working on an adhoc analysis about [topic].
+I need to understand the relevant data models. Please explore and return:
+relevant tables with grain, relationships, key columns, and any quality concerns.
+Focus on: [specific tables or business concepts].
+Since I'll be querying these tables, please also run a quick grain validation
+(PK uniqueness check) on the key tables you identify.
 ```
 
 **Greenfield handling:** Before presenting findings, check whether the Data Modeller's
@@ -172,35 +172,35 @@ When selecting metrics, use established measures as a foundation but also consid
 
 Tell the user: "This is worth a second opinion — I'm grabbing the Data Scientist shard to sanity-check the plan. Hang tight."
 
+{{consult data-scientist entry=review task="Review analysis plan for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-scientist",
-  description="Review analysis plan for [project]",
-  prompt="I am the Data Analyst shard. I've planned an adhoc analysis for [topic].
-  Here is my analysis plan:
-  [include the query outlines]
-  Please review: Does this approach make sense for the question being asked?
-  Are there obvious gaps or better approaches? Any concerns about the data
-  sources or methodology? Keep the review brief and focused."
-)
+I am the Data Analyst shard. I've planned an adhoc analysis for [topic].
+Here is my analysis plan:
+[include the query outlines]
+Please review: Does this approach make sense for the question being asked?
+Are there obvious gaps or better approaches? Any concerns about the data
+sources or methodology? Keep the review brief and focused.
 ```
 
 **Request Researcher review of statistical assumptions:**
 
 Tell the user: "Let me loop in the Researcher to check the statistical assumptions. Quick call, then we'll proceed."
 
+{{consult researcher entry=service task="Review statistical assumptions for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review statistical assumptions for [project]",
-  prompt="I am the Data Analyst shard. I've planned an adhoc analysis for [topic].
-  Here is my analysis plan:
-  [include the query outlines, metrics, and any comparisons or aggregations]
-  Please review the statistical assumptions: Are the metrics I'm computing
-  appropriate for this data? Any distribution or outlier concerns with the
-  proposed approach? Any sample size issues? Keep the review focused — this
-  is a quick analysis, not a deep study."
-)
+I am the Data Analyst shard. I've planned an adhoc analysis for [topic].
+Here is my analysis plan:
+[include the query outlines, metrics, and any comparisons or aggregations]
+Please review the statistical assumptions: Are the metrics I'm computing
+appropriate for this data? Any distribution or outlier concerns with the
+proposed approach? Any sample size issues? Keep the review focused — this
+is a quick analysis, not a deep study.
 ```
 
 Present both the Data Scientist's and Researcher's findings to the user.
@@ -212,16 +212,16 @@ output, consult the BI Engineer for chart design review:
 
 Tell the user: "The output includes a visualization — getting the BI Engineer to weigh in on chart type and design. One sec."
 
+{{consult bi-engineer entry=review task="Chart design review for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="bi-engineer",
-  description="Chart design review for [project]",
-  prompt="I am the Data Analyst shard working on an adhoc analysis for [topic].
-  The output will include a visualization. Here is what I'm planning to display:
-  [include the query outline and intended visualization — chart type, axes, measures]
-  Please review: Is this the right chart type for this data? Any design or clarity
-  recommendations? Keep the review brief and focused — this is a quick analysis output."
-)
+I am the Data Analyst shard working on an adhoc analysis for [topic].
+The output will include a visualization. Here is what I'm planning to display:
+[include the query outline and intended visualization — chart type, axes, measures]
+Please review: Is this the right chart type for this data? Any design or clarity
+recommendations? Keep the review brief and focused — this is a quick analysis output.
 ```
 
 Present the BI Engineer's feedback to the user. Address any design recommendations
@@ -264,18 +264,18 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Goal: Write and run the queries.
 
 **Join path trace:** Before writing any query that joins tables, trace the join
-path following `.claude/agents/specific_instructions/shared/join_path_protocol.md`.
+path following [`protocols/join_path.md`](../../../protocols/join_path.md).
 Present the trace to the user. If the trace reveals fan-out risk or uncertain
 grain, invoke the Data Modeller for validation before writing the query.
 
@@ -416,15 +416,15 @@ Goal: Get Syn's sign-off and close the analysis.
 
 Tell the user: "Let me get Syn to do a final review of this analysis..."
 
+{{consult syn entry=final_review task="Final review of adhoc analysis"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of adhoc analysis",
-  prompt="I am the Data Analyst shard. I've completed an adhoc analysis for
-  project [project_name]. Please review the project-specs.md at [file_path]
-  and provide your final review verdict. This was a quick analysis — check
-  that the question was answered, the approach was sound, and nothing was missed."
-)
+I am the Data Analyst shard. I've completed an adhoc analysis for
+project [project_name]. Please review the project-specs.md at [file_path]
+and provide your final review verdict. This was a quick analysis — check
+that the question was answered, the approach was sound, and nothing was missed.
 ```
 
 Append Syn's review to the specs. Present to user.
@@ -449,14 +449,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for adhoc analysis"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for adhoc analysis",
-  prompt="CODE REVIEW MODE. I am the Data Analyst shard. Project: [project_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the Data Analyst shard. Project: [project_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -468,7 +468,7 @@ Summarize:
 4. Suggested follow-ups (if any)
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Phase 4

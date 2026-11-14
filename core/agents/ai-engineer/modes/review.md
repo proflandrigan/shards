@@ -46,10 +46,11 @@ Consult reviewers as appropriate:
 
 **ML Engineer** — if the review touches production feasibility, infrastructure,
 or model serving:
+{{consult ml-engineer entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  prompt="""
 You are being consulted to assess production feasibility for an AI system review.
 
 **System under review:** <system name and brief description>
@@ -62,15 +63,14 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 **Academic** — if the review touches safety, ethics, or user impact concerns:
+{{consult academic entry=service}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="academic",
-  prompt="""
 You are being consulted to assess safety and ethical considerations for an AI system review.
 
 **System under review:** <system name and brief description>
@@ -84,8 +84,6 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 ---

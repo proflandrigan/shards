@@ -18,14 +18,14 @@ files.
 
 **Task call format (for Syn's reference):**
 
+{{consult backend-engineer entry=service task="Python code review for <project_name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="backend-engineer",
-  description="Python code review for <project_name>",
-  prompt="You are in SERVICE MODE. Review the following Python files in the
-  project at <project_dir>. Read project-specs.md first for context.
-  Files to review: <list>"
-)
+You are in SERVICE MODE. Review the following Python files in the
+project at <project_dir>. Read project-specs.md first for context.
+Files to review: <list>
 ```
 
 **In service mode:**

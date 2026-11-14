@@ -11,17 +11,17 @@ Goal: Understand what data is available and what filters are needed.
 
 Tell the user: "Before I start querying, let me get the Data Modeller shard to sketch out what we're working with. One sec..."
 
+{{consult data-modeller entry=review task="Explore data model for [analysis topic]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Explore data model for [analysis topic]",
-  prompt="I am the Data Analyst shard working on an adhoc analysis about [topic].
-  I need to understand the relevant data models. Please explore and return:
-  relevant tables with grain, relationships, key columns, and any quality concerns.
-  Focus on: [specific tables or business concepts].
-  Since I'll be querying these tables, please also run a quick grain validation
-  (PK uniqueness check) on the key tables you identify."
-)
+I am the Data Analyst shard working on an adhoc analysis about [topic].
+I need to understand the relevant data models. Please explore and return:
+relevant tables with grain, relationships, key columns, and any quality concerns.
+Focus on: [specific tables or business concepts].
+Since I'll be querying these tables, please also run a quick grain validation
+(PK uniqueness check) on the key tables you identify.
 ```
 
 **Greenfield handling:** Before presenting findings, check whether the Data Modeller's
@@ -156,4 +156,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_analyst/phases/phase-2.md` in full and follow its instructions starting from Phase 2. Do not pre-read further phase files.
+{{phase 2}} in full and follow its instructions starting from Phase 2. Do not pre-read further phase files.

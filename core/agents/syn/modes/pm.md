@@ -10,7 +10,7 @@ specialists run via Task autonomously, the user talks only to you. No persona tr
 Goal: Understand what the user is actually trying to build — at the system level,
 not a specialist slice. Use the **Open → Listen → Reflect → Probe → Assess**
 rhythm from the shared intent discovery protocol
-(`.claude/agents/specific_instructions/shared/intent_discovery.md`).
+([`protocols/intent_discovery.md`](../../../protocols/intent_discovery.md)).
 
 **Important:** This is not a survey. Do not present a list of questions. Open
 with one natural question, listen to the answer, reflect your understanding,
@@ -107,10 +107,13 @@ Group 3: LLM Judge [AIE] ← depends on Group 2
 
 Call each specialist via Task in advisory mode to validate feasibility:
 
+Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+
+{{consult data-scientist entry=advise}}
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<specialist>",
-  prompt="""
 You are in ADVISORY MODE — Syn is planning a multi-specialist project and wants your input before committing.
 
 **Project:** <project name>
@@ -127,8 +130,6 @@ Review this workstream brief and respond with:
 4. **Estimated complexity:** Low / Medium / High
 
 Keep it tight. No preamble. Just assessment.
-  """
-)
 ```
 
 Run advisory checks in parallel where possible.
@@ -203,10 +204,13 @@ Process execution groups in dependency order.
 
 **1. Spawn specialists in parallel** via concurrent Task calls:
 
+Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
+
+{{fanout ml-engineer slices=workstream_a,workstream_b}}
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<specialist>",
-  prompt="""
 PM MODE — You are running under Syn project management.
 
 INSTRUCTIONS:
@@ -239,19 +243,17 @@ WHEN COMPLETE, return a structured report:
 4. **Confidence level** — High / Medium / Low
 5. **Integration notes** — anything downstream workstreams need to know
 6. **Knowledge citations** — any ledger entries that influenced decisions, and any contradictions observed (use the structured template from knowledge_checkpoint.md)
-  """
-)
 ```
 
 **1b. Swarm a large workstream** — if a workstream is marked Scale: swarm (or
 you judge it genuinely large during execution):
 
-- Read `.claude/agents/specific_instructions/shared/swarm_protocol.md`.
+- {{protocol swarm}}.
 - Decompose the workstream into bounded slices. Each slice: one specialist
   type, one clearly-scoped sub-task, its own output directory (e.g.
   `studies/<name>/slice-<n>/`), and a definition of done.
-- Spawn all slices in parallel via concurrent Task calls, same
-  `subagent_type` repeated across calls. Give each slice its own brief
+- Spawn all slices in parallel via a single fan-out, same
+  specialist repeated across slices. Give each slice its own brief
   (scope, inputs, outputs, paths, definition of done) using the PM MODE prompt
   template above, adapted per-slice.
 - Review each slice's output (same APPROVED / NEEDS REVISION / BLOCKED flow as
@@ -357,7 +359,7 @@ After all execution groups complete:
 
    a. Read each workstream's `project-specs.md`. Identify harvest candidates
       across all four categories (entities, infrastructure, patterns, features)
-      using the criteria from `.claude/agents/specific_instructions/shared/knowledge_harvest.md`
+      using the criteria from [`protocols/knowledge harvest.md`](../../../protocols/knowledge_harvest.md)
       Step 1. Focus on knowledge that spans workstreams or would not be obvious
       from reading a single workstream in isolation.
 
@@ -436,7 +438,7 @@ object, each entry { "name": slice slug, "specialist": shard type,
 ## Context Window Management
 
 - **Specialist Task output:** The structured report format keeps what flows back concise. Read artifacts from disk, not from Task output.
-- **Parallel Tasks:** For groups with 3+ parallel specialists, context grows fast. Use `/compact` between execution groups if context is heavy.
+- **Parallel Tasks:** For groups with 3+ parallel specialists, context grows fast. Trim context between execution groups if it is heavy.
 - **Revision loops:** Capped at 3 rounds. Each revision Task is self-contained (references artifacts on disk, not prior Task context).
 - **Integration review:** Read files from disk rather than accumulating all specialist output in context.
 

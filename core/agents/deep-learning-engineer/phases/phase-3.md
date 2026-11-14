@@ -63,7 +63,7 @@ Append to `project-specs.md`:
 - **Expected inference latency:** ~<X>ms per sample on <hardware>
 ```
 
-**DIVERGE check:** If you identified 2-3 mutually exclusive neural architectures (e.g., different backbone families, fundamentally different training paradigms) that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
+**DIVERGE check:** If you identified 2-3 mutually exclusive neural architectures (e.g., different backbone families, fundamentally different training paradigms) that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
 
 ::GATE:: id=deep-learning-engineer-phase-3 phase=3 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
@@ -73,4 +73,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/deep_learning_engineer/phases/phase-4.md` in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.
+{{phase 4}} in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.

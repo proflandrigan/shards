@@ -44,10 +44,11 @@ Note any files you expected to find but couldn't locate.
 **Data Modeller** — if the review touches grain, entity definitions, or schema
 correctness:
 
+{{consult data-modeller entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  prompt="""
 You are being consulted to assess grain and entity correctness for an analytics
 engineering review.
 
@@ -64,16 +65,15 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 **Data Analyst** — if the review touches business logic or metric correctness:
 
+{{consult data-analyst entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-analyst",
-  prompt="""
 You are being consulted to assess business alignment for an analytics engineering review.
 
 **System under review:** <mart or transformation name and brief description>
@@ -89,8 +89,6 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 ---

@@ -7,7 +7,7 @@
 
 Goal: Deepen the analysis question by probing the user's intent, not ticking a checklist.
 
-Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the Data Scientist section in `.claude/agents/specific_instructions/shared/intent_discovery.md` for your domain probes.
+Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the Data Scientist section in [`protocols/intent_discovery.md`](../../../protocols/intent_discovery.md) for your domain probes.
 
 Let the conversation flow. Surface these topics naturally when the user's responses lead there:
 - **Decision supported:** what the analysis drives and who makes it
@@ -42,4 +42,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_scientist/phases/phase-2.md` in full and follow its instructions starting from Phase 2. Do not pre-read further phase files.
+{{phase 2}} in full and follow its instructions starting from Phase 2. Do not pre-read further phase files.

@@ -39,25 +39,25 @@ verified by <agent> in <source_project>)`
 Tell the user: "Asking the Data Scientist to review the modeling approach. Statistical rigor isn't optional."
 
 
+{{consult data-scientist entry=review task="Review ML model design for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-scientist",
-  description="Review ML model design for [project]",
-  prompt="I am the ML Engineer shard designing an ML system for [purpose].
-  Here is the model design:
-  - Task: [classification/regression/ranking/etc.]
-  - Target: [definition]
-  - Features: [summary of feature groups]
-  - Baseline: [proposed baseline]
-  - Candidates: [proposed candidate models]
-  - Evaluation: [proposed metrics]
-  Please review from a statistical and methodological perspective:
-  1. Is the target definition sound? Any leakage risk?
-  2. Are the evaluation metrics appropriate for the business problem?
-  3. Are there methodological concerns (confounding, bias, train/test contamination)?
-  4. Would you suggest a different approach or additional baselines?
-  Keep the review focused — I'll handle the systems/infrastructure side."
-)
+I am the ML Engineer shard designing an ML system for [purpose].
+Here is the model design:
+- Task: [classification/regression/ranking/etc.]
+- Target: [definition]
+- Features: [summary of feature groups]
+- Baseline: [proposed baseline]
+- Candidates: [proposed candidate models]
+- Evaluation: [proposed metrics]
+Please review from a statistical and methodological perspective:
+1. Is the target definition sound? Any leakage risk?
+2. Are the evaluation metrics appropriate for the business problem?
+3. Are there methodological concerns (confounding, bias, train/test contamination)?
+4. Would you suggest a different approach or additional baselines?
+Keep the review focused — I'll handle the systems/infrastructure side.
 ```
 
 **Consult the Applied ML Scientist** for methodology review. This is the default —
@@ -83,27 +83,27 @@ If skipping, state explicitly: "Skipping Applied ML Scientist review — this is
 standard tabular <problem type> with <model family> and <metric>. No cutting-edge
 methodology in scope." Document the skip rationale in the phase output.
 
+{{consult applied-ml-scientist entry=review task="ML methodology review for <system type>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="applied-ml-scientist",
-  description="ML methodology review for <system type>",
-  prompt="I am the ML Engineer shard designing a <system>. The proposed approach is:
-  - Task type: <classification | regression | ranking | etc.>
-  - Data: <modality, scale, key characteristics>
-  - Proposed model: <architecture or approach>
-  - Objective: <loss function / evaluation metric>
-  - Constraints: <latency, memory, compute budget, interpretability>
-  - Business goal: <what the model output drives>
+I am the ML Engineer shard designing a <system>. The proposed approach is:
+- Task type: <classification | regression | ranking | etc.>
+- Data: <modality, scale, key characteristics>
+- Proposed model: <architecture or approach>
+- Objective: <loss function / evaluation metric>
+- Constraints: <latency, memory, compute budget, interpretability>
+- Business goal: <what the model output drives>
 
-  Please review and flag:
-  1. Is the problem formulated correctly as an ML problem?
-  2. Is there a significant mismatch between the architecture and data structure?
-  3. Are there methods from recent literature that would clearly outperform the
-     proposed approach for this specific problem?
-  4. Any red flags on the loss function or evaluation metric?
+Please review and flag:
+1. Is the problem formulated correctly as an ML problem?
+2. Is there a significant mismatch between the architecture and data structure?
+3. Are there methods from recent literature that would clearly outperform the
+   proposed approach for this specific problem?
+4. Any red flags on the loss function or evaluation metric?
 
-  Context: <key constraints and goals from Phases 1-3>."
-)
+Context: <key constraints and goals from Phases 1-3>.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `applied-ml-scientist` row).
@@ -116,33 +116,33 @@ Tell the user: "This involves deep learning — I'm asking the Deep Learning Eng
 shard to review architecture–data alignment, memory footprint, and inference
 feasibility..."
 
+{{consult deep-learning-engineer entry=review task="DL architecture and production feasibility review for <project>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="deep-learning-engineer",
-  description="DL architecture and production feasibility review for <project>",
-  prompt="I am the ML Engineer shard designing an ML system. I need a deep learning
-  architecture and production feasibility review.
+I am the ML Engineer shard designing an ML system. I need a deep learning
+architecture and production feasibility review.
 
-  - Task type: <classification | regression | ranking | generation | etc.>
-  - Data modality: <image | text | audio | point cloud | graph | tabular | multi-modal>
-  - Proposed architecture: <name or description>
-  - Input/output shapes: <input tensor shape> → <output tensor shape>
-  - Data scale: <N training examples, sequence length or spatial dims>
-  - Hardware: <GPU, VRAM, inference latency budget>
-  - Model size budget: <parameter ceiling or 'unconstrained'>
-  - Business goal: <what the model output drives>
+- Task type: <classification | regression | ranking | generation | etc.>
+- Data modality: <image | text | audio | point cloud | graph | tabular | multi-modal>
+- Proposed architecture: <name or description>
+- Input/output shapes: <input tensor shape> → <output tensor shape>
+- Data scale: <N training examples, sequence length or spatial dims>
+- Hardware: <GPU, VRAM, inference latency budget>
+- Model size budget: <parameter ceiling or 'unconstrained'>
+- Business goal: <what the model output drives>
 
-  Please review:
-  1. Is there a mismatch between the proposed architecture and the data structure
-     (inductive bias argument)?
-  2. Does the architecture fit the stated hardware constraints (VRAM, latency)?
-  3. Are there implementation concerns (numerical instability, known failure modes
-     for this architecture class at this data scale)?
-  4. Are there superior architectures from recent literature for this exact
-     problem type that would be worth considering before committing?
+Please review:
+1. Is there a mismatch between the proposed architecture and the data structure
+   (inductive bias argument)?
+2. Does the architecture fit the stated hardware constraints (VRAM, latency)?
+3. Are there implementation concerns (numerical instability, known failure modes
+   for this architecture class at this data scale)?
+4. Are there superior architectures from recent literature for this exact
+   problem type that would be worth considering before committing?
 
-  Context: <key constraints and goals from Phases 1-3>."
-)
+Context: <key constraints and goals from Phases 1-3>.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `deep-learning-engineer` row).
@@ -151,28 +151,28 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `deep-learning-engi
 
 Tell the user: "Looping in the Data Analyst — they need to validate that these features make business sense before we serve them."
 
+{{consult data-analyst entry=review task="Review feature candidates for business sense and interpretability"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-analyst",
-  description="Review feature candidates for business sense and interpretability",
-  prompt="I am the ML Engineer shard building an ML system for [purpose]. High
-  interpretability has been flagged as a requirement. Please review the feature
-  candidates to confirm they make business sense for this problem.
+I am the ML Engineer shard building an ML system for [purpose]. High
+interpretability has been flagged as a requirement. Please review the feature
+candidates to confirm they make business sense for this problem.
 
-  Feature candidates: [summary of feature groups from Phase 3]
-  Target variable: [name and definition]
-  End users of model outputs: [from Phase 1 — internal system | customer-facing | analyst | API consumer]
-  Business problem: [from Phase 1]
-  Cost of wrong predictions: [false positive / false negative impact, from Phase 1]
+Feature candidates: [summary of feature groups from Phase 3]
+Target variable: [name and definition]
+End users of model outputs: [from Phase 1 — internal system | customer-facing | analyst | API consumer]
+Business problem: [from Phase 1]
+Cost of wrong predictions: [false positive / false negative impact, from Phase 1]
 
-  Please review:
-  1. Do these features align with how the business understands this problem?
-  2. Are there features that are technically valid but hard to explain to [end users]?
-  3. Are there obvious business-meaningful features that appear missing?
-  4. Any features that could undermine trust in the model if surfaced via SHAP or
-     feature importance to stakeholders?
-  Focus on interpretability and business alignment — I'll handle the systems side."
-)
+Please review:
+1. Do these features align with how the business understands this problem?
+2. Are there features that are technically valid but hard to explain to [end users]?
+3. Are there obvious business-meaningful features that appear missing?
+4. Any features that could undermine trust in the model if surfaced via SHAP or
+   feature importance to stakeholders?
+Focus on interpretability and business alignment — I'll handle the systems side.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `data-analyst` row).
@@ -184,27 +184,27 @@ online evaluation — consult the Researcher:
 Tell the user: "The evaluation plan involves statistical inference — I'm asking
 the Researcher shard to validate the methodology before we commit to it."
 
+{{consult researcher entry=service task="Review statistical inference methodology for ML evaluation"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review statistical inference methodology for ML evaluation",
-  prompt="I am the ML Engineer shard designing the evaluation strategy for an
-  ML system: [description].
-  Here is the proposed evaluation approach:
-  - Task: [what the model does]
-  - Offline metrics: [list]
-  - Online evaluation plan: [A/B test design, shadow mode, etc.]
-  - Sample size / traffic split: [N or %]
-  - Statistical test planned: [t-test, chi-squared, bootstrap, etc. or 'TBD']
-  - Confidence level: [95%, 99%, etc. or 'TBD']
-  Please review from a statistical methodology perspective:
-  1. Is the proposed statistical test appropriate for this metric type?
-  2. Is the sample size / traffic split adequate for the expected effect size?
-  3. Is the experiment design sound (randomization, control, duration)?
-  4. Are there multiple comparison issues or other statistical pitfalls?
-  5. What power analysis would you recommend?
-  Keep the review focused on statistical inference methodology."
-)
+I am the ML Engineer shard designing the evaluation strategy for an
+ML system: [description].
+Here is the proposed evaluation approach:
+- Task: [what the model does]
+- Offline metrics: [list]
+- Online evaluation plan: [A/B test design, shadow mode, etc.]
+- Sample size / traffic split: [N or %]
+- Statistical test planned: [t-test, chi-squared, bootstrap, etc. or 'TBD']
+- Confidence level: [95%, 99%, etc. or 'TBD']
+Please review from a statistical methodology perspective:
+1. Is the proposed statistical test appropriate for this metric type?
+2. Is the sample size / traffic split adequate for the expected effect size?
+3. Is the experiment design sound (randomization, control, duration)?
+4. Are there multiple comparison issues or other statistical pitfalls?
+5. What power analysis would you recommend?
+Keep the review focused on statistical inference methodology.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
@@ -276,4 +276,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/ml_engineer/phases/phase-5.md` in full and follow its instructions starting from Phase 5. Do not pre-read further phase files.
+{{phase 5}} in full and follow its instructions starting from Phase 5. Do not pre-read further phase files.

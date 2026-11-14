@@ -24,25 +24,25 @@ Inspect the transformation project:
 
 Tell the user: "Let me check with the Data Engineer shard on the staging layer before we design anything on top of it."
 
-```
-Task(
-  subagent_type="data-engineer",
-  description="Staging layer assessment for [project]",
-  prompt="I am the Analytics Engineer shard working on [project]. I need to assess
-  the staging layer before designing a transformation pipeline. Please explore and
-  return:
-  1. Which staging models exist for [source systems / entities]? List model names
-     and grain (one row per what).
-  2. Are there existing intermediate models I can reuse or build on?
-  3. Are source definitions present in sources.yml? Are freshness configs defined?
-  4. Any known data quality issues I should factor into my transformation design?
-     (late-arriving data, duplicates, schema drift, soft deletes)
-  5. What incremental strategies are already in use? Any patterns I should follow
-     for consistency?
+{{consult data-engineer entry=review task="Staging layer assessment for [project]"}}
 
-  Keep your response focused on source layer soundness and staging model inventory —
-  not the transformation logic I should build."
-)
+Brief for the consultant (fill the bracketed fields):
+
+```
+I am the Analytics Engineer shard working on [project]. I need to assess
+the staging layer before designing a transformation pipeline. Please explore and
+return:
+1. Which staging models exist for [source systems / entities]? List model names
+   and grain (one row per what).
+2. Are there existing intermediate models I can reuse or build on?
+3. Are source definitions present in sources.yml? Are freshness configs defined?
+4. Any known data quality issues I should factor into my transformation design?
+   (late-arriving data, duplicates, schema drift, soft deletes)
+5. What incremental strategies are already in use? Any patterns I should follow
+   for consistency?
+
+Keep your response focused on source layer soundness and staging model inventory —
+not the transformation logic I should build.
 ```
 
 **Greenfield handling:** Before proceeding, check whether the Data Engineer's
@@ -103,4 +103,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/analytics_engineer/phases_deep/phase-3.md` in full and follow its instructions starting from Deep Phase 3. Do not pre-read further phase files.
+{{phase 3}} in full and follow its instructions starting from Deep Phase 3. Do not pre-read further phase files.

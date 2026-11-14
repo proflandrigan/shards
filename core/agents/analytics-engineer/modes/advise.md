@@ -43,10 +43,11 @@ paths and context warrants it, but file reading is not required.
 If the question touches grain, entity design, or data model correctness, consult
 the Data Modeller:
 
+{{consult data-modeller entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  prompt="""
 You are being consulted for an analytics engineering advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -55,17 +56,16 @@ You are being consulted for an analytics engineering advisory discussion.
 
 Please give a concise assessment — 3-5 sentences — on the data modeling angle.
 Which option better respects entity boundaries and grain, and why?
-  """
-)
 ```
 
 If the question touches source layer design, ingestion feasibility, or pipeline
 constraints, consult the Data Engineer:
 
+{{consult data-engineer entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-engineer",
-  prompt="""
 You are being consulted for an analytics engineering advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -74,8 +74,6 @@ You are being consulted for an analytics engineering advisory discussion.
 
 Please give a concise assessment — 3-5 sentences — on the data engineering angle.
 Which option is more feasible given the source data constraints, and why?
-  """
-)
 ```
 
 ---

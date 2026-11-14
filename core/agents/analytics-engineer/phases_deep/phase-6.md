@@ -42,4 +42,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/analytics_engineer/phases_deep/phase-7.md` in full and follow its instructions starting from Deep Phase 7. Do not pre-read further phase files.
+{{phase 7}} in full and follow its instructions starting from Deep Phase 7. Do not pre-read further phase files.

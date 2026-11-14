@@ -13,20 +13,20 @@ Goal: Understand the data landscape and nail down the requirements.
 
 Tell the user: "Let me check with the Data Modeller on what data actually exists. Exciting stuff."
 
+{{consult data-modeller entry=review task="Explore data model for [dashboard topic]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Explore data model for [dashboard topic]",
-  prompt="I am the BI Engineer shard working on a dashboard about [topic].
-  I need to understand the relevant data models. Please explore and return:
-  relevant tables with grain, relationships, key columns, available aggregations,
-  and any quality concerns.
-  Focus on: [specific tables or business concepts].
-  Since I'll be querying these tables for a dashboard, please also confirm:
-  - Which tables have pre-aggregated mart models vs. raw tables?
-  - Are there any known freshness issues that would affect dashboard accuracy?
-  Run a quick grain validation (PK uniqueness check) on the key tables you identify."
-)
+I am the BI Engineer shard working on a dashboard about [topic].
+I need to understand the relevant data models. Please explore and return:
+relevant tables with grain, relationships, key columns, available aggregations,
+and any quality concerns.
+Focus on: [specific tables or business concepts].
+Since I'll be querying these tables for a dashboard, please also confirm:
+- Which tables have pre-aggregated mart models vs. raw tables?
+- Are there any known freshness issues that would affect dashboard accuracy?
+Run a quick grain validation (PK uniqueness check) on the key tables you identify.
 ```
 
 **Greenfield / no-data handling:** Before presenting findings, check whether the
@@ -172,35 +172,35 @@ Goal: Define the charts, layout, and components — then get it reviewed.
 
 Tell the user: "Getting the Data Analyst to verify I'm visualizing the right metrics. Can't have a beautiful chart tracking the wrong number."
 
+{{consult data-analyst entry=review task="Review dashboard metric and analysis design for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-analyst",
-  description="Review dashboard metric and analysis design for [project]",
-  prompt="I am the BI Engineer shard designing a dashboard for [topic].
-  Here is my dashboard design plan:
-  [include panel descriptions, chart types, and metrics to be displayed]
-  Please review: Are these the right metrics for the question being answered?
-  Are there obvious gaps or better measures? Any concerns about how the data
-  is being aggregated or displayed? Keep the review brief and focused."
-)
+I am the BI Engineer shard designing a dashboard for [topic].
+Here is my dashboard design plan:
+[include panel descriptions, chart types, and metrics to be displayed]
+Please review: Are these the right metrics for the question being answered?
+Are there obvious gaps or better measures? Any concerns about how the data
+is being aggregated or displayed? Keep the review brief and focused.
 ```
 
 **Request Analytics Engineer review:**
 
 Tell the user: "Pulling in the Analytics Engineer to confirm these marts exist and are actually correct. No point building a dashboard on broken data."
 
+{{consult analytics-engineer entry=review task="Review data model correctness for dashboard [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="analytics-engineer",
-  description="Review data model correctness for dashboard [project]",
-  prompt="I am the BI Engineer shard designing a dashboard for [topic].
-  Here is my dashboard design and the data sources I plan to use:
-  [include panel descriptions, chart types, and tables/marts to be queried]
-  Please review: Are these marts the right ones to use for this purpose?
-  Are there grain, definition, or data quality concerns I should know about?
-  Do these marts have the necessary columns and aggregations for this design?
-  Keep the review brief and actionable."
-)
+I am the BI Engineer shard designing a dashboard for [topic].
+Here is my dashboard design and the data sources I plan to use:
+[include panel descriptions, chart types, and tables/marts to be queried]
+Please review: Are these marts the right ones to use for this purpose?
+Are there grain, definition, or data quality concerns I should know about?
+Do these marts have the necessary columns and aggregations for this design?
+Keep the review brief and actionable.
 ```
 
 Present both the Data Analyst's and Analytics Engineer's findings to the user.
@@ -243,12 +243,12 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Design's locked — good moment to run `/compact` or `/clear` before I start building.
+"Design's locked — good moment to trim or reset your context before I start building.
 I'll be working from project-specs.md from here. Say the word when you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Goal: Build the dashboard code or produce the design specification.
 
@@ -263,7 +263,7 @@ Write the dashboard application to `dashboards/<project_name>/`.
 - Standalone: `<descriptive_name>.py`
 
 **Join path trace:** Before writing dashboard queries that join tables, trace the
-join path following `.claude/agents/specific_instructions/shared/join_path_protocol.md`.
+join path following [`protocols/join_path.md`](../../../protocols/join_path.md).
 Present the trace to the user. Fan-out in a dashboard query means every chart
 built on that query shows inflated numbers — flag it explicitly.
 
@@ -360,15 +360,15 @@ Goal: Get Syn's sign-off and close the project.
 
 Tell the user: "Getting Syn to do a final check on this..."
 
+{{consult syn entry=final_review task="Final review of dashboard project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of dashboard project",
-  prompt="I am the BI Engineer shard. I've completed a dashboard project for
-  [project_name]. Please review the project-specs.md at [file_path] and
-  provide your final review verdict. Check that the requirement was met,
-  the design decisions were sound, and nothing was missed."
-)
+I am the BI Engineer shard. I've completed a dashboard project for
+[project_name]. Please review the project-specs.md at [file_path] and
+provide your final review verdict. Check that the requirement was met,
+the design decisions were sound, and nothing was missed.
 ```
 
 Append Syn's review to the specs. Present to user.
@@ -393,19 +393,19 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for dashboard project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for dashboard project",
-  prompt="CODE REVIEW MODE. I am the BI Engineer shard. Project: [project_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the BI Engineer shard. Project: [project_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
 
-**Data Analyst handoff (if applicable):** See `.claude/agents/specific_instructions/bi_engineer/data_analyst_handoff.md`
+**Data Analyst handoff (if applicable):** See [`modes/data_analyst_handoff.md`](data_analyst_handoff.md)
 for the full handoff instructions. Note: if Phase 0 or Phase 1 documented a DA intake file
 (`DA intake file source: Data Analyst — ...`), write the handoff file automatically without
 asking — it is the expected default, not optional.
@@ -417,7 +417,7 @@ Summarize:
 4. Suggested extensions (if any)
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Phase 4

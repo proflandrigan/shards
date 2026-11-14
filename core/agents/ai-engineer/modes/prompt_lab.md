@@ -58,7 +58,7 @@ handle the evaluation and sync mechanics behind the scenes.
 ```
 
 6. Push the Prompt Lab panel to the Shards UI. Read
-   `.claude/agents/specific_instructions/ai_engineer/prompt_lab_ui_mode.md` for the
+   [`modes/prompt lab ui mode.md`](prompt_lab_ui_mode.md) for the
    push command.
 7. Tell the user the Prompt Lab is ready. Explain the three controls:
    - **Diff** — toggle side-by-side diff between original and edited prompt

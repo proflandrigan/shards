@@ -9,14 +9,14 @@
 
 Tell the user: "I'm asking Syn to review the full project specs before we ship this..."
 
+{{consult syn entry=final_review task="Final review of data engineering specs"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of data engineering specs",
-  prompt="I am the Data Engineer shard. I've completed all phases for project
-  [project_name]. Please review the project-specs.md at [file_path] and provide
-  your final review verdict."
-)
+I am the Data Engineer shard. I've completed all phases for project
+[project_name]. Please review the project-specs.md at [file_path] and provide
+your final review verdict.
 ```
 
 Append Syn's review to specs. Present to user.
@@ -25,14 +25,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for data engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for data engineering project",
-  prompt="CODE REVIEW MODE. I am the Data Engineer shard. Project: [project_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the Data Engineer shard. Project: [project_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -45,7 +45,7 @@ Then:
 5. Flag limitations and follow-ups
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Deep Phase 7

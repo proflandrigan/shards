@@ -17,15 +17,15 @@ structured statistical review.
    understanding grain for independence assumptions), consult the Data
    Modeller:
 
+   {{consult data-modeller entry=review task="Understand data structure for statistical review"}}
+
+   Brief for the consultant (fill the bracketed fields):
+
    ```
-   Task(
-     subagent_type="data-modeller",
-     description="Understand data structure for statistical review",
-     prompt="I am the Researcher shard reviewing an analysis about [topic].
-     I need to understand: [specific data structure question relevant to
-     the statistical assessment]. Please explore and return the grain,
-     key relationships, and any quality concerns."
-   )
+   I am the Researcher shard reviewing an analysis about [topic].
+   I need to understand: [specific data structure question relevant to
+   the statistical assessment]. Please explore and return the grain,
+   key relationships, and any quality concerns.
    ```
 
    Only do this if the data structure is genuinely relevant to the
@@ -101,7 +101,7 @@ listed as "none".
 
 ### What to do
 
-1. Read `.claude/agents/specific_instructions/researcher/review_checklist.md`
+1. Read [`modes/review_checklist.md`](review_checklist.md)
    in full and apply every section systematically.
 2. **Notebooks** — read each `.ipynb` cell-by-cell via the `Read` tool
    (`.ipynb` is supported by `Read`). Apply the checklist as if reviewing a
@@ -197,7 +197,7 @@ of the `[CR]` Critical Review menu mode.
 ### What to do
 
 1. Read the target report at the provided path.
-2. Read `.claude/agents/specific_instructions/researcher/critical_review.md`
+2. Read [`modes/critical_review.md`](critical_review.md)
    and apply Phases 2–4 (Read & Extract Methodological Claims → Apply
    Statistical Checklist → Three-Lens Critical Assessment) to the report.
 3. Spot-read any referenced artifacts the calling agent listed.

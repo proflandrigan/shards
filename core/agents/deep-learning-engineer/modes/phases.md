@@ -222,7 +222,7 @@ Append to `project-specs.md`:
 - **Expected inference latency:** ~<X>ms per sample on <hardware>
 ```
 
-**DIVERGE check:** If you identified 2-3 mutually exclusive neural architectures (e.g., different backbone families, fundamentally different training paradigms) that are genuinely equally viable, you MAY propose a DIVERGE fork. Read `.claude/agents/specific_instructions/shared/diverge_protocol.md` and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
+**DIVERGE check:** If you identified 2-3 mutually exclusive neural architectures (e.g., different backbone families, fundamentally different training paradigms) that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
 
 ::GATE:: id=specific-instructions-deep-learning-engineer-phases-phase3 phase=3 kind=phase
 Read this section back to the user. Stop here — do not begin the next phase or output any further content. Wait for the user to explicitly confirm before proceeding. Do not interpret silence or partial agreement as confirmation.
@@ -236,13 +236,13 @@ Goal: Build the model implementation.
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Then create:
 
@@ -332,39 +332,39 @@ concern, discuss with the user and revise before proceeding.
 Tell the user: "Requesting ML Engineer review for production infrastructure
 and deployment feasibility..."
 
+{{consult ml-engineer entry=review task="Production readiness review for deep learning model: <project name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Production readiness review for deep learning model: <project name>",
-  prompt="I am the Deep Learning Engineer shard. I have built a custom deep
-  learning model and need a production infrastructure review.
+I am the Deep Learning Engineer shard. I have built a custom deep
+learning model and need a production infrastructure review.
 
-  Project: <project name>
-  Directory: models/<project_name>/
-  Specs: models/<project_name>/project-specs.md
+Project: <project name>
+Directory: models/<project_name>/
+Specs: models/<project_name>/project-specs.md
 
-  Summary:
-  - Task: <input/output tensor shapes from Phase 0>
-  - Architecture: <selected backbone + head from Phase 1>
-  - Parameters: ~<N>M
-  - Training: <optimizer, LR schedule, augmentation summary from Phase 2>
-  - Hardware: <GPU, precision, gradient checkpointing from Phase 3>
-  - Results: <best validation metric vs baseline from Phase 4>
-  - Serving format: <from Phase 3>
+Summary:
+- Task: <input/output tensor shapes from Phase 0>
+- Architecture: <selected backbone + head from Phase 1>
+- Parameters: ~<N>M
+- Training: <optimizer, LR schedule, augmentation summary from Phase 2>
+- Hardware: <GPU, precision, gradient checkpointing from Phase 3>
+- Results: <best validation metric vs baseline from Phase 4>
+- Serving format: <from Phase 3>
 
-  Please review for production readiness:
-  1. Is the serving format (or absence of one) appropriate for the stated
-     latency budget?
-  2. Are there infrastructure or pipeline concerns for integrating this model
-     into production?
-  3. Is the model size and inference cost acceptable for the stated hardware
-     constraints?
-  4. What monitoring and retraining triggers would you recommend?
-  5. Are there production failure modes (data drift, distribution shift,
-     cold start) not addressed in the current design?
+Please review for production readiness:
+1. Is the serving format (or absence of one) appropriate for the stated
+   latency budget?
+2. Are there infrastructure or pipeline concerns for integrating this model
+   into production?
+3. Is the model size and inference cost acceptable for the stated hardware
+   constraints?
+4. What monitoring and retraining triggers would you recommend?
+5. Are there production failure modes (data drift, distribution shift,
+   cold start) not addressed in the current design?
 
-  Please read project-specs.md for full context."
-)
+Please read project-specs.md for full context.
 ```
 
 **Applied ML Scientist review (methodology soundness and cutting-edge alternatives):**
@@ -372,36 +372,36 @@ Task(
 Tell the user: "Requesting Applied ML Scientist review for methodology soundness
 and cutting-edge alternatives assessment..."
 
+{{consult applied-ml-scientist entry=review task="Methodology review for deep learning model: <project name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="applied-ml-scientist",
-  description="Methodology review for deep learning model: <project name>",
-  prompt="I am the Deep Learning Engineer shard. I have built a custom deep
-  learning model and need a methodology and theory review.
+I am the Deep Learning Engineer shard. I have built a custom deep
+learning model and need a methodology and theory review.
 
-  Project: <project name>
-  Directory: models/<project_name>/
+Project: <project name>
+Directory: models/<project_name>/
 
-  Summary:
-  - Task: <problem description and input/output from Phase 0>
-  - Core hypothesis: <why this architecture for this data>
-  - Architecture: <selected approach from Phase 1>
-  - Loss function: <formula and justification from Phase 2>
-  - Results: <metric table from Phase 4>
+Summary:
+- Task: <problem description and input/output from Phase 0>
+- Core hypothesis: <why this architecture for this data>
+- Architecture: <selected approach from Phase 1>
+- Loss function: <formula and justification from Phase 2>
+- Results: <metric table from Phase 4>
 
-  Please review for methodology soundness:
-  1. Is the inductive bias argument for the selected architecture sound given
-     the data structure?
-  2. Are there recent methods (post-2022) that would clearly outperform this
-     approach for this problem type?
-  3. Is the loss function well-aligned with the task objective?
-  4. Are there theoretical gaps in the training protocol (optimizer choice,
-     regularization, augmentation strategy)?
-  5. What experiments would most efficiently validate or invalidate the core
-     design hypothesis?
+Please review for methodology soundness:
+1. Is the inductive bias argument for the selected architecture sound given
+   the data structure?
+2. Are there recent methods (post-2022) that would clearly outperform this
+   approach for this problem type?
+3. Is the loss function well-aligned with the task objective?
+4. Are there theoretical gaps in the training protocol (optimizer choice,
+   regularization, augmentation strategy)?
+5. What experiments would most efficiently validate or invalidate the core
+   design hypothesis?
 
-  Please read models/<project_name>/project-specs.md for full context."
-)
+Please read models/<project_name>/project-specs.md for full context.
 ```
 
 **MLOps Engineer review (production platform and operationalization):**
@@ -409,36 +409,36 @@ Task(
 Tell the user: "And finally, asking the MLOps Engineer to review the production
 platform requirements and operationalization plan..."
 
+{{consult mlops-engineer entry=review task="Production platform review for deep learning model: <project name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="mlops-engineer",
-  description="Production platform review for deep learning model: <project name>",
-  prompt="I am the Deep Learning Engineer shard. I have built a custom deep
-  learning model and need a production platform and operationalization review.
+I am the Deep Learning Engineer shard. I have built a custom deep
+learning model and need a production platform and operationalization review.
 
-  Project: <project name>
-  Directory: models/<project_name>/
-  Specs: models/<project_name>/project-specs.md
+Project: <project name>
+Directory: models/<project_name>/
+Specs: models/<project_name>/project-specs.md
 
-  Summary:
-  - Architecture: <selected backbone + head from Phase 1>
-  - Parameters: ~<N>M
-  - Serving format: <from Phase 3>
-  - Hardware: <GPU, precision from Phase 3>
-  - Results: <best validation metric vs baseline from Phase 4>
+Summary:
+- Architecture: <selected backbone + head from Phase 1>
+- Parameters: ~<N>M
+- Serving format: <from Phase 3>
+- Hardware: <GPU, precision from Phase 3>
+- Results: <best validation metric vs baseline from Phase 4>
 
-  Please review:
-  1. Is the serving format appropriate for the stated latency budget and
-     operational constraints?
-  2. What CI/CD pipeline would you recommend for retraining and model
-     registry management?
-  3. Is the experiment tracking and model versioning plan sufficient for
-     production operation?
-  4. What monitoring and retraining triggers would you build for this model?
-  5. What infrastructure is needed that isn't yet in the plan?
+Please review:
+1. Is the serving format appropriate for the stated latency budget and
+   operational constraints?
+2. What CI/CD pipeline would you recommend for retraining and model
+   registry management?
+3. Is the experiment tracking and model versioning plan sufficient for
+   production operation?
+4. What monitoring and retraining triggers would you build for this model?
+5. What infrastructure is needed that isn't yet in the plan?
 
-  Please read project-specs.md for full context."
-)
+Please read project-specs.md for full context.
 ```
 
 Append MLOps Engineer's review to specs.
@@ -451,14 +451,14 @@ If any are found:
 Tell the user: "Before we write the report, the Backend Engineer is reviewing
 the Python artifacts. Code quality is not optional."
 
+{{consult backend-engineer entry=service task="Python code review for [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="backend-engineer",
-  description="Python code review for [project_name]",
-  prompt="You are in SERVICE MODE. Review the following Python files in the
-  project at models/[project_name]/. Read project-specs.md first for context.
-  Files to review: [list of .py and .ipynb files found]"
-)
+You are in SERVICE MODE. Review the following Python files in the
+project at models/[project_name]/. Read project-specs.md first for context.
+Files to review: [list of .py and .ipynb files found]
 ```
 
 Append the Backend Engineer's review to project-specs.md. If no Python files are
@@ -556,7 +556,7 @@ weight decay; Goyal et al., 2017 for LR scaling, etc.)>
 ```
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ::GATE:: id=specific-instructions-deep-learning-engineer-phases-phase4-2 phase=4 kind=final

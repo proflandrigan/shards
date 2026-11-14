@@ -45,13 +45,13 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 1. Implement the change in the model SQL and schema file
 2. Update downstream models if column names or types changed
@@ -64,7 +64,7 @@ Wait for any signal from the user before beginning build steps.
 5. Summarize what changed
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Quick Phase 2
@@ -100,13 +100,13 @@ If during Quick Phase 1 or Quick Phase 2 the scope grows beyond a quick change (
 
 1. **Announce:** Tell the user exactly what triggered the escalation and why the Quick track can't handle it.
 2. **Propose:** Recommend switching to the Deep track within the same Analytics Engineer session.
-3. **Preserve context:** Write an `## Escalation Brief` section to `project-specs.md` following the format defined in `.claude/agents/specific_instructions/shared/behavioral_rules.md`. Set the **Target agent** to `Analytics Engineer (Deep Track)`.
+3. **Preserve context:** Write an `## Escalation Brief` section to `project-specs.md` following the format defined in [`protocols/behavioral_rules.md`](../../../protocols/behavioral_rules.md). Set the **Target agent** to `Analytics Engineer (Deep Track)`.
 4. **Hand off:** Tell the user:
 
 > "This has grown beyond a quick change — [specific trigger]. I recommend switching to the **Deep track** for a full pipeline design.
 >
 > I've written an Escalation Brief to `project-specs.md` so nothing is lost. I'll load the Deep track phases now and pick up from the brief."
 
-After the user confirms, read `.claude/agents/specific_instructions/analytics_engineer/deep_phases.md` in full and resume from Deep Phase 1, treating the Escalation Brief as prior context.
+After the user confirms, read [`modes/deep_phases.md`](deep_phases.md) in full and resume from Deep Phase 1, treating the Escalation Brief as prior context.
 
 ---

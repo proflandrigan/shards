@@ -15,28 +15,28 @@ Ask about:
 
 Tell the user: "Visuals matter. Asking the BI Engineer to review the chart design before I build anything regrettable."
 
+{{consult bi-engineer entry=review task="Chart design review for [study]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="bi-engineer",
-  description="Chart design review for [study]",
-  prompt="I am the Data Scientist shard. I am about to build visualizations for study [name].
-  Please review the planned chart types and suggest improvements before I build them.
-  This is a design review only — I will implement.
+I am the Data Scientist shard. I am about to build visualizations for study [name].
+Please review the planned chart types and suggest improvements before I build them.
+This is a design review only — I will implement.
 
-  Study context:
-  - Business question: [from Phase 1]
-  - Primary audience: [from Phase 1]
-  - Visualisation style preference: [Clean/minimal | Exploratory, from Phase 5]
-  - Planned visualizations: [list chart types, what each shows, data basis — e.g.,
-    'line chart of monthly churn rate by cohort', 'bar chart of feature importances']
+Study context:
+- Business question: [from Phase 1]
+- Primary audience: [from Phase 1]
+- Visualisation style preference: [Clean/minimal | Exploratory, from Phase 5]
+- Planned visualizations: [list chart types, what each shows, data basis — e.g.,
+  'line chart of monthly churn rate by cohort', 'bar chart of feature importances']
 
-  Please review:
-  1. Are the chart types appropriate for the data and this audience?
-  2. Are there better alternatives I should use?
-  3. Any design or layout recommendations given the intended audience?
-  4. Any visualizations I should add that would strengthen the findings?
-  Return your review as: Approved (proceed as planned) | Concerns raised (flag issues)."
-)
+Please review:
+1. Are the chart types appropriate for the data and this audience?
+2. Are there better alternatives I should use?
+3. Any design or layout recommendations given the intended audience?
+4. Any visualizations I should add that would strengthen the findings?
+Return your review as: Approved (proceed as planned) | Concerns raised (flag issues).
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `bi-engineer` row).
@@ -68,4 +68,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_scientist/phases/phase-6.md` in full and follow its instructions starting from Phase 6. Do not pre-read further phase files.
+{{phase 6}} in full and follow its instructions starting from Phase 6. Do not pre-read further phase files.

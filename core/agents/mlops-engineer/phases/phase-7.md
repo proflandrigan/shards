@@ -11,46 +11,46 @@
 
 Tell the user: "Getting the ML Engineer in to validate that the serving setup actually matches what the model needs. A mismatch here is how you end up with a perfect model that performs terribly in production."
 
+{{consult ml-engineer entry=review task="Infrastructure design review for MLOps project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Infrastructure design review for MLOps project",
-  prompt="I am the MLOps Engineer shard. I've completed the operational design
-  for project [project_name]. Please review the infrastructure design from an
-  ML engineering perspective.
+I am the MLOps Engineer shard. I've completed the operational design
+for project [project_name]. Please review the infrastructure design from an
+ML engineering perspective.
 
-  The project-specs.md is at: services/[project_name]/mlops/project-specs.md
+The project-specs.md is at: services/[project_name]/mlops/project-specs.md
 
-  Please assess:
-  1. Does the serving infrastructure match the model's actual requirements
-     (latency, memory, batch vs. real-time, GPU needs)?
-  2. Is the feature serving strategy appropriate for how features are used
-     at training time vs. inference time?
-  3. Are there model-specific operational concerns I haven't addressed
-     (e.g., warm-up behavior, memory growth, GPU memory fragmentation)?
-  4. Is the retraining pipeline design compatible with the model training
-     framework and artifact format?
-  5. Any risks or gaps from an ML perspective?
-  Keep the review focused — I've handled the operational design."
-)
+Please assess:
+1. Does the serving infrastructure match the model's actual requirements
+   (latency, memory, batch vs. real-time, GPU needs)?
+2. Is the feature serving strategy appropriate for how features are used
+   at training time vs. inference time?
+3. Are there model-specific operational concerns I haven't addressed
+   (e.g., warm-up behavior, memory growth, GPU memory fragmentation)?
+4. Is the retraining pipeline design compatible with the model training
+   framework and artifact format?
+5. Any risks or gaps from an ML perspective?
+Keep the review focused — I've handled the operational design.
 ```
 
 **Step 2: Invoke Syn for final review:**
 
 Tell the user: "Calling in Syn for final sign-off. Every project gets reviewed before we hand over the keys."
 
+{{consult syn entry=final_review task="Final review of MLOps engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of MLOps engineering project",
-  prompt="I am the MLOps Engineer shard. I've completed all phases for project
-  [project_name]. Please review the project-specs.md at
-  services/[project_name]/mlops/project-specs.md and provide your final review
-  verdict. This is an MLOps project — check for: business requirement coverage,
-  deployment design soundness, monitoring completeness, runbook quality, IaC
-  coverage, rollback plan, and whether the operational design can actually be
-  maintained by the team that will own it."
-)
+I am the MLOps Engineer shard. I've completed all phases for project
+[project_name]. Please review the project-specs.md at
+services/[project_name]/mlops/project-specs.md and provide your final review
+verdict. This is an MLOps project — check for: business requirement coverage,
+deployment design soundness, monitoring completeness, runbook quality, IaC
+coverage, rollback plan, and whether the operational design can actually be
+maintained by the team that will own it.
 ```
 
 Append both reviews to specs. Present to user.
@@ -59,15 +59,15 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review for MLOps engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review for MLOps engineering project",
-  prompt="CODE REVIEW MODE. I am the MLOps Engineer shard. Project: [project_name].
-  Directory: services/[project_name]/mlops/. Please review and fix the artifacts
-  produced. The project-specs.md is at services/[project_name]/mlops/project-specs.md
-  for context."
-)
+CODE REVIEW MODE. I am the MLOps Engineer shard. Project: [project_name].
+Directory: services/[project_name]/mlops/. Please review and fix the artifacts
+produced. The project-specs.md is at services/[project_name]/mlops/project-specs.md
+for context.
 ```
 
 Append Syn's code review summary to the specs.
@@ -87,7 +87,7 @@ Report contents:
 - Dependencies (external services, team actions required)
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Phase 7

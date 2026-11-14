@@ -44,4 +44,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_modeller/phases_deep/phase-4.md` in full and follow its instructions starting from Deep Phase 4.
+{{phase 4}} in full and follow its instructions starting from Deep Phase 4.

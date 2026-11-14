@@ -11,22 +11,22 @@ Goal: Understand what data exists and whether it's fit for purpose.
 
 In character and using your conversation styal tell the user you are consulting with the data modeller.
 
+{{consult data-modeller entry=review task="Explore data model for [study topic]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Explore data model for [study topic]",
-  prompt="I am the Data Scientist shard conducting a study on [topic]. I need to
-  understand the data model around [entities/concepts]. Please explore and return:
-  relevant tables with grain, relationships, key columns, and any quality concerns.
-  Focus on: [specific tables, entities, or business concepts].
-  Since I'll be building queries against these tables, please run grain validation
-  (PK uniqueness checks) on the key tables so I know the grain holds in practice."
-)
+I am the Data Scientist shard conducting a study on [topic]. I need to
+understand the data model around [entities/concepts]. Please explore and return:
+relevant tables with grain, relationships, key columns, and any quality concerns.
+Focus on: [specific tables, entities, or business concepts].
+Since I'll be building queries against these tables, please run grain validation
+(PK uniqueness checks) on the key tables so I know the grain holds in practice.
 ```
 
 **Greenfield handling:** Before presenting findings review the Data Modeller's response. 
 
-If it contains "NO DATA ENVIRONMENT DETECTED" follow the guidelines set in `.claude/agents/specific_instructions/data_scientist/greenfield_data.md` otherwise proceed with phase 2.
+If it contains "NO DATA ENVIRONMENT DETECTED" follow the guidelines set in [`modes/greenfield_data.md`](../modes/greenfield_data.md) otherwise proceed with phase 2.
 
 Present findings to the user, then ask:
 - What data sources are available? (intermediate, mart, source)
@@ -64,4 +64,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_scientist/phases/phase-3.md` in full and follow its instructions starting from Phase 3. Do not pre-read further phase files.
+{{phase 3}} in full and follow its instructions starting from Phase 3. Do not pre-read further phase files.

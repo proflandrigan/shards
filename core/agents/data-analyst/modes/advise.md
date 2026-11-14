@@ -44,10 +44,11 @@ what "adequate" actually means in this context.
 
 If the question touches statistical methodology or assumptions, consult the Researcher:
 
+{{consult researcher entry=service}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  prompt="""
 You are being consulted for a data analysis advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -57,8 +58,6 @@ You are being consulted for a data analysis advisory discussion.
 Please give a concise assessment — 3-5 sentences. What are the key statistical
 considerations or risks across these options? Which approach is more statistically
 sound, and why?
-  """
-)
 ```
 
 ---

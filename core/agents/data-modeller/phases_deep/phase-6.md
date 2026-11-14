@@ -7,13 +7,13 @@
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Build in this order:
 1. Source definitions
@@ -37,7 +37,7 @@ to validate" in the build log.
 > at the start of the post-build sweep and `::ENDAUTO::` at the end. The hook
 > auto-approves `dbt show`, `dbt ls`, and SELECT-only warehouse-CLI queries while
 > the block is open; `dbt build` and any write still prompt as normal. See
-> `specific_instructions/shared/auto_verify_mode.md`.
+> [`protocols/auto_verify_mode.md`](../../../protocols/auto_verify_mode.md).
 
 1. **Grain validation** (every model with a stated PK):
    ```sql
@@ -102,4 +102,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_modeller/phases_deep/phase-7.md` in full and follow its instructions starting from Deep Phase 7.
+{{phase 7}} in full and follow its instructions starting from Deep Phase 7.

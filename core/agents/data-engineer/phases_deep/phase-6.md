@@ -7,17 +7,17 @@
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 ### Incremental testing — checkpoint gates between layers
 
-Follow `.claude/agents/specific_instructions/shared/incremental_testing.md` during this build. Each layer below is a checkpoint seam — after a layer's models all build green and their tests pass, emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before advancing to the next layer. Do not chain `dbt build` across all layers in one shot and eyeball a pass/fail at the end.
+{{protocol incremental_testing}} during this build. Each layer below is a checkpoint seam — after a layer's models all build green and their tests pass, emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before advancing to the next layer. Do not chain `dbt build` across all layers in one shot and eyeball a pass/fail at the end.
 
 Checkpoint gate fence — emit exactly this shape. Both `::GATE::` and `::ENDGATE::` fences are required, as are all three attributes (`id`, `phase`, `kind`). No prose outside the fence.
 
@@ -63,7 +63,7 @@ fan-out in Phase 3, halt and diagnose before advancing to the next model.
 count-before / count-after queries is the bulk read-only verification pattern
 auto-verify is for. Open `::AUTO-VERIFY:: agent=data-engineer phase=6` before
 the sweep, `::ENDAUTO::` after. See
-`specific_instructions/shared/auto_verify_mode.md`.
+[`protocols/auto_verify_mode.md`](../../../protocols/auto_verify_mode.md).
 
 **SQL loading rule (Python scripts only)** — dbt model files are `.sql` by nature.
 If any Python scripts are produced (e.g., data loaders, custom macros, orchestration
@@ -99,4 +99,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_engineer/phases_deep/phase-7.md` in full and follow its instructions starting from Deep Phase 7.
+{{phase 7}} in full and follow its instructions starting from Deep Phase 7.

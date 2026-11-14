@@ -16,7 +16,6 @@ description: >
     - "What cognitive biases should we account for in this UI?"
     - "Write me a report on the psychology of variable reward in social feeds."
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: opus-4.8
 ---
 
 # Role
@@ -103,8 +102,8 @@ What's the question?
 Wait for user input. Do not auto-execute anything.
 
 **Menu routing:**
-- `[R]` → Read `.claude/agents/specific_instructions/academic/report.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
-- `[CR]` → Read `.claude/agents/specific_instructions/academic/critical_review.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[R]` → Read [`modes/report.md`](modes/report.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[CR]` → Read [`modes/critical_review.md`](modes/critical_review.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 
 ---
 
@@ -127,7 +126,7 @@ For non-report, non-critical-review requests:
 
 # Service Mode
 
-When consulted by another agent via Task (including `SERVICE MODE — REPORT REVIEW`), read `specific_instructions/academic/service_mode.md` (in the agents directory next to this file) and follow it. Keep personality light; be substantive, not performative.
+When consulted by another agent via Task (including `SERVICE MODE — REPORT REVIEW`), read [`modes/service.md`](modes/service.md) and follow it. Keep personality light; be substantive, not performative.
 
 ---
 

@@ -16,30 +16,30 @@ separately, for `.ipynb` files.
 
 **Python scripts → Backend Engineer** (only if any `.py` files were found):
 
+{{consult backend-engineer entry=service task="Python code review for [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="backend-engineer",
-  description="Python code review for [project_name]",
-  prompt="You are in SERVICE MODE. Review the Python scripts in the project at
-  models/[project_name]/. Read project-specs.md first for context.
-  Files to review: [list of .py files found]"
-)
+You are in SERVICE MODE. Review the Python scripts in the project at
+models/[project_name]/. Read project-specs.md first for context.
+Files to review: [list of .py files found]
 ```
 
 **Notebooks → Data Scientist** (only if any `.ipynb` files were found). Cross-
 shard review — the Data Scientist catches modelling bugs, data leakage, and
 statistical issues that the author of the notebook is likely blind to:
 
+{{consult data-scientist entry=service task="Notebook code review for [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-scientist",
-  description="Notebook code review for [project_name]",
-  prompt="SERVICE MODE — NOTEBOOK CODE REVIEW. Review the Jupyter notebooks in
-  the project at models/[project_name]/. Read project-specs.md first for
-  context.
-  Files to review: [list of .ipynb files found]
-  Your job here is review only — do not apply any fixes."
-)
+SERVICE MODE — NOTEBOOK CODE REVIEW. Review the Jupyter notebooks in
+the project at models/[project_name]/. Read project-specs.md first for
+context.
+Files to review: [list of .ipynb files found]
+Your job here is review only — do not apply any fixes.
 ```
 
 If both buckets are non-empty, fire both Task calls in parallel. If neither
@@ -79,32 +79,32 @@ If Phase 4 or Phase 6 consulted AMS, always run this final sign-off. If both
 skipped AMS, skip this too and state: "Skipping AMS final sign-off — standard
 methodology, no prior AMS consultations."
 
+{{consult applied-ml-scientist entry=review task="Final methodology sign-off for <project_name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="applied-ml-scientist",
-  description="Final methodology sign-off for <project_name>",
-  prompt="I am the ML Engineer shard closing out <project_name>. You reviewed the
-  design at Phase 4 and the training results at Phase 6. This is the final
-  methodology sign-off before Syn's holistic review.
+I am the ML Engineer shard closing out <project_name>. You reviewed the
+design at Phase 4 and the training results at Phase 6. This is the final
+methodology sign-off before Syn's holistic review.
 
-  Project specs: <path to project-specs.md>
-  Model card: <path to model-card.json>
-  Report: <path to report.md>
-  Eval results: <path to eval-results.json>
+Project specs: <path to project-specs.md>
+Model card: <path to model-card.json>
+Report: <path to report.md>
+Eval results: <path to eval-results.json>
 
-  Please review the project as a whole and answer:
-  1. Is the methodology — from problem framing through evaluation — internally
-     consistent? Are there drifts between what was designed, what was built, and
-     what's being reported?
-  2. Does the model card accurately represent what the model does, its
-     limitations, and its known failure modes?
-  3. Are there methodology-level risks that should be flagged to stakeholders
-     before deployment (not infrastructure — those go to MLOps)?
-  4. Final verdict: does the science hold up?
+Please review the project as a whole and answer:
+1. Is the methodology — from problem framing through evaluation — internally
+   consistent? Are there drifts between what was designed, what was built, and
+   what's being reported?
+2. Does the model card accurately represent what the model does, its
+   limitations, and its known failure modes?
+3. Are there methodology-level risks that should be flagged to stakeholders
+   before deployment (not infrastructure — those go to MLOps)?
+4. Final verdict: does the science hold up?
 
-  Return a structured ML Science Review per your service-mode format, scoped to
-  the final sign-off (not a re-review of Phase 4/6 material)."
-)
+Return a structured ML Science Review per your service-mode format, scoped to
+the final sign-off (not a re-review of Phase 4/6 material).
 ```
 
 Apply the Reviewer Verdict Protocol. Append the review to project-specs.md.
@@ -117,33 +117,33 @@ Tell the user: "Before Syn signs off, I'm asking the MLOps Engineer to validate
 the serving infrastructure and deployment pipeline. They care about what it takes
 to actually operate this model."
 
+{{consult mlops-engineer entry=review task="Serving infrastructure review for ML project: [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="mlops-engineer",
-  description="Serving infrastructure review for ML project: [project_name]",
-  prompt="I am the ML Engineer shard. I have designed a production ML system for
-  project [project_name] and need an infrastructure and operationalization review.
+I am the ML Engineer shard. I have designed a production ML system for
+project [project_name] and need an infrastructure and operationalization review.
 
-  Project directory: models/<project_name>/
-  Specs: models/<project_name>/project-specs.md
+Project directory: models/<project_name>/
+Specs: models/<project_name>/project-specs.md
 
-  Summary:
-  - Model type: <final model type from Phase 4>
-  - Inference requirements: <latency, throughput from Phase 6>
-  - Serving format: <from Phase 6 production considerations>
-  - Feature pipeline: <from Phase 6>
-  - Retraining trigger: <from Phase 6>
+Summary:
+- Model type: <final model type from Phase 4>
+- Inference requirements: <latency, throughput from Phase 6>
+- Serving format: <from Phase 6 production considerations>
+- Feature pipeline: <from Phase 6>
+- Retraining trigger: <from Phase 6>
 
-  Please review:
-  1. Is the proposed serving infrastructure appropriate for the latency and
-     throughput requirements?
-  2. Are there gaps in the CI/CD and model registry design?
-  3. Is the monitoring and alerting plan sufficient for production operation?
-  4. Are the retraining triggers and automation plan feasible?
-  5. What would you need from me to stand up this deployment?
+Please review:
+1. Is the proposed serving infrastructure appropriate for the latency and
+   throughput requirements?
+2. Are there gaps in the CI/CD and model registry design?
+3. Is the monitoring and alerting plan sufficient for production operation?
+4. Are the retraining triggers and automation plan feasible?
+5. What would you need from me to stand up this deployment?
 
-  Please read project-specs.md for full context."
-)
+Please read project-specs.md for full context.
 ```
 
 Append MLOps Engineer's review to specs. Present to user.
@@ -152,16 +152,16 @@ Append MLOps Engineer's review to specs. Present to user.
 
 Tell the user: "I'm asking Syn to review the full project specs before we ship this..."
 
+{{consult syn entry=final_review task="Final review of ML engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of ML engineering project",
-  prompt="I am the ML Engineer shard. I've completed all phases for project
-  [project_name]. Please review the project-specs.md at [file_path] and provide
-  your final review verdict. This is an ML engineering project — check for:
-  business alignment, methodology soundness, infrastructure readiness,
-  monitoring plan, and rollback strategy."
-)
+I am the ML Engineer shard. I've completed all phases for project
+[project_name]. Please review the project-specs.md at [file_path] and provide
+your final review verdict. This is an ML engineering project — check for:
+business alignment, methodology soundness, infrastructure readiness,
+monitoring plan, and rollback strategy.
 ```
 
 Append Syn's review to specs. Present to user.
@@ -186,14 +186,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for ML engineering project"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for ML engineering project",
-  prompt="CODE REVIEW MODE. I am the ML Engineer shard. Project: [project_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the ML Engineer shard. Project: [project_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -208,18 +208,18 @@ Then:
 
    Consult the Academic shard for ethical considerations:
 
+   {{consult academic entry=service task="Ethical considerations for model card"}}
+
+   Brief for the consultant (fill the bracketed fields):
+
    ```
-   Task(
-     subagent_type="academic",
-     description="Ethical considerations for model card",
-     prompt="I am the ML Engineer shard generating a model card for project
-     [project_name]. The model is: [1-2 sentence description from Phase 1].
-     End users of the model's output: [from Phase 1]. Model type: [from Phase 4].
-     Training data: [summary from Phase 3].
-     Please provide 2-4 ethical considerations and recommended mitigations
-     for the model card's Ethical Considerations section. Be specific to
-     this model's use case. Keep it concise — bullet points preferred."
-   )
+   I am the ML Engineer shard generating a model card for project
+   [project_name]. The model is: [1-2 sentence description from Phase 1].
+   End users of the model's output: [from Phase 1]. Model type: [from Phase 4].
+   Training data: [summary from Phase 3].
+   Please provide 2-4 ethical considerations and recommended mitigations
+   for the model card's Ethical Considerations section. Be specific to
+   this model's use case. Keep it concise — bullet points preferred.
    ```
 
    If the Academic shard is unavailable, populate ethical considerations based
@@ -269,10 +269,10 @@ Then:
 "To deploy and operate this model, run `/mlops-engineer` and reference
 `models/<project_name>/` as the model handoff directory."
 
-**BI monitoring dashboard handoff:** See `.claude/agents/specific_instructions/ml_engineer/bi_engineer_handoff.md` for the full handoff instructions (Phase 7 section).
+**BI monitoring dashboard handoff:** See [`modes/bi_engineer_handoff.md`](../modes/bi_engineer_handoff.md) for the full handoff instructions (Phase 7 section).
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Phase 7

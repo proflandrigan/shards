@@ -24,7 +24,7 @@ better fits.
   Step 7 pre-iteration). MCP calls modify the user's Google Drive, so they
   get gated.
 - Sub-agent verdicts — specialists return verdict strings, not `::GATE::`
-  fences. See `.claude/agents/specific_instructions/syn/final_review.md`.
+  fences. See [`modes/final_review.md`](final_review.md).
 
 ---
 
@@ -40,7 +40,7 @@ Ask in a single message:
    vs. exec readout vs. tutorial)?
 4. **Tone** — Formal exec / technical peer review / conference / casual internal?
 5. **MCP availability** — Do you have a Google Slides MCP configured in
-   `~/.claude/settings.json`? (If unsure, say so — I'll detect at build time
+   the host's user-level MCP server configuration? (If unsure, say so — I'll detect at build time
    and surface guidance if missing.)
 
 No gate. As soon as the user answers, derive `<deck_slug>` from the purpose
@@ -139,10 +139,13 @@ Announce the consultation to the user:
 
 > "Pulling in [specialist name(s)] for an outline gut-check before we build."
 
+Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+
+{{consult data-scientist entry=review}}
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<specialist>",
-  prompt="""
 You are in SLIDES REVIEW MODE — quick consultation only. No project setup,
 no phases, no spec file. Syn is building a presentation and wants your
 domain gut-check on the outline before any slides are created.
@@ -168,8 +171,6 @@ Review and return:
    layout choice would land better than prose
 
 Keep it tight. No preamble. Just the review.
-  """
-)
 ```
 
 After **each** Task call returns, immediately append that specialist's full
@@ -209,7 +210,7 @@ tools for one whose name ends in `create_presentation`.
 **If no Slides MCP is detected**, do not gate. Tell the user:
 
 > "I don't see a Google Slides MCP configured. To enable building, add one to
-> your user-level `~/.claude/settings.json` under `mcpServers`. The Shards
+> the host's user-level MCP server configuration. The Shards
 > guide page on Google Slides has setup instructions
 > (`docs/shards-guide/08-integrations/google-slides.md`). Want me to save the
 > spec doc and outline as a markdown-only deliverable for now? You can come
@@ -314,10 +315,13 @@ entirely. Go straight to Step 8.
 
 Same parallel-Task pattern as Step 3, with post-build framing:
 
+Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+
+{{consult data-scientist entry=review}}
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<specialist>",
-  prompt="""
 You are in SLIDES REVIEW MODE — post-build fidelity check.
 
 **Outline (approved final):**
@@ -335,8 +339,6 @@ Return:
    benefit from a chart, slide M is text-heavy, etc.
 
 Tight. No preamble.
-  """
-)
 ```
 
 Append responses to `## Step 6 — Build Review` in the spec doc verbatim, same

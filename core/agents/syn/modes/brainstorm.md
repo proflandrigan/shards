@@ -174,10 +174,13 @@ break the UI experience and the brainstorm semantics.
 
 Per-specialist Task call:
 
+Fan out one worker per slice (shown for `data-analyst`; use the specialist that owns the slices and name the slices accordingly):
+
+{{fanout data-analyst slices=1}}
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<specialist>",
-  prompt="""
 SYN BRAINSTORM CONSULT — Skip your activation menu, skip Phase 0, do not ask
 clarifying questions, do not invoke Syn for review. You are contributing ideas
 to a brainstorm Syn is facilitating, not executing a project.
@@ -204,8 +207,6 @@ At the very end of your response, on a single line, emit:
   HEADLINE: <one-line preview of your strongest idea, ≤120 chars>
 
 Syn parses this line to populate the brainstorm UI panel — do not omit it.
-  """
-)
 ```
 
 ### As each specialist Task returns
@@ -454,7 +455,7 @@ Respond to any of the following naturally:
   domain inputs surfaced 2–3 fundamentally different approach families that
   all look viable for the same metric-bounded problem) → Propose
   **Syn-initiated Autonomous Research (`[AR]`) fan-out** per
-  `.claude/agents/specific_instructions/shared/autonomous_research.md`
+  [`protocols/autonomous_research.md`](../../../protocols/autonomous_research.md)
   Section H.
 
   Preconditions (inherit from DIVERGE Section A):

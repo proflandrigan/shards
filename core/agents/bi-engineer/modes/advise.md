@@ -43,10 +43,11 @@ paths and context warrants it, but file reading is not required.
 If the question touches metric correctness or whether the data supports the proposed
 visualization, consult the Data Analyst:
 
+{{consult data-analyst entry=advise}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-analyst",
-  prompt="""
 You are being consulted for a BI engineering advisory discussion.
 
 **Question / decision:** <the question the user is working through>
@@ -55,8 +56,6 @@ You are being consulted for a BI engineering advisory discussion.
 
 Please give a concise assessment — 3-5 sentences — on the data analysis angle.
 Which visualization approach best represents the underlying data, and why?
-  """
-)
 ```
 
 ---

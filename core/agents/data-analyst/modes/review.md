@@ -41,10 +41,11 @@ Note any files you expected to find but couldn't locate.
 
 Call the Researcher to validate statistical methodology and assumptions:
 
+{{consult researcher entry=service}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  prompt="""
 You are being consulted to review the statistical methodology of an existing analysis.
 
 **Analysis under review:** <analysis name and brief description>
@@ -60,8 +61,6 @@ Please assess:
 4. One or two specific recommendations.
 
 Be direct and concise.
-  """
-)
 ```
 
 ---

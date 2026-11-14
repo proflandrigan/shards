@@ -101,10 +101,13 @@ Then proceed directly to Step 4.
 
 For non-trivial fixes, call the specialist:
 
+Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+
+{{consult data-scientist entry=review}}
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<specialist>",
-  prompt="""
 You are in FIXER MODE — quick consultation only. No project setup, no phases,
 no spec file. Syn is handling a quick fix and wants your domain review before
 applying it.
@@ -125,8 +128,6 @@ Review the proposed fix and return:
 3. **Alternative** (optional): if you'd do it differently, say how in 1-2 sentences
 
 Keep it tight. No preamble. No project setup. Just the review.
-  """
-)
 ```
 
 Announce the consultation to the user:

@@ -7,7 +7,7 @@
 
 Goal: Understand the operational requirements before designing the stack.
 
-Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the MLOps Engineer section in `.claude/agents/specific_instructions/shared/intent_discovery.md` for your domain probes.
+Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the MLOps Engineer section in [`protocols/intent_discovery.md`](../../../protocols/intent_discovery.md) for your domain probes.
 
 Surface these topics naturally when the user's responses lead there:
 - **Scale:** expected QPS for real-time serving, or batch volume and frequency
@@ -49,4 +49,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/mlops_engineer/phases/phase-2.md` in full and follow its instructions starting from Phase 2. Do not pre-read further phase files.
+{{phase 2}} in full and follow its instructions starting from Phase 2. Do not pre-read further phase files.

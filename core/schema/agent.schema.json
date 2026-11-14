@@ -29,6 +29,7 @@
         "service": { "$ref": "#/$defs/relpath" },
         "final_review": { "$ref": "#/$defs/relpath" },
         "arbiter": { "$ref": "#/$defs/relpath" },
+        "code_review": { "$ref": "#/$defs/relpath" },
         "worker": { "$ref": "#/$defs/relpath" }
       }
     },

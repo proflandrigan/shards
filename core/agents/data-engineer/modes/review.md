@@ -43,10 +43,11 @@ Note any files you expected to find but couldn't locate.
 
 **Data Modeller** — if the review touches grain, entity design, or schema correctness:
 
+{{consult data-modeller entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  prompt="""
 You are being consulted to assess schema correctness and grain for a pipeline review.
 
 **System under review:** <pipeline name and brief description>
@@ -60,8 +61,6 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 ---

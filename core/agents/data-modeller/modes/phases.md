@@ -47,13 +47,13 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 1. Implement the change in model SQL and .yml schema
 2. Update any downstream models that reference changed columns
@@ -66,7 +66,7 @@ Wait for any signal from the user before beginning build steps.
 5. Summarize what changed
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Quick Phase 2
@@ -160,56 +160,56 @@ these entities down..."
 
 Invoke both in parallel:
 
-```
-Task(
-  subagent_type="data-analyst",
-  description="Analytical requirements for [domain] schema entities",
-  prompt="I am the Data Modeller shard designing a new schema for [domain].
-  I've identified the following candidate entities:
-  [paste entity inventory table from above]
+{{consult data-analyst entry=review task="Analytical requirements for [domain] schema entities"}}
 
-  Phase 1 business context:
-  - Domain: [domain]
-  - Consumers: [consumers from Phase 1]
-  - Key questions this schema must answer: [questions from Phase 1]
-
-  Please explore and return:
-  1. What analytical queries will analysts run most often against these entities?
-  2. Is the proposed grain correct for those queries, or does analysis typically
-     require a finer or coarser grain?
-  3. Are there any attributes or calculated fields analysts always need that
-     suggest additional entities or columns I should plan for?
-  4. Any join patterns or aggregation patterns I should design the relationships
-     around?
-
-  Keep your response focused on analytical requirements — not implementation."
-)
-```
+Brief for the consultant (fill the bracketed fields):
 
 ```
-Task(
-  subagent_type="data-engineer",
-  description="Source data feasibility for [domain] schema entities",
-  prompt="I am the Data Modeller shard designing a new schema for [domain].
-  I've identified the following candidate entities:
-  [paste entity inventory table from above]
+I am the Data Modeller shard designing a new schema for [domain].
+I've identified the following candidate entities:
+[paste entity inventory table from above]
 
-  Phase 1 business context:
-  - Domain: [domain]
-  - Source of truth system: [source system from Phase 1]
-  - Consumers: [consumers from Phase 1]
+Phase 1 business context:
+- Domain: [domain]
+- Consumers: [consumers from Phase 1]
+- Key questions this schema must answer: [questions from Phase 1]
 
-  Please explore and return:
-  1. Which source systems or raw tables can supply data for each entity?
-  2. Are there existing staging or intermediate models I can build on?
-  3. What is the expected data volume and freshness for each entity's source?
-  4. Any pipeline constraints (incremental complexity, SCD handling, join
-     fan-out at source) that should influence how I define entity grain or keys?
-  5. Any source data quality issues I should factor into the entity design?
+Please explore and return:
+1. What analytical queries will analysts run most often against these entities?
+2. Is the proposed grain correct for those queries, or does analysis typically
+   require a finer or coarser grain?
+3. Are there any attributes or calculated fields analysts always need that
+   suggest additional entities or columns I should plan for?
+4. Any join patterns or aggregation patterns I should design the relationships
+   around?
 
-  Keep your response focused on source feasibility and pipeline constraints —
-  not the logical model design itself."
-)
+Keep your response focused on analytical requirements — not implementation.
+```
+
+{{consult data-engineer entry=review task="Source data feasibility for [domain] schema entities"}}
+
+Brief for the consultant (fill the bracketed fields):
+
+```
+I am the Data Modeller shard designing a new schema for [domain].
+I've identified the following candidate entities:
+[paste entity inventory table from above]
+
+Phase 1 business context:
+- Domain: [domain]
+- Source of truth system: [source system from Phase 1]
+- Consumers: [consumers from Phase 1]
+
+Please explore and return:
+1. Which source systems or raw tables can supply data for each entity?
+2. Are there existing staging or intermediate models I can build on?
+3. What is the expected data volume and freshness for each entity's source?
+4. Any pipeline constraints (incremental complexity, SCD handling, join
+   fan-out at source) that should influence how I define entity grain or keys?
+5. Any source data quality issues I should factor into the entity design?
+
+Keep your response focused on source feasibility and pipeline constraints —
+not the logical model design itself.
 ```
 
 After both return, summarize their key findings in 3-5 bullets and ask the user
@@ -365,13 +365,13 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Build in this order:
 1. Source definitions
@@ -457,14 +457,14 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 Tell the user: "I'm asking Syn to review the full project specs before we close this out..."
 
+{{consult syn entry=final_review task="Final review of data model specs"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of data model specs",
-  prompt="I am the Data Modeller shard. I've completed all phases for project
-  [project_name]. Please review the project-specs.md at [file_path] and provide
-  your final review verdict. Check for gaps, consistency, and completeness."
-)
+I am the Data Modeller shard. I've completed all phases for project
+[project_name]. Please review the project-specs.md at [file_path] and provide
+your final review verdict. Check for gaps, consistency, and completeness.
 ```
 
 Append Syn's review to the specs. Present it to the user.
@@ -473,14 +473,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for data model"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for data model",
-  prompt="CODE REVIEW MODE. I am the Data Modeller shard. Project: [project_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the Data Modeller shard. Project: [project_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -497,32 +497,32 @@ intermediate transforms, mart SQL, tests, and documentation)?
 
 If user says (a), invoke:
 
+{{consult analytics-engineer entry=review task="Physical dbt implementation of logical model: [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="analytics-engineer",
-  description="Physical dbt implementation of logical model: [project_name]",
-  prompt="I am the Data Modeller shard. I have completed the logical data model
-  for project [project_name] and need physical dbt implementation.
+I am the Data Modeller shard. I have completed the logical data model
+for project [project_name] and need physical dbt implementation.
 
-  Model specs: data_models/<project_name>/project-specs.md
+Model specs: data_models/<project_name>/project-specs.md
 
-  Summary:
-  - Entities modeled: <entity list from Phase 3>
-  - Source tables: <source list from Phase 1>
-  - Grain definitions: <from Phase 2>
-  - Key relationships: <from Phase 3>
-  - Proposed mart structure: <from Phase 4>
+Summary:
+- Entities modeled: <entity list from Phase 3>
+- Source tables: <source list from Phase 1>
+- Grain definitions: <from Phase 2>
+- Key relationships: <from Phase 3>
+- Proposed mart structure: <from Phase 4>
 
-  Please implement:
-  1. Staging models for each source
-  2. Intermediate transforms as needed
-  3. Mart models matching the logical model's entity grain
-  4. dbt schema tests (uniqueness, not-null, accepted values, relationships)
-  5. Column-level documentation
+Please implement:
+1. Staging models for each source
+2. Intermediate transforms as needed
+3. Mart models matching the logical model's entity grain
+4. dbt schema tests (uniqueness, not-null, accepted values, relationships)
+5. Column-level documentation
 
-  Please read data_models/<project_name>/project-specs.md for full context and the
-  complete ER diagram."
-)
+Please read data_models/<project_name>/project-specs.md for full context and the
+complete ER diagram.
 ```
 
 Document the outcome in Phase 7 specs.
@@ -538,7 +538,7 @@ Then:
 8. Ask if consumer needs a handoff artifact
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Deep Phase 7

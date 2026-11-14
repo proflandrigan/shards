@@ -7,51 +7,51 @@
 
 **Context checkpoint:** Before building, prompt the user:
 
-"Planning's locked — good moment to run `/compact` or `/clear` before we start
+"Planning's locked — good moment to trim or reset your context before we start
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** Follow `.claude/agents/specific_instructions/shared/knowledge_checkpoint.md` before building.
+**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
 
 Goal: Build the feature queries, training notebook, and pipeline artifacts.
 
 **Join path self-check (feature queries):** Before requesting the Data Modeller
 review, trace the join path for each feature query following
-`.claude/agents/specific_instructions/shared/join_path_protocol.md`. Present the
+[`protocols/join_path.md`](../../../protocols/join_path.md). Present the
 trace to the user. Include it in the DM prompt below.
 
 **Then request Data Modeller query review with validation:**
 
 Tell the user: "Pulling in the Data Modeller to verify the feature extraction queries. Feature pipeline built on bad grain assumptions is a training set problem. I'm not building until this is confirmed."
 
+{{consult data-modeller entry=review task="Review ML feature queries for [project]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Review ML feature queries for [project]",
-  prompt="I am the ML Engineer shard. I've written feature extraction queries for
-  project [name]. The project specs are at: [services|<existing_dir>]/[name]/project-specs.md
+I am the ML Engineer shard. I've written feature extraction queries for
+project [name]. The project specs are at: [services|<existing_dir>]/[name]/project-specs.md
 
-  Here are the queries:
-  [include query outlines or key SQL]
+Here are the queries:
+[include query outlines or key SQL]
 
-  Please REVIEW (not just explore): Do the joins make sense given the data model
-  grain? Are there grain fan-out risks? Am I using the right tables for these
-  features?
+Please REVIEW (not just explore): Do the joins make sense given the data model
+grain? Are there grain fan-out risks? Am I using the right tables for these
+features?
 
-  Run validation queries to check:
-  1. PK uniqueness on all tables referenced in these queries
-  2. Null rates on join keys and key feature source columns
-  3. Join fan-out: row counts before/after the joins in my feature queries
-  4. Data freshness on the tables feeding features
+Run validation queries to check:
+1. PK uniqueness on all tables referenced in these queries
+2. Null rates on join keys and key feature source columns
+3. Join fan-out: row counts before/after the joins in my feature queries
+4. Data freshness on the tables feeding features
 
-  Cross-reference against the project requirements in project-specs.md
-  (especially Phase 3 feature candidates and Phase 5 data freshness requirements).
-  This is for ML feature engineering — pay special attention to fan-out that would
-  silently inflate training examples.
-  Return your full review with query validation results."
-)
+Cross-reference against the project requirements in project-specs.md
+(especially Phase 3 feature candidates and Phase 5 data freshness requirements).
+This is for ML feature engineering — pay special attention to fan-out that would
+silently inflate training examples.
+Return your full review with query validation results.
 ```
 
 The Data Modeller will run a bulk read-only validation sweep — that's an
@@ -174,46 +174,46 @@ the bulk queries.
    training results — loss curves, eval metrics, model behavior. Design review
    is cheap; results review catches what theory missed."
 
+   {{consult applied-ml-scientist entry=review task="Training results review for <project_name>"}}
+
+   Brief for the consultant (fill the bracketed fields):
+
    ```
-   Task(
-     subagent_type="applied-ml-scientist",
-     description="Training results review for <project_name>",
-     prompt="I am the ML Engineer shard. I've trained baseline and candidate
-     models for <project_name>. You reviewed the design at Phase 4 — now I need
-     you to review the actual results.
+   I am the ML Engineer shard. I've trained baseline and candidate
+   models for <project_name>. You reviewed the design at Phase 4 — now I need
+   you to review the actual results.
 
-     Project specs: <path to project-specs.md>
-     Eval results: <path to eval-results.json>
-     Notebook: <path to training notebook>
+   Project specs: <path to project-specs.md>
+   Eval results: <path to eval-results.json>
+   Notebook: <path to training notebook>
 
-     Baseline results:
-     - Model: <type>
-     - Key metrics: <metric>: <value>, <metric>: <value>
+   Baseline results:
+   - Model: <type>
+   - Key metrics: <metric>: <value>, <metric>: <value>
 
-     Best candidate results:
-     - Model: <type>
-     - Key metrics: <metric>: <value>, <metric>: <value>
-     - Delta vs baseline: <delta>
+   Best candidate results:
+   - Model: <type>
+   - Key metrics: <metric>: <value>, <metric>: <value>
+   - Delta vs baseline: <delta>
 
-     Training artifacts available:
-     - Loss curves: <notebook cell or plot path>
-     - Learning curves (train vs val): <notebook cell or plot path>
-     - Error analysis: <notebook cell or plot path if present>
-     - Feature importance / SHAP: <notebook cell or plot path if present>
+   Training artifacts available:
+   - Loss curves: <notebook cell or plot path>
+   - Learning curves (train vs val): <notebook cell or plot path>
+   - Error analysis: <notebook cell or plot path if present>
+   - Feature importance / SHAP: <notebook cell or plot path if present>
 
-     Please review the actual results and flag:
-     1. Training dynamics — do loss/learning curves look healthy, or do you see
-        signs of underfitting, overfitting, instability, or premature convergence?
-     2. Result plausibility — does the baseline-to-candidate lift match what
-        the methodology predicted, or is something suspicious (too-good-to-be-true
-        metrics, unexplained gaps between validation and test)?
-     3. Error structure — does the error analysis reveal any systematic failure
-        modes that suggest a methodology adjustment?
-     4. Are there concrete next iterations from the literature that would address
-        observable gaps in current performance?
+   Please review the actual results and flag:
+   1. Training dynamics — do loss/learning curves look healthy, or do you see
+      signs of underfitting, overfitting, instability, or premature convergence?
+   2. Result plausibility — does the baseline-to-candidate lift match what
+      the methodology predicted, or is something suspicious (too-good-to-be-true
+      metrics, unexplained gaps between validation and test)?
+   3. Error structure — does the error analysis reveal any systematic failure
+      modes that suggest a methodology adjustment?
+   4. Are there concrete next iterations from the literature that would address
+      observable gaps in current performance?
 
-     Return a structured ML Science Review per your service-mode format."
-   )
+   Return a structured ML Science Review per your service-mode format.
    ```
 
    Apply the Reviewer Verdict Protocol. Append the review to project-specs.md
@@ -221,7 +221,7 @@ the bulk queries.
 
 ### Incremental testing — checkpoint gates between components
 
-Follow `.claude/agents/specific_instructions/shared/incremental_testing.md` during this build. Each component above is a checkpoint seam — after you write and execute a component, emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before starting the next component. Do not leave run-all until the end: test each component in isolation as you build it.
+{{protocol incremental_testing}} during this build. Each component above is a checkpoint seam — after you write and execute a component, emit a `kind=checkpoint` gate fence (template below) and wait for user confirmation before starting the next component. Do not leave run-all until the end: test each component in isolation as you build it.
 
 Checkpoint gate fence — emit exactly this shape. Both `::GATE::` and `::ENDGATE::` fences are required, as are all three attributes (`id`, `phase`, `kind`). No prose outside the fence.
 
@@ -292,4 +292,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-If Phase 6.5 is applicable for this project (based on the state classification in this phase), read `.claude/agents/specific_instructions/ml_engineer/phases/phase-6-5.md` in full and follow its instructions. Otherwise, read `.claude/agents/specific_instructions/ml_engineer/phases/phase-7.md` in full and follow its instructions starting from Phase 7. Do not pre-read further phase files.
+If Phase 6.5 is applicable for this project (based on the state classification in this phase), {{phase 6-5}} in full and follow its instructions. Otherwise, {{phase 7}} in full and follow its instructions starting from Phase 7. Do not pre-read further phase files.

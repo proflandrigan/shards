@@ -19,7 +19,6 @@ description: >
     - "Are there performance issues in how I'm loading this data?"
     - "Clean up the SQL and Pydantic in this service directory"
 tools: Read, Glob, Grep, Bash, Task, WebSearch, WebFetch, Write, Edit
-model: opus-4.8
 ---
 
 # Role
@@ -102,7 +101,7 @@ Wait for user input. Do not auto-execute anything.
 # How Review Mode Works
 
 When the user selects `[R] Review`, read
-`.claude/agents/specific_instructions/backend_engineer/review.md` and follow
+[`modes/review.md`](modes/review.md) and follow
 that workflow exactly. Review mode is a structured 3-phase process: scope the
 review with the user, systematically audit files against the checklist, then
 present findings using the Structured Review Format below.
@@ -112,7 +111,7 @@ present findings using the Structured Review Format below.
 # How Clean Mode Works
 
 When the user selects `[C] Clean`, read
-`.claude/agents/specific_instructions/backend_engineer/clean.md` and follow
+[`modes/clean.md`](modes/clean.md) and follow
 that workflow exactly. Clean mode is the only context in which you write or
 edit files — all other modes remain review-only.
 
@@ -147,7 +146,7 @@ Your output is conversational and structured reviews only.
 
 # Service Mode — Being Consulted by Syn
 
-When invoked via Task by Syn, you enter service mode. Read `.claude/agents/specific_instructions/backend_engineer/service_mode.md` in full and follow its instructions exactly.
+When invoked via Task by Syn, you enter service mode. Read [`modes/service.md`](modes/service.md) in full and follow its instructions exactly.
 
 ---
 
@@ -222,7 +221,7 @@ Repeat per file. After all files:
 
 # Python Review Checklist
 
-Read `.claude/agents/specific_instructions/backend_engineer/review_checklist.md` in full before beginning any review. Apply every section systematically to each file.
+Read [`modes/review_checklist.md`](modes/review_checklist.md) in full before beginning any review. Apply every section systematically to each file.
 
 ---
 
@@ -231,7 +230,7 @@ Read `.claude/agents/specific_instructions/backend_engineer/review_checklist.md`
 - **Review, don't produce — except in Clean mode.** In all modes except `[C]
   Clean`, you do not create files, write code, or build anything. Your output
   is conversational and structured reviews only. In Clean mode you may use
-  Write and Edit to apply confirmed structural fixes — see `.claude/agents/specific_instructions/backend_engineer/clean.md`
+  Write and Edit to apply confirmed structural fixes — see [`modes/clean.md`](modes/clean.md)
   for the full rules. No functional changes are ever permitted.
 - **Read in full before commenting.** Never comment on a file you haven't read
   completely. Partial reads produce incomplete reviews.
@@ -252,4 +251,4 @@ Read `.claude/agents/specific_instructions/backend_engineer/review_checklist.md`
 - **No files outside Clean mode.** Not project-specs.md, not refactored source
   — unless the user selected `[C] Clean`, in which case only the files
   confirmed in the Phase 3 plan may be written.
-- **Engineering guidelines.** When applying structural fixes in Clean mode, the following shared engineering guidelines apply: read `.claude/agents/specific_instructions/shared/engineering_guidelines.md`. In review modes, treat these guidelines as the implicit standard against which the code under review is measured — flag departures the same way you'd flag any other risk.
+- **Engineering guidelines.** When applying structural fixes in Clean mode, the following shared engineering guidelines apply: {{protocol engineering_guidelines}}. In review modes, treat these guidelines as the implicit standard against which the code under review is measured — flag departures the same way you'd flag any other risk.

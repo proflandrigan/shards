@@ -16,14 +16,14 @@ Glob the project directory (`studies/<study_name>/`) for `.py` files,
 
 **Python scripts → Backend Engineer** (only if any `.py` files were found):
 
+{{consult backend-engineer entry=service task="Python code review for [study_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="backend-engineer",
-  description="Python code review for [study_name]",
-  prompt="You are in SERVICE MODE. Review the Python scripts in the project at
-  studies/[study_name]/. Read project-specs.md first for context.
-  Files to review: [list of .py files found]"
-)
+You are in SERVICE MODE. Review the Python scripts in the project at
+studies/[study_name]/. Read project-specs.md first for context.
+Files to review: [list of .py files found]
 ```
 
 **Notebooks → ML Engineer** (only if any `.ipynb` files were found). Cross-
@@ -31,16 +31,16 @@ shard review — the ML Engineer catches code quality, modelling, and
 production-alignment issues that the author of the notebook is likely blind
 to:
 
+{{consult ml-engineer entry=service task="Notebook code review for [study_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Notebook code review for [study_name]",
-  prompt="SERVICE MODE — NOTEBOOK CODE REVIEW. Review the Jupyter notebooks in
-  the project at studies/[study_name]/. Read project-specs.md first for
-  context.
-  Files to review: [list of .ipynb files found]
-  Your job here is review only — do not apply any fixes."
-)
+SERVICE MODE — NOTEBOOK CODE REVIEW. Review the Jupyter notebooks in
+the project at studies/[study_name]/. Read project-specs.md first for
+context.
+Files to review: [list of .ipynb files found]
+Your job here is review only — do not apply any fixes.
 ```
 
 **SQL queries → Analytics Engineer** (only if any `.sql` files were found).
@@ -48,27 +48,27 @@ Cross-shard review — the AE catches grain, fan-out, and source-layer issues
 that the Data Scientist may have missed, and validates each query under
 LIMIT 100:
 
+{{consult analytics-engineer entry=service task="SQL code review + LIMIT 100 validation for [study_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="analytics-engineer",
-  description="SQL code review + LIMIT 100 validation for [study_name]",
-  prompt="SERVICE MODE — CODE REVIEW. Review the following SQL files in
-  studies/[study_name]/. Read project-specs.md first for context.
-  Files to review: [list of .sql files found]
+SERVICE MODE — CODE REVIEW. Review the following SQL files in
+studies/[study_name]/. Read project-specs.md first for context.
+Files to review: [list of .sql files found]
 
-  Beyond the standard code review pass (correctness, quality, security,
-  performance, domain fit), please ALSO execute each query under LIMIT 100
-  and report:
-  - Row count under LIMIT, column list, and dtypes
-  - Join fan-out (multi-table queries only): left row count vs. joined row count
-  - Any unexpected NULLs on join keys or critical filter columns
-  - Match against the Phase 3 grain and join path documented in project-specs.md
+Beyond the standard code review pass (correctness, quality, security,
+performance, domain fit), please ALSO execute each query under LIMIT 100
+and report:
+- Row count under LIMIT, column list, and dtypes
+- Join fan-out (multi-table queries only): left row count vs. joined row count
+- Any unexpected NULLs on join keys or critical filter columns
+- Match against the Phase 3 grain and join path documented in project-specs.md
 
-  The LIMIT 100 sweep is a read-only validation — feel free to open an
-  ::AUTO-VERIFY:: marker if it speeds up your run.
+The LIMIT 100 sweep is a read-only validation — feel free to open an
+::AUTO-VERIFY:: marker if it speeds up your run.
 
-  Your job here is review + validation only — do not apply any fixes."
-)
+Your job here is review + validation only — do not apply any fixes.
 ```
 
 If two or more buckets are non-empty, fire all Task calls in parallel. If all
@@ -98,15 +98,15 @@ Append all reviews to project-specs.md under a combined `Code Review` heading.
 
 Tell the user: "I'm asking Syn to review the full project specs before we wrap this up..."
 
+{{consult syn entry=final_review task="Final review of data science study"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Final review of data science study",
-  prompt="I am the Data Scientist shard. I've completed all phases for study
-  [study_name]. Please review the project-specs.md at [file_path] and provide
-  your final review verdict. Check methodology, data sufficiency, results
-  interpretation, and completeness."
-)
+I am the Data Scientist shard. I've completed all phases for study
+[study_name]. Please review the project-specs.md at [file_path] and provide
+your final review verdict. Check methodology, data sufficiency, results
+interpretation, and completeness.
 ```
 
 Append Syn's review to specs. Present to user.
@@ -131,14 +131,14 @@ If Syn's review includes a "Code Review" section with `Code artifacts found: Yes
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
 - If yes, invoke:
 
+{{consult syn entry=code_review task="Code review and fix for data science study"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="syn",
-  description="Code review and fix for data science study",
-  prompt="CODE REVIEW MODE. I am the Data Scientist shard. Project: [study_name].
-  Directory: [project_dir]. Please review and fix the code artifacts produced
-  in this project. The project-specs.md is at [file_path] for context."
-)
+CODE REVIEW MODE. I am the Data Scientist shard. Project: [study_name].
+Directory: [project_dir]. Please review and fix the code artifacts produced
+in this project. The project-specs.md is at [file_path] for context.
 ```
 
 Append Syn's code review summary to the specs. Present findings to user.
@@ -154,12 +154,12 @@ Then:
 4. Flag open questions or follow-up analyses
 5. Ask if the result answered the original decision question
 
-6. **If Deployment intent was "Productionized"** see `.claude/agents/specific_instructions/data_scientist/ml_engineer_handoff.md` for the full handoff instructions (Phase 7, Step 6 section).
+6. **If Deployment intent was "Productionized"** see [`modes/ml_engineer_handoff.md`](../modes/ml_engineer_handoff.md) for the full handoff instructions (Phase 7, Step 6 section).
 
-7. **BI dashboard handoff (recurring visualizations):** See `.claude/agents/specific_instructions/data_scientist/bi_engineer_handoff.md` for the full handoff instructions (Phase 7, Step 7 section).
+7. **BI dashboard handoff (recurring visualizations):** See [`modes/bi_engineer_handoff.md`](../modes/bi_engineer_handoff.md) for the full handoff instructions (Phase 7, Step 7 section).
 
 **Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-Read `.claude/agents/specific_instructions/shared/knowledge_harvest.md` and follow
+{{protocol knowledge_harvest}} and follow
 the protocol. Present candidates to the user for confirmation before writing.
 
 ### Document Phase 7

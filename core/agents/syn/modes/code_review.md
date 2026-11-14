@@ -47,30 +47,30 @@ non-empty, call them in parallel.
 
 If any `.sql` files were found:
 
+{{consult analytics-engineer entry=service task="SQL code review for <project_name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="analytics-engineer",
-  description="SQL code review for <project_name>",
-  prompt="SERVICE MODE — CODE REVIEW. Review the following SQL files in
-  <project_dir>. Read project-specs.md first for context.
-  Files to review: <list>
-  Your job here is review only — do not apply any fixes."
-)
+SERVICE MODE — CODE REVIEW. Review the following SQL files in
+<project_dir>. Read project-specs.md first for context.
+Files to review: <list>
+Your job here is review only — do not apply any fixes.
 ```
 
 **Step 3b: Backend Engineer reviews Python scripts**
 
 If any `.py` files were found:
 
+{{consult backend-engineer entry=service task="Python code review for <project_name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="backend-engineer",
-  description="Python code review for <project_name>",
-  prompt="You are in SERVICE MODE. Review the following Python scripts in
-  <project_dir>. Read project-specs.md first for context.
-  Files to review: <list of .py paths>
-  Your job here is review only — do not apply any fixes."
-)
+You are in SERVICE MODE. Review the following Python scripts in
+<project_dir>. Read project-specs.md first for context.
+Files to review: <list of .py paths>
+Your job here is review only — do not apply any fixes.
 ```
 
 The Backend Engineer reviews `.py` only. Notebooks go to the Data Scientist or
@@ -81,15 +81,17 @@ ML Engineer — see Step 3c.
 If any `.ipynb` files were found, invoke whichever reviewer was picked in
 Step 2a:
 
+Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+
+{{consult data-scientist entry=service task="Notebook code review for <project_name>"}}
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<data-scientist|ml-engineer>",
-  description="Notebook code review for <project_name>",
-  prompt="SERVICE MODE — NOTEBOOK CODE REVIEW. Review the following Jupyter
-  notebooks in <project_dir>. Read project-specs.md first for context.
-  Files to review: <list of .ipynb paths>
-  Your job here is review only — do not apply any fixes."
-)
+SERVICE MODE — NOTEBOOK CODE REVIEW. Review the following Jupyter
+notebooks in <project_dir>. Read project-specs.md first for context.
+Files to review: <list of .ipynb paths>
+Your job here is review only — do not apply any fixes.
 ```
 
 The notebook reviewer applies a notebook-aware checklist covering code
@@ -101,15 +103,15 @@ Engineer — that path is deprecated.
 
 If any config/infra files were found:
 
+{{consult mlops-engineer entry=service task="Config/infra code review for <project_name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="mlops-engineer",
-  description="Config/infra code review for <project_name>",
-  prompt="SERVICE MODE — CODE REVIEW. Review the following config/infra files
-  in <project_dir>. Read project-specs.md first for context.
-  Files to review: <list>
-  Your job here is review only — do not apply any fixes."
-)
+SERVICE MODE — CODE REVIEW. Review the following config/infra files
+in <project_dir>. Read project-specs.md first for context.
+Files to review: <list>
+Your job here is review only — do not apply any fixes.
 ```
 
 Incorporate each returned review wholesale — do not re-review any files yourself.
@@ -137,64 +139,66 @@ Syn does not call Edit on any project files directly.
 
 If SQL fixes were approved:
 
+{{consult analytics-engineer entry=service task="Apply SQL fixes for <project_name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="analytics-engineer",
-  description="Apply SQL fixes for <project_name>",
-  prompt="SERVICE MODE — APPLY FIXES. The user has approved the following
-  fixes to SQL files in <project_dir>.
-  Files and fixes: <paste the Analytics Engineer's per-file findings>
-  Use the Edit tool to apply each fix. Return a per-file summary of what
-  was changed."
-)
+SERVICE MODE — APPLY FIXES. The user has approved the following
+fixes to SQL files in <project_dir>.
+Files and fixes: <paste the Analytics Engineer's per-file findings>
+Use the Edit tool to apply each fix. Return a per-file summary of what
+was changed.
 ```
 
 **Step 5b: Backend Engineer applies Python script fixes**
 
 If Python script fixes were approved:
 
+{{consult backend-engineer entry=service task="Apply Python fixes for <project_name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="backend-engineer",
-  description="Apply Python fixes for <project_name>",
-  prompt="SERVICE MODE — APPLY FIXES. The user has approved the following
-  fixes to Python scripts in <project_dir>.
-  Files and fixes: <paste the Backend Engineer's per-file findings>
-  Use the Edit tool to apply each fix. Return a per-file summary of what
-  was changed."
-)
+SERVICE MODE — APPLY FIXES. The user has approved the following
+fixes to Python scripts in <project_dir>.
+Files and fixes: <paste the Backend Engineer's per-file findings>
+Use the Edit tool to apply each fix. Return a per-file summary of what
+was changed.
 ```
 
 **Step 5c: Notebook reviewer applies notebook fixes**
 
 If notebook fixes were approved, invoke the same reviewer chosen in Step 2a:
 
+Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+
+{{consult data-scientist entry=service task="Apply notebook fixes for <project_name>"}}
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<data-scientist|ml-engineer>",
-  description="Apply notebook fixes for <project_name>",
-  prompt="SERVICE MODE — APPLY NOTEBOOK FIXES. The user has approved the
-  following fixes to Jupyter notebooks in <project_dir>.
-  Files and fixes: <paste the notebook reviewer's per-file findings>
-  Use the NotebookEdit tool to apply each fix. Return a per-notebook summary
-  of what was changed."
-)
+SERVICE MODE — APPLY NOTEBOOK FIXES. The user has approved the
+following fixes to Jupyter notebooks in <project_dir>.
+Files and fixes: <paste the notebook reviewer's per-file findings>
+Use the NotebookEdit tool to apply each fix. Return a per-notebook summary
+of what was changed.
 ```
 
 **Step 5d: MLOps Engineer applies config/infra fixes**
 
 If config/infra fixes were approved:
 
+{{consult mlops-engineer entry=service task="Apply config/infra fixes for <project_name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="mlops-engineer",
-  description="Apply config/infra fixes for <project_name>",
-  prompt="SERVICE MODE — APPLY FIXES. The user has approved the following
-  fixes to config/infra files in <project_dir>.
-  Files and fixes: <paste the MLOps Engineer's per-file findings>
-  Use the Edit tool to apply each fix. Return a per-file summary of what
-  was changed."
-)
+SERVICE MODE — APPLY FIXES. The user has approved the following
+fixes to config/infra files in <project_dir>.
+Files and fixes: <paste the MLOps Engineer's per-file findings>
+Use the Edit tool to apply each fix. Return a per-file summary of what
+was changed.
 ```
 
 **Step 6: Return summary**

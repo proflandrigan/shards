@@ -43,10 +43,11 @@ Note any files you expected to find but couldn't locate.
 **Data Analyst** — if the review touches metric correctness or whether the right
 data is being visualized:
 
+{{consult data-analyst entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-analyst",
-  prompt="""
 You are being consulted to assess metric correctness for a dashboard review.
 
 **Dashboard under review:** <dashboard name and brief description>
@@ -62,17 +63,16 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 **Analytics Engineer** — if the review touches whether the correct marts are being
 used or whether the data layer is sound:
 
+{{consult analytics-engineer entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="analytics-engineer",
-  prompt="""
 You are being consulted to assess data model correctness for a dashboard review.
 
 **Dashboard under review:** <dashboard name and brief description>
@@ -88,8 +88,6 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 ---

@@ -232,11 +232,13 @@ context loss within the same lens.
 Call **all Tasks in a single message with multiple Task content blocks** —
 parallel, not sequential.
 
+Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+
+{{consult data-scientist entry=service task="Panel review for <dirname>"}}
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<specialist>",
-  description="Panel review for <dirname>",
-  prompt="""
 SERVICE MODE — PANEL REVIEW. Review the listed files in <target_dir>.
 
 **Target directory:** <target_dir>
@@ -255,8 +257,6 @@ may surface in a sequenced fix plan, so call out:
 - Suggested fix (one-liner or short snippet)
 
 Your job here is review only — do not apply any fixes.
-"""
-)
 ```
 
 For the **Researcher** specifically (if in the panel), use the same Task
@@ -264,11 +264,11 @@ wrapper but a Researcher-specific prompt body that itemizes notebooks, SQL,
 and reports separately so the Researcher can apply the right lens to each
 artifact type:
 
+{{consult researcher entry=service task="Panel review for <dirname>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Panel review for <dirname>",
-  prompt="""
 SERVICE MODE — PANEL REVIEW. Statistical methodology review.
 
 **Target directory:** <target_dir>
@@ -288,8 +288,6 @@ Stay in your statistical lane — sampling, distributions, assumptions, outliers
 power, multiple-testing, independence, group construction. Do NOT review grain,
 joins, dbt structure, performance, or Python style — those are other reviewers'
 lanes. Review only — do not apply any fixes.
-"""
-)
 ```
 
 ### Append findings as each Task returns
@@ -494,11 +492,15 @@ multiple Task blocks).
 
 #### Standard fix dispatch (domain reviewer applies the fix)
 
+Fan out one worker per slice (shown for `data-scientist`; use the specialist that owns the slices and name the slices accordingly):
+
+{{fanout data-scientist slices=fix_a,fix_b}}
+
+Per-slice task: Apply fix <ID> in <dirname>
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<owning specialist>",
-  description="Apply fix <ID> in <dirname>",
-  prompt="""
 SERVICE MODE — APPLY FIXES. The user has approved the following fix.
 
 **Target directory:** <target_dir>
@@ -512,8 +514,6 @@ Use the Edit tool (or NotebookEdit for .ipynb) to apply the fix. Do not exceed
 the scope of this fix. Return:
 - A one-line summary of the change
 - Verbatim the before/after diff or cell content
-"""
-)
 ```
 
 #### Researcher fix routing
@@ -523,11 +523,15 @@ reviewer** (the domain reviewer from Phase 1). The Researcher does not apply
 fixes — its recommendations are embedded in the fix prompt to that domain
 reviewer:
 
+Fan out one worker per slice (shown for `data-scientist`; use the specialist that owns the slices and name the slices accordingly):
+
+{{fanout data-scientist slices=fix_a,fix_b}}
+
+Per-slice task: Apply Researcher-flagged fix <ID> in <dirname>
+
+Brief for each consultant or worker (fill the angle-bracket fields):
+
 ```
-Task(
-  subagent_type="<bucket primary, e.g. data-scientist or analytics-engineer>",
-  description="Apply Researcher-flagged fix <ID> in <dirname>",
-  prompt="""
 SERVICE MODE — APPLY FIXES. The Researcher (statistical methodology shard)
 flagged a methodological issue. The user has approved the fix. You are the
 domain reviewer for this artifact — apply the fix.
@@ -542,8 +546,6 @@ Apply the fix using Edit (or NotebookEdit for .ipynb). If you disagree with the
 recommendation on technical grounds, flag the disagreement in your response and
 do NOT apply — Syn will resurface to the user. Otherwise return the standard
 before/after diff.
-"""
-)
 ```
 
 ### After group N completes

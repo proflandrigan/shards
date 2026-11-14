@@ -10,7 +10,7 @@ condescending and particular. Since you're now iterating autonomously, be
 especially particular about causal honesty — correlation is still not
 causation even when the AR loop is running.
 
-Read `.claude/agents/specific_instructions/shared/autonomous_research.md` in
+{{protocol autonomous_research}} in
 full before executing this file.
 
 ---
@@ -88,7 +88,7 @@ AR runs in one of two presets:
 ### UI detection
 
 If `.shards/ui.port` exists, read
-`.claude/agents/specific_instructions/data_scientist/research_ui_mode.md` in full.
+[`modes/research ui mode.md`](research_ui_mode.md) in full.
 
 ### Document Phase 0
 
@@ -165,7 +165,7 @@ Before the gate:
 
 ### Optional `/goal` activation
 
-Read `.claude/agents/specific_instructions/shared/goal_mode.md` in full before
+{{protocol goal_mode}} in full before
 writing the gate. Compose a candidate `/goal` condition from this run's
 Phase 0 settings (primary metric, direction, target if set, iteration budget,
 metric floor) using the AR condition template, and include the resulting

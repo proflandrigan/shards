@@ -23,21 +23,21 @@ availability rather than full discovery.
 
 Tell the user: "Pulling in the Data Modeller. Feature definitions have to be grounded in actual data models, not what we hope exists."
 
+{{consult data-modeller entry=review task="Explore data model for ML features"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Explore data model for ML features",
-  prompt="I am the ML Engineer shard building an ML system for [purpose]. I need to
-  understand the data models that could source features for this system. Specifically:
-  1. What tables capture [relevant entities and events]?
-  2. What's the grain and freshness of each?
-  3. How do they relate to each other (join keys, cardinality)?
-  4. Any data quality concerns?
-  5. Which tables are available in real-time vs. batch only?
-  Focus on: [specific entities, events, or business concepts].
-  Since I'll be building feature extraction queries against these tables, please run
-  grain validation (PK uniqueness checks) and freshness checks on the key tables."
-)
+I am the ML Engineer shard building an ML system for [purpose]. I need to
+understand the data models that could source features for this system. Specifically:
+1. What tables capture [relevant entities and events]?
+2. What's the grain and freshness of each?
+3. How do they relate to each other (join keys, cardinality)?
+4. Any data quality concerns?
+5. Which tables are available in real-time vs. batch only?
+Focus on: [specific entities, events, or business concepts].
+Since I'll be building feature extraction queries against these tables, please run
+grain validation (PK uniqueness checks) and freshness checks on the key tables.
 ```
 
 **Greenfield handling:** Applies to greenfield and iteration projects only. If this is
@@ -121,4 +121,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/ml_engineer/phases/phase-4.md` in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.
+{{phase 4}} in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.

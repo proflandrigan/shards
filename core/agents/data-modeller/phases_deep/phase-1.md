@@ -7,7 +7,7 @@
 
 Goal: Deepen understanding of what the user is building and what the model must represent — driven by their intent, not a checklist.
 
-Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the Data Modeller section in `.claude/agents/specific_instructions/shared/intent_discovery.md` for your domain probes.
+Continue the discovery rhythm from Phase 0 — open by referencing what the user already said. See the Data Modeller section in [`protocols/intent_discovery.md`](../../../protocols/intent_discovery.md) for your domain probes.
 
 Let the conversation flow. Surface these topics naturally when the user's responses lead there:
 - **Consumer(s):** analysts, dashboards, ML pipelines, reverse ETL
@@ -49,4 +49,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_modeller/phases_deep/phase-2.md` in full and follow its instructions starting from Deep Phase 2.
+{{phase 2}} in full and follow its instructions starting from Deep Phase 2.

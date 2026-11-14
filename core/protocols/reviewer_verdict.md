@@ -16,7 +16,7 @@ When a consulted reviewer returns a verdict, map it to one of three universal ti
 
 Each reviewer agent returns verdicts in a fixed vocabulary. The table below lists the canonical verdicts per reviewer and their tier mapping. Specialists consulting a reviewer do not need to restate this vocabulary in their phase instructions — they only need to invoke this protocol.
 
-| Reviewer (subagent_type) | Verdict vocabulary | Tier mapping |
+| Reviewer (agent id) | Verdict vocabulary | Tier mapping |
 |--------------------------|--------------------|--------------|
 | `researcher` | Sound / Consider Alternatives / Revise | Sound → Proceed · Consider Alternatives → Proceed with caveats · Revise → Halt and fix |
 | `applied-ml-scientist` | Sound / Consider Alternatives / Revise | same as above |
@@ -52,7 +52,7 @@ Document the resolution in specs:
 
 ## Final Review (Syn Sign-Off) — Validation Section Check
 
-When a specialist invokes Syn via `Task(subagent_type="syn", ...)` for final sign-off on a validation-eligible phase, Syn's review must explicitly inspect the `## Validation` section in `project-specs.md` per `shared/validation_protocol.md`. This is distinct from the gate hook's structural check — Syn performs the *semantic* check the hook cannot.
+When a specialist consults Syn (`entry=final_review`) for final sign-off on a validation-eligible phase, Syn's review must explicitly inspect the `## Validation` section in `project-specs.md` per `shared/validation_protocol.md`. This is distinct from the gate hook's structural check — Syn performs the *semantic* check the hook cannot.
 
 Syn's validation review looks for:
 

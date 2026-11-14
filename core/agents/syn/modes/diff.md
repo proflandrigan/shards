@@ -60,7 +60,7 @@ Then for each directory:
 Write the report to `<dir_A>/diff_vs_<project_B_name>.md`.
 
 Use the diff report template from `templates/diff-report.md`. Read it via
-`.claude/templates/diff-report.md` if available, otherwise use the structure
+`[`templates/diff-report.md`](../../../templates/diff-report.md)` if available, otherwise use the structure
 below.
 
 Fill in all sections. **Skip sections gracefully** when data is missing from

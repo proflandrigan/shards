@@ -13,45 +13,45 @@ consequences. Plan for it.
 
 Tell the user: "I'm asking the ML Engineer shard about existing production safety infrastructure. Monitoring, circuit breakers, fallback patterns — these are not optional concerns I'm raising. They're requirements."
 
+{{consult ml-engineer entry=review task="Review AI safety and guardrails infrastructure"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="ml-engineer",
-  description="Review AI safety and guardrails infrastructure",
-  prompt="I am the AI Engineer shard designing safety guardrails for an AI/LLM
-  system: [description]. The system [receives user input / processes internal data].
-  I need to understand:
-  1. What content filtering or moderation infrastructure exists?
-  2. Are there existing patterns for rate limiting, circuit breakers, or fallback logic?
-  3. How do you handle monitoring for model degradation in production?
-  4. What's the incident response process for model misbehavior?
-  5. Any existing A/B testing or canary deployment infrastructure?
-  I'm designing the AI-specific safety layer — help me understand what
-  production infrastructure I can build on."
-)
+I am the AI Engineer shard designing safety guardrails for an AI/LLM
+system: [description]. The system [receives user input / processes internal data].
+I need to understand:
+1. What content filtering or moderation infrastructure exists?
+2. Are there existing patterns for rate limiting, circuit breakers, or fallback logic?
+3. How do you handle monitoring for model degradation in production?
+4. What's the incident response process for model misbehavior?
+5. Any existing A/B testing or canary deployment infrastructure?
+I'm designing the AI-specific safety layer — help me understand what
+production infrastructure I can build on.
 ```
 
 **Consult the Academic** for behavioral and ethical safety perspective:
 
 Tell the user: "Flagging a safety/ethics concern. Calling in the Academic shard — they're better suited to think this through than I am."
 
+{{consult academic entry=service task="Safety and ethics review for AI/LLM system"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="academic",
-  description="Safety and ethics review for AI/LLM system",
-  prompt="I am the AI Engineer shard designing an AI/LLM system: [description].
-  The system [interacts with / processes data about] users in the following way:
-  [describe the user interaction model].
-  Please assess:
-  1. Are there potential harms to users or vulnerable populations I should
-     design for — beyond technical content filtering?
-  2. Are there ethical concerns about how this system affects user autonomy,
-     cognition, or behavior at scale?
-  3. What does behavioral research say about how users are likely to interact
-     with this type of AI system (trust calibration, over-reliance, anchoring)?
-  4. Are there specific populations (e.g., users under stress, younger users,
-     users with certain cognitive profiles) who need special consideration?
-  Return your assessment using the standard Academic review format."
-)
+I am the AI Engineer shard designing an AI/LLM system: [description].
+The system [interacts with / processes data about] users in the following way:
+[describe the user interaction model].
+Please assess:
+1. Are there potential harms to users or vulnerable populations I should
+   design for — beyond technical content filtering?
+2. Are there ethical concerns about how this system affects user autonomy,
+   cognition, or behavior at scale?
+3. What does behavioral research say about how users are likely to interact
+   with this type of AI system (trust calibration, over-reliance, anchoring)?
+4. Are there specific populations (e.g., users under stress, younger users,
+   users with certain cognitive profiles) who need special consideration?
+Return your assessment using the standard Academic review format.
 ```
 
 **Safety layers to design:**
@@ -154,4 +154,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/ai_engineer/phases/phase-6.md` in full and follow its instructions starting from Phase 6. Do not pre-read further phase files.
+{{phase 6}} in full and follow its instructions starting from Phase 6. Do not pre-read further phase files.

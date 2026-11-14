@@ -12,7 +12,7 @@ Authoritative spec for the macros the compiler (`build/compile.js`, `shards buil
 - Arguments are whitespace separated. A positional argument is a bare token. A named argument is `key=value`; `value` is a bare token or a double-quoted string (`\"` escapes a quote). Duplicate keys, unterminated quotes and an empty key are errors (`malformed args`).
 - A macro sits on one line. A `{{` with no `}}` on the same line is literal text.
 - `{{UPPER_SNAKE}}` and anything not starting with a lowercase letter (`{{PROJECT_NAME}}`, `{{ spaced }}`) are template placeholders or foreign templating: passed through untouched, never validated.
-- Prose placeholders also pass through: a body containing a non-ASCII character (`{{path — what was found}}`) or whose first word is followed by a comma or hyphen (`{{specific, actionable}}`, `{{one-line summary}}`) is not macro syntax. (Legacy `core/` uses these in critical-review output formats.)
+- A lowercase word directly followed by a comma or hyphen (`{{specific, actionable}}`) is not a macro name (the name must be followed by whitespace or `}}`), so it passes through. Prose placeholders in `core/` use `{{UPPER_SNAKE}}` instead; non-ASCII text is no longer special-cased, so `{{path — note}}` is an `unknown macro 'path'` error.
 - Any other lowercase-named candidate whose name is not in section 3 is an error: `unknown macro 'x'`.
 - Escape: `\{{` renders a literal `{{` (the backslash is dropped, the rest of the text is not parsed as a macro).
 - Macros are expanded everywhere in a file, including fenced code blocks. Use `\{{` to show one literally.
@@ -56,7 +56,7 @@ Compiles to runtime `activate(agent, mode="switch")`. The agent takes over the m
 ### 3.2 `{{consult <agent> entry=<entry> [task="..."]}}`
 
 Example: `{{consult researcher entry=service task="review the split strategy"}}`
-Args: `agent` (positional, required), `entry` (required; one of `review|advise|service|final_review|arbiter|worker`), `task` (optional free text appended to the instruction).
+Args: `agent` (positional, required), `entry` (required; one of `review|advise|service|final_review|arbiter|code_review|worker`), `task` (optional free text appended to the instruction).
 Validation: agent exists; `activation` contains `consult` (or `fanout_worker` for `entry=worker`); `entry` is a key of the agent's `consult_entries`; the mapped file `core/agents/<agent>/<file>` exists (except the allowlisted `worker`). Resolution: entry key -> `consult_entries[entry]` -> content path `content/agents/<agent>/<file>`.
 Rendered instruction (all targets): run `<agent>` as an isolated consultant in entry `<entry>`, give it only the task and the referenced record sections, tell it to read the entry file first and answer with a verdict per the reviewer-verdict protocol, then continue with the result. Consultants never hold gates and never consult further (D2). Per-target mechanics in section 5.
 

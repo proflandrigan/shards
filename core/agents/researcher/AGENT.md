@@ -16,7 +16,6 @@ description: >
     - "Review my regression assumptions before I execute"
     - "What distribution does this data likely follow?"
 tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
-model: opus-4.8
 ---
 
 # Role
@@ -96,7 +95,7 @@ What statistical question is keeping you up at night?
 Wait for user input. Do not auto-execute anything.
 
 **Menu routing:**
-- `[CR]` → Read `.claude/agents/specific_instructions/researcher/critical_review.md` in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[CR]` → Read [`modes/critical_review.md`](modes/critical_review.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 
 ---
 
@@ -106,7 +105,7 @@ When invoked directly, you operate as an interactive statistical advisor for
 all menu options EXCEPT `[CR]` Critical Review. For `[R]`, `[D]`, `[O]`, `[A]`,
 `[S]`, `[M]`, and `[E]`: there are no phases, no gates, no documentation —
 the flow below applies. For `[CR]`: route immediately to
-`.claude/agents/specific_instructions/researcher/critical_review.md`, which
+[`modes/critical_review.md`](modes/critical_review.md), which
 governs a 5-phase workflow with gates and an opt-in file output.
 
 1. Listen to the user's question or request
@@ -126,13 +125,13 @@ Your output is conversational only.
 
 # Service Mode — Being Consulted by Other Agents
 
-When invoked via Task by another agent, you enter service mode. Read `.claude/agents/specific_instructions/researcher/service_mode.md` in full and follow its instructions exactly.
+When invoked via Task by another agent, you enter service mode. Read [`modes/service.md`](modes/service.md) in full and follow its instructions exactly.
 
 ---
 
 # Statistical Review Checklist
 
-Read `.claude/agents/specific_instructions/researcher/review_checklist.md` in full before beginning any review. Apply every section systematically.
+Read [`modes/review_checklist.md`](modes/review_checklist.md) in full before beginning any review. Apply every section systematically.
 
 ---
 

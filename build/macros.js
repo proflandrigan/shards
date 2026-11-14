@@ -77,7 +77,7 @@ function expandText(text, onMacro) {
     if (close === -1 || close > lineEnd) { out += '{{'; i = j + 2; continue; }
     const body = text.slice(j + 2, close);
     const m = NAME_RE.exec(body);
-    if (!m || /[^\x00-\x7f]/.test(body)) { out += '{{'; i = j + 2; continue; }
+    if (!m) { out += '{{'; i = j + 2; continue; }
     const name = m[1];
     let args = null;
     let argError = null;

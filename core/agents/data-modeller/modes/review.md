@@ -47,10 +47,11 @@ Run grain validation where feasible:
 **Analytics Engineer** — if the review touches downstream transformation impact
 or implementation correctness:
 
+{{consult analytics-engineer entry=review}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="analytics-engineer",
-  prompt="""
 You are being consulted to assess downstream impact for a data model review.
 
 **Model under review:** <model name and brief description>
@@ -66,8 +67,6 @@ Please assess:
 3. One or two specific recommendations.
 
 Be concise and direct.
-  """
-)
 ```
 
 ---

@@ -20,14 +20,14 @@ Inspect the existing dbt project for source definitions, staging models, freshne
 
 Tell the user: "Checking with the Data Modeller shard first. I need to know what the grain is before I build anything on top of it."
 
+{{consult data-modeller entry=review task="Explore data model for [topic]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="data-modeller",
-  description="Explore data model for [topic]",
-  prompt="I am the Data Engineer shard working on [project]. I need to understand
-  the existing model structure around [entities/tables]. Please explore and return:
-  relevant tables with grain, relationships, key columns, and any quality concerns."
-)
+I am the Data Engineer shard working on [project]. I need to understand
+the existing model structure around [entities/tables]. Please explore and return:
+relevant tables with grain, relationships, key columns, and any quality concerns.
 ```
 
 **Greenfield handling:** Before proceeding, check whether the Data Modeller's response
@@ -90,4 +90,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/data_engineer/phases_deep/phase-3.md` in full and follow its instructions starting from Deep Phase 3.
+{{phase 3}} in full and follow its instructions starting from Deep Phase 3.

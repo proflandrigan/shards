@@ -33,27 +33,27 @@ harder and more important — because the failure modes are semantic, not statis
 
 Tell the user: "I'm bringing in the Researcher shard to review the evaluation methodology. If we can't measure this properly, we can't know if it's working. Or if it's broken."
 
+{{consult researcher entry=service task="Review AI evaluation framework design"}}
+
+Brief for the consultant (fill the bracketed fields):
+
 ```
-Task(
-  subagent_type="researcher",
-  description="Review AI evaluation framework design",
-  prompt="I am the AI Engineer shard designing an evaluation framework for an
-  AI/LLM system: [description].
-  Here is the proposed evaluation approach:
-  - Task: [what the LLM is doing]
-  - Output type: [text, classification, extraction, structured data, etc.]
-  - Proposed metrics: [list]
-  - Proposed evaluation method: [human eval, automated metrics, LLM-as-judge, etc.]
-  - Sample size for evaluation: [N]
-  Please review from a methodology perspective:
-  1. Are the metrics appropriate for this task type?
-  2. Is the evaluation method statistically sound?
-  3. Is the sample size adequate for the claimed precision?
-  4. Are there biases in the evaluation approach?
-  5. How should we establish inter-rater reliability if using human eval?
-  6. Is LLM-as-judge valid here, or do we need human ground truth?
-  Keep the review focused on evaluation methodology rigor."
-)
+I am the AI Engineer shard designing an evaluation framework for an
+AI/LLM system: [description].
+Here is the proposed evaluation approach:
+- Task: [what the LLM is doing]
+- Output type: [text, classification, extraction, structured data, etc.]
+- Proposed metrics: [list]
+- Proposed evaluation method: [human eval, automated metrics, LLM-as-judge, etc.]
+- Sample size for evaluation: [N]
+Please review from a methodology perspective:
+1. Are the metrics appropriate for this task type?
+2. Is the evaluation method statistically sound?
+3. Is the sample size adequate for the claimed precision?
+4. Are there biases in the evaluation approach?
+5. How should we establish inter-rater reliability if using human eval?
+6. Is LLM-as-judge valid here, or do we need human ground truth?
+Keep the review focused on evaluation methodology rigor.
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
@@ -135,4 +135,4 @@ Read this section back to the user. Stop here — do not begin the next phase or
 
 ## When this gate is confirmed
 
-Read `.claude/agents/specific_instructions/ai_engineer/phases/phase-5.md` in full and follow its instructions starting from Phase 5. Do not pre-read further phase files.
+{{phase 5}} in full and follow its instructions starting from Phase 5. Do not pre-read further phase files.

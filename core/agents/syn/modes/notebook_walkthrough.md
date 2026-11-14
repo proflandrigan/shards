@@ -12,7 +12,7 @@ than the methodology-deep-dive (Data Scientist) or production-rigor
 
 ## Read the protocol
 
-Read `.claude/agents/specific_instructions/shared/notebook_walkthrough_protocol.md`
+{{protocol notebook_walkthrough}}
 in full and follow it exactly. The protocol owns:
 
 - The bootstrap sequence (kernel start, panel push, initial state JSON)
