@@ -15,7 +15,7 @@ step() { local name="$1"; shift; if "$@"; then pass "$name"; else fail "$name"; 
 
 # ---- Explicit expected tarball contents (top-level path globs, relative to package/) ----
 ROOT_ALLOWED='package.json README.md cli/* build/* core/* hooks/* runtime/* bindings/* scripts/validate-agents.js src/* tools/install.js tools/legacy-layout.js tools/gate-hook.js tools/gate-hook/* tools/shards-ui.js tools/shards-gates.js tools/shards-sessions.js'
-ROOT_REQUIRED='package.json README.md cli/shards.js build/compile.js core/agents runtime/server.js hooks/session-start.js bindings/README.md scripts/validate-agents.js src/ui/server.js tools/shards-ui.js tools/shards-gates.js tools/shards-sessions.js tools/gate-hook.js tools/install.js'
+ROOT_REQUIRED='package.json README.md cli/shards.js build/compile.js core/agents runtime/server.js hooks/session-start.js bindings/README.md scripts/validate-agents.js src/ui/chat-session.js tools/shards-ui.js tools/shards-gates.js tools/shards-sessions.js tools/gate-hook.js tools/install.js'
 MCP_ALLOWED='package.json runtime/* core/* bindings/* hooks/lib/* build/* scripts/validate-agents.js'
 MCP_REQUIRED='package.json runtime/server.js runtime/tools core/agents core/schema hooks/lib/host.js hooks/lib/common.js build/core.js build/compile.js scripts/validate-agents.js bindings/README.md'
 
@@ -147,7 +147,7 @@ legacy_ok() {
   done
   # shards-ui: only verify it can be loaded (status does not start the server)
   (cd "$DOC" && timeout 20 "$BIN/shards-ui" status 2>&1 | head -3) | sed 's/^/    | /'
-  node -e 'require("fs").accessSync(process.argv[1])' "$PROJ/node_modules/@proflandrigan/shards/src/ui/server.js"
+  node -e 'require("fs").accessSync(process.argv[1])' "$PROJ/node_modules/@proflandrigan/shards/src/ui/chat-session.js"
   node -e 'require.resolve("../runtime/sessions/index.js",{paths:[process.argv[1]+"/tools"]})' "$PROJ/node_modules/@proflandrigan/shards"
 }
 step "legacy bins (shards-ui/gates/sessions) resolve their runtime files" legacy_ok

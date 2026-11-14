@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shards.dev/schema/artifacts/pr-review.schema.json",
+  "title": "artifact_emit meta: pr-review",
+  "description": "meta for artifact type 'pr-review'. path: project-relative JSON file with the PR thread data: {pr, threads[], generalComments[], reviews[]} (threads annotated addressed:true/false).",
+  "type": "object",
+  "required": [
+    "title",
+    "pr"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Panel tab title."
+    },
+    "panel_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable panel id; re-emitting with the same panel_id updates the panel in place and `close` with it removes it. Defaults to a hash of (type, path)."
+    },
+    "pr": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "GitHub PR number."
+    },
+    "url": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

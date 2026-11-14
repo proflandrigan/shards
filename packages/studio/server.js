@@ -13,7 +13,23 @@ const { ChatSession, reconnectOrCleanup } = require('./chat-session');
 const symbolIndex = require('./symbol-index');
 const { permissionPattern } = require('./permission-pattern');
 const { isCcReadOnlyAutoApprovable } = require('./cc-readonly');
-const sessionIndex = require('./session-index');
+const eventsWatcher = require('./events-watcher');
+
+// Sessions index lives in the runtime package. When Studio is published
+// separately it cannot reach ../../runtime, so fall back to a minimal no-op
+// index: sessions still run, but INDEX.json is not maintained and the
+// Sessions panel shows an empty list.
+let sessionIndex;
+try {
+  sessionIndex = require('../../runtime/sessions/index.js');
+} catch {
+  sessionIndex = {
+    INDEX_VERSION: 1,
+    appendSession() {}, updateActivity() {}, updatePhase() {},
+    markEnded() { return null; }, sweepAbandoned() { return 0; },
+    listSessions() { return []; }, getEntry() { return null; },
+  };
+}
 
 let PROJECT_DIR = process.cwd();
 let SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
@@ -37,6 +53,7 @@ function initPaths(projectDir, options = {}) {
   SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
   KNOWLEDGE_DIR = path.join(SHARDS_DIR, 'knowledge');
   const uiDir = options.uiDir || __dirname;
+  if (options.port !== undefined) PORTS = [options.port];
   INDEX_HTML = path.join(uiDir, 'index.html');
   ELECTRON_MODE = !!options.electronMode;
   VENDOR_DIR = options.vendorDir || null;
@@ -53,7 +70,10 @@ function log(msg) {
   try { fs.appendFileSync(LOG_FILE, line); } catch {}
 }
 
-const PORTS = [7842, 7843, 7844, 7845];
+// SHARDS_STUDIO_PORT (or createServer options.port; 0 = any free port) pins the port.
+let PORTS = process.env.SHARDS_STUDIO_PORT !== undefined
+  ? [parseInt(process.env.SHARDS_STUDIO_PORT, 10)]
+  : [7842, 7843, 7844, 7845];
 const OUTPUT_DIRS = ['analysis', 'studies', 'models', 'services', 'research', 'dashboards', 'brainstorm', 'data_models', 'experiments'];
 
 // ─── P1: Auth token ──────────────────────────────────────────────────────────
@@ -364,7 +384,13 @@ function ensurePreToolUseHook() {
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
   }
 }
-ensurePreToolUseHook();
+// Studio does NOT write Claude Code hooks by default (artifacts need none).
+// The embedded chat's browser permission cards still depend on the relay
+// PreToolUse hook; opt in explicitly with SHARDS_STUDIO_WRITE_HOOKS=1 (and the
+// project's .claude/ must exist).
+if (process.env.SHARDS_STUDIO_WRITE_HOOKS === '1') {
+  try { ensurePreToolUseHook(); } catch (err) { console.error('[shards-studio] could not write hook: ' + err.message); }
+}
 
 function matchesPermission(command, patterns) {
   for (const pattern of patterns) {
@@ -426,6 +452,48 @@ let gateClients = [];
 const GATE_ENFORCE = process.env.SHARDS_GATE_ENFORCE !== '0';
 const CHECKPOINT_ENFORCE = process.env.SHARDS_CHECKPOINT_ENFORCE !== '0';
 const AUTO_VERIFY = process.env.SHARDS_AUTO_VERIFY !== '0';
+
+// ─── Artifact events (.shards/events.jsonl) ─────────────────────────────────
+
+const artifactIndex = eventsWatcher.createArtifactIndex();
+let artifactTailer = null;
+
+function replayPanelEvent(p) {
+  // Same shape handleEvent broadcasts for a ui-panel push, without file watchers.
+  let data = p.data;
+  if (p.source) {
+    const content = readFileSafe(p.source);
+    if (content !== null) data = parsePanelFileContent(p.source, content);
+  }
+  return {
+    type: 'ui-panel', panel: p.panel, panelId: p.panelId, title: p.title,
+    data, source: p.source || null, panelType: p.type || null, agent: p.agent || null,
+  };
+}
+
+function handleArtifactEvent(ev) {
+  if (ev.type === 'close') {
+    for (const p of eventsWatcher.closePayloads(ev, artifactIndex)) handleEvent(JSON.stringify(p));
+    artifactIndex.apply(ev);
+    return;
+  }
+  if (!eventsWatcher.PANEL_TYPES.includes(ev.type) || typeof ev.path !== 'string' || !ev.path) return;
+  artifactIndex.apply(ev);
+  handleEvent(JSON.stringify(eventsWatcher.eventToPanelPayload(ev, PROJECT_DIR)));
+}
+
+function startArtifactWatcher() {
+  stopArtifactWatcher();
+  artifactTailer = eventsWatcher.createEventsWatcher({
+    file: path.join(SHARDS_DIR, 'events.jsonl'),
+    onEvent: handleArtifactEvent,
+    onReset: () => artifactIndex.clear(),
+  }).start(); // start() replays existing events
+}
+
+function stopArtifactWatcher() {
+  if (artifactTailer) { artifactTailer.stop(); artifactTailer = null; }
+}
 
 // ─── Broadcast ───────────────────────────────────────────────────────────────
 
@@ -1472,14 +1540,14 @@ function createHandler() {
     }
 
     // ─── Developer Guide (docs) ──────────────────────────────────────────────
-    // Serves the Shards Developer Guide from .shards/ui/docs/ — no auth,
-    // public static docs. __dirname here is the .shards/ui/ directory in the
-    // target install.
-    const DOCS_DIR = path.join(__dirname, 'docs');
+    // Manifest ships with the package (<package>/docs/manifest.json). Pages are
+    // resolved from <project>/docs/shards-guide/ first, then <package>/docs/.
+    const PKG_DOCS_DIR = path.join(__dirname, 'docs');
+    const DOC_ROOTS = [path.join(PROJECT_DIR, 'docs', 'shards-guide'), PKG_DOCS_DIR];
 
     if (req.method === 'GET' && parsedUrl.pathname === '/docs/manifest') {
       try {
-        const raw = fs.readFileSync(path.join(DOCS_DIR, 'manifest.json'), 'utf8');
+        const raw = fs.readFileSync(path.join(PKG_DOCS_DIR, 'manifest.json'), 'utf8');
         res.writeHead(200, { ...cors, 'Content-Type': 'application/json' });
         res.end(raw);
       } catch {
@@ -1496,26 +1564,27 @@ function createHandler() {
         res.end('Missing file');
         return;
       }
-      const filePath = path.join(DOCS_DIR, file);
-      const resolved = path.resolve(filePath);
-      if (!resolved.startsWith(path.resolve(DOCS_DIR) + path.sep)) {
-        res.writeHead(403, { ...cors });
-        res.end('Forbidden');
-        return;
-      }
-      if (!resolved.endsWith('.md')) {
+      if (!file.endsWith('.md')) {
         res.writeHead(400, { ...cors });
         res.end('Only .md files are served');
         return;
       }
-      try {
-        const content = fs.readFileSync(resolved, 'utf8');
-        res.writeHead(200, { ...cors, 'Content-Type': 'text/markdown; charset=utf-8' });
-        res.end(content);
-      } catch {
-        res.writeHead(404, { ...cors });
-        res.end('Not found');
+      for (const root of DOC_ROOTS) {
+        const resolved = path.resolve(root, file);
+        if (!resolved.startsWith(path.resolve(root) + path.sep)) {
+          res.writeHead(403, { ...cors });
+          res.end('Forbidden');
+          return;
+        }
+        try {
+          const content = fs.readFileSync(resolved, 'utf8');
+          res.writeHead(200, { ...cors, 'Content-Type': 'text/markdown; charset=utf-8' });
+          res.end(content);
+          return;
+        } catch { /* try next root */ }
       }
+      res.writeHead(404, { ...cors, 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('This guide page is not available in this installation (looked in docs/shards-guide/ and the Studio package docs).');
       return;
     }
 
@@ -1669,9 +1738,21 @@ function createHandler() {
       });
       res.write('data: {"type":"connected"}\n\n');
       clients.push({ res, sessionId: filterSessionId });
+      // Replay current artifacts so a fresh browser sees them.
+      for (const ev of artifactIndex.list()) {
+        const p = eventsWatcher.eventToPanelPayload(ev, PROJECT_DIR);
+        try {
+          res.write(`data: ${JSON.stringify(replayPanelEvent(p))}\n\n`);
+        } catch {}
+      }
       req.on('close', () => {
         clients = clients.filter((c) => c.res !== res);
       });
+      return;
+    }
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/api/artifacts') {
+      jsonResponse(res, cors, 200, { artifacts: artifactIndex.list() });
       return;
     }
 
@@ -2946,7 +3027,7 @@ function startServer(portIndex, resolve, reject) {
     process.exit(1);
   }
 
-  const port = PORTS[portIndex];
+  const configuredPort = PORTS[portIndex];
   const handler = createHandler();
 
   // P5: Create HTTPS server if TLS cert/key are provided
@@ -2986,7 +3067,8 @@ function startServer(portIndex, resolve, reject) {
     }
   });
 
-  server.listen(port, BIND_ADDR, () => {
+  server.listen(configuredPort, BIND_ADDR, () => {
+    const port = server.address().port;
     fs.mkdirSync(SHARDS_DIR, { recursive: true });
     fs.mkdirSync(SESSIONS_DIR, { recursive: true });
 
@@ -3018,6 +3100,9 @@ function startServer(portIndex, resolve, reject) {
     // Start gate / auto / violations watchers (replaces browser-side 2s poll)
     startGateWatchers();
 
+    // Artifact events: replay events.jsonl, then tail it
+    startArtifactWatcher();
+
     // Build symbol index asynchronously (reference cache is built lazily on hover)
     setTimeout(() => {
       try {
@@ -3048,6 +3133,7 @@ function startServer(portIndex, resolve, reject) {
 function cleanup() {
   symbolIndex.stopWatcher();
   stopGateWatchers();
+  stopArtifactWatcher();
   try { fs.unlinkSync(PORT_FILE); } catch {}
   try { fs.unlinkSync(PID_FILE); } catch {}
 }
@@ -3066,6 +3152,11 @@ function createServer(projectDir, options = {}) {
 
 // Standalone mode — preserves existing CLI behavior
 if (require.main === module) {
+  // Project root = --project <dir> or process.cwd()
+  const pi = process.argv.indexOf('--project');
+  const projectDir = pi !== -1 && process.argv[pi + 1] ? path.resolve(process.argv[pi + 1]) : process.cwd();
+  const qi = process.argv.indexOf('--port');
+  initPaths(projectDir, qi !== -1 && process.argv[qi + 1] ? { port: parseInt(process.argv[qi + 1], 10) } : {});
   startServer(0);
 }
 

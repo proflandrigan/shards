@@ -11,3 +11,4 @@ Decisions for the Shards agent suite migration. Source: `shards-agent-suite-plan
 - [0007](0007-no-model-names.md): No model names; agents use the session's model (D7)
 - [0008](0008-gates-are-tool-calls.md): Gates are tool calls with state, never parsed text (D8)
 - [0009](0009-led-build-phases.md): Build phases are led, not done alone (D9)
+- [0010](0010-studio-desktop-build.md): Studio desktop (Electron) build: keep or drop (drop for v2.0)

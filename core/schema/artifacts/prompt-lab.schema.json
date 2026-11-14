@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shards.dev/schema/artifacts/prompt-lab.schema.json",
+  "title": "artifact_emit meta: prompt-lab",
+  "description": "meta for artifact type 'prompt-lab'. path: project-relative prompt-lab.json: {prompts:[{name,filename,currentVersion,...}], activePrompt, status, testRuns[], syncHistory[], promptsDir}. Watched.",
+  "type": "object",
+  "required": [
+    "title"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Panel tab title."
+    },
+    "panel_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable panel id; re-emitting with the same panel_id updates the panel in place and `close` with it removes it. Defaults to a hash of (type, path)."
+    },
+    "project": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

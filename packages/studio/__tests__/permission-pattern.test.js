@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { permissionPattern } = require('../src/ui/permission-pattern.js');
+const { permissionPattern } = require('../permission-pattern.js');
 
 describe('permissionPattern', () => {
   describe('single-token commands', () => {

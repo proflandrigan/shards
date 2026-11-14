@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shards.dev/schema/artifacts/chart.schema.json",
+  "title": "artifact_emit meta: chart",
+  "description": "meta for artifact type 'chart'. path: project-relative JSON file holding a Plotly spec ({data:[...],layout:{...}}) or a bare traces array.",
+  "type": "object",
+  "required": [
+    "title"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Panel tab title."
+    },
+    "panel_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable panel id; re-emitting with the same panel_id updates the panel in place and `close` with it removes it. Defaults to a hash of (type, path)."
+    },
+    "chart_type": {
+      "type": "string",
+      "description": "Chart subtype hint, e.g. bar, line, scatter, pie."
+    }
+  },
+  "additionalProperties": true
+}

@@ -7,12 +7,12 @@ const path = require('path');
 const fs = require('fs');
 
 const SHARDS_DIR = path.join(process.cwd(), '.shards');
-const SERVER_SCRIPT = path.join(SHARDS_DIR, 'ui', 'server.js');
+const SERVER_SCRIPT = path.join(__dirname, 'server.js') // runs in place from the package;
 const PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
 const PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
 
 if (!fs.existsSync(SERVER_SCRIPT)) {
-  console.error('Shards UI server not found. Run "shards-ui" from your terminal first.');
+  console.error('Shards UI server not found. Reinstall @proflandrigan/shards-studio.');
   process.exit(1);
 }
 
@@ -31,7 +31,7 @@ if (fs.existsSync(PID_FILE)) {
   }
 }
 
-const child = spawn(process.execPath, [SERVER_SCRIPT], {
+const child = spawn(process.execPath, [SERVER_SCRIPT, '--project', process.cwd()], {
   detached: true,
   stdio: 'ignore',
   cwd: process.cwd(),

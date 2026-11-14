@@ -13,9 +13,28 @@ const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
 const validate = ajv.compile(schema);
 
+// Per-type meta schemas (core/schema/artifacts/<type>.schema.json), compiled once.
+const ARTIFACT_TYPES = EVENT_TYPES.slice();
+const metaValidators = {};
+for (const t of ARTIFACT_TYPES) {
+  metaValidators[t] = ajv.compile(require(`../../core/schema/artifacts/${t}.schema.json`));
+}
+
+function validateMeta(type, meta) {
+  const v = metaValidators[type];
+  if (!v) return { valid: false, errors: [`unknown artifact type: ${JSON.stringify(type)}`] };
+  const m = meta === undefined || meta === null ? {} : meta;
+  if (v(m)) return { valid: true, errors: [] };
+  return { valid: false, errors: v.errors.map((e) => `${e.instancePath || '(meta)'} ${e.message}`) };
+}
+
 function validateEvent(evt) {
-  if (validate(evt)) return { valid: true, errors: [] };
-  return { valid: false, errors: validate.errors.map((e) => `${e.instancePath || '(event)'} ${e.message}`) };
+  if (!validate(evt)) {
+    return { valid: false, errors: validate.errors.map((e) => `${e.instancePath || '(event)'} ${e.message}`) };
+  }
+  const m = validateMeta(evt.type, evt.meta);
+  if (!m.valid) return { valid: false, errors: [`invalid meta for ${evt.type}: ${m.errors.join('; ')}`] };
+  return { valid: true, errors: [] };
 }
 
 function deepestExisting(p) {
@@ -70,9 +89,11 @@ function buildEvent({ type, path: p, meta } = {}, ctx) {
 async function emitEvent(ctx, args) {
   const evt = buildEvent(args || {}, ctx);
   const r = validateEvent(evt);
-  if (!r.valid) throw new Error(`invalid event: ${r.errors.join('; ')}`);
+  if (!r.valid) {
+    throw new Error(r.errors[0].startsWith('invalid meta for') ? r.errors[0] : `invalid event: ${r.errors.join('; ')}`);
+  }
   await lockedAppend(path.join(ctx.root, '.shards', 'events.jsonl'), JSON.stringify(evt));
   return evt;
 }
 
-module.exports = { EVENT_TYPES, validateEvent, resolveInsideRoot, buildEvent, emitEvent };
+module.exports = { EVENT_TYPES, ARTIFACT_TYPES, validateMeta, validateEvent, resolveInsideRoot, buildEvent, emitEvent };

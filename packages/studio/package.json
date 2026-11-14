@@ -1,0 +1,19 @@
+{
+  "name": "@proflandrigan/shards-studio",
+  "version": "2.0.0-next.0",
+  "description": "Shards Studio: local web viewer for Shards artifacts (reads .shards/events.jsonl; no Claude Code hooks required).",
+  "license": "MIT",
+  "bin": { "shards-studio": "bin/shards-studio.js" },
+  "main": "server.js",
+  "files": [
+    "bin/",
+    "css/",
+    "js/",
+    "docs/",
+    "*.js",
+    "index.html",
+    "shards_icon.png"
+  ],
+  "engines": { "node": ">=18" },
+  "publishConfig": { "access": "public", "tag": "next" }
+}

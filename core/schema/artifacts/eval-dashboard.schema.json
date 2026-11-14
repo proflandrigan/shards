@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shards.dev/schema/artifacts/eval-dashboard.schema.json",
+  "title": "artifact_emit meta: eval-dashboard",
+  "description": "meta for artifact type 'eval-dashboard'. path: project-relative eval-results.json: {variant:\"ai-engineer\"|\"ml-engineer\", status, summary:{passed,failed,overallVerdict}, dimensions[], cost}. Watched.",
+  "type": "object",
+  "required": [
+    "title"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Panel tab title."
+    },
+    "panel_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable panel id; re-emitting with the same panel_id updates the panel in place and `close` with it removes it. Defaults to a hash of (type, path)."
+    },
+    "variant": {
+      "type": "string",
+      "enum": [
+        "ai-engineer",
+        "ml-engineer"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

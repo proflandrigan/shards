@@ -7,7 +7,7 @@ const {
   isCcReadOnlyBash,
   isCcReadOnlyAutoApprovable,
   maskQuotedRegions,
-} = require('../src/ui/cc-readonly.js');
+} = require('../cc-readonly.js');
 
 describe('isCcReadOnlyBash', () => {
   describe('bare read-only commands auto-approve', () => {

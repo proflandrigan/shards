@@ -12,8 +12,9 @@ const { randomUUID } = require('crypto');
 // Graceful degradation: if the module isn't available (standalone deploy,
 // install partially rolled back, etc.) we fall through to the normal POST.
 let isAutoApprovable;
+// Optional: resolved from the monorepo runtime when present (never required).
 try {
-  ({ isAutoApprovable } = require('../hooks/gate-hook/auto-allowlist.js'));
+  ({ isAutoApprovable } = require('../../runtime/lib/auto-allowlist.js'));
 } catch (_) {
   isAutoApprovable = () => false;
 }

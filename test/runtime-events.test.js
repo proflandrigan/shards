@@ -29,7 +29,7 @@ const lines = () => (fs.existsSync(evFile()) ? fs.readFileSync(evFile(), 'utf8')
 
 describe('emitEvent', () => {
   it('appends a valid event with relative POSIX path', async () => {
-    const evt = await emitEvent(mkctx(), { type: 'chart', path: 'analysis\\x\\c.json'.replace(/\\/g, path.sep), meta: { a: 1 } });
+    const evt = await emitEvent(mkctx(), { type: 'chart', path: 'analysis\\x\\c.json'.replace(/\\/g, path.sep), meta: { title: 't', a: 1 } });
     const ls = lines();
     expect(ls).toHaveLength(1);
     const parsed = JSON.parse(ls[0]);
@@ -52,7 +52,7 @@ describe('emitEvent', () => {
       await expect(emitEvent(mkctx(), { type: 'data-viewer', path: p })).rejects.toThrow();
     }
     expect(lines()).toHaveLength(0);
-    const evt = await emitEvent(mkctx(), { type: 'data-viewer', path: path.join(dir, 'sub', 'f.csv') });
+    const evt = await emitEvent(mkctx(), { type: 'data-viewer', path: path.join(dir, 'sub', 'f.csv'), meta: { title: 't' } });
     expect(evt.path).toBe('sub/f.csv');
   });
 
@@ -71,7 +71,7 @@ describe('emitEvent', () => {
     expect(EVENT_TYPES).toHaveLength(11);
     for (const type of EVENT_TYPES) {
       if (type === 'close') continue;
-      await emitEvent(mkctx(), { type, path: 'p/x.json' });
+      await emitEvent(mkctx(), { type, path: 'p/x.json', meta: { title: 't', panel_id: 'p1', pr: 1 } });
     }
     const c = await emitEvent(mkctx(), { type: 'close', meta: { id: 'panel-1' } });
     expect(c.path).toBeNull();
@@ -81,7 +81,7 @@ describe('emitEvent', () => {
   });
 
   it('20 concurrent emits yield 20 well-formed lines', async () => {
-    await Promise.all(Array.from({ length: 20 }, (_, i) => emitEvent(mkctx(), { type: 'chart', path: `c${i}.json`, meta: { i, pad: 'x'.repeat(2000) } })));
+    await Promise.all(Array.from({ length: 20 }, (_, i) => emitEvent(mkctx(), { type: 'chart', path: `c${i}.json`, meta: { title: 't', i, pad: 'x'.repeat(2000) } })));
     const ls = lines();
     expect(ls).toHaveLength(20);
     const idx = new Set(ls.map((l) => { const e = JSON.parse(l); expect(check(e)).toBe(true); return e.meta.i; }));
@@ -98,7 +98,7 @@ describe('artifact_emit over MCP', () => {
       const { tools } = await client.listTools();
       expect(tools.map((t) => t.name)).toContain('artifact_emit');
 
-      const ok = await client.callTool({ name: 'artifact_emit', arguments: { type: 'chart', path: 'a/b.json', meta: { k: 1 } } });
+      const ok = await client.callTool({ name: 'artifact_emit', arguments: { type: 'chart', path: 'a/b.json', meta: { title: 't', k: 1 } } });
       expect(ok.isError).toBeFalsy();
       expect(ok.content[0].text).toMatch(HDR);
       const ls = lines();

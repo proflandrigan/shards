@@ -21,15 +21,12 @@ process.on("exit", () => {
 });
 const COMMANDS_SRC = path.join(SRC_DIR, "commands");
 const TEMPLATES_SRC = path.join(CORE_DIR, "templates");
-const UI_SRC = path.join(SRC_DIR, "ui");
 const DOCS_SRC = path.join(SRC_DIR, "docs");
 
 const AGENTS_DEST = path.join(CLAUDE_DIR, "agents");
 const COMMANDS_DEST = path.join(CLAUDE_DIR, "commands");
 const TEMPLATES_DEST = path.join(PROJECT_DIR, "templates");
 const SHARDS_DIR = path.join(PROJECT_DIR, ".shards");
-const UI_DEST = path.join(SHARDS_DIR, "ui");
-const UI_DOCS_DEST = path.join(UI_DEST, "docs");
 const DOCS_DEST = path.join(PROJECT_DIR, "docs", "shards-guide");
 const HOOKS_DEST = path.join(SHARDS_DIR, "hooks");
 
@@ -129,6 +126,7 @@ function uninstall() {
           if (!Array.isArray(settings.hooks[eventName])) return;
           settings.hooks[eventName] = settings.hooks[eventName].filter((entry) => {
             if (!entry.hooks) return true;
+            if (entry.hooks.some((h) => h.command && /relay\.js|ui-push/.test(h.command))) return false;
             if (recordedEntries) {
               // Exact-match path: drop the entry only if all of its inner
               // hooks match a recorded (event, matcher, command) triple.
@@ -142,7 +140,7 @@ function uninstall() {
               );
               return !allMatchRecorded;
             }
-            // Legacy substring fallback.
+            // Legacy substring fallback (also strips relay entries from older installs).
             return !entry.hooks.some(
               (h) =>
                 h.command &&
@@ -234,24 +232,10 @@ function install() {
     console.log(`  ✓ templates/${f}`);
   }
 
-  // 5. Copy UI files
-  console.log("\n📦 Installing UI...");
-  const uiCount = copyDir(UI_SRC, UI_DEST);
-  const uiFiles = listFiles(UI_SRC);
-  for (const f of uiFiles) {
-    console.log(`  ✓ .shards/ui/${f}`);
-  }
-
-  // 5a. Copy developer guide docs into two places:
-  //     1) .shards/ui/docs/ — served by the UI guide panel
-  //     2) docs/shards-guide/ — readable as plain markdown outside the UI
+  // 5. Copy developer guide docs (plain markdown; the UI now lives in Studio).
   console.log("\n📦 Installing Developer Guide...");
-  const uiDocsCount = copyDir(DOCS_SRC, UI_DOCS_DEST);
   const docsCount = copyDir(DOCS_SRC, DOCS_DEST);
   const docFiles = listFiles(DOCS_SRC);
-  for (const f of docFiles) {
-    console.log(`  ✓ .shards/ui/docs/${f}`);
-  }
   if (docFiles.length > 0) {
     console.log(`  ✓ docs/shards-guide/ (${docFiles.length} files, plain-markdown copy)`);
   }
@@ -287,31 +271,8 @@ function install() {
   // settings.json is portable across developers and machines. See:
   // https://code.claude.com/docs/en/hooks
   const settingsPath = path.join(CLAUDE_DIR, "settings.json");
-  const relayCmd = (subcmd) =>
-    `node $CLAUDE_PROJECT_DIR/.shards/ui/relay.js ${subcmd}`;
   const gateCmd = (subcmd) =>
     `node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js ${subcmd}`;
-
-  // Relay hooks — feed live events to the Shards UI for all four hook points
-  // the UI cares about. Reference: see .claude/settings.json events feeding
-  // src/ui/relay.js (chat-session.js consumes pre-tool-use, post-tool-use,
-  // user-prompt, and stop).
-  const preToolUseHook = {
-    matcher: "Bash",
-    hooks: [{ type: "command", command: relayCmd("pre-tool-use") }],
-  };
-  const relayStopHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: relayCmd("stop") }],
-  };
-  const relayUserPromptHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: relayCmd("user-prompt") }],
-  };
-  const relayPostToolUseHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: relayCmd("post-tool-use") }],
-  };
 
   // Gate hooks — enforce the ::GATE:: workflow pattern.
   const gateStopHook = {
@@ -330,13 +291,9 @@ function install() {
   // Flat list of (event, matcher, command) triples recorded in the manifest
   // so uninstall can surgically remove ONLY the entries the installer wrote.
   const installedHookEntries = [
-    { event: "PreToolUse", matcher: "Bash", command: relayCmd("pre-tool-use") },
     { event: "PreToolUse", matcher: "", command: gateCmd("pre-tool-use") },
     { event: "Stop", matcher: "", command: gateCmd("stop") },
-    { event: "Stop", matcher: "", command: relayCmd("stop") },
     { event: "UserPromptSubmit", matcher: "", command: gateCmd("user-prompt-submit") },
-    { event: "UserPromptSubmit", matcher: "", command: relayCmd("user-prompt") },
-    { event: "PostToolUse", matcher: "", command: relayCmd("post-tool-use") },
   ];
 
   // Permission rules for shards specialists.
@@ -418,9 +375,6 @@ function install() {
     "Edit(research/**)", "Edit(fixes/**)", "Edit(presentations/**)",
     "Edit(panels/**)", "Edit(brainstorm/**)", "Edit(.shards/**)",
 
-    // ── Shards UI bridge ──
-    "Bash(node .shards/ui/ui-push.js:*)",
-    "Bash(node .shards/ui/relay.js pre-tool-use:*)",
   ];
 
   // BASE_DENY: hard floor — blocks even when an allow rule, a hook, or the
@@ -464,10 +418,9 @@ function install() {
   if (!fs.existsSync(settingsPath)) {
     const defaultSettings = {
       hooks: {
-        Stop: [gateStopHook, relayStopHook],
-        PreToolUse: [preToolUseHook, gatePreToolUseHook],
-        UserPromptSubmit: [gateUserPromptSubmitHook, relayUserPromptHook],
-        PostToolUse: [relayPostToolUseHook],
+        Stop: [gateStopHook],
+        PreToolUse: [gatePreToolUseHook],
+        UserPromptSubmit: [gateUserPromptSubmitHook],
       },
       permissions: {
         allow: BASE_ALLOW,
@@ -514,14 +467,25 @@ function install() {
       }
     };
 
-    // Relay hooks — all four hook points the UI feeds on. Dedup substrings
-    // identify each by the relay subcommand so legacy absolute-path entries
-    // (e.g. `node /Users/.../relay.js pre-tool-use`) are treated as
-    // already-present.
-    ensureHookEntry("PreToolUse", preToolUseHook, "relay.js pre-tool-use");
-    ensureHookEntry("Stop", relayStopHook, "relay.js stop");
-    ensureHookEntry("UserPromptSubmit", relayUserPromptHook, "relay.js user-prompt");
-    ensureHookEntry("PostToolUse", relayPostToolUseHook, "relay.js post-tool-use");
+    // Strip legacy relay hooks (UI bridge from older installs; the UI moved to Studio).
+    const isLegacyUi = (c) => typeof c === "string" && /relay\.js|ui-push|\.shards\/ui/.test(c);
+    for (const ev of Object.keys(settings.hooks)) {
+      if (!Array.isArray(settings.hooks[ev])) continue;
+      const before = settings.hooks[ev].length;
+      settings.hooks[ev] = settings.hooks[ev].filter(
+        (e) => !(Array.isArray(e && e.hooks) && e.hooks.some((h) => isLegacyUi(h && h.command)))
+      );
+      if (settings.hooks[ev].length !== before) changed = true;
+      if (settings.hooks[ev].length === 0) { delete settings.hooks[ev]; changed = true; }
+    }
+    if (settings.permissions) {
+      for (const k of ["allow", "deny", "ask"]) {
+        if (!Array.isArray(settings.permissions[k])) continue;
+        const before = settings.permissions[k].length;
+        settings.permissions[k] = settings.permissions[k].filter((p) => !isLegacyUi(p));
+        if (settings.permissions[k].length !== before) changed = true;
+      }
+    }
 
     // Gate hooks.
     ensureHookEntry("Stop", gateStopHook, "gate-hook.js stop");
@@ -679,8 +643,6 @@ function install() {
     ...agentFiles.map((f) => `.claude/agents/${f}`),
     ...cmdFiles.map((f) => `.claude/commands/${f}`),
     ...tplFiles.map((f) => `templates/${f}`),
-    ...uiFiles.map((f) => `.shards/ui/${f}`),
-    ...docFiles.map((f) => `.shards/ui/docs/${f}`),
     ...docFiles.map((f) => `docs/shards-guide/${f}`),
     ...["validation.js", "auto-allowlist.js", "sql-guard.js"]
       .filter((f) => fs.existsSync(path.join(SHARDS_DIR, "runtime", "lib", f)))
@@ -693,7 +655,7 @@ function install() {
     // Flat record of hook entries (event + matcher + command) the installer
     // wrote into .claude/settings.json. Uninstall uses these for exact-match
     // surgical removal — see uninstall(). Legacy manifests without this field
-    // fall back to substring matching against gate-hook.js / .shards/ui/relay.js.
+    // fall back to substring matching against gate-hook.js / relay.js (legacy).
     hookEntries: installedHookEntries,
   };
   fs.writeFileSync(
@@ -899,7 +861,7 @@ explicit user approval regardless of permission mode.
   }
 
   // Done
-  const total = agentCount + cmdCount + tplCount + uiCount + uiDocsCount + docsCount;
+  const total = agentCount + cmdCount + tplCount + docsCount;
   console.log(`
 ╔══════════════════════════════════════════╗
 ║  ✅ Installed ${String(total).padEnd(3)} files successfully      ║
@@ -923,8 +885,8 @@ explicit user approval regardless of permission mode.
 ║    /deep-learning-engineer               ║
 ║    /brainstorm                           ║
 ║                                          ║
-║  Launch the web UI:                      ║
-║    shards-ui                             ║
+║  Web UI moved to Studio:                 ║
+║    npx @proflandrigan/shards-studio      ║
 ║                                          ║
 ║  Notebook walkthrough mode:              ║
 ║    /notebook-walkthrough                 ║
