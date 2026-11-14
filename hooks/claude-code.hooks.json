@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "matcher": "startup|resume|compact|clear", "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.js\"" } ] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/user-prompt-submit.js\"" } ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "mcp__.*shards.*__gate_.*", "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use.js\"" } ] }
+    ]
+  }
+}

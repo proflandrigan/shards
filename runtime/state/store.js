@@ -102,6 +102,16 @@ class StateStore {
     return Number.isInteger(s.version) ? s.version : 0;
   }
 
+  // withLock(fn) -> fn()'s result. Runs fn under the state lock WITHOUT bumping the session
+  // version (for hook-owned state such as prompts.jsonl / hooks.json, which must not
+  // trigger version-change re-grounding). Added for E11.0; backward-compatible.
+  async withLock(fn) {
+    fs.mkdirSync(this.sessionDir, { recursive: true });
+    fs.closeSync(fs.openSync(this.lockTarget, 'a'));
+    const release = await lockfile.lock(this.lockTarget, LOCK_OPTS);
+    try { return await fn(); } finally { await release(); }
+  }
+
   // update(name, fn[, sessionScoped=true]) -> next. fn(current) may be async; may mutate or return.
   async update(name, fn, sessionScoped = true) {
     fs.mkdirSync(this.sessionDir, { recursive: true });

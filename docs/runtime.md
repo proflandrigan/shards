@@ -185,3 +185,24 @@ Each module's header comment describes its contract. The library internals were 
 The legacy hook still uses them through shims. `tools/gate-hook/validation.js`, `tools/gate-hook/sql-guard.js` and `tools/gate-hook/auto-allowlist.js` each contain one line that re-exports from `../../runtime/lib/...`. The shims stay until E11.9 deletes the legacy gate hook.
 
 **Install breakage.** `tools/install.js` copies `tools/gate-hook/` to `.shards/hooks/gate-hook/` in a target project. From there, `../../runtime/lib/` resolves to `.shards/runtime/lib/`, which the installer does not create. Installed legacy hooks would fail to load these modules. The fix is for `tools/install.js` to also copy `runtime/lib/` into the target, for example to `.shards/runtime/lib/`, so the relative path resolves. `install.js` is owned outside this change, so this is not done here.
+
+## 8. Hooks (E11.0)
+
+Hook shims live in `hooks/` (see `hooks/README.md`). They write hook-owned state through `StateStore.withLock(fn)` (added for E11.0: takes the state lock without bumping the session `version`, so hook writes never trigger version-change re-grounding).
+
+```
+<root>/.shards/state/sessions/<key>/prompts.jsonl   one line per UserPromptSubmit
+<root>/.shards/state/sessions/<key>/hooks.json      {promptSeq, host, gateCalls: [...<=20], lastGateCall}
+<root>/.shards/state/handshake/<hook-pid>.json      SessionStart handshake (pruned after 24h)
+<root>/.shards/state/hook-errors.log                JSON lines {ts, hook, error}
+```
+
+`<key>` = `toSessionKey(session_id)` (`hooks/lib/host.js`).
+
+`prompts.jsonl` line: `{v:1, session_id, prompt_id (int, 1-based, monotonic per session), ts (ISO), text (NFC, whitespace collapsed, trimmed), sha256 (hex of text as UTF-8), host, turn_id?, permission_mode?}`.
+
+`hooks.json` gate record: `{tool, permission_mode (string|null), ts, host, tool_use_id?, agent_id?}`.
+
+Handshake: `{session_id, source (startup|resume|compact|clear), cwd, ts, pid, ppid_chain: [parent, grandparent, ...]}`. `pid` is the hook process; the host process is a common ancestor of the hook and the MCP server, so E2.11 intersects `ppid_chain` with the MCP process's own ancestry and takes the newest `ts`. Windows records `[process.ppid]` only.
+
+Field assumptions from docs only (not seen in real payloads): Codex payloads, Codex `additionalContext` output shape, `permission_mode` on PreToolUse. Claude Code SessionStart and UserPromptSubmit were observed live (headless `claude -p`). Codex live check: OPEN (external), `TODO(owner: proflandrigan)`.
