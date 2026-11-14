@@ -6,6 +6,7 @@ const path = require('path');
 const COMMANDS = {
   build: { summary: 'Compile core/ into a target package (claude|codex|skills)', run: runBuild },
   'uninstall-dev': { summary: 'Remove dev build output (adapters/<target>) made by build --dev', run: runUninstallDev },
+  gates: { summary: 'Gate status and interim operator confirm (E11.13 replaces this)', run: (argv) => require('./commands/gates').run(argv) },
   // EXTENSION POINT: register doctor / gates / sessions here, e.g.
   //   doctor: { summary: '...', run: (argv) => require('./doctor').run(argv) },
 };
@@ -15,6 +16,7 @@ function usage() {
   for (const [n, c] of Object.entries(COMMANDS)) lines.push(`  ${n.padEnd(14)} ${c.summary}`);
   lines.push('', 'build options: --target <claude|codex|skills> [--dev] [--out dir] [--strict] [--core dir]');
   lines.push('uninstall-dev options: [--target claude|codex|all] [--out dir]');
+  lines.push('gates: gates status [--session k] [--root d] | gates confirm <gate-id> [--session k] [--changes "note"] [--root d]');
   return lines.join('\n');
 }
 
@@ -90,5 +92,5 @@ function main(argv) {
   return c.run(rest);
 }
 
-if (require.main === module) process.exit(main(process.argv.slice(2)));
+if (require.main === module) Promise.resolve(main(process.argv.slice(2))).then((c) => process.exit(c), (e) => { console.error(e && e.message ? e.message : e); process.exit(1); });
 module.exports = { main, COMMANDS };
