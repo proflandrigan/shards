@@ -1,6 +1,6 @@
 'use strict';
 // Activation checks: static (core/) and post-emit (written file list per target).
-const { inventory } = require('../scripts/activation-inventory.js');
+const { inventory } = require('./activation-inventory.js');
 
 const has = (doc, kind) => Array.isArray(doc.activation) && doc.activation.includes(kind);
 

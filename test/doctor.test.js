@@ -139,6 +139,7 @@ describe('permissions.gate-tools', () => {
     'mcp__plugin_shards_shards__gate_confirm',
     'mcp__plugin_shards_shards__gate_advance',
     'mcp__plugin_shards_shards__gate_force_close',
+    'mcp__plugin_shards_shards__gate_suspend',
     'mcp__plugin_shards_shards',
     'mcp__plugin_shards_shards__*',
     'mcp__shards',

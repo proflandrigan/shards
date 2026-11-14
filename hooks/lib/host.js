@@ -12,7 +12,7 @@ const HOSTS = { CLAUDE: 'claude-code', CODEX: 'codex' };
 // Gate tools matched on the MCP tool name (E11.0 / E11.4). The server name differs by
 // host and packaging (Claude plugin: mcp__plugin_<plugin>_<server>__gate_advance;
 // Codex: assumed mcp__<server>__gate_advance [docs-only]), so we match on the pattern.
-const GATE_TOOL_RE = /^mcp__.*shards.*__gate_(advance|force_close|confirm)$/i;
+const GATE_TOOL_RE = /^mcp__.*shards.*__gate_(advance|force_close|confirm|suspend)$/i;
 
 function isGateTool(toolName) {
   return typeof toolName === 'string' && GATE_TOOL_RE.test(toolName);

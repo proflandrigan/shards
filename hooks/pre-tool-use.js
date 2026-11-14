@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 // PreToolUse shim (E11.0). For the gate tools only (mcp__*shards*__gate_advance |
-// gate_force_close | gate_confirm) records permission_mode AT CALL TIME, the tool name and
+// gate_force_close | gate_confirm | gate_suspend) records permission_mode AT CALL TIME, the tool name and
 // a timestamp into <session>/hooks.json (gateCalls, newest last, capped; lastGateCall).
 // Other tools: no output and no state unless an auto-verify block is active (then may print allow). Never reads the host's session log.
 const fs = require('fs');

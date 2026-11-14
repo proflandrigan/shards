@@ -8,7 +8,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
-const GATE_TOOLS = ['gate_advance', 'gate_force_close', 'gate_confirm'];
+const GATE_TOOLS = ['gate_advance', 'gate_force_close', 'gate_confirm', 'gate_suspend'];
 const SERVERS = ['mcp__plugin_shards_shards', 'mcp__shards'];
 
 function usage() {

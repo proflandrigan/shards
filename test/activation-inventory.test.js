@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import path from 'path';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { inventory } = require('../scripts/activation-inventory.js');
+const { inventory } = require('../build/activation-inventory.js');
 const { loadCore } = require('../build/core.js');
 const { checkActivation, checkEmitted } = require('../build/activation-check.js');
 

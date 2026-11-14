@@ -4,7 +4,7 @@
 // Layout preserves the repo-relative structure so runtime's `../core`, `../bindings`, `../hooks/lib`
 // and `../package.json` (VERSION) requires resolve unchanged:
 //   <out>/package.json   generated: name shards-mcp, same version/deps as root, bin -> runtime/server.js
-//   <out>/runtime/ core/ bindings/ hooks/lib/ build/ scripts/validate-agents.js  (build/ is used by the load_phase tool)
+//   <out>/runtime/ core/ bindings/ hooks/lib/ build/ scripts/validate-agents.js  (build/ is used by the load_phase tool and carries activation-inventory.js; runtime/build must never require scripts/)
 // Usage: node scripts/stage-runtime-package.js [--out dir]   (prints the staged dir on stdout)
 const fs = require('fs');
 const os = require('os');

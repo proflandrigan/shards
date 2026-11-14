@@ -16,6 +16,7 @@ const C = '11111111-1111-4111-8111-111111111111';
 const GA = 'mcp__plugin_shards_shards__gate_advance';
 const GF = 'mcp__plugin_shards_shards__gate_force_close';
 const GC = 'mcp__plugin_shards_shards__gate_confirm';
+const GS = 'mcp__plugin_shards_shards__gate_suspend';
 
 let tmp;
 beforeEach(() => { tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shards-pre-')); });
@@ -54,6 +55,11 @@ describe('gate tools', () => {
     const r = run({ tool_name: GC });
     expect(r.stdout).toBe('');
     expect(hooksJson().lastGateCall).toMatchObject({ tool: GC, decision: '' });
+  });
+  it('gate_suspend records permission_mode without ask', () => {
+    const r = run({ tool_name: GS, permission_mode: 'acceptEdits' });
+    expect(r.stdout).toBe('');
+    expect(hooksJson().lastGateCall).toMatchObject({ tool: GS, permission_mode: 'acceptEdits', decision: '' });
   });
   it('records bypassPermissions / auto as-is', () => {
     run({ tool_name: GA, permission_mode: 'bypassPermissions' });
