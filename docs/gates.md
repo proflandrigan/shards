@@ -15,12 +15,12 @@ A gate is a human checkpoint at the end of a phase. The agent asks for one with 
 | `core/schema/gate-request.schema.json` | Input schema for `gate_request`. |
 | `runtime/gates/machine.js` | State machine: `requestGate`, `confirmGate`, `suspendGate` and `resumeGate` (internal), `getGate`, `listGates`, `pendingForFrame`. `runtime/gates/index.js` re-exports it. |
 | `runtime/git/index.js` | Gate commits: `commitGate`, `replayPending`, `listPending`, `gitState`, `gateRef`, `makeDenyMatcher`. |
-| `runtime/git/leases.js` | `getLeasedPaths()` stub. Always returns `[]` (E5.9). |
+| `runtime/git/leases.js` | `getLeasedPaths()`. Returns the paths of active lease slices (`listActive`), and `commitGate` excludes them. |
 | `runtime/lib/validation.js` | Parses the last `## Validation` section for `validates`. |
 | `cli/commands/gates.js` | Interim operator CLI: `gates status`, `gates confirm` (section 7). |
 | `runtime/state/store.js` | Locked, atomic writes of the session state. |
 
-What is wired today: `gate_request` opens gates, and `gates confirm` confirms them. The confirm path runs the git commit. Only those two write `gates.json`. The `return` tool and the status header read it (`pendingGatesFor` in `runtime/stack.js`). Hooks do not enforce gates (section 8).
+What is wired today: `gate_request` opens gates, and `gates confirm` confirms them. The confirm path runs the git commit. Only those two write `gates.json`. The `return` tool and the status header read it (`pendingGatesFor` in `runtime/stack.js`). The PreToolUse hook blocks write/exec calls from unbound callers while a gate is pending (section 8, and `docs/delegation.md` section 3.1).
 
 ## 2. Gate entry schema
 
@@ -82,7 +82,7 @@ Rules enforced in code:
 
 `ADVANCING_KINDS` in `machine.js` is `phase, final, execute, handoff`. Unknown kinds are rejected. The `gate_request` schema enum rejects them as a tool error, and `requestGate` throws `Unknown gate kind`. The runtime does not normalize unknown kinds to `phase`.
 
-The runtime does not read `SHARDS_GATE_ENFORCE` or `SHARDS_CHECKPOINT_ENFORCE`. `TODO(E11.6)`.
+`SHARDS_GATE_ENFORCE=0` turns off the PreToolUse write blocks in `hooks/lib/enforce.js` (see `docs/delegation.md` section 3.1). The runtime (`runtime/`) does not read `SHARDS_CHECKPOINT_ENFORCE`; only `packages/studio/server.js` reads it. `pendingForFrame` matches a gate of any kind, so a pending `checkpoint` or `confirm` gate also blocks unbound writes in the hook while enforcement is on.
 
 ## 5. `gate_request` tool
 
@@ -137,7 +137,7 @@ The prose for a pending gate says to stop and wait, and gives the interim `gates
 - The commit covers the full diff of each output directory against HEAD, not only the files written during this gate.
 - Denylist and size limits apply to tracked and untracked files. A tracked file excluded by these rules is left alone, not deleted.
 - `.shards/` is excluded only through the output directory. No collector rule excludes it by name. Current output directories (`analysis/`, `studies/`, `models/`, `data_models/`, `services/`, `research/`, `dashboards/`) never cover the root.
-- Leases: `leases.getLeasedPaths(session)` always returns `[]` until E5.9. `commitGate` accepts a `getLeasedPaths` override. `machine.js` does not pass one, so the module function is used. Tests stub the module function.
+- Leases: `leases.getLeasedPaths(session)` returns the paths of active lease slices (`listActive`). `commitGate` accepts a `getLeasedPaths` override. `machine.js` does not pass one, so the module function is used. Tests stub the module function.
 
 ### 6.3 Commit paths
 
@@ -258,8 +258,8 @@ Exit codes: 0 success, 1 gate or confirm error, 2 usage error.
 | Suspended gates block frame `return`. Today only `pending` gates do (`runtime/stack.js` `pendingGatesFor`), so a suspended gate does not stop a pop. | Gap | `TODO(E5.5)` |
 | `load_phase` compaction and version-change re-ground | Not built. Only `activate` and `load_phase` return a re-ground block. | `TODO(E11.7)` (section 9) |
 | Copy queue. `copy_queue` is always `[]`. | Not started | `TODO(E6.8)` |
-| Hook enforcement (block tool calls while a gate is pending). `hooks/` does not read gates. | Not started | `TODO(E11.6)` |
-| Lease exclusion. `getLeasedPaths` returns `[]`. | Stub | `TODO(E5.9)` |
+| Hook enforcement (block tool calls while a gate is pending). `hooks/lib/enforce.js` denies write/exec calls from unbound callers while the top frame has a pending gate. Bound fan-out workers are exempt (`docs/delegation.md` section 3.1). | Partly done (E5.9) | `TODO(E11.6)` for the remainder |
+| Lease exclusion. `getLeasedPaths` returns active lease paths, and `commitGate` excludes them. | Done (E5.9) | |
 | Replay at session end | Not implemented. `shards doctor` exists (`docs/doctor.md`); `doctor --fix` replays stuck records. | `TODO(owner: proflandrigan)` |
 | Recovery for `stuck` records and `commit_error` gaps | Partly: `doctor --fix` force-replays stuck records. `commit_error` has no recovery. | `TODO(owner: proflandrigan)` |
 | Push | Not implemented | Section 6.9 |

@@ -15,8 +15,7 @@ const MODE_ASK_TOOLS = /__gate_(advance|force_close)$/i;
 const ASK_REASON = 'Shards gate confirmation: approve only if you (the human) want this gate advanced/closed.';
 
 // E11.4: returns {decision, output}. `ask` is Claude-only (Codex cannot, compat CX-6).
-// EXTENSION POINT (E11.6, optional enforcement; separate joint epic, NOT implemented): a future
-// deny/steer decision for gate tools (e.g. a pending gate) would be computed here.
+// E11.6 enforcement for non-gate tools lives in lib/enforce.js (see handler below).
 function decide(n) {
   if (n.host === host.HOSTS.CLAUDE && MODE_ASK_TOOLS.test(n.toolName || '')) {
     return { decision: 'ask', output: JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'ask', permissionDecisionReason: ASK_REASON } }) };
@@ -38,6 +37,10 @@ async function autoVerify(n, root) {
 
 async function handler(n, root) {
   if (!host.isGateTool(n.toolName)) {
+    try {
+      const e = await require('./lib/enforce').enforce(n, root);
+      if (e && e.deny) return require('./lib/enforce').denyOutput(e.deny);
+    } catch (e) { common.logError(root, 'pre-tool-use', e); }
     try { return await autoVerify(n, root); } catch (e) { common.logError(root, 'pre-tool-use', e); return ''; }
   }
   const key = host.toSessionKey(n.sessionId);

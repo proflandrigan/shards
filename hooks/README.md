@@ -25,7 +25,7 @@ auto-verify (E11.12) needs every tool call; the gate-tool-only fast exit stays i
   (tier 2 is off on Codex). `gate_confirm` is recorded only.
 - E11.12: for non-gate tools, `runtime/auto-verify` `isActive(session)` is checked first (cheap, lock-free, no writes);
   only when a block is active does the shim `await check(...)` and print `permissionDecision: "allow"`. Both hosts. Gate tools are never auto-approved.
-- E11.6 (optional enforcement, e.g. `deny` when a gate is pending) is a separate joint epic and NOT implemented; extension point is the comment block in `pre-tool-use.js`.
+- E11.6 enforcement (`hooks/lib/enforce.js`, runtime state only): for write/exec tools, `deny` while the active frame has a pending gate (unless the caller's `agent_id` is bound to a fan-out lease slice), deny writes outside a bound worker's slice, deny lead writes inside a leased slice; `fanout_claim` calls bind agent_id to a slice. `SHARDS_GATE_ENFORCE=0` disables the deny paths.
 - Nothing emitted adds an allow rule for gate tools.
 
 ## Codex gaps (docs-only, CX-6 / CX-1)
