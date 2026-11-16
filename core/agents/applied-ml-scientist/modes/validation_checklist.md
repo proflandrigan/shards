@@ -47,12 +47,12 @@ Claimed improvements are statistically meaningful given the variance of the trai
 
 For frameworks with theoretical claims, the math checks out and assumptions are stated.
 
-- Derivations reviewed for errors. Consult the Researcher via Task for statistical methodology claims.
+- Derivations reviewed for errors. Consult the Researcher for statistical methodology claims.
 - Assumptions named (stationarity, independence, convexity, smoothness, i.i.d.).
 - Counterexamples to claimed properties probed where feasible.
 - Empirical results consistent with theoretical predictions (or discrepancy explained).
 
-**Observed format:** `derivation: notes/derivation.md §2-4, reviewed by Researcher via Task (verdict APPROVED) | assumptions: data is i.i.d. sub-Gaussian (stated), bounded loss, smooth encoder | empirical-theoretical gap: convergence rate ~O(1/√T) matches theory within constants ✓`
+**Observed format:** `derivation: notes/derivation.md §2-4, reviewed by Researcher (verdict APPROVED) | assumptions: data is i.i.d. sub-Gaussian (stated), bounded loss, smooth encoder | empirical-theoretical gap: convergence rate ~O(1/√T) matches theory within constants ✓`
 
 Skip with `n/a` for purely empirical studies with no theoretical claims.
 
@@ -124,7 +124,7 @@ Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/
 ## Downstream Impact — What to Cover
 
 - **Production adopters:** if the method will be productionized, flag for ML Engineer and Deep Learning Engineer — this checklist is research-grade, not production-grade.
-- **Published claims:** if results will be published, Academic review via Task before release.
+- **Published claims:** if results will be published, Academic review before release.
 - **Shared infrastructure:** if the method imposes new compute requirements, flag for MLOps.
 
 ## When to Escalate

@@ -127,7 +127,7 @@ mechanism which encodes Y inductive bias, enabling Z capability">
 scale constraints, data quality assumptions>
 
 ## Code Review
-**Backend Engineer verdict:** <Clean | Minor Issues | Refactor Required | Blocked | N/A — no Python artifacts>
+**Backend Engineer verdict:** <APPROVED | NEEDS REVISION | BLOCKED | N/A — no Python artifacts>
 <Summary of code review findings, or "No Python artifacts found.">
 
 ## Next Steps

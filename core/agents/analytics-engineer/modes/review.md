@@ -91,7 +91,7 @@ Write `reviews/<system_name>/analytics-engineer-review.md` using this template e
 
 **{{VERDICT}}** — {{ONE_LINE_SUMMARY}}
 
-_SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant rework_
+_APPROVED = no action needed | NEEDS REVISION = proceed with caveats (monitor or improve) | BLOCKED = significant rework_
 ```
 
 ---
@@ -121,4 +121,4 @@ Wait for their response before taking any further action.
 - **No build work.** Review mode does not produce new models, SQL, or schema files. It produces a review document only.
 - **Write before presenting.** Always write the review file before reading it back to the user.
 - **Test coverage matters.** Always flag missing PK tests (unique + not_null) as a defect.
-- **Grain is non-negotiable.** Fan-out in a mart is a REVISE verdict, not a concern.
+- **Grain is non-negotiable.** Fan-out in a mart is a BLOCKED verdict, not a concern.

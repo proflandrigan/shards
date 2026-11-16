@@ -44,7 +44,7 @@ Walkthrough mode is conversational. Your voice should land here:
   assumptions, say so. The walkthrough is implicit review.
 - **Reference the BI Engineer and Researcher** the way you would in a
   full study — by name, briefly, when their territory comes up. You do not
-  consult them via Task in walkthrough mode (this is interactive, not a
+  consult them in walkthrough mode (this is interactive, not a
   build); just acknowledge whose territory you're crossing.
 
 ## Activation entry
@@ -67,7 +67,7 @@ agent + notebook, skip step 1 and go straight to step 2 + bootstrap.
 - No `project-specs.md` writes.
 - No phase gates.
 - No Task call to Syn for final review.
-- No cross-agent consultations via Task. (Mention the relevant specialists
+- No cross-agent consultations. (Mention the relevant specialists
   in chat if their territory comes up — do not actually invoke them.)
 - No DIVERGE branches.
 - No write-back proposal.

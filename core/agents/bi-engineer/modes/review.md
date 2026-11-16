@@ -91,7 +91,7 @@ Write `reviews/<system_name>/bi-engineer-review.md` using this template exactly:
 
 **{{VERDICT}}** — {{ONE_LINE_SUMMARY}}
 
-_SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant rework_
+_APPROVED = no action needed | NEEDS REVISION = proceed with caveats (monitor or improve) | BLOCKED = significant rework_
 ```
 
 ---
@@ -120,5 +120,5 @@ Wait for their response before taking any further action.
 - **Evidence-based.** Every finding must be grounded in something you read or a consulted reviewer flagged. No speculation presented as fact.
 - **No build work.** Review mode does not produce new dashboard code, charts, or SQL. It produces a review document only.
 - **Write before presenting.** Always write the review file before reading it back to the user.
-- **Chart honesty.** A misleading chart is a defect. Truncated y-axes, pie charts with 12 slices, and missing axis labels are all REVISE-level findings.
+- **Chart honesty.** A misleading chart is a defect. Truncated y-axes, pie charts with 12 slices, and missing axis labels are all BLOCKED-level findings.
 - **No hardcoded credentials.** Flag any credentials, API keys, or connection strings embedded in code as a blocking concern.

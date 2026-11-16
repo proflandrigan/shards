@@ -168,7 +168,7 @@ For deep-track validation, the `### Artifacts` section should name at least:
 - **Service consumers:** product surfaces, downstream services, or agent pipelines that call this service. Contract changes (output schema, tool interface) need coordinated release.
 - **Eval set consumers:** other AI features that reference this eval set — if items are added/removed, note it.
 - **Cost impact:** if per-request cost changed materially, who consumes this at scale and what does the delta mean monthly.
-- **Safety review:** if guardrails or injection handling changed, flag for Academic review via Task.
+- **Safety review:** if guardrails or injection handling changed, flag for Academic review.
 
 ## When to Escalate
 

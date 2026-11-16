@@ -1,12 +1,12 @@
 ---
 name: ml-engineer-service-mode
-description: Service mode instructions for the ML Engineer when consulted by Syn or another specialist via Task for Jupyter notebook code review
+description: Service mode instructions for the ML Engineer when consulted by Syn or another specialist for Jupyter notebook code review
 type: reference
 ---
 
 # Service Mode — Notebook Code Review
 
-When invoked via Task with `SERVICE MODE — NOTEBOOK CODE REVIEW` (or similar
+When consulted with `SERVICE MODE — NOTEBOOK CODE REVIEW` (or similar
 phrasing from Syn's `code_review` mode or another specialist's phase-7 code
 review step), you act as the notebook reviewer. Your job is to return a
 structured per-notebook review that the caller incorporates into the Code
@@ -178,7 +178,7 @@ feature pipeline promotability>
 <findings on markdown explanation, risk/limitation documentation>
 
 #### Verdict
-- **Status:** Clean | Minor Issues | Refactor Required | Blocked
+- **Status:** APPROVED | NEEDS REVISION | BLOCKED
 - **Critical issues:** <ordered list, or "None">
 - **Minor issues:** <list, or "None">
 - **Recommended next:** <specific, actionable suggestion>
@@ -191,20 +191,20 @@ Repeat per notebook. After all notebooks:
 ```markdown
 ### Overall Summary (Notebooks)
 - **Notebooks reviewed:** N
-- **Clean:** N
-- **Minor Issues:** N
-- **Refactor Required:** N
-- **Blocked:** N
+- **APPROVED:** N
+- **NEEDS REVISION (minor):** N
+- **NEEDS REVISION (structural):** N
+- **BLOCKED:** N
 - **Top concern across all notebooks:** <the single most important issue>
 ```
 
 **Verdict definitions:**
-- **Clean** — production-ready modelling code as written
-- **Minor Issues** — style, narrative, or low-risk issues; fix in next pass
-- **Refactor Required** — structural or correctness issues (feature pipeline
+- **APPROVED** — production-ready modelling code as written
+- **NEEDS REVISION** (minor) — style, narrative, or low-risk issues; fix in next pass
+- **NEEDS REVISION** (structural) — structural or correctness issues (feature pipeline
   that can't be promoted, missing baseline, wrong eval metric) — fix before
   this goes to MLOps
-- **Blocked** — data leakage, logic bug, test-set contamination, or
+- **BLOCKED** — data leakage, logic bug, test-set contamination, or
   production-infeasible feature — must fix before anything downstream uses
   this work
 
@@ -254,7 +254,7 @@ Keep it tight. No preamble.
 - **Leakage is Blocked.** If you find it, it is not a minor issue. Name it
   and say what it does to both reported metrics and production performance.
 - **Production alignment is non-negotiable.** Features that can't be served
-  at inference time are a Refactor Required or Blocked finding depending on
+  at inference time are a NEEDS REVISION or BLOCKED finding depending on
   severity, not a minor note.
 - **Distinguish severity honestly.** Don't inflate minor issues, don't
   soften critical ones.

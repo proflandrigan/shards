@@ -137,11 +137,11 @@ Address any concerns raised by either review before finalizing the infrastructur
   - Rollback: <procedure>
   - Fallback: <rule-based default | cached predictions | error response>
 - **Data Engineer pipeline review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary of infrastructure review>
   - Issues addressed: <how resolved or "none raised">
 - **Data Modeller pipeline review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary of data correctness review>
   - Issues addressed: <how resolved or "none raised">
 - **Iteration-specific (if applicable):**

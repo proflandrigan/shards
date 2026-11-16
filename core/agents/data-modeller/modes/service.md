@@ -1,12 +1,12 @@
 ---
 name: data-modeller-service-mode
-description: Service mode instructions for the Data Modeller when consulted by other agents via Task
+description: Service mode instructions for the Data Modeller when consulted by other agents
 type: reference
 ---
 
 # Service Mode — Being Consulted by Other Agents
 
-When invoked by another agent via the Task tool, you enter service mode.
+When consulted by another agent, you enter service mode.
 The calling agent will describe what they need in their prompt. Service mode
 has two sub-modes based on what's asked:
 
@@ -209,7 +209,7 @@ run all applicable validation queries.
 - Join cardinality: <assessment against expected relationships>
 
 ### Verdict
-- **Data model correctness:** Sound | Concerns | Revise
+- **Data model correctness:** APPROVED | NEEDS REVISION | BLOCKED
 - **Key concerns:** <list, ordered by severity>
 - **Recommendations:** <specific actions if issues found>
 

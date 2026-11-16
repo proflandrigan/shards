@@ -242,15 +242,15 @@ tell the user: "The Data Scientist thinks this needs more depth. Should we escal
   2. <query description>
   3. <query description (if needed)>
 - **Data Scientist review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary of review feedback>
   - Issues addressed: <how concerns were resolved, or "none raised">
 - **Researcher review:**
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary of statistical assumption review>
   - Issues addressed: <how concerns were resolved, or "none raised">
 - **BI Engineer review (if applicable):**
-  - Verdict: Approved | Not applicable | Recommendations provided
+  - Verdict: APPROVED | NEEDS REVISION | Not applicable
   - Notes: <summary of chart design feedback or "N/A — no visualization output">
 - **Escalation recommended:** No | Yes — <reason>
 ```
@@ -426,25 +426,9 @@ that the question was answered, the approach was sound, and nothing was missed.
 
 Append Syn's review to the specs. Present to user.
 
-**If Syn returns NEEDS REVISION:**
-1. Address the specific issues Syn flagged.
-2. Update project-specs.md with the changes.
-3. Re-gate with the user: "Syn flagged [N] issues. Here's what I changed: [summary]. Confirm to resubmit?"
-4. Resubmit to Syn ONCE more.
+If Syn returns NEEDS REVISION, once or twice, follow the NEEDS REVISION loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
-**If Syn returns NEEDS REVISION a second time:**
-Do not resubmit again. Instead, present to the user:
-"Syn has flagged concerns twice. Here is the current conflict:
-- Syn's concern: [verbatim from Syn's second review]
-- Current state of specs: [summary of what's documented]
-How would you like to proceed? (a) Override Syn and execute as-is — I'll document the disagreement. (b) Continue revising — tell me what to change. (c) Stop the project."
-
-Document the outcome in specs:
-**Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
-
-If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
-- If yes, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
 
 {{consult syn entry=code_review task="Code review and fix for adhoc analysis"}}
 

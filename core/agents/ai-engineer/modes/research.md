@@ -43,7 +43,7 @@ first, or drop to `[EX]` where human review sits between iterations.
    - If no `project-specs.md` exists: stop and ask the user to provide project
      context (AI system type, current prompts/chain, eval harness, baseline
      metrics) before proceeding.
-2. Read `project-specs.md` in full.
+2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
 3. Scan the project directory for relevant files: prompts, chain configs, RAG
    configs, eval scripts, eval sets.
 4. **Verify the eval harness exists and runs.** If it doesn't run, stop and

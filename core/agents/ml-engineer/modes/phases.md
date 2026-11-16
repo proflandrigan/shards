@@ -230,7 +230,7 @@ The study's candidate model is the starting point, not a blank slate. Focus this
 - Can the study's best model meet serving constraints (latency, memory, size)?
 - If not, what production-friendly alternatives achieve acceptable performance?
 - What's the production baseline? (the study's baseline may differ from a production baseline)
-Still consult the Data Scientist via Task, but frame the review as "production adaptation
+Still consult the Data Scientist, but frame the review as "production adaptation
 review" rather than full methodology review.
 
 **Otherwise (greenfield or iteration):** proceed as below.
@@ -254,6 +254,8 @@ verified by <agent> in <source_project>)`
 
 Tell the user: "Asking the Data Scientist to review the modeling approach. Statistical rigor isn't optional."
 
+
+Before this consult, collect the context the reviewer needs, because it cannot consult further: data-modeller context (grain, entities, relationships) via {{consult data-modeller entry=review task="Grain and relationships for the data-scientist review"}} and researcher input on the statistical methodology via {{consult researcher entry=service task="Methodology input for the data-scientist review"}}. Include both in the task of the consult below.
 
 {{consult data-scientist entry=review task="Review ML model design for [project]"}}
 
@@ -284,6 +286,8 @@ explicitly asks about novel approaches — consult the Applied ML Scientist:
 Tell the user: "This problem has characteristics that warrant a deeper ML science
 review — I'm asking the Applied ML Scientist shard to assess whether more
 cutting-edge approaches should be considered..."
+
+Before this consult, collect the context the reviewer needs, because it cannot consult further: data-modeller context (grain, entities, relationships) via {{consult data-modeller entry=review task="Grain and relationships for the methodology review"}} and researcher input via {{consult researcher entry=service task="Statistical methodology input for the methodology review"}}. Include both in the task of the consult below.
 
 {{consult applied-ml-scientist entry=review task="ML methodology review for <system type>"}}
 
@@ -432,24 +436,24 @@ Define:
 
 ## Phase 4: Model Design (ML Engineer)
 - **Data Scientist review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Tier: Proceed | Proceed with caveats
   - Notes: <summary of methodology review>
   - Reviewer resolution: Approved | User override — <rationale>
 - **Applied ML Scientist review:** N/A — standard methodology | <summary if consulted>
-  - Verdict: Sound | Consider Alternatives | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Deep Learning Engineer review:** N/A — not a DL approach | <summary if consulted>
-  - Verdict: DEPLOY | OPTIMIZE | REDESIGN
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Data Analyst feature review:** N/A — Interpretability not High | <summary>
-  - Verdict: Aligned | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Tier: Proceed | Proceed with caveats
   - Reviewer resolution: Approved | User override — <rationale>
 - **Researcher review:** N/A — no statistical inference in evaluation | <summary if consulted>
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Baseline model:**
@@ -613,11 +617,11 @@ Address any concerns raised by either review before finalizing the infrastructur
   - Rollback: <procedure>
   - Fallback: <rule-based default | cached predictions | error response>
 - **Data Engineer pipeline review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary of infrastructure review>
   - Issues addressed: <how resolved or "none raised">
 - **Data Modeller pipeline review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary of data correctness review>
   - Issues addressed: <how resolved or "none raised">
 - **Iteration-specific (if applicable):**
@@ -786,7 +790,7 @@ Return your full review with query validation results.
 
 ## Phase 6: Build Log (ML Engineer)
 - **Data Modeller query review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary>
   - Issues addressed: <how resolved or "none raised">
 - **Query files:**
@@ -834,9 +838,9 @@ Append the Backend Engineer's review to project-specs.md.
 
 **After appending the Backend Engineer's review, branch on verdict:**
 
-- **Clean or Minor Issues** → proceed directly to Syn review.
-- **Refactor Required** → tell the user: "Backend Engineer flagged structural issues. Fixing before Syn review." Address every listed issue in the project files. Update project-specs.md. Re-gate: "Backend Engineer issues resolved: [summary]. Confirm to proceed to Syn?" Then proceed to Syn.
-- **Blocked** → tell the user: "Backend Engineer has blocked this. Fixing critical issues before continuing." Address every critical issue. Update project-specs.md. Resubmit to Backend Engineer once (same Task call format). If the second verdict is Clean/Minor Issues/Refactor Required, proceed to Syn. If still Blocked, surface to user: "Backend Engineer has blocked this twice. [Verbatim second verdict.] How would you like to proceed? (a) Override and proceed to Syn — I'll document the disagreement. (b) Continue fixing — tell me what to change. (c) Stop the project."
+- **APPROVED** → proceed directly to Syn review.
+- **NEEDS REVISION** → tell the user: "Backend Engineer flagged structural issues. Fixing before Syn review." Address every listed issue in the project files. Update project-specs.md. Re-gate: "Backend Engineer issues resolved: [summary]. Confirm to proceed to Syn?" Then proceed to Syn.
+- **BLOCKED** → tell the user: "Backend Engineer has blocked this. Fixing critical issues before continuing." Address every critical issue. Update project-specs.md. Resubmit to Backend Engineer once (same Task call format). If the second verdict is APPROVED or NEEDS REVISION, proceed to Syn. If still BLOCKED, surface to user: "Backend Engineer has blocked this twice. [Verbatim second verdict.] How would you like to proceed? (a) Override and proceed to Syn — I'll document the disagreement. (b) Continue fixing — tell me what to change. (c) Stop the project."
 
 ---
 
@@ -895,25 +899,9 @@ monitoring plan, and rollback strategy.
 
 Append Syn's review to specs. Present to user.
 
-**If Syn returns NEEDS REVISION:**
-1. Address the specific issues Syn flagged.
-2. Update project-specs.md with the changes.
-3. Re-gate with the user: "Syn flagged [N] issues. Here's what I changed: [summary]. Confirm to resubmit?"
-4. Resubmit to Syn ONCE more.
+If Syn returns NEEDS REVISION, once or twice, follow the NEEDS REVISION loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
-**If Syn returns NEEDS REVISION a second time:**
-Do not resubmit again. Instead, present to the user:
-"Syn has flagged concerns twice. Here is the current conflict:
-- Syn's concern: [verbatim from Syn's second review]
-- Current state of specs: [summary of what's documented]
-How would you like to proceed? (a) Override Syn and execute as-is — I'll document the disagreement. (b) Continue revising — tell me what to change. (c) Stop the project."
-
-Document the outcome in specs:
-**Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
-
-If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
-- If yes, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
 
 {{consult syn entry=code_review task="Code review and fix for ML engineering project"}}
 
@@ -930,7 +918,7 @@ Append Syn's code review summary to the specs. Present findings to user.
 Then:
 
 1. **Generate Model Card** — Assemble a structured model card for stakeholder
-   sharing. Read `project-specs.md` to extract: ML system type and description
+   sharing. Extract from the live `project-specs.md` (already loaded): ML system type and description
    (Phase 1), data sources (Phase 3), model design and evaluation strategy
    (Phase 4), feature engineering (Phase 5), build results (Phase 6), review
    verdicts (Phase 7). Read `eval-results.json` for quantitative metrics.
@@ -1005,7 +993,7 @@ Then:
 ## Phase 7: Review and Handoff (ML Engineer)
 - **Backend Engineer Review:** <summary or N/A — list files reviewed, overall verdict>
 - **MLOps Engineer Review:**
-  - Verdict: Approved | Concerns | Redesign needed
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary of infrastructure feedback>
 - **Syn Review:** <included above>
 - **Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped

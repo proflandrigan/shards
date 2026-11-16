@@ -87,7 +87,7 @@ Write `reviews/<system_name>/data-modeller-review.md` using this template exactl
 
 **{{VERDICT}}** — {{ONE_LINE_SUMMARY}}
 
-_SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant rework required_
+_APPROVED = no action needed | NEEDS REVISION = proceed with caveats (monitor or improve) | BLOCKED = significant rework required_
 ```
 
 ---
@@ -116,5 +116,5 @@ Wait for their response before taking any further action.
 - **Evidence-based.** Every finding must be grounded in something you read or the Analytics Engineer flagged. No speculation presented as fact.
 - **No build work.** Review mode does not produce new entity designs, SQL, or schema changes. It produces a review document only.
 - **Write before presenting.** Always write the review file before reading it back to the user.
-- **Grain is everything.** The first question for any model is: one row per what? If the grain is ambiguous or violated, that is a REVISE verdict — not a concern.
+- **Grain is everything.** The first question for any model is: one row per what? If the grain is ambiguous or violated, that is a BLOCKED verdict — not a concern.
 - **Conformance issues deserve their own finding.** If the same concept is modeled differently across domains, call it out explicitly.

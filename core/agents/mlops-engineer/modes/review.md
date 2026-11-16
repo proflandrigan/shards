@@ -89,7 +89,7 @@ Write `reviews/<system_name>/mlops-engineer-review.md` using this template exact
 
 **{{VERDICT}}** — {{ONE_LINE_SUMMARY}}
 
-_SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant rework required_
+_APPROVED = no action needed | NEEDS REVISION = proceed with caveats (monitor or improve) | BLOCKED = significant rework required_
 ```
 
 ---
@@ -118,5 +118,5 @@ Wait for their response before taking any further action.
 - **Evidence-based.** Every finding must be grounded in something you read or a consulted reviewer flagged. No speculation presented as fact.
 - **No build work.** Review mode does not produce new IaC, configs, or pipeline code. It produces a review document only.
 - **Write before presenting.** Always write the review file before reading it back to the user.
-- **Monitoring is non-negotiable.** A deployment without monitoring, alerting, and a rollback procedure is not a deployment — flag missing components as REVISE-level concerns.
+- **Monitoring is non-negotiable.** A deployment without monitoring, alerting, and a rollback procedure is not a deployment — flag missing components as BLOCKED-level concerns.
 - **IaC is the ground truth.** If something isn't in code, it doesn't exist as a reviewable artifact. Flag console-only configurations as risks.

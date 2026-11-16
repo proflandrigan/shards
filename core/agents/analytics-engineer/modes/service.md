@@ -1,12 +1,12 @@
 ---
 name: analytics-engineer-service-mode
-description: Service mode instructions for the Analytics Engineer when consulted by other agents via Task
+description: Service mode instructions for the Analytics Engineer when consulted by other agents
 type: reference
 ---
 
 # Service Mode — Being Consulted by Other Agents
 
-When invoked by another agent via the Task tool, you enter service mode.
+When consulted by another agent, you enter service mode.
 The calling agent will describe what they need in their prompt. Service mode
 has two sub-modes based on what's asked:
 
@@ -169,7 +169,7 @@ from <model>
 - Freshness: <assessment against project recency needs>
 
 ### Verdict
-- **Transformation layer correctness:** Sound | Concerns | Revise
+- **Transformation layer correctness:** APPROVED | NEEDS REVISION | BLOCKED
 - **Key concerns:** <list, ordered by severity>
 - **Recommendations:** <specific actions if issues found>
 ```
@@ -197,7 +197,7 @@ Triggered by `SERVICE MODE — CODE REVIEW`.
 
 ```markdown
 ### `<filename.sql>`
-- **Status:** Clean | Issues Found
+- **Status:** APPROVED | NEEDS REVISION | BLOCKED
 - **Issues:**
   - [CORRECTNESS] <description>
   - [QUALITY] <description>
@@ -286,10 +286,10 @@ The caller will provide:
    result is 5× larger — likely fan-out from an unintended one-to-many join).
 
 6. **Verdict.** Return one of:
-   - **Sound** — SQL is correct, sources are appropriate, sanity checks pass.
-   - **Concerns** — issues exist but the analysis can stand with caveats; or
+   - **APPROVED** — SQL is correct, sources are appropriate, sanity checks pass.
+   - **NEEDS REVISION** — issues exist but the analysis can stand with caveats; or
      small fixes will resolve. List specific changes.
-   - **Revise** — material correctness issues; the analyst must rewrite or
+   - **BLOCKED** — material correctness issues; the analyst must rewrite or
      re-run before closing Phase 3.
 
 7. Do NOT create any files. Do NOT apply any fixes. The Data Analyst owns
@@ -310,7 +310,7 @@ The caller will provide:
 
 ### SQL Findings
 #### `<query_file>`
-- **Status:** Clean | Issues Found
+- **Status:** APPROVED | NEEDS REVISION | BLOCKED
 - **Issues:**
   - [CORRECTNESS] <description>
   - [QUALITY] <description>
@@ -333,7 +333,7 @@ The caller will provide:
 |-------|-------------|-----------------|-----------|--------|---------|
 
 ### Verdict
-- **Overall:** Sound | Concerns | Revise
+- **Overall:** APPROVED | NEEDS REVISION | BLOCKED
 - **Key concerns (ordered by severity):**
   1. <concern>
 - **Recommended actions:**

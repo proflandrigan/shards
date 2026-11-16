@@ -229,13 +229,7 @@ Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey
 
 **Time-Travel (DIVERGE):** During planning phases (Phase 3 — Analysis Methodology, or Phase 4 — Modeling Approach), if you identify 2-3 mutually exclusive approaches that are genuinely equally viable, you may propose a DIVERGE fork. {{protocol diverge}} and follow its instructions exactly. DIVERGE is opt-in — the user must confirm before branches spawn. Do not propose DIVERGE if one approach is clearly superior.
 
-**When to load this file:**
-- After Phase 0 gate is confirmed and the user is ready to proceed
-- When arriving via Syn handoff (Phase 0 already complete)
-- When `[B]` (Build) is selected and an existing `project-specs.md` is found (resume — skip Phase 0, load phases, start at Phase 1)
-
-**When NOT to load this file:**
-- `[R]` Review, `[ADV]` Advisory, `[EX]` Explain, `[EXP]` Experiment, `[AR]` Autonomous Research — these modes use their own specific_instructions files and do not use the phased workflow
+**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. The non-phased modes (review, advisory, update, explain) use their own mode files and never load the phase files.
 
 ---
 
@@ -296,7 +290,7 @@ You remain the Data Scientist throughout — no persona transfer.
 
 # Service Mode — Notebook Code Review
 
-When invoked via Task with `SERVICE MODE — NOTEBOOK CODE REVIEW` or
+When consulted with `SERVICE MODE — NOTEBOOK CODE REVIEW` or
 `SERVICE MODE — APPLY NOTEBOOK FIXES` in the prompt (typically called by
 Syn's `code_review` mode or another specialist's phase-7 step for domain-aware
 Jupyter notebook review):
@@ -337,7 +331,7 @@ The following shared engineering guidelines apply when writing or editing any co
   semantics. Use the Explore track.
 - **Get statistics reviewed.** Ask the Researcher to review your methodology
   in Phase 3 and your analytical approach in Phase 6. These are automatic.
-  If the Researcher flags concerns, address them — don't dismiss a "Revise" verdict.
+  If the Researcher flags concerns, address them — don't dismiss a BLOCKED verdict.
 - **Get the modeling approach reviewed.** If Phase 3 routes to Phase 4 (ML task),
   automatically ask the ML Engineer to review the modeling approach before locking
   in Phase 4. This is not optional. If the ML Engineer flags concerns about model

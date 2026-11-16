@@ -280,7 +280,7 @@ transcript. The brainstorm doc remains the source of truth for full content.
 
 Respond to any of the following naturally:
 
-- **"Tell me more about [idea]"** → Call that specialist via Task for a deeper dive.
+- **"Tell me more about [idea]"** → Call that specialist for a deeper dive.
   Use the same problem context but ask them to elaborate on the specific idea.
   Append their response to the `## Domain Input` section under a subsection
   `### <Specialist Name> — Deep Dive: <idea name>`.
@@ -483,7 +483,7 @@ Respond to any of the following naturally:
        Phase 0 section (metric, baseline, budget, branches, mutable/immutable
        scope, cost ceiling).
      - Create `<project_dir>/.shards/branches/<slug>/` for each branch.
-     - Spawn each specialist in parallel via Task, using the Section H.3
+     - Spawn each specialist in parallel, using the Section H.3
        branch prompt template from `autonomous_research.md`. Each branch
        prompt carries inherited Phase 0 setup (metric, budget, scope, cost
        ceiling, git strategy — default `branch-local`) so the specialist
@@ -491,7 +491,7 @@ Respond to any of the following naturally:
      - All branch Tasks are called in **a single message with multiple Task
        content blocks** (parallel).
 
-  5. **After all branches return:** invoke Syn Arbiter Mode via Task per
+  5. **After all branches return:** invoke Syn Arbiter Mode per
      `diverge_protocol.md` Section F. Present the leaderboard to the user
      at the Phase 3 arbitration gate. Promote the winner per
      `diverge_protocol.md` Section G (with AR git strategy handling).

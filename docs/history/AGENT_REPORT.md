@@ -34,20 +34,24 @@ Across all agents there are **121 "in full" directives** and **114 `Read .claude
 
 ## 3. Context Bloat Findings
 
-### 3.1 Double-reading of phase files on resume
+### 3.1 Double-reading of phase files on resume ✅ COMPLETE
 `data-analyst.md:260` and identical blocks in every other specialist tell the model to `Read .claude/agents/specific_instructions/<agent>/phases.md in full` on three different trigger conditions (Phase 0 gate confirmation, Syn handoff, and `[B]` resume). There is no deduplication. A Syn-handoff session that later resumes (e.g., user returns after `/compact`) will read the phase file twice in the same session, each time at 500–1,100 lines.
 
 **Fix:** State once, at the top of each core file, that the phase file is loaded exactly once upon transition to Phase 1, regardless of origin. Remove the "When to load" bullet list — it promotes re-reads.
+
+**Closed (E1.9):** each phased `AGENT.md` has one `**Load once.**` statement and no "When to load" list. Tests: `test/phase-load-once.test.js` ("3.1 phase files are loaded exactly once").
 
 ### 3.2 Redundant Reviewer Verdict Protocol reload ✅ COMPLETE
 `ml-engineer.md:364` reads `reviewer_verdict_protocol.md` once under "Behavioral Rules." But every phase file that invokes a reviewer repeats the verdict mapping inline anyway (see `ml_engineer/phases.md:311`, `:808`). Net effect: the 30-line protocol is loaded once and then re-stated in phase-local language multiple times, doubling the cognitive surface without improving clarity.
 
 **Fix:** Pick one location. The shared protocol or the phase file — not both.
 
-### 3.3 "Syn review NEEDS REVISION" boilerplate replicated per phase
+### 3.3 "Syn review NEEDS REVISION" boilerplate replicated per phase ✅ COMPLETE
 The same ~12-line "If Syn returns NEEDS REVISION a second time" escalation script appears verbatim in `data_analyst/phases.md:432`, `ai_engineer/phases.md:836`, `ml_engineer/phases.md:906`, `data_scientist/phases.md`, `mlops_engineer/phases.md`, etc. Same for the "If Syn's review includes a Code Review section" block. This is copy-paste prose coding.
 
 **Fix:** Extract to `shared/syn_review_resolution.md` and reference from each phase's review section.
+
+**Closed (E1.9):** extracted to `core/protocols/syn_review_resolution.md`, referenced via `{{protocol syn_review_resolution}}` from every final-review phase. Tests: `test/phase-load-once.test.js` ("3.3 Syn-review resolution is a single shared protocol").
 
 ### 3.4 Model-card JSON schema duplicated in two phase files ✅ COMPLETE
 `ml_engineer/phases.md:964–1039` and `ai_engineer/phases.md:893–967` contain the same ~75-line JSON schema. Any schema change requires edits in two places; if they drift, the BI/UI model-card panel will break for one specialist or the other.
@@ -64,10 +68,12 @@ Three separate protocols — `knowledge_retrieval.md` (75 lines, before Phase 1)
 
 **Fix:** The PM preamble must use the same "skip entirely" wording already proven in the knowledge protocol's Syn-handoff section. Add a `__pm_mode__: true` marker the specialist can check.
 
-### 3.7 "Read the project-specs.md" happens over and over
+### 3.7 "Read the project-specs.md" happens over and over ✅ COMPLETE
 Every handoff, every mode switch, every phase checkpoint includes "Read project-specs.md." In a long session the same file can be read 5–8 times. Each read is a full file load.
 
 **Fix:** State once: "At session start, load project-specs.md. Treat it as live — update in place." Remove the "read project-specs.md" sentence from individual phase transitions. Add it only at boundaries where the file may have changed out-of-band (e.g., Syn arbiter mode, resume after compact).
+
+**Closed (E1.9):** stated once in `core/protocols/behavioral_rules.md`; same-context re-read directives removed. Remaining hits are consult briefs to other contexts. Tests: `test/phase-load-once.test.js` ("3.7 project-specs.md is loaded once and treated as live", ceiling 17).
 
 ### 3.8 Anti-repetition "voice rule" is dead weight ✅ COMPLETE
 Every specialist has a "Voice rule — anti-repetition: Track which openers you've used in this session..." block. This is ~6 lines × 13 specialists = 78 lines of instructions asking the model to run a tracker it cannot actually maintain reliably (state is conversational, not structured). The intent is good; the implementation is magical thinking.

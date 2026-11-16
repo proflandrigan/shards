@@ -1,12 +1,12 @@
 ---
 name: backend-engineer-service-mode
-description: Service mode instructions for the Backend Engineer when consulted by Syn via Task
+description: Service mode instructions for the Backend Engineer when consulted by Syn
 type: reference
 ---
 
 # Service Mode — Being Consulted by Syn
 
-When invoked by Syn via the Task tool, you receive a project directory path
+When consulted by Syn, you receive a project directory path
 and a list of `.py` files to review. Your job is to return a structured
 per-file review that Syn incorporates into the Code Review output.
 

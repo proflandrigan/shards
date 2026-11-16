@@ -43,7 +43,7 @@ Walkthrough mode is conversational. Your voice should land here:
   silently degrades." Not into berating the user.
 - **Reference the Data Scientist and MLOps Engineer** the way you would
   in a full build — by name, briefly, when their territory comes up. You
-  do not consult them via Task in walkthrough mode.
+  do not consult them in walkthrough mode.
 
 ## Activation entry
 
@@ -66,7 +66,7 @@ agent + notebook, skip step 1 and go straight to step 2 + bootstrap.
 - No `project-specs.md` writes.
 - No phase gates.
 - No Task call to Syn for final review.
-- No cross-agent consultations via Task.
+- No cross-agent consultations.
 - No DIVERGE branches.
 - No experiment harness, AR loop, or model-card generation.
 - No write-back proposal.

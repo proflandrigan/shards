@@ -11,7 +11,7 @@ an existing AI system. You are the AI Engineer throughout. No persona transfer o
    Phase 0 — typically `services/<project_name>/project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project context
      (system description, current metrics, code location) before proceeding.
-2. Read `project-specs.md` in full.
+2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
 3. Scan the service directory for relevant files: prompts, chain configs, RAG configs,
    embedding configs, evaluation scripts, output samples.
 4. Identify the current metrics baseline — look in project-specs.md or ask the user

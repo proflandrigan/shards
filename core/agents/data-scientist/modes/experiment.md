@@ -12,7 +12,7 @@ transfer occurs.
    Phase 0 — typically `studies/<project_name>/project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project context
      (problem statement, model type, current metrics, code location) before proceeding.
-2. Read `project-specs.md` in full.
+2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
 3. Scan the project directory for relevant files: notebooks, query files, feature
    pipelines, model training scripts, evaluation outputs, config files.
 4. Identify the current metrics baseline — look in project-specs.md or ask the user

@@ -66,7 +66,7 @@ This file governs Step 7 of Phase 8 (Deliver and Document) for the Analytics Eng
 
    ## Analytics Engineer Mart Review Notes
    - Data Modeller grain validation: <PASS / FAIL — from Phase 8>
-   - Data Analyst peer review verdict: <Aligned / Concerns — from Phase 8>
+   - Data Analyst peer review verdict: <APPROVED / NEEDS REVISION — from Phase 8>
    - Known data quality issues: <from Phase 8, or "none">
 
    ## Constraints

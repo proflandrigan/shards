@@ -54,9 +54,9 @@ This file governs Step 6 of Phase 8 (Deliver and Document) for the Analytics Eng
    - Access method: <direct query / dbt metrics layer / BI tool connection>
 
    ## Analytics Engineer Mart Review Notes
-   - Data Analyst verdict: <Aligned / Concerns — summary from Phase 8>
+   - Data Analyst verdict: <APPROVED / NEEDS REVISION — summary from Phase 8>
    - Data Modeller grain validation: <PASS / FAIL — details from Phase 8>
-   - BI Engineer mart-usability verdict: <Suitable / Concerns / Redesign — summary from Phase 8, or "Not reviewed">
+   - BI Engineer mart-usability verdict: <APPROVED / NEEDS REVISION / BLOCKED — summary from Phase 8, or "Not reviewed">
 
    ## Tool Recommendation
    - <Streamlit / Dash / Superset / Metabase> — <one-sentence rationale>

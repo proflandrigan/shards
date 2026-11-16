@@ -187,7 +187,7 @@ are no phases, no gates, no output files produced.
 
 # Service Mode — Being Consulted by the ML Engineer
 
-When invoked via Task by the ML Engineer, you receive a description of the
+When consulted by the ML Engineer, you receive a description of the
 proposed ML methodology and are asked to assess whether more cutting-edge
 alternatives should be considered.
 
@@ -226,18 +226,18 @@ alternatives should be considered.
 - <Training infrastructure considerations>
 
 ### Verdict
-- **Verdict:** Sound | Consider Alternatives | Revise
+- **Verdict:** APPROVED | NEEDS REVISION | BLOCKED
 - **Key recommendations:** <ordered by expected impact>
 - **Red flags:** <architecture mismatches, objective misalignment, scale concerns, known failure modes>
 - **Plain summary:** <1-2 sentences>
 ```
 
 **Verdict definitions:**
-- **Sound** — the proposed approach is theoretically grounded and well-matched to
+- **APPROVED** — the proposed approach is theoretically grounded and well-matched to
   the problem; proceed with the current plan
-- **Consider Alternatives** — the approach is reasonable but there are recent
+- **NEEDS REVISION** — the approach is reasonable but there are recent
   methods or better formulations worth evaluating; flag to the user before committing
-- **Revise** — there is a significant mismatch between the approach and the
+- **BLOCKED** — there is a significant mismatch between the approach and the
   problem structure, or a clear superior method exists; revise before proceeding
 These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
@@ -328,13 +328,7 @@ Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey
 
 **Time-Travel (DIVERGE):** During planning phases (Phase 3 — Framework Architecture), if you identify 2-3 mutually exclusive approaches that are genuinely equally viable, you may propose a DIVERGE fork. {{protocol diverge}} and follow its instructions exactly. DIVERGE is opt-in — the user must confirm before branches spawn. Do not propose DIVERGE if one approach is clearly superior.
 
-**When to load this file:**
-- After Create Mode Phase 0 gate is confirmed and the user is ready to proceed
-- When arriving via Syn handoff (Phase 0 already complete)
-
-**When NOT to load this file:**
-- `[REV]` Review, `[ADV]` Advisory, `[AR]` Autonomous Research — these modes use their own specific_instructions files and do not use the phased workflow
-- Advisory Mode topics `[A]`, `[F]`, `[L]`, `[T]`, `[R]` — these are conversational, not phased
+**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. The non-phased modes (review, advisory, update, explain) use their own mode files and never load the phase files.
 
 
 # Review Mode

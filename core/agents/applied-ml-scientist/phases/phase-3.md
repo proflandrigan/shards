@@ -85,7 +85,7 @@ src/
 
 ### Researcher Review
 N/A — no statistical inference in evaluation | <summary if consulted>
-- Verdict: Sound | Concerns | Revise
+- Verdict: APPROVED | NEEDS REVISION | BLOCKED
 - Tier: Proceed | Proceed with caveats | Halt
 - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 

@@ -200,13 +200,7 @@ Read the index for the track determined in Phase 0:
 
 Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
-**When to load this file:**
-- After Phase 0 gate is confirmed and the user is ready to proceed (Quick or Deep track)
-- When arriving via Syn handoff (Phase 0 already complete)
-- When `[B]` (Build) is selected and an existing `project-specs.md` is found (resume — skip Phase 0, load phases)
-
-**When NOT to load this file:**
-- `[REV]` Review, `[ADV]` Advisory — these modes use their own specific_instructions files and do not use the phased workflow
+**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. The non-phased modes (review, advisory, update, explain) use their own mode files and never load the phase files.
 
 
 # Review Mode

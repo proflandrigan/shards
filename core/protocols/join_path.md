@@ -131,7 +131,7 @@ the `auto_verify_start` tool before the sweep and `auto_verify_end` after. See [
 
 ## Escalation Triggers
 
-Invoke the Data Modeller via Task instead of self-assessing when:
+Invoke the Data Modeller instead of self-assessing when:
 
 - Any M:M relationship is detected or suspected
 - Verification query shows unexpected fan-out (predicted 1.0x, observed > 1.0x)

@@ -565,7 +565,7 @@ rather than dropping one reviewer — both perspectives matter.
 
 ### D.4 Consultation call format
 
-Call the reviewer via Task:
+Call the reviewer:
 
 Run this consult (shown for `researcher`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
 
@@ -973,7 +973,7 @@ transcripts.>
 ## Your Task
 
 Execute Sections A-G of the shared AR protocol autonomously inside this branch
-directory. **Do not call `gate_request`** — sub-agents invoked via Task must
+directory. **Do not call `gate_request`** — sub-agents consulted must
 not request gates. Phase 0 is already set up by this spawn prompt.
 Phase 1 writes the branch-local research_brief.md without a gate. Phase 2 runs
 gate-free as designed. Phase 3 is truncated to writing `branch-report.md` only

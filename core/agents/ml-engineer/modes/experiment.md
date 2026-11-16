@@ -13,7 +13,7 @@ transfer occurs.
    `<existing_service_dir>/project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project context
      (problem statement, model type, current metrics, code location) before proceeding.
-2. Read `project-specs.md` in full.
+2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
 3. Scan the project directory for relevant files: model training scripts, feature
    pipelines, evaluation scripts, config files, hyperparameter logs.
 4. Identify the current metrics baseline — look in project-specs.md or ask the user
@@ -249,6 +249,8 @@ a versioned checkpoint of this experiment's results. If versioning mode is
 
 ### Step 6 — Consult Data Scientist
 Call:
+Before this consult, collect the context the reviewer needs, because it cannot consult further: data-modeller context (grain, entities, relationships) via {{consult data-modeller entry=review task="Grain and relationships for the data-scientist review"}} and researcher input on the statistical methodology via {{consult researcher entry=service task="Methodology input for the data-scientist review"}}. Include both in the task of the consult below.
+
 {{consult data-scientist entry=review}}
 
 Brief for the consultant (fill the bracketed fields):

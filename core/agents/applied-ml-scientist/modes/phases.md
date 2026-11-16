@@ -185,7 +185,7 @@ src/
 
 ### Researcher Review
 N/A — no statistical inference in evaluation | <summary if consulted>
-- Verdict: Sound | Concerns | Revise
+- Verdict: APPROVED | NEEDS REVISION | BLOCKED
 - Tier: Proceed | Proceed with caveats | Halt
 - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 
@@ -397,7 +397,7 @@ mechanism which encodes Y inductive bias, enabling Z capability">
 scale constraints, data quality assumptions>
 
 ## Code Review
-**Backend Engineer verdict:** <Clean | Minor Issues | Refactor Required | Blocked | N/A — no Python artifacts>
+**Backend Engineer verdict:** <APPROVED | NEEDS REVISION | BLOCKED | N/A — no Python artifacts>
 <Summary of code review findings, or "No Python artifacts found.">
 
 ## Next Steps

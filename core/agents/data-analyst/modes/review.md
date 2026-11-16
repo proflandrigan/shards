@@ -84,7 +84,7 @@ Write `reviews/<system_name>/data-analyst-review.md` using this template exactly
 
 **{{VERDICT}}** — {{ONE_LINE_SUMMARY}}
 
-_SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant rework_
+_APPROVED = no action needed | NEEDS REVISION = proceed with caveats (monitor or improve) | BLOCKED = significant rework_
 ```
 
 ---

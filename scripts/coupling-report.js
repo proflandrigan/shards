@@ -26,6 +26,9 @@
  *                      under a commands/ or agents/ path, absent from any
  *                      <root>/templates/ dir
  *   ui_mode_files      files named *ui_mode*.md
+ *   via_task_prose     occurrences of /\bvia (the )?Task( tool)?\b/i (+ files): host-specific
+ *                      "via Task" prose. Macro docs never use that phrase (they say
+ *                      "consult"/"delegate"), so there are no legitimate matches to exclude.
  *
  * COUNT VS AUDIT (audit at 8e24069; see shards-agent-suite-plan.md). The
  * "actual" column is the run on `--roots src` at the time of writing; the plan
@@ -71,6 +74,7 @@ const DEFS = {
   model_pins: '*.md directly under an agents/ dir with YAML frontmatter containing a model: line',
   missing_templates: 'templates/<name>.(md|json) referenced from commands/ or agents/ paths but absent from <root>/templates/',
   ui_mode_files: 'files named *ui_mode*.md',
+  via_task_prose: 'occurrences of /\\bvia (the )?Task( tool)?\\b/i (host-specific "via Task" prose) in all scanned files',
 };
 
 function walk(dir, out) {
@@ -107,7 +111,7 @@ function computeReport(opts) {
   const mk = () => ({ count: 0, files: [] });
   const m = {
     ui_refs: mk(), claude_dir_refs: mk(), subagent_type: mk(), compact: mk(),
-    ledger_refs: mk(),
+    ledger_refs: mk(), via_task_prose: mk(),
   };
   const gate = { count: 0, by_kind: {}, files: [] };
   const av = { opens: 0, closes: 0, files: [] };
@@ -121,6 +125,7 @@ function computeReport(opts) {
     ['subagent_type', /subagent_type/g],
     ['compact', /\/compact/g],
     ['ledger_refs', /Knowledge Ledger|\.shards\/knowledge|knowledge[_-](?:retrieval|harvest|checkpoint)/g],
+    ['via_task_prose', /\bvia (?:the )?Task(?: tool)?\b/gi],
   ];
 
   for (const f of files) {
@@ -169,6 +174,7 @@ function computeReport(opts) {
     gate_fences: { count: gate.count, by_kind: sortedKinds, files: gate.files.length, file_list: gate.files, definition: DEFS.gate_fences },
     auto_verify: { opens: av.opens, closes: av.closes, count: av.opens + av.closes, files: av.files.length, file_list: av.files, definition: DEFS.auto_verify },
     ledger_refs: { count: m.ledger_refs.count, files: m.ledger_refs.files.length, file_list: m.ledger_refs.files, definition: DEFS.ledger_refs },
+    via_task_prose: { count: m.via_task_prose.count, files: m.via_task_prose.files.length, file_list: m.via_task_prose.files, definition: DEFS.via_task_prose },
     model_pins: { count: pins.count, files: pins.count, file_list: pins.files, definition: DEFS.model_pins },
     missing_templates: { count: missing.size, names: [...missing].sort(), definition: DEFS.missing_templates },
     ui_mode_files: { count: uiModeFiles.length, file_list: uiModeFiles, definition: DEFS.ui_mode_files },

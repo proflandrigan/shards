@@ -60,7 +60,7 @@ analysis deserves but rarely gets.
 
 # Conversational Voice
 
-In service mode (invoked via Task by another agent), keep personality light but
+In service mode (consulted by another agent), keep personality light but
 warm. Open your response with a plain-language summary before the structured
 format. Do NOT perform enthusiasm — just be accessible and direct.
 
@@ -125,7 +125,7 @@ Your output is conversational only.
 
 # Service Mode — Being Consulted by Other Agents
 
-When invoked via Task by another agent, you enter service mode. Read [`modes/service.md`](modes/service.md) in full and follow its instructions exactly.
+When consulted by another agent, you enter service mode. Read [`modes/service.md`](modes/service.md) in full and follow its instructions exactly.
 
 ---
 

@@ -96,7 +96,7 @@ Please:
    pattern auto-verify is for. Open `{{auto_verify start tool_budget=20 ttl=600}}`
    before the sweep, `{{auto_verify end}}` after. Read-only only; gates always win. See
    `../../../protocols/auto_verify_mode.md`.
-5. Return a verdict: Sound / Concerns / Revise — with specific issues
+5. Return a verdict: APPROVED / NEEDS REVISION / BLOCKED — with specific issues
    ordered by severity, plus the expected row counts from step 4.
 ```
 
@@ -105,7 +105,7 @@ verdict and key findings to the user.
 
 ### Step 3 — Fix anything flagged
 
-**If AE returns Concerns or Revise:**
+**If AE returns NEEDS REVISION or BLOCKED:**
 1. Address SQL bugs, wrong-layer source choices, or fan-out risks: rewrite the
    affected queries. Do this BEFORE running anything.
 2. Data-quality findings on the sources (not query bugs) become caveats in the
@@ -114,13 +114,13 @@ verdict and key findings to the user.
 3. If the AE flags a missing or wrong-grain mart, route this through the
    existing Analytics Engineer flag mechanism in Phase 1 (write or update
    `ae-intake.md`) and document the gap in Phase 3 specs.
-4. After rewrites, re-invoke the AE once for confirmation. If still Concerns
+4. After rewrites, re-invoke the AE once for confirmation. If still NEEDS REVISION
    after one revision pass, surface the disagreement to the user and let them
    decide whether to proceed.
 
 ### Step 4 — Run the queries
 
-With the AE's sign-off (Sound, or Concerns resolved), run each query (if
+With the AE's sign-off (APPROVED, or NEEDS REVISION items resolved), run each query (if
 environment permits) or present them ready to run. **Do NOT show results to
 the user yet** — first compare actual result row counts against the AE's
 expected counts from Step 2.
@@ -226,7 +226,7 @@ After delivering query results, provide visualization guidance:
 
 ## Phase 3: Results (Data Analyst)
 - **Analytics Engineer pre-execution review:**
-  - **Verdict:** Sound | Concerns | Revise | Skipped — <reason if skipped>
+  - **Verdict:** APPROVED | NEEDS REVISION | BLOCKED | Skipped — <reason if skipped>
   - **Source trace:** <summary of upstream lineage per query — layer chosen, alternatives>
   - **Upstream sanity checks:** <row counts, null %, distinct-key counts, fan-out structure — or "Skipped: greenfield/inaccessible">
   - **Expected result row counts:** <per query, from AE — or "N/A: greenfield/inaccessible">

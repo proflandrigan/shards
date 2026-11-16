@@ -99,7 +99,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 
 ## Phase 4: Evaluation Framework Design (AI Engineer)
 - **Researcher review:**
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Notes: <summary of methodology review>
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped

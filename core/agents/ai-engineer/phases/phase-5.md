@@ -111,7 +111,7 @@ Return your assessment using the standard Academic review format.
   - <summary of production safety infrastructure findings>
 - **Academic consultation:**
   - Potential user harms: <summary of behavioral/ethical findings>
-  - Ethical verdict: Clear | Nuanced | Concerns — <details>
+  - Ethical verdict: APPROVED | NEEDS REVISION | BLOCKED — <details>
   - User behavior considerations: <relevant cognitive/behavioral dynamics>
 - **Input validation:**
   - Prompt injection defense: <method>

@@ -1,0 +1,35 @@
+---
+name: syn-review-resolution
+description: Shared resolution steps for a specialist's final Syn review, covering the NEEDS REVISION loop, second-verdict escalation and the Code Review follow-up
+type: reference
+---
+
+This protocol is the single home for what a specialist does after its final-review consultation of Syn returns. Phase files invoke the consult and then point here; they do not restate these steps. The verdict words and tiers come from {{protocol reviewer_verdict}}.
+
+## NEEDS REVISION loop
+
+1. Address the specific issues Syn flagged.
+2. Update `project-specs.md` with the changes.
+3. Re-gate with the user: "Syn flagged [N] issues. Here's what I changed: [summary]. Confirm to resubmit?"
+4. Resubmit to Syn ONCE more.
+
+## If Syn returns NEEDS REVISION a second time
+
+Do not resubmit again. Present to the user:
+
+> "Syn has flagged concerns twice. Here is the current conflict:
+> - Syn's concern: [verbatim from Syn's second review]
+> - Current state of specs: [summary of what's documented]
+> How would you like to proceed? (a) Override Syn and proceed as-is, and I'll document the disagreement. (b) Continue revising, and tell me what to change. (c) Stop the project."
+
+Document the outcome in specs:
+
+**Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
+
+## Code Review follow-up
+
+If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
+
+- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
+- If yes, run the code-review consult given in the phase file, with the brief it supplies.
+- Append Syn's code review summary to the specs and present the findings to the user.

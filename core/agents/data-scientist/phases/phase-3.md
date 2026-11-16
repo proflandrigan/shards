@@ -70,7 +70,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 - **Key assumptions:** <list>
 - **Confounders / controls:** <list or "N/A">
 - **Researcher review:**
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Notes: <summary of statistical review>
   - Distribution assessment: <key distribution findings>

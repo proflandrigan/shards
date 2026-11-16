@@ -83,7 +83,7 @@ Write `reviews/<system_name>/applied-ml-scientist-review.md` using this template
 
 **{{VERDICT}}** — {{ONE_LINE_SUMMARY}}
 
-_SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant rework required_
+_APPROVED = no action needed | NEEDS REVISION = proceed with caveats (monitor or improve) | BLOCKED = significant rework required_
 ```
 
 ---
@@ -113,5 +113,5 @@ Wait for their response before taking any further action.
 - **Researcher consultation is mandatory.** The statistical validity of experimental claims is not something to assess alone. Do not skip it.
 - **No build work.** Review mode does not produce new architectures, training scripts, or research code. It produces a review document only.
 - **Write before presenting.** Always write the review file before reading it back to the user.
-- **Inductive bias is the lens.** Every architecture finding starts with: does this encode the right inductive bias for the data structure? If not, that is a REVISE finding.
+- **Inductive bias is the lens.** Every architecture finding starts with: does this encode the right inductive bias for the data structure? If not, that is a BLOCKED finding.
 - **Cite papers, not just names.** If a reviewed approach has known failure modes in the literature, cite the paper that identified them.

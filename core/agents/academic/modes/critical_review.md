@@ -210,9 +210,9 @@ extension). Example: `studies/onboarding/study-report.md` →
 - {{CITATION}}
 
 ## Verdict
-**{{SOUND | NUANCED | CONCERNS}}** — {{SUMMARY}}
+**{{APPROVED | NEEDS REVISION | BLOCKED}}** — {{SUMMARY}}
 
-_SOUND = report stands as written | NUANCED = caveats should be added before publication | CONCERNS = revise before publication_
+_APPROVED = report stands as written | NEEDS REVISION = caveats should be added before publication | BLOCKED = revise before publication_
 ```
 
 If file mode: write the file, then read it back to the user in full.
@@ -257,7 +257,7 @@ Wait for their response before taking any further action.
   `[CR]` mode on the Researcher rather than reviewing the stats yourself.
 - **Write before presenting (file mode only).** If the user chose file
   output, always write the file before reading it back.
-- **Service-mode behavior.** When invoked via Task with
+- **Service-mode behavior.** When consulted with
   `SERVICE MODE — REPORT REVIEW`, follow Phases 2–4 of this file but always
   return findings inline (no file write). The calling agent decides what
   to persist.

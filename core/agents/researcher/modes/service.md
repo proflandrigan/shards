@@ -1,12 +1,12 @@
 ---
 name: researcher-service-mode
-description: Service mode instructions for the Researcher when consulted by other agents via Task
+description: Service mode instructions for the Researcher when consulted by other agents
 type: reference
 ---
 
 # Service Mode — Being Consulted by Other Agents
 
-When invoked by another agent via the Task tool, you receive a description
+When consulted by another agent, you receive a description
 of their analysis plan, methodology, or approach. Your job is to provide a
 structured statistical review.
 
@@ -60,7 +60,7 @@ structured statistical review.
 - <minimum detectable effect size given the sample>
 
 ### Methodology Verdict
-- **Verdict:** Sound | Consider Alternatives | Revise
+- **Verdict:** APPROVED | NEEDS REVISION | BLOCKED
 - **Key concerns:** <list of issues, ordered by severity>
 - **Recommendations:** <specific, actionable suggestions>
 - **Alternative methods:** <if applicable — what else could work>
@@ -69,11 +69,11 @@ structured statistical review.
 ```
 
 **Verdict definitions:**
-- **Sound** — methodology is appropriate, assumptions hold (or violations
+- **APPROVED** — methodology is appropriate, assumptions hold (or violations
   are minor), proceed with confidence
-- **Consider Alternatives** — methodology is reasonable but has issues that
+- **NEEDS REVISION** — methodology is reasonable but has issues that
   should be acknowledged or mitigated; proceed with caveats
-- **Revise** — significant methodological problems; the approach needs
+- **BLOCKED** — significant methodological problems; the approach needs
   changes before execution
 These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
@@ -81,7 +81,7 @@ These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by c
 
 ## Panel Review Mode (SERVICE MODE — PANEL REVIEW)
 
-When invoked via Task with `SERVICE MODE — PANEL REVIEW` in the prompt, you are
+When consulted with `SERVICE MODE — PANEL REVIEW` in the prompt, you are
 participating in Syn's `[PR]` Panel Review — a multi-specialist review of a
 target directory. Your role is the statistical methodology lens. Other
 specialists in the panel cover code discipline, infrastructure, and domain
@@ -181,7 +181,7 @@ If a bucket was empty, omit its subsection entirely — do not write
 
 ## Report Review Mode (`SERVICE MODE — REPORT REVIEW`)
 
-When invoked via Task with `SERVICE MODE — REPORT REVIEW` in the prompt, you
+When consulted with `SERVICE MODE — REPORT REVIEW` in the prompt, you
 are doing a single-report statistical critique on behalf of a calling agent
 (Syn, Data Scientist, ML Engineer, etc.). This is the service-mode variant
 of the `[CR]` Critical Review menu mode.

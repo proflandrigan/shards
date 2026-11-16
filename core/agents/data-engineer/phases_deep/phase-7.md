@@ -21,9 +21,7 @@ your final review verdict.
 
 Append Syn's review to specs. Present to user.
 
-If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
-- If yes, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
 
 {{consult syn entry=code_review task="Code review and fix for data engineering project"}}
 

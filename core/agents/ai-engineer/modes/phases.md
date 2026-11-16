@@ -357,7 +357,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 
 ## Phase 4: Evaluation Framework Design (AI Engineer)
 - **Researcher review:**
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Notes: <summary of methodology review>
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
@@ -500,7 +500,7 @@ Return your assessment using the standard Academic review format.
   - <summary of production safety infrastructure findings>
 - **Academic consultation:**
   - Potential user harms: <summary of behavioral/ethical findings>
-  - Ethical verdict: Clear | Nuanced | Concerns — <details>
+  - Ethical verdict: APPROVED | NEEDS REVISION | BLOCKED — <details>
   - User behavior considerations: <relevant cognitive/behavioral dynamics>
 - **Input validation:**
   - Prompt injection defense: <method>
@@ -713,9 +713,9 @@ Append the Backend Engineer's review to project-specs.md.
 
 **After appending the Backend Engineer's review, branch on verdict:**
 
-- **Clean or Minor Issues** → proceed directly to Syn review.
-- **Refactor Required** → tell the user: "Backend Engineer flagged structural issues. Fixing before Syn review." Address every listed issue in the project files. Update project-specs.md. Re-gate: "Backend Engineer issues resolved: [summary]. Confirm to proceed to Syn?" Then proceed to Syn.
-- **Blocked** → tell the user: "Backend Engineer has blocked this. Fixing critical issues before continuing." Address every critical issue. Update project-specs.md. Resubmit to Backend Engineer once (same Task call format). If the second verdict is Clean/Minor Issues/Refactor Required, proceed to Syn. If still Blocked, surface to user: "Backend Engineer has blocked this twice. [Verbatim second verdict.] How would you like to proceed? (a) Override and proceed to Syn — I'll document the disagreement. (b) Continue fixing — tell me what to change. (c) Stop the project."
+- **APPROVED** → proceed directly to Syn review.
+- **NEEDS REVISION** → tell the user: "Backend Engineer flagged structural issues. Fixing before Syn review." Address every listed issue in the project files. Update project-specs.md. Re-gate: "Backend Engineer issues resolved: [summary]. Confirm to proceed to Syn?" Then proceed to Syn.
+- **BLOCKED** → tell the user: "Backend Engineer has blocked this. Fixing critical issues before continuing." Address every critical issue. Update project-specs.md. Resubmit to Backend Engineer once (same Task call format). If the second verdict is APPROVED or NEEDS REVISION, proceed to Syn. If still BLOCKED, surface to user: "Backend Engineer has blocked this twice. [Verbatim second verdict.] How would you like to proceed? (a) Override and proceed to Syn — I'll document the disagreement. (b) Continue fixing — tell me what to change. (c) Stop the project."
 
 ---
 
@@ -828,25 +828,9 @@ completeness, safety plan, and production readiness.
 
 Append all four reviews to specs. Present to user.
 
-**If Syn returns NEEDS REVISION:**
-1. Address the specific issues Syn flagged.
-2. Update project-specs.md with the changes.
-3. Re-gate with the user: "Syn flagged [N] issues. Here's what I changed: [summary]. Confirm to resubmit?"
-4. Resubmit to Syn ONCE more.
+If Syn returns NEEDS REVISION, once or twice, follow the NEEDS REVISION loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
-**If Syn returns NEEDS REVISION a second time:**
-Do not resubmit again. Instead, present to the user:
-"Syn has flagged concerns twice. Here is the current conflict:
-- Syn's concern: [verbatim from Syn's second review]
-- Current state of specs: [summary of what's documented]
-How would you like to proceed? (a) Override Syn and execute as-is — I'll document the disagreement. (b) Continue revising — tell me what to change. (c) Stop the project."
-
-Document the outcome in specs:
-**Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
-
-If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
-- If yes, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
 
 {{consult syn entry=code_review task="Code review and fix for AI engineering project"}}
 
@@ -863,7 +847,7 @@ Append Syn's code review summary to the specs. Present findings to user.
 Then:
 
 1. **Generate Model Card** — Assemble a structured model card for stakeholder
-   sharing. Read `project-specs.md` to extract: system type and description
+   sharing. Extract from the live `project-specs.md` (already loaded): system type and description
    (Phase 1), architecture decisions (Phase 3), evaluation framework (Phase 4),
    build results (Phase 6), review verdicts (Phase 7). Read `eval-results.json`
    for quantitative metrics.
@@ -938,13 +922,13 @@ Then:
 ## Phase 7: Review and Handoff (AI Engineer)
 - **Backend Engineer Review:** <summary or N/A — list files reviewed, overall verdict>
 - **ML Engineer Review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary>
 - **MLOps Engineer Review:**
-  - Verdict: Approved | Concerns | Redesign needed
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary>
 - **Researcher Review:**
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary>
 - **Syn Review:**
   - Verdict: APPROVED | NEEDS REVISION | BLOCKED

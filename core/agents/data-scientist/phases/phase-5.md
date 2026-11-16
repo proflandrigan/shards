@@ -36,7 +36,7 @@ Please review:
 2. Are there better alternatives I should use?
 3. Any design or layout recommendations given the intended audience?
 4. Any visualizations I should add that would strengthen the findings?
-Return your review as: Approved (proceed as planned) | Concerns raised (flag issues).
+Return your review as: APPROVED (proceed as planned) | NEEDS REVISION (flag issues).
 ```
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `bi-engineer` row).
@@ -55,7 +55,7 @@ Skip this consultation only if the primary deliverable is "data file only" with 
 - **Reproducibility requirement:** Self-contained | One-time
 - **Additional deliverables:** <requirements.txt, summary doc, or "none">
 - **BI Engineer chart design review:** N/A — no visual deliverables | <summary>
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Tier: Proceed | Proceed with caveats
   - Reviewer resolution: Approved | User override — <rationale>
 ```

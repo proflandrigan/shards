@@ -98,7 +98,7 @@ Please review from a dashboard design perspective:
    filter dropdowns)?
 5. Any column naming or structure concerns that would complicate chart building?
 
-Keep the review brief and actionable. Return verdict: Suitable | Concerns | Redesign.
+Keep the review brief and actionable. Return verdict: APPROVED | NEEDS REVISION | BLOCKED.
 ```
 
 Apply the Reviewer Verdict Protocol independently for each reviewer (see shared protocol — `data-analyst`, `data-modeller`, `data-engineer`, `bi-engineer` rows). Address all Halt-tier verdicts before invoking Syn.
@@ -120,9 +120,7 @@ Data Engineer are appended to the specs.
 
 Append Syn's review to specs. Present to user.
 
-If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
-- If yes, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
 
 {{consult syn entry=code_review task="Code review for analytics engineering project"}}
 
@@ -157,28 +155,28 @@ Then:
 
 ## Deep Phase 8: Peer Review and Handoff (Analytics Engineer)
 - **Data Analyst review:** <summary of findings>
-  - Verdict: Aligned | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Tier: Proceed | Proceed with caveats
   - Business requirements met: Yes | Partially | No — <gaps>
   - Grain usability: Correct | Too fine | Too coarse — <notes>
   - Missing elements: <list or "none">
   - Reviewer resolution: Approved | User override — <rationale>
 - **Data Modeller review:** <summary of validation results>
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Grain validation: PASS | FAIL — <details>
   - FK null checks: PASS | FAIL — <details>
-  - Conformance: Sound | Issues — <details>
+  - Conformance: APPROVED | NEEDS REVISION — <details>
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Data Engineer review:** <summary of findings>
-  - Verdict: Sound | Concerns
+  - Verdict: APPROVED | NEEDS REVISION
   - Tier: Proceed | Proceed with caveats
-  - Staging soundness: Sound | Concerns — <details>
+  - Staging soundness: APPROVED | NEEDS REVISION — <details>
   - Freshness configs: Sufficient | Insufficient — <details>
-  - Incremental strategy: Appropriate | Concerns — <details>
+  - Incremental strategy: APPROVED | NEEDS REVISION — <details>
   - Reviewer resolution: Approved | User override — <rationale>
 - **BI Engineer mart-usability review:** Not applicable — downstream consumer is not a BI dashboard | <summary of findings>
-  - Verdict: Suitable | Concerns | Redesign
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Date spine: Present | Missing — <notes>
   - Aggregation level: Appropriate | Too fine | Too coarse — <notes>
   - Dimension cardinality: OK | High-cardinality concerns — <details>

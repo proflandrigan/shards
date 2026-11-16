@@ -4,36 +4,27 @@ description: Universal three-tier reviewer verdict mapping and escalation script
 type: reference
 ---
 
-When a consulted reviewer returns a verdict, map it to one of three universal tiers and act accordingly:
+Every reviewer returns exactly one of three verdict words: **APPROVED**, **NEEDS REVISION**, or **BLOCKED**. No reviewer defines its own vocabulary. Reviewer-specific nuance (what kind of concern, how severe, which alternatives) goes in the body of the review, never in the verdict word. Map the verdict to a tier and act accordingly:
 
-| Tier | Reviewer verdicts that map here | Action |
-|------|---------------------------------|--------|
-| **Proceed** | Sound · Approved · Aligned | Document verdict in specs. Continue. |
-| **Proceed with caveats** | Concerns · Consider Alternatives | Document the concern verbatim in specs. Tell the user what was flagged. Gate: "Reviewer noted: [X] — documented in specs. Confirm to continue?" Proceed on user confirmation. |
-| **Halt and fix** | Revise | Halt. Document the issue in specs. Fix it. Resubmit to the same reviewer ONCE. If still Halt on resubmission, escalate. |
+| Verdict | Tier | Meaning | Action |
+|---------|------|---------|--------|
+| **APPROVED** | Proceed | The work stands as written. | Document verdict in specs. Continue. |
+| **NEEDS REVISION** | Proceed with caveats | Issues exist but the work can continue once they are acknowledged or fixed. The body lists each issue and says whether it is a caveat to record or a fix to make. | Document the concern verbatim in specs. Tell the user what was flagged. Gate: "Reviewer noted: [X] — documented in specs. Confirm to continue?" Proceed on user confirmation. |
+| **BLOCKED** | Halt and fix | A material problem makes the work unsafe to build on. | Halt. Document the issue in specs. Fix it. Resubmit to the same reviewer ONCE. If still BLOCKED on resubmission, escalate. |
 
 ## Reviewer Vocabulary
 
-Each reviewer agent returns verdicts in a fixed vocabulary. The table below lists the canonical verdicts per reviewer and their tier mapping. Specialists consulting a reviewer do not need to restate this vocabulary in their phase instructions — they only need to invoke this protocol.
+All reviewers use the same three words. The table below lists which agents act as reviewers; it adds no per-reviewer verdict words. Specialists consulting a reviewer do not need to restate this vocabulary in their phase instructions, they only need to invoke this protocol.
 
-| Reviewer (agent id) | Verdict vocabulary | Tier mapping |
-|--------------------------|--------------------|--------------|
-| `researcher` | Sound / Consider Alternatives / Revise | Sound → Proceed · Consider Alternatives → Proceed with caveats · Revise → Halt and fix |
-| `applied-ml-scientist` | Sound / Consider Alternatives / Revise | same as above |
-| `data-modeller` (service mode) | Sound / Concerns / Revise | Sound → Proceed · Concerns → Proceed with caveats · Revise → Halt and fix |
-| `analytics-engineer` (service mode) | Sound / Concerns / Revise | same as above |
-| `backend-engineer` (service mode) | Sound / Concerns / Revise | same as above |
-| `data-analyst` (reviewer role) | Aligned / Concerns raised | Aligned → Proceed · Concerns raised → Proceed with caveats |
-| `data-engineer` (reviewer role) | Sound / Concerns | Sound → Proceed · Concerns → Proceed with caveats |
-| `bi-engineer` (reviewer role) | Suitable / Concerns / Redesign | Suitable → Proceed · Concerns → Proceed with caveats · Redesign → Halt and fix |
-| `deep-learning-engineer` (reviewer role) | Approved / Concerns / Redesign needed | Approved → Proceed · Concerns → Proceed with caveats · Redesign needed → Halt and fix |
-| `mlops-engineer` (reviewer role) | Approved / Concerns / Redesign needed | same as above |
-| `ml-engineer` (reviewer role) | DEPLOY / OPTIMIZE / REDESIGN | DEPLOY → Proceed · OPTIMIZE → Proceed with caveats · REDESIGN → Halt and fix |
-| `academic` | Clear / Nuanced / Concerns | Clear → Proceed · Nuanced → Proceed with caveats · Concerns → Halt and fix |
+| Reviewer (agent id) | Verdict vocabulary |
+|--------------------------|--------------------|
+| `researcher`, `applied-ml-scientist`, `data-modeller` (service mode), `analytics-engineer` (service mode), `backend-engineer` (service mode), `data-scientist` (service mode), `ml-engineer` (service/reviewer role), `data-analyst`, `data-engineer`, `bi-engineer`, `deep-learning-engineer`, `mlops-engineer`, `academic`, `syn` (final review, code review) | APPROVED / NEEDS REVISION / BLOCKED |
 
-If a reviewer returns a verdict not listed here, record it verbatim and default to the tier that most closely matches the semantic meaning (ask the user if ambiguous).
+Reviewers that used to return their own words map as follows when reading older specs: Sound, Aligned, Suitable, Clear, DEPLOY, Clean mean APPROVED; Concerns, Consider Alternatives, Nuanced, OPTIMIZE, Minor Issues, Refactor Required mean NEEDS REVISION; Revise, Redesign, REDESIGN mean BLOCKED.
 
-**Escalation script (use verbatim when a second Halt verdict is returned):**
+If a reviewer returns a word outside APPROVED / NEEDS REVISION / BLOCKED, record it verbatim, treat it as the tier that most closely matches its meaning (ask the user if ambiguous), and note the format deviation in specs.
+
+**Escalation script (use verbatim when a second BLOCKED verdict is returned):**
 > "[Reviewer] has flagged a concern twice. Here is the conflict:
 > - Reviewer's concern: [verbatim from second review]
 > - Current plan: [one-sentence summary of what exists]

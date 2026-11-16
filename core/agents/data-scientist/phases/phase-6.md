@@ -166,12 +166,12 @@ Never confirm your own checkpoint. If a checkpoint fails (e.g., structural revie
 
 ## Phase 6: Build Log (Data Scientist)
 - **Data Modeller query review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Tier: Proceed | Proceed with caveats
   - Notes: <summary>
   - Reviewer resolution: Approved | User override — <rationale>
 - **Researcher build review:**
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Notes: <summary of statistical build review>
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped

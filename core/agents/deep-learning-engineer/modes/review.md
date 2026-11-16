@@ -99,7 +99,7 @@ Write `reviews/<system_name>/deep-learning-engineer-review.md` using this templa
 
 **{{VERDICT}}** — {{ONE_LINE_SUMMARY}}
 
-_SOUND = no action needed | CONCERNS = monitor or improve | REVISE = significant rework required_
+_APPROVED = no action needed | NEEDS REVISION = proceed with caveats (monitor or improve) | BLOCKED = significant rework required_
 ```
 
 ---
@@ -130,4 +130,4 @@ Wait for their response before taking any further action.
 - **Write before presenting.** Always write the review file before reading it back to the user.
 - **Quantify.** Not "might be slow" — estimate FLOPs, parameter count, and memory. Not "might be unstable" — identify the specific instability risk (softmax overflow, vanishing gradients, BatchNorm at small batch sizes).
 - **Tensor shapes are ground truth.** Trace the forward pass through key components. An architecture description without shape verification is incomplete.
-- **Hardware constraints are first-class.** If the model does not fit stated VRAM, that is a REVISE finding regardless of how elegant the architecture is.
+- **Hardware constraints are first-class.** If the model does not fit stated VRAM, that is a BLOCKED finding regardless of how elegant the architecture is.

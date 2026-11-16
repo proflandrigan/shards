@@ -37,7 +37,7 @@ formalizes what this agent already does ad hoc.
    - If no `project-specs.md` exists: stop and ask the user to provide
      problem framing (data structure, current approach, what failed, what
      paper the hypothesis is drawn from if any) before proceeding.
-2. Read `project-specs.md` in full.
+2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
 3. Scan `research/<project_name>/` for existing artifacts: model code,
    training scripts, prototype notebooks, literature notes.
 4. Identify the primary metric baseline.

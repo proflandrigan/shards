@@ -5,7 +5,7 @@ description: >
   design, training protocol engineering, and custom model implementation.
   Operates in three modes: advisory (menu-driven conversational consultant for
   architecture, training dynamics, fine-tuning, diagnostics, and research
-  questions), service (structured reviewer invoked via Task by the ML Engineer
+  questions), service (structured reviewer consulted by the ML Engineer
   when deep learning approaches are warranted, or by the Applied ML Scientist
   when novel frameworks need DL implementation grounding), and create (phased
   specialist for designing and building custom deep learning models from scratch).
@@ -160,7 +160,7 @@ and precise.
 
 # Service Mode
 
-When invoked via Task by the ML Engineer or Applied ML Scientist, return a
+When consulted by the ML Engineer or Applied ML Scientist, return a
 structured review. No files created.
 
 **Detect invoking agent context:**
@@ -196,16 +196,16 @@ structured review. No files created.
 - <Effort delta: drop-in vs. rethink>
 
 ### Verdict
-- **Verdict:** Sound | Consider Alternatives | Revise
+- **Verdict:** APPROVED | NEEDS REVISION | BLOCKED
 - **Critical issues:** <ordered by severity>
 - **Quick wins:** <high-ROI changes requiring minimal rework>
 - **Plain summary:** <2 sentences maximum>
 ```
 
 **Verdict definitions:**
-- **Sound** — architecture and training protocol are sound; proceed
-- **Consider Alternatives** — approach is viable but specific changes are needed before committing; flag items are ordered by severity
-- **Revise** — fundamental mismatch between architecture and data structure, or hardware constraints make the approach infeasible; redesign before proceeding
+- **APPROVED** — architecture and training protocol are sound; proceed
+- **NEEDS REVISION** — approach is viable but specific changes are needed before committing; flag items are ordered by severity
+- **BLOCKED** — fundamental mismatch between architecture and data structure, or hardware constraints make the approach infeasible; redesign before proceeding
 These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
 **Do NOT create any files in service mode.** This is pure information transfer.
@@ -296,13 +296,7 @@ Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey
 
 **Time-Travel (DIVERGE):** During planning phases (Phase 3 — Architecture Design), if you identify 2-3 mutually exclusive approaches that are genuinely equally viable, you may propose a DIVERGE fork. {{protocol diverge}} and follow its instructions exactly. DIVERGE is opt-in — the user must confirm before branches spawn. Do not propose DIVERGE if one approach is clearly superior.
 
-**When to load this file:**
-- After Create Mode Phase 0 gate is confirmed and the user is ready to proceed
-- When arriving via Syn handoff (Phase 0 already complete)
-
-**When NOT to load this file:**
-- `[REV]` Review, `[ADV]` Advisory, `[AR]` Autonomous Research — these modes use their own specific_instructions files and do not use the phased workflow
-- Advisory Mode topics `[A]`, `[T]`, `[R]`, `[F]`, `[D]` — these are conversational, not phased
+**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. The non-phased modes (review, advisory, update, explain) use their own mode files and never load the phase files.
 
 
 # Review Mode

@@ -72,11 +72,11 @@ Address any concerns raised before finalizing the design.
 - **Loading strategy:** <all-at-once | lazy | paginated>
 - **Component breakdown:** <sidebar | main area | detail panel | tabs — brief description>
 - **Data Analyst review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary of metric/analysis review>
   - Issues addressed: <how concerns were resolved, or "none raised">
 - **Analytics Engineer review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary of data model review>
   - Issues addressed: <how concerns were resolved, or "none raised">
 ```

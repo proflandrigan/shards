@@ -169,6 +169,8 @@ the bulk queries.
    training results — loss curves, eval metrics, model behavior. Design review
    is cheap; results review catches what theory missed."
 
+Before this consult, collect the context the reviewer needs, because it cannot consult further: data-modeller context (grain, entities, relationships) via {{consult data-modeller entry=review task="Grain and relationships for the methodology review"}} and researcher input via {{consult researcher entry=service task="Statistical methodology input for the methodology review"}}. Include both in the task of the consult below.
+
    {{consult applied-ml-scientist entry=review task="Training results review for <project_name>"}}
 
    Brief for the consultant (fill the bracketed fields):
@@ -239,11 +241,11 @@ If a checkpoint fails, it blocks until the user responds: STOP and wait, never c
 
 ## Phase 6: Build Log (ML Engineer)
 - **Data Modeller query review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary>
   - Issues addressed: <how resolved or "none raised">
 - **Applied ML Scientist results review:** <summary if consulted> | Skipped — Phase 4 AMS review was skipped per standard-tabular criteria
-  - Verdict: Sound | Consider Alternatives | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Training dynamics notes: <healthy | concerns — description>
   - Error structure notes: <systematic failures surfaced or "none">

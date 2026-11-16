@@ -1,6 +1,6 @@
 # Sources:
 #   - src/agents/specific_instructions/researcher/{service_mode,review_checklist,critical_review}.md
-#   - src/agents/specific_instructions/syn/brainstorm.md (researcher polled via Task, so consult only)
+#   - src/agents/specific_instructions/syn/brainstorm.md (researcher is polled as a consult-only agent)
 #   - critical_review is a menu mode, not a consult entry
 #   - src/agents/researcher.md (frontmatter, persona)
 #   - CLAUDE.md output directory table, shards-agent-suite-plan.md E1.1/E5.1/E12.2

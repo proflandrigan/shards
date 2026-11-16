@@ -111,22 +111,25 @@ in full. Apply every section systematically to the report:
   claim–evidence match, causal-language audit, limitations adequacy,
   reproducibility cues.
 
-**Optional — Data Modeller consultation.** Only if the report's
-independence claims hinge on data structure you can't verify from the
-report or its referenced artifacts alone, announce and issue:
-
-{{consult data-modeller entry=review task="Understand data structure for report critique"}}
-
-Brief for the consultant (fill the bracketed fields):
+**Optional — data structure context (caller-provided).** Consults never nest:
+do not consult the Data Modeller yourself. If the report's independence
+claims hinge on data structure you can't verify from the report or its
+referenced artifacts alone, the caller is expected to have collected that
+context beforehand and passed it in the task. State up front which context
+you need back from the caller:
 
 ```
-I am the Researcher shard auditing a report about [topic].
-I need to understand: [specific data structure question relevant to
-the independence / grain assessment]. Please return the grain, key
-relationships, and any quality concerns.
+Context needed from caller (collect from the Data Modeller before consulting me):
+- grain of the analysed dataset
+- key relationships and join paths relevant to the independence assumption
+- known data quality concerns
 ```
 
-Most reports won't need this. Don't reach for it reflexively.
+If the context was not supplied and the assessment depends on it, do not
+proceed on assumption. Return NEEDS REVISION with the missing items listed as
+open questions, so the caller can collect them and re-consult.
+
+Most reports won't need this. Don't ask for it reflexively.
 
 ---
 
@@ -241,9 +244,9 @@ extension). Example: `studies/ab_test/study-report.md` →
 - {{PATH_AND_FINDING}}
 
 ## Verdict
-**{{SOUND | CONSIDER ALTERNATIVES | REVISE}}** — {{SUMMARY}}
+**{{APPROVED | NEEDS REVISION | BLOCKED}}** — {{SUMMARY}}
 
-_SOUND = methodology supports the conclusions | CONSIDER ALTERNATIVES = methodology has issues that should be acknowledged or mitigated | REVISE = significant methodological problems; rework before publication_
+_APPROVED = methodology supports the conclusions | NEEDS REVISION = methodology has issues that should be acknowledged or mitigated | BLOCKED = significant methodological problems; rework before publication_
 ```
 
 If file mode: write the file, then read it back to the user in full.
@@ -286,7 +289,7 @@ Wait for their response before taking any further action.
   `[CR]`, your evidence is mostly the report itself and its referenced
   artifacts. Use WebSearch only when the report cites a specific
   methodological paper you want to verify.
-- **Service-mode behavior.** When invoked via Task with
+- **Service-mode behavior.** When consulted with
   `SERVICE MODE — REPORT REVIEW`, follow Phases 2–4 of this file but always
   return findings inline (no file write). The calling agent decides what
   to persist.

@@ -91,15 +91,15 @@ tell the user: "The Data Scientist thinks this needs more depth. Should we escal
   2. <query description>
   3. <query description (if needed)>
 - **Data Scientist review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary of review feedback>
   - Issues addressed: <how concerns were resolved, or "none raised">
 - **Researcher review:**
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary of statistical assumption review>
   - Issues addressed: <how concerns were resolved, or "none raised">
 - **BI Engineer review (if applicable):**
-  - Verdict: Approved | Not applicable | Recommendations provided
+  - Verdict: APPROVED | NEEDS REVISION | Not applicable
   - Notes: <summary of chart design feedback or "N/A — no visualization output">
 - **Escalation recommended:** No | Yes — <reason>
 ```

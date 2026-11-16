@@ -49,18 +49,18 @@ Append both reviews to project-specs.md under a combined `Code Review` heading.
 
 **After appending the reviews, branch on the worst verdict across both:**
 
-- **Clean or Minor Issues** → proceed directly to Syn review.
-- **Refactor Required** → tell the user: "Reviewer(s) flagged structural
+- **APPROVED** → proceed directly to Syn review.
+- **NEEDS REVISION** → tell the user: "Reviewer(s) flagged structural
   issues. Fixing before Syn review." Address every listed issue in the
   project files (the notebook reviewer may also be re-invoked in apply-fixes
   mode — see Step 5c of Syn's code_review mode for the call pattern). Update
   project-specs.md. Re-gate: "Reviewer issues resolved: [summary]. Confirm
   to proceed to Syn?" Then proceed to Syn.
-- **Blocked** → tell the user: "Reviewer has blocked this. Fixing critical
+- **BLOCKED** → tell the user: "Reviewer has blocked this. Fixing critical
   issues before continuing." Address every critical issue. Update
   project-specs.md. Resubmit to the same reviewer(s) once. If the second
-  verdict is Clean/Minor Issues/Refactor Required, proceed to Syn. If still
-  Blocked, surface to user: "Reviewer has blocked this twice. [Verbatim
+  verdict is APPROVED or NEEDS REVISION, proceed to Syn. If still
+  BLOCKED, surface to user: "Reviewer has blocked this twice. [Verbatim
   second verdict.] How would you like to proceed? (a) Override and proceed
   to Syn — I'll document the disagreement. (b) Continue fixing — tell me
   what to change. (c) Stop the project."
@@ -78,6 +78,8 @@ per standard-tabular criteria."
 If Phase 4 or Phase 6 consulted AMS, always run this final sign-off. If both
 skipped AMS, skip this too and state: "Skipping AMS final sign-off — standard
 methodology, no prior AMS consultations."
+
+Before this consult, collect the context the reviewer needs, because it cannot consult further: data-modeller context (grain, entities, relationships) via {{consult data-modeller entry=review task="Grain and relationships for the methodology review"}} and researcher input via {{consult researcher entry=service task="Statistical methodology input for the methodology review"}}. Include both in the task of the consult below.
 
 {{consult applied-ml-scientist entry=review task="Final methodology sign-off for <project_name>"}}
 
@@ -166,25 +168,9 @@ monitoring plan, and rollback strategy.
 
 Append Syn's review to specs. Present to user.
 
-**If Syn returns NEEDS REVISION:**
-1. Address the specific issues Syn flagged.
-2. Update project-specs.md with the changes.
-3. Re-gate with the user: "Syn flagged [N] issues. Here's what I changed: [summary]. Confirm to resubmit?"
-4. Resubmit to Syn ONCE more.
+If Syn returns NEEDS REVISION, once or twice, follow the NEEDS REVISION loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
-**If Syn returns NEEDS REVISION a second time:**
-Do not resubmit again. Instead, present to the user:
-"Syn has flagged concerns twice. Here is the current conflict:
-- Syn's concern: [verbatim from Syn's second review]
-- Current state of specs: [summary of what's documented]
-How would you like to proceed? (a) Override Syn and execute as-is — I'll document the disagreement. (b) Continue revising — tell me what to change. (c) Stop the project."
-
-Document the outcome in specs:
-**Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
-
-If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
-- If yes, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
 
 {{consult syn entry=code_review task="Code review and fix for ML engineering project"}}
 
@@ -201,7 +187,7 @@ Append Syn's code review summary to the specs. Present findings to user.
 Then:
 
 1. **Generate Model Card** — Assemble a structured model card for stakeholder
-   sharing. Read `project-specs.md` to extract: ML system type and description
+   sharing. Extract from the live `project-specs.md` (already loaded): ML system type and description
    (Phase 1), data sources (Phase 3), model design and evaluation strategy
    (Phase 4), feature engineering (Phase 5), build results (Phase 6), review
    verdicts (Phase 7). Read `eval-results.json` for quantitative metrics.
@@ -277,14 +263,14 @@ Then:
 - **Backend Engineer Review (.py scripts):** <summary or N/A — list files reviewed, overall verdict>
 - **Data Scientist Review (.ipynb notebooks):** <summary or N/A — list notebooks reviewed, overall verdict>
 - **Applied ML Scientist final sign-off:** <summary if consulted> | Skipped — Phase 4 and Phase 6 AMS reviews both skipped per standard-tabular criteria
-  - Verdict: Sound | Consider Alternatives | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Methodology consistency notes: <drifts surfaced or "none">
   - Model card accuracy notes: <accurate | concerns — description>
   - Stakeholder risks flagged: <list or "none">
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **MLOps Engineer Review:**
-  - Verdict: Approved | Concerns | Redesign needed
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary of infrastructure feedback>
 - **Syn Review:** <included above>
 - **Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped

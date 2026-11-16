@@ -59,8 +59,8 @@ If writing the file (either automatically or after user confirmation), write `da
 - <freshness caveat, or "none">
 
 ## BI Engineer Review Notes
-- Data Analyst metric review verdict: <Aligned | Concerns — from Phase 2>
-- Analytics Engineer data model review verdict: <Suitable | Concerns — from Phase 2>
+- Data Analyst metric review verdict: <APPROVED | NEEDS REVISION — from Phase 2>
+- Analytics Engineer data model review verdict: <APPROVED | NEEDS REVISION — from Phase 2>
 
 ## Constraints
 - Data availability: Dashboard is built and accessible

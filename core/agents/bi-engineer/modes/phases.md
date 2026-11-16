@@ -222,11 +222,11 @@ Address any concerns raised before finalizing the design.
 - **Loading strategy:** <all-at-once | lazy | paginated>
 - **Component breakdown:** <sidebar | main area | detail panel | tabs — brief description>
 - **Data Analyst review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary of metric/analysis review>
   - Issues addressed: <how concerns were resolved, or "none raised">
 - **Analytics Engineer review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Notes: <summary of data model review>
   - Issues addressed: <how concerns were resolved, or "none raised">
 ```
@@ -367,25 +367,9 @@ the design decisions were sound, and nothing was missed.
 
 Append Syn's review to the specs. Present to user.
 
-**If Syn returns NEEDS REVISION:**
-1. Address the specific issues Syn flagged.
-2. Update project-specs.md with the changes.
-3. Re-gate with the user: "Syn flagged [N] issues. Here's what I changed: [summary]. Confirm to resubmit?"
-4. Resubmit to Syn ONCE more.
+If Syn returns NEEDS REVISION, once or twice, follow the NEEDS REVISION loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
-**If Syn returns NEEDS REVISION a second time:**
-Do not resubmit again. Instead, present to the user:
-"Syn has flagged concerns twice. Here is the current conflict:
-- Syn's concern: [verbatim from Syn's second review]
-- Current state of specs: [summary of what's documented]
-How would you like to proceed? (a) Override Syn and close as-is — I'll document the disagreement. (b) Continue revising — tell me what to change. (c) Stop the project."
-
-Document the outcome in specs:
-**Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
-
-If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
-- Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
-- If yes, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
 
 {{consult syn entry=code_review task="Code review and fix for dashboard project"}}
 

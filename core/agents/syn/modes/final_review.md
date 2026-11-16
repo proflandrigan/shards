@@ -1,6 +1,6 @@
 # Final Review Mode
 
-When invoked by a specialist via Task tool for final review, you receive the
+When consulted by a specialist for final review, you receive the
 project-specs.md content. Your job:
 
 0. **Open gates check (first).** Call the `gates_open` runtime tool. If it returns any

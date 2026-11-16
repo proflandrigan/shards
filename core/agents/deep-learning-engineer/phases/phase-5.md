@@ -174,10 +174,10 @@ Summary:
 - Known limitations: <from Phase 4>
 
 Reviewer verdicts already collected:
-- ML Engineer (production readiness): <DEPLOY | OPTIMIZE | REDESIGN> — <one-line reason>
-- Applied ML Scientist (methodology): <Sound | Consider Alternatives | Revise> — <one-line reason>
-- MLOps Engineer (operationalization): <Approved | Concerns | Redesign needed> — <one-line reason>
-- Backend Engineer (code quality): <Clean | Minor Issues | Refactor Required | Blocked | N/A> — <one-line reason>
+- ML Engineer (production readiness): <APPROVED | NEEDS REVISION | BLOCKED> — <one-line reason>
+- Applied ML Scientist (methodology): <APPROVED | NEEDS REVISION | BLOCKED> — <one-line reason>
+- MLOps Engineer (operationalization): <APPROVED | NEEDS REVISION | BLOCKED> — <one-line reason>
+- Backend Engineer (code quality): <APPROVED | NEEDS REVISION | BLOCKED | N/A> — <one-line reason>
 
 Please read project-specs.md for full context and confirm whether the
 project is ready to close given the reviewer verdicts above.
@@ -188,7 +188,7 @@ BLOCKED, discuss with the user and address before proceeding.
 
 **Multi-reviewer conflict protocol:**
 
-If no reviewer returns a blocking verdict (REDESIGN, Revise, or Redesign needed):
+If no reviewer returns a blocking verdict (BLOCKED):
 → Proceed to report.md. Document all three verdicts.
 
 If all reviewers with blocking concerns agree on the same root cause:
@@ -198,9 +198,9 @@ If reviewers disagree — one or two block while the other(s) do not:
 → Present the conflict explicitly to the user:
 
   "The reviewers disagree:
-   - ML Engineer verdict: [DEPLOY | OPTIMIZE | REDESIGN] — [key reason]
-   - Applied ML Scientist verdict: [Sound | Consider Alternatives | Revise] — [key reason]
-   - MLOps Engineer verdict: [Approved | Concerns | Redesign needed] — [key reason]
+   - ML Engineer verdict: [APPROVED | NEEDS REVISION | BLOCKED] — [key reason]
+   - Applied ML Scientist verdict: [APPROVED | NEEDS REVISION | BLOCKED] — [key reason]
+   - MLOps Engineer verdict: [APPROVED | NEEDS REVISION | BLOCKED] — [key reason]
 
    This is a genuine constraint conflict. Which is the binding constraint for
    this project: production feasibility, methodological rigor, or operational
@@ -242,22 +242,22 @@ weight decay; Goyal et al., 2017 for LR scaling, etc.)>
 <Ablation results if run>
 
 ## Production Readiness
-**ML Engineer verdict:** <DEPLOY | OPTIMIZE | REDESIGN>
+**ML Engineer verdict:** <APPROVED | NEEDS REVISION | BLOCKED>
 <Summary of infrastructure and deployment assessment>
 <Required changes before production: ordered by priority>
 
 ## Methodology Review
-**Applied ML Scientist verdict:** <Sound | Consider Alternatives | Revise>
+**Applied ML Scientist verdict:** <APPROVED | NEEDS REVISION | BLOCKED>
 <Summary of theoretical soundness assessment>
 <Literature gaps or superior alternatives identified>
 
 ## Operations Review
-**MLOps Engineer verdict:** <Approved | Concerns | Redesign needed>
+**MLOps Engineer verdict:** <APPROVED | NEEDS REVISION | BLOCKED>
 <Summary of production platform and operationalization assessment>
 <CI/CD, monitoring, and retraining gaps identified>
 
 ## Code Review
-**Backend Engineer verdict:** <Clean | Minor Issues | Refactor Required | Blocked | N/A — no Python artifacts>
+**Backend Engineer verdict:** <APPROVED | NEEDS REVISION | BLOCKED | N/A — no Python artifacts>
 <Summary of code review findings, or "No Python artifacts found.">
 
 ## Limitations

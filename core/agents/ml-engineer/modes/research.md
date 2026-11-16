@@ -39,7 +39,7 @@ Same as `[EX]` Phase 0 but with expanded parameter confirmation.
    - If no `project-specs.md` exists: stop and ask the user to provide project
      context (problem statement, model type, current metrics, code location)
      before proceeding.
-2. Read `project-specs.md` in full.
+2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
 3. Scan the project directory for relevant files: training scripts, feature
    pipelines, evaluation scripts, config files.
 4. Identify the current metrics baseline — look in project-specs.md or ask the
@@ -277,7 +277,7 @@ iteration N:
 
 ### Reviewer: Data Scientist
 
-Your reviewer for AR is the Data Scientist. Consult via Task per Section D.4
+Your reviewer for AR is the Data Scientist. Consult per Section D.4
 of the shared protocol. Standard cadence:
 - Always on first iteration
 - Every K iterations (K from Phase 0)

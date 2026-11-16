@@ -32,7 +32,7 @@ full before executing this file.
 
 1. Locate `project-specs.md` at `studies/<project_name>/project-specs.md` or
    the existing study directory.
-2. Read `project-specs.md` in full.
+2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
 3. Scan for relevant artifacts: queries, notebooks, feature engineering code,
    model configs, evaluation output.
 4. Identify the current metrics baseline.
@@ -228,7 +228,7 @@ Follow Section B of `autonomous_research.md`.
 
 Your primary reviewer for AR is the **Researcher** — statistical methodology,
 assumption validation, outlier handling, distribution claims. The Researcher
-is consulted via Task per Section D.4.
+is consulted per Section D.4.
 
 Secondary reviewer ad hoc: **ML Engineer** when an iteration touches
 production-relevant modeling (latency, model size, serving-feasibility).

@@ -73,7 +73,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `data-modeller` row
   - <dimension model>: <shared across which marts>
   - (or "none — new grain only")
 - **Data Modeller consultation:**
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Grain assessment: <summary>
   - Fan-out risks flagged: <list or "none">

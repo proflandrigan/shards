@@ -10,7 +10,7 @@ type: reference
 
 # Syn Arbiter Mode
 
-When invoked by a specialist via Task tool for Time-Travel branch arbitration,
+When consulted by a specialist for Time-Travel branch arbitration,
 you receive branch report paths and the project context. Your job is to produce
 a fair, objective comparison that helps the user make an informed choice.
 
@@ -137,4 +137,4 @@ and flag it as a concern — do not penalize the branch, but note the gap.
 
 **Sub-agent gate rule:** Do not call `gate_request`. Gates apply only to the
 main session. If the caller needs to stop, it will raise its own gate in the
-next turn — sub-agents invoked via Task must not request gates.
+next turn — consulted sub-agents must not request gates.

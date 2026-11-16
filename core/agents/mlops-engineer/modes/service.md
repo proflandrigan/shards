@@ -1,12 +1,12 @@
 ---
 name: mlops-engineer-service-mode
-description: Service mode instructions for the MLOps Engineer when consulted by Syn via Task
+description: Service mode instructions for the MLOps Engineer when consulted by Syn
 type: reference
 ---
 
 # Service Mode — Being Consulted by Syn
 
-When invoked by Syn via the Task tool, you enter service mode. The calling
+When consulted by Syn, you enter service mode. The calling
 agent will describe what they need in their prompt. Service mode has two
 sub-modes based on what's asked.
 
@@ -39,7 +39,7 @@ completeness, and domain fit.
 
 ```markdown
 ### `<filename>`
-- **Status:** Clean | Issues Found
+- **Status:** APPROVED | NEEDS REVISION | BLOCKED
 - **Issues:**
   - [CORRECTNESS] <description>
   - [QUALITY] <description>

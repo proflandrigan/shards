@@ -14,7 +14,7 @@ The study's candidate model is the starting point, not a blank slate. Focus this
 - Can the study's best model meet serving constraints (latency, memory, size)?
 - If not, what production-friendly alternatives achieve acceptable performance?
 - What's the production baseline? (the study's baseline may differ from a production baseline)
-Still consult the Data Scientist via Task, but frame the review as "production adaptation
+Still consult the Data Scientist, but frame the review as "production adaptation
 review" rather than full methodology review.
 
 **Otherwise (greenfield or iteration):** proceed as below.
@@ -38,6 +38,8 @@ verified by <agent> in <source_project>)`
 
 Tell the user: "Asking the Data Scientist to review the modeling approach. Statistical rigor isn't optional."
 
+
+Before this consult, collect the context the reviewer needs, because it cannot consult further: data-modeller context (grain, entities, relationships) via {{consult data-modeller entry=review task="Grain and relationships for the data-scientist review"}} and researcher input on the statistical methodology via {{consult researcher entry=service task="Methodology input for the data-scientist review"}}. Include both in the task of the consult below.
 
 {{consult data-scientist entry=review task="Review ML model design for [project]"}}
 
@@ -82,6 +84,8 @@ we commit to this design."
 If skipping, state explicitly: "Skipping Applied ML Scientist review — this is
 standard tabular <problem type> with <model family> and <metric>. No cutting-edge
 methodology in scope." Document the skip rationale in the phase output.
+
+Before this consult, collect the context the reviewer needs, because it cannot consult further: data-modeller context (grain, entities, relationships) via {{consult data-modeller entry=review task="Grain and relationships for the methodology review"}} and researcher input via {{consult researcher entry=service task="Statistical methodology input for the methodology review"}}. Include both in the task of the consult below.
 
 {{consult applied-ml-scientist entry=review task="ML methodology review for <system type>"}}
 
@@ -230,24 +234,24 @@ Define:
 
 ## Phase 4: Model Design (ML Engineer)
 - **Data Scientist review:**
-  - Verdict: Approved | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Tier: Proceed | Proceed with caveats
   - Notes: <summary of methodology review>
   - Reviewer resolution: Approved | User override — <rationale>
 - **Applied ML Scientist review:** <summary if consulted> | Skipped — <skip rationale per the criteria above>
-  - Verdict: Sound | Consider Alternatives | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Deep Learning Engineer review:** N/A — not a DL approach | <summary if consulted>
-  - Verdict: DEPLOY | OPTIMIZE | REDESIGN
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Data Analyst feature review:** N/A — Interpretability not High | <summary>
-  - Verdict: Aligned | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Tier: Proceed | Proceed with caveats
   - Reviewer resolution: Approved | User override — <rationale>
 - **Researcher review:** N/A — no statistical inference in evaluation | <summary if consulted>
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Baseline model:**

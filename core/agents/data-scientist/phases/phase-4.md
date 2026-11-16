@@ -35,6 +35,8 @@ verified by <agent> in <source_project>)`
 
 Tell the user: "I'm asking the ML Engineer to review the modeling approach. Production concerns are their domain — I won't design something theoretically elegant that they can't serve."
 
+Before this consult, collect the context the reviewer needs, because it cannot consult further: data-modeller context (grain, entities, relationships) via {{consult data-modeller entry=review task="Grain and relationships for the ml-engineer review"}}. Include it in the task of the consult below.
+
 {{consult ml-engineer entry=review task="Review modeling approach for [study]"}}
 
 Brief for the consultant (fill the bracketed fields):
@@ -108,12 +110,12 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `data-analyst` row)
 - **Candidate model(s):** <model type(s) and why>
 - **Explainability approach:** <SHAP | LIME | PDP | N/A>
 - **ML Engineer review:**
-  - Verdict: Sound | Concerns | Revise
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt
   - Notes: <summary of modeling approach review>
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Data Analyst feature review:** N/A — Interpretability not High | <summary>
-  - Verdict: Aligned | Concerns raised
+  - Verdict: APPROVED | NEEDS REVISION
   - Tier: Proceed | Proceed with caveats
   - Reviewer resolution: Approved | User override — <rationale>
 - **Feature search:** <N> relevant features found | No features found | N/A — no knowledge source reachable

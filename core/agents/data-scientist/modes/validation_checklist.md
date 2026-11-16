@@ -58,7 +58,7 @@ Statistical methods used have their assumptions verified (or violations acknowle
 
 **Observed format:** `linear regression on log-revenue: residual normality (Shapiro p=0.18) ✓, homoscedasticity (BP p=0.34) ✓, VIF max=2.8 (no collinearity) ✓ | diagnostic plots: notebook §3.2`
 
-Consult the Researcher via Task if assumption checks surface a methodology choice that seems wrong.
+Consult the Researcher if assumption checks surface a methodology choice that seems wrong.
 
 ### DS-06 — Multiple Comparisons
 

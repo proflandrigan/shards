@@ -54,7 +54,7 @@ core agent file. Classify each finding by severity:
 - **Refactor** — structural or correctness issue that will cause problems under load
   or during evolution
 - **Minor** — style, naming, low-risk patterns that should be cleaned up eventually
-- **Clean** — nothing wrong; note it
+- **APPROVED** — nothing wrong; note it
 
 ---
 
