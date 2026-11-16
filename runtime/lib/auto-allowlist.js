@@ -168,7 +168,8 @@ function isAutoApprovable(toolName, toolInput) {
     // inside a quoted argument. The compound check fires on bare shell `;`.
     // SQL invocations have the `;` *inside* a quoted SQL string, so the bare
     // shell-level check would match. We give SQL guard first crack:
-    if (sqlGuard.isReadOnlyCliInvocation(cmd)) return true;
+    // Bare shell separators (outside quotes) are never excused: sql-guard only
+    // inspects the SQL argument, not what is chained after it.
     return false;
   }
 
@@ -178,7 +179,8 @@ function isAutoApprovable(toolName, toolInput) {
       // Same SQL-guard exception: a SELECT may legitimately reference a column
       // called `rm` or contain `>`. But destructive markers in non-SQL Bash
       // commands are hard veto.
-      if (sqlGuard.isReadOnlyCliInvocation(cmd)) return true;
+      // The exception holds only when the marker sits inside a quoted region.
+      if (!re.test(maskQuotedRegions(cmd)) && sqlGuard.isReadOnlyCliInvocation(cmd)) return true;
       return false;
     }
   }
