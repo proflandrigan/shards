@@ -21,7 +21,7 @@ set -u
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PREFIX="mcp__plugin_shards_shards__"
-TOOLS="activate active return gate_request gate_confirm gates_open shards_status load_phase fanout_start fanout_claim fanout_collect tasks_set task_dispatch task_report task_status artifact_emit"
+TOOLS="activate active return gate_request gate_confirm gates_open shards_status load_phase fanout_start fanout_claim fanout_collect tasks_set task_dispatch task_report task_verify task_status artifact_emit"
 PROMPT='You are the Shards PM. Plan and run a 2-workstream project in this directory. Workstream 1: an Analytics Engineer (gated; switch into it, request a gate, and confirm it before continuing). Workstream 2: a BI Engineer 4-slice swarm: after the gate is confirmed, call fanout_start with exactly 4 non-overlapping slices (dashboards/p/s1 .. dashboards/p/s4), launch one worker per slice in parallel, each worker calls fanout_claim first and writes only inside its slice, then call fanout_collect with one verdict per slice and report the merged verdict. Do not use Bash.'
 
 DRY=0; CHECK=""; KEEP=0; PLUGIN="$REPO/adapters/claude-code"

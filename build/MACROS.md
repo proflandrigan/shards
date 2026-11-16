@@ -125,16 +125,16 @@ Example: `{{artifact.emit type=report path=analysis/churn/report.md}}`
 Args: `type` required (`[a-z][a-z0-9_-]*`), `path` required, `meta` optional.
 Compiles to runtime `artifact_emit(type, path, meta)`, which appends to `.shards/events.jsonl`.
 
-### 3.14 `{{delegate [tasks=<path>] [max_parallel=<n>]}}`
+### 3.14 `{{delegate [tasks=<path>] [max_parallel=<n>] [mode=parallel|sequential|inline]}}`
 
 Example: `{{delegate tasks=data_models/foo/tasks.yaml max_parallel=3}}`
-Args: `tasks` (optional non-empty path hint, default `<output_dir>/tasks.yaml`), `max_parallel` (optional positive integer cap on concurrent workers). No required args.
+Args: `tasks` (optional non-empty path hint, default `<output_dir>/tasks.yaml`), `max_parallel` (optional positive integer cap on concurrent workers), `mode` (optional `parallel|sequential|inline`; anything else is a validation error). No required args. Without `mode` the text follows the target's capability: claude and codex parallel (background subagents bounded by the host thread cap / Codex `max_threads`), skills sequential. `sequential` dispatches ONE ready task at a time; `inline` dispatches cards but does them in this session with no worker handoff. Every rendering carries the sequential and inline fallback sentences (see `docs/compat.md`, E12.8).
 Validation: args only (the `protocols/plan_drift.md` path is referenced, not checked).
-Compiles to the delegated build loop: `tasks_set` (rejects cycles, overlapping owned paths, missing acceptance checks), `task_dispatch` (ready tasks only, capped), hand each task card to a worker, `task_report` with each result, verify acceptance yourself, dispatch unblocked tasks. Workers hold no gates, never change the plan or delegate; deviations stop dependents and follow plan_drift. The phase gate is raised only when all tasks are done.
+Compiles to the delegated build loop: `tasks_set` (rejects cycles, overlapping owned paths, missing acceptance checks), `task_dispatch` (ready tasks only, capped), hand each task card to a worker, `task_report` with each result, verify acceptance yourself and record it with `task_verify` (a task is done only through it; max 2 retries, then escalate), dispatch unblocked tasks. Workers hold no gates, never change the plan or delegate; deviations stop dependents and follow plan_drift. The phase gate is raised only when all tasks are done.
 
 ## 4. Runtime tools and bindings
 
-Runtime tools referenced: `activate`, `return`, `load_phase`, `gate_request`, `gate_advance`, `gate_confirm` (the last two are never emitted into agent text: the user side confirms), `auto_verify_start`, `auto_verify_end`, `artifact_emit`, `fanout_start` (E5.9), `tasks_set`, `task_dispatch`, `task_report`, `task_status` (E12, via `delegate`). Binding jobs (from `shards.config.yaml`): `record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`; macros render the job name, not a concrete tool.
+Runtime tools referenced: `activate`, `return`, `load_phase`, `gate_request`, `gate_advance`, `gate_confirm` (the last two are never emitted into agent text: the user side confirms), `auto_verify_start`, `auto_verify_end`, `artifact_emit`, `fanout_start` (E5.9), `tasks_set`, `task_dispatch`, `task_report`, `task_status`, `task_verify` (E12, via `delegate`). Binding jobs (from `shards.config.yaml`): `record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`; macros render the job name, not a concrete tool.
 
 ## 5. Rendering table
 

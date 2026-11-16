@@ -5,7 +5,7 @@ const T = require('../tasks');
 
 module.exports = defineTool({
   name: 'task_dispatch',
-  description: 'Dispatch ready tasks. Each id must be pending (or failed, for a retry), have all depends_on reported or done, and not be paused; otherwise the whole call is refused and nothing is dispatched. Opens a lease on each non-inline task\'s owned_paths and returns one task card per id. Hand each card to a worker subagent (card.entry_file says what the worker reads first); the worker returns task-result JSON; pass it to task_report. Inline cards (inline:true) are done by you directly and hold no lease.',
+  description: 'Dispatch ready tasks. Each id must be pending (or failed with attempts < 3, for a retry; the card then carries `feedback`), have all depends_on done, and not be paused; otherwise the whole call is refused and nothing is dispatched. Opens a lease on each non-inline task\'s owned_paths and returns one task card per id. Hand each card to a worker subagent (card.entry_file says what the worker reads first); the worker returns task-result JSON; pass it to task_report. Inline cards (inline:true) are done by you directly and hold no lease.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
@@ -23,6 +23,7 @@ module.exports = defineTool({
       if (!t) { problems.push(`${id}: unknown task`); continue; }
       const s = st0.tasks[id];
       if (s.paused_reason || s.status === 'paused') problems.push(`${id}: paused (${s.paused_reason || 'no reason recorded'})`);
+      else if (s.status === 'failed' && (s.attempts || 0) >= T.MAX_ATTEMPTS) problems.push(`${id}: failed after ${s.attempts} attempts (2 retries used); escalate to the user instead of re-dispatching`);
       else if (s.status !== 'pending' && s.status !== 'failed') problems.push(`${id}: status is ${s.status}, only pending or failed tasks can be dispatched`);
       const unmet = (t.depends_on || []).filter((d) => !st0.tasks[d] || !T.SATISFIED.includes(st0.tasks[d].status));
       if (unmet.length) problems.push(`${id}: unmet dependencies: ${unmet.map((d) => `${d} (${st0.tasks[d] ? st0.tasks[d].status : 'missing'})`).join(', ')}`);
@@ -63,7 +64,7 @@ module.exports = defineTool({
       const t = byId.get(id);
       return {
         id, goal: t.goal, plan_ref: t.plan_ref, inputs: t.inputs, owned_paths: t.owned_paths, acceptance: t.acceptance,
-        worker: t.worker, size: t.size, lease_id: leaseIds[id], inline: t.delegate === 'inline',
+        worker: t.worker, size: t.size, feedback: (st0.tasks[id] && st0.tasks[id].feedback) || null, lease_id: leaseIds[id], inline: t.delegate === 'inline',
         entry_file: `Entry worker: read agents/${t.worker}/modes/worker.md first`,
       };
     });

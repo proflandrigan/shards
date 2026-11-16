@@ -80,6 +80,7 @@ tasks:
 | `task_dispatch` | `ids` (unique, min 1) | Atomic. Every id must be `pending` or `failed`, not paused, with all `depends_on` in `reported` or `done`. Otherwise nothing is dispatched. Opens one lease per non-inline task. Returns one card per id (`entry_file` points the worker at `agents/<worker>/modes/worker.md`). Inline cards hold no lease. |
 | `task_report` | `id`, `result` (task-result object) | Task must be `dispatched`. Result is validated against the schema. Closes the task's lease. `done` is stored as `reported`; `failed` and `blocked` are stored as given. Runs the deviation hook (section 6). |
 | `task_status` | none | Returns each task's status, worker, `depends_on`, `lease_id`, `attempts`, `paused_reason`, the `ready` list and status counts. |
+| `task_verify` | `id`, `pass`, `expected`, `observed`, `notes?`, `check?` | The lead's independent check (E12.5). Only a `reported` task can be verified. Section 4 gives the state rules. Appends an evidence row to `## Validation` in `<output_dir>/project-specs.md`. |
 
 `tasks_set` refusal rules (all problems are listed in one error, nothing is stored):
 
@@ -147,12 +148,17 @@ Codex. The PreToolUse payload has no `agent_id` (compat CX-6), so every Codex ca
 | `pending` | Not yet dispatched. Ready when its dependencies are satisfied and it is not paused. |
 | `dispatched` | Lease open, worker running. |
 | `reported` | Worker returned `done`. Satisfies dependencies. Not yet verified. |
-| `done` | Satisfies dependencies. No tool in `runtime/tools/` currently sets it. |
-| `failed` | Worker returned `failed`. Can be re-dispatched. |
-| `blocked` | Worker returned `blocked`. Cannot be dispatched by `task_dispatch` as written. |
+| `done` | Satisfies dependencies. Set only by `task_verify` with `pass=true`. |
+| `failed` | Worker returned `failed`, or `task_verify` failed the check (observed output kept as `feedback`). Can be re-dispatched. |
+| `blocked` | Worker returned `blocked`, or `task_verify` failed the check after 2 retries (`escalated`). Cannot be dispatched by `task_dispatch` as written; the lead stops and asks the user. |
 | `paused` | Set when a dependency deviated (section 6). Not dispatchable. Set by runtime only when the hook is wired (see section 9). |
 
-`reported` means the lead must still verify. The lead re-runs the acceptance command itself and never accepts a result on the worker's word. The lead verification step is `TODO(E12.5)`; no tool records it today.
+`reported` means the lead must still verify. The lead re-runs the acceptance command itself and never accepts a result on the worker's word, then calls `task_verify` (E12.5). Verification semantics:
+
+- `reported` + `pass=true` gives `done`. Feedback is cleared and dependents become ready.
+- `reported` + `pass=false` gives `failed`, with the observed output stored as `feedback`. `task_dispatch` re-sends it to the worker. Up to 2 retries.
+- A `pass=false` after 2 retries gives `blocked` with `escalated=true`. The lead stops and asks the user with a summary of the evidence rows.
+- Every call, pass or fail, appends one row to the Evidence table in `## Validation` of `<output_dir>/project-specs.md`.
 
 `TASKS.md` mirror: written by `mirrorTasksMd` through the `tasks` job in `shards.config.yaml` (default `{binding: git, options: {path: TASKS.md}}`). It is a checklist generated from `tasks.yaml` (a header says so). Done tasks are `[x]`; others are `[ ]` with their status in parentheses. Any other binding skips the mirror and returns a note.
 
@@ -224,9 +230,9 @@ Current implementation: `runtime/tasks/drift.js` is installed as the default hoo
 
 ## 8. `{{delegate}}` macro
 
-Syntax: `{{delegate [tasks=<path>] [max_parallel=<n>]}}`. Both arguments are optional. `tasks` is a non-empty path hint (default `<output_dir>/tasks.yaml`). `max_parallel` is a positive integer cap on concurrent workers. Example: `{{delegate tasks=data_models/foo/tasks.yaml max_parallel=3}}`.
+Syntax: `{{delegate [tasks=<path>] [max_parallel=<n>] [mode=parallel|sequential|inline]}}`. All arguments are optional. `tasks` is a non-empty path hint (default `<output_dir>/tasks.yaml`). `max_parallel` is a positive integer cap on concurrent workers. `mode` selects the rendering: `parallel` (one worker per ready card, up to the cap), `sequential` (one ready card in flight at a time), `inline` (no worker handoff; the agent does each card itself under the same owned-path rule). Default per host: `parallel` for `claude` and `codex`, `sequential` for `skills` (no parallel guarantee on that host). Any other `mode` value is a build error. Example: `{{delegate tasks=data_models/foo/tasks.yaml max_parallel=3 mode=sequential}}`.
 
-The macro validates arguments only (`build/resolve.js`). It renders the build loop (`build/render.js`): `tasks_set`, then `task_dispatch` for ready tasks up to the cap, hand each card to a worker, `task_report` each result, verify each acceptance check, dispatch what is unblocked. Deviations stop dependent tasks and follow plan_drift. The phase gate is raised only when every task is done.
+The macro validates arguments only (`build/resolve.js`). It renders the build loop (`build/render.js`): `tasks_set`, then `task_dispatch` for ready tasks (up to the cap, or one at a time in `sequential`/`inline`), hand each card to a worker, `task_report` each result, verify each acceptance check with `task_verify`, dispatch what is unblocked. A task is done only through `task_verify`. Deviations stop dependent tasks and follow plan_drift. The phase gate is raised only when every task is done. Host fallbacks (parallel, then sequential, then inline) are stated in the rendered text; see `docs/compat.md` (Delegate host fallbacks, E12.8).
 
 Tool names are prefixed per target (see `build/MACROS.md` section 5).
 
@@ -239,7 +245,11 @@ Tool names are prefixed per target (see `build/MACROS.md` section 5).
 | `fanout_claim` binding does not check the lease owner | Gap (section 3.1). `TODO`. |
 | SubagentStop does not close leases | Not wired. `hooks/claude-code.hooks.json` wires SessionStart, UserPromptSubmit and PreToolUse only. Leases close on `fanout_collect`, `task_report`, or TTL expiry. `TODO`. |
 | PM 2-workstream live run | OPEN. The live-run budget is not spent. Harness: `scripts/pm-fanout-live-run.sh` (one sample, never a pass rate; `--dry-run` and `--check-only` modes). |
-| Lead verification of `reported` tasks | Not recorded by any tool. `TODO(E12.5)`. |
+| Lead verification of `reported` tasks | Done (E12.5): `task_verify` tool (section 3). Only `done` satisfies dependencies; each verification appends an evidence row to `## Validation` in `<output_dir>/project-specs.md`; max 2 retries, then `blocked` and escalated. |
+| Host fallbacks (E12.8) | Done: see `docs/compat.md` (Delegate host fallbacks). |
+| Delegated-build golden harness (E12.9) | Built: `test/golden/delegated-build/` (`run.sh`, `score.js`, `dry-run.js`, `fixture/`); only the dry-run (synthetic state through the real tools) was run, no live `claude -p` sample. |
+| 3/3 runs per host | OPEN. The live-run budget is not spent. |
+| Codex and other hosts | OPEN (external). `TODO(owner: proflandrigan)`. |
 | Auto-pause on deviation and amendment refusal in `tasks_set` | Done (E12.6): `runtime/tasks/drift.js`, covered by `test/tasks-drift.test.js`. |
 | Phase rewrites for delegated build | Done (E12.3/E12.4): build phases are lead loops over `<output_dir>/tasks.yaml` (`core/protocols/delegated_build.md`); planning phases decompose the plan into tasks. `core/protocols/incremental_testing.md` is folded in as the task evidence guide (checkpoint gates removed). Guarded by `test/delegated-build.test.js` and the `write_whole_build` coupling metric. |
 | Subagent generation for workers | The `worker` entry is validated but no subagent is generated. `TODO(E5.3)`. |

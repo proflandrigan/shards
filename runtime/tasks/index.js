@@ -13,7 +13,8 @@ const validateResultSchema = ajv.compile(resultSchema);
 
 const STATE_NAME = 'tasks';
 const DEFAULT_TTL_MS = 900000;
-const SATISFIED = ['reported', 'done'];
+const SATISFIED = ['done'];
+const MAX_ATTEMPTS = 3; // 1 dispatch + 2 retries
 
 function pathsOverlap(a, b) {
   try { return require('../leases').pathsOverlap(a, b); } catch (e) {
@@ -211,11 +212,48 @@ function mirrorTasksMd(ctx, st) {
   return { mirrored: true, path: r.split(path.sep).join('/') };
 }
 
+// Append a row to the last `## Validation` section's `### Evidence` table of <output_dir>/project-specs.md.
+function appendEvidence(ctx, st, { check, expected, observed, pass, notes }) {
+  const cell = (v) => String(v === undefined || v === null ? '' : v).replace(/\|/g, '\\|').replace(/\s*\r?\n\s*/g, ' ').trim();
+  const row = `| ${cell(check)} | ${cell(expected)} | ${cell(observed)} | ${pass ? '\u2713' : '\u2717'} | ${cell(notes)} |`;
+  const header = '| Check | Expected | Observed | Pass/Fail | Notes |\n|---|---|---|---|---|';
+  const rootAbs = path.resolve(ctx.root);
+  const dir = path.dirname(path.resolve(rootAbs, st.path || 'tasks.yaml'));
+  const file = path.join(dir, 'project-specs.md');
+  fs.mkdirSync(dir, { recursive: true });
+  let text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const lines = text.split('\n');
+  let vi = -1;
+  lines.forEach((l, i) => { if (/^## Validation\s*$/.test(l)) vi = i; });
+  if (vi < 0) {
+    text = `${text}${text && !text.endsWith('\n') ? '\n' : ''}${text ? '\n' : ''}## Validation\n\n### Evidence\n\n${header}\n${row}\n`;
+    fs.writeFileSync(file, text);
+    return path.relative(rootAbs, file).split(path.sep).join('/');
+  }
+  let end = lines.length;
+  for (let i = vi + 1; i < lines.length; i++) if (/^## /.test(lines[i])) { end = i; break; }
+  let ei = -1;
+  for (let i = vi + 1; i < end; i++) if (/^### Evidence\s*$/.test(lines[i])) ei = i;
+  if (ei < 0) {
+    let at = end; while (at > vi + 1 && lines[at - 1].trim() === '') at--;
+    lines.splice(at, 0, '', '### Evidence', '', ...header.split('\n'), row);
+  } else {
+    let secEnd = end;
+    for (let i = ei + 1; i < end; i++) if (/^#{1,3} /.test(lines[i])) { secEnd = i; break; }
+    let last = -1;
+    for (let i = ei + 1; i < secEnd; i++) if (/^\s*\|/.test(lines[i])) last = i;
+    if (last < 0) { let at = ei + 1; lines.splice(at, 0, '', ...header.split('\n'), row); }
+    else lines.splice(last + 1, 0, row);
+  }
+  fs.writeFileSync(file, lines.join('\n'));
+  return path.relative(rootAbs, file).split(path.sep).join('/');
+}
+
 function parseYaml(text) { return YAML.parse(text); }
 function stringifyYaml(obj) { return YAML.stringify(obj); }
 
 module.exports = {
   validateManifest, validateResult, readTasksState, initialTasksState, readyIds, countsOf,
-  assertMayReplace, onDeviations, setHooks, mirrorTasksMd, parseYaml, stringifyYaml,
+  assertMayReplace, onDeviations, setHooks, mirrorTasksMd, appendEvidence, MAX_ATTEMPTS, parseYaml, stringifyYaml,
   STATE_NAME, DEFAULT_TTL_MS, SATISFIED, manifestSchema, resultSchema,
 };

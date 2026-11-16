@@ -251,3 +251,18 @@ For D2 (consult / fan-out depth):
 - E5.3: subagents are `agents/<id>.md` (general: persona summary plus entry file list) and `agents/<id>-<entry>.md` (summary, rendered entry file, plus `worker_contract.md` for `worker`), Codex `.codex/agents/<id>[-<entry>].toml`. No `model` key anywhere (D7); `tools` never includes `Task` or `Agent`, default `Read, Glob, Grep, Bash` when the persona has none. Consult and fanout text now names `<id>-<entry>`. Codex still picks agents by model reading `name` (CX-3).
 - E8.7: on Codex, the skill takes over instructions after `activate`, and every tool response header carries `agent=<id>` (runtime/header.js), which re-asserts the persona. Fallback outside T3: the codex build writes `[profiles.shards-<agent>]` tables (with `developer_instructions`) into `.codex/config.toml`; use `codex --profile shards-<agent>`. UNVERIFIED: the profile table shape and whether a profile accepts `developer_instructions` were not found in fetched docs.
 - E5.7: opt-in only (`opts.defaultAgent` to emitTarget, or env `SHARDS_BUILD_DEFAULT_AGENT=1`; the CLI flag `--default-agent` still needs wiring in build/compile.js). Claude: writes plugin-root `settings.json` `{"agent": "shards:syn"}`, and `agents/syn.md` then omits `tools` (full tool set, so the main thread can spawn subagents and call MCP tools) and gains a main-thread instruction to call `activate(agent="syn", mode="switch")` first. Manual route: `claude --agent shards:syn`. UNVERIFIED (CC-3): whether a plugin `settings.json` honors `agent`. Codex: a top-level `profile = "shards-syn"` in `.codex/config.toml`, also UNVERIFIED.
+
+## Delegate host fallbacks (E12.8)
+
+`{{delegate}}` renders capability-aware text per host, so the same build phase degrades gracefully. An optional `mode=parallel|sequential|inline` argument forces one rendering; any other value is a build error.
+
+| Host | Default | Parallel limit | Fallbacks (always stated in the text) |
+|---|---|---|---|
+| Claude Code (claude) | parallel: background subagents, one per ready card | the host background-subagent thread cap, or `max_parallel` if lower | sequential (one ready card at a time through the same dispatch/report/verify steps), then inline |
+| Codex (codex) | parallel via `spawn_agent` | bounded by Codex `max_threads`, or `max_parallel` if lower | same sequential and inline fallbacks |
+| Skills (skills) | sequential: no parallel guarantee; one card at a time via isolated skill invocation if supported | none assumed | inline in this session under the same owned-path rule |
+| T3 | uses the underlying provider's rendering (Claude or Codex) per E0.6 | provider's limit | provider's fallbacks |
+
+Modes: `sequential` dispatches ONE ready task at a time. `inline` dispatches the cards, then the agent does each itself with no worker handoff: same cards, acceptance checks and evidence rows; only isolation is lost. In every mode step 5 calls `task_verify` (prefixed per target) to record the evidence row; a task is done only through it, with at most 2 retries before escalating to the user.
+
+TODO(owner: proflandrigan) OPEN (external): live verification of the Codex rendering (`spawn_agent` bounded by `max_threads`) on a real Codex install.

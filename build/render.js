@@ -40,11 +40,36 @@ function render(m, target) {
     case 'delegate': {
       const wf = contentPath(target, 'agents/<worker>/modes/worker.md');
       const pd = contentPath(target, 'protocols/plan_drift.md');
-      const cap = m.max_parallel ? `the host thread cap or ${m.max_parallel}, whichever is lower` : 'the host thread cap';
-      const hand = target === 'claude' ? `run the specialist's own worker subagent (the worker agent id on the card) by name, starting its prompt with "Entry worker: read ${wf} first" followed by the card JSON`
-        : target === 'codex' ? `spawn the worker agent named on the card with spawn_agent, starting its message with "Entry worker: read ${wf} first" followed by the card JSON`
-          : `invoke the worker skill named on the card in an isolated context if the host supports it, otherwise do the card inline in this session under the same owned-path rule`;
-      return `Run the delegated build loop. (1) Call ${T('tasks_set')}(path=${q(m.tasks || '<output_dir>/tasks.yaml')}) with the approved tasks.yaml; it rejects cycles, overlapping owned paths and missing acceptance checks. (2) Call ${T('task_dispatch')}(ids=<ready tasks>) for ready tasks only, at most ${cap} at once; it returns task cards. (3) Hand each card to a worker: ${hand}. (4) Pass each worker's result JSON to ${T('task_report')}; use ${T('task_status')} to see what is ready. (5) Verify the acceptance check yourself (never accept on the worker's word), then dispatch the tasks it unblocks. (6) Workers hold no gates, never change the plan and never delegate; if a result has deviations, stop dependent tasks and follow the plan_drift protocol (read ${pd}). (7) Raise the phase gate only when every task is done.`;
+      const mode = m.mode || (target === 'skills' ? 'sequential' : 'parallel');
+      const hostCap = target === 'claude' ? 'the host background-subagent thread cap'
+        : target === 'codex' ? 'the Codex max_threads setting' : 'the host thread cap';
+      const cap = m.max_parallel ? `${hostCap} or ${m.max_parallel}, whichever is lower` : hostCap;
+      const card = 'followed by the card JSON';
+      const par = target === 'claude' ? `launch the specialist's own worker subagent (the worker agent id on the card) for every dispatched card as a background subagent in a single message, starting each prompt with "Entry worker: read ${wf} first" ${card}`
+        : target === 'codex' ? `spawn the worker agent named on the card with spawn_agent for every dispatched card (bounded by max_threads), starting each message with "Entry worker: read ${wf} first" ${card}`
+          : `invoke the worker skill named on the card in an isolated context for each dispatched card if the host supports concurrent skill invocations`;
+      const seq = target === 'claude' ? `run the specialist's own worker subagent (the worker agent id on the card) by name, starting its prompt with "Entry worker: read ${wf} first" ${card}, and wait for its result before handing over the next card`
+        : target === 'codex' ? `spawn the worker agent named on the card with spawn_agent, starting its message with "Entry worker: read ${wf} first" ${card}, and wait for its result before spawning the next`
+          : `invoke the worker skill named on the card in an isolated context if the host supports it (one card at a time, waiting for each result), otherwise do the card inline in this session under the same owned-path rule`;
+      const inl = 'do not hand the card to a worker: do each card yourself inline in this session, writing only inside the card\'s owned paths';
+      const fbSeq = 'If the host cannot run subagents in parallel, run the ready cards one at a time through the same dispatch/report/verify steps.';
+      const fbInl = 'If there are no subagents at all, do each card yourself inline under the same owned-path rule; same cards, acceptance checks and evidence rows; only isolation is lost.';
+      let dispatch, hand, fb;
+      if (mode === 'parallel') {
+        dispatch = `Call ${T('task_dispatch')}(ids=<ready tasks>) for ready tasks only, at most ${cap} at once; it returns task cards`;
+        hand = `Hand each card to a worker in parallel: ${par}`;
+        fb = `${fbSeq} ${fbInl}`;
+      } else if (mode === 'sequential') {
+        dispatch = `Call ${T('task_dispatch')}(ids=<ONE ready task>) for a single ready task at a time (never more than one in flight); it returns its task card`;
+        hand = `Hand the card to a worker: ${seq}`;
+        fb = fbInl;
+      } else {
+        dispatch = `Call ${T('task_dispatch')}(ids=<ONE ready task>) for a single ready task at a time; it returns its task card`;
+        hand = `Inline mode, no worker handoff: ${inl}, then produce the result JSON as a worker would (same card, same acceptance check, same evidence)`;
+        fb = 'Inline mode forces this: same cards, acceptance checks and evidence rows as with workers; only isolation is lost.';
+      }
+      const dflt = m.mode ? '' : (target === 'skills' ? ' This host gives no parallel guarantee, so run cards sequentially by default.' : '');
+      return `Run the delegated build loop (mode: ${mode}).${dflt} (1) Call ${T('tasks_set')}(path=${q(m.tasks || '<output_dir>/tasks.yaml')}) with the approved tasks.yaml; it rejects cycles, overlapping owned paths and missing acceptance checks. (2) ${dispatch}. (3) ${hand}. (4) Pass each result JSON to ${T('task_report')}; use ${T('task_status')} to see what is ready. (5) Verify the acceptance check yourself (never accept on the worker's word), then call ${T('task_verify')}(id=<task id>, pass=<true|false>, expected=<what the check requires>, observed=<what you saw>, notes=<optional>) to record the evidence row. A task is done only through ${T('task_verify')}; on a failed check re-dispatch with the failure notes, at most 2 retries, then escalate to the user. Then dispatch the tasks it unblocks. (6) Workers hold no gates, never change the plan and never delegate; if a result has deviations, stop dependent tasks and follow the plan_drift protocol (read ${pd}). (7) Raise the phase gate only when every task is done. Fallbacks: ${fb}`;
     }
     case 'return':
       return m.to ? `Return to \`${m.to}\`: call ${T('return')}(to=${q(m.to)}). Resolve any pending gate first.` : `Return to the previous agent: call ${T('return')}(). Resolve any pending gate first.`;

@@ -116,7 +116,7 @@ describe('dispatch / report / status', () => {
     expect(leases.listActive(sess())).toHaveLength(0);
     expect(state.read('tasks').tasks.a.status).toBe('reported');
     const s = JSON.parse(text(await call('task_status', {})));
-    expect(s.ready).toEqual(['b', 'c']);
+    expect(s.ready).toEqual(['c']);
     expect(s.counts.reported).toBe(1);
     expect(fs.readFileSync(path.join(root, 'TASKS.md'), 'utf8')).toContain('- [ ] a (bi-engineer): goal a (reported)');
   });
