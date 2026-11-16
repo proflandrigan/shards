@@ -65,7 +65,7 @@ Rendered instruction (all targets): run `<agent>` as an isolated consultant in e
 Example: `{{fanout ml-engineer slices=model_a,model_b,model_c}}`
 Args: `agent` (positional, required), `slices` (required; positive integer, or comma list of `[a-z0-9_-]+`), `entry` (optional, default `worker`; same enum as consult).
 Validation: agent exists and `activation` contains `fanout_worker`. The entry file is checked like consult.
-Compiles to runtime `fanout_start(agent, slices)` (E5.9; leases) then one parallel worker per slice, then collect results. Workers never hold gates, change the plan or delegate.
+Compiles to runtime `fanout_start(agent, slices)` (E5.9; leases), which returns one card per slice and opens a lease. Launch one parallel worker per card. Each worker calls `fanout_claim(lease_id, slice_id)` first, writes only inside its owned paths, and returns verdict JSON. The lead then calls `fanout_collect(lease_id, results)` with one result per slice; it merges worst-wins and closes the lease. Workers never hold gates, change the plan or delegate. See `docs/delegation.md` section 3.1.
 
 ### 3.4 `{{return [to=<agent>]}}`
 

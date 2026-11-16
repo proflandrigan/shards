@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 // shards-mcp: stdio MCP server. NEVER write to stdout except via the transport (logs -> stderr).
+const fs = require('fs');
 const path = require('path');
 const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
@@ -22,7 +23,32 @@ function resolveRoot(argv = process.argv.slice(2), env = process.env) {
   return process.cwd();
 }
 
-function createServer({ root, sessionKey, ancestry, env, host } = {}) {
+// Lease sweep (E5.9): periodically expire stale leases for every session dir that has leases state.
+// Interval is unref()'d so it never keeps the process alive; ms<=0 disables. Returns {sweep, stop}.
+function startLeaseSweep({ root, ms, setIntervalFn = setInterval, clearIntervalFn = clearInterval } = {}) {
+  const leases = require('./leases');
+  const dir = path.join(root, '.shards', 'state', 'sessions');
+  const sweep = async () => {
+    let names = [];
+    try { names = fs.readdirSync(dir); } catch (_) { return []; }
+    const out = [];
+    for (const k of names) {
+      try {
+        if (!fs.existsSync(path.join(dir, k, 'leases.json'))) continue;
+        out.push(...await leases.expireStale({ root, sessionKey: k }));
+      } catch (e) { process.stderr.write(`shards-mcp lease sweep ${k}: ${e.message}\n`); }
+    }
+    return out;
+  };
+  let t = null;
+  if (Number.isFinite(ms) && ms > 0) {
+    t = setIntervalFn(() => { sweep(); }, ms);
+    if (t && typeof t.unref === 'function') t.unref();
+  }
+  return { sweep, stop() { if (t) { clearIntervalFn(t); t = null; } } };
+}
+
+function createServer({ root, sessionKey, ancestry, env, host, leaseSweepMs } = {}) {
   root = path.resolve(root || resolveRoot());
   const registry = new Registry(loadTools());
   let cached;
@@ -56,8 +82,12 @@ function createServer({ root, sessionKey, ancestry, env, host } = {}) {
       elicit: (params, opts) => server.elicitInput(params, opts),
       clientCapabilities: () => server.getClientCapabilities(),
     }));
+  const envMs = (env || process.env).SHARDS_LEASE_SWEEP_MS;
+  const ms = leaseSweepMs !== undefined ? leaseSweepMs : (envMs !== undefined && envMs !== '' ? Number(envMs) : 30000);
+  const sweeper = startLeaseSweep({ root, ms });
+  server.onclose = () => sweeper.stop();
   return {
-    server, registry, root, correlator,
+    server, registry, root, correlator, sweeper,
     get state() { return resolveSession().state; },
     get sessionKey() { return resolveSession().sessionKey; },
   };
@@ -72,4 +102,4 @@ if (require.main === module) {
   main().catch((e) => { process.stderr.write(`shards-mcp fatal: ${e && e.stack || e}\n`); process.exit(1); });
 }
 
-module.exports = { createServer, resolveRoot };
+module.exports = { createServer, resolveRoot, startLeaseSweep };

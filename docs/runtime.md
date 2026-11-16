@@ -61,6 +61,7 @@ All state lives under the project root:
 <root>/.shards/state/sessions/<sessionKey>/frames.json      {frames: []}  stack of {agent, phase, ...}
 <root>/.shards/state/sessions/<sessionKey>/gates.json       {gates: {}}   keyed by gate id
 <root>/.shards/state/sessions/<sessionKey>/session.json     {sessionKey, createdAt, version}
+<root>/.shards/state/sessions/<sessionKey>/leases.json      {leases: {}}  lease records (fan-out and task leases)
 ```
 
 Notes on what the code does today:
@@ -229,6 +230,8 @@ Hook shims live in `hooks/` (see `hooks/README.md`). They write hook-owned state
 `prompts.jsonl` line: `{v:1, session_id, prompt_id (int, 1-based, monotonic per session), ts (ISO), text (NFC, whitespace collapsed, trimmed), sha256 (hex of text as UTF-8), host, turn_id?, permission_mode?}`.
 
 `hooks.json` gate record: `{tool, permission_mode (string|null), ts, host, tool_use_id?, agent_id?}`.
+
+Lease handling in the hook: worker binding (`fanout_claim`) and worker heartbeats are written with `bump: false`, so they do not bump the session version. Expiry writes made by `expireStale` go through the normal update and do bump it. The MCP server runs a lease sweep every `SHARDS_LEASE_SWEEP_MS` ms (default 30000; zero, negative or non-numeric disables it) in `startLeaseSweep` (`runtime/server.js`). Rules and tool details: `docs/delegation.md` section 3.1.
 
 Handshake: `{session_id, source (startup|resume|compact|clear), cwd, ts, pid, ppid_chain: [parent, grandparent, ...]}`. `pid` is the hook process; the host process is a common ancestor of the hook and the MCP server, so E2.11 intersects `ppid_chain` with the MCP process's own ancestry and takes the newest `ts`. Windows records `[process.ppid]` only.
 

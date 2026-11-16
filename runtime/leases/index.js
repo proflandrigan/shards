@@ -110,25 +110,121 @@ async function expireStale(session, now = Date.now()) {
   return expired;
 }
 
-function isPathAllowed(session, agentId, filePath, now = Date.now()) {
-  const mine = listActive(session, now).filter((l) => l.worker_type === agentId);
-  if (!mine.length) return { allowed: true, lease_id: null, reason: 'no active lease for agent' };
-  let rel;
+function relOf(session, filePath) {
   const s = String(filePath || '').replace(/\\/g, '/');
+  let rel;
   if (path.isAbsolute(filePath) || /^[A-Za-z]:\//.test(s)) rel = path.relative(session.root, filePath).replace(/\\/g, '/');
   else rel = path.posix.normalize(s || '.');
   rel = rel.replace(/^(\.\/)+/, '').replace(/\/+$/, '');
-  if (!rel || rel === '.' || rel === '..' || rel.startsWith('../') || path.isAbsolute(rel)) {
-    return { allowed: false, lease_id: mine[0].id, reason: `path outside project root or not a file: ${filePath}` };
+  if (!rel || rel === '.' || rel === '..' || rel.startsWith('../') || path.isAbsolute(rel)) return null;
+  return rel;
+}
+
+const inside = (rel, p) => rel === p || rel.startsWith(`${p}/`);
+
+// Mutate the leases state under the state lock. bump=false (hook-owned writes: worker binding and
+// heartbeats) does NOT bump the session version, so they never trigger version-change re-grounding.
+async function mutate(session, fn, { bump = true } = {}) {
+  const st = storeOf(session);
+  if (bump) return st.update('leases', fn);
+  const { atomicWrite } = require('../state/store');
+  return st.withLock(() => {
+    const cur = st.read('leases');
+    const next = fn(cur);
+    atomicWrite(st.file('leases'), JSON.stringify(next === undefined ? cur : next, null, 2));
+    return next;
+  });
+}
+
+const typeTail = (t) => String(t || '').toLowerCase().split(':').pop();
+function typesMatch(a, b) {
+  if (!a || !b) return true;
+  const x = String(a).toLowerCase(); const y = String(b).toLowerCase();
+  return x === y || typeTail(x) === typeTail(y);
+}
+
+// Bind a host agent_id (from the hook payload) to one slice of an active lease (E5.9/E12).
+async function bindWorker(session, { agentId, agentType, leaseId, sliceId } = {}, now = Date.now()) {
+  if (!agentId) throw new Error('agentId required (host did not report agent_id)');
+  let out;
+  await mutate(session, (cur) => {
+    const l = leasesOf(cur)[leaseId];
+    if (!l) throw new Error(`unknown lease ${leaseId}`);
+    if (!isLive(l, now)) throw new Error(`lease ${leaseId} is ${l.status === 'active' ? 'expired' : l.status}`);
+    if (!OWNERS.includes(l.owner)) throw new Error(`lease ${leaseId} owner ${l.owner} does not allow workers`);
+    if (!l.slices.some((s) => s.id === sliceId)) throw new Error(`lease ${leaseId} has no slice ${sliceId}`);
+    if (!typesMatch(agentType, l.worker_type)) throw new Error(`agent_type ${agentType} does not match lease worker_type ${l.worker_type}`);
+    const workers = l.workers || {};
+    const prev = workers[agentId];
+    if (prev && prev.slice_id !== sliceId) throw new Error(`agent ${agentId} is already bound to slice ${prev.slice_id}`);
+    for (const [id, w] of Object.entries(workers)) {
+      if (id !== agentId && w.slice_id === sliceId) throw new Error(`slice ${sliceId} is already bound to a different worker`);
+    }
+    if (!prev && Object.keys(workers).length + 1 > l.slices.length) throw new Error(`lease ${leaseId} already has ${l.slices.length} bound worker(s) (one per slice)`);
+    l.workers = { ...workers, [agentId]: prev || { slice_id: sliceId, agent_type: agentType || null, bound_at: iso(now) } };
+    out = { lease: l, slice: l.slices.find((s) => s.id === sliceId) };
+    return cur;
+  }, { bump: false });
+  return out;
+}
+
+function findWorkerLease(session, agentId, now = Date.now()) {
+  if (!agentId) return null;
+  for (const l of listActive(session, now)) {
+    const w = l.workers && l.workers[agentId];
+    if (!w) continue;
+    const slice = l.slices.find((s) => s.id === w.slice_id);
+    if (slice) return { lease: l, slice };
+  }
+  return null;
+}
+
+// Extend the lease expiry when a bound worker acts. Throttled (a quarter of the TTL, max 5s) to keep
+// the hook cheap. Returns true when the lease was refreshed.
+async function touchWorker(session, agentId, now = Date.now()) {
+  const f = findWorkerLease(session, agentId, now);
+  if (!f) return false;
+  const l = f.lease;
+  if (now - Date.parse(l.heartbeat_at) < Math.min(5000, l.ttl_ms / 4)) return false;
+  let did = false;
+  await mutate(session, (cur) => {
+    const x = leasesOf(cur)[l.id];
+    if (x && isLive(x, now)) { x.heartbeat_at = iso(now); x.expires_at = iso(now + x.ttl_ms); did = true; }
+    return cur;
+  }, { bump: false });
+  return did;
+}
+
+// Active fanout-owned slice that contains (or is contained by) rel, or null. For the lead/unbound caller.
+function findSliceOwning(session, filePath, now = Date.now()) {
+  const rel = relOf(session, filePath);
+  if (!rel) return null;
+  for (const l of listActive(session, now)) {
+    if (l.owner !== 'fanout') continue;
+    for (const sl of l.slices) for (const p of sl.paths) if (inside(rel, p) || inside(p, rel)) return { lease: l, slice: sl, rel };
+  }
+  return null;
+}
+
+function isPathAllowed(session, agentId, filePath, now = Date.now()) {
+  const bound = findWorkerLease(session, agentId, now);
+  const mine = bound ? [] : listActive(session, now).filter((l) => l.worker_type === agentId);
+  if (!bound && !mine.length) return { allowed: true, lease_id: null, reason: 'no active lease for agent' };
+  const rel = relOf(session, filePath);
+  const leaseId = bound ? bound.lease.id : mine[0].id;
+  if (!rel) return { allowed: false, lease_id: leaseId, reason: `path outside project root or not a file: ${filePath}` };
+  if (bound) {
+    for (const p of bound.slice.paths) if (inside(rel, p)) return { allowed: true, lease_id: leaseId, reason: `within slice ${bound.slice.id}`, slice_id: bound.slice.id };
+    return { allowed: false, lease_id: leaseId, slice_id: bound.slice.id, reason: `path ${rel} is outside slice ${bound.slice.id} of lease ${leaseId}` };
   }
   for (const l of mine) {
     for (const sl of l.slices) {
       for (const p of sl.paths) {
-        if (rel === p || rel.startsWith(`${p}/`)) return { allowed: true, lease_id: l.id, reason: `within slice ${sl.id}` };
+        if (inside(rel, p)) return { allowed: true, lease_id: l.id, reason: `within slice ${sl.id}` };
       }
     }
   }
   return { allowed: false, lease_id: mine[0].id, reason: `path ${rel} is outside leased slices for ${agentId}` };
 }
 
-module.exports = { openLease, heartbeat, closeLease, listActive, expireStale, isPathAllowed, pathsOverlap, normalizeRel, OWNERS, DEFAULT_TTL_MS };
+module.exports = { bindWorker, findWorkerLease, touchWorker, findSliceOwning, openLease, heartbeat, closeLease, listActive, expireStale, isPathAllowed, pathsOverlap, normalizeRel, OWNERS, DEFAULT_TTL_MS };
