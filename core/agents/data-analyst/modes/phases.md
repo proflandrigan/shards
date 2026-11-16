@@ -269,7 +269,7 @@ you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
+**Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
 Goal: Write and run the queries.
 
@@ -464,9 +464,8 @@ Summarize:
 3. Any caveats or limitations
 4. Suggested follow-ups (if any)
 
-**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-{{protocol knowledge_harvest}} and follow
-the protocol. Present candidates to the user for confirmation before writing.
+**Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
+{{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
 
 ### Document Phase 4
 
@@ -483,8 +482,8 @@ the protocol. Present candidates to the user for confirmation before writing.
 - **Follow-up analyses suggested:**
   - <suggestion or "none">
 - **Original question answered:** Yes | Partially | No — <explanation>
-- **Knowledge harvested:**
-  - <title> → .shards/knowledge/<type>/<filename>.md
+- **Write-backs proposed:**
+  - <title> → <knowledge job destination> (confirmed | declined | pending)
   - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```

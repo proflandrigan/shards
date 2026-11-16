@@ -47,7 +47,6 @@
         { "id": "swarm", "title": "Decompose & Swarm", "file": "03-protocols/swarm.md" },
         { "id": "autonomous-research", "title": "Autonomous Research", "file": "03-protocols/autonomous-research.md" },
         { "id": "experiment-versioning", "title": "Experiment Versioning", "file": "03-protocols/experiment-versioning.md" },
-        { "id": "knowledge-ledger", "title": "Knowledge Ledger", "file": "03-protocols/knowledge-ledger.md" },
         { "id": "join-path", "title": "Join-Path Protocol", "file": "03-protocols/join-path.md" },
         { "id": "incremental-testing", "title": "Incremental Testing", "file": "03-protocols/incremental-testing.md" },
         { "id": "auto-verify", "title": "Auto-Verify Mode", "file": "03-protocols/auto-verify.md" }
@@ -66,7 +65,6 @@
         { "id": "git", "title": "Git & PR Review", "file": "04-ui/git.md" },
         { "id": "code-intel", "title": "Code Intelligence", "file": "04-ui/code-intel.md" },
         { "id": "quick-open-palette", "title": "Quick Open & Command Palette", "file": "04-ui/quick-open-palette.md" },
-        { "id": "knowledge-map", "title": "Knowledge Map", "file": "04-ui/knowledge-map.md" },
         { "id": "sessions", "title": "Sessions Panel", "file": "04-ui/sessions.md" },
         { "id": "settings-permissions", "title": "Settings & Permissions", "file": "04-ui/settings-permissions.md" },
         { "id": "keybindings", "title": "Keybindings Reference", "file": "04-ui/keybindings.md" }

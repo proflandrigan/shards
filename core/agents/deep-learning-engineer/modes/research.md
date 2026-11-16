@@ -45,7 +45,7 @@ Per `experiment_versioning.md` Section A. AR requires git (or DVC).
 
 ### Knowledge retrieval
 
-Per `knowledge_retrieval.md` AR entry point. Match on architecture family
+Per {{protocol sources}} (AR entry point). Match on architecture family
 (CNN, ViT, Transformer variant, GNN, diffusion model), data modality
 (image, sequence, graph, audio, multi-modal), and metric.
 
@@ -131,11 +131,11 @@ Append to `project-specs.md`:
 - **Starting architecture:** <one-line summary>
 - **Tensor shape sanity:** <confirmed forward pass with shapes>
 
-### Knowledge Ledger
-- **Entries checked:** <N>
-- **Relevant entries found:** <N>
-  - <title> (<type>, <confidence>) — <relevance>
-- **Or:** No relevant entries found
+### Sources
+- **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+- **Relevant findings:** <N>
+  - <title> (<source>) — <1-line relevance>
+- **Or:** No relevant findings
 ```
 
 {{gate kind=execute phase=0 id=specific-instructions-deep-learning-engineer-research-phase0}}

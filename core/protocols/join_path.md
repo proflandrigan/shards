@@ -30,11 +30,13 @@ is higher. When in doubt, bump the tier up.
 
 ## Knowledge Pre-Check
 
-Before beginning the join trace, run a Knowledge Checkpoint for each table in the planned join. {{protocol knowledge_checkpoint}} (fast path first, deep path if needed).
+Before beginning the join trace, search the knowledge source for each table in the planned join. {{protocol sources}}
 
-If a knowledge entry documents the grain, key type, or semantics of a table involved in the join, incorporate it into the trace and cite it using the citation format in the checkpoint protocol. Grain and key-type mismatches that the ledger already documents should be called out before any SQL is written — not discovered post-execution.
+{{knowledge.search query="<table name> grain key"}}
 
-If the ledger has no relevant entries, proceed directly to the trace.
+If a result documents the grain, key type, or semantics of a table involved in the join, incorporate it into the trace and cite it in the Sources format. Treat it as a hint to verify. Grain and key-type mismatches that the knowledge source already documents should be called out before any SQL is written — not discovered post-execution.
+
+If nothing relevant is found, proceed directly to the trace.
 
 ## The Trace
 

@@ -227,11 +227,11 @@ For Quick/Deep, create or append to `data_models/<project_name>/project-specs.md
 - **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Routing decision:** Explore | Quick | Deep
 - **Routing rationale:** <1-2 sentences>
-### Knowledge Ledger
-- **Entries checked:** <N> | N/A — ledger not found
-- **Relevant entries found:** <N>
-  - <title> (<type>, <confidence>) — <1-line relevance>
-- **Or:** No relevant entries found
+### Sources
+- **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+- **Relevant findings:** <N>
+  - <title> (<source>) — <1-line relevance>
+- **Or:** No relevant findings
 ```
 
 {{gate kind=phase phase=0}}
@@ -339,7 +339,7 @@ You remain the Data Modeller throughout — no persona transfer.
 These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
 
 - **Engineering guidelines.** When writing or editing any SQL, dbt model, or configuration artifact, the following shared engineering guidelines apply: {{protocol engineering_guidelines}}.
-- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol knowledge_retrieval}} for the protocol.
+- **Check the knowledge sources.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol sources}} for the protocol.
 - **Triage first, always.** Never inspect a model before Phase 0 is confirmed.
 - **Document before advancing.** Non-negotiable. Exception: Explore track.
 - **One phase at a time. Wait.** Never advance before the current phase's GATE is

@@ -121,8 +121,8 @@ Mode selects *which row of the checklist's Track Calibration table* applies with
 
 - **Gate pattern:** The Validate step sits before the gate request. Write the `## Validation` section → re-read it to the user → call `gate_request`. Same discipline as every other phase.
 - **Join path protocol:** Join-path issues found during validation are recorded under **Notes** in the evidence table and, if unresolved, escalated to **Open Issues**.
-- **Knowledge retrieval:** If the Knowledge Ledger has a relevant pattern (e.g., known bad distribution, historical grain issue), cite it in **Notes**.
-- **Knowledge harvest:** At project completion, validation checks that caught real issues are harvest candidates — patterns worth saving.
+- **Sources:** If the bound knowledge source has a relevant pattern (e.g., known bad distribution, historical grain issue), cite it in **Notes**.
+- **Write-backs:** At project completion, validation checks that caught real issues are write-back candidates — patterns worth proposing to the knowledge source (see {{protocol sources}}).
 - **Reviewer verdict:** Final-review invocation of Syn must read the `## Validation` section. Missing or unconvincing validation is grounds for `NEEDS REVISION`.
 - **Autonomous Research `[AR]`:** Each AR iteration that keeps a change produces a lightweight validation block (Fixer-level subset) in the iteration log. Auto-reverted iterations do not.
 

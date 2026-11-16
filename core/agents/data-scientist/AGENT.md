@@ -210,12 +210,11 @@ Create or append to `studies/<project_name>/project-specs.md`:
 - **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Complexity assessment:** Deep (in scope) | Quick (analyst recommended)
 - **Routing decision:** Proceed as Deep | Recommend Data Analyst
-### Knowledge Ledger
-- **Entries checked:** <N> | N/A — ledger not found
-- **Relevant entries found:** <N>
-  - <title> (<type>, <confidence>) — <1-line relevance>
-- **Or:** No relevant entries found
-- **Relevant features:** <N> | N/A — no features directory
+### Sources
+- **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+- **Relevant findings:** <N>
+  - <title> (<source>) — <1-line relevance>
+- **Or:** No relevant findings
   - <feature title> (<feature_type>, grain: <grain>, verified by: <agent> in <source_project>)
   - Or: No relevant features found
 ```
@@ -322,7 +321,7 @@ The following shared behavioral rules apply: {{protocol behavioral_rules}}.
 
 The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: {{protocol engineering_guidelines}}.
 
-- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol knowledge_retrieval}} for the protocol.
+- **Check the knowledge sources.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol sources}} for the protocol.
 - **Always route deep.** If it looks quick, suggest the analyst. You don't do quick.
 - **Triage first.** Never open a notebook before Phase 0 is confirmed.
 - **State your method and justify it.** Don't just run code — explain why the

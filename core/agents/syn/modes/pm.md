@@ -169,26 +169,25 @@ For each workstream, create:
    - Header field: `PM project: <project_name>`
    - Header field: `Workstream: <workstream_name>`
 
-2b. **Knowledge Ledger retrieval per workstream:**
+2b. **Sources check per workstream:**
+
+   {{protocol sources}}
 
    For each workstream that has a `project-specs.md`:
 
-   a. Extract 3–5 domain keywords from the workstream's scope, inputs, and data domain.
-   b. Check if `.shards/knowledge/INDEX.md` exists. If not, write `### Knowledge Ledger — Entries checked: N/A — ledger not found` to the workstream's `project-specs.md` and move on.
-   c. Scan INDEX.md for rows whose Title or Domains columns contain any keyword (case-insensitive partial match). Collect up to 5 matches.
-   d. For each match, read the knowledge file. Assess relevance to this specific workstream — discard coincidental keyword matches. Flag entries older than 6 months as `(possibly stale)`.
-   e. For DS/ML workstreams, also scan `.shards/knowledge/features/` per the retrieval protocol's Step 5.
-   f. Append the `### Knowledge Ledger` subsection to the workstream's `project-specs.md` using the same format as the retrieval protocol:
+   a. Extract 3-5 domain keywords from the workstream's scope, inputs, and data domain.
+   b. Run `{{knowledge.search query="<workstream keywords>"}}`. If the knowledge job returns nothing or is unavailable, record that and move on.
+   c. Assess relevance to this specific workstream: discard coincidental matches and flag anything old or unverified as `(possibly stale)`.
+   d. Append a `### Sources` subsection to the workstream's `project-specs.md`:
 
    ```
-   ### Knowledge Ledger
-   - **Entries checked:** <N>
-   - **Relevant entries found:** <N>
-     - <title> (<type>, <confidence>) — <1-line relevance note>
-   - **Relevant features:** <N> | N/A
+   ### Sources
+   - **Query:** <keywords>
+   - **Relevant sources found:** <N> | N/A
+     - <title or path> - <1-line relevance note>
    ```
 
-   Run retrieval sequentially across workstreams — it's fast (1 INDEX read + up to 5 file reads each) and avoids parallel reads of the same INDEX file.
+   Run the checks sequentially across workstreams so searches and notes stay ordered.
 
 3. Cross-references in `project-plan.md` pointing to each workstream's directory
 
@@ -220,12 +219,10 @@ INSTRUCTIONS:
   When you would normally gate, document your decision in project-specs.md
   and continue to the next phase.
 - Do NOT invoke Syn final review — Syn is already reviewing your work.
-- The Knowledge Ledger retrieval is already done — Syn populated the
-  `### Knowledge Ledger` subsection in your project-specs.md during
-  workstream initialization. Do NOT re-run retrieval. Do use the
-  subsection: the `**Knowledge re-check:**` lines in your phase files
-  still apply. Re-read the subsection before building and cite entries
-  that influence your decisions.
+- The sources check is already done: Syn populated the `### Sources`
+  subsection in your project-specs.md during workstream initialization.
+  Do NOT re-run it for the initial brief. Re-read the subsection before
+  building and cite sources that influence your decisions.
 - If you would normally consult another agent (Data Modeller, Researcher, etc.),
   proceed with the consultation as normal via Task — those are still valuable.
 
@@ -242,7 +239,7 @@ WHEN COMPLETE, return a structured report:
 3. **Issues encountered** — blockers, workarounds, or compromises
 4. **Confidence level** — High / Medium / Low
 5. **Integration notes** — anything downstream workstreams need to know
-6. **Knowledge citations** — any ledger entries that influenced decisions, and any contradictions observed (use the structured template from knowledge_checkpoint.md)
+6. **Source citations** — any sources that influenced decisions, and any contradictions observed between a source and what you found in the work
 ```
 
 **1b. Swarm a large workstream** — if a workstream is marked Scale: swarm (or
@@ -270,13 +267,13 @@ you judge it genuinely large during execution):
 - Read the structured report
 - Read key artifacts from disk
 - Check against the workstream's definition of done
-- Check the **Knowledge citations** section of the report. If the specialist
-  flagged any contradictions using the `**Knowledge contradiction:**` template,
-  note them in `project-plan.md` under a `### Knowledge Contradictions` section.
-  Do not resolve them yet — batch all contradictions for harvest in Phase 5.
+- Check the **Source citations** section of the report. If the specialist
+  flagged any contradictions, note them in `project-plan.md` under a
+  `### Source Contradictions` section. Do not resolve them yet: batch them
+  for the write-back proposal in Phase 5.
   If a contradiction affects a downstream workstream that hasn't executed yet,
-  update that workstream's `### Knowledge Ledger` subsection in its
-  `project-specs.md` with a warning: `- ⚠ Upstream contradiction: "<title>"
+  update that workstream's `### Sources` subsection in its
+  `project-specs.md` with a warning: `- Upstream contradiction: "<title>"
   claims <X>, but <upstream workstream> observed <Y>. Treat with caution.`
 - **APPROVED:** mark workstream complete in `workstreams.json`, append to execution log in `project-plan.md`
 - **NEEDS REVISION:** re-task the specialist with specific feedback (up to 3 rounds)
@@ -353,39 +350,37 @@ After all execution groups complete:
    - **Open items** — anything remaining or deferred
    - **Suggested next steps** — maintenance, monitoring, iteration ideas
 
-2b. **Knowledge harvest:**
+2b. **Write-back proposal:**
 
-   Run a centralized knowledge harvest across all workstreams:
+   {{protocol sources}}
 
-   a. Read each workstream's `project-specs.md`. Identify harvest candidates
-      across all four categories (entities, infrastructure, patterns, features)
-      using the criteria from [`protocols/knowledge harvest.md`](../../../protocols/knowledge_harvest.md)
-      Step 1. Focus on knowledge that spans workstreams or would not be obvious
-      from reading a single workstream in isolation.
+   Propose a centralized write-back across all workstreams:
 
-   b. Collect all `**Knowledge contradiction:**` entries from the
-      `### Knowledge Contradictions` section in `project-plan.md` (accumulated
-      during Phase 3 review). For each with "Ledger update needed: Yes", draft
-      an update candidate per the harvest protocol's Step 1b.
+   a. Read each workstream's `project-specs.md`. Identify candidates worth
+      recording (entities, infrastructure quirks, patterns, features), per
+      the sources protocol. Focus on knowledge that spans workstreams or
+      would not be obvious from reading a single workstream in isolation.
 
-   c. Deduplicate: if multiple workstreams surfaced the same knowledge (e.g.,
-      both the data pipeline and model workstreams noted the same table quirk),
+   b. Collect the entries in `### Source Contradictions` in `project-plan.md`
+      (accumulated during Phase 3 review) and draft an update candidate for
+      each that needs a correction.
+
+   c. Deduplicate: if multiple workstreams surfaced the same knowledge,
       keep the version with more detail and higher confidence.
 
-   d. Present all candidates to the user in a single numbered list (new entries
-      + contradiction updates), grouped by category. Follow the harvest protocol's
-      Step 3 presentation format.
+   d. Present all candidates to the user in a single numbered list (new
+      items + contradiction updates), grouped by category. Summaries only.
 
    e. {{gate kind=final phase=5 id=specific-instructions-syn-pm-phase5}}
-      This is the one gate in the harvest flow — consistent with standalone
-      projects. The user may edit, remove, or add candidates.
+      This is the one gate in the write-back flow. The user may edit,
+      remove, or add candidates.
 
-   f. Write confirmed entries using the harvest protocol's Steps 4–7. Set
-      `source_project` to `PM: <project_name> (<workstream_name>)` and
-      `contributed_by` to `Syn + <specialist>`.
+   f. Write confirmed candidates through the knowledge job only after the
+      gate (or explicit user confirmation). Record the PM project and
+      workstream as provenance.
 
    g. Report what was written in `project-plan.md` under a
-      `### Knowledge Harvested` subsection.
+      `### Write-back` subsection.
 
 3. Present the report to user
 4. Update `workstreams.json` with final statuses

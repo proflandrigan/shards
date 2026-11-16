@@ -69,7 +69,7 @@ agent + notebook, skip step 1 and go straight to step 2 + bootstrap.
 - No cross-agent consultations via Task.
 - No DIVERGE branches.
 - No experiment harness, AR loop, or model-card generation.
-- No Knowledge Ledger harvest.
+- No write-back proposal.
 
 If the user asks for any of the above, exit walkthrough mode and route them
 to the appropriate `[B]`, `[R]`, `[EX]` (Experiment), or `[AR]` mode.

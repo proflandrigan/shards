@@ -57,7 +57,7 @@ revert, or (c) cancel.
 
 ### Knowledge retrieval
 
-{{protocol knowledge_retrieval}} and
+{{protocol sources}} and
 follow the AR entry point. Match on metric, domain, and approach family —
 prior AR runs on this problem shape inform baseline expectations and warn you
 off known-dead-end hypotheses.
@@ -157,13 +157,11 @@ Append to `project-specs.md`:
 - **Project directory:** <path>
 - **Experiments directory:** <path>/experiments/
 
-### Knowledge Ledger
-- **Entries checked:** <N> | N/A — ledger not found
-- **Relevant entries found:** <N>
-  - <title> (<type>, <confidence>) — <relevance>
-- **Or:** No relevant entries found
-- **Relevant features:** <N>
-  - <title> (<feature_type>, grain: <grain>, verified by: <agent> in <project>)
+### Sources
+- **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+- **Relevant findings:** <N>
+  - <title> (<source>) — <1-line relevance>
+- **Or:** No relevant findings
 ```
 
 {{gate kind=execute phase=0 id=specific-instructions-ml-engineer-research-phase0}}
@@ -371,7 +369,7 @@ Follow **Section I** of
 2. Write `experiments/research_summary.md` (factual)
 3. Write `experiments/research_recommendations.md` (opinionated)
 4. Update `project-specs.md` `## Autonomous Research` section with final state
-5. Knowledge harvest (via `knowledge_harvest.md`)
+5. Write-back proposal (via {{protocol sources}}, write-back step)
 6. Present to user and gate on Phase 3
 
 ### Fan-out specific: arbitration before summary
@@ -384,8 +382,8 @@ c. Present the leaderboard to the user and gate on winner selection per
    `diverge_protocol.md` Section F final gate.
 d. Promote the winner per `diverge_protocol.md` Section G (with the AR git
    strategy handling).
-e. Run harvest only after promotion. Include cross-branch patterns from the
-   leaderboard in harvest candidates (`knowledge_harvest.md` AR fan-out special
+e. Propose write-backs only after promotion. Include cross-branch patterns from the
+   leaderboard in the write-back candidates ({{protocol sources}}, AR fan-out special
    case).
 f. Write the consolidated `research_summary.md` covering all branches, not
    just the winner. Losing branches get a short section each.
@@ -427,7 +425,7 @@ Update `project-specs.md` to reflect:
 - **Adopt only what was confirmed.** At Phase 3 the user chooses what to keep
   from the run. Do not silently carry forward intermediate changes that
   weren't explicitly adopted.
-- **Knowledge harvest is non-optional.** Every completed AR run contributes
+- **Write-back proposal is non-optional.** Every completed AR run proposes
   candidates — GREEN iterations, RED patterns, YELLOW stepping stones.
 - **Document before advancing.** Phase 0, Phase 1, Phase 3 gates are
   documented and read back. Phase 2 is autonomous but every iteration is

@@ -397,8 +397,8 @@ If yes, append a `## Presentation` block to the source project's specs with
 the slides URL, the deck slug, and today's date. This closes the loop
 between specialist work and stakeholder readout.
 
-Skip Knowledge Harvest — Slides sessions don't naturally produce reusable
-patterns. (Fixer also skips harvest for the same reason.)
+Skip Write-back proposal — Slides sessions don't naturally produce reusable
+patterns. (Fixer also skips the write-back for the same reason.)
 
 End the session.
 

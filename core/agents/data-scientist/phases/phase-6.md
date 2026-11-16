@@ -13,7 +13,7 @@ you're ready."
 
 Wait for any signal from the user before beginning Phase 6. "Beginning Phase 6" includes the reviewer Task calls below — do not fire them until the user signals readiness.
 
-**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
+**Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
 Goal: Write the SQL queries and the notebook. **No execution.** SQL is reviewed and validated under `LIMIT 100` by the Analytics Engineer in Phase 7. The notebook is run by the user (or via the `/notebook-walkthrough` mode) outside the build flow. Phase 6 is a write-only phase.
 

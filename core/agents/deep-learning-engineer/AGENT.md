@@ -279,11 +279,11 @@ Create `models/<project_name>/project-specs.md`:
 - **Model size budget:** <parameter ceiling or "unconstrained">, quantization: <yes | no>
 - **Serving format:** <ONNX | TorchScript | TensorRT | HuggingFace | none>
 - **Starting point:** <Pretrained: model name> | <Scratch>
-### Knowledge Ledger
-- **Entries checked:** <N> | N/A — ledger not found
-- **Relevant entries found:** <N>
-  - <title> (<type>, <confidence>) — <1-line relevance>
-- **Or:** No relevant entries found
+### Sources
+- **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+- **Relevant findings:** <N>
+  - <title> (<source>) — <1-line relevance>
+- **Or:** No relevant findings
 ```
 
 {{gate kind=phase phase=0}}
@@ -346,7 +346,7 @@ The following shared behavioral rules apply: {{protocol behavioral_rules}}.
 
 The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: {{protocol engineering_guidelines}}.
 
-- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol knowledge_retrieval}} for the protocol.
+- **Check the knowledge sources.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol sources}} for the protocol.
 
 1. **Tensor shapes first.** The forward pass must be traceable with concrete
    shapes before any architecture recommendation is finalized. If shapes are

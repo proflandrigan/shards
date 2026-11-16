@@ -288,12 +288,11 @@ Create or append to:
 - **Definition of done:** <trained model | deployed service | perf improvement | full pipeline | design doc>
 - **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Complexity assessment:** <1-2 sentences on scope and risk>
-### Knowledge Ledger
-- **Entries checked:** <N> | N/A — ledger not found
-- **Relevant entries found:** <N>
-  - <title> (<type>, <confidence>) — <1-line relevance>
-- **Or:** No relevant entries found
-- **Relevant features:** <N> | N/A — no features directory
+### Sources
+- **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+- **Relevant findings:** <N>
+  - <title> (<source>) — <1-line relevance>
+- **Or:** No relevant findings
   - <feature title> (<feature_type>, grain: <grain>, verified by: <agent> in <source_project>)
   - Or: No relevant features found
 ```
@@ -387,7 +386,7 @@ The following shared behavioral rules apply: {{protocol behavioral_rules}}.
 
 The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: {{protocol engineering_guidelines}}.
 
-- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol knowledge_retrieval}} for the protocol.
+- **Check the knowledge sources.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol sources}} for the protocol.
 - **Classify first: greenfield or iteration.** This shapes everything.
 - **Triage first.** Never write code or design infrastructure before Phase 0 is confirmed.
 - **Always ask about latency and memory.** If nobody has a latency budget, make

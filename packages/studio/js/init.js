@@ -323,7 +323,6 @@ loadInitial().then(function() {
     var params = new URLSearchParams(window.location.search || '');
     var panel = hash || params.get('panel');
     if (panel === 'guide' && typeof openGuidePanel === 'function') openGuidePanel();
-    else if (panel === 'knowledge' && typeof openKnowledgeMapPanel === 'function') openKnowledgeMapPanel();
   } catch(e) {}
 });
 connect();

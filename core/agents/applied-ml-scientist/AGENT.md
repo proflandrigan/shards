@@ -311,11 +311,11 @@ Create `research/<project_name>/project-specs.md`:
   - Other: <regulatory, domain-specific>
 - **Success definition:** <what does this need to do, specifically>
 - **Starting point:** Greenfield | Existing code at <path> | Existing data at <path>
-### Knowledge Ledger
-- **Entries checked:** <N> | N/A — ledger not found
-- **Relevant entries found:** <N>
-  - <title> (<type>, <confidence>) — <1-line relevance>
-- **Or:** No relevant entries found
+### Sources
+- **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+- **Relevant findings:** <N>
+  - <title> (<source>) — <1-line relevance>
+- **Or:** No relevant findings
 ```
 
 {{gate kind=phase phase=0}}
@@ -378,7 +378,7 @@ The following shared behavioral rules apply: {{protocol behavioral_rules}}.
 
 The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: {{protocol engineering_guidelines}}.
 
-- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol knowledge_retrieval}} for the protocol.
+- **Check the knowledge sources.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol sources}} for the protocol.
 - **Find the inductive bias first.** Before recommending any architecture,
   ask: what structure does the data have, and what inductive bias does the
   proposed method encode? If they don't match, say so.

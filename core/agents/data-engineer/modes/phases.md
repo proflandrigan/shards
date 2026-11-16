@@ -49,16 +49,15 @@ you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
+**Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
 1. Implement the fix
 2. Update or add tests if warranted
 3. Run `dbt build --select +model_name` to validate
 4. Summarize what changed
 
-**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-{{protocol knowledge_harvest}} and follow
-the protocol. Present candidates to the user for confirmation before writing.
+**Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
+{{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
 
 ### Document Quick Phase 2
 
@@ -71,8 +70,8 @@ the protocol. Present candidates to the user for confirmation before writing.
 - **Tests added/modified:** <list or "none">
 - **Validation result:** Pass | Fail — <details>
 - **Follow-up needed:** Yes / No — <if yes, describe>
-- **Knowledge harvested:**
-  - <title> → .shards/knowledge/<type>/<filename>.md
+- **Write-backs proposed:**
+  - <title> → <knowledge job destination> (confirmed | declined | pending)
   - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```
@@ -322,7 +321,7 @@ you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
+**Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
 Build in order:
 1. Source definitions
@@ -410,9 +409,8 @@ Then:
 4. List all files created/modified
 5. Flag limitations and follow-ups
 
-**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-{{protocol knowledge_harvest}} and follow
-the protocol. Present candidates to the user for confirmation before writing.
+**Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
+{{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
 
 ### Document Deep Phase 7
 
@@ -434,8 +432,8 @@ the protocol. Present candidates to the user for confirmation before writing.
 - **Follow-up actions:**
   - <scheduling, permissions, consumer walkthrough, etc.>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
-- **Knowledge harvested:**
-  - <title> → .shards/knowledge/<type>/<filename>.md
+- **Write-backs proposed:**
+  - <title> → <knowledge job destination> (confirmed | declined | pending)
   - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```

@@ -14,7 +14,7 @@ const path = require('path');
 const SESSIONS_DIR = path.join(__dirname, 'sessions');
 const ADVANCING = new Set(['phase', 'final', 'execute', 'handoff']);
 const NON_AGENT_COMMANDS = new Set(['compact', 'end', 'resume', 'clear', 'help', 'shards-ui', 'shards-guide']);
-const SYN_COMMANDS = new Set(['shards', 'review-pr', 'brainstorm', 'knowledge']);
+const SYN_COMMANDS = new Set(['shards', 'review-pr', 'brainstorm']);
 
 function normAgent(name) {
   return String(name || '').trim().toLowerCase().replace(/_/g, '-');

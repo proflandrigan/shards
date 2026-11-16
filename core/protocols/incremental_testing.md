@@ -109,7 +109,7 @@ The checkpoint lives *within* a phase and does not advance it. `kind=checkpoint`
 - **Join path protocol** (`join_path_protocol.md`) — still required *before* writing any join. The checkpoint fires *after* the join has been executed and verified.
 - **Experiment versioning** (`experiment_versioning.md`) — checkpoints are build-time; experiment snapshots are result-time. In `[X]` or `[AR]` modes both apply: snapshot after each experiment result, checkpoint after each component within each experiment.
 - **Gate pattern** — the phase-level `kind=phase` gate still fires at the end of the phase. Checkpoints do not replace it; they punctuate the build leading up to it.
-- **Knowledge checkpoint** (`knowledge_checkpoint.md`) — if a checkpoint surfaces a pattern (known bad distribution, known grain issue), cite it in the Evidence block.
+- **Sources** ({{protocol sources}}) — if a mid-phase search surfaces a pattern (known bad distribution, known grain issue), cite it in the Evidence block.
 
 ## Restart & Run All — the Final Reproducibility Check
 

@@ -158,9 +158,8 @@ Then:
 
 7. **BI dashboard handoff (recurring visualizations):** See [`modes/bi_engineer_handoff.md`](../modes/bi_engineer_handoff.md) for the full handoff instructions (Phase 7, Step 7 section).
 
-**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-{{protocol knowledge_harvest}} and follow
-the protocol. Present candidates to the user for confirmation before writing.
+**Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
+{{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
 
 ### Document Phase 7
 
@@ -188,8 +187,8 @@ the protocol. Present candidates to the user for confirmation before writing.
 - **Productionization handoff:** Yes — ML Engineer | No — one-off study
 - **If handoff — ML Engineer handoff file:** studies/<project_name>/ml_engineer_handoff.md | N/A
 - **BI dashboard handoff:** Yes — studies/<project_name>/bi_engineer_handoff.md | No
-- **Knowledge harvested:**
-  - <title> → .shards/knowledge/<type>/<filename>.md
+- **Write-backs proposed:**
+  - <title> → <knowledge job destination> (confirmed | declined | pending)
   - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```

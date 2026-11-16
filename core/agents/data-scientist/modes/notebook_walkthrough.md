@@ -70,7 +70,7 @@ agent + notebook, skip step 1 and go straight to step 2 + bootstrap.
 - No cross-agent consultations via Task. (Mention the relevant specialists
   in chat if their territory comes up — do not actually invoke them.)
 - No DIVERGE branches.
-- No Knowledge Ledger harvest.
+- No write-back proposal.
 
 If the user asks for any of the above, exit walkthrough mode and route them
 to the appropriate `[B]`, `[R]`, or `[EX]` mode.

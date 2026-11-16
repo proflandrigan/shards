@@ -89,9 +89,8 @@ Then:
 7. Flag limitations and future work
 8. Ask if consumer needs a handoff artifact
 
-**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-{{protocol knowledge_harvest}} and follow
-the protocol. Present candidates to the user for confirmation before writing.
+**Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
+{{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
 
 ### Document Deep Phase 7
 
@@ -117,8 +116,8 @@ the protocol. Present candidates to the user for confirmation before writing.
   - <limitation>
 - **Analytics Engineer handoff:** Not requested | Invoked — <handoff summary>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
-- **Knowledge harvested:**
-  - <title> → .shards/knowledge/<type>/<filename>.md
+- **Write-backs proposed:**
+  - <title> → <knowledge job destination> (confirmed | declined | pending)
   - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```

@@ -13,7 +13,7 @@ working from project-specs.md from here. Say the word when you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
+**Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
 Goal: Build all IaC, configs, pipeline definitions, and monitoring setup.
 

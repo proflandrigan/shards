@@ -35,11 +35,12 @@ fixed-N experiments) rather than replacing it.
 Run this section at the start of Phase 1 (Research Brief), after Phase 0 setup
 has been gated and confirmed.
 
-### A.1 Knowledge retrieval
+### A.1 Prior knowledge
 
-Before writing the brief, read
-[`protocols/knowledge retrieval.md`](knowledge_retrieval.md) in full and
-follow the AR entry point (Step 2 under AR Phase 0 / pre-brief context).
+Before writing the brief, follow {{protocol sources}} (the AR keywords: metric,
+domain, approach family) and search the knowledge source.
+
+{{knowledge.search query="<metric> <domain> <approach family>"}}
 
 Match criteria most useful for AR:
 - **Metric** — has a prior AR or study measured this metric on similar data?
@@ -47,7 +48,7 @@ Match criteria most useful for AR:
 - **Approach family** — have prior runs explored the same model family (e.g.,
   gradient boosting, transformer, prompt-chain)?
 
-Surface relevant ledger entries (saturation points, known-leaky features,
+Surface relevant search results (saturation points, known-leaky features,
 architectural dead ends) to the user alongside the draft brief. Prior runs may
 warn you off hypotheses that look promising but are already-tested dead ends.
 
@@ -1080,20 +1081,20 @@ Arbiter Mode per `diverge_protocol.md` Section F, passing the list of
 The parent specialist presents the leaderboard to the user, who selects the
 winner.
 
-### H.10 Knowledge harvest in fan-out
+### H.10 Write-backs in fan-out
 
-**Losing branches do NOT run `knowledge_harvest.md` independently.** That would
-flood the ledger with duplicate or conflicting candidates across branches
-exploring similar territory.
+**Losing branches do NOT propose write-backs independently.** That would
+flood the knowledge source with duplicate or conflicting candidates across
+branches exploring similar territory.
 
-- Only the **winning branch** contributes to harvest.
-- The parent specialist runs harvest as part of its consolidated Phase 3
+- Only the **winning branch** contributes write-back candidates.
+- The parent specialist proposes write-back candidates (per {{protocol sources}}) as part of its consolidated Phase 3
   **after promotion**.
-- Harvest candidates come from:
+- Write-back candidates come from:
   1. The winning branch's artifacts (brief, iteration files, results.json).
   2. Cross-branch patterns that Syn Arbiter flagged in the leaderboard (e.g.,
      "three of four branches hit the same data leakage issue" — a pattern
-     worth harvesting even though no individual branch would have flagged it).
+     worth proposing even though no individual branch would have flagged it).
 
 ### H.11 Promotion
 
@@ -1250,11 +1251,11 @@ Consolidation rules:
 
 This section is machine-readable by `gate_request` when Phase 3 requests its gate with `validates=<agent>`. Per-agent `research.md` files are responsible for setting that attribute on their Phase 3 gate.
 
-### I.5 Knowledge harvest
+### I.5 Write-back candidates
 
-Run [`protocols/knowledge harvest.md`](knowledge_harvest.md) per its
-protocol. In fan-out contexts, only the initiating parent runs harvest after
-promotion (see Section H.10).
+Propose write-back candidates per {{protocol sources}}, section 4. Nothing is
+written until the user confirms. In fan-out contexts, only the initiating
+parent proposes them after promotion (see Section H.10).
 
 ### I.6 Present to user (GATE)
 

@@ -221,7 +221,7 @@ you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
+**Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
 **Create `research/<project_name>/notebooks/framework_prototype.ipynb`:**
 
@@ -406,14 +406,13 @@ scale constraints, data quality assumptions>
 2. <experiment or engineering step>
 3. <experiment or engineering step>
 
-## Knowledge Harvested
-- <title> → .shards/knowledge/<type>/<filename>.md
+## Write-backs Proposed
+- <title> → <knowledge job destination> (confirmed | declined | pending)
 - Or: None — project did not produce reusable knowledge
 ```
 
-**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-{{protocol knowledge_harvest}} and follow
-the protocol. Present candidates to the user for confirmation before writing.
+**Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
+{{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
 
 {{gate kind=final phase=4 id=specific-instructions-applied-ml-scientist-phases-phase4-2}}
 

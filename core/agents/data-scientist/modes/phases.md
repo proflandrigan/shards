@@ -196,12 +196,12 @@ Ask about (and provide examples):
 
 Suggest a model family with justification. Propose a baseline model before anything complex.
 
-**Feature Registry check.** If `.shards/knowledge/features/` exists, scan for features
-whose domain tags overlap with this project's data domain (from Phase 2). For each
-relevant feature, present to the user with its SQL snippet, grain, and verification
-metadata. Ask: "Would you like to import any of these into your feature candidates?"
+**Feature search.** Run `{{knowledge.search query="reusable features for <domain>"}}` (domain from Phase 2) and look for
+features whose domain tags overlap with this project's data. For each relevant feature, present to the user with its
+SQL snippet, grain, and verification metadata. Ask: "Would you like to import any of these into your feature candidates?"
+Skip if no knowledge source is reachable.
 
-If imported, note in feature candidates list: `(imported from Knowledge Ledger —
+If imported, note in feature candidates list: `(imported from knowledge source —
 verified by <agent> in <source_project>)`
 
 **Request ML Engineer review of the modeling approach:**
@@ -289,7 +289,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `data-analyst` row)
   - Verdict: Aligned | Concerns raised
   - Tier: Proceed | Proceed with caveats
   - Reviewer resolution: Approved | User override — <rationale>
-- **Feature Registry check:** <N> relevant features found | No features found | N/A — no features directory
+- **Feature search:** <N> relevant features found | No features found | N/A — no knowledge source reachable
   - Imported: <title(s)> | None
 ```
 
@@ -380,7 +380,7 @@ you're ready."
 
 Wait for any signal from the user before beginning build steps.
 
-**Knowledge re-check:** {{protocol knowledge_checkpoint}} before building.
+**Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
 Goal: Build the notebook, queries, and report.
 
@@ -604,9 +604,8 @@ Then:
 
 7. **BI dashboard handoff (recurring visualizations):** See [`modes/bi_engineer_handoff.md`](bi_engineer_handoff.md) for the full handoff instructions (Phase 7, Step 7 section).
 
-**Knowledge harvest.** Before closing, extract reusable knowledge from this project.
-{{protocol knowledge_harvest}} and follow
-the protocol. Present candidates to the user for confirmation before writing.
+**Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
+{{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
 
 ### Document Phase 7
 
@@ -632,8 +631,8 @@ the protocol. Present candidates to the user for confirmation before writing.
 - **Productionization handoff:** Yes — ML Engineer | No — one-off study
 - **If handoff — ML Engineer handoff file:** studies/<project_name>/ml_engineer_handoff.md | N/A
 - **BI dashboard handoff:** Yes — studies/<project_name>/bi_engineer_handoff.md | No
-- **Knowledge harvested:**
-  - <title> → .shards/knowledge/<type>/<filename>.md
+- **Write-backs proposed:**
+  - <title> → <knowledge job destination> (confirmed | declined | pending)
   - Or: None — project did not produce reusable knowledge
 - **Status:** Complete
 ```

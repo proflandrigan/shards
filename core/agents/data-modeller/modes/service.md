@@ -19,17 +19,17 @@ Triggered by phrases like "review", "verify", "do the joins make sense",
 
 ## Knowledge Bootstrap
 
-Before running the Service Mode Procedure, check whether the Knowledge Ledger already documents relevant facts about the tables or systems in this request. This reduces redundant exploration and starts the response from verified facts rather than fresh inference.
+Before running the Service Mode Procedure, check whether the knowledge sources already document relevant facts about the tables or systems in this request. This reduces redundant exploration and starts the response from verified facts rather than fresh inference.
 
-**Skip if already grounded:** If the caller's Task prompt already contains `(per Knowledge Ledger: ...)` citations, skip this bootstrap entirely — the caller has already re-grounded against the ledger, and re-reading it here wastes context.
+**Skip if already grounded:** If the caller's Task prompt already contains `(per knowledge source: ...)` citations, skip this bootstrap entirely — the caller has already re-grounded against the knowledge sources, and searching again here wastes context.
 
-**Conditional INDEX scan:** Extract 2–4 domain keywords from the caller's request (table names, entity names, system names). Scan `.shards/knowledge/INDEX.md` for rows matching those keywords. If no rows match, skip directly to step 1 of the Service Mode Procedure below — do not read INDEX.md unconditionally.
+**Conditional search:** Extract 2–4 domain keywords from the caller's request (table names, entity names, system names) and run `{{knowledge.search query="<2-4 domain keywords from the request>"}}`. If nothing relevant comes back, skip directly to step 1 of the Service Mode Procedure below — do not search unconditionally.
 
-**Bounded reads:** Read up to 3 matching knowledge files. Pre-populate your working context with ledger data marked `(from Knowledge Ledger, <confidence>)` in your response where those facts appear.
+**Bounded reads:** Read at most the top 3 matching results. Pre-populate your working context with that knowledge, marked `(from knowledge source, <confidence>)` in your response where those facts appear.
 
-**Still validate:** The ledger is a starting point, not a substitute for validation. Still run exploration and validation queries per the procedure below. Confirm ledger facts against observed data, and contradict them if the data disagrees. If you observe a contradiction, flag it using the exact template in `knowledge_checkpoint.md`.
+**Still validate:** Knowledge-source results are a starting point, not a substitute for validation. Still run exploration and validation queries per the procedure below. Confirm those facts against observed data, and contradict them if the data disagrees. If you observe a contradiction, flag it per {{protocol sources}} (mid-phase re-check).
 
-If `.shards/knowledge/` does not exist or INDEX.md is missing, skip this bootstrap entirely.
+If no knowledge source is reachable, skip this bootstrap entirely.
 
 ---
 

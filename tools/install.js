@@ -175,7 +175,7 @@ function uninstall() {
 
   fs.unlinkSync(manifestPath);
   console.log(`\n✅ Uninstalled ${removed} files.`);
-  console.log(`  ℹ  .shards/knowledge/ preserved (persistent workspace memory)\n`);
+  console.log("");
 }
 
 // ─── Install ─────────────────────────────────────────────────────────────────
@@ -507,29 +507,6 @@ function install() {
     console.log("\n📓 Created .shards/notebooks/ (notebook walkthrough kernel sessions)");
   }
 
-  // 7. Create Knowledge Ledger directory
-  const knowledgeDir = path.join(SHARDS_DIR, "knowledge");
-  const knowledgeSubdirs = ["entities", "infrastructure", "patterns", "features"];
-  if (!fs.existsSync(knowledgeDir)) {
-    fs.mkdirSync(knowledgeDir, { recursive: true });
-    for (const sub of knowledgeSubdirs) {
-      fs.mkdirSync(path.join(knowledgeDir, sub), { recursive: true });
-    }
-    // Copy INDEX.md template
-    const indexSrc = path.join(TEMPLATES_SRC, "knowledge-index.md");
-    const indexDest = path.join(knowledgeDir, "INDEX.md");
-    if (fs.existsSync(indexSrc)) {
-      fs.copyFileSync(indexSrc, indexDest);
-    }
-    console.log("\n📂 Created .shards/knowledge/ (persistent workspace memory)");
-  } else {
-    console.log("\n📂 .shards/knowledge/ already exists (preserved)");
-    // Ensure subdirs exist even on re-install
-    for (const sub of knowledgeSubdirs) {
-      fs.mkdirSync(path.join(knowledgeDir, sub), { recursive: true });
-    }
-  }
-
   // 8. Create output directories
   const outputDirs = ["analysis", "studies", "models", "data_models", "services", "research", "dashboards", "brainstorm", "fixes", "projects", "presentations", "panels"];
   for (const dir of outputDirs) {
@@ -591,7 +568,6 @@ phased workflow.
 |---------|-------|-------------|------------|
 | \`/shards\` | Syn (Orchestrator) | Friendly, structured | Triage, delegation, final review |
 | \`/brainstorm\` | Syn (Brainstorm) | Friendly, structured | Multi-agent ideation, hack day exploration |
-| \`/knowledge\` | Syn (Knowledge) | Friendly, structured | Seed, browse, and manage the Knowledge Ledger |
 | \`/data-analyst\` | Data Analyst | Helpful | Adhoc queries, quick analyses |
 | \`/data-scientist\` | Data Scientist | Condescending | EDA, modeling, deep studies |
 | \`/ml-engineer\` | ML Engineer | Intense | Recommenders, ranking, production ML |
@@ -640,24 +616,6 @@ Every project produces a \`project-specs.md\` file documenting all decisions.
 Agents cannot advance to the next phase until each phase is written and confirmed.
 This is the gate pattern — documentation IS the gate.
 
-### Knowledge Ledger
-
-Shards maintains a persistent workspace-wide Knowledge Ledger at \`.shards/knowledge/\`.
-Agents automatically check it before starting work and contribute to it when projects complete.
-
-- \`.shards/knowledge/INDEX.md\` — one-line-per-entry index scanned for keyword matches
-- \`.shards/knowledge/entities/\` — data table quirks, column semantics, grain surprises
-- \`.shards/knowledge/infrastructure/\` — warehouse/API/system behaviors
-- \`.shards/knowledge/patterns/\` — reusable SQL/Python snippets
-- \`.shards/knowledge/features/\` — verified ML features (Data Scientist + ML Engineer)
-
-**Auto-retrieval:** Before Phase 1, agents scan INDEX.md for entries relevant to the
-current project and document findings in project-specs.md.
-
-**Auto-harvest:** After Syn final review, agents extract reusable knowledge and present
-candidates for user confirmation before writing to the ledger.
-
-The knowledge directory is preserved across installs and uninstalls.
 `;
 
   // Tool-call conventions primer. Read by the user and — when active — by

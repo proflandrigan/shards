@@ -226,9 +226,9 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 205 | `src/agents/specific_instructions/shared/incremental_testing.md` | `core/protocols/incremental_testing.md` |  |
 | 206 | `src/agents/specific_instructions/shared/intent_discovery.md` | `core/protocols/intent_discovery.md` |  |
 | 207 | `src/agents/specific_instructions/shared/join_path_protocol.md` | `core/protocols/join_path.md` |  |
-| 208 | `src/agents/specific_instructions/shared/knowledge_checkpoint.md` | `core/protocols/knowledge_checkpoint.md` | -> deleted in E4 |
-| 209 | `src/agents/specific_instructions/shared/knowledge_harvest.md` | `core/protocols/knowledge_harvest.md` | -> deleted in E4 |
-| 210 | `src/agents/specific_instructions/shared/knowledge_retrieval.md` | `core/protocols/knowledge_retrieval.md` | -> deleted in E4 |
+| 208 | `src/agents/specific_instructions/shared/knowledge_checkpoint.md` | (dropped) | deleted in E4 (Knowledge Ledger removed) |
+| 209 | `src/agents/specific_instructions/shared/knowledge_harvest.md` | (dropped) | deleted in E4 (Knowledge Ledger removed) |
+| 210 | `src/agents/specific_instructions/shared/knowledge_retrieval.md` | (dropped) | deleted in E4 (Knowledge Ledger removed) |
 | 211 | `src/agents/specific_instructions/shared/notebook_walkthrough_protocol.md` | `core/protocols/notebook_walkthrough.md` |  |
 | 212 | `src/agents/specific_instructions/shared/reviewer_verdict_protocol.md` | `core/protocols/reviewer_verdict.md` |  |
 | 213 | `src/agents/specific_instructions/shared/swarm_protocol.md` | `core/protocols/swarm.md` |  |
@@ -240,7 +240,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 219 | `src/agents/specific_instructions/syn/final_review.md` | `core/agents/syn/modes/final_review.md` |  |
 | 220 | `src/agents/specific_instructions/syn/fixer.md` | `core/agents/syn/modes/fixer.md` |  |
 | 221 | `src/agents/specific_instructions/syn/free_form.md` | `core/agents/syn/modes/free_form.md` |  |
-| 222 | `src/agents/specific_instructions/syn/knowledge.md` | `core/agents/syn/modes/knowledge.md` | -> deleted in E4 |
+| 222 | `src/agents/specific_instructions/syn/knowledge.md` | (dropped) | deleted in E4 (Knowledge Ledger removed) |
 | 223 | `src/agents/specific_instructions/syn/notebook_walkthrough.md` | `core/agents/syn/modes/notebook_walkthrough.md` |  |
 | 224 | `src/agents/specific_instructions/syn/panel_review.md` | `core/agents/syn/modes/panel_review.md` |  |
 | 225 | `src/agents/specific_instructions/syn/pm.md` | `core/agents/syn/modes/pm.md` |  |
@@ -250,7 +250,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 229 | `src/templates/analysis-template.md` | `core/templates/analysis-template.md` |  |
 | 230 | `src/templates/branch-report.md` | `core/templates/branch-report.md` |  |
 | 231 | `src/templates/diff-report.md` | `core/templates/diff-report.md` |  |
-| 232 | `src/templates/knowledge-index.md` | `core/templates/knowledge-index.md` | -> deleted in E4 |
+| 232 | `src/templates/knowledge-index.md` | (dropped) | deleted in E4 (Knowledge Ledger removed) |
 | 233 | `src/templates/model-card-schema.json` | `core/templates/model-card-schema.json` |  |
 | 234 | `src/templates/model-card-schema.md` | `core/templates/model-card-schema.md` |  |
 | 235 | `src/templates/model-card.md` | `core/templates/model-card.md` |  |

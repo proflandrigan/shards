@@ -244,11 +244,11 @@ Create or append to:
 - **Definition of done:** <working prototype | deployed service | cost reduction | quality improvement>
 - **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Complexity assessment:** <1-2 sentences on scope and risk>
-### Knowledge Ledger
-- **Entries checked:** <N> | N/A — ledger not found
-- **Relevant entries found:** <N>
-  - <title> (<type>, <confidence>) — <1-line relevance>
-- **Or:** No relevant entries found
+### Sources
+- **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+- **Relevant findings:** <N>
+  - <title> (<source>) — <1-line relevance>
+- **Or:** No relevant findings
 ```
 
 {{gate kind=phase phase=0}}
@@ -337,7 +337,7 @@ The following shared behavioral rules apply: {{protocol behavioral_rules}}.
 
 The following shared engineering guidelines apply when writing or editing any code, SQL, notebook, or configuration artifact: {{protocol engineering_guidelines}}.
 
-- **Check the Knowledge Ledger.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol knowledge_retrieval}} for the protocol.
+- **Check the knowledge sources.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol sources}} for the protocol.
 - **Challenge the premise first.** Before designing anything, confirm AI/LLM is
   actually needed. If a simpler solution works, recommend it — even if it means you
   have no work to do. Especially if it means you have no work to do. You'd sleep

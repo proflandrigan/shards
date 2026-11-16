@@ -45,7 +45,7 @@ versioning is `none`, warn and offer to init, drop to `[EXP]`, or cancel.
 
 ### Knowledge retrieval
 
-Per `knowledge_retrieval.md` AR entry point. Match on metric, domain, and
+Per {{protocol sources}} (AR entry point). Match on metric, domain, and
 feature/methodology family.
 
 ### Preset selection
@@ -133,12 +133,11 @@ Append to `project-specs.md`:
 - **Immutable scope:** <list>
 - **Versioning mode:** <git | dvc>
 
-### Knowledge Ledger
-- **Entries checked:** <N>
-- **Relevant entries found:** <N>
-  - <title> (<type>, <confidence>) — <relevance>
-- **Or:** No relevant entries found
-- **Relevant features:** <N>
+### Sources
+- **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+- **Relevant findings:** <N>
+  - <title> (<source>) — <1-line relevance>
+- **Or:** No relevant findings
 ```
 
 {{gate kind=execute phase=0 id=specific-instructions-data-scientist-research-phase0}}

@@ -2,14 +2,14 @@
   "auto_verify": 6,
   "auto_verify.closes": 4,
   "auto_verify.opens": 2,
-  "claude_dir_refs": 66,
+  "claude_dir_refs": 64,
   "compact": 3,
   "gate_fences": 11,
   "gate_fences.by_kind": {
     "checkpoint": 1,
     "unspecified": 10
   },
-  "ledger_refs": 251,
+  "ledger_refs": 36,
   "missing_templates": 0,
   "model_pins": 0,
   "subagent_type": 2,

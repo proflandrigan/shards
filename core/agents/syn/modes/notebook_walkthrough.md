@@ -71,7 +71,7 @@ and routed to Syn):
 - No Task calls to specialists for in-mode review.
 - No PM Mode, no Fixer mode, no Brainstorm.
 - No DIVERGE branches.
-- No Knowledge Ledger harvest.
+- No write-back proposal.
 
 If the user asks for any of the above, end the walkthrough cleanly and
 route them to the right mode (`/shards`, `/data-scientist`, `/ml-engineer`,

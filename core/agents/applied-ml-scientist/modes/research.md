@@ -52,9 +52,9 @@ would be Advisory or Create Mode instead.
 
 ### Knowledge retrieval
 
-Per `knowledge_retrieval.md` AR entry point. Match especially on approach
+Per {{protocol sources}} (AR entry point). Match especially on approach
 family (contrastive learning, Neural ODEs, GNN variants, diffusion, etc.) —
-prior research projects in the ledger often document what worked and what
+prior research projects in the knowledge sources often document what worked and what
 didn't for the same structural problem.
 
 ### Preset selection
@@ -138,11 +138,11 @@ Append to `project-specs.md`:
 - **Versioning mode:** <git | dvc>
 - **Literature context:** <paper references relevant to the baseline and hypotheses, if any>
 
-### Knowledge Ledger
-- **Entries checked:** <N>
-- **Relevant entries found:** <N>
-  - <title> (<type>, <confidence>) — <relevance>
-- **Or:** No relevant entries found
+### Sources
+- **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+- **Relevant findings:** <N>
+  - <title> (<source>) — <1-line relevance>
+- **Or:** No relevant findings
 ```
 
 {{gate kind=execute phase=0 id=specific-instructions-applied-ml-scientist-research-phase0}}
@@ -375,7 +375,7 @@ key decisions.
 - **Scope enforcement is hard.** Typically: model code, loss, training
   config mutable; data, dataloader, eval harness immutable.
 - **Negative results are valuable.** A failed run documented clearly is
-  worth a harvest candidate on its own.
+  worth a write-back candidate on its own.
 - **Reverts are file-scoped.**
 - **Document before advancing.** Phase 0, Phase 1, Phase 3 gated.
 - **Adopt only what was confirmed.**

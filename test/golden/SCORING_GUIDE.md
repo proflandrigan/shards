@@ -36,7 +36,7 @@ JSONL from `claude -p --output-format stream-json --verbose`, one JSON event per
   and `Read` of `.claude/agents/<name>.md` or `.claude/commands/<name>.md` (persona transfer; `_` normalised to `-`).
 - `{"type":"user","message":{"content":"..."}}` with string or `text` content is a **human turn**.
   Events whose content is only `tool_result` blocks are ignored. A human turn starting with `/<cmd>` or containing
-  `<command-name>/cmd</command-name>` contributes routing (`/shards`, `/review-pr`, `/brainstorm`, `/knowledge` map to `syn`; `/compact`, `/end`, `/resume` are ignored).
+  `<command-name>/cmd</command-name>` contributes routing (`/shards`, `/review-pr`, `/brainstorm` map to `syn`; `/compact`, `/end`, `/resume` are ignored).
 - `{"type":"system","subtype":"compact_boundary"}` and human `/compact` turns count as compactions.
 - Unparseable lines are skipped.
 

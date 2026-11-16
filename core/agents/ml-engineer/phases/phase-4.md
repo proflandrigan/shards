@@ -26,12 +26,12 @@ Ask about:
 - **Ensemble acceptable?** Or must it be a single model for serving simplicity?
 - **Online learning needed?** Or batch retrain is sufficient?
 
-**Feature Registry check.** If `.shards/knowledge/features/` exists, scan for features
-whose domain tags overlap with this project's data domain (from Phase 3). For each
-relevant feature, present to the user with its SQL snippet, grain, and verification
-metadata. Ask: "Would you like to import any of these into your feature candidates?"
+**Feature search.** Run `{{knowledge.search query="reusable features for <domain>"}}` (domain from Phase 3) and look for
+features whose domain tags overlap with this project's data. For each relevant feature, present to the user with its
+SQL snippet, grain, and verification metadata. Ask: "Would you like to import any of these into your feature candidates?"
+Skip if no knowledge source is reachable.
 
-If imported, note in feature candidates list: `(imported from Knowledge Ledger —
+If imported, note in feature candidates list: `(imported from knowledge source —
 verified by <agent> in <source_project>)`
 
 **Consult the Data Scientist** for methodology review:
@@ -267,7 +267,7 @@ Define:
 - **Inference cost:** ~<X>ms per prediction on <CPU/GPU>
 - **Ensemble:** Yes — <strategy> | No — single model
 - **Online learning:** Yes — <strategy> | No — batch retrain
-- **Feature Registry check:** <N> relevant features found | No features found | N/A — no features directory
+- **Feature search:** <N> relevant features found | No features found | N/A — no knowledge source reachable
   - Imported: <title(s)> | None
 ```
 

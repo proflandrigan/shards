@@ -60,7 +60,7 @@ depends on file-scoped checkout. If versioning is `none`, warn and offer to
 
 ### Knowledge retrieval
 
-Read `knowledge_retrieval.md` AR entry point. Match on metric (quality, cost,
+Per {{protocol sources}} (AR entry point). Match on metric (quality, cost,
 latency), domain, and approach family (single-prompt, chain, RAG, agent).
 
 ### Preset selection
@@ -167,11 +167,11 @@ Append to `project-specs.md`:
 - **Immutable scope:** <list> (includes eval harness and eval set)
 - **Versioning mode:** <git>
 
-### Knowledge Ledger
-- **Entries checked:** <N>
-- **Relevant entries found:** <N>
-  - <title> (<type>, <confidence>) — <relevance>
-- **Or:** No relevant entries found
+### Sources
+- **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+- **Relevant findings:** <N>
+  - <title> (<source>) — <1-line relevance>
+- **Or:** No relevant findings
 ```
 
 {{gate kind=execute phase=0 id=specific-instructions-ai-engineer-research-phase0}}
