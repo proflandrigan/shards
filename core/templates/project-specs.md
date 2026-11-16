@@ -63,19 +63,18 @@
   If multiple phases produce validation sections, overwrite rather than append —
   validation uses the last ## Validation section in the file.
 
-  Incremental testing (build phases only):
-  Notebook- and pipeline-producing specialists emit a `kind=checkpoint` gate
-  between each component they write. See:
+  Task evidence (build phases only):
+  Build phases run as a lead loop over the approved task list (### Task list in
+  the plan phase section, tasks.yaml in the output directory). Each task is one
+  tested component; the lead writes one evidence row per task in the
+  ## Validation Evidence table. See:
+    [`protocols/delegated_build.md`](../protocols/delegated_build.md)
     [`protocols/incremental_testing.md`](../protocols/incremental_testing.md)
 
-  Optional record inside the build-phase section for auditability:
+  Plan phase section, before the plan gate:
 
-    ### Checkpoint Log
-    | Component | Test command | Evidence | Status |
-    |-----------|--------------|----------|--------|
-    | <name>    | <cmd>        | <facts>  | PASS / FAIL |
-
-  This table mirrors what the gate runtime already records in
-  `.shards/gates/gates.jsonl` — including it in project-specs is optional but
-  useful when the user wants the audit trail alongside the rest of the spec.
+    ### Task list
+    | id | goal | owned paths | acceptance | depends_on |
+    |----|------|-------------|------------|------------|
+    | <id> | <goal> | <paths> | <command -> expected> | <ids> |
 -->

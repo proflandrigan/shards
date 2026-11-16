@@ -17,35 +17,32 @@ Wait for any signal from the user before beginning build steps.
 
 **Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
-### Incremental testing — checkpoint gates between components
+{{protocol delegated_build}}
 
-{{protocol incremental_testing}} during this build. Each component below is a checkpoint seam — after you write and execute a component, raise a `kind=checkpoint` gate (macro below) with evidence before starting the next component. Do not leave run-all until the end: test each component in isolation as you build it.
+You are the lead of this build. The model is built as delegated tasks, one
+tested component each; you dispatch, verify and record.
 
-{{gate kind=checkpoint name=data}}
+### Component specifications
 
-The macro above shows the first component (`name=data`). For each later component call `gate_request` the same way with `kind=checkpoint` and that component's slug as the name (no `validates=`). Pass `evidence={status: pass|fail, checks: [...]}` with the component name, the exact test command you ran, and measured facts (for example `df.shape = (48211, 47)`, `null rate on join key = 0.00%`, `sample head matches expected schema`). Under the default `phase` policy a passing checkpoint is recorded automatically and you continue to the next component; a failing or anomalous one blocks and waits for the user.
+Task cards cite these sections via `plan_ref`; workers only see the sections a
+card references. Components, in build order (each is one task, or a short chain
+of tasks):
 
-Expected checkpoint components for this phase (slugs are the suffix after `checkpoint-`; build in this order):
+- `data` — dataset load + sample batch visualization; shape assertions hold; class distribution (if classification) matches prior.
+- `forward` — model forward pass on a dummy batch; shapes at each component match expectation; no NaNs.
+- `smoke-train` — smoke-fit on ≤1% of data for a handful of epochs; loss decreases, gradient norms finite; tiny-batch overfitting sanity check passes.
+- `full-train` — full training completes on target hardware; peak memory within budget; best validation metric logged.
+- `eval` — evaluation + diagnostics (gradient history, activation stats, dead-neuron check) produced and reviewed.
 
-- `deep-learning-engineer-phase-4-checkpoint-data` — dataset load + sample batch visualization; shape assertions hold; class distribution (if classification) matches prior.
-- `deep-learning-engineer-phase-4-checkpoint-forward` — model forward pass on a dummy batch; shapes at each component match expectation; no NaNs.
-- `deep-learning-engineer-phase-4-checkpoint-smoke-train` — smoke-fit on ≤1% of data for a handful of epochs; loss decreases, gradient norms finite; tiny-batch overfitting sanity check passes.
-- `deep-learning-engineer-phase-4-checkpoint-full-train` — full training completes on target hardware; peak memory within budget; best validation metric logged.
-- `deep-learning-engineer-phase-4-checkpoint-eval` — evaluation + diagnostics (gradient history, activation stats, dead-neuron check) produced and reviewed.
-
-If a checkpoint fails, it blocks until the user responds: STOP and wait, never confirm it yourself. After the user replies, diagnose, fix, and re-run the test, then call `gate_request` again with updated evidence before advancing.
-
-Then create:
-
-**`models/<project_name>/notebooks/model_development.ipynb`**
-
-Structure:
+**`models/<project_name>/notebooks/model_development.ipynb`** — sections (one
+task per section group, chained by `depends_on` since they share the notebook
+file):
 1. **Setup** — imports, config load, device setup, seed setting
 2. **Dataset Sanity Check** — data loading, shape assertions, sample batch
    visualization, class distribution (if classification)
 3. **Model Trace** — instantiate model, run forward pass with dummy input,
    print shape at each major component via hooks or explicit prints
-4. **Training Loop** — full training with logging: loss, eval metric, gradient
+4. **Training Loop** — training with logging: loss, eval metric, gradient
    norm, LR per epoch; inline loss curves after training
 5. **Evaluation** — metric table vs baseline, confusion matrix or equivalent,
    per-class breakdown if applicable
@@ -78,6 +75,42 @@ Structure:
 
 **`models/<project_name>/requirements.txt`**
 - Pinned major dependencies (torch==X.Y, torchvision==X.Y, etc.)
+
+**Task evidence guidance:** {{protocol incremental_testing}} Per-task evidence
+should carry the exact test command and measured facts (for example
+`df.shape = (48211, 47)`, `null rate on join key = 0.00%`, sample head matches
+expected schema). Test each component in isolation when its task completes.
+
+### Lead loop
+
+{{delegate tasks=models/<project_name>/tasks.yaml max_parallel=3}}
+
+Dispatch only tasks with `phase: 4` from the single `tasks.yaml` written
+by the plan phase (the other phase's tasks are not dispatched here).
+
+1. **Load** the task list approved at the plan gate (call `tasks_set`; fix and
+   re-validate if it is rejected).
+2. **Dispatch** ready `phase: 4` tasks (`task_dispatch`) in parallel up to
+   `max_parallel=3`. Tasks that write to the same file (for example the
+   notebook) must be ordered by `depends_on`.
+3. **Collect** each worker's result via `task_report`.
+4. **Verify before counting.** For every report, re-run (or independently
+   check) the acceptance command and compare the output with the `plan_ref`
+   spec. Then write a per-task evidence row to the `## Validation` Evidence
+   table (Check = task id + component, Expected, Observed, Pass/Fail), with the
+   exact command and measured facts (for example `df.shape = (48211, 47)`,
+   output shapes, loss values). Never mark a task done on the worker's word
+   alone.
+5. **On failure** re-dispatch with the failure output as feedback, at most 2
+   retries; then stop and ask the user with a summary.
+6. **Deviations** or a plan that cannot be met: pause dependent tasks and follow
+   {{protocol plan_drift}}; amend the plan only via a confirmed gate.
+7. **Dispatch** tasks unblocked by done tasks until all `phase: 4` tasks
+   are done.
+8. You write no build code yourself except for `delegate: inline` tasks.
+
+**Final integration check (lead, after all tasks are done):** restart the kernel and run `model_development.ipynb` top to bottom, confirm `src/` modules import and `configs/config.yaml` drives every hyperparameter, and that results match the training run summary you will document. Record
+the result as an evidence row before the gate.
 
 ### Document Phase 4
 

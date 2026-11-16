@@ -31,6 +31,17 @@ describe('computeReport', () => {
     expect(r.ledger_refs.count).toBe(1);
     expect(r.compact.count).toBe(1);
   });
+  it('counts write_whole_build only in phases*/ markdown files', () => {
+    const d = fixture();
+    const w = (p, s) => { fs.mkdirSync(path.dirname(path.join(d, p)), { recursive: true }); fs.writeFileSync(path.join(d, p), s); };
+    w('src/agents/q/phases/phase-1.md', 'Write the entire notebook now.\nThen write the full pipeline.\nWrite the notebook cell by cell.');
+    w('src/agents/q/phases_deep/phase-2.md', 'In one pass, write everything.');
+    w('src/agents/q/other.md', 'Write the entire notebook now.');
+    const r = computeReport({ root: d, roots: ['src'] });
+    expect(r.write_whole_build.count).toBe(3);
+    expect(r.write_whole_build.file_list).toEqual(['src/agents/q/phases/phase-1.md', 'src/agents/q/phases_deep/phase-2.md']);
+    expect(r.write_whole_build.definition).toContain('write the whole');
+  });
   it('is deterministic', () => {
     const d = fixture();
     const a = stableStringify(computeReport({ root: d, roots: ['src'] }));

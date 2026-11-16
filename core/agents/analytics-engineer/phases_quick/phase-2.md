@@ -15,15 +15,35 @@ Wait for any signal from the user before beginning build steps.
 
 **Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
-1. Implement the change in the model SQL and schema file
-2. Update downstream models if column names or types changed
-3. Run the stack's build/validate command to validate
+### Component specifications
+
+Each task in `data_models/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`:
+
+1. The change in the model SQL and schema file (one task per changed model, or one combined task for a single-model change).
+2. Downstream updates if column names or types changed.
+3. The stack's build/validate command.
 4. **Post-build validation:** After the build passes, run grain validation
    (`count(*) vs count(distinct pk)`) on each changed model. For models with
    joins, run the fan-out check from `join_path_protocol.md` Tier 2+. Run
    `dbt show --select <model> --limit 5` to confirm output looks right.
-   If any check fails, fix before proceeding. Skip if no-data environment.
-5. Summarize what changed
+   If any check fails, the task fails. Skip if no-data environment.
+
+### Lead loop
+
+{{delegate tasks=data_models/<project_name>/tasks.yaml max_parallel=3}}
+
+Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and record; you do not write build code yourself except for `delegate: inline` tasks.
+
+This is a small build (two tasks or fewer in practice). The plan may mark its tasks `delegate: inline`; when it does, the lead performs those tasks itself, but still follows the same loop, the same acceptance commands and the same per-task evidence rows below.
+
+1. **Load the task list.** Load `data_models/<project_name>/tasks.yaml` (approved at the plan gate) with `tasks_set`. Fix any rejection (cycle, overlapping owned paths, missing acceptance) with the user before building.
+2. **Dispatch.** `task_dispatch` the ready tasks (all `depends_on` done), in parallel up to `max_parallel=3`. Each task card cites its `plan_ref`, so workers see only the Component specifications they need.
+3. **Collect.** Each worker returns a result through `task_report`.
+4. **Lead verifies every report before it counts.** Re-run (or independently check) the task's acceptance command and compare the outcome with the cited `plan_ref`. Then write a per-task evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone. {{protocol incremental_testing}} is task evidence guidance.
+5. **Failures.** Re-dispatch with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary of what failed.
+6. **Deviations.** If a worker reports a deviation, or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend the plan only through a confirmed gate.
+7. **Unblock.** After each verified task, dispatch the tasks it unblocks.
+8. **Wrap up.** When all tasks are done, summarize what changed.
 
 **Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
 {{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
@@ -37,6 +57,7 @@ Wait for any signal from the user before beginning build steps.
 - **Files changed:**
   - <file path>: <what changed>
 - **Downstream updates:** <files updated or "none needed">
+- **Task evidence:** one row per task in the `## Validation` Evidence table
 - **Validation result:** Pass | Fail — <details>
 - **Tests passing:** <N> / <N>
 - **Post-build validation:** PASS | FAIL | SKIPPED (no data) — <details>

@@ -11,11 +11,11 @@
 building. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
-Wait for any signal from the user before beginning Phase 6. "Beginning Phase 6" includes the reviewer Task calls below — do not fire them until the user signals readiness.
+Wait for any signal from the user before beginning Phase 6. "Beginning Phase 6" includes the reviewer consultations below; do not start them until the user signals readiness.
 
 **Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
-Goal: Write the SQL queries and the notebook. **No execution.** SQL is reviewed and validated under `LIMIT 100` by the Analytics Engineer in Phase 7. The notebook is run by the user (or via the `/notebook-walkthrough` mode) outside the build flow. Phase 6 is a write-only phase.
+Goal: Have the SQL queries and the notebook written, one tested component per task, under a lead loop. **No execution.** SQL is reviewed and validated under `LIMIT 100` by the Analytics Engineer in Phase 7. The notebook is run by the user (or via the `/notebook-walkthrough` mode) outside the build flow. Phase 6 is a write-only phase.
 
 **Join path self-check:** Before requesting the Data Modeller review, trace the
 join path for each query following [`protocols/join_path.md`](../../../protocols/join_path.md).
@@ -82,44 +82,20 @@ the queries and notebook.
 
 Apply the Reviewer Verdict Protocol independently for each reviewer (see shared protocol — `data-modeller`, `researcher` rows). Address all Halt-tier verdicts before proceeding to build.
 
-### Reviewer-verdict checkpoint
+### Reviewer verdicts (lead-side step, no gate)
 
-After both reviewers return and you have applied the Reviewer Verdict Protocol to each, call `gate_request` as below. **Do not begin writing SQL or notebook cells until the user confirms this gate.** This applies regardless of verdict tier — even when both reviewers return clean "Proceed", the user must explicitly confirm before build begins.
-
-Pass `evidence={status: pass, checks: [...]}` with: the Data Modeller verdict (Proceed | Proceed with caveats | Halt) and one-line summary; the Researcher verdict and one-line summary; the resolution for each (e.g., "Both Proceed; no fixes needed" or "DM raised grain concern → switched to teacher-week grain"). Next: SQL queries (build step 1).
-
-{{gate kind=checkpoint name=reviewers}}
+After both reviewers return and you have applied the Reviewer Verdict Protocol to each, record the outcome in `## Validation`: the Data Modeller verdict (Proceed | Proceed with caveats | Halt) and one-line summary; the Researcher verdict and one-line summary; the resolution for each (e.g., "Both Proceed; no fixes needed" or "DM raised grain concern -> switched to teacher-week grain"). Resolve every Halt-tier verdict (and update the Phase 3 plan and the task list through a confirmed amendment if the fix changes either) before dispatching any task. This applies regardless of verdict tier: do not dispatch build tasks until the reviewer evidence is recorded.
 
 ### Build scope
 
-The deliverables are SQL files under `studies/<name>/queries/` and a notebook under `studies/<name>/notebooks/`. **Write only — do not execute the SQL or run notebook cells in this phase.** Do not introduce standalone Python loader, helper, or "data prep" scripts — data loading and transformation live in notebook cells per the SQL-loading rule below. If something genuinely belongs in a `.py` module (a long shared utility used across notebooks), surface it to the user and confirm before writing it. A freestanding `load_data.py` is almost always a sign you're building outside the plan.
+The deliverables are SQL files under `studies/<name>/queries/` and a notebook under `studies/<name>/notebooks/`. **Write only: do not execute the SQL or run notebook cells in this phase.** Do not introduce standalone Python loader, helper, or "data prep" scripts: data loading and transformation live in notebook cells per the SQL-loading rule below. If something genuinely belongs in a `.py` module (a long shared utility used across notebooks), surface it to the user and confirm before adding it. A freestanding `load_data.py` is almost always a sign the build is going outside the plan.
 
-### Incremental testing — checkpoint gates between components
+### Component specifications
 
-{{protocol incremental_testing}} during this build. Each numbered build step below ends with a `kind=checkpoint` gate — after you write the component, call `gate_request` and wait for the user before starting the next component. The "test" in this build-only phase is structural — you read back what you wrote and confirm it matches the Phase 3 plan; you do not execute it.
+Each task in `studies/<name>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each one self-contained.
 
-**Checkpoint evidence.** Each checkpoint is a `kind=checkpoint` gate with a `name=` slug (name is `[a-z0-9-]+`, unique within the file, no `validates=`). Pass `evidence={status: pass|fail, checks: [...]}` naming the component, the verification action (here: "structural read-back against Phase 3 plan"; for build-and-run phases, the exact test command), and measured facts. Under the default `phase` policy a passing checkpoint is recorded automatically and blocks only on fail or anomaly.
-
-Worked example for the notebook component (illustrative values; substitute real measurements):
-
-- Component: Jupyter notebook (full); verification: structural read-back against Phase 3 cell-list plan (no execution).
-- Checks: path `studies/teacher_churn/notebooks/teacher_churn.ipynb`; 22 cells written (4 markdown headers, 18 code) across Overview / Setup / Data load / EDA / Analysis / Results / Caveats; SQL files referenced `queries/01_feature_extraction.sql`, `queries/02_cohort_definition.sql` (loaded via `Path.read_text()`); SQL-loading-rule compliance PASS (no embedded SQL strings); Phase 3 plan match 22/22 sections, one deviation noted (split EDA section into 2 sub-blocks).
-- Next: Phase 7 documentation and code review fan-out.
-
-
-**Common deviations to avoid.** Do not:
-
-- Replace the component / verification / evidence structure with free prose or an open question. The user confirms by reading the evidence you pass.
-- Invent a checkpoint name outside the per-step names called out in the build steps below (e.g., `sql` instead of `queries`). The names are part of the contract.
-- Run the SQL or execute the notebook to gather evidence. Phase 6 is write-only. SQL is run under `LIMIT 100` by the Analytics Engineer in Phase 7; the notebook is run by the user or via `/notebook-walkthrough` outside this flow.
-- Checkpoint a script that isn't part of the build plan. If you find yourself wanting to checkpoint a `load_data.py`, stop — that script shouldn't exist (see Build scope above).
-
-Never confirm your own checkpoint. If a checkpoint fails (e.g., structural review reveals a missing section vs. the Phase 3 plan), fix the artifact and call `gate_request` again with updated evidence before advancing.
-
-### Then build (each step ends with its own checkpoint gate)
-
-**1. SQL queries — write, then checkpoint.**
-   - Write to `studies/<name>/queries/`
+**Spec A. SQL query file** (one task per query file)
+   - Location: `studies/<name>/queries/`
    - Name files descriptively: `01_feature_extraction.sql`, `02_cohort_definition.sql`
    - Include header comments:
      ```sql
@@ -129,35 +105,46 @@ Never confirm your own checkpoint. If a checkpoint fails (e.g., structural revie
      -- Dependencies: <upstream tables>
      -- Output grain: one row per <entity>
      ```
-   - Verify structurally: every query has the header block; the join path in each query matches the trace you presented under the join-path self-check; every required table from the Phase 2 data sources is referenced.
-   - Checkpoint: `{{gate kind=checkpoint name=queries}}` with structural evidence: file paths and counts, header-comment compliance, one-line join-path summary per query, any deviations from Phase 3 plan.
-   - Wait for user confirmation before step 2.
+   - Structural acceptance: the file has the header block; its join path matches the trace you presented under the join-path self-check; every required table from the Phase 2 data sources it is responsible for is referenced. Acceptance is structural (read-back, grep), never execution.
 
-**2. Notebook — write, then checkpoint.** Create the notebook at `studies/<name>/notebooks/<study>.ipynb` using NotebookEdit. Write all sections in this single step:
+**Spec B. Notebook** at `studies/<name>/notebooks/<study>.ipynb`, built with NotebookEdit. The notebook is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group:
 
    - **Overview** (markdown): business question, hypothesis, data sources, date, author
    - **Setup**: imports, config, reproducibility notes
-   - **Data load**: cells that read each `.sql` file and produce the analysis dataframe(s) — see SQL loading rule below
+   - **Data load**: cells that read each `.sql` file and produce the analysis dataframe(s), see SQL loading rule below
    - **EDA**: target distribution, feature distributions, missingness, correlations
    - **Analysis / Modelling**: implement chosen method
    - **Results**: key numbers, visualizations, model performance with business interpretation
-   - **Recommendations**: top 2–3 actionable findings with confidence levels
+   - **Recommendations**: top 2-3 actionable findings with confidence levels
    - **Caveats and Limitations**: what this can't answer, assumptions, data quality
 
-   **SQL loading rule** — **Do NOT re-embed SQL as Python strings.** Read `.sql` files directly using `Path.read_text()`. Reference files by relative path from the notebook location:
+   **SQL loading rule.** **Do NOT re-embed SQL as Python strings.** Read `.sql` files directly using `Path.read_text()`. Reference files by relative path from the notebook location:
    ```python
    from pathlib import Path
    sql = Path("../queries/01_feature_extraction.sql").read_text()
    df = pd.read_sql(sql, conn)
    ```
 
-   Verify structurally: every section listed above is present; the section list matches the Phase 3 plan; every `.sql` file under `queries/` is loaded by at least one cell via `Path.read_text()`; no SQL is embedded as Python strings; no stray `.py` loaders were created.
+   Structural acceptance: the sections for the task's group are present and match the Phase 3 plan; every `.sql` file under `queries/` is loaded by at least one cell via `Path.read_text()`; no SQL is embedded as Python strings; no stray `.py` loaders were created.
 
-   Checkpoint: `{{gate kind=checkpoint name=notebook}}` with structural evidence: notebook path, total cell count and per-section breakdown, SQL files referenced, SQL-loading-rule compliance status, deviations from the Phase 3 plan if any.
+**Spec C. Requirements file** (optional). If analysis needs non-standard packages, a task creates `requirements.txt`.
 
-   Wait for user confirmation before step 3.
+### Lead loop
 
-**3. Requirements file — no checkpoint.** If analysis needs non-standard packages, create `requirements.txt`. Optional.
+{{protocol delegated_build}} governs this phase. Task evidence guidance: {{protocol incremental_testing}} (here the acceptance check is structural, because Phase 6 is write-only).
+
+{{delegate tasks=studies/<name>/tasks.yaml max_parallel=3}}
+
+1. **Load the task list** approved at the plan gate (`studies/<name>/tasks.yaml`) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
+2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3. Query-file tasks can run in parallel; notebook section-group tasks run in their `depends_on` order.
+3. **Receive** each worker's result via `task_report`.
+4. **Verify before it counts.** Re-run (or independently check) the task's acceptance command, compare the artifact with its `plan_ref` specification and the Phase 3 plan, then write an evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone. Do not execute SQL or notebook cells to gather evidence.
+5. **On failure**, re-dispatch the task with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary.
+6. **Deviations.** If a worker reports a deviation or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend the plan or task list only through a confirmed gate.
+7. **Continue** dispatching tasks unblocked by tasks you have verified as done.
+8. You write no SQL or notebook cells yourself unless a task is marked `delegate: inline`.
+
+When all tasks are verified done, run the final integration read-back as the lead: every spec section is covered by a done task, the notebook section list matches the Phase 3 plan, every query file is referenced, and no unplanned files exist. Record it in `## Validation`, then document the phase and raise the gate.
 
 ### Document Phase 6
 
@@ -185,13 +172,14 @@ Never confirm your own checkpoint. If a checkpoint fails (e.g., structural revie
 
 ### Validation
 
-Roll up the structural evidence from the three in-phase checkpoint gates. Copy the Status + key Evidence facts directly from each gate body so this section is auditable on its own without rereading every checkpoint.
+Evidence table, one row per verified task plus the reviewer outcomes and the final read-back. Each row is written by the lead after independently checking the acceptance result.
 
-| Checkpoint | Status | Key evidence |
-|---|---|---|
-| reviewers | PASS | DM: <verdict>; Researcher: <verdict>; Resolution: <action> |
-| queries | PASS \| FAIL | <file count and paths>; <header-comment compliance>; <join-path summary>; <deviations from Phase 3 plan> |
-| notebook | PASS \| FAIL | <notebook path>; <cell count and per-section breakdown>; <SQL files referenced>; <SQL-loading-rule compliance>; <Phase 3 plan match> |
+| Check | Expected | Observed | Pass/Fail |
+|---|---|---|---|
+| reviewers (DM + Researcher) | Both Proceed or caveats resolved | DM: <verdict>; Researcher: <verdict>; Resolution: <action> | PASS \| FAIL |
+| <task id> queries: <file> | header block present; join path matches trace; required tables referenced | <file path>; <header compliance>; <join-path summary>; <deviations> | PASS \| FAIL |
+| <task id> notebook: <section group> | sections match Phase 3 plan; SQL loaded via `Path.read_text()` | <notebook path>; <cell counts per section>; <SQL files referenced>; <SQL-loading-rule compliance> | PASS \| FAIL |
+| final read-back | all spec sections covered; no stray files | <summary> | PASS \| FAIL |
 ```
 
 {{gate kind=phase validates=data-scientist}}

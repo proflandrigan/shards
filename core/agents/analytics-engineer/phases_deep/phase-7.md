@@ -15,55 +15,37 @@ Wait for any signal from the user before beginning build steps.
 
 **Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
-### Incremental testing — checkpoint gates between layers
+### Component specifications
 
-{{protocol incremental_testing}} during this build. Each layer below is a checkpoint seam — after a layer's models all build green and their post-build validation (grain, fan-out, nulls, sample) passes, call `gate_request` with a `kind=checkpoint` gate (macro below) before advancing to the next layer. Do not batch the entire DAG into a single build and eyeball a pass/fail at the end.
+Each task in `data_models/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`. Components, in dependency order:
 
-Checkpoint gate — pass `evidence={status: pass|fail, checks: [...]}`: put the layer name, the exact test command you ran, and the measured facts (e.g. row counts, `null rate on join key = 0.00%`, grain check result) in `checks`. Under the default `phase` policy a passing checkpoint is recorded automatically and blocks only on fail/anomaly. Never confirm your own gate.
+1. Source definitions (sources.yml updates); source freshness passes.
+2. Staging models (one task per model or small related group), each with its schema file.
+3. Intermediate models, each with its schema file; fan-out matches Phase 3 predictions.
+4. Mart models, each with its schema file; full validation suite.
+5. Snapshot models (if SCD Type 2).
+6. Singular test files.
 
-{{gate kind=checkpoint name=component-slug}}
-
-Expected checkpoint names for this phase (use as `name`, in order as you build):
-
-- `sources` — sources.yml updates validate; source freshness passes.
-- `staging` — all staging models build green; grain + sample inspection pass per the post-build rubric.
-- `intermediate` — intermediate models build green; fan-out verification matches Phase 3 predictions.
-- `marts` — mart/fact models build green; grain / fan-out / PK-FK null / sample checks all pass.
-- `tests` — singular tests and snapshot models (if present) run green.
-
-If a checkpoint fails, diagnose, fix, and call `gate_request` again with updated evidence before advancing.
-
-Build in this order:
-1. Source definitions (sources.yml updates)
-2. Staging models
-3. Intermediate models
-4. Mart models
-5. Snapshot models (if SCD Type 2)
-6. Schema files with tests and documentation
-7. Singular test files
-
-For each model:
+Every model component comprises:
 - **Join path trace (models with joins):** Before writing SQL for any model that
   joins tables, trace the join path following
   [`protocols/join_path.md`](../../../protocols/join_path.md). Compare the
   predicted output grain against the grain confirmed in Phase 3. If they diverge,
-  fix the design before writing SQL.
-- Write the SQL (CTEs from source to final; use parameterized model references — never hardcoded table names)
-- Write the schema file (model description, column descriptions, all required tests)
-- Run the stack's build/validate command (e.g., `dbt build --select +model_name`) — fix any failures before next model
-- Do not advance to the next model until the current one is green
-- After each model passes validation, update the DAG file with the completed model highlighted (e.g. `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`) and re-emit with the same `panel_id` from Phase 4 so it updates in place:
-  {{artifact.emit type=dag path=data_models/<project_name>/dag.mmd meta="title=DAG: <project_name> panel_id=dag-<project_name>"}}
+  stop and report the deviation instead of building (worker: via `task_report`; lead: fix the design first).
+- The SQL (CTEs from source to final; use parameterized model references — never hardcoded table names)
+- The schema file (model description, column descriptions, all required tests)
+- The stack's build/validate command (e.g., `dbt build --select +model_name`); failures are fixed within the task before it reports
+- A task is not reportable until its model is green
 - **Post-build validation (per model, after `dbt build` passes):** Run the
   applicable checks below using `dbt show` or the warehouse CLI. If any check
-  fails, halt and diagnose before advancing to the next model. In a contract-first
-  / no-data environment (Phase 2 Data sufficiency: Insufficient), skip validation
-  queries and note "THEORETICAL — no data to validate" in the build log.
+  fails, the task fails. In a contract-first / no-data environment (Phase 2 Data
+  sufficiency: Insufficient), skip validation queries and note "THEORETICAL — no
+  data to validate" in the evidence row.
 
-  **Auto-verify mode**: each layer's post-build sweep is a bulk read-only
-  verification stretch. Open the block with `{{auto_verify start tool_budget=30 ttl=900}}`
-  at the start of the layer's validation pass and close it with `{{auto_verify end}}` before
-  the layer's checkpoint gate. While it is open, `dbt show`
+  **Auto-verify mode**: each task's post-build sweep, and the lead's re-verification
+  of a layer, is a bulk read-only verification stretch. Open the block with
+  `{{auto_verify start tool_budget=30 ttl=900}}` at the start of the validation pass and close it
+  with `{{auto_verify end}}` before recording evidence. While it is open, `dbt show`
   and SELECT-only warehouse-CLI queries are auto-approved; `dbt build`
   and writes still prompt, and gates always win. See [`protocols/auto_verify_mode.md`](../../../protocols/auto_verify_mode.md).
 
@@ -92,11 +74,30 @@ For each model:
      ```
   4. **Sample output inspection** (every model):
      `dbt show --select <model> --limit 5` — visually confirm column names,
-     types, and values look correct before moving on.
+     types, and values look correct.
 
   Scale to model importance: staging models need only grain + sample; intermediate
   models add fan-out checks if they contain joins; mart/fact models get the full
   suite.
+
+Task acceptance commands must name the exact test command and the measured facts expected (row counts, `null rate on join key = 0.00%`, grain check result).
+
+### Lead loop
+
+{{delegate tasks=data_models/<project_name>/tasks.yaml max_parallel=3}}
+
+Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and record; you do not write build code yourself except for `delegate: inline` tasks.
+
+1. **Load the task list.** Load `data_models/<project_name>/tasks.yaml` (approved at the plan gate) with `tasks_set`. Fix any rejection (cycle, overlapping owned paths, missing acceptance) with the user before building.
+2. **Dispatch.** `task_dispatch` the ready tasks (all `depends_on` done), in parallel up to `max_parallel=3`. Each task card cites its `plan_ref`, so workers see only the Component specifications they need.
+3. **Collect.** Each worker returns a result through `task_report`.
+4. **Lead verifies every report before it counts.** Re-run (or independently check) the task's acceptance command and compare the outcome with the cited `plan_ref`. Then write a per-task evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone. {{protocol incremental_testing}} is task evidence guidance.
+5. **Failures.** Re-dispatch with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary of what failed.
+6. **Deviations.** If a worker reports a deviation, or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend the plan only through a confirmed gate.
+7. **Unblock.** After each verified task, dispatch the tasks it unblocks.
+8. **DAG updates.** After the lead verifies a model task, update the DAG file with the completed model highlighted (e.g. `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`) and re-emit with the same `panel_id` from Phase 4 so it updates in place:
+   {{artifact.emit type=dag path=data_models/<project_name>/dag.mmd meta="title=DAG: <project_name> panel_id=dag-<project_name>"}}
+9. **Final integration check.** When all tasks are done, the lead runs the full stack build/test (e.g. `dbt build`) and records the result as an evidence row before the gate.
 
 **SQL template for staging model** (adapt reference syntax to your stack):
 ```sql
@@ -209,6 +210,7 @@ select * from final
   |-------|-------------|---------------|-------------|-----------|-------|
   | <model> | PASS / FAIL | PASS / FAIL / N/A | PASS / WARN / FAIL | Yes / No | <details or "clean"> |
   - (or "THEORETICAL — no data to validate" if contract-first design)
+- **Task evidence:** one row per task in the `## Validation` Evidence table (task id, expected, observed, pass/fail)
 - **Deviations from design:** <changes from Phases 4-6 and why, or "none">
 - **Performance notes:** <run time, row counts, anything notable>
 ```

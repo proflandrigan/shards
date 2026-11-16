@@ -15,17 +15,24 @@ Wait for any signal from the user before beginning build steps.
 
 **Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
-Goal: Write the queries, get them reviewed, fix anything flagged, then run them
-and show results. Queries are NOT executed before the Analytics Engineer review.
+Goal: Get the queries written (as delegated tasks, verified by you), reviewed,
+fix anything flagged, then run them and show results. Queries are NOT executed
+before the Analytics Engineer review.
+
+{{protocol delegated_build}}
 
 **Join path trace:** Before writing any query that joins tables, trace the join
 path following [`protocols/join_path.md`](../../../protocols/join_path.md).
 Present the trace to the user. If the trace reveals fan-out risk or uncertain
-grain, invoke the Data Modeller for validation before writing the query.
+grain, invoke the Data Modeller for validation before dispatching the query-writing task.
 
-### Step 1 — Write queries (do NOT run yet)
+### Step 1 — Query specifications and lead loop (do NOT run yet)
 
-Write each query to a `.sql` file in `analysis/<project_name>/queries/`
+**Component specifications.** Each query is one component. Task cards cite
+this section (and the Phase 2 plan) via `plan_ref`; workers see only the
+sections a card references.
+
+- Each query lives in its own `.sql` file in `analysis/<project_name>/queries/`
 - Name files descriptively: `01_conversion_by_cohort.sql`, `02_revenue_trend.sql`
 - Include a header comment in each file:
   ```sql
@@ -43,6 +50,37 @@ Write each query to a `.sql` file in `analysis/<project_name>/queries/`
   sql = Path("queries/01_conversion_by_cohort.sql").read_text()
   df = pd.read_sql(sql, conn)
   ```
+
+**Task evidence guidance:** {{protocol incremental_testing}} Because queries
+are not executed before the AE review, the per-task acceptance check is
+static: the file exists, the header comment is complete, no embedded Python SQL
+strings, and the stated output grain matches the plan.
+
+### Lead loop
+
+{{delegate tasks=analysis/<project_name>/tasks.yaml max_parallel=3}}
+
+This is a small adhoc build (usually 1-2 query tasks). Tasks with
+`delegate: inline` are written by you directly; any others go to workers.
+Either way, run the same loop:
+
+1. **Load** the task list approved at the Phase 2 gate (call `tasks_set`; fix
+   and re-validate if it is rejected).
+2. **Dispatch** ready tasks (`task_dispatch`), in parallel up to
+   `max_parallel=3`. Each task card cites its query spec via `plan_ref`.
+3. **Collect** each worker's result via `task_report`.
+4. **Verify before counting.** For every report, re-run (or independently
+   check) the acceptance command and compare the file with the `plan_ref`
+   spec. Then write a per-task evidence row to the `## Validation` Evidence
+   table (Check = task id + query, Expected, Observed, Pass/Fail). Never mark a
+   task done on the worker's word alone.
+5. **On failure** re-dispatch with the failure output as feedback, at most 2
+   retries; then stop and ask the user with a summary.
+6. **Deviations** (a query cannot meet the plan, grain or filters change):
+   pause dependent tasks and follow {{protocol plan_drift}}; amend the plan only
+   via a confirmed gate.
+7. **Dispatch** tasks unblocked by done tasks until all are done.
+8. You write no query code yourself except for `delegate: inline` tasks.
 
 **Do not execute the queries yet.** They go through Analytics Engineer review
 first.
@@ -107,7 +145,8 @@ verdict and key findings to the user.
 
 **If AE returns NEEDS REVISION or BLOCKED:**
 1. Address SQL bugs, wrong-layer source choices, or fan-out risks: rewrite the
-   affected queries. Do this BEFORE running anything.
+   affected queries (re-dispatch the affected query tasks and re-verify each
+   with an evidence row). Do this BEFORE running anything.
 2. Data-quality findings on the sources (not query bugs) become caveats in the
    Phase 3 result interpretation — surface them alongside the results when you
    present them.

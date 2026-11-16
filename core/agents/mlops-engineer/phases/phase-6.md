@@ -11,79 +11,84 @@
 Good moment to trim or reset your context before we start executing — I'll be
 working from project-specs.md from here. Say the word when you're ready."
 
-Wait for any signal from the user before beginning build steps.
+Wait for any signal from the user before dispatching any task.
 
 **Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
-Goal: Build all IaC, configs, pipeline definitions, and monitoring setup.
+Goal: Build all IaC, configs, pipeline definitions, and monitoring setup as validated components, one task each, under a lead loop.
 
-### Incremental testing — checkpoint gates between components
+### Component specifications
 
-{{protocol incremental_testing}} during this build. Each component below is a checkpoint seam — after you write and validate a component (plan, lint, dry-run, or container-build as appropriate), raise a `kind=checkpoint` gate (macro below) with evidence before advancing. Do not stack unvalidated IaC / serving / pipeline configs and attempt to apply them at the end.
+Each task in `services/<project_name>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. For iteration, files go into `<existing_service_dir>/mlops/` or the user-specified path. Validate each component as appropriate (plan, lint, dry-run, or container-build); never stack unvalidated IaC, serving or pipeline configs to apply at the end.
 
-{{gate kind=checkpoint name=iac}}
-
-The macro above shows the first component (`name=iac`). For each later component call `gate_request` the same way with `kind=checkpoint` and that component's slug as the name (no `validates=`). Pass `evidence={status: pass|fail, checks: [...]}` with the component name, the exact test command you ran, and measured facts (for example `df.shape = (48211, 47)`, `null rate on join key = 0.00%`, `sample head matches expected schema`). Under the default `phase` policy a passing checkpoint is recorded automatically and you continue to the next component; a failing or anomalous one blocks and waits for the user.
-
-Expected checkpoint components for this phase (slugs are the suffix after `checkpoint-`; build in this order):
-
-- `mlops-engineer-phase-6-checkpoint-iac` — `terraform plan` or `aws cloudformation validate-template` runs clean; diff previews only expected resources.
-- `mlops-engineer-phase-6-checkpoint-serving` — serving config loads (`bentoml build` / container image builds); smoke invocation against a local model returns a valid response.
-- `mlops-engineer-phase-6-checkpoint-pipeline` — pipeline definition validates (`kfp compile` / SageMaker `describe-pipeline` dry-run / Airflow `dag test`); all steps parse.
-- `mlops-engineer-phase-6-checkpoint-monitoring` — monitoring config validates; alert rules and baselines compile; a simulated drift event triggers the expected rule.
-- `mlops-engineer-phase-6-checkpoint-runbook` — runbook rollback procedure walked through against the staging environment (or manually verified on the sandbox).
-
-If a checkpoint fails, it blocks until the user responds: STOP and wait, never confirm it yourself. After the user replies, diagnose, fix, and re-run the test, then call `gate_request` again with updated evidence before advancing.
-
-**Build in this order:**
-
-1. **IaC files** — Write Terraform modules or CloudFormation templates for:
+**Spec A. IaC files.** Terraform modules or CloudFormation templates for:
    - Compute resources (endpoint instances, training compute)
    - Networking (VPC, subnets, security groups if needed)
    - IAM roles and policies
    - Storage (S3 buckets / GCS buckets for artifacts)
    - Monitoring infrastructure (CloudWatch dashboards, Prometheus config)
-   Write to: `services/<project_name>/mlops/terraform/` or `cloudformation/`
 
-2. **Serving configs** — Write serving framework configuration:
+   Location: `services/<project_name>/mlops/terraform/` or `cloudformation/`.
+   Acceptance: `terraform plan` or `aws cloudformation validate-template` runs clean; the diff previews only expected resources.
+
+**Spec B. Serving configs.** Serving framework configuration:
    - BentoML: `bentofile.yaml` + `service.py`
    - SageMaker: endpoint config JSON, model config
    - Vertex AI: model deployment config YAML
    - Kubernetes: deployment YAML, service YAML, HPA config
    - Docker: `Dockerfile` for model container
-   Write to: `services/<project_name>/mlops/serving/`
 
-3. **Pipeline definition** — Write training pipeline:
+   Location: `services/<project_name>/mlops/serving/`.
+   Acceptance: the serving config loads (`bentoml build` / container image builds); a smoke invocation against a local model returns a valid response.
+
+**Spec C. Pipeline definition.** Training pipeline:
    - Kubeflow: pipeline YAML / Python SDK definition
    - SageMaker Pipelines: pipeline definition JSON or Python SDK
    - Vertex AI Pipelines: pipeline spec YAML
    - Airflow: DAG Python file
    - GitHub Actions: workflow YAML
-   Write to: `services/<project_name>/mlops/pipelines/`
 
-4. **Monitoring config** — Write monitoring setup:
+   Location: `services/<project_name>/mlops/pipelines/`.
+   Acceptance: the definition validates (`kfp compile` / SageMaker `describe-pipeline` dry-run / Airflow `dag test`); all steps parse.
+
+**Spec D. Monitoring config.** Monitoring setup:
    - Evidently: data drift report config, monitoring service config
    - WhyLogs: profiling config
    - SageMaker Model Monitor: baseline creation script, monitoring schedule
    - Vertex AI: monitoring job config
    - Alert definitions (CloudWatch alarms JSON, Prometheus alert rules YAML)
-   Write to: `services/<project_name>/mlops/monitoring/`
 
-5. **CI/CD config** — Write automation workflow:
-   - GitHub Actions workflow for automated retraining trigger
-   - Or equivalent for other CI/CD systems
-   Write to: `services/<project_name>/mlops/` or `.github/workflows/`
+   Location: `services/<project_name>/mlops/monitoring/`.
+   Acceptance: monitoring config validates; alert rules and baselines compile; a simulated drift event triggers the expected rule.
 
-6. **Runbook** — Write operational runbook:
+**Spec E. CI/CD config.** Automation workflow: a GitHub Actions workflow for the automated retraining trigger, or the equivalent for another CI/CD system. Location: `services/<project_name>/mlops/` or `.github/workflows/`.
+
+**Spec F. Runbook.** Operational runbook:
    - Common failure scenarios and step-by-step remediation
    - Rollback procedure (with exact commands)
    - Monitoring dashboard URLs
    - On-call escalation paths
    - Deployment checklist (pre-deploy, deploy, post-deploy validation)
-   Write to: `services/<project_name>/mlops/runbook.md`
 
-For iteration: write all files into `<existing_service_dir>/mlops/` or
-user-specified path.
+   Location: `services/<project_name>/mlops/runbook.md`.
+   Acceptance: the rollback procedure is walked through against the staging environment (or manually verified on the sandbox).
+
+### Lead loop
+
+{{protocol delegated_build}} governs this phase. Task evidence guidance: {{protocol incremental_testing}} (validate each component as its task completes).
+
+{{delegate tasks=services/<project_name>/tasks.yaml max_parallel=3}}
+
+1. **Load the task list** approved at the plan gate (`services/<project_name>/tasks.yaml`) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
+2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3, in `depends_on` order (typically IaC, then serving, pipeline, monitoring, CI/CD, runbook).
+3. **Receive** each worker's result via `task_report`.
+4. **Verify before it counts.** Re-run (or independently check) the acceptance command, compare with the `plan_ref` specification, then write an evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail), with the exact command run and measured facts. Never mark a task done on the worker's word alone.
+5. **On failure**, re-dispatch the task with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary.
+6. **Deviations.** If a worker reports a deviation or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend the plan or task list only through a confirmed gate.
+7. **Continue** dispatching tasks unblocked by tasks you have verified as done.
+8. You write no IaC, config or pipeline code yourself unless a task is marked `delegate: inline`.
+
+When all tasks are verified done, record the final integration evidence row in `## Validation`, then document the phase and raise the gate.
 
 ### Document Phase 6
 
@@ -103,6 +108,12 @@ user-specified path.
 - **Runbook:** <file path>
 - **Deviations from plan:** <changes and why, or "none">
 - **Known gaps:** <anything that requires manual setup or future work>
+
+### Validation
+
+| Check | Expected | Observed | Pass/Fail |
+|---|---|---|---|
+| <task id> <component> | <acceptance expected> | <command and measured facts> | PASS \| FAIL |
 ```
 
 {{gate kind=phase validates=mlops-engineer}}

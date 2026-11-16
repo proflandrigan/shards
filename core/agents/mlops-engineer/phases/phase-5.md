@@ -59,6 +59,11 @@ Design decisions to make:
 - Training run cost budgets and alerts (prevent runaway training jobs)
 - Storage cost monitoring for model artifacts and training data
 
+### Decompose the plan into tasks
+
+Turn the plan just agreed into `services/<project_name>/tasks.yaml`: one task per artifact (each deployment, pipeline, monitoring or alerting artifact, with its check). Each task needs an id, goal, `plan_ref` (the section of `project-specs.md` it implements), inputs, `owned_paths` (no overlap between tasks that can run in parallel), an acceptance command with the expected evidence, `depends_on`, `worker` (this agent), `phase` (6), and size (60 or less).
+Validate the list with the tasks_set tool; the rules are in {{protocol delegated_build}}. Add the `### Task list` table to the Phase 5 section of `project-specs.md` (see the template below) so the user approves plan and tasks together. The tasks are executed in Phase 6.
+
 ### Document Phase 5
 
 ```markdown
@@ -93,7 +98,17 @@ Design decisions to make:
   - Training budget alert: $<X>/run
   - Tool: <CloudWatch Cost Explorer | GCP Billing | custom>
 - **Dashboard locations:** <links or "TBD">
+
+### Task list
+
+| id | goal | owned paths | acceptance | depends_on |
+|----|------|-------------|------------|------------|
+| <task id> | <goal> | <owned paths> | <acceptance command and expected evidence> | <ids or none> |
+
+- **Task count:** <N> — `services/<project_name>/tasks.yaml`
 ```
+
+Before the gate, summarize the plan and state the task count and the path `services/<project_name>/tasks.yaml`, so the user confirms plan and task list together.
 
 {{gate kind=phase}}
 

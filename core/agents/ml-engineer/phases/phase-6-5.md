@@ -72,7 +72,24 @@ Wait for the user's selection.
 
 ### Execute the selected path
 
-**[D] Deterministic pick:**
+Winner selection is also a lead loop. After the user picks a path, the lead appends the tasks for that path to `models/<name>/tasks.yaml` (entries with `phase: "6.5"`; for iteration, the existing service directory) and validates the list with `tasks_set`; each task cites the path's specification below through `plan_ref`. A task is one candidate re-run, evaluation or branch. Paths `[D]`, `[M]` and `[S]` need no worker and use `delegate: inline` or no tasks at all. Skip logic is unchanged: `[S]` and the "Skip this phase" case create no tasks.
+
+### Lead loop
+
+{{protocol delegated_build}} governs this phase. Task evidence guidance: {{protocol incremental_testing}}.
+
+{{delegate tasks=models/<name>/tasks.yaml max_parallel=3}}
+
+1. **Load and validate** the 6.5 tasks with `tasks_set` once the path is chosen and the user has agreed to the cost described for it.
+2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3 (candidate re-runs or branches with disjoint `owned_paths`).
+3. **Receive** each worker's result via `task_report`.
+4. **Verify before it counts.** Re-run (or independently check) the acceptance command (for example, re-read the candidate's metrics file and recompute the primary metric and infrastructure dimensions), compare with the `plan_ref` specification, then write an evidence row to the `## Validation` Evidence table (Check = task id + candidate, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone.
+5. **On failure**, re-dispatch with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary.
+6. **Deviations.** If a worker reports a deviation or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend only through a confirmed gate.
+7. **Continue** dispatching tasks unblocked by tasks you have verified as done.
+8. You write no training or evaluation code yourself unless a task is marked `delegate: inline`. Only the lead updates `eval-results.json` `bestCandidate`, and only from verified evidence.
+
+**[D] Deterministic pick:** (lead-side, one `delegate: inline` task or no task)
 1. Read `eval-results.json`.
 2. Select the candidate with best value on the primary metric (max or min per
    Phase 4 direction).
@@ -84,7 +101,7 @@ Wait for the user's selection.
 5. Update `eval-results.json`: set `bestCandidate.model`, `bestCandidate.metrics`,
    `bestCandidate.deltas` (vs. baseline). Recompute `summary.overallVerdict`.
 
-**[A] Solo AR on leading candidate:**
+**[A] Solo AR on leading candidate:** (one task per candidate re-run or iteration batch, owned paths limited to the Phase 5 mutable scope)
 1. Pre-flight: verify git (or DVC) is available per
    [`protocols/experiment_versioning.md`](../../../protocols/experiment_versioning.md)
    Section A. If unavailable, refuse and offer `[D]` instead.
@@ -101,7 +118,7 @@ Wait for the user's selection.
 5. On convergence: write converged metrics into `eval-results.json`
    `bestCandidate`. Record iterations consumed and budget spent in Phase 6.5 doc.
 
-**[F] AR fan-out across approach families:**
+**[F] AR fan-out across approach families:** (one task per branch; branches have disjoint owned paths and the lead verifies each branch's converged metrics before the arbiter runs)
 1. Pre-flight: verify git/DVC available and cost ceiling confirmed.
 2. Identify 2-3 approach families from Phase 4 candidates. Confirm mutual
    exclusivity and genuine viability with the user.
@@ -157,6 +174,12 @@ Append to `project-specs.md`:
     - `<branch-slug>`: <converged metric value> — <winner | runner-up>
 - **Infrastructure trade-off (if applicable):** <metric winner fails <dim> — user accepted | chose next-best | revisited Phase 5>
 - **eval-results.json bestCandidate:** Locked | Skipped — bestCandidate left as-is
+
+### Validation
+
+| Check | Expected | Observed | Pass/Fail |
+|---|---|---|---|
+| <task id> <candidate or branch> | <acceptance expected> | <recomputed metrics and infrastructure facts> | PASS \| FAIL |
 ```
 
 {{gate kind=phase}}

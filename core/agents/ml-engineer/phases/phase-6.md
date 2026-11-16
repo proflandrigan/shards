@@ -11,11 +11,11 @@
 executing. I'll be working from project-specs.md from here. Say the word when
 you're ready."
 
-Wait for any signal from the user before beginning build steps.
+Wait for any signal from the user before dispatching any task.
 
 **Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
-Goal: Build the feature queries, training notebook, and pipeline artifacts.
+Goal: Build the feature queries, training notebook, and pipeline artifacts as tested components, one task each, under a lead loop.
 
 **Join path self-check (feature queries):** Before requesting the Data Modeller
 review, trace the join path for each feature query following
@@ -60,11 +60,12 @@ already references it). On your side, no marker is needed for the Task call
 itself; auto-verify only matters when the calling agent is the one running
 the bulk queries.
 
-**Then build:**
+### Component specifications
 
-1. **SQL queries** — Write to:
-   - Greenfield: `models/<name>/queries/`
-   - Iteration: `<existing_service_dir>/queries/`
+Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: greenfield `models/<name>/`, iteration `<existing_service_dir>/`.
+
+**Spec A. Feature SQL queries** (one task per query file)
+   - Location: `<output_dir>/queries/`
    - Name files descriptively: `01_label_definition.sql`, `02_user_features.sql`,
      `03_behavioral_features.sql`, `04_training_dataset.sql`
    - Include header comments:
@@ -76,12 +77,10 @@ the bulk queries.
      -- Dependencies: <upstream tables>
      -- Output grain: one row per <entity>
      ```
+   - Acceptance: each query runs under `LIMIT 100` and returns the expected shape; row counts before/after joins match the Phase 3 prediction.
 
-2. **Training notebook** — Write using NotebookEdit to:
-   - Greenfield: `models/<name>/notebooks/`
-   - Iteration: `<existing_service_dir>/notebooks/`
-   Structure:
-   - **SQL loading rule** — **Do NOT re-embed SQL as Python strings.** Read `.sql`
+**Spec B. Training notebook** at `<output_dir>/notebooks/`, built with NotebookEdit. It is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group: data (Overview, Setup, Feature Engineering, EDA), baseline, candidate(s), analysis and infrastructure.
+   - **SQL loading rule.** **Do NOT re-embed SQL as Python strings.** Read `.sql`
      files directly using `Path.read_text()`. Reference files by relative path from
      the notebook location:
      ```python
@@ -99,17 +98,22 @@ the bulk queries.
    - **Infrastructure Readiness**: model size, inference time benchmarks,
      serving requirements check
    - **Results Summary**: final metrics, business interpretation, recommendation
+   - Acceptance per group:
+     - data: data-load and EDA cells execute and produce the expected shape; target distribution matches prior knowledge.
+     - baseline: baseline fits and evaluates on held-out data; metrics recorded.
+     - candidate: candidate smoke-fits on <=1% of data first (loss decreasing), then full fit; eval metrics beat the baseline floor.
+     - infra: model size, inference latency and memory measured against the Phase 5 budget.
 
-3. **Requirements file** — `requirements.txt` with all ML dependencies
+**Spec C. Requirements file.** `requirements.txt` with all ML dependencies.
 
-4. **Config file** (if applicable) — model hyperparameters, feature lists, thresholds
+**Spec D. Config file** (if applicable). Model hyperparameters, feature lists, thresholds.
 
-5. **Eval results JSON** — After training and evaluating models, write structured
-   results to the project's `eval-results.json`:
+**Spec E. Eval results JSON.** After training and evaluating models, the evaluation tasks record structured
+   results in the project's `eval-results.json`:
    - Greenfield: `models/<name>/eval-results.json`
    - Iteration: `<existing_service_dir>/eval-results.json`
 
-   The JSON must follow this schema:
+   `eval-results.json` is owned by a single sequential chain of tasks (never parallel tasks). The JSON must follow this schema:
    ```json
    {
      "variant": "ml-engineer",
@@ -149,18 +153,34 @@ the bulk queries.
    }
    ```
 
-   Write the file initially with `status: "running"` and null values. Update it
+   The file is created initially with `status: "running"` and null values. Update it
    as baseline and candidate models are evaluated. When complete, set
    `status: "complete"`, populate all metrics, compute `summary.overallVerdict`
    (PASS if all dimensions pass, FAIL if any fail, PARTIAL if mixed).
 
-   Emit the eval dashboard (agents always emit, whether or not a UI exists). Emit
-   once; afterwards keep rewriting `eval-results.json` and the panel updates in place:
+   The lead emits the eval dashboard (always emit, whether or not a UI exists). Emit
+   once; afterwards keep updating `eval-results.json` and the panel updates in place:
 
    {{artifact.emit type=eval-dashboard path=<path_to>/eval-results.json meta="title=Eval: <project_name> panel_id=eval-<project_name>"}}
 
-6. **Applied ML Scientist results review** — After baseline and candidate models
-   are trained and evaluated, consult the Applied ML Scientist to review the
+### Lead loop
+
+{{protocol delegated_build}} governs this phase. Task evidence guidance: {{protocol incremental_testing}} (test each component in isolation as its task completes; do not leave run-all until the end).
+
+{{delegate tasks=models/<name>/tasks.yaml max_parallel=3}}
+
+1. **Load the task list** approved at the plan gate (`<output_dir>/tasks.yaml`; for iteration, in the existing service directory) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
+2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3. Query tasks can run in parallel; notebook, baseline and candidate tasks follow their `depends_on` order.
+3. **Receive** each worker's result via `task_report`.
+4. **Verify before it counts.** Re-run (or independently check) the acceptance command, compare with the `plan_ref` specification, then write an evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail), with measured facts (for example `df.shape = (48211, 47)`, `null rate on join key = 0.00%`). Never mark a task done on the worker's word alone.
+5. **On failure**, re-dispatch the task with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary.
+6. **Deviations.** If a worker reports a deviation or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend the plan or task list only through a confirmed gate.
+7. **Continue** dispatching tasks unblocked by tasks you have verified as done.
+8. You write no build code yourself unless a task is marked `delegate: inline`.
+
+After the baseline and candidate tasks are verified done, run the results review below as the lead. Then finalize `eval-results.json` (status `complete`, summary verdict computed) and record the final integration evidence row before documenting the phase.
+
+**Applied ML Scientist results review (lead-side step, after the baseline and candidate tasks are verified done).** Consult the Applied ML Scientist to review the
    *actual results*, not just the design. AMS reviewed the plan at Phase 4; this
    is where the plan meets empirical reality. Skip if Phase 4's AMS consultation
    was skipped per the standard-tabular criteria.
@@ -214,25 +234,7 @@ Before this consult, collect the context the reviewer needs, because it cannot c
    ```
 
    Apply the Reviewer Verdict Protocol. Append the review to project-specs.md
-   under Phase 6.
-
-### Incremental testing — checkpoint gates between components
-
-{{protocol incremental_testing}} during this build. Each component above is a checkpoint seam — after you write and execute a component, raise a `kind=checkpoint` gate (macro below) with evidence before starting the next component. Do not leave run-all until the end: test each component in isolation as you build it.
-
-{{gate kind=checkpoint name=queries}}
-
-The macro above shows the first component (`name=queries`). For each later component call `gate_request` the same way with `kind=checkpoint` and that component's slug as the name (no `validates=`). Pass `evidence={status: pass|fail, checks: [...]}` with the component name, the exact test command you ran, and measured facts (for example `df.shape = (48211, 47)`, `null rate on join key = 0.00%`, `sample head matches expected schema`). Under the default `phase` policy a passing checkpoint is recorded automatically and you continue to the next component; a failing or anomalous one blocks and waits for the user.
-
-Expected checkpoint components for this phase (slugs are the suffix after `checkpoint-`; build in this order):
-
-- `ml-engineer-phase-6-checkpoint-queries` — each feature query returns expected shape under `LIMIT 100`; row counts before/after joins match Phase 3 prediction.
-- `ml-engineer-phase-6-checkpoint-data` — notebook data-load + EDA cells produce expected shape; target distribution matches prior knowledge.
-- `ml-engineer-phase-6-checkpoint-baseline` — baseline model fits and evaluates on held-out data; metrics recorded.
-- `ml-engineer-phase-6-checkpoint-candidate` — candidate model smoke-fits on ≤1% of data first (loss decreasing), then full fit; eval metrics beat baseline floor.
-- `ml-engineer-phase-6-checkpoint-infra` — model size, inference latency, memory measured against Phase 5 budget.
-
-If a checkpoint fails, it blocks until the user responds: STOP and wait, never confirm it yourself. After the user replies, diagnose, fix, and re-run the test, then call `gate_request` again with updated evidence before advancing.
+   under Phase 6 and record its verdict in `## Validation`.
 
 ### Document Phase 6
 
@@ -267,6 +269,12 @@ If a checkpoint fails, it blocks until the user responds: STOP and wait, never c
   - Memory usage: <X>MB (budget: <Y>MB) — Pass | Fail
 - **Deviations from plan:** <changes and why, or "none">
 - **Surprising findings:** <anything unexpected>
+
+### Validation
+
+| Check | Expected | Observed | Pass/Fail |
+|---|---|---|---|
+| <task id> <component> | <acceptance expected> | <measured facts> | PASS \| FAIL |
 ```
 
 {{gate kind=phase validates=ml-engineer}}

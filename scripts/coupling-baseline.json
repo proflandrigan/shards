@@ -15,5 +15,6 @@
   "subagent_type": 2,
   "ui_mode_files": 0,
   "ui_refs": 14,
-  "via_task_prose": 21
+  "via_task_prose": 21,
+  "write_whole_build": 0
 }

@@ -43,6 +43,11 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `bi-engineer` row).
 
 Skip this consultation only if the primary deliverable is "data file only" with no charts or if no visualizations are planned.
 
+### Decompose the plan into tasks
+
+Turn the plan just agreed into `studies/<project_name>/tasks.yaml`: one task per analysis section or notebook component (data load, each EDA block, each model, each figure group, report assembly). Each task needs an id, goal, `plan_ref` (the section of `project-specs.md` it implements), inputs, `owned_paths` (no overlap between tasks that can run in parallel), an acceptance command with the expected evidence, `depends_on`, `worker` (this agent), `phase` (6), and size (60 or less).
+Validate the list with the tasks_set tool; the rules are in {{protocol delegated_build}}. Add the `### Task list` table to the Phase 5 section of `project-specs.md` (see the template below) so the user approves plan and tasks together. The tasks are executed in Phase 6.
+
 ### Document Phase 5
 
 ```markdown
@@ -58,7 +63,17 @@ Skip this consultation only if the primary deliverable is "data file only" with 
   - Verdict: APPROVED | NEEDS REVISION
   - Tier: Proceed | Proceed with caveats
   - Reviewer resolution: Approved | User override — <rationale>
+
+### Task list
+
+| id | goal | owned paths | acceptance | depends_on |
+|----|------|-------------|------------|------------|
+| <task id> | <goal> | <owned paths> | <acceptance command and expected evidence> | <ids or none> |
+
+- **Task count:** <N> — `studies/<project_name>/tasks.yaml`
 ```
+
+Before the gate, summarize the plan and state the task count and the path `studies/<project_name>/tasks.yaml`, so the user confirms plan and task list together.
 
 {{gate kind=phase}}
 

@@ -122,8 +122,8 @@ confidently sign off on.
 
 - `validation_protocol.md` is the gate-level expression of this rule —
   evidence over assertion before closing any artifact-producing phase.
-- `incremental_testing.md` is the build-loop expression — test each
-  component as you write it; don't batch failures to the end.
+- `incremental_testing.md` is the build-loop expression — each task is one
+  tested component with its own evidence row; don't batch failures to the end.
 - This rule covers the gap between them: at the individual-task level,
   *state the verification check before you write the code*, not after.
 

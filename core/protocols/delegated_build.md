@@ -1,0 +1,59 @@
+---
+name: delegated-build
+description: Shared protocol — decompose the plan into a task list, then run the build as a lead loop that dispatches, verifies and records each task
+type: reference
+---
+
+# Delegated Build Protocol
+
+A build or execute phase is a loop run by the lead (the specialist agent). The plan phase before it turns the agreed plan into a task list. The build phase dispatches those tasks, verifies each result itself and records evidence. The lead owns the plan; workers own only their task (`{{protocol worker_contract}}`).
+
+## Task list format
+
+The task list is `<output_dir>/tasks.yaml` (the agent's own output directory). Top level: `version: 1` and `tasks`. Each task has `id`, `goal`, `plan_ref` (a section of `project-specs.md`), `inputs` (read-only context), `owned_paths`, `acceptance` (`command` and `expected`), `depends_on`, `worker` (the specialist's own agent id), `size` (minutes, 1 to 60), optional `phase` and optional `delegate` (`inline` or `worker`).
+
+```yaml
+version: 1
+tasks:
+  - id: stg-orders
+    goal: Staging model for orders with its tests
+    plan_ref: project-specs.md#phase-6-component-specifications
+    inputs: [data_models/shop/specs.md]
+    owned_paths: [data_models/shop/models/staging/stg_orders.sql]
+    acceptance:
+      command: dbt build --select stg_orders
+      expected: all tests pass, row count equals source
+    depends_on: []
+    worker: analytics-engineer
+    size: 20
+    phase: 6
+```
+
+## Decompose the plan into tasks (plan phase)
+
+Before the plan gate, turn the plan just agreed into the task list.
+
+- One task is one tested component: the smallest unit whose correctness can be checked on its own (see `{{protocol incremental_testing}}`).
+- Tasks that can run in parallel must have disjoint `owned_paths`. Tasks that touch the same path must be ordered with `depends_on`.
+- Every task has an acceptance command and the evidence it should produce. No acceptance, no task.
+- Keep `size` at 60 or less. Split larger components.
+- At most 2 tasks in a phase may use `delegate: inline` (the lead does them itself).
+- Validate with the `tasks_set` tool. It refuses overlaps, cycles, unknown workers and missing acceptance. Fix every listed problem.
+- Add a `### Task list` table (id, goal, owned paths, acceptance, depends_on) to the phase's section of `project-specs.md`. The user approves plan and tasks together at the plan gate; the gate summary names the task count and the `tasks.yaml` path.
+
+## Lead loop (build phase)
+
+1. Load the task list approved at the plan gate and call `tasks_set`.
+2. Call `task_dispatch` for every ready task (dependencies satisfied), in parallel up to the thread cap.
+3. Each worker returns one result through `task_report`.
+4. LEAD VERIFICATION. A task counts only after the lead has checked it. Re-run the acceptance command (or check the evidence independently), compare the outcome with the `plan_ref` section, and write a per-task evidence row to the `## Validation` Evidence table of `project-specs.md` (Check = task id and component, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word.
+5. On a failed check, re-dispatch with the failure output as feedback. Allow at most 2 retries. Then stop and ask the user, with a summary of what failed.
+6. Deviations or a plan that cannot be met: pause the dependent tasks and follow `{{protocol plan_drift}}`. The plan and `tasks.yaml` change only through a confirmed gate.
+7. Dispatch the tasks that the verified tasks have unblocked. Repeat from step 2.
+8. The lead writes no build code itself, except for tasks marked `delegate: inline`.
+
+When all tasks are verified, run the final integration checks (for example Restart and Run All, or the full project build). Only then request the phase gate, with the evidence table as its evidence. See `{{protocol validation}}`.
+
+## Sequential or inline fallback
+
+Where parallel workers are not available, the lead works through the same task cards one at a time, as inline tasks. The cards, acceptance checks and evidence rows are identical. Verification still means running the acceptance command and recording the observed result before the next task starts.

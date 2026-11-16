@@ -181,6 +181,6 @@ Tool names are prefixed per target (see `build/MACROS.md` section 5).
 | Write enforcement of owned paths | `isPathAllowed` exists with no caller. `TODO(E5.9/E11.6)`. |
 | Lead verification of `reported` tasks | Not recorded by any tool. `TODO(E12.5)`. |
 | Auto-pause on deviation and amendment refusal in `tasks_set` | Done (E12.6): `runtime/tasks/drift.js`, covered by `test/tasks-drift.test.js`. |
-| Phase rewrites for delegated build | `TODO(E12.3/E12.4)`. |
+| Phase rewrites for delegated build | Done (E12.3/E12.4): build phases are lead loops over `<output_dir>/tasks.yaml` (`core/protocols/delegated_build.md`); planning phases decompose the plan into tasks. `core/protocols/incremental_testing.md` is folded in as the task evidence guide (checkpoint gates removed). Guarded by `test/delegated-build.test.js` and the `write_whole_build` coupling metric. |
 | Subagent generation for workers | The `worker` entry is validated but no subagent is generated. `TODO(E5.3)`. |
 | Lease heartbeats and stale sweeps | Functions exist; no scheduler calls them. |
