@@ -11,7 +11,7 @@ const path = require('path');
 
 const ID_RES = [
   /\b(?:opus|sonnet|haiku)\b[-\w.]*/i,
-  /\bclaude-[\w.-]+/i,
+  /\bclaude-(?!code\b)[\w.-]+/i, // claude-code is a host name, not a model
   /\bgpt-[\w.-]+/i,
   /\bgemini-[\w.-]+/i,
   /\b[a-z][a-z0-9-]*-20\d{6}\b/i, // dated ids, e.g. foo-20250101

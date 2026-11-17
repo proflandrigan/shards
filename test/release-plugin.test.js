@@ -83,7 +83,7 @@ describe('release plugin hooks', () => {
   const cmds = () => Object.values(json(OUT, 'hooks/hooks.json').hooks).flatMap((gs) => gs.flatMap((g) => g.hooks.map((h) => h.command)));
   it('every hook command path exists in the package', () => {
     const cs = cmds();
-    expect(cs.length).toBe(3);
+    expect(cs.length).toBe(4); // recorder, handshake, re-ground + SubagentStop (S5F)
     for (const c of cs) {
       const m = /node "([^"]+)"/.exec(c);
       expect(m).toBeTruthy();
