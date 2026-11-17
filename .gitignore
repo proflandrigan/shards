@@ -22,3 +22,7 @@ adapters/
 
 # Generated release plugin output (shards build --marketplace; E10.4 publishes it)
 plugins/
+
+# Local tool state and the legacy installer's generated guide copy
+.serena/
+/docs/shards-guide/
