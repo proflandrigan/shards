@@ -9,7 +9,7 @@ const COMMANDS = {
   gates: { summary: 'Gate status and interim operator confirm (E11.13 replaces this)', run: (argv) => require('./commands/gates').run(argv) },
   doctor: { summary: 'Check prerequisites, config, MCP, hooks, git state and gate permissions', run: (argv) => require('./commands/doctor').run(argv) },
   sessions: { summary: 'List, show, resume and end sessions without the UI', run: (argv) => require('./commands/sessions').run(argv) },
-  migrate: { summary: 'Migrate a legacy install (only --export-ledger so far; full migrate in E10.1)', run: (argv) => require('./commands/migrate').run(argv) },
+  migrate: { summary: 'Migrate a legacy v1 install to v2 (ledger export, gate-history import, manifest-driven cleanup)', run: (argv) => require('./commands/migrate').run(argv) },
   // EXTENSION POINT: register doctor / gates / sessions here, e.g.
   //   doctor: { summary: '...', run: (argv) => require('./doctor').run(argv) },
 };
@@ -22,7 +22,7 @@ function usage() {
   lines.push('gates: gates status [--session k] [--root d] | gates confirm <gate-id> [--session k] [--changes "note"] [--root d]');
   lines.push('doctor: doctor [--root d] [--json] [--fix]');
   lines.push('sessions: sessions list|show|resume|end [id] [--root d] [--status s] [--limit n] [--json]');
-  lines.push('migrate: migrate --export-ledger [--root d] [--out d] [--dry-run] [--force]  (ledger-export step only; full migrate arrives in E10.1)');
+  lines.push('migrate: migrate [--export-ledger] [--root d] [--out d] [--dry-run] [--force]  (full legacy migrate; --export-ledger = ledger step only)');
   return lines.join('\n');
 }
 

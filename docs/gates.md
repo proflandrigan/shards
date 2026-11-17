@@ -372,3 +372,16 @@ Other tool responses carry only the state header (`docs/runtime.md` section 4).
 - Auto-verify: `auto_verify_start/auto_verify_end` tools + `runtime/auto-verify/`; the PreToolUse shim auto-approves allowlisted calls inside the budget/TTL; gates always win.
 - Operator CLI: `shards gates status|history|checkpoints|violations|force-close|confirm`; `gate_force_close` tool follows the tier 2 rule. Force-closed gates are terminal, never count as confirmed, and can be re-requested.
 - Re-ground: `runtime/reground.js` on activate/load_phase/SessionStart compact+resume; fixture `scripts/reground-fixture.js --check` (OPEN: live 3/3 compaction criterion).
+
+## 10. Legacy migration (E10.1) and gate-history import (E11.11)
+
+`shards migrate [--dry-run] [--root d]` migrates a v1 install. Code: `cli/commands/migrate.js` (orchestration), `cli/commands/migrate-legacy.js` (removal), `runtime/gates/legacy-import.js` (history import). Test fixture builder: `test/fixtures/legacy-install.js` plus `test/fixtures/legacy-gates/`.
+
+Steps, in order:
+
+1. Ledger export (`.shards/knowledge` to `docs/knowledge`, the ledger stays in place).
+2. Gate-history import. Reads `.shards/gates/state.json` in the single-slot or the v2 `sessions` format, plus `gates.jsonl`. Every `history[]` entry becomes a `confirmed` gate in `.shards/state/sessions/legacy-import/gates.json` with `proof.tier: "legacy-import"`. Duplicate ids get `.2`, `.3` suffixes. `closed` events in `gates.jsonl` beyond what `history[]` holds are added too. A gate still open in the legacy state is imported as `changes_requested` (it never blocks v2). Unknown kinds become `phase`. `gates.jsonl` is copied verbatim to `legacy-gates.jsonl` in the same session directory. One note on `HEAD` under `refs/notes/shards-legacy-gates` lists every imported gate (skipped without a repository). The legacy gate files move to `.shards/archive/legacy-gates/`; nothing is deleted.
+3. Removal, manifest-driven. Only files in `.claude/.shards-manifest.json` are removed, and only if their mtime is not later than `installedAt` plus 60 s (otherwise they are reported as skipped and stay recorded in a rewritten manifest). Paths that escape the root are ignored. Hook entries in `.claude/settings.json` are removed per inner hook (manifest `hookEntries`, or a `gate-hook.js` / `relay.js` / `ui-push` / `.shards/ui` match); user hooks stay. `.shards/hooks/gate-hook.js` and `gate-hook/` go; `.shards/runtime` is only reported. The `## Shards — Agent Suite` and `## Shards — Tool-call conventions` blocks are cut from `CLAUDE.md`.
+4. Summary. Output folders are never touched. Nothing is committed.
+
+Re-running is a no-op. The command refuses to run inside the shards source repo.

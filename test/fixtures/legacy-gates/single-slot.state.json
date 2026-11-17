@@ -1,0 +1,14 @@
+{
+  "open": true,
+  "id": "data-analyst-phase-3",
+  "phase": "3",
+  "kind": "phase",
+  "agent": "data-analyst",
+  "opened_at": "2026-05-03T10:00:00.000Z",
+  "opened_in_turn": 12,
+  "transcript_ref": "/tmp/t.jsonl",
+  "history": [
+    { "id": "data-analyst-phase-1", "phase": "1", "kind": "phase", "opened_at": "2026-05-03T09:00:00.000Z", "closed_at": "2026-05-03T09:05:00.000Z", "confirmed_by": "user-prompt" },
+    { "id": "data-analyst-phase-2", "phase": "2", "kind": "final", "opened_at": "2026-05-03T09:10:00.000Z", "closed_at": "2026-05-03T09:20:00.000Z", "confirmed_by": "user-prompt" }
+  ]
+}

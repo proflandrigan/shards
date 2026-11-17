@@ -61,4 +61,4 @@ See `shards migrate --help` for the full flag reference.
 
 Once committed, the exported entries are plain repo docs and the default `git` binding finds them through `knowledge.search`.
 
-The full `shards migrate` (beyond ledger export) arrives in E10.1. Publishing exported entries to Confluence is a later skill (E4.5b, Milestone C).
+`shards migrate` without `--export-ledger` runs this export as step 1 of the full legacy migration (E10.1, see `docs/gates.md` section 10). Publishing exported entries to Confluence is a later skill (E4.5b, Milestone C).

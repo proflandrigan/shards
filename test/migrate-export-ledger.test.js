@@ -104,15 +104,15 @@ describe('migrate --export-ledger', () => {
     } finally { fs.rmSync(empty, { recursive: true, force: true }); }
   });
 
-  it('help and registration say this is only the ledger-export step (E10.1)', () => {
-    expect(HELP).toContain('E10.1');
-    expect(HELP).toMatch(/only the ledger-export step/);
-    expect(COMMANDS.migrate.summary).toContain('E10.1');
+  it('help and registration describe the migrate command', () => {
+    expect(HELP).toContain('--export-ledger');
+    expect(HELP).toMatch(/Full migrate/);
+    expect(COMMANDS.migrate.summary).toMatch(/legacy/);
     const h = capture(() => run(['--help']));
     expect(h.code).toBe(0);
-    expect(h.out).toContain('E10.1');
+    expect(h.out).toContain('--dry-run');
     const top = capture(() => main(['--help']));
-    expect(top.out).toMatch(/migrate .*E10\.1/);
-    expect(capture(() => run([])).code).toBe(2);
+    expect(top.out).toMatch(/migrate .*--export-ledger/);
+    expect(capture(() => run(['--bogus'])).code).toBe(2);
   });
 });
