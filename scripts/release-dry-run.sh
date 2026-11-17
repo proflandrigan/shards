@@ -81,10 +81,10 @@ cmds_ok() {
   local listed c
   listed="$(awk '/^Commands:/{f=1;next} f&&/^  [a-z]/{print $1} f&&/^$/{exit}' <<<"$HELP" | sort | tr '\n' ' ')"
   echo "  commands listed: $listed"
-  for c in build uninstall-dev gates doctor sessions migrate install; do grep -qw "$c" <<<"$listed" || { echo "  missing command: $c"; return 1; }; done
-  [ "$listed" = "build doctor gates install migrate sessions uninstall-dev " ] || { echo "  unexpected command set"; return 1; }
+  for c in build uninstall-dev gates doctor sessions migrate install sync connect; do grep -qw "$c" <<<"$listed" || { echo "  missing command: $c"; return 1; }; done
+  [ "$listed" = "build connect doctor gates install migrate sessions sync uninstall-dev " ] || { echo "  unexpected command set"; return 1; }
 }
-step "shards --help lists exactly build, doctor, gates, install, migrate, sessions, uninstall-dev" cmds_ok
+step "shards --help lists exactly build, connect, doctor, gates, install, migrate, sessions, sync, uninstall-dev" cmds_ok
 
 # ---- 5. doctor in a clean non-git dir ----
 DOC="$SCRATCH/clean"; mkdir -p "$DOC"

@@ -1,20 +1,19 @@
 {
-  "auto_verify": 6,
-  "auto_verify.closes": 4,
-  "auto_verify.opens": 2,
-  "claude_dir_refs": 64,
-  "compact": 3,
-  "gate_fences": 11,
+  "auto_verify": 0,
+  "auto_verify.closes": 0,
+  "auto_verify.opens": 0,
+  "claude_dir_refs": 62,
+  "compact": 1,
+  "gate_fences": 1,
   "gate_fences.by_kind": {
-    "checkpoint": 1,
-    "unspecified": 10
+    "unspecified": 1
   },
-  "ledger_refs": 36,
+  "ledger_refs": 6,
   "missing_templates": 0,
   "model_pins": 0,
-  "subagent_type": 2,
+  "subagent_type": 0,
   "ui_mode_files": 0,
-  "ui_refs": 14,
-  "via_task_prose": 21,
+  "ui_refs": 1,
+  "via_task_prose": 3,
   "write_whole_build": 0
 }
