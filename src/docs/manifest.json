@@ -1,0 +1,269 @@
+{
+  "version": 2,
+  "sections": [
+    {
+      "title": "Getting Started",
+      "dir": "01-getting-started",
+      "pages": [
+        {
+          "title": "Installation",
+          "path": "01-getting-started/install.md"
+        },
+        {
+          "title": "Your First Session",
+          "path": "01-getting-started/first-session.md"
+        },
+        {
+          "title": "Core Concepts",
+          "path": "01-getting-started/concepts.md"
+        }
+      ]
+    },
+    {
+      "title": "Agents",
+      "dir": "02-agents",
+      "pages": [
+        {
+          "title": "Agent Taxonomy",
+          "path": "02-agents/overview.md"
+        },
+        {
+          "title": "Syn \u2014 Orchestrator",
+          "path": "02-agents/syn.md"
+        },
+        {
+          "title": "Academic",
+          "path": "02-agents/academic.md"
+        },
+        {
+          "title": "AI Engineer",
+          "path": "02-agents/ai-engineer.md"
+        },
+        {
+          "title": "Analytics Engineer",
+          "path": "02-agents/analytics-engineer.md"
+        },
+        {
+          "title": "Applied ML Scientist",
+          "path": "02-agents/applied-ml-scientist.md"
+        },
+        {
+          "title": "Backend Engineer",
+          "path": "02-agents/backend-engineer.md"
+        },
+        {
+          "title": "BI Engineer",
+          "path": "02-agents/bi-engineer.md"
+        },
+        {
+          "title": "Data Analyst",
+          "path": "02-agents/data-analyst.md"
+        },
+        {
+          "title": "Data Engineer",
+          "path": "02-agents/data-engineer.md"
+        },
+        {
+          "title": "Data Modeller",
+          "path": "02-agents/data-modeller.md"
+        },
+        {
+          "title": "Data Scientist",
+          "path": "02-agents/data-scientist.md"
+        },
+        {
+          "title": "Deep Learning Engineer",
+          "path": "02-agents/deep-learning-engineer.md"
+        },
+        {
+          "title": "ML Engineer",
+          "path": "02-agents/ml-engineer.md"
+        },
+        {
+          "title": "MLOps Engineer",
+          "path": "02-agents/mlops-engineer.md"
+        },
+        {
+          "title": "Researcher",
+          "path": "02-agents/researcher.md"
+        }
+      ]
+    },
+    {
+      "title": "Protocols",
+      "dir": "03-protocols",
+      "pages": [
+        {
+          "title": "The Gate Pattern",
+          "path": "03-protocols/gate-pattern.md"
+        },
+        {
+          "title": "Activation Modes",
+          "path": "03-protocols/activation-modes.md"
+        },
+        {
+          "title": "Delegated Build",
+          "path": "03-protocols/delegated-build.md"
+        },
+        {
+          "title": "Knowledge",
+          "path": "03-protocols/knowledge.md"
+        },
+        {
+          "title": "Auto-Verify Mode",
+          "path": "03-protocols/auto-verify.md"
+        },
+        {
+          "title": "Autonomous Research (AR)",
+          "path": "03-protocols/autonomous-research.md"
+        },
+        {
+          "title": "Behavioral Rules",
+          "path": "03-protocols/behavioral-rules.md"
+        },
+        {
+          "title": "DIVERGE: Time-Travel Branches",
+          "path": "03-protocols/diverge.md"
+        },
+        {
+          "title": "Engineering Guidelines",
+          "path": "03-protocols/engineering-guidelines.md"
+        },
+        {
+          "title": "Experiment Versioning",
+          "path": "03-protocols/experiment-versioning.md"
+        },
+        {
+          "title": "Incremental Testing",
+          "path": "03-protocols/incremental-testing.md"
+        },
+        {
+          "title": "Join-Path Protocol",
+          "path": "03-protocols/join-path.md"
+        },
+        {
+          "title": "Reviewer Verdicts",
+          "path": "03-protocols/reviewer-verdicts.md"
+        },
+        {
+          "title": "Decompose & Swarm: Parallel Slices for Large Work",
+          "path": "03-protocols/swarm.md"
+        },
+        {
+          "title": "Validation Protocol",
+          "path": "03-protocols/validation.md"
+        }
+      ]
+    },
+    {
+      "title": "Studio",
+      "dir": "04-studio",
+      "pages": [
+        {
+          "title": "Studio",
+          "path": "04-studio/overview.md"
+        },
+        {
+          "title": "Chat",
+          "path": "04-studio/chat.md"
+        },
+        {
+          "title": "Artifact Panels",
+          "path": "04-studio/panels.md"
+        },
+        {
+          "title": "Sessions",
+          "path": "04-studio/sessions.md"
+        },
+        {
+          "title": "Workspace",
+          "path": "04-studio/workspace.md"
+        }
+      ]
+    },
+    {
+      "title": "Commands and CLI",
+      "dir": "05-commands",
+      "pages": [
+        {
+          "title": "Slash Command Reference",
+          "path": "05-commands/reference.md"
+        },
+        {
+          "title": "The `shards` CLI",
+          "path": "05-commands/cli.md"
+        },
+        {
+          "title": "`shards doctor`",
+          "path": "05-commands/doctor.md"
+        },
+        {
+          "title": "Sessions",
+          "path": "05-commands/sessions.md"
+        },
+        {
+          "title": "`shards migrate`",
+          "path": "05-commands/migrate.md"
+        }
+      ]
+    },
+    {
+      "title": "Outputs",
+      "dir": "06-outputs",
+      "pages": [
+        {
+          "title": "Output Directory Map",
+          "path": "06-outputs/directory-map.md"
+        }
+      ]
+    },
+    {
+      "title": "Workflows",
+      "dir": "07-workflows",
+      "pages": [
+        {
+          "title": "Workflow: AI Engineering, Eval-First",
+          "path": "07-workflows/ai-eval-first.md"
+        },
+        {
+          "title": "Workflow: Deep Study to Production Model",
+          "path": "07-workflows/deep-study-to-production.md"
+        },
+        {
+          "title": "Workflow: DIVERGE Exploration",
+          "path": "07-workflows/diverge-exploration.md"
+        },
+        {
+          "title": "Workflow: Quick Adhoc Analysis",
+          "path": "07-workflows/quick-analysis.md"
+        }
+      ]
+    },
+    {
+      "title": "Jobs and Bindings",
+      "dir": "08-bindings",
+      "pages": [
+        {
+          "title": "Jobs and bindings",
+          "path": "08-bindings/overview.md"
+        },
+        {
+          "title": "Configuration: shards.config.yaml",
+          "path": "08-bindings/config.md"
+        },
+        {
+          "title": "Git binding",
+          "path": "08-bindings/git-binding.md"
+        },
+        {
+          "title": "Writing a binding",
+          "path": "08-bindings/writing-a-binding.md"
+        },
+        {
+          "title": "Integrations status",
+          "path": "08-bindings/integrations-status.md"
+        }
+      ]
+    }
+  ]
+}

@@ -2,57 +2,60 @@
 
 > Intense, infrastructure-focused. The shard for production ML systems.
 
-Specializes in production machine learning — recommenders, ranking, classification, regression, and end-to-end ML pipelines. Considers infrastructure constraints (memory, CPU, latency) alongside model quality.
+Specializes in production machine learning: recommenders, ranking, classification, regression and end-to-end ML pipelines, greenfield or iteration. Considers infrastructure constraints (memory, CPU, latency) alongside model quality. Also reviews notebooks in service mode for model-domain projects (`models/`, `research/`, `services/`).
 
 ## Activation menu
 
-- `[T]` Triage — Scope a new project, classify greenfield vs. iteration.
-- `[B]` Build — Full phased ML engineering workflow.
-- `[R]` Review — Evaluate an existing ML model or pipeline.
-- `[ADV]` Advisory — Discuss options, trade-offs, methodology.
-- `[EX]` Experiment — Targeted experiments on an existing model.
-- `[AR]` Autonomous Research — Self-steering loop against a metric.
+On a switch, the agent shows this menu and waits for input.
+
+- `[T]` Triage: scope a new project, classify greenfield vs. iteration.
+- `[B]` Build: full phased ML engineering workflow.
+- `[R]` Review: evaluate an existing ML model or pipeline.
+- `[ADV]` Advisory: discuss options, trade-offs, methodology.
+- `[NW]` Notebook: live cell-by-cell walkthrough of a Jupyter notebook.
+- `[EX]` Experiment: targeted experiments on an existing model.
+- `[AR]` Autonomous Research: self-steering loop against a metric.
 
 ## Modes
 
-| Mode | File | Purpose |
-|---|---|---|
-| Phases (Build) | `specific_instructions/ml_engineer/phases/` | Full phased workflow — one file per phase, progressively loaded. |
-| Review | `specific_instructions/ml_engineer/review.md` | Review-only. |
-| Advisory | `specific_instructions/ml_engineer/advise.md` | Advisor mode. |
-| Experiment | `specific_instructions/ml_engineer/experiment.md` | Fixed-N experimentation. |
-| Experiment UI | `specific_instructions/ml_engineer/experiment_ui_mode.md` | Experiment with UI dashboard. |
-| Research | `specific_instructions/ml_engineer/research.md` | Autonomous Research loop. |
-| Research UI | `specific_instructions/ml_engineer/research_ui_mode.md` | AR with UI dashboard. |
-| BI handoff | `specific_instructions/ml_engineer/bi_engineer_handoff.md` | Monitoring dashboard handoff. |
+Mode files live in `core/agents/ml-engineer/modes/` and are loaded on demand.
+
+| Mode file | Purpose |
+|---|---|
+| `advise.md` | Conversational advisor: options and trade-offs without committing to a build. Also the `advise` consult entry. |
+| `bi_engineer_handoff.md` | Outgoing handoff brief for the BI Engineer. |
+| `experiment.md` | Fixed-N experiments on an existing system (`[EX]`). |
+| `notebook_walkthrough.md` | Live cell-by-cell notebook walkthrough (`[NW]`). |
+| `research.md` | Autonomous Research loop (`[AR]`); see [Autonomous Research](../03-protocols/autonomous-research.md). |
+| `review.md` | `[R]` review of an existing artifact, and the `review` consult entry used when other agents ask this agent for a review. |
+| `service.md` | The `service` consult entry: a stripped-down, single-question mode other agents call; returns a verdict and nothing else. |
+| `validation_checklist.md` | Checklist read during the build phase to satisfy the [validation protocol](../03-protocols/validation.md). |
+| `worker.md` | The `worker` entry used by [delegated build](../03-protocols/delegated-build.md) and fan-out: one task card, one acceptance check, one JSON result. |
 
 ## Phases (Build mode)
 
-1. **Business Requirements** — problem, decision, users, cost of error.
-2. **Scope and Constraints** — serving mode, latency, throughput, fallback.
-3. **Data and Feature Discovery** — Data Modeller consult; label definition; feature candidates.
-4. **Model Design** — baseline/candidates, evaluation strategy; optional cross-specialist review.
-5. **Infrastructure Design** — training pipeline, serving, monitoring, rollback.
-6. **Execute** — build feature queries, training notebook, `eval-results.json`.
-7. **Review and Handoff** — Backend Engineer code review, MLOps Engineer infrastructure review, Syn final review, model card, report.
+Phase bodies are served one at a time by the `load_phase` tool, which refuses until the previous phase's gate is confirmed. Every phase ends with a `gate_request` call; only a human confirms it. See [The Gate Pattern](../03-protocols/gate-pattern.md).
 
-## Consultants
+1. **Business Requirements**: problem, decision, users, cost of error.
+2. **Scope and Constraints**: serving mode, latency, throughput, fallback; Data Engineer review.
+3. **Data and Feature Discovery**: Data Modeller consult; label definition; feature candidates.
+4. **Model Design**: baselines and candidates; optional Applied ML Scientist, Deep Learning Engineer, Data Scientist, Data Analyst and Researcher reviews.
+5. **Infrastructure Design**: training pipeline, serving, monitoring, rollback; Data Engineer and Data Modeller review.
+6. **Execute** (validated): feature queries, training notebook, `eval-results.json`; build work can be delegated.
+7. **Winner Selection** (phase 6.5, optional): picks among candidate runs; the phase file says when to skip.
+8. **Review and Handoff**: Backend Engineer, MLOps Engineer, Academic (model card ethics) and other reviews, code review, Syn sign-off, model card, report.
 
-- **Data Engineer** — Phase 2, Phase 5.
-- **Data Modeller** — Phase 3, Phase 5, Phase 6.
-- **Data Scientist** — Phase 4 when productionizing a study.
-- **Applied ML Scientist** — Phase 4 when non-standard methodology is needed.
-- **Deep Learning Engineer** — Phase 4 when a DL approach is warranted.
-- **Data Analyst** — Phase 4 when high interpretability is required.
-- **Researcher** — Phase 4 when statistical inference matters.
-- **Backend Engineer** — Phase 7 code review.
-- **MLOps Engineer** — Phase 7 serving/infrastructure review.
-- **Academic** — Phase 7 model card ethics review.
-- **Syn** — Phase 7 final review.
+## Consults and reviewers
+
+Consults are isolated subagents that answer one question and return a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)). They never nest.
+
+- **Calls out to:** Data Engineer (phases 2, 5), Data Modeller (phases 3-7), the model-design reviewers listed under phase 4, Backend Engineer, MLOps Engineer, Academic and Syn (phase 7).
+- **Declared reviewers** (`agent.yaml`): Data Modeller, Data Engineer, Data Scientist, Applied ML Scientist, Deep Learning Engineer, Data Analyst, Researcher, Academic, MLOps Engineer, Backend Engineer, Syn.
+- **Consulted by (reverse of declared reviewers):** [AI Engineer](ai-engineer.md), [Data Scientist](data-scientist.md), [Deep Learning Engineer](deep-learning-engineer.md), [MLOps Engineer](mlops-engineer.md), [Syn](syn.md).
 
 ## Output directory
 
-`models/<project_name>/` (greenfield) or the existing service directory (iteration).
+`models/<project_name>/` (greenfield) or the existing service directory (iteration)
 
 ```
 models/<project>/
@@ -65,11 +68,17 @@ models/<project>/
 └── bi_engineer_handoff.md   (optional)
 ```
 
-## Entry points
+Gate-confirmed phases are committed to git as the record. Where each agent writes is listed in [Output Directory Map](../06-outputs/directory-map.md).
 
-- Slash command: `/ml-engineer`
-- Skill: `ml-engineer`
-- Through Syn triage (`/shards`)
+## How to start
+
+- **Claude Code:** `/shards:ml-engineer` (switch skill; calls `activate`).
+- **Codex:** `$ml-engineer`, or `codex --profile shards-ml-engineer`.
+- **Through Syn:** `/shards:syn` triages and calls `activate(agent="ml-engineer", mode="switch")`.
+- **Consult subagents:** `ml-engineer`, `ml-engineer-review`, `ml-engineer-advise`, `ml-engineer-service`, `ml-engineer-worker`.
+- **Fan-out and delegated build:** the `ml-engineer-worker` entry; see [Activation Modes](../03-protocols/activation-modes.md) and [Delegated Build](../03-protocols/delegated-build.md).
+
+Reference material is reached through the `knowledge` job; see [Knowledge](../03-protocols/knowledge.md). Nothing is published yet, so install from source: [Install](../01-getting-started/install.md).
 
 ## See also
 
@@ -77,4 +86,4 @@ models/<project>/
 - [Applied ML Scientist](applied-ml-scientist.md)
 - [Deep Learning Engineer](deep-learning-engineer.md)
 - [Autonomous Research](../03-protocols/autonomous-research.md)
-- Source: `src/agents/ml-engineer.md`
+- Source: `core/agents/ml-engineer/AGENT.md`, `core/agents/ml-engineer/agent.yaml`

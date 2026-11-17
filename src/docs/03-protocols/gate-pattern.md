@@ -1,65 +1,96 @@
 # The Gate Pattern
 
-The single most important idea in Shards: **documentation is the gate**. Every specialist must write its decision to `project-specs.md` and get your confirmation before advancing to the next phase.
+The single most important idea in Shards: **documentation is the gate**. Every specialist writes its decision to `project-specs.md` and gets your confirmation before advancing to the next phase.
 
 ## Why
 
-It's easy for an agent to rush ahead and produce code that was never aligned with what you actually wanted. The gate pattern forces alignment at every step — you see the decision in writing *before* the work is done, and you can redirect cheaply.
+It is easy for an agent to rush ahead and produce code that was never aligned with what you wanted. A gate forces alignment at every step. You see the decision in writing before the work is done, and you can redirect cheaply.
 
-## How it works
+## Gates are tool calls
 
-Every phase ends with the same three-step sequence:
+In v2 a gate is a tool call, not text in a document (ADR 0008). Every phase ends the same way:
 
-1. The specialist writes its decisions to the phase section of `project-specs.md`, wrapped in a `::GATE:: ... ::ENDGATE::` fence.
-2. The specialist reads the section back to you.
-3. The specialist waits for your confirmation before continuing.
+1. The specialist writes its decisions to the phase section of `project-specs.md`.
+2. It reads the section back to you.
+3. It calls `gate_request` (`id`, `kind`, `phase`, `summary`, `record_ref`, optional `validates` and `evidence`) and stops.
+4. It waits. The agent has no tool that confirms its own gate. Only a human confirms.
 
-Gates are **machine-enforced** by three Claude Code hooks installed at `.shards/hooks/gate-hook.js`:
+`load_phase` refuses to serve phase N until the gate for phase N-1 is confirmed, so the chain holds on every host, including hosts without hooks. A gate belongs to the switched-in agent frame that opened it (see [Activation Modes](activation-modes.md)). Consult and fan-out workers never hold gates. A frame cannot `return` while it has a pending gate, unless the gate is suspended.
 
-| Hook | Trigger | Effect |
+## Kinds
+
+| Kind | Advances the phase | On confirm |
 |---|---|---|
-| `Stop` | When the model stops generating | Checks for open gate fences; blocks closure until gate is resolved. |
-| `PreToolUse` | Before any tool call | Rejects tool calls that would bypass the current gate. |
-| `UserPromptSubmit` | When you submit a new prompt | Validates gate state transitions. |
+| `phase` | yes | commits the output directory |
+| `final` | yes | commits |
+| `execute` | yes | commits (an experiment or Autonomous Research iteration finished) |
+| `handoff` | yes | commits (specialist-to-specialist transition) |
+| `checkpoint` | no | no commit (mid-build component seam, see [Incremental Testing](incremental-testing.md)) |
+| `confirm` | no | no commit (micro-confirmation) |
 
-State is tracked in `.shards/gates/state.json`.
+Unknown kinds are rejected. A gate that sets `validates=<agent>` makes the runtime check the `## Validation` section of the record before the gate opens (see [Validation](validation.md)).
 
-## Gate fence syntax
+## Who confirms: tiers
 
-Inside `project-specs.md`:
+Confirmation needs proof that a human acted. There are three tiers, and the runtime uses whichever the host supports.
 
-```
-## Phase 3: Analysis Methodology
+| Tier | How | Notes |
+|---|---|---|
+| 1 | `gate_request` elicits an Approve / Request changes form | Interactive Claude Code only. Otherwise the gate stays pending. |
+| 2 | The agent calls `gate_advance` and you approve the host permission prompt | The PreToolUse hook must have forced an `ask` in a supervised permission mode. Off on Codex. |
+| 3 | The agent calls `gate_confirm` with your reply | Your reply must be the first, whole, unused user message after the gate was requested. |
 
-::GATE::
-**Method:** Propensity score matching.
-**Reason:** Observational data, need to control for confounders.
-**Reviewer verdict (Researcher):** SOUND.
-::ENDGATE::
-```
+A refused confirmation leaves the gate pending. If you request changes, the agent revises and calls `gate_request` again with the same id.
 
-Everything between the fences is the gate decision. The hooks parse these fences, identify which are open (no confirmation yet) vs. closed (confirmed), and enforce the flow.
+## Policies
 
-## Diagnostics
+`gates.policy` in `shards.config.yaml` sets how much human confirmation is needed (see [Config](../08-bindings/config.md)):
+
+- `strict`: a human confirms every gate, including checkpoint and confirm.
+- `phase` (default): `phase`, `final`, `execute` and `handoff` need a human. `checkpoint` and `confirm` gates are recorded automatically when the agent passes `evidence: { status: "pass" }`. A fail, an anomaly or missing evidence leaves them pending.
+- `plan`: you approve a `plan-approval` gate (plan plus budget) once. After that every gate is a notice until a failure, anomaly or budget limit puts a human back in the loop. Goal mode (unattended Autonomous Research and experiment loops) is this policy.
+
+## What a confirmed gate does
+
+Confirming an advancing gate commits the agent's output directory to git (ADR 0005). Active fan-out slice paths are excluded. Checkpoint and confirm gates do not commit. If a commit cannot run, the record is kept and `shards doctor --fix` can replay it (see [Doctor](../05-commands/doctor.md)).
+
+## Enforcement
+
+- **PreToolUse hook** (Claude Code plugin hooks): while the top frame has a pending gate, write and exec calls from callers without a fan-out lease are denied. This includes subagents without a lease binding (ADR 0011). A worker holding a lease may write inside its slice. Reads are never blocked. Suspended gates do not block writes.
+- **`fanout_start`** refuses while a gate is pending or suspended.
+- **`return`, `final_review` and `sessions_end`**: `return` refuses on a pending gate. A suspended gate (`gate_suspend`, which needs the same human proof as a confirmation) lets the frame leave, but `final_review` and `sessions_end` refuse while any gate is suspended. `gates_open` lists open gates.
+- The hook is a guardrail on Claude Code. Codex calls carry no `agent_id`, so every Codex caller is treated as unbound.
+- `SHARDS_GATE_ENFORCE=0` turns off the hook's deny paths. Use it sparingly.
+
+## Operator CLI
+
+You run these out of band. No agent can.
 
 ```bash
-shards-gates status       # show current gate state
-shards-gates force-close  # unstick a session if enforcement is wedged
+shards gates status            # gates per session, plus auto-verify and pending commits
+shards gates history           # status transitions per gate
+shards gates checkpoints       # checkpoint/confirm gates and their evidence
+shards gates violations        # refused confirmations and violations
+shards gates confirm <gate-id> [--changes "<note>"]
+shards gates force-close <gate-id> | --all [--reason "<text>"]
 ```
 
-## Opting out
-
-Set `SHARDS_GATE_ENFORCE=0` in the environment to disable enforcement entirely. Use sparingly — the gate pattern is what keeps projects honest.
+`force-close` ends a stuck gate as `force_closed`. It is never counted as confirmed, and the agent can request a fresh gate afterwards. It also resets any open auto-verify block. The `gate_force_close` tool does the same for one gate but follows the tier 2 rule (you must approve the host prompt). See [CLI](../05-commands/cli.md).
 
 ## Exceptions
 
-Two modes suspend the gate pattern:
+Two modes do not use the phase gate chain:
 
-- **Syn Fixer mode** (`[F]`) — direct fixes don't need phased gates.
-- **Explore mode** (Data Modeller `[X]`) — pure exploration produces no files, no gates.
+- **Syn Fixer mode** (`[F]`): direct fixes do not need phased gates.
+- **Explore mode** (Data Modeller `[X]`): pure exploration produces no files and no gates.
+
+## Legacy
+
+Earlier versions used `::GATE:: ... ::ENDGATE::` text fences and a transcript-parsing gate hook. Both are gone. `shards migrate` imports old gate history as confirmed entries (see [Migrate](../05-commands/migrate.md)).
 
 ## See also
 
 - [Behavioral Rules](behavioral-rules.md)
 - [Reviewer Verdicts](reviewer-verdicts.md)
-- Source: `src/agents/specific_instructions/shared/behavioral_rules.md`
+- [Auto-Verify](auto-verify.md)
+- Source: `core/protocols/behavioral_rules.md`, `docs/gates.md`

@@ -2,55 +2,58 @@
 
 > Existentially anxious. Deeply skeptical that AI is the right tool.
 
-Specializes in production AI systems — LLM-powered workflows, prompt engineering, RAG pipelines, agentic systems, and generative AI integrations. Obsessed with evaluation, safety, and simplicity. Always asks "could this be a regex?" before designing a prompt chain.
+Specializes in production AI systems: LLM-powered workflows, prompt engineering, RAG pipelines, agentic systems and generative AI integrations. Obsessed with evaluation, safety and simplicity. Always asks "could this be a regex?" before designing a prompt chain.
 
 ## Activation menu
 
-- `[T]` Triage — Greenfield vs. optimization? Is AI even needed?
-- `[B]` Build — Full phased AI engineering workflow.
-- `[R]` Review — Evaluate an existing AI system.
-- `[ADV]` Advisory — Discuss options without committing to a build.
-- `[EX]` Experiment — Targeted experiments on an existing AI system.
-- `[AR]` Autonomous Research — Self-steering loop against a metric.
-- `[PL]` Prompt Lab — Interactive prompt editing, evaluation, and versioning via the Shards UI.
+On a switch, the agent shows this menu and waits for input.
+
+- `[T]` Triage: greenfield vs. optimization, and is AI even needed?
+- `[B]` Build: full phased AI engineering workflow.
+- `[R]` Review: evaluate an existing AI system.
+- `[ADV]` Advisory: discuss options without committing to a build.
+- `[EX]` Experiment: targeted experiments on an existing AI system.
+- `[AR]` Autonomous Research: self-steering loop against a metric.
+- `[PL]` Prompt Lab: interactive prompt editing, evaluation and versioning (emits a Prompt Lab panel for [Studio](../04-studio/overview.md)).
 
 ## Modes
 
-| Mode | File | Purpose |
-|---|---|---|
-| Phases (Build) | `specific_instructions/ai_engineer/phases/` | Full phased workflow — one file per phase, progressively loaded. |
-| Review | `specific_instructions/ai_engineer/review.md` | Review-only. |
-| Advisory | `specific_instructions/ai_engineer/advise.md` | Advisor mode. |
-| Experiment | `specific_instructions/ai_engineer/experiment.md` | Fixed-N experimentation. |
-| Experiment UI | `specific_instructions/ai_engineer/experiment_ui_mode.md` | Experiment with UI dashboard. |
-| Research | `specific_instructions/ai_engineer/research.md` | Autonomous Research loop. |
-| Research UI | `specific_instructions/ai_engineer/research_ui_mode.md` | AR with UI dashboard. |
-| Prompt Lab | `specific_instructions/ai_engineer/prompt_lab.md` | Interactive prompt lab. |
-| Prompt Lab UI | `specific_instructions/ai_engineer/prompt_lab_ui_mode.md` | Prompt Lab with UI panel. |
-| BI handoff | `specific_instructions/ai_engineer/bi_engineer_handoff.md` | Monitoring dashboard handoff. |
+Mode files live in `core/agents/ai-engineer/modes/` and are loaded on demand.
+
+| Mode file | Purpose |
+|---|---|
+| `advise.md` | Conversational advisor: options and trade-offs without committing to a build. Also the `advise` consult entry. |
+| `bi_engineer_handoff.md` | Outgoing handoff brief for the BI Engineer. |
+| `experiment.md` | Fixed-N experiments on an existing system (`[EX]`). |
+| `prompt_lab.md` | Interactive prompt editing, evaluation and versioning; emits a Prompt Lab panel for Studio. |
+| `research.md` | Autonomous Research loop (`[AR]`); see [Autonomous Research](../03-protocols/autonomous-research.md). |
+| `review.md` | `[R]` review of an existing artifact, and the `review` consult entry used when other agents ask this agent for a review. |
+| `validation_checklist.md` | Checklist read during the build phase to satisfy the [validation protocol](../03-protocols/validation.md). |
+| `worker.md` | The `worker` entry used by [delegated build](../03-protocols/delegated-build.md) and fan-out: one task card, one acceptance check, one JSON result. |
 
 ## Phases (Build mode)
 
-1. **Business Requirements** — problem, decision, acceptable error rate, human-in-the-loop.
-2. **Scope and Constraints** — model providers, data sensitivity, cost budget, latency, fallback.
-3. **AI Architecture Design** — simplicity ladder: single prompt → chain → RAG → agent → multi-agent → fine-tune.
-4. **Evaluation Framework Design** — Researcher review; dimensions, metrics, test set, golden eval.
-5. **Safety and Guardrails Design** — input/output validation, human-in-the-loop, fallback, monitoring.
-6. **Execute** — build prompts, eval test set, evaluation notebook, integration code.
-7. **Review and Handoff** — triple review (Backend, ML Engineer, MLOps, Researcher), Syn final review, model card and report.
+Phase bodies are served one at a time by the `load_phase` tool, which refuses until the previous phase's gate is confirmed. Every phase ends with a `gate_request` call; only a human confirms it. See [The Gate Pattern](../03-protocols/gate-pattern.md).
 
-## Consultants
+1. **Business Requirements**: problem, decision, acceptable error rate, human-in-the-loop.
+2. **Scope and Constraints**: model providers, data sensitivity, cost, latency, fallback; ML Engineer review.
+3. **AI Architecture Design**: simplicity ladder from single prompt through chain, RAG, agent, multi-agent to fine-tune.
+4. **Evaluation Framework Design**: Researcher and Data Modeller review; dimensions, metrics, test set, golden eval.
+5. **Safety and Guardrails Design**: Academic and ML Engineer review; input/output validation, human-in-the-loop, fallback, monitoring.
+6. **Execute** (validated): prompts, eval harness, integration code, eval results; build work can be delegated; emits an eval dashboard panel.
+7. **Review and Handoff**: Backend Engineer, ML Engineer, MLOps Engineer, Researcher and Academic reviews, code review, Syn sign-off, service card, optional BI monitoring handoff.
 
-- **ML Engineer** — Phase 2, Phase 5 (production infrastructure).
-- **Researcher** — Phase 4, Phase 7 (evaluation rigor).
-- **Academic** — Phase 5, Phase 7 (ethics and safety).
-- **Backend Engineer** — Phase 7 code review.
-- **MLOps Engineer** — Phase 7 deployment review.
-- **Syn** — Phase 7 final review.
+## Consults and reviewers
+
+Consults are isolated subagents that answer one question and return a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)). They never nest.
+
+- **Calls out to:** ML Engineer (phases 2, 5, 7), Researcher (phases 4, 7), Data Modeller (phases 4, 7), Academic (phases 5, 7), Backend Engineer, MLOps Engineer and Syn (phase 7).
+- **Declared reviewers** (`agent.yaml`): ML Engineer, Researcher, Academic, MLOps Engineer, Backend Engineer, Data Scientist, Syn.
+- **Consulted by (reverse of declared reviewers):** [MLOps Engineer](mlops-engineer.md), [Syn](syn.md).
 
 ## Output directory
 
-`services/<project_name>/` (greenfield) or the existing service directory (iteration).
+`services/<project_name>/` (greenfield) or the existing service directory (iteration)
 
 ```
 services/<project>/
@@ -64,15 +67,21 @@ services/<project>/
 └── bi_engineer_handoff.md   (optional)
 ```
 
-## Entry points
+Gate-confirmed phases are committed to git as the record. Where each agent writes is listed in [Output Directory Map](../06-outputs/directory-map.md).
 
-- Slash command: `/ai-engineer`
-- Skill: `ai-engineer`
-- Through Syn triage (`/shards`)
+## How to start
+
+- **Claude Code:** `/shards:ai-engineer` (switch skill; calls `activate`).
+- **Codex:** `$ai-engineer`, or `codex --profile shards-ai-engineer`.
+- **Through Syn:** `/shards:syn` triages and calls `activate(agent="ai-engineer", mode="switch")`.
+- **Consult subagents:** `ai-engineer`, `ai-engineer-review`, `ai-engineer-advise`, `ai-engineer-worker`.
+- **Fan-out and delegated build:** the `ai-engineer-worker` entry; see [Activation Modes](../03-protocols/activation-modes.md) and [Delegated Build](../03-protocols/delegated-build.md).
+
+Reference material is reached through the `knowledge` job; see [Knowledge](../03-protocols/knowledge.md). Nothing is published yet, so install from source: [Install](../01-getting-started/install.md).
 
 ## See also
 
-- [Prompt Lab](../04-ui/panels.md) — UI panel for prompt iteration
 - [Example: AI Eval-First](../07-workflows/ai-eval-first.md)
 - [Autonomous Research](../03-protocols/autonomous-research.md)
-- Source: `src/agents/ai-engineer.md`
+- [Studio](../04-studio/overview.md): panels such as Prompt Lab
+- Source: `core/agents/ai-engineer/AGENT.md`, `core/agents/ai-engineer/agent.yaml`

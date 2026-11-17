@@ -1,79 +1,45 @@
 # Your First Session
 
-The quickest way to feel out Shards is to run `/shards` and describe a real problem.
+A v2 session runs inside your host (Claude Code in the verified case) with the Shards plugin loaded and the `shards` MCP server connected. See [Installation](install.md) first.
 
-## Start from the orchestrator
+## Activate an agent
 
-Open Claude Code in a project directory with Shards installed and type:
-
-```
-/shards
-```
-
-This activates **Syn**, the orchestrator. Syn greets you, runs a **Phase 0 triage**, and asks clarifying questions to decide which specialist shard is the right fit.
-
-Example: "We had a revenue drop in APAC last week — I want to understand what happened."
-
-Syn will:
-
-1. Ask you to confirm the scope (a quick diagnostic vs. a full deep-dive study).
-2. Decide which specialist is best suited (likely Data Analyst for a quick look, Data Scientist for a deep investigation).
-3. Create a project directory with a `project-specs.md` scaffold.
-4. Ask you to run `/compact` to clear context, then hand off to the specialist.
-
-After `/compact`, Syn performs an **in-session persona transfer** — it reads the specialist's agent file and becomes that specialist. From there, the specialist runs its full phased workflow.
-
-## Skip triage — go direct
-
-If you already know which specialist you need, run the command directly:
+Type a skill command. With the plugin loaded the commands are namespaced:
 
 ```
-/data-analyst     # quick adhoc analysis
-/data-scientist   # deep study, EDA, modeling
-/ml-engineer      # production ML, ranking, recommenders
-/ai-engineer      # LLM workflows, RAG, prompt engineering
-/data-engineer    # pipelines, dbt models
-/data-modeller    # entities, relationships, grain
-/analytics-engineer  # dbt transformation layers, marts
-/bi-engineer      # dashboards, visualizations
-/backend-engineer # Python code review
-/applied-ml-scientist     # novel ML methodology
-/deep-learning-engineer   # neural architectures
-/mlops-engineer   # deployment, serving, monitoring
-/researcher       # statistical methodology review
-/academic         # safety, ethics, literature review
-/brainstorm       # multi-agent ideation
-/knowledge        # browse the Knowledge Ledger
-/review-pr        # walk through GitHub PR comments
-/shards-ui        # open the web UI
+/shards:syn
 ```
 
-See the [Slash Command Reference](../05-commands/reference.md) for what each invokes.
+Syn is the orchestrator and router. Describe your problem ("revenue dropped in APAC last week, I want to know why"). Syn triages, picks a specialist, and calls the `activate` tool to switch that specialist in as the active persona. You can skip triage and go direct, for example `/shards:data-analyst` or `/shards:ml-engineer`. `/shards:agents` lists every agent and its modes. See [Activation modes](../03-protocols/activation-modes.md).
 
-## What to expect inside a phase
+The status header on each tool result shows which agent is active.
 
-Every specialist follows the same rhythm:
+## Work through phases
 
-1. **Gather context** — the specialist asks questions or reads existing project state.
-2. **Propose** — it drafts a decision for the current phase (scope, methodology, architecture, etc.).
-3. **Consult** — if the phase requires another specialist's input (e.g. the Data Scientist needs the Researcher to review its statistical approach), it spawns that specialist via the Task tool. You'll see this happen.
-4. **Document** — the decision is written to `project-specs.md` in a `::GATE::` fence.
-5. **Confirm** — the specialist reads the section back to you and waits for your confirmation before advancing.
+The specialist loads one phase at a time with `load_phase`. The tool refuses to serve phase N+1 until phase N's gate is confirmed, so the sequence cannot be skipped. Decisions are written to `project-specs.md` in the agent's output directory (see [directory map](../06-outputs/directory-map.md)). The `record` job in `shards.config.yaml` controls where that record goes; the default writes it into the repo.
 
-This is the [Gate Pattern](../03-protocols/gate-pattern.md), and it's the single most important idea in Shards. Every decision is documented *before* execution, so you can audit or redirect at any point.
+## Gates
 
-## The final review
+At the end of a phase the agent calls the `gate_request` tool with a summary and a pointer to what it wrote. Only a human can confirm. The agent has no confirm tool of its own. Depending on your host you confirm in one of three ways:
 
-At the end of every specialist's last phase, it invokes Syn via Task for a final review. Syn returns `APPROVED`, `NEEDS REVISION`, or `BLOCKED`. See [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md).
+1. A prompt offering Approve or Request changes with a note (interactive Claude Code).
+2. A host permission prompt for `gate_advance`.
+3. Replying in chat; the runtime accepts your very next message as the answer.
 
-## When things go sideways
+Approving an advancing gate commits the agent's output paths to your current branch with `Shards-Gate:` trailers. Checkpoint gates between components can be recorded automatically when the agent supplies passing evidence; `gates.policy` in `shards.config.yaml` (`strict`, `phase`, `plan`) controls how much confirmation is needed. See [The Gate Pattern](../03-protocols/gate-pattern.md).
 
-- **Stuck at a gate?** Run `shards-gates status` at the terminal for diagnostics. `shards-gates force-close` will unstick a session in a pinch.
-- **Want to abandon a project?** Just close the session. The `project-specs.md` file is safe to keep or delete.
-- **Need to come back later?** Re-open `/shards`, tell Syn you want to resume project `<name>`, and it'll pick up where `project-specs.md` left off.
+## Reviews and consults
 
-## See also
+Specialists consult reviewers (the Researcher, the Data Modeller, and so on) as isolated subagents that return a verdict, and Syn gives final sign-off. These do not take over the conversation. In build phases a lead may split work across workers; see [Delegated build](../03-protocols/delegated-build.md).
 
-- [Core Concepts](concepts.md) — agents, phases, gates, Knowledge Ledger
-- [Agent Taxonomy](../02-agents/overview.md) — when to use which specialist
-- [Example Workflows](../07-workflows/quick-analysis.md)
+## Pause, end, resume
+
+- `/shards:end` closes the chat cleanly (it refuses while gates are pending or suspended).
+- `/shards:resume` lists earlier sessions and prints the host resume hint, for Claude Code `claude --resume <id>`. Exit the current session first.
+- From a shell: `shards sessions list`, `show`, `resume`, `end`. See [sessions](../05-commands/sessions.md).
+
+If a gate is stuck, an operator (you, in a terminal) can use the `shards gates` commands; no agent can.
+
+## Optional: Studio
+
+Run `npx @proflandrigan/shards-studio` in the project to see charts, tables and dashboards the agents emit. It is optional and not yet published. See [Studio](../04-studio/overview.md).

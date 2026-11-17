@@ -1,0 +1,34 @@
+# Integrations status
+
+Read this before configuring anything other than git.
+
+## What exists
+
+- The git binding (`bindings/git.md`), for all six jobs.
+- The binding format and loader: frontmatter schema, verb sections, `loadBinding` / `listBindings`. See [Writing a binding](writing-a-binding.md).
+- `shards.config.yaml` validation, which accepts any well-formed binding name.
+
+## What does not exist yet
+
+No binding other than `git` ships in `bindings/`. If you set a job to `confluence`, `jira` or anything else, config validation passes but the runtime cannot load the binding, so the job does not work.
+
+The following are planned in Stage 6 of the suite plan and are **not built**:
+
+- Confluence and Jira bindings (records, tasks, publishing knowledge to Confluence, build tasks as Jira sub-tasks).
+- Google Drive and Google Slides bindings.
+- GitHub and Bitbucket review bindings.
+- Copy reporting with automatic replay of failed external copies.
+- Utility skills `connect`, `sync`, `doctor` and `publish-knowledge`. The build deliberately skips them (they are marked deferred in `build/skills.js`). Use the `shards doctor` CLI command instead of a doctor skill.
+- `shards connect` onboarding with backfill.
+
+The guardrail for external writes (no write without a confirmed gate or user confirmation) is a binding-author rule today, stated in [Writing a binding](writing-a-binding.md); it is not yet enforced by built integrations.
+
+## What to use meanwhile
+
+Git alone is complete: records, tasks, knowledge, review, artifacts and presentations all work as local files committed at confirmed gates. Present them elsewhere manually, or write your own binding following the format spec.
+
+## See also
+
+- [Jobs and bindings](overview.md)
+- [Configuration](config.md)
+- [CLI reference](../05-commands/cli.md)
