@@ -773,10 +773,30 @@ explicit user approval regardless of permission mode.
 
 // ─── CLI Entry ───────────────────────────────────────────────────────────────
 
-const command = process.argv[2] || "install";
+// E10.5: the v1 installer is deprecated. `install` prints the v2 replacement and exits 1 (nothing is written)
+// unless explicitly opted in with --legacy or SHARDS_LEGACY_INSTALL=1. `uninstall` always works so v1 installs can be removed.
+const legacyOptIn = process.argv.includes("--legacy") || process.env.SHARDS_LEGACY_INSTALL === "1";
+const args = process.argv.slice(2).filter((a) => a !== "--legacy");
+const command = args[0] || "install";
+
+function refuseInstall() {
+  console.error(`
+  DEPRECATED: the v1 installer (tools/install.js) no longer installs Shards. Nothing was written.
+  Use the v2 equivalents:
+    shards build --target claude --dev     local plugin for development (claude --plugin-dir adapters/claude-code)
+    /plugin marketplace add proflandrigan/shards    then   /plugin install shards@shards    (release plugin)
+    shards install --project               copy skills into this project's .claude/skills and .agents/skills
+    shards install --agents-md             Codex AGENTS.md section;  shards install --claude-md  for CLAUDE.md
+  Remove an old v1 install:  node tools/install.js uninstall   (or: shards migrate)
+  Forced legacy install (unsupported; macros stay unexpanded):  node tools/install.js --legacy
+  Last v1 release: git checkout v-legacy
+`);
+  process.exit(1);
+}
 
 switch (command) {
   case "install":
+    if (!legacyOptIn) refuseInstall();
     install();
     break;
   case "uninstall":
@@ -784,6 +804,6 @@ switch (command) {
     break;
   default:
     console.log(`Unknown command: ${command}`);
-    console.log("Usage: npx shards [install|uninstall]");
+    console.log("Usage: npx shards [install|uninstall]   (install is deprecated; see `shards install --help`)");
     process.exit(1);
 }

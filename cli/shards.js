@@ -10,7 +10,7 @@ const COMMANDS = {
   doctor: { summary: 'Check prerequisites, config, MCP, hooks, git state and gate permissions', run: (argv) => require('./commands/doctor').run(argv) },
   sessions: { summary: 'List, show, resume and end sessions without the UI', run: (argv) => require('./commands/sessions').run(argv) },
   migrate: { summary: 'Migrate a legacy v1 install to v2 (ledger export, gate-history import, manifest-driven cleanup)', run: (argv) => require('./commands/migrate').run(argv) },
-  install: { summary: 'Opt-in project config: skills (--project), permission preset (--permissions) and CLAUDE.md conventions (--claude-md)', run: (argv) => require('./commands/install').run(argv) },
+  install: { summary: 'Opt-in project config: skills (--project), permission preset (--permissions), CLAUDE.md conventions (--claude-md) and AGENTS.md section (--agents-md)', run: (argv) => require('./commands/install').run(argv) },
   sync: { summary: 'List the external copy queue: pending and stuck copies per gate and target (--status)', run: (argv) => require('./commands/sync').run(argv) },
   connect: { summary: 'Check which MCP servers (Atlassian, Google Drive, GitHub) are registered and print the official add commands', run: (argv) => require('./commands/connect').run(argv) },
   // EXTENSION POINT: register doctor / gates / sessions here, e.g.
@@ -23,12 +23,18 @@ function usage() {
   lines.push('', 'build options: --target <claude|codex|skills> [--dev] [--out dir] [--strict] [--default-agent] [--core dir] [--no-bundle-deps] [--marketplace]');
   lines.push('  release (non-dev) claude builds are a self-contained plugin; --no-bundle-deps skips node_modules; --marketplace writes <out>/.claude-plugin/marketplace.json and the plugin at <out>/plugins/shards (claude only, default out adapters/marketplace)');
   lines.push('uninstall-dev options: [--target claude|codex|all] [--out dir]');
-  lines.push('gates: gates status [--session k] [--root d] | gates confirm <gate-id> [--session k] [--changes "note"] [--root d]');
+  lines.push('gates: gates <status|history|checkpoints|violations|force-close|confirm> [options]');
+  lines.push('  gates status [--session k] [--root d]');
+  lines.push('  gates history [--session k] [--gate id] [--json] [--root d]');
+  lines.push('  gates checkpoints [--session k] [--json] [--root d]');
+  lines.push('  gates violations [--json] [--root d]');
+  lines.push('  gates force-close <gate-id> | --all [--session k] [--reason "text"] [--root d]');
+  lines.push('  gates confirm <gate-id> [--session k] [--changes "note"] [--root d]');
   lines.push('doctor: doctor [--root d] [--json] [--fix]');
   lines.push('sessions: sessions list|show|resume|end [id] [--root d] [--status s] [--limit n] [--json]');
   lines.push('sync: sync --status [--json] [--all] [--root d]');
   lines.push('connect: connect [--host claude|codex] [--only atlassian,drive,github] [--json] [--root d] [--home d]  (read-only; prints commands, never runs them)');
-  lines.push('install: install (--project | --permissions | --claude-md) [--root d] [--remove] [--dry-run] [--force]  (--remove is the uninstall: it removes only what install added)');
+  lines.push('install: install (--project | --permissions | --claude-md | --agents-md) [--root d] [--preset name] [--remove] [--dry-run] [--force]  (--remove is the uninstall: it removes only what install added)');
   lines.push('migrate: migrate [--export-ledger] [--root d] [--out d] [--dry-run] [--force]  (full legacy migrate; --export-ledger = ledger step only)');
   return lines.join('\n');
 }
@@ -103,7 +109,7 @@ function runBuild(argv) {
     const fs = require('fs');
     const mf = path.join(mktRoot, '.claude-plugin', 'marketplace.json');
     fs.mkdirSync(path.dirname(mf), { recursive: true });
-    fs.writeFileSync(mf, require('../build/package').marketplaceText());
+    fs.writeFileSync(mf, require('../build/package').marketplaceText({ local: true }));
     console.log(`marketplace -> ${mf}`);
   }
   if (o.dev) printDevHint(o.target, path.resolve(outDir));
@@ -119,4 +125,4 @@ function main(argv) {
 }
 
 if (require.main === module) Promise.resolve(main(process.argv.slice(2))).then((c) => process.exit(c), (e) => { console.error(e && e.message ? e.message : e); process.exit(1); });
-module.exports = { main, COMMANDS };
+module.exports = { main, COMMANDS, usage };

@@ -21,14 +21,27 @@ describe('E1 stage 3 codemods are idempotent on the converted core/', () => {
 });
 
 describe('legacy installer deprecation', () => {
-  it('prints a warning pointing at v-legacy and shards build --dev', () => {
+  const installer = path.join(root, 'tools/install.js');
+  const optIn = { ...process.env, SHARDS_LEGACY_INSTALL: '1' };
+  it('refuses by default: prints the v2 replacements, exits 1 and writes nothing', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'inst-'));
-    const r = execFileSync('node', [path.join(root, 'tools/install.js')], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-    // warning goes to stderr; capture via a second run with 2>&1
-    const both = spawnSync('node', [path.join(root, 'tools/install.js')], { cwd: dir, encoding: 'utf8' }).stderr;
-    expect(both).toContain('DEPRECATED');
-    expect(both).toContain('git checkout v-legacy');
-    expect(both).toContain('shards build --dev');
-    expect(r).toContain('Installing');
+    const r = spawnSync('node', [installer], { cwd: dir, encoding: 'utf8' });
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('DEPRECATED');
+    expect(r.stderr).toContain('shards build --target claude --dev');
+    expect(r.stderr).toContain('shards install --project');
+    expect(r.stderr).toContain('/plugin install shards@shards');
+    expect(fs.readdirSync(dir)).toEqual([]);
+  });
+  it('with --legacy (or SHARDS_LEGACY_INSTALL=1) still warns pointing at v-legacy and shards build --dev, then installs', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'inst-'));
+    const r = spawnSync('node', [installer, '--legacy'], { cwd: dir, encoding: 'utf8' });
+    expect(r.status).toBe(0);
+    expect(r.stderr).toContain('DEPRECATED');
+    expect(r.stderr).toContain('git checkout v-legacy');
+    expect(r.stderr).toContain('shards build --dev');
+    expect(r.stdout).toContain('Installing');
+    const d2 = fs.mkdtempSync(path.join(os.tmpdir(), 'inst-'));
+    expect(spawnSync('node', [installer], { cwd: d2, encoding: 'utf8', env: optIn }).status).toBe(0);
   });
 });

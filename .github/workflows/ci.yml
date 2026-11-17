@@ -34,5 +34,7 @@ jobs:
           npm run lint:verdicts
       - name: Build all targets (claude, codex, skills)
         run: npm run build:all
+      - name: Pack check (explicit allow-list + bin require closure)
+        run: npm run pack:check
       - name: Coupling ratchet
         run: npm run coupling:ratchet

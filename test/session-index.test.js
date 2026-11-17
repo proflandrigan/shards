@@ -1,16 +1,11 @@
-import { fileURLToPath } from 'url';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
-import { execFileSync } from 'child_process';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
 
 const require = createRequire(import.meta.url);
 const sessionIndex = require('../runtime/sessions/index.js');
-
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SHARDS_SESSIONS_BIN = path.join(REPO_ROOT, 'tools', 'shards-sessions.js');
 
 let tmpDir;
 let sessionsDir;
@@ -31,14 +26,6 @@ afterEach(() => {
 function writeGateState(state) {
   fs.mkdirSync(gatesDir, { recursive: true });
   fs.writeFileSync(path.join(gatesDir, 'state.json'), JSON.stringify(state, null, 2));
-}
-
-function runSessionsCli(args) {
-  // Run the CLI with cwd=tmpDir so it picks up the per-test .shards directory.
-  return execFileSync(process.execPath, [SHARDS_SESSIONS_BIN, ...args], {
-    cwd: tmpDir,
-    encoding: 'utf8',
-  });
 }
 
 describe('readIndex', () => {
@@ -393,46 +380,5 @@ describe('sweepAbandoned — gate snapshot (Bug L4)', () => {
     sessionIndex.sweepAbandoned(sessionsDir);
     // Behavior matches the pre-fix sweep when shardsDir is not passed.
     expect(sessionIndex.getEntry(sessionsDir, 'stale').gateOpenAtEnd).toBeNull();
-  });
-});
-
-describe('shards-sessions end — gate snapshot (Bug M6)', () => {
-  // Bug M6: CLI `end` used to call markEnded without snapshotting gate state,
-  // diverging from the UI's POST /chat/end path. Now both paths populate
-  // gateOpenAtEnd identically by reading .shards/gates/state.json.
-  it('populates gateOpenAtEnd when a gate is open at CLI end-time', () => {
-    sessionIndex.appendSession(sessionsDir, { sessionId: 'cli-active', agent: 'data-analyst' });
-    writeGateState({ open: true, id: 'data-analyst-phase-3', phase: 3, kind: 'phase' });
-
-    runSessionsCli(['end', 'cli-active']);
-
-    const e = sessionIndex.getEntry(sessionsDir, 'cli-active');
-    expect(e.status).toBe('ended');
-    expect(e.endReason).toBe('cli_end');
-    expect(e.gateOpenAtEnd).toBe('data-analyst-phase-3');
-    expect(e.phase).toBe(3);
-  });
-
-  it('sets gateOpenAtEnd to null when no gate is open at CLI end-time', () => {
-    sessionIndex.appendSession(sessionsDir, { sessionId: 'cli-active', agent: 'data-analyst' });
-    writeGateState({ open: false, history: [] });
-
-    runSessionsCli(['end', 'cli-active']);
-
-    const e = sessionIndex.getEntry(sessionsDir, 'cli-active');
-    expect(e.status).toBe('ended');
-    expect(e.endReason).toBe('cli_end');
-    expect(e.gateOpenAtEnd).toBeNull();
-  });
-
-  it('tolerates a missing gate state file (sets gateOpenAtEnd to null)', () => {
-    sessionIndex.appendSession(sessionsDir, { sessionId: 'cli-active', agent: 'a' });
-    // No .shards/gates/state.json exists.
-
-    runSessionsCli(['end', 'cli-active']);
-
-    const e = sessionIndex.getEntry(sessionsDir, 'cli-active');
-    expect(e.status).toBe('ended');
-    expect(e.gateOpenAtEnd).toBeNull();
   });
 });

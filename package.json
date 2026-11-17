@@ -32,7 +32,8 @@
     "build:skills": "node cli/shards.js build --target skills",
     "build:all": "npm run build:claude && npm run build:codex && npm run build:skills",
     "release:dry-run": "bash scripts/release-dry-run.sh",
-    "stage:mcp": "node scripts/stage-runtime-package.js"
+    "stage:mcp": "node scripts/stage-runtime-package.js",
+    "pack:check": "node scripts/pack-check.js"
   },
   "files": [
     "cli/",
@@ -42,7 +43,8 @@
     "runtime/",
     "bindings/",
     "scripts/validate-agents.js",
-    "src/",
+    "src/commands/",
+    "src/docs/",
     "tools/install.js",
     "tools/legacy-layout.js",
     "tools/shards-ui.js",

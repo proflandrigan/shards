@@ -34,7 +34,7 @@ describe('GitHub workflows (E9.4)', () => {
     const job = w.jobs.test;
     expect(job.strategy.matrix.os).toEqual(['ubuntu-latest', 'macos-latest', 'windows-latest']);
     const t = stepsText(job);
-    for (const cmd of ['npm test', 'npm run build:all', 'npm run lint:models', 'npm run lint:verdicts', 'npm run validate:agents', 'npm run coupling:ratchet']) expect(t).toContain(cmd);
+    for (const cmd of ['npm run pack:check', 'npm test', 'npm run build:all', 'npm run lint:models', 'npm run lint:verdicts', 'npm run validate:agents', 'npm run coupling:ratchet']) expect(t).toContain(cmd);
     // every npm script it calls exists
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
     for (const m of t.matchAll(/npm run ([\w:-]+)/g)) expect(pkg.scripts[m[1]], m[1]).toBeTruthy();
@@ -88,5 +88,58 @@ describe('nightly golden driver (E9.4)', () => {
   it('rejects an unknown host with exit 2', () => {
     const r = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'nightly-golden.js'), '--host', 'x', '--out', os.tmpdir()], { encoding: 'utf8' });
     expect(r.status).toBe(2);
+  });
+});
+
+describe('release workflow (E10.4)', () => {
+  const w = load('release.yml');
+  const triggers = w.on || w[true];
+
+  it('triggers on v* tags and manual dispatch only, with read-only default permissions', () => {
+    expect(triggers.push.tags).toEqual(['v*']);
+    expect(triggers).toHaveProperty('workflow_dispatch');
+    expect(Object.keys(triggers).sort()).toEqual(['push', 'workflow_dispatch']);
+    expect(w.permissions).toEqual({ contents: 'read' });
+  });
+
+  it('verify runs tests, pack check and the dry run; build produces every target and checks both tarballs', () => {
+    const v = stepsText(w.jobs.verify);
+    for (const c of ['npm test', 'npm run pack:check', 'npm run release:dry-run']) expect(v).toContain(c);
+    expect(w.jobs.verify.steps.some((s) => (s.if || '').includes('refs/tags/v') && /GITHUB_REF_NAME/.test(s.run))).toBe(true); // tag must equal package version
+    const b = stepsText(w.jobs.build);
+    for (const c of ['--target claude --marketplace', '--target codex', '--target skills', 'scripts/stage-runtime-package.js', '--kind cli', '--kind mcp']) expect(b).toContain(c);
+    expect(w.jobs.build.needs).toBe('verify');
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+    for (const t of [...(stepsText(w.jobs.verify) + b).matchAll(/npm run ([\w:-]+)/g)]) expect(pkg.scripts[t[1]], t[1]).toBeTruthy();
+    expect(stepsText(w.jobs.build)).toMatch(/upload-artifact/);
+  });
+
+  it('only the release and marketplace jobs get write access, and only for tags (or an explicit dispatch input)', () => {
+    const writers = Object.entries(w.jobs).filter(([, j]) => j.permissions && j.permissions.contents === 'write').map(([n]) => n).sort();
+    expect(writers).toEqual(['github-release', 'marketplace-branch']);
+    expect(w.jobs['github-release'].if).toContain("refs/tags/v");
+    expect(w.jobs['marketplace-branch'].if).toContain('refs/tags/v');
+    expect(w.jobs['marketplace-branch'].if).toContain('inputs.push_marketplace');
+    expect(triggers.workflow_dispatch.inputs.push_marketplace.default).toBe(false);
+    const push = stepsText(w.jobs['marketplace-branch']);
+    expect(push).toContain('marketplace:marketplace');
+    expect(push).toContain('.claude-plugin/plugin.json');
+  });
+
+  it('npm publish is opt-in: needs the SHARDS_NPM_PUBLISH variable and a tag, uses NPM_TOKEN, and targets the next tag', () => {
+    const j = w.jobs['npm-publish'];
+    expect(j.if).toContain("vars.SHARDS_NPM_PUBLISH == 'true'");
+    expect(j.if).toContain('refs/tags/v');
+    expect(JSON.stringify(j)).toContain('secrets.NPM_TOKEN');
+    expect(stepsText(j)).toContain('--tag next');
+    // no other job can publish
+    for (const [n, other] of Object.entries(w.jobs)) if (n !== 'npm-publish') expect(stepsText(other), n).not.toMatch(/npm publish/);
+    expect(j.permissions).toBeUndefined();
+  });
+
+  it('the marketplace.json source points at the branch the workflow pushes', () => {
+    const m = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude-plugin', 'marketplace.json'), 'utf8'));
+    expect(m.plugins[0].source).toMatchObject({ source: 'github', repo: 'proflandrigan/shards', ref: 'marketplace' });
+    expect(stepsText(w.jobs['marketplace-branch'])).toContain(`marketplace:${m.plugins[0].source.ref}`);
   });
 });

@@ -13,3 +13,4 @@ Decisions for the Shards agent suite migration. Source: `shards-agent-suite-plan
 - [0009](0009-led-build-phases.md): Build phases are led, not done alone (D9)
 - [0010](0010-studio-desktop-build.md): Studio desktop (Electron) build: keep or drop (drop for v2.0)
 - [0011](0011-pending-gate-subagent-policy.md): Pending gates block subagents without a lease; lease-holding fan-out workers are exempt
+- [0012](0012-release-distribution.md): Release distribution: plugin on a `marketplace` branch, npm publish opt-in

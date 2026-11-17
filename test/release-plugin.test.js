@@ -33,6 +33,27 @@ describe('release plugin layout', () => {
     expect(json(OUT, 'package.json')).toEqual({ name: 'shards', version: pkg.version, private: true, dependencies: pkg.dependencies });
     for (const f of ['runtime/server.js', 'core', 'bindings', 'build/emit.js', 'hooks/lib/host.js', 'scripts/validate-agents.js']) expect(fs.existsSync(path.join(OUT, f)), f).toBe(true);
   });
+  it('ships a square 512-2048px plugin icon referenced from plugin.json (ICON_MISSING fix)', () => {
+    const m = json(OUT, '.claude-plugin/plugin.json');
+    expect(m.icon).toBe('./assets/icon.png');
+    const png = fs.readFileSync(path.join(OUT, m.icon));
+    expect(png.subarray(1, 4).toString()).toBe('PNG');
+    const w = png.readUInt32BE(16); const h = png.readUInt32BE(20);
+    expect(w).toBe(h);
+    expect(w).toBeGreaterThanOrEqual(512);
+    expect(w).toBeLessThanOrEqual(2048);
+    expect(png.length).toBeLessThan(2 * 1024 * 1024);
+    expect(fs.readFileSync(path.join(OUT, 'README.md'), 'utf8')).toContain('/plugin install shards@shards');
+  });
+  it('release package.json files come from one generator (build/package.js)', () => {
+    expect(relpkg.releasePackageJson('plugin')).toEqual(json(OUT, 'package.json'));
+    const mcp = relpkg.releasePackageJson('mcp');
+    expect(mcp).toMatchObject({ name: '@proflandrigan/shards-mcp', version: pkg.version, dependencies: pkg.dependencies, engines: pkg.engines, license: pkg.license, publishConfig: { access: 'public', tag: pkg.publishConfig.tag } });
+    expect(mcp.bin).toEqual({ 'shards-mcp': 'runtime/server.js' });
+    const staged = require('../scripts/stage-runtime-package').stage(path.join(root, 'staged'));
+    expect(json(staged, 'package.json')).toEqual(mcp);
+    expect(() => relpkg.releasePackageJson('nope')).toThrow(/unknown/);
+  });
   it('bundles only the production dependency closure', () => {
     const names = relpkg.depClosure().map((d) => d.name);
     for (const d of Object.keys(pkg.dependencies)) expect(names).toContain(d);
@@ -122,13 +143,15 @@ describe('marketplace', () => {
     const m = JSON.parse(relpkg.marketplaceText());
     expect(m).toMatchObject({ name: 'shards', owner: { name: 'proflandrigan' } });
     expect(m.plugins).toHaveLength(1);
-    expect(m.plugins[0]).toMatchObject({ name: 'shards', source: './plugins/shards', version: pkg.version });
+    expect(m.plugins[0]).toMatchObject({ name: 'shards', source: { source: 'github', repo: 'proflandrigan/shards', ref: 'marketplace' }, version: pkg.version });
+    // the local variant (used by `build --marketplace`) keeps the relative plugin path for offline validation
+    expect(JSON.parse(relpkg.marketplaceText({ local: true })).plugins[0].source).toBe('./plugins/shards');
   });
   it('CLI --marketplace writes manifest and plugin', () => {
     const out = path.join(root, 'mkt');
     const r = spawnSync('node', [CLI, 'build', '--target', 'claude', '--marketplace', '--no-bundle-deps', '--out', out], { encoding: 'utf8' });
     expect(r.status, r.stderr).toBe(0);
-    expect(fs.readFileSync(path.join(out, '.claude-plugin/marketplace.json'), 'utf8')).toBe(relpkg.marketplaceText());
+    expect(fs.readFileSync(path.join(out, '.claude-plugin/marketplace.json'), 'utf8')).toBe(relpkg.marketplaceText({ local: true }));
     expect(fs.existsSync(path.join(out, 'plugins/shards/.claude-plugin/plugin.json'))).toBe(true);
     expect(spawnSync('node', [CLI, 'build', '--target', 'codex', '--marketplace'], { encoding: 'utf8' }).status).toBe(2);
   });

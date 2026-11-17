@@ -13,31 +13,9 @@ pass() { echo "PASS  $1"; }
 fail() { echo "FAIL  $1"; FAILS=$((FAILS + 1)); }
 step() { local name="$1"; shift; if "$@"; then pass "$name"; else fail "$name"; fi; }
 
-# ---- Explicit expected tarball contents (top-level path globs, relative to package/) ----
-ROOT_ALLOWED='package.json README.md cli/* build/* core/* hooks/* runtime/* bindings/* scripts/validate-agents.js src/* tools/install.js tools/legacy-layout.js tools/shards-ui.js tools/shards-gates.js tools/shards-sessions.js'
-ROOT_REQUIRED='package.json README.md cli/shards.js build/compile.js build/activation-inventory.js core/agents runtime/server.js hooks/session-start.js bindings/README.md scripts/validate-agents.js tools/shards-ui.js tools/shards-gates.js tools/shards-sessions.js tools/install.js'
-MCP_ALLOWED='package.json runtime/* core/* bindings/* hooks/lib/* build/* scripts/validate-agents.js'
-MCP_REQUIRED='package.json runtime/server.js runtime/tools core/agents core/schema hooks/lib/host.js hooks/lib/common.js build/core.js build/compile.js build/activation-inventory.js scripts/validate-agents.js bindings/README.md'
-
-# check_listing <tar> <allowed globs> <required prefixes>
-check_listing() {
-  local tgz="$1" allowed="$2" required="$3" f g ok bad=0 r
-  set -f  # globs below are patterns, not paths
-  local list; list="$(tar -tzf "$tgz" | sed 's#^package/##' | grep -v '/$' | grep -v '^$')"
-  while IFS= read -r f; do
-    ok=0
-    for g in $allowed; do
-      # shellcheck disable=SC2254
-      case "$f" in $g) ok=1; break;; esac
-    done
-    if [ $ok = 0 ]; then echo "  unexpected: $f"; bad=1; fi
-  done <<<"$list"
-  for r in $required; do
-    if ! grep -qE "^${r}(/|$)" <<<"$list"; then echo "  missing: $r"; bad=1; fi
-  done
-  set +f
-  return $bad
-}
+# ---- Explicit expected tarball contents: scripts/pack-check.js owns the allow-list, required paths and bin require closure ----
+# check_listing <tar> <kind cli|mcp> <source dir for the require closure>
+check_listing() { node "$REPO/scripts/pack-check.js" --tarball "$1" --kind "$2" --dir "$3"; }
 
 # check_bins <extracted package dir>
 check_bins() {
@@ -64,8 +42,8 @@ MCP_TGZ="$(ls "$SCRATCH"/packs/proflandrigan-shards-mcp-*.tgz 2>/dev/null | head
 [ -n "$CLI_TGZ" ] && [ -n "$MCP_TGZ" ] || { echo "FAIL  tarballs not produced"; exit 1; }
 
 # ---- 2. Contents ----
-step "root tarball contents match expected list" check_listing "$CLI_TGZ" "$ROOT_ALLOWED" "$ROOT_REQUIRED"
-step "mcp tarball contents match expected list" check_listing "$MCP_TGZ" "$MCP_ALLOWED" "$MCP_REQUIRED"
+step "root tarball: allow-list, required paths, bin require closure" check_listing "$CLI_TGZ" cli "$REPO"
+step "mcp tarball: allow-list, required paths, bin require closure" check_listing "$MCP_TGZ" mcp "$STAGED"
 mkdir -p "$SCRATCH/x/cli" "$SCRATCH/x/mcp"
 tar -xzf "$CLI_TGZ" -C "$SCRATCH/x/cli"; tar -xzf "$MCP_TGZ" -C "$SCRATCH/x/mcp"
 step "root bins exist+executable, publishConfig.tag=next, version" check_bins "$SCRATCH/x/cli/package"
@@ -103,10 +81,10 @@ cmds_ok() {
   local listed c
   listed="$(awk '/^Commands:/{f=1;next} f&&/^  [a-z]/{print $1} f&&/^$/{exit}' <<<"$HELP" | sort | tr '\n' ' ')"
   echo "  commands listed: $listed"
-  for c in build uninstall-dev gates doctor sessions migrate; do grep -qw "$c" <<<"$listed" || { echo "  missing command: $c"; return 1; }; done
-  [ "$listed" = "build doctor gates migrate sessions uninstall-dev " ] || { echo "  unexpected command set"; return 1; }
+  for c in build uninstall-dev gates doctor sessions migrate install; do grep -qw "$c" <<<"$listed" || { echo "  missing command: $c"; return 1; }; done
+  [ "$listed" = "build doctor gates install migrate sessions uninstall-dev " ] || { echo "  unexpected command set"; return 1; }
 }
-step "shards --help lists exactly build, doctor, gates, migrate, sessions, uninstall-dev" cmds_ok
+step "shards --help lists exactly build, doctor, gates, install, migrate, sessions, uninstall-dev" cmds_ok
 
 # ---- 5. doctor in a clean non-git dir ----
 DOC="$SCRATCH/clean"; mkdir -p "$DOC"
@@ -139,17 +117,32 @@ build_ok() {
 }
 step "shards build --target claude --dev from installed package" build_ok
 
-# ---- 7. legacy bins load ----
+# ---- 7. deprecated v1 bins (E10.5): each prints its v2 replacement ----
 legacy_ok() {
-  local b
-  for b in shards-gates shards-sessions; do
-    (cd "$DOC" && timeout 20 "$BIN/$b" status >/dev/null 2>&1 || timeout 20 "$BIN/$b" list >/dev/null 2>&1 || timeout 20 "$BIN/$b" --help >/dev/null 2>&1) || true
-  done
-  # shards-ui: only verify it can be loaded (status does not start the server)
-  (cd "$DOC" && timeout 20 "$BIN/shards-ui" status 2>&1 | head -3) | sed 's/^/    | /'
-  node -e 'require.resolve("../runtime/sessions/index.js",{paths:[process.argv[1]+"/tools"]})' "$PROJ/node_modules/@proflandrigan/shards"
+  local out
+  out="$(cd "$DOC" && timeout 20 "$BIN/shards-gates" status 2>&1)" || true
+  grep -q 'shards gates status' <<<"$out" || { echo "  shards-gates did not print v2 replacement"; return 1; }
+  out="$(cd "$DOC" && timeout 20 "$BIN/shards-sessions" list 2>&1)" || true
+  grep -q 'shards sessions list' <<<"$out" || { echo "  shards-sessions did not print v2 replacement"; return 1; }
+  out="$(cd "$DOC" && timeout 20 "$BIN/shards-ui" status 2>&1)" || true
+  grep -q 'shards-studio' <<<"$out" || { echo "  shards-ui did not print Studio replacement"; return 1; }
+  out="$(cd "$DOC" && timeout 20 node "$PROJ/node_modules/@proflandrigan/shards/tools/install.js" 2>&1)" && { echo "  v1 installer should exit non-zero"; return 1; }
+  grep -q 'shards build --target claude --dev' <<<"$out" || { echo "  v1 installer did not print v2 replacement"; return 1; }
+  [ -z "$(ls -A "$DOC")" ] || { echo "  v1 installer wrote files"; return 1; }
 }
-step "legacy bins (shards-ui/gates/sessions) resolve their runtime files" legacy_ok
+step "deprecated v1 bins (shards-ui/gates/sessions/install) print v2 replacements" legacy_ok
+
+# ---- 7b. release plugin + marketplace pass `claude plugin validate --strict` (skipped when the claude CLI is absent) ----
+validate_ok() {
+  local mk="$SCRATCH/mkt"
+  (cd "$PROJ" && "$BIN/shards" build --target claude --marketplace --no-bundle-deps --out "$mk" >"$SCRATCH/mkt.log" 2>&1) || { tail -20 "$SCRATCH/mkt.log"; return 1; }
+  claude plugin validate --strict --profile directory "$mk/plugins/shards" && claude plugin validate --strict "$mk"
+}
+if command -v claude >/dev/null 2>&1; then
+  step "claude plugin validate --strict (plugin + marketplace)" validate_ok
+else
+  echo "SKIP  claude plugin validate (claude CLI not on PATH)"
+fi
 
 # ---- 8. shards-mcp smoke ----
 step "shards-mcp initialize + tools/list (activate, gate_request)" \

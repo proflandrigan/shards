@@ -7,7 +7,7 @@ import path from 'node:path';
 const root = path.resolve(__dirname, '..');
 const install = path.join(root, 'tools/install.js');
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'shards-noui-'));
-const run = (dir, ...args) => spawnSync('node', [install, ...args], { cwd: dir, encoding: 'utf8' });
+const run = (dir, ...args) => spawnSync('node', [install, ...args], { cwd: dir, encoding: 'utf8', env: { ...process.env, SHARDS_LEGACY_INSTALL: '1' } });
 const cmds = (s) => (Object.values(s.hooks || {}).flat().flatMap((e) => (e.hooks || []).map((h) => h.command)));
 const BAD = /relay\.js|ui-push|\.shards\/ui/;
 
