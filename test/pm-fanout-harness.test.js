@@ -31,7 +31,8 @@ function fixture(o = {}) {
 
 afterAll(() => { for (const d of tmp) fs.rmSync(d, { recursive: true, force: true }); });
 
-describe('pm-fanout-live-run.sh', () => {
+// POSIX-only: drives a bash script with a /usr/bin:/bin PATH; bash is not on that PATH on Windows runners.
+describe.skipIf(process.platform === 'win32')('pm-fanout-live-run.sh', () => {
   it('has a one-sample header and parses', () => {
     const src = fs.readFileSync(SCRIPT, 'utf8');
     expect(src).toMatch(/ONE SAMPLE, NEVER A PASS RATE/);

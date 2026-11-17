@@ -24,7 +24,7 @@ afterEach(() => fs.rmSync(tmp, { recursive: true, force: true }));
 const outDir = () => path.join(tmp, 'docs', 'knowledge');
 function sources() {
   const base = path.join(tmp, '.shards', 'knowledge'); const acc = [];
-  (function w(d) { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) w(f); else acc.push(path.relative(base, f)); } })(base);
+  (function w(d) { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) w(f); else acc.push(path.relative(base, f).split(path.sep).join('/')); } })(base);
   return acc;
 }
 

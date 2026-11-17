@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'url';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
 import { execFileSync } from 'child_process';
@@ -8,7 +9,7 @@ import fs from 'fs';
 const require = createRequire(import.meta.url);
 const sessionIndex = require('../runtime/sessions/index.js');
 
-const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SHARDS_SESSIONS_BIN = path.join(REPO_ROOT, 'tools', 'shards-sessions.js');
 
 let tmpDir;

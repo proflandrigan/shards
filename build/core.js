@@ -19,7 +19,8 @@ function walk(dir, base = dir) {
 // Label used in error messages: relative to cwd, or absolute when outside it.
 function label(file) {
   const rel = path.relative(process.cwd(), file);
-  return rel.startsWith('..') || path.isAbsolute(rel) ? file : rel;
+  // Diagnostics always use forward slashes so output (and tests) are identical on Windows.
+  return rel.startsWith('..') || path.isAbsolute(rel) ? file : rel.split(path.sep).join('/');
 }
 
 function loadCore(coreDir) {

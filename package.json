@@ -60,6 +60,9 @@
     "proper-lockfile": "^4.1.2",
     "yaml": "^2.9.1"
   },
+  "engines": {
+    "node": ">=18"
+  },
   "publishConfig": {
     "access": "public",
     "tag": "next"

@@ -1,9 +1,9 @@
 name: ci
 
 # E9.4(a): PR gate on Linux, macOS and Windows.
-# TODO(owner: proflandrigan): this workflow has never run (repo work is local only); the macOS and Windows legs
-# are OPEN (external) until it is pushed and observed green.
+# Observed green on ubuntu, macOS and Windows on 2026-11-17 (wip/ci-portability run 44012257990).
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches: [next, main]

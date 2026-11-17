@@ -65,6 +65,15 @@ function baseEnv(extra) {
 
 // execFile with stdin handling and a hard timeout. SIGTERM goes to the child so git cleans up its
 // own index.lock and hook children; SIGKILL follows if it lingers.
+// Windows has no process groups for child.kill(): Git for Windows spawns a wrapper -> real git -> sh -> hook, and
+// killing only the wrapper orphans the rest (still holding index.lock). Kill the whole tree there.
+function killTree(child, signal) {
+  if (process.platform === 'win32' && child.pid) {
+    try { require('child_process').spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true }); return; } catch (_) { /* fall through */ }
+  }
+  try { child.kill(signal); } catch (_) { /* gone */ }
+}
+
 function exec(file, args, { cwd, env, input, timeoutMs } = {}) {
   return new Promise((resolve, reject) => {
     let done = false;
@@ -81,9 +90,9 @@ function exec(file, args, { cwd, env, input, timeoutMs } = {}) {
     if (timeoutMs) {
       timer = setTimeout(() => {
         timedOut = true;
-        try { child.kill('SIGTERM'); } catch (_) { /* gone */ }
+        killTree(child, 'SIGTERM');
         killTimer = setTimeout(() => {
-          try { child.kill('SIGKILL'); } catch (_) { /* gone */ }
+          killTree(child, 'SIGKILL');
           finish({ code: 1, stdout: '', stderr: '', timedOut: true });
         }, 1500);
       }, timeoutMs);
@@ -109,7 +118,9 @@ async function chunked(items, size, fn) {
 
 function firstLine(...texts) {
   for (const t of texts) {
-    const l = String(t || '').split('\n').map((s) => s.trim()).find(Boolean);
+    const lines = String(t || '').split('\n').map((s) => s.trim()).filter(Boolean);
+    // Skip git's own "warning: ... LF will be replaced by CRLF" noise (core.autocrlf on Windows) when a real line follows.
+    const l = lines.find((x) => !/^warning:/i.test(x)) || lines[0];
     if (l) return l.slice(0, 200);
   }
   return '';
@@ -387,15 +398,34 @@ async function commitOnlyPath(root, changed, rec, ctx) {
     if (a.code !== 0) { restoreIndex(backup); return { ok: false, reason: `commit_failed: ${firstLine(a.stderr)}` }; }
   }
   const [subject, trailers] = msgParts(rec);
+  const startedAt = Date.now();
   const r = await git(root, ['commit', '--only', '-m', subject, '-m', trailers, '--pathspec-from-file=-', '--pathspec-file-nul'], {
     input: paths.join('\0'), env: ctx.ident, timeoutMs: ctx.hookTimeoutMs,
   });
   if (r.code !== 0) {
+    if (r.timedOut) await removeKilledIndexLock(root, startedAt);
     if (backup) restoreIndex(backup);
     const hasHook = !!(await hookExists(root, 'pre-commit')) || !!(await hookExists(root, 'commit-msg'));
     return { ok: false, reason: classifyFailure(r, hasHook), tried: true };
   }
   return { ok: true };
+}
+
+// A `git commit` killed on timeout cannot clean up after itself on Windows (TerminateProcess), leaving a stale
+// index.lock that would wedge every later git command. We killed the process tree ourselves, so drop the lock it
+// created (only if it appeared after this commit started).
+async function removeKilledIndexLock(root, startedAt) {
+  try {
+    const p = await git(root, ['rev-parse', '--git-path', 'index.lock']);
+    if (p.code !== 0) return;
+    const lock = path.resolve(root, p.stdout.trim());
+    for (let i = 0; i < 10; i++) {
+      let st;
+      try { st = fs.statSync(lock); } catch (_) { return; }
+      if (st.mtimeMs < startedAt - 1000) return; // not ours
+      try { fs.unlinkSync(lock); return; } catch (_) { await new Promise((r) => setTimeout(r, 100)); }
+    }
+  } catch (_) { /* best effort */ }
 }
 
 async function plumbingPath(root, st, snapEntries, changed, rec, ctx) {

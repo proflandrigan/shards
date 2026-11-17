@@ -95,7 +95,7 @@ describe('codex dev build keeps absolute paths', () => {
     const o = path.join(root, 'dev');
     expect(compile({ target: 'codex', outDir: o, dev: true, bundleDeps: false }).errors).toEqual([]);
     const toml = read('.codex/config.toml', o);
-    expect(toml).toContain(JSON.stringify(path.join(REPO, 'runtime', 'server.js')));
+    expect(toml).toContain(JSON.stringify(path.join(REPO, 'runtime', 'server.js').replace(/\\/g, '/')));
     expect(toml).toContain('approval_mode = "prompt"');
     expect(toml).toMatch(/# max_depth = 2/);
   });

@@ -1,9 +1,9 @@
 name: runtime
 
 # E2.1 exit criterion: `shards-mcp` starts on Linux, macOS and Windows.
-# TODO(owner: proflandrigan): this workflow has never run (repo work is local only);
-# the macOS and Windows legs are OPEN (external) until it is pushed and observed green.
+# Observed green on ubuntu, macOS and Windows (Node 18/20/22) on 2026-11-17 (wip/ci-portability runs).
 on:
+  workflow_dispatch:
   push:
     branches: [next, main]
   pull_request:
@@ -22,5 +22,9 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm ci
+      # Node 18 proof without vitest (vitest 4 needs node:util styleText, Node 20+): plain stdio handshake + tools/list.
+      - name: Runtime smoke (stdio MCP handshake + tools/list, no test framework)
+        run: node scripts/runtime-smoke.js
       - name: Runtime tests (real stdio MCP handshake, locked state, events)
+        if: matrix.node != 18
         run: npx vitest run test/runtime-

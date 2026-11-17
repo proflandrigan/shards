@@ -41,7 +41,7 @@ describe('dev install: claude', () => {
     expect(json(out, '.claude-plugin/plugin.json')).toMatchObject({ name: 'shards' });
     const mcp = json(out, '.mcp.json').mcpServers.shards;
     expect(mcp.command).toBe('node');
-    expect(mcp.args[0]).toBe(path.join(REPO, 'runtime', 'server.js'));
+    expect(mcp.args[0]).toBe(path.join(REPO, 'runtime', 'server.js').replace(/\\/g, '/'));
     expect(fs.existsSync(mcp.args[0])).toBe(true);
     expect(mcp.env.SHARDS_PROJECT_ROOT).toBe('${CLAUDE_PROJECT_DIR}');
   });
@@ -97,7 +97,7 @@ describe('dev install: codex', () => {
     const toml = read(out, '.codex/config.toml');
     expect(toml).toContain('[mcp_servers.shards]');
     expect(toml).toContain('command = "node"');
-    expect(toml).toContain(JSON.stringify(path.join(REPO, 'runtime', 'server.js')));
+    expect(toml).toContain(JSON.stringify(path.join(REPO, 'runtime', 'server.js').replace(/\\/g, '/')));
     expect(read(out, '.codex/hooks.json')).not.toContain('{{SHARDS_HOOKS_DIR}}');
     for (const p of hookPaths(json(out, '.codex/hooks.json'))) expect(fs.existsSync(p), p).toBe(true);
     const skill = read(out, 'skills/agents/SKILL.md');

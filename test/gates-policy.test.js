@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'url';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRequire } from 'module';
 import fs from 'fs';
@@ -140,4 +141,4 @@ describe('config schema', () => {
   });
 });
 
-const __dirname_ = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const __dirname_ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

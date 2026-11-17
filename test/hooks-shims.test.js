@@ -17,7 +17,7 @@ beforeEach(() => { tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shards-hooks-'))
 afterEach(() => { fs.rmSync(tmp, { recursive: true, force: true }); });
 
 function fixture(name, vars = {}) {
-  let t = fs.readFileSync(path.join(FIX, name), 'utf8').replace(/__CWD__/g, tmp);
+  let t = fs.readFileSync(path.join(FIX, name), 'utf8').replace(/__CWD__/g, () => JSON.stringify(tmp).slice(1, -1)); // JSON-escape backslashes (Windows paths)
   for (const [k, v] of Object.entries(vars)) t = t.replace(`__${k}__`, v);
   return t;
 }

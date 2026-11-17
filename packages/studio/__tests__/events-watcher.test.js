@@ -86,6 +86,6 @@ describe('artifact index', () => {
     const p1 = eventToPanelPayload(ev('chart', 'out/a.json'), '/proj');
     const p2 = eventToPanelPayload(ev('chart', 'out/a.json'), '/proj');
     expect(p1.panelId).toBe(p2.panelId);
-    expect(p1).toMatchObject({ eventType: 'ui-panel', panel: 'chart', source: '/proj/out/a.json' });
+    expect(p1).toMatchObject({ eventType: 'ui-panel', panel: 'chart', source: path.resolve('/proj', 'out/a.json') });
   });
 });

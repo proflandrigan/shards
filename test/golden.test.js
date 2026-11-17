@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'url';
 import { describe, it, expect } from 'vitest';
 import { createRequire } from 'module';
 import { execFileSync, spawnSync } from 'child_process';
@@ -5,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 
 const require = createRequire(import.meta.url);
-const GOLDEN = path.resolve(path.dirname(new URL(import.meta.url).pathname), 'golden');
+const GOLDEN = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'golden');
 const { scoreSession, globToRegExp } = require('./golden/score.js');
 
 const SCORE = path.join(GOLDEN, 'score.js');

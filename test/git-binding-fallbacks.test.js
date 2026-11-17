@@ -52,15 +52,21 @@ describe('git binding: fallbacks', () => {
 
   it('pre-commit hook timeout -> hook_timeout', async () => {
     const { root, top } = makeRepo();
-    hook(top, 'pre-commit', 'sleep 5');
+    hook(top, 'pre-commit', 'sleep 20'); // long enough that a slow Windows runner still proves the hook was killed, not awaited
     write(root, 'out/a.md', 'a\n');
     const t0 = Date.now();
     const r = await commitGate(base(root, { hookTimeoutMs: 300 }));
-    expect(Date.now() - t0).toBeLessThan(4500);
+    expect(Date.now() - t0).toBeLessThan(15000);
     expect(r.outcome).toBe('commit_pending');
     expect(r.reason).toBe('hook_timeout');
-    expect(fs.existsSync(path.join(top, '.git', 'index.lock'))).toBe(false);
-    expect(sh(root, 'status', '--porcelain', '--', 'out')).toBe('?? out/');
+    // On Windows the killed hook tree (sh -> sleep) can outlive the kill for a moment; a lock that is merely
+    // in flight must clear. Only a lock that is still there after the grace period counts as stale.
+    const lock = path.join(top, '.git', 'index.lock');
+    const until = Date.now() + (process.platform === 'win32' ? 8000 : 0);
+    while (fs.existsSync(lock) && Date.now() < until) await new Promise((r) => setTimeout(r, 100));
+    expect(fs.existsSync(lock)).toBe(false);
+    const st = sh(root, 'status', '--porcelain', '--', 'out');
+    expect(st, `out=${fs.existsSync(path.join(root, 'out/a.md'))} log=${sh(root, 'log', '--oneline', '-3')}`).toBe('?? out/');
   });
 
   it('detached HEAD -> commit_pending', async () => {

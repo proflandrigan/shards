@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -25,7 +25,7 @@ describe('legacy installer deprecation', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'inst-'));
     const r = execFileSync('node', [path.join(root, 'tools/install.js')], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
     // warning goes to stderr; capture via a second run with 2>&1
-    const both = execFileSync('sh', ['-c', `node ${path.join(root, 'tools/install.js')} 2>&1 >/dev/null`], { cwd: dir, encoding: 'utf8' });
+    const both = spawnSync('node', [path.join(root, 'tools/install.js')], { cwd: dir, encoding: 'utf8' }).stderr;
     expect(both).toContain('DEPRECATED');
     expect(both).toContain('git checkout v-legacy');
     expect(both).toContain('shards build --dev');

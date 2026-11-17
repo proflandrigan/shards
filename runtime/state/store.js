@@ -54,7 +54,10 @@ function atomicWrite(file, text) {
   for (let i = 0; i < 8; i++) {
     try { fs.renameSync(tmp, file); return; } catch (e) {
       lastErr = e;
-      if (!['EPERM', 'EACCES', 'EBUSY'].includes(e.code)) break;
+      // Windows: a concurrent reader/replacer can surface as EPERM/EACCES/EBUSY, or as a transient ENOENT while the
+      // destination is delete-pending even though our tmp file still exists. Retry those.
+      const transient = ['EPERM', 'EACCES', 'EBUSY'].includes(e.code) || (e.code === 'ENOENT' && fs.existsSync(tmp));
+      if (!transient) break;
       sleepSync(10 * (i + 1));
     }
   }
