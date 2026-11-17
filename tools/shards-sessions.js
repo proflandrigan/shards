@@ -12,7 +12,7 @@ const SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
 const SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
 const GATE_STATE_FILE = path.join(SHARDS_DIR, 'gates', 'state.json');
 
-// Mirrors src/ui/server.js#readGateSnapshot — returns the gate id (string) if a
+// Mirrors packages/studio/server.js#readGateSnapshot — returns the gate id (string) if a
 // gate is currently open, else null. Both code paths produce identical shapes
 // in INDEX.json, so the UI Sessions panel and CLI `show` render the same field.
 // Tolerant of a missing/corrupt state file (returns null silently).
@@ -209,7 +209,7 @@ function cmdEnd(parsed) {
     return;
   }
   // Snapshot gate state at end-of-session so CLI-ended sessions match the
-  // shape written by the UI's POST /chat/end path (src/ui/server.js).
+  // shape written by the UI's POST /chat/end path (packages/studio/server.js).
   const snap = readGateSnapshot();
   sessionIndex.markEnded(SESSIONS_DIR, id, {
     reason: 'cli_end',

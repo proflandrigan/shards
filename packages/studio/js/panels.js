@@ -107,7 +107,7 @@ function closePanelTab(panelId) {
 }
 
 // ─── Live update (Story 2.3) ──────────────────────────────────────────────────
-// Called on ui-panel-update SSE; re-renders data preserving sort state
+// Called on panel-update SSE; re-renders data preserving sort state
 
 function updatePanelData(panelId, newData) {
   var p = openPanels[panelId];

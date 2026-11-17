@@ -373,10 +373,7 @@ function renderPermissionsList() {
   if (!list) return;
   list.innerHTML = '';
 
-  // Filter out internal shards permissions from display
-  var display = permissionsCache.allow.filter(function(p) {
-    return p.indexOf('ui-push.js') === -1 && p.indexOf('relay.js') === -1;
-  });
+  var display = permissionsCache.allow;
 
   if (display.length === 0) {
     list.innerHTML = '<span class="perm-empty">No permissions configured. Use a preset or add custom rules.</span>';

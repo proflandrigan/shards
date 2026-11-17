@@ -898,15 +898,6 @@ function switchSession(sessionId) {
   newSession.needsAttention = false;
   newSession.attentionReason = null;
 
-  // Render any queued permission cards
-  var queued = newSession.pendingPermissions;
-  if (queued.length > 0) {
-    for (var qi = 0; qi < queued.length; qi++) {
-      var perm = queued[qi];
-      renderPermissionCard(perm.id, perm.tool, perm.command, perm.sessionId);
-    }
-    newSession.pendingPermissions = [];
-  }
 
   updateTitleNotification();
   renderSessionTabs();
@@ -1031,7 +1022,7 @@ function finalizePendingBubble(markdownContent) {
   if (!session) return;
   flushTokens();
   if (session.pendingBubble) {
-    var displayContent = stripGateFence(markdownContent);
+    var displayContent = markdownContent;
     var rendered = renderMarkdown(displayContent);
     session.pendingBubble.innerHTML = linkifyFilePaths(rendered);
     session.pendingBubble.setAttribute('data-raw-md', displayContent);
@@ -1059,79 +1050,11 @@ function finalizePendingBubble(markdownContent) {
       };
       session.pendingBubble.parentElement.insertBefore(showMore, actions);
     }
-    // Detect gate pattern and inject confirmation buttons
-    if (isGateMessage(markdownContent)) {
-      injectGateButtons(session.pendingBubble.parentElement);
-    }
     session.pendingBubble = null;
   }
   session.tokenBuffer = '';
   var container = document.getElementById('messages');
   container.scrollTop = container.scrollHeight;
-}
-
-// ─── Gate confirmation detection and buttons ────────────────────────────────
-
-function stripGateFence(content) {
-  if (!content) return content;
-  return content.replace(/::GATE::[\s\S]*?::ENDGATE::\s*/g, '');
-}
-
-function isGateMessage(content) {
-  if (!content) return false;
-  // Require a real ::GATE:: ... ::ENDGATE:: fence — the same syntax parsed
-  // authoritatively by the legacy gate parser (tools/gate-hook/parser.js, removed in E11.9) and emitted by agents per
-  // src/agents/specific_instructions/shared/behavioral_rules.md. Substring
-  // heuristics on words like "confirm" or "proceed" false-positive on agent
-  // narration (e.g. "Confirmed — X is not present in Y").
-  if (!/::GATE::[\s\S]*?::ENDGATE::/.test(content)) return false;
-  // Suppress the Confirm/Request-Changes injection when enforcement is off
-  // (SHARDS_GATE_ENFORCE=0) — the gate hook will never act on the response,
-  // so showing the buttons as if they meant something is misleading. The
-  // /gate-mode banner already tells the user gates are advisory.
-  if (typeof gateMode !== 'undefined' && gateMode && gateMode.enforce === false) {
-    return false;
-  }
-  // Prefer server state — only inject buttons when the gate hook has
-  // actually opened a gate. With SSE in place gateState lands ~immediately;
-  // the fallback (10s polling) can still leave a transient window where
-  // gateState is stale, so we fall back to trusting the fence.
-  if (typeof gateState !== 'undefined' && gateState) {
-    return gateState.open === true;
-  }
-  return true;
-}
-
-function injectGateButtons(messageEl) {
-  if (!messageEl) return;
-  // Don't double-inject
-  if (messageEl.querySelector('.gate-actions')) return;
-
-  var actions = document.createElement('div');
-  actions.className = 'gate-actions';
-  actions.innerHTML =
-    '<span class="gate-label">Gate confirmation</span>' +
-    '<button class="gate-btn gate-btn-confirm">Confirm</button>' +
-    '<button class="gate-btn gate-btn-changes">Request Changes</button>';
-
-  actions.querySelector('.gate-btn-confirm').addEventListener('click', function() {
-    var input = document.getElementById('chat-input');
-    input.value = 'Confirmed. Proceed.';
-    sendChatMessage();
-    actions.classList.add('gate-resolved');
-    setTimeout(function() { actions.remove(); }, 500);
-  });
-
-  actions.querySelector('.gate-btn-changes').addEventListener('click', function() {
-    var input = document.getElementById('chat-input');
-    input.value = 'I\'d like to change: ';
-    input.focus();
-    input.setSelectionRange(input.value.length, input.value.length);
-    actions.classList.add('gate-resolved');
-    setTimeout(function() { actions.remove(); }, 300);
-  });
-
-  messageEl.appendChild(actions);
 }
 
 // ─── File path auto-linking ──────────────────────────────────────────────────
@@ -1334,7 +1257,7 @@ function addMessageDirect(role, content, agent, skipAnimation, attachments) {
       '<div class="message-bubble">' + attachmentsHtml + textHtml + '</div>' +
       '<div class="message-actions">' + starHtml + '</div>';
   } else {
-    var displayContent = stripGateFence(content);
+    var displayContent = content;
     div.innerHTML =
       '<div class="message-meta">' +
       '<span class="meta-dot" style="background:' + info.color + '; color:' + info.color + '"></span>' +
@@ -1380,10 +1303,6 @@ function addMessageDirect(role, content, agent, skipAnimation, attachments) {
         showMore.remove();
       };
       div.querySelector('.message-actions').before(showMore);
-    }
-    // Inject gate buttons if this is the last message and agent is waiting
-    if (isGateMessage(content) && session && !session.chatResponding) {
-      injectGateButtons(div);
     }
   }
 
@@ -1543,222 +1462,56 @@ function applySplitLayout() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Permission approval cards
-// ═══════════════════════════════════════════════════════════════
-
-
-function renderPermissionCard(id, tool, command, sessionId) {
-  var session = getActiveSession();
-  var container = document.getElementById('messages');
-  if (session && !session.hasMessages) { container.innerHTML = ''; session.hasMessages = true; }
-
-  var card = document.createElement('div');
-  card.className = 'permission-card';
-  card.setAttribute('data-permission-id', id);
-
-  var displayCmd = esc(command || '');
-  var isLong = command && command.length > 120;
-  var truncated = isLong ? esc(command.slice(0, 120)) + '...' : displayCmd;
-
-  card.innerHTML =
-    '<div class="permission-header">' +
-      '<span class="permission-lock">&#128274;</span>' +
-      '<span class="permission-title">Permission Required</span>' +
-    '</div>' +
-    '<div class="permission-tool">' + esc(tool || 'Bash') + '</div>' +
-    '<div class="permission-command">' +
-      '<code class="permission-command-text">' + (isLong ? truncated : displayCmd) + '</code>' +
-      (isLong ? '<button class="permission-show-more">show more</button>' : '') +
-    '</div>' +
-    '<div class="permission-actions">' +
-      '<button class="permission-btn permission-btn-allow" data-action="allow">Allow Once</button>' +
-      '<button class="permission-btn permission-btn-always" data-action="allow" data-persist="true">Always Allow</button>' +
-      '<button class="permission-btn permission-btn-deny" data-action="deny">Deny</button>' +
-      '<button class="permission-btn permission-btn-always-deny" data-action="deny" data-persist="true">Always Deny</button>' +
-    '</div>';
-
-  if (isLong) {
-    var cmdEl = card.querySelector('.permission-command');
-    cmdEl.setAttribute('data-full-cmd', command);
-    card.querySelector('.permission-show-more').addEventListener('click', function() {
-      cmdEl.querySelector('.permission-command-text').textContent = command;
-      this.remove();
-    });
-  }
-
-  // Use addEventListener instead of inline onclick to avoid escaping issues
-  // with double quotes, backslashes, and newlines in command strings
-  var btns = card.querySelectorAll('.permission-btn');
-  for (var i = 0; i < btns.length; i++) {
-    (function(btn) {
-      btn.addEventListener('click', function() {
-        submitPermission(id, btn.getAttribute('data-action'), btn.getAttribute('data-persist') === 'true', command);
-      });
-    })(btns[i]);
-  }
-
-  container.appendChild(card);
-  container.scrollTop = container.scrollHeight;
-
-}
-
-function disablePermissionCard(id) {
-  var card = document.querySelector('[data-permission-id="' + id + '"].permission-card');
-  if (!card) return;
-  var btns = card.querySelectorAll('.permission-btn');
-  for (var i = 0; i < btns.length; i++) {
-    btns[i].disabled = true;
-  }
-}
-
-function enablePermissionCard(id) {
-  var card = document.querySelector('[data-permission-id="' + id + '"].permission-card');
-  if (!card) return;
-  var btns = card.querySelectorAll('.permission-btn');
-  for (var i = 0; i < btns.length; i++) {
-    btns[i].disabled = false;
-  }
-}
-
-async function submitPermission(id, decision, persist, command) {
-  disablePermissionCard(id);
-  try {
-    await authFetch('/chat/permission', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id, decision: decision, persist: persist, command: command }),
-    });
-  } catch (err) {
-    showPermissionCardError(id, 'Failed to submit. Try again.');
-    enablePermissionCard(id);
-  }
-}
-
-function showPermissionCardError(id, msg) {
-  var card = document.querySelector('[data-permission-id="' + id + '"].permission-card');
-  if (!card) return;
-  var existing = card.querySelector('.permission-error');
-  if (existing) existing.remove();
-  var errDiv = document.createElement('div');
-  errDiv.className = 'permission-error';
-  errDiv.textContent = msg;
-  card.appendChild(errDiv);
-}
-
-function resolvePermissionCard(id, decision) {
-  var card = document.querySelector('[data-permission-id="' + id + '"].permission-card');
-  if (!card) return;
-
-  // Replace card content with resolved state
-  var isAllow = decision === 'allow';
-  card.innerHTML =
-    '<div class="permission-resolved ' + (isAllow ? 'allowed' : 'denied') + '">' +
-      (isAllow ? '&#10003; Allowed' : '&#10007; Denied') +
-    '</div>';
-
-  // Fade out after 2s
-  setTimeout(function() {
-    card.classList.add('fade-out');
-    setTimeout(function() { card.remove(); }, 500);
-  }, 2000);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Gate block banner (gate hook returned decision:block)
+// Gate banner (driven by runtime gate state, not by chat text)
 // ═══════════════════════════════════════════════════════════════
 //
-// Pushed by the server's /gate-state-stream SSE channel when a new entry
-// appears in .shards/gates/violations.jsonl. Rendered as a chip above the
-// most recent assistant message so the user can see *why* the turn was
-// blocked (the agent's text alone doesn't reveal the hook's decision).
+// Gate state comes from the v2 runtime (.shards/state/sessions/*/gates.json)
+// via /gates and /gates/stream. Only a human can confirm a gate, and Studio is
+// read-only, so the banner shows the CLI command to run instead of a button.
 
-function renderGateBlockBanner(evt) {
-  if (!evt) return;
-  var container = document.getElementById('messages');
-  if (!container) return;
-
-  // Find the last assistant bubble in the active session.
-  var bubbles = container.querySelectorAll('.message.assistant');
-  var anchor = bubbles.length > 0 ? bubbles[bubbles.length - 1] : null;
-
-  var banner = document.createElement('div');
-  banner.className = 'gate-block-banner';
-  var reason = evt.reason || 'Gate violation';
-  var detail = [];
-  if (evt.kind) detail.push(evt.kind);
-  if (evt.gateId) detail.push('gate ' + evt.gateId);
-  if (evt.phase) detail.push('phase ' + evt.phase);
-  var detailStr = detail.length > 0 ? ' (' + detail.join(', ') + ')' : '';
-  banner.innerHTML =
-    '<span class="gate-block-icon">⛔</span>' +
-    '<span class="gate-block-text"><strong>Blocked:</strong> ' +
-      (typeof esc === 'function' ? esc(reason) : reason) +
-      (typeof esc === 'function' ? esc(detailStr) : detailStr) +
-    '</span>' +
-    '<button class="gate-block-dismiss" type="button" aria-label="Dismiss">×</button>';
-
-  banner.querySelector('.gate-block-dismiss').onclick = function() {
-    banner.remove();
-  };
-
-  if (anchor && anchor.parentElement) {
-    anchor.parentElement.insertBefore(banner, anchor);
-  } else {
-    container.appendChild(banner);
-  }
-  container.scrollTop = container.scrollHeight;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Gate mode disabled banner
-// ═══════════════════════════════════════════════════════════════
-//
-// Surfaces SHARDS_GATE_ENFORCE=0 / SHARDS_CHECKPOINT_ENFORCE=0 /
-// SHARDS_AUTO_VERIFY=0 to the user. Without this the Confirm/Request-Changes
-// buttons render normally even though the hook will ignore the response,
-// which is misleading (Bug M4 in the audit).
-
-function renderGateModeBanner(mode) {
-  if (!mode) return;
-  var host = document.getElementById('chat-pane') ||
-             document.getElementById('messages') ||
-             document.body;
+function renderGateBanner(state) {
+  var host = document.getElementById('chat-pane') || document.getElementById('messages') || document.body;
   if (!host) return;
-
-  var existing = document.getElementById('gate-mode-banner');
-  var flags = [];
-  if (mode.enforce === false) flags.push('SHARDS_GATE_ENFORCE=0');
-  if (mode.checkpointEnforce === false) flags.push('SHARDS_CHECKPOINT_ENFORCE=0');
-  if (mode.autoVerify === false) flags.push('SHARDS_AUTO_VERIFY=0');
-
-  if (flags.length === 0) {
+  var existing = document.getElementById('gate-banner');
+  if (!state || !state.open) {
     if (existing) existing.remove();
     return;
   }
-
-  var msg;
-  if (mode.enforce === false) {
-    msg = '⚠ Gate enforcement disabled (' + flags.join(', ') + ') — gates are advisory only.';
-  } else {
-    msg = '⚠ Reduced gate enforcement (' + flags.join(', ') + ').';
+  var detail = [];
+  if (state.kind) detail.push(state.kind);
+  if (state.phase !== null && typeof state.phase !== 'undefined') detail.push('phase ' + state.phase);
+  if (state.agent) detail.push(state.agent);
+  var extra = state.pending && state.pending.length > 1 ? ' (+' + (state.pending.length - 1) + ' more)' : '';
+  var html =
+    '<span class="gate-banner-label">Gate pending: <strong>' + esc(state.id || '') + '</strong>' +
+      (detail.length ? ' (' + esc(detail.join(', ')) + ')' : '') + esc(extra) + '</span>' +
+    (state.summary ? '<span class="gate-banner-summary">' + esc(state.summary) + '</span>' : '') +
+    '<span class="gate-banner-cmd">Confirm in your terminal: <code>' + esc(state.confirmCommand || '') + '</code></span>';
+  if (!existing) {
+    existing = document.createElement('div');
+    existing.id = 'gate-banner';
+    existing.className = 'gate-banner';
+    if (host.firstChild) host.insertBefore(existing, host.firstChild); else host.appendChild(existing);
   }
+  existing.innerHTML = html;
+}
 
-  if (existing) {
-    existing.textContent = msg;
+// SHARDS_GATE_ENFORCE=0 disables the runtime's write blocks; say so.
+function renderGateModeBanner(mode) {
+  var host = document.getElementById('chat-pane') || document.getElementById('messages') || document.body;
+  if (!host) return;
+  var existing = document.getElementById('gate-mode-banner');
+  if (!mode || mode.enforce !== false) {
+    if (existing) existing.remove();
     return;
   }
-
+  var msg = '\u26a0 Gate enforcement disabled (SHARDS_GATE_ENFORCE=0) \u2014 gates are advisory only.';
+  if (existing) { existing.textContent = msg; return; }
   var banner = document.createElement('div');
   banner.id = 'gate-mode-banner';
   banner.className = 'gate-mode-banner';
   banner.textContent = msg;
-
-  // Insert at the top of the chat pane so it's always visible.
-  if (host.firstChild) {
-    host.insertBefore(banner, host.firstChild);
-  } else {
-    host.appendChild(banner);
-  }
+  if (host.firstChild) host.insertBefore(banner, host.firstChild); else host.appendChild(banner);
 }
 
 function rebuildMessages(msgArray) {

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { ChatSession } = require('../src/ui/chat-session.js');
+const { ChatSession } = require('../chat-session.js');
 
 function makeSession() {
   const events = [];

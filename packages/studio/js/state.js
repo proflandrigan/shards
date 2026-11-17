@@ -83,7 +83,6 @@ function createSessionState(sid, agent) {
     domDirty: false,
     unread: false,
     needsAttention: false,
-    pendingPermissions: [],
     // Image attachments staged for the next send. Each entry:
     //   { id, mediaType, dataBase64, sizeBytes, name, previewUrl }
     pendingAttachments: [],
@@ -195,26 +194,23 @@ function saveSessionWorkspace(session) {
 // Gate state subscription (SSE primary, polling fallback)
 // ═══════════════════════════════════════════════════════════════
 //
-// The server pushes gate-state / gate-block / auto-state events on
-// /gate-state-stream whenever .shards/gates/state.json,
-// .shards/gates/violations.jsonl, or .shards/auto/state.json change. Replaces
-// the legacy 2s poll which lagged real gate transitions and caused the
-// Confirm-button-on-wrong-gate render bug. On SSE error we fall back to a
-// 10s poll as resilience (server restart, network blip).
+// The server pushes { type: 'gate-update', state } on /gates/stream whenever a
+// session's runtime gates.json (.shards/state/sessions/<key>/gates.json)
+// changes. On SSE error we fall back to a 10s poll of /gates.
 
 var gateState = { open: false, history: [] };
-var gateMode = { enforce: true, checkpointEnforce: true, autoVerify: true };
+var gateMode = { enforce: true };
 var _gateEventSource = null;
 var _gatePoller = null;
 var _gateReconnectTimer = null;
 
 function _onGateStateUpdate(state) {
   gateState = state || { open: false, history: [] };
-}
-
-function _onGateBlock(evt) {
-  if (typeof renderGateBlockBanner === 'function') {
-    renderGateBlockBanner(evt);
+  if (typeof renderGateBanner === 'function') renderGateBanner(gateState);
+  var session = typeof getActiveSession === 'function' ? getActiveSession() : null;
+  if (session && gateState.open && typeof setSessionSignal === 'function') {
+    setSessionSignal(session, 'gate', 'gate ' + gateState.id);
+    if (typeof pushTimeline === 'function') pushTimeline(session, 'gate', gateState.id, null);
   }
 }
 
@@ -228,7 +224,7 @@ function _onGateModeLoaded(mode) {
 function _startGatePollingFallback() {
   if (_gatePoller) return;
   _gatePoller = setInterval(function() {
-    authFetch('/gate-state')
+    authFetch('/gates')
       .then(function(r) { return r.json(); })
       .then(function(data) { _onGateStateUpdate(data); })
       .catch(function() {});
@@ -240,14 +236,14 @@ function _stopGatePollingFallback() {
 }
 
 function startGatePoller() {
-  // One-time fetches: initial gate-state + gate-mode. The SSE stream also
-  // pushes an initial gate-state on connect, but the fetch races with the
+  // One-time fetches: initial gates + gate mode. The SSE stream also
+  // pushes an initial gate-update on connect, but the fetch races with the
   // EventSource open and we want whichever lands first to seed UI.
-  authFetch('/gate-state')
+  authFetch('/gates')
     .then(function(r) { return r.json(); })
     .then(_onGateStateUpdate)
     .catch(function() {});
-  authFetch('/gate-mode')
+  authFetch('/gates/mode')
     .then(function(r) { return r.json(); })
     .then(_onGateModeLoaded)
     .catch(function() {});
@@ -259,7 +255,7 @@ function _openGateStream() {
   if (_gateEventSource) return;
   // SSE EventSource can't set Authorization headers, so the server accepts
   // ?token=… as a fallback (same pattern as /events).
-  var url = '/gate-state-stream?token=' + encodeURIComponent(SHARDS_TOKEN);
+  var url = '/gates/stream?token=' + encodeURIComponent(SHARDS_TOKEN);
   try {
     _gateEventSource = new EventSource(url);
   } catch (e) {
@@ -274,13 +270,8 @@ function _openGateStream() {
     try { payload = JSON.parse(ev.data); } catch (e) { return; }
     if (!payload || !payload.type) return;
     if (payload.type === 'connected') return;
-    if (payload.type === 'gate-state') {
+    if (payload.type === 'gate-update') {
       _onGateStateUpdate(payload.state);
-    } else if (payload.type === 'gate-block') {
-      _onGateBlock(payload);
-    } else if (payload.type === 'auto-state') {
-      // Reserved for future auto-verify HUD; non-fatal if no renderer.
-      if (typeof renderAutoStateBadge === 'function') renderAutoStateBadge(payload.state);
     }
   };
   _gateEventSource.onerror = function() {

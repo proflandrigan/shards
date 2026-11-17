@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 function isChatEvent(type) {
-  return type && (type.indexOf('chat-') === 0 || type === 'agent-consulting' || type === 'permission-request' || type === 'permission-resolved');
+  return type && (type.indexOf('chat-') === 0 || type === 'agent-consulting');
 }
 
 // R2/R3 — small helpers for deriving tab subline + timeline entries.
@@ -79,17 +79,6 @@ function formatToolDetail(name, input) {
       }
   }
   return detail ? name + ': ' + detail : name;
-}
-
-// Detects "::GATE::" markers in agent messages (the gate fence pattern from
-// CLAUDE.md). Falls back to a softer "phase N gate" heuristic.
-function extractGateLabel(content) {
-  if (typeof content !== 'string') return null;
-  var m = content.match(/::GATE::[^\n]*?id=([\w-]+)/);
-  if (m) return m[1];
-  m = content.match(/gate[\s:]+([\w-]+phase[\w-]+)/i);
-  if (m) return m[1];
-  return null;
 }
 
 function handleSSEEvent(e) {
@@ -237,16 +226,16 @@ function handleGlobalEvent(data) {
       break;
     }
 
-    // ─── Agent-pushed panel events ────────────────────────────────────
-    case 'ui-panel':
+    // ─── Artifact panel events ────────────────────────────────────
+    case 'panel-open':
       openPanelTab(data.panelId, data);
       break;
 
-    case 'ui-panel-close':
+    case 'panel-close':
       if (data.panelId) closePanelTab(data.panelId);
       break;
 
-    case 'ui-panel-update':
+    case 'panel-update':
       updatePanelData(data.panelId, data.data);
       break;
   }
@@ -349,16 +338,9 @@ function handleChatEventForSession(data, session, isActive) {
 
     case 'chat-message':
       session.messages.push({ role: 'assistant', content: data.content, agent: data.agent });
-      // R2/R3 — derive gate signal for both active and inactive sessions
-      var gateLabel = extractGateLabel(data.content);
-      if (gateLabel) {
-        setSessionSignal(session, 'gate', 'gate ' + gateLabel);
-        if (typeof pushTimeline === 'function') pushTimeline(session, 'gate', gateLabel, null);
-      } else {
-        // Note: don't overwrite a tool/file signal with "message" — chat-message
-        // fires after every assistant turn and would clobber more useful state.
-        session.lastActivityAt = Date.now();
-      }
+      // Note: don't overwrite a tool/file signal with "message" — chat-message
+      // fires after every assistant turn and would clobber more useful state.
+      session.lastActivityAt = Date.now();
       if (isActive) {
         if (session.pendingBubble) {
           finalizePendingBubble(data.content);
@@ -368,8 +350,7 @@ function handleChatEventForSession(data, session, isActive) {
       } else {
         session.domDirty = true;
         session.unread = true;
-        // Check for gate pattern to provide better notification later
-        if (typeof isGateMessage === 'function' && isGateMessage(data.content)) {
+        if (typeof gateState !== 'undefined' && gateState && gateState.open) {
           session.attentionReason = 'gate';
         }
         renderSessionTabs();
@@ -401,11 +382,8 @@ function handleChatEventForSession(data, session, isActive) {
         // If tab is hidden, still show a notification for the active session
         if (document.visibilityState !== 'visible') {
           var reason = 'Ready for input';
-          if (session.messages.length > 0) {
-            var last = session.messages[session.messages.length - 1];
-            if (last.role === 'assistant' && typeof isGateMessage === 'function' && isGateMessage(last.content)) {
-              reason = 'Gate reached';
-            }
+          if (typeof gateState !== 'undefined' && gateState && gateState.open) {
+            reason = 'Gate reached';
           }
           showNotificationToast(session, reason);
         }
@@ -523,49 +501,6 @@ function handleChatEventForSession(data, session, isActive) {
       if (typeof pushTimeline === 'function') pushTimeline(session, 'consult', data.agent || 'subagent', null);
       if (typeof renderSessionTabs === 'function') renderSessionTabs();
       if (typeof renderTimeline === 'function') renderTimeline();
-      break;
-
-    case 'permission-request':
-      if (isActive) {
-        renderPermissionCard(data.id, data.tool, data.command, data.sessionId);
-        // Also notify if tab hidden
-        if (document.visibilityState !== 'visible') {
-          showNotificationToast(session, 'Permission required');
-        }
-      } else {
-        session.pendingPermissions.push({
-          id: data.id,
-          tool: data.tool,
-          command: data.command,
-          sessionId: data.sessionId
-        });
-        session.needsAttention = true;
-        session.attentionReason = 'permission';
-        renderSessionTabs();
-        showNotificationToast(session, 'Permission required');
-        updateTitleNotification();
-      }
-      break;
-
-    case 'permission-resolved':
-      if (isActive) {
-        resolvePermissionCard(data.id, data.decision);
-      } else {
-        // Remove from pending queue (resolved externally, e.g. via CLI)
-        var pq = session.pendingPermissions;
-        for (var pi = pq.length - 1; pi >= 0; pi--) {
-          if (pq[pi].id === data.id) {
-            pq.splice(pi, 1);
-            break;
-          }
-        }
-        if (pq.length === 0 && session.chatResponding) {
-          session.needsAttention = false;
-          session.attentionReason = null;
-          renderSessionTabs();
-          updateTitleNotification();
-        }
-      }
       break;
   }
 }

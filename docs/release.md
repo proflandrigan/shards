@@ -27,7 +27,7 @@ Without `--out` it stages into a fresh directory under `os.tmpdir()`.
 
 ## Legacy bins retained
 
-The root `bin` map keeps the legacy entries alongside the new CLI: `shards` (`cli/shards.js`), `shards-ui`, `shards-gates`, and `shards-sessions` (all under `tools/`). Do not remove them in the 2.0 next line. The dry run checks that every bin exists and is executable, and that the legacy bins resolve their `src/ui` and `tools/` runtime files.
+The root `bin` map keeps the legacy entries alongside the new CLI: `shards` (`cli/shards.js`), `shards-ui`, `shards-gates`, and `shards-sessions` (all under `tools/`). Do not remove them in the 2.0 next line. The dry run checks that every bin exists and is executable, and that the legacy bins resolve their `runtime/` and `tools/` files.
 
 ## Rule: new runtime requires that escape `runtime/`
 

@@ -18,9 +18,9 @@ Starting a chat spawns the `claude` CLI in the project directory (stream-json in
 - `Shift+Tab` cycles the permission mode between **Accept Edits** (read and edit files) and **Plan** (explore and plan, no edits). The current mode is shown on the button beside the input.
 - `Cmd+F` searches the transcript.
 
-## Permission cards
+## Permissions
 
-When Claude Code asks to run a tool, Studio can show a permission card in the chat with allow and deny choices, including "always" variants that persist to `.claude/settings.json`. Read-only commands that Claude Code auto-approves anyway are not surfaced. Showing cards requires a Claude Code `PreToolUse` hook that forwards requests to Studio; Studio does not write that hook unless you start it with `SHARDS_STUDIO_WRITE_HOOKS=1` (and the project has a `.claude/` directory). Without it, Claude Code handles approvals itself.
+Studio does not show its own permission cards and installs no Claude Code hooks. Claude Code handles tool approvals itself according to the permission mode and the `permissions.allow` list in `.claude/settings.json` (editable in Settings, see [Workspace](workspace.md)).
 
 ## Pinboard and selection context
 
@@ -29,4 +29,4 @@ When Claude Code asks to run a tool, Studio can show a permission card in the ch
 
 ## Gates in the chat
 
-Gates are runtime tool calls (see the [gate pattern](../03-protocols/gate-pattern.md)), so the agent asks for approval through the normal conversation. Parts of the chat code still look for the legacy text-fence gate format to render confirmation buttons; a v2 agent does not emit those fences, so do not expect such buttons.
+Gates are runtime tool calls (see the [gate pattern](../03-protocols/gate-pattern.md)). Studio reads gate state from the runtime (`.shards/state/sessions/<key>/gates.json`), never from chat text. While a gate is pending, a banner at the top of the chat shows the gate id, kind, phase and summary, plus the command that confirms it, for example `shards gates confirm <id> --session <key>`. Only a human can confirm, and Studio is read-only, so you run that command in a terminal. The banner clears when the gate is decided. If `SHARDS_GATE_ENFORCE=0` is set in Studio's environment, a second banner notes that gates are advisory.

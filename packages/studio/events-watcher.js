@@ -6,8 +6,7 @@
  * core/schema/event.schema.json) into Studio panel payloads.
  *
  * Studio needs no Claude Code hooks: agents append events to events.jsonl and
- * this watcher feeds the same ui-panel / ui-panel-close path the old relay
- * (ui-push.js -> POST /event) used.
+ * this watcher feeds the panel-open / panel-close path in server.js.
  */
 
 const fs = require('fs');
@@ -130,12 +129,12 @@ function panelIdFor(type, p) {
   return 'art-' + crypto.createHash('sha1').update(type + '\0' + p).digest('hex').slice(0, 12);
 }
 
-/** Payload for server.handleEvent({eventType:'ui-panel', ...}). */
+/** Payload for server.handlePanelEvent({eventType:'panel-open', ...}). */
 function eventToPanelPayload(ev, projectDir) {
   const meta = ev.meta || {};
   const abs = path.isAbsolute(ev.path) ? ev.path : path.resolve(projectDir, ev.path);
   return {
-    eventType: 'ui-panel',
+    eventType: 'panel-open',
     panel: ev.type,
     panelId: panelIdFor(ev.type, ev.path),
     title: meta.title || path.basename(ev.path),
@@ -152,7 +151,7 @@ function closePayloads(ev, index) {
   const target = ev.meta && (ev.meta.target || ev.meta.panel);
   return index.list()
     .filter((v) => v.path === ev.path && (!target || v.type === target))
-    .map((v) => ({ eventType: 'ui-panel-close', panelId: panelIdFor(v.type, v.path) }));
+    .map((v) => ({ eventType: 'panel-close', panelId: panelIdFor(v.type, v.path) }));
 }
 
 module.exports = {

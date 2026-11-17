@@ -79,4 +79,4 @@ node cli/shards.js migrate --dry-run
 
 ## Legacy (v1) remnants
 
-Kept for migration and compatibility; do not extend: `tools/install.js` (v1 installer), `tools/shards-ui.js`, `tools/shards-gates.js`, `tools/shards-sessions.js` (legacy bins), `src/commands/` (v1 slash commands) and `src/ui/chat-session.js`, `docs/history/`. `shards migrate` is the supported path off v1 (`cli/commands/migrate.js`, `migrate-legacy.js`, `tools/legacy-layout.js`).
+Kept for migration and compatibility; do not extend: `tools/install.js` (v1 installer), `tools/shards-ui.js`, `tools/shards-gates.js`, `tools/shards-sessions.js` (legacy bins), `src/commands/` (v1 slash commands) and `docs/history/`. `shards migrate` is the supported path off v1 (`cli/commands/migrate.js`, `migrate-legacy.js`, `tools/legacy-layout.js`).

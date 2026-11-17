@@ -77,8 +77,23 @@ describe('Studio headless smoke', () => {
   it('serves the guide manifest and a friendly 404 for missing pages', async () => {
     const m = await get('/docs/manifest');
     expect(m.status).toBe(200);
+    const man = JSON.parse(m.body);
+    expect(man.sections.length).toBeGreaterThan(0);
+    expect(man.sections[0].pages[0]).toHaveProperty('file');
+    const first = await get('/docs/page?file=' + encodeURIComponent(man.sections[0].pages[0].file));
+    expect(first.status).toBe(200);
     const p = await get('/docs/page?file=nope/missing.md');
     expect(p.status).toBe(404);
     expect(p.body).toMatch(/not available/);
+  });
+
+  it('serves runtime gate state at /gates and no longer serves the v1 routes', async () => {
+    const gdir = path.join(dir, '.shards', 'state', 'sessions', 'sx');
+    fs.mkdirSync(gdir, { recursive: true });
+    fs.writeFileSync(path.join(gdir, 'gates.json'), JSON.stringify({ gates: { g1: { id: 'g1', status: 'pending', kind: 'phase', phase: 1, requested_at: '2026-01-01T00:00:00Z' } } }));
+    const g = JSON.parse((await get('/gates')).body);
+    expect(g).toMatchObject({ open: true, id: 'g1', session: 'sx' });
+    expect((await get('/gate-state')).status).toBe(404);
+    expect((await get('/pre-tool-use')).status).toBe(404);
   });
 });

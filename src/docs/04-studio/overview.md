@@ -16,7 +16,7 @@ shards-studio status [--project <dir>]
 
 - `start` is the default. It runs the server in the background for the project (`--project`, default the current directory), waits for it, prints `http://localhost:<port>` and opens the browser (skip with `--no-open`). If Studio is already running for that project it just prints the address.
 - The server is bound to localhost and picks the first free port in 7842-7845. `--port <n>` or the `SHARDS_STUDIO_PORT` environment variable pins one.
-- State files live in the project's `.shards/` directory: `ui.pid`, `ui.port` (port plus a per-process auth token) and `ui.log`.
+- State files live in the project's `.shards/` directory: `studio.pid`, `studio.port` (port plus a per-process auth token) and `studio.log`.
 - There is no desktop build in v2.0 (ADR 0010); Studio is browser-only.
 
 ## Where its data comes from
@@ -25,8 +25,9 @@ Studio reads files; it does not run agents or gates itself.
 
 1. `.shards/events.jsonl`. Each `artifact_emit(type, path, meta)` call from the runtime appends one line. Studio replays the file on start, then tails it, and turns each line into a panel. Line shape: `core/schema/event.schema.json`; rules for `path`: `docs/artifact-contract.md`.
 2. The files at the paths named in those events, which Studio watches so a rewritten file refreshes its panel.
-3. `.shards/sessions/INDEX.json`, the durable session index written by the runtime, for the [Sessions](sessions.md) panel.
-4. The project tree itself, for the file explorer, editor and git views.
+3. `.shards/state/sessions/<key>/gates.json`, the runtime's gate state, for the gate banner in the chat. Read-only.
+4. `.shards/sessions/INDEX.json`, the durable session index written by the runtime, for the [Sessions](sessions.md) panel.
+5. The project tree itself, for the file explorer, editor and git views.
 
 If a panel does not appear, check that `.shards/events.jsonl` exists and has lines, and that the artifact path is inside the project.
 

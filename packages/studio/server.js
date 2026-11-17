@@ -11,8 +11,7 @@ const { execSync, execFileSync } = require('child_process');
 const { randomUUID } = require('crypto');
 const { ChatSession, reconnectOrCleanup } = require('./chat-session');
 const symbolIndex = require('./symbol-index');
-const { permissionPattern } = require('./permission-pattern');
-const { isCcReadOnlyAutoApprovable } = require('./cc-readonly');
+const gatesState = require('./gates-state');
 const eventsWatcher = require('./events-watcher');
 
 // Sessions index lives in the runtime package. When Studio is published
@@ -33,9 +32,9 @@ try {
 
 let PROJECT_DIR = process.cwd();
 let SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
-let PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
-let PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
-let LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
+let PORT_FILE = path.join(SHARDS_DIR, 'studio.port');
+let PID_FILE = path.join(SHARDS_DIR, 'studio.pid');
+let LOG_FILE = path.join(SHARDS_DIR, 'studio.log');
 let AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
 let COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
 let SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
@@ -44,9 +43,9 @@ let INDEX_HTML = path.join(__dirname, 'index.html');
 function initPaths(projectDir, options = {}) {
   PROJECT_DIR = projectDir;
   SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
-  PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
-  PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
-  LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
+  PORT_FILE = path.join(SHARDS_DIR, 'studio.port');
+  PID_FILE = path.join(SHARDS_DIR, 'studio.pid');
+  LOG_FILE = path.join(SHARDS_DIR, 'studio.log');
   AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
   COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
   SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
@@ -139,32 +138,8 @@ function detectProjectFromRelPath(relPath) {
   return { projectDir: `${m[1]}/${m[2]}`, projectName: m[2] };
 }
 
-// Read the gate state file and reduce it to a (phase, gateOpenAtEnd) snapshot
-// suitable for stamping into the session index. We treat the "current phase"
-// as: the open gate's phase if one is open, otherwise the most recent closed
-// gate's phase. Returns nulls if there's no gate activity to report.
-function readGateSnapshot(shardsDir) {
-  const file = path.join(shardsDir, 'gates', 'state.json');
-  try {
-    const raw = fs.readFileSync(file, 'utf8');
-    const state = JSON.parse(raw);
-    // Reduce to the single most-recent open gate. Handles both the legacy
-    // single-slot shape ({ open, ... }) and the v2 per-session shape
-    // ({ version: 2, sessions: { ... } }).
-    const open = reduceOpenGate(state);
-    if (open) {
-      return { phase: typeof open.phase === 'number' ? open.phase : null, gateOpenAtEnd: open.id || null };
-    }
-    const history = Array.isArray(state && state.history) ? state.history : [];
-    for (let i = history.length - 1; i >= 0; i--) {
-      const h = history[i];
-      if (h && typeof h.phase === 'number') return { phase: h.phase, gateOpenAtEnd: null };
-    }
-    return { phase: null, gateOpenAtEnd: null };
-  } catch {
-    return { phase: null, gateOpenAtEnd: null };
-  }
-}
+// (phase, gateOpenAtEnd) snapshot for the session index, from v2 runtime gate state.
+const readGateSnapshot = gatesState.readGateSnapshot;
 
 class SessionStore {
   constructor({ sessionId, agent }) {
@@ -241,30 +216,6 @@ function getSession(sessionId) {
   return s || null;
 }
 
-// ─── Permission request store ────────────────────────────────────────────────
-
-const permissionRequests = new Map();
-// id → { id, tool, command, sessionId, decision: null|'allow'|'deny', createdAt }
-
-// Pending entries used to be retained indefinitely "in case the user comes
-// back to decide" — but a permission card whose browser session ended (closed
-// tab, refresh, abandoned chat) is never going to be decided. The relay
-// polling that entry will sit in `pending` for its full poll timeout
-// (SHARDS_UI_PERMISSION_TIMEOUT_MS, default 10 min) and the entry itself never
-// frees. Cleanup now removes pending entries that have exceeded the relay's
-// poll timeout — by then the relay has already fallen through to CC's native
-// prompt, so the entry serves no purpose. Decided entries still age out at
-// the 5-minute mark.
-const DECIDED_TTL_MS = 5 * 60 * 1000;
-const PENDING_TTL_MS = 11 * 60 * 1000;  // relay default + 1min buffer
-setInterval(() => {
-  const now = Date.now();
-  for (const [id, req] of permissionRequests) {
-    const ttl = req.decision === null ? PENDING_TTL_MS : DECIDED_TTL_MS;
-    if (now - req.createdAt > ttl) permissionRequests.delete(id);
-  }
-}, 60_000);
-
 // ─── Settings cache for permission fast paths ───────────────────────────────
 
 const READONLY_PRESET = [
@@ -329,104 +280,6 @@ function loadSettingsCache() {
 }
 loadSettingsCache();
 
-// Ensure the PreToolUse hook exists — without it, non-whitelisted Bash commands
-// are denied by Claude Code's internal permission system in stream-json mode
-// and never reach the browser permission card flow.
-//
-// Hook timeout is in seconds. Default Claude Code hook timeout is 600s;
-// we extend to 1800s (30 min) so users have a realistic window to respond
-// to a permission card before Claude Code falls back to its internal rules.
-const PRETOOL_HOOK_TIMEOUT_SEC = 1800;
-
-function ensurePreToolUseHook() {
-  const settingsPath = path.join(PROJECT_DIR, '.claude', 'settings.json');
-  let settings = {};
-  try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8')); } catch {}
-
-  if (!settings.hooks) settings.hooks = {};
-  if (!settings.hooks.PreToolUse) settings.hooks.PreToolUse = [];
-
-  const relayPath = path.join(__dirname, 'relay.js');
-  let mutated = false;
-
-  // Find an existing relay entry if any, and patch its timeout in place
-  // so older installations pick up the longer window without manual edits.
-  let hasRelay = false;
-  for (const entry of settings.hooks.PreToolUse) {
-    if (!entry.hooks) continue;
-    for (const h of entry.hooks) {
-      if (h.command && h.command.includes('relay.js')) {
-        hasRelay = true;
-        if (h.timeout !== PRETOOL_HOOK_TIMEOUT_SEC) {
-          h.timeout = PRETOOL_HOOK_TIMEOUT_SEC;
-          mutated = true;
-        }
-      }
-    }
-  }
-
-  if (!hasRelay) {
-    settings.hooks.PreToolUse.push({
-      matcher: 'Bash',
-      hooks: [{
-        type: 'command',
-        command: `node ${relayPath} pre-tool-use`,
-        timeout: PRETOOL_HOOK_TIMEOUT_SEC,
-      }],
-    });
-    mutated = true;
-    console.log('[shards-ui] Added missing PreToolUse hook to settings.json');
-  }
-
-  if (mutated) {
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-  }
-}
-// Studio does NOT write Claude Code hooks by default (artifacts need none).
-// The embedded chat's browser permission cards still depend on the relay
-// PreToolUse hook; opt in explicitly with SHARDS_STUDIO_WRITE_HOOKS=1 (and the
-// project's .claude/ must exist).
-if (process.env.SHARDS_STUDIO_WRITE_HOOKS === '1') {
-  try { ensurePreToolUseHook(); } catch (err) { console.error('[shards-studio] could not write hook: ' + err.message); }
-}
-
-function matchesPermission(command, patterns) {
-  for (const pattern of patterns) {
-    const m = pattern.match(/^Bash\((.+)\)$/);
-    if (!m) continue;
-    const glob = m[1];
-    // The colon in Bash(cmd:*) is Claude Code's delimiter between command prefix
-    // and argument glob — replace with a pattern matching space-or-end-of-string
-    const regex = new RegExp('^' + glob
-      .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-      .replace(/:/, '( |$)')
-      .replace(/\*/g, '.*') + '$');
-    if (regex.test(command)) return true;
-  }
-  return false;
-}
-
-function persistPermission(command, decision) {
-  const settingsPath = path.join(PROJECT_DIR, '.claude', 'settings.json');
-  let settings = {};
-  try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8')); } catch {}
-
-  if (!settings.permissions) settings.permissions = {};
-  const key = decision === 'allow' ? 'allow' : 'deny';
-  if (!settings.permissions[key]) settings.permissions[key] = [];
-
-  // Persist as a prefix glob (Bash(cmd:*)) rather than the literal command, so
-  // clicking Always Allow on `python3 foo.py` also covers `python3 bar.py`.
-  // For launcher commands (git, dbt, npm, …) the subcommand is included in the
-  // prefix — Bash(git status:*) — so scope doesn't widen to every git call.
-  const entry = permissionPattern(command);
-  if (!settings.permissions[key].includes(entry)) {
-    settings.permissions[key].push(entry);
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-    loadSettingsCache();
-  }
-}
-
 // ─── State ───────────────────────────────────────────────────────────────────
 
 let clients = [];       // SSE response objects: { res, sessionId (optional filter) }
@@ -434,22 +287,15 @@ let files = {};         // relPath -> content
 let panelSources = {};  // panelId -> { filePath, panel, title, agent, lastContent }
 let panelWatchers = {}; // panelId -> fs.FSWatcher
 
-// Dedicated SSE channel for gate-state / gate-block / auto-state events.
-// Kept separate from the main `clients` channel so subscribers that only care
-// about gate transitions don't pay the cost of decoding every tool / file
-// broadcast. Each entry: { res } — no per-session filtering since gates are
-// project-scoped.
+// Dedicated SSE channel for gate updates. Gate state is read from the v2
+// runtime (.shards/state/sessions/<key>/gates.json, see docs/gates.md); Studio
+// never parses chat text for gates and never writes gate state.
 let gateClients = [];
+let gateWatcher = null;
 
-// ─── Gate-mode env vars ─────────────────────────────────────────────────────
-// Captured at server startup. The Claude Code hook processes spawn in their
-// own env (which may or may not inherit these), but the UI server can only
-// honestly report what *it* sees. If the user disables enforcement only in
-// the CC side without also exporting it to the UI server, the banner won't
-// fire — documented in the /gate-mode handler below.
+// SHARDS_GATE_ENFORCE=0 turns off the runtime's PreToolUse write blocks. Studio
+// can only report what its own environment sees.
 const GATE_ENFORCE = process.env.SHARDS_GATE_ENFORCE !== '0';
-const CHECKPOINT_ENFORCE = process.env.SHARDS_CHECKPOINT_ENFORCE !== '0';
-const AUTO_VERIFY = process.env.SHARDS_AUTO_VERIFY !== '0';
 
 // ─── Artifact events (.shards/events.jsonl) ─────────────────────────────────
 
@@ -457,27 +303,27 @@ const artifactIndex = eventsWatcher.createArtifactIndex();
 let artifactTailer = null;
 
 function replayPanelEvent(p) {
-  // Same shape handleEvent broadcasts for a ui-panel push, without file watchers.
+  // Same shape handlePanelEvent broadcasts for a panel-open event, without file watchers.
   let data = p.data;
   if (p.source) {
     const content = readFileSafe(p.source);
     if (content !== null) data = parsePanelFileContent(p.source, content);
   }
   return {
-    type: 'ui-panel', panel: p.panel, panelId: p.panelId, title: p.title,
+    type: 'panel-open', panel: p.panel, panelId: p.panelId, title: p.title,
     data, source: p.source || null, panelType: p.type || null, agent: p.agent || null,
   };
 }
 
 function handleArtifactEvent(ev) {
   if (ev.type === 'close') {
-    for (const p of eventsWatcher.closePayloads(ev, artifactIndex)) handleEvent(JSON.stringify(p));
+    for (const p of eventsWatcher.closePayloads(ev, artifactIndex)) handlePanelEvent(p);
     artifactIndex.apply(ev);
     return;
   }
   if (!eventsWatcher.PANEL_TYPES.includes(ev.type) || typeof ev.path !== 'string' || !ev.path) return;
   artifactIndex.apply(ev);
-  handleEvent(JSON.stringify(eventsWatcher.eventToPanelPayload(ev, PROJECT_DIR)));
+  handlePanelEvent(eventsWatcher.eventToPanelPayload(ev, PROJECT_DIR));
 }
 
 function startArtifactWatcher() {
@@ -520,10 +366,6 @@ function broadcast(event) {
 }
 
 // ─── Gate SSE broadcast ──────────────────────────────────────────────────────
-//
-// Broadcasts gate-related events (gate-state changes, gate-block reasons,
-// auto-state changes) on a dedicated SSE channel. Replaces the 2s polling the
-// browser previously did on /gate-state — see Bug H2 in the integration audit.
 
 function broadcastGate(event) {
   let data;
@@ -538,188 +380,13 @@ function broadcastGate(event) {
   });
 }
 
-// ─── Gate / auto / violations watchers ──────────────────────────────────────
-//
-// fs.watch on the JSON state files (plus violations log). We debounce by 50ms
-// to coalesce mid-write events (atomic-write replaces emit two change events
-// in quick succession on most platforms) and ignore JSON.parse errors so the
-// watcher survives a half-written file — the next change event will retry.
-
-const GATE_STATE_FILE = () => path.join(SHARDS_DIR, 'gates', 'state.json');
-const AUTO_STATE_FILE = () => path.join(SHARDS_DIR, 'auto', 'state.json');
-const VIOLATIONS_FILE = () => path.join(SHARDS_DIR, 'gates', 'violations.jsonl');
-
-let _gateWatchers = [];
-let _gateStateDebounce = null;
-let _autoStateDebounce = null;
-let _violationsDebounce = null;
-let _violationsOffset = 0;
-
-// Reduce a parsed gate-state object to its single most-recent OPEN gate, or
-// null if none is open. Handles the legacy single-slot shape ({ open, id, ...})
-// and the v2 per-session shape ({ version: 2, sessions: { "<id>": {...} } }).
-function reduceOpenGate(state) {
-  if (!state || typeof state !== 'object') return null;
-  // v2 per-session map.
-  if (state.sessions && typeof state.sessions === 'object') {
-    let best = null;
-    let bestT = -Infinity;
-    for (const g of Object.values(state.sessions)) {
-      if (!g || !g.open) continue;
-      const t = g.opened_at ? Date.parse(g.opened_at) : NaN;
-      const score = Number.isNaN(t) ? -Infinity : t;
-      if (best === null || score > bestT) { best = g; bestT = score; }
-    }
-    return best;
-  }
-  // Legacy single slot.
-  return state.open ? state : null;
-}
-
-// Reduce a parsed gate-state object to the flat shape the browser expects:
-// { open, id, phase, kind, agent, opened_at, history }. The v2 per-session map
-// collapses to the single most-recent open gate; `history` is always the shared
-// top-level array. This preserves the browser-facing JSON contract unchanged.
-function reduceGateState(state) {
-  const history = Array.isArray(state && state.history) ? state.history : [];
-  const open = reduceOpenGate(state);
-  if (!open) return { open: false, history };
-  return {
-    open: true,
-    id: open.id || null,
-    phase: typeof open.phase !== 'undefined' ? open.phase : null,
-    kind: open.kind || null,
-    agent: open.agent || null,
-    opened_at: open.opened_at || null,
-    history,
-  };
-}
-
-// Read state.json and reduce it to the flat browser contract. Returns null only
-// when the file is unreadable (caller substitutes a closed default).
-function readGateStateFile() {
-  try {
-    const raw = fs.readFileSync(GATE_STATE_FILE(), 'utf8');
-    return reduceGateState(JSON.parse(raw));
-  } catch {
-    return null;
-  }
-}
-
-function readAutoStateFile() {
-  try {
-    const raw = fs.readFileSync(AUTO_STATE_FILE(), 'utf8');
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-// Pull only the bytes appended since we last read (so we don't replay every
-// historical violation each time the file changes).
-function readNewViolations() {
-  const file = VIOLATIONS_FILE();
-  let stat;
-  try { stat = fs.statSync(file); } catch { return []; }
-  if (stat.size < _violationsOffset) {
-    // File was truncated/rotated — reset offset and treat from start.
-    _violationsOffset = 0;
-  }
-  if (stat.size === _violationsOffset) return [];
-  let chunk;
-  try {
-    const fd = fs.openSync(file, 'r');
-    const length = stat.size - _violationsOffset;
-    const buf = Buffer.alloc(length);
-    fs.readSync(fd, buf, 0, length, _violationsOffset);
-    fs.closeSync(fd);
-    chunk = buf.toString('utf8');
-  } catch {
-    return [];
-  }
-  _violationsOffset = stat.size;
-  const out = [];
-  for (const line of chunk.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    try { out.push(JSON.parse(trimmed)); } catch { /* skip half-written line; next event retries */ }
-  }
-  return out;
-}
-
-function emitGateState() {
-  const state = readGateStateFile() || { open: false, history: [] };
-  broadcastGate({ type: 'gate-state', state });
-}
-
-function emitAutoState() {
-  const state = readAutoStateFile();
-  if (state) broadcastGate({ type: 'auto-state', state });
-}
-
-function emitViolations() {
-  const entries = readNewViolations();
-  for (const v of entries) {
-    broadcastGate({
-      type: 'gate-block',
-      reason: v.reason || v.type || 'Gate violation',
-      kind: v.type || null,
-      gateId: v.gate_id || null,
-      agent: v.agent || null,
-      phase: v.phase || null,
-      sessionId: v.session_id || null,
-      ts: v.ts || null,
-    });
-  }
-}
-
 function startGateWatchers() {
-  // Initialise violations offset to current size so we don't replay history.
-  try {
-    const stat = fs.statSync(VIOLATIONS_FILE());
-    _violationsOffset = stat.size;
-  } catch {
-    _violationsOffset = 0;
-  }
-
-  const setupWatch = (file, kind) => {
-    try {
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-    } catch {}
-    try {
-      const watcher = fs.watch(path.dirname(file), (event, filename) => {
-        if (!filename) return;
-        if (path.basename(file) !== filename) return;
-        if (kind === 'gate') {
-          if (_gateStateDebounce) clearTimeout(_gateStateDebounce);
-          _gateStateDebounce = setTimeout(emitGateState, 50);
-        } else if (kind === 'auto') {
-          if (_autoStateDebounce) clearTimeout(_autoStateDebounce);
-          _autoStateDebounce = setTimeout(emitAutoState, 50);
-        } else if (kind === 'violations') {
-          if (_violationsDebounce) clearTimeout(_violationsDebounce);
-          _violationsDebounce = setTimeout(emitViolations, 50);
-        }
-      });
-      watcher.on('error', (err) => {
-        log(`gate watcher (${kind}) error: ${err.message}`);
-      });
-      _gateWatchers.push(watcher);
-    } catch (err) {
-      log(`gate watcher (${kind}) setup failed: ${err.message}`);
-    }
-  };
-
-  setupWatch(GATE_STATE_FILE(), 'gate');
-  setupWatch(AUTO_STATE_FILE(), 'auto');
-  setupWatch(VIOLATIONS_FILE(), 'violations');
+  stopGateWatchers();
+  gateWatcher = gatesState.watchGateState(SHARDS_DIR, (state) => broadcastGate({ type: 'gate-update', state }));
 }
 
 function stopGateWatchers() {
-  for (const w of _gateWatchers) {
-    try { w.close(); } catch {}
-  }
-  _gateWatchers = [];
+  if (gateWatcher) { gateWatcher.stop(); gateWatcher = null; }
 }
 
 function stopPanelWatcher(panelId) {
@@ -744,7 +411,7 @@ function startPanelWatcher(panelId, info) {
             panelSources[panelId] = { ...currentInfo, lastContent: content };
             const parsedData = parsePanelFileContent(currentInfo.filePath, content);
             broadcast({
-              type: 'ui-panel-update',
+              type: 'panel-update',
               panelId,
               panel: currentInfo.panel,
               title: currentInfo.title,
@@ -947,103 +614,12 @@ function parsePanelFileContent(filePath, content) {
   return content;
 }
 
-// ─── Event handler (observer mode - relay) ──────────────────────────────────
+// ─── Panel events (from .shards/events.jsonl via events-watcher) ────────────
 
-function handleEvent(body) {
-  let payload;
-  try {
-    payload = JSON.parse(body);
-  } catch {
-    return { ack: false };
-  }
-
-  const { eventType, seq, sessionId: eventSessionId, ...data } = payload;
-
-  // Prefer the session id carried by the relay event itself (forwarded from
-  // the Claude Code hook's stdin payload — same value as the SessionStore
-  // key for UI-spawned sessions, since we pass --session-id to the CLI). If
-  // a matching store exists, use it directly. This is the fix for two
-  // concurrent sessions seeing each other's events misattributed to "most
-  // recently active session."
-  //
-  // Fall back to the previous "most recently active" heuristic when:
-  //   - the event lacks a sessionId (legacy relay processes before this fix
-  //     ship, or queued events written under the old shape)
-  //   - the event references a session not tracked by this server (claude run
-  //     outside the UI in the same project — hooks still fire)
-  let activeStore = null;
-  let activeSessionId = null;
-  if (eventSessionId) {
-    const store = sessions.get(eventSessionId);
-    if (store) {
-      activeStore = store;
-      activeSessionId = eventSessionId;
-    }
-  }
-  if (!activeStore) {
-    for (const [id, store] of sessions) {
-      if (store.chatSession && store.chatSession.isRunning) {
-        if (!activeStore || store.lastActivityAt > activeStore.lastActivityAt) {
-          activeStore = store;
-          activeSessionId = id;
-        }
-      }
-    }
-  }
-
-  switch (eventType) {
-    case 'user-message':
-      if (activeStore) activeStore.transcript.push({ role: 'user', content: data.content, agent: data.agent, source: 'observer' });
-      broadcast({ type: 'user-message', content: data.content, agent: data.agent, sessionId: activeSessionId });
-      break;
-    case 'agent-message':
-      if (activeStore) activeStore.transcript.push({ role: 'assistant', content: data.content, agent: data.agent, source: 'observer' });
-      broadcast({ type: 'agent-message', content: data.content, agent: data.agent, sessionId: activeSessionId });
-      break;
-    case 'agent-activated':
-      broadcast({ type: 'agent-activated', agent: data.agent, sessionId: activeSessionId });
-      break;
-    case 'agent-changed':
-      broadcast({ type: 'agent-changed', from: data.from, to: data.to, sessionId: activeSessionId });
-      break;
-    case 'agent-consulting':
-      broadcast({ type: 'agent-consulting', agent: data.agent, sessionId: activeSessionId });
-      break;
-    case 'event-log':
-      broadcast({ type: 'event-log', text: data.text, sessionId: activeSessionId });
-      break;
-    case 'file-touched': {
-      const relPath = path.relative(PROJECT_DIR, data.filePath);
-      if (activeStore) {
-        activeStore.sessionFiles.add(relPath);
-        if (activeStore.setProjectFromRelPath(relPath)) {
-          activeStore.save();
-          try {
-            sessionIndex.updateActivity(SESSIONS_DIR, activeSessionId, {
-              projectName: activeStore.projectName,
-              projectDir: activeStore.projectDir,
-            });
-          } catch (err) {
-            log(`session-index updateActivity (file-touched) failed: ${err.message}`);
-          }
-          broadcast({
-            type: 'session-context',
-            sessionId: activeSessionId,
-            projectName: activeStore.projectName,
-            projectDir: activeStore.projectDir,
-          });
-        }
-      }
-      broadcast({ type: 'file-touched', path: relPath, sessionId: activeSessionId });
-      break;
-    }
-    case 'session-end':
-      broadcast({ type: 'session-end', sessionId: activeSessionId });
-      if (activeStore) activeStore.sessionFiles = new Set();
-      break;
-
-    // ─── ui-panel: agent pushes an interactive panel to the browser ─────
-    case 'ui-panel': {
+function handlePanelEvent(data) {
+  switch (data.eventType) {
+    // ─── panel-open: an artifact event opens (or refreshes) a panel ─────
+    case 'panel-open': {
       const { panel, panelId, title, data: panelData, source, type: panelType, agent: panelAgent } = data;
       if (!panel || !panelId) break;
 
@@ -1067,7 +643,7 @@ function handleEvent(body) {
       }
 
       broadcast({
-        type: 'ui-panel',
+        type: 'panel-open',
         panel,
         panelId,
         title: title || panel,
@@ -1079,19 +655,18 @@ function handleEvent(body) {
       break;
     }
 
-    // ─── ui-panel-close: agent or server closes a panel ─────────────────
-    case 'ui-panel-close': {
+    // ─── panel-close: a close event removes a panel ─────────────────────
+    case 'panel-close': {
       const { panelId } = data;
       if (panelId) {
         if (panelSources[panelId]) delete panelSources[panelId];
         stopPanelWatcher(panelId);
       }
-      broadcast({ type: 'ui-panel-close', panelId: panelId || null });
+      broadcast({ type: 'panel-close', panelId: panelId || null });
       break;
     }
   }
 
-  return { ack: true, seq: seq || null };
 }
 
 // ─── Agent listing ──────────────────────────────────────────────────────────
@@ -1254,18 +829,6 @@ function handleChatExit({ code, sessionId }) {
     try { fs.unlinkSync(path.join(SESSIONS_DIR, `${sessionId}.json`)); } catch {}
   }
 
-  // Abort any pending permission requests tied to this session. Without this,
-  // a relay process started by the now-dead chat session keeps polling for a
-  // decision that will never come (the browser card disappeared with the
-  // session). Marking these as denied lets the relay's next poll resolve
-  // immediately and fall through to CC's native permission flow.
-  for (const [id, req] of permissionRequests) {
-    if (req.sessionId === sessionId && req.decision === null) {
-      req.decision = 'deny';
-      req.createdAt = Date.now();  // restart TTL so the entry isn't immediately collected
-      broadcast({ type: 'permission-resolved', id, decision: 'deny', reason: 'session-ended' });
-    }
-  }
   // Mark ended in the index if not already (covers natural CLI exit, crashes,
   // and the path where the user closes the browser without hitting End Chat).
   try {
@@ -1538,20 +1101,35 @@ function createHandler() {
     }
 
     // ─── Developer Guide (docs) ──────────────────────────────────────────────
-    // Manifest ships with the package (<package>/docs/manifest.json). Pages are
-    // resolved from <project>/docs/shards-guide/ first, then <package>/docs/.
-    const PKG_DOCS_DIR = path.join(__dirname, 'docs');
-    const DOC_ROOTS = [path.join(PROJECT_DIR, 'docs', 'shards-guide'), PKG_DOCS_DIR];
+    // The guide is the v2 docs tree (src/docs/manifest.json + pages). Roots, in
+    // order: the project's installed copy (docs/shards-guide/), a copy shipped
+    // inside this package (docs/), and the monorepo source (src/docs/).
+    const DOC_ROOTS = [
+      path.join(PROJECT_DIR, 'docs', 'shards-guide'),
+      path.join(__dirname, 'docs'),
+      path.join(__dirname, '..', '..', 'src', 'docs'),
+    ];
 
     if (req.method === 'GET' && parsedUrl.pathname === '/docs/manifest') {
-      try {
-        const raw = fs.readFileSync(path.join(PKG_DOCS_DIR, 'manifest.json'), 'utf8');
-        res.writeHead(200, { ...cors, 'Content-Type': 'application/json' });
-        res.end(raw);
-      } catch {
-        res.writeHead(404, { ...cors });
-        res.end('Guide manifest not found');
+      for (const root of DOC_ROOTS) {
+        try {
+          const m = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
+          // Normalise the v2 shape ({title, dir, pages:[{title, path}]}) to what guide.js reads.
+          const sections = (m.sections || []).map((sec, si) => ({
+            id: sec.id || sec.dir || 'section-' + si,
+            title: sec.title,
+            pages: (sec.pages || []).map((pg, pi) => ({
+              id: pg.id || pg.path || 'page-' + pi,
+              title: pg.title,
+              file: pg.file || pg.path,
+            })),
+          }));
+          jsonResponse(res, cors, 200, { version: m.version, title: m.title || 'Shards Developer Guide', sections });
+          return;
+        } catch { /* try next root */ }
       }
+      res.writeHead(404, { ...cors });
+      res.end('Guide manifest not found');
       return;
     }
 
@@ -1582,7 +1160,7 @@ function createHandler() {
         } catch { /* try next root */ }
       }
       res.writeHead(404, { ...cors, 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('This guide page is not available in this installation (looked in docs/shards-guide/ and the Studio package docs).');
+      res.end('This guide page is not available in this installation (looked in docs/shards-guide/, the Studio package docs and src/docs/).');
       return;
     }
 
@@ -2343,139 +1921,17 @@ function createHandler() {
       return;
     }
 
-    // ─── Permission approval endpoints ─────────────────────────
+    // ─── Gate state (read-only, from the v2 runtime) ─────────────────────
 
-    // POST /pre-tool-use — relay posts permission request
-    if (req.method === 'POST' && parsedUrl.pathname === '/pre-tool-use') {
-      loadSettingsCache(); // Refresh from disk so CLI flag changes take effect immediately
-      const body = await readBody(req);
-      let params;
-      try { params = JSON.parse(body); } catch {
-        jsonResponse(res, cors, 400, { error: 'Invalid JSON' });
-        return;
-      }
-
-      const { tool, command, sessionId: claudeSessionId } = params;
-
-      // Fast path: deny first (CC evaluates deny before any allow/hook
-      // decision), then settings allowlist, then CC's built-in read-only
-      // classifier — so read-only commands the CLI auto-approves (ls, cat,
-      // grep, read-only git forms, read-only tools) never reach a card.
-      if (matchesPermission(command, settingsCache.deny)) {
-        jsonResponse(res, cors, 200, { id: randomUUID(), status: 'denied' });
-        return;
-      }
-      if (matchesPermission(command, settingsCache.allow) ||
-          isCcReadOnlyAutoApprovable(tool, { command })) {
-        jsonResponse(res, cors, 200, { id: randomUUID(), status: 'allowed' });
-        return;
-      }
-
-      // Pending — store and broadcast
-      const id = randomUUID();
-      permissionRequests.set(id, {
-        id, tool, command, sessionId: claudeSessionId, decision: null, createdAt: Date.now(),
-      });
-
-      // Find most-recently-active running session for routing
-      let activeStore = null;
-      let activeSessionId = null;
-      for (const [sid, store] of sessions) {
-        if (store.chatSession && store.chatSession.isRunning) {
-          if (!activeStore || store.lastActivityAt > activeStore.lastActivityAt) {
-            activeStore = store;
-            activeSessionId = sid;
-          }
-        }
-      }
-
-      broadcast({
-        type: 'permission-request',
-        id,
-        tool: tool || 'Bash',
-        command: command || '',
-        sessionId: activeSessionId,
-      });
-
-      jsonResponse(res, cors, 200, { id, status: 'pending' });
+    // GET /gates — current gate state reduced from .shards/state/sessions/*/gates.json
+    if (req.method === 'GET' && parsedUrl.pathname === '/gates') {
+      jsonResponse(res, cors, 200, gatesState.readGateState(SHARDS_DIR));
       return;
     }
 
-    // GET /chat/permission/:id — relay polls for decision
-    if (req.method === 'GET' && parsedUrl.pathname.startsWith('/chat/permission/')) {
-      const id = parsedUrl.pathname.split('/').pop();
-      const entry = permissionRequests.get(id);
-
-      if (!entry) {
-        jsonResponse(res, cors, 200, { status: 'not_found' });
-        return;
-      }
-      if (entry.decision === null) {
-        jsonResponse(res, cors, 200, { status: 'pending' });
-        return;
-      }
-
-      const decision = entry.decision;
-      permissionRequests.delete(id);
-
-      broadcast({
-        type: 'permission-resolved',
-        id,
-        decision,
-      });
-
-      jsonResponse(res, cors, 200, { status: decision });
-      return;
-    }
-
-    // POST /chat/permission — browser submits decision
-    if (req.method === 'POST' && parsedUrl.pathname === '/chat/permission') {
-      const body = await readBody(req);
-      let params;
-      try { params = JSON.parse(body); } catch {
-        jsonResponse(res, cors, 400, { error: 'Invalid JSON' });
-        return;
-      }
-
-      const { id, decision, persist, command } = params;
-      const entry = permissionRequests.get(id);
-      if (!entry) {
-        jsonResponse(res, cors, 404, { error: 'Permission request not found' });
-        return;
-      }
-
-      entry.decision = decision;
-
-      if (persist && command) {
-        persistPermission(command, decision);
-      }
-
-      jsonResponse(res, cors, 200, { ok: true });
-      return;
-    }
-
-    // ─── Gate state endpoint ────────────────────────────────────────
-
-    // GET /gate-state — returns current gate state from .shards/gates/state.json
-    if (req.method === 'GET' && parsedUrl.pathname === '/gate-state') {
-      const gateStatePath = path.join(SHARDS_DIR, 'gates', 'state.json');
-      try {
-        const raw = fs.readFileSync(gateStatePath, 'utf8');
-        // Collapse the v2 per-session map (or legacy single slot) to the flat
-        // gate object the browser expects. Contract unchanged.
-        jsonResponse(res, cors, 200, reduceGateState(JSON.parse(raw)));
-      } catch {
-        jsonResponse(res, cors, 200, { open: false, history: [] });
-      }
-      return;
-    }
-
-    // GET /gate-state-stream — SSE channel pushing gate-state / gate-block /
-    // auto-state events on file change. Browser uses this in place of the
-    // legacy 2s poll (Bug H2 + H5 in the integration audit). On connect we
-    // immediately send the current gate-state so the client doesn't need a
-    // second /gate-state request to seed initial state.
-    if (req.method === 'GET' && parsedUrl.pathname === '/gate-state-stream') {
+    // GET /gates/stream — SSE: seeds the current state, then pushes
+    // { type: 'gate-update', state } whenever a session's gates.json changes.
+    if (req.method === 'GET' && parsedUrl.pathname === '/gates/stream') {
       res.writeHead(200, {
         ...cors,
         'Content-Type': 'text/event-stream',
@@ -2484,11 +1940,7 @@ function createHandler() {
         'X-Accel-Buffering': 'no',
       });
       res.write('data: {"type":"connected"}\n\n');
-      // Seed initial gate state for this client only — broadcast helpers
-      // append to all subscribers, but a fresh subscriber needs the snapshot
-      // before its first change event arrives.
-      const initial = readGateStateFile() || { open: false, history: [] };
-      try { res.write(`data: ${JSON.stringify({ type: 'gate-state', state: initial })}\n\n`); } catch {}
+      try { res.write(`data: ${JSON.stringify({ type: 'gate-update', state: gatesState.readGateState(SHARDS_DIR) })}\n\n`); } catch {}
       gateClients.push({ res });
       req.on('close', () => {
         gateClients = gateClients.filter((c) => c.res !== res);
@@ -2496,18 +1948,9 @@ function createHandler() {
       return;
     }
 
-    // GET /gate-mode — returns enforcement flags as the UI server sees them.
-    // The Claude Code hook process runs in a different env; if the user only
-    // exports SHARDS_GATE_ENFORCE=0 to CC without also exporting it to the UI
-    // server, this endpoint will still report enforcement on. The browser
-    // surfaces a banner reflecting whatever the server reports — accurate for
-    // the common case where both processes are launched from the same shell.
-    if (req.method === 'GET' && parsedUrl.pathname === '/gate-mode') {
-      jsonResponse(res, cors, 200, {
-        enforce: GATE_ENFORCE,
-        checkpointEnforce: CHECKPOINT_ENFORCE,
-        autoVerify: AUTO_VERIFY,
-      });
+    // GET /gates/mode — SHARDS_GATE_ENFORCE as Studio's own environment sees it.
+    if (req.method === 'GET' && parsedUrl.pathname === '/gates/mode') {
+      jsonResponse(res, cors, 200, { enforce: GATE_ENFORCE });
       return;
     }
 
@@ -2571,14 +2014,6 @@ function createHandler() {
       loadSettingsCache();
 
       jsonResponse(res, cors, 200, { ok: true, allow: settingsCache.allow });
-      return;
-    }
-
-    // ─── P2: Event endpoint with ack ────────────────────────────
-    if (req.method === 'POST' && parsedUrl.pathname === '/event') {
-      const body = await readBody(req);
-      const result = handleEvent(body);
-      jsonResponse(res, cors, 200, result);
       return;
     }
 
@@ -2932,7 +2367,7 @@ function createHandler() {
       const snap = readGateSnapshot(SHARDS_DIR);
 
       // Stop the CLI if still running. We intentionally do not mutate
-      // .shards/gates/state.json — gates are project-scoped state and may
+      // the runtime's gate state — gates are project-scoped state and may
       // still be legitimately open for a future resume of this same project.
       if (store && store.chatSession && store.chatSession.isRunning) {
         try { store.chatSession.stop(); } catch (err) { log(`/chat/end stop failed: ${err.message}`); }

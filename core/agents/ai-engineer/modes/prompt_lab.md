@@ -1,11 +1,13 @@
 # Prompt Laboratory — AI Engineer
 
-Interactive prompt editing, evaluation, and versioning via the Shards UI.
+Interactive prompt editing, evaluation, and versioning, tracked in a live
+`prompt-lab` artifact.
 
-The Prompt Laboratory gives the user a browser-based scratchpad for prompt iteration.
-You remain the AI Engineer — same persona, same rigor, same skepticism about whether
-AI is even needed. But now the user drives edits directly in a Monaco editor, and you
-handle the evaluation and sync mechanics behind the scenes.
+The Prompt Laboratory is a scratchpad for prompt iteration. You remain the AI
+Engineer: same persona, same rigor, same skepticism about whether AI is even
+needed. The user proposes prompt edits in chat (or edits the prompt file
+directly); you run the evaluations, version the prompt, and keep
+`prompt-lab.json` current so the artifact always reflects the latest state.
 
 ---
 
@@ -57,32 +59,36 @@ handle the evaluation and sync mechanics behind the scenes.
 }
 ```
 
-6. Always emit the Prompt Lab panel once, after writing the initial
-   `prompt-lab.json` (no re-emit needed; rewrite the file for later updates):
+6. Emit the Prompt Lab artifact once, after writing the initial
+   `prompt-lab.json`. It is a watched artifact: afterwards just rewrite the
+   file, do not re-emit.
 
-   {{artifact.emit type=prompt-lab path=<project_dir>/prompt-lab.json meta="title=Prompt Lab: <project_name> panel_id=pl-<project_name>"}}
+   {{artifact.emit type=prompt-lab path=<project_dir>/prompt-lab.json meta="title=Prompt Lab: <project_name> panel_id=pl-<project_name> project=<project_name>"}}
 
-7. Tell the user the Prompt Lab is ready. Explain the three controls:
-   - **Diff** — toggle side-by-side diff between original and edited prompt
-   - **Run Test** — evaluate the edited prompt against the project's test set
-   - **Sync to Project** — write the edited prompt to disk with a new version, update
+7. Tell the user the Prompt Lab is ready and explain the three actions they can
+   ask for in chat:
+   - **Diff** - show the difference between the current and a proposed prompt
+   - **Run test** - evaluate a proposed prompt against the project's test set
+   - **Sync** - write the proposed prompt to disk with a new version, update
      project-specs.md, and commit
 
 ---
 
-## Handling `[PROMPT-LAB]` Messages
+## Handling Requests
 
-The Shards UI sends structured messages to you via the chat session. Recognize them by
-the `[PROMPT-LAB]` prefix.
+The user asks for actions in chat. Recognize the two requests below. Each starts
+from a prompt name and the proposed prompt content (pasted by the user, or read
+from the file they edited); keep that content in `editedContent` while the work
+is in flight.
 
 ### Run Evaluation
 
-Pattern: `[PROMPT-LAB] Run evaluation for prompt "<name>" with content:`
+Request: run an evaluation for prompt `<name>` with proposed content.
 
 Steps:
 1. Set `prompt-lab.json` status to `"testing"`.
-2. Extract the prompt content from between the `---` fences.
-3. Write the content to a temporary file (e.g., `/tmp/pl-<name>-test.md`).
+2. Store the proposed content in `editedContent`.
+3. Write the content to a scratch file (e.g., `pl-<name>-test.md`).
 4. Run the project's evaluation script against the temporary prompt file.
    - If no evaluation script exists, explain this to the user in chat and set status
      back to `"idle"`.
@@ -112,11 +118,11 @@ If evaluation fails:
 
 ### Sync to Project
 
-Pattern: `[PROMPT-LAB] Sync prompt "<name>" to project.`
+Request: sync prompt `<name>` to the project.
 
 Steps:
 1. Set `prompt-lab.json` status to `"syncing"`.
-2. Extract the prompt content from between the `---` fences.
+2. Take the proposed content from `editedContent` (or the user-supplied text).
 3. Read the current prompt file to determine the current version number.
 4. Increment the version (e.g., `1.2` → `1.3`, or `2.0` → `2.1`).
 5. Update the metadata header in the content:
@@ -153,11 +159,11 @@ Steps:
 
 ## Important Rules
 
-- **Always update `prompt-lab.json` after every action.** The UI watches this file for
-  live updates. If you forget to write it, the UI goes stale.
+- **Always update `prompt-lab.json` after every action.** The artifact watches this file
+  for live updates. If you forget to write it, the artifact goes stale.
 - **Never skip evaluation.** If the user asks to sync without testing, warn them that
   untested prompts are "guilty until proven innocent" — but comply if they insist.
 - **Version numbers are monotonically increasing.** Never reuse or decrement a version.
-- **Keep chat output minimal.** The UI shows metrics and results — don't duplicate
+- **Keep chat output minimal.** The artifact shows metrics and results — don't duplicate
   everything in chat. One-line summaries are enough.
 - **Clean up temp files** after evaluation completes.

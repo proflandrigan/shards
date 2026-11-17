@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { randomUUID } = require('crypto');
 
-const LOG_FILE = path.join(process.cwd(), '.shards', 'ui.log');
+const LOG_FILE = path.join(process.cwd(), '.shards', 'studio.log');
 
 function log(msg) {
   const ts = new Date().toISOString();

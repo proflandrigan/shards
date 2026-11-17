@@ -82,10 +82,10 @@ describe('artifact index', () => {
     expect(idx.list().map((e) => e.type)).toEqual(['chart']);
   });
 
-  it('maps events to ui-panel payloads with stable ids', () => {
+  it('maps events to panel-open payloads with stable ids', () => {
     const p1 = eventToPanelPayload(ev('chart', 'out/a.json'), '/proj');
     const p2 = eventToPanelPayload(ev('chart', 'out/a.json'), '/proj');
     expect(p1.panelId).toBe(p2.panelId);
-    expect(p1).toMatchObject({ eventType: 'ui-panel', panel: 'chart', source: path.resolve('/proj', 'out/a.json') });
+    expect(p1).toMatchObject({ eventType: 'panel-open', panel: 'chart', source: path.resolve('/proj', 'out/a.json') });
   });
 });

@@ -26,9 +26,9 @@ const subcommand = positional[0] || 'start';
 
 const PROJECT_DIR = path.resolve(typeof flag('--project') === 'string' ? flag('--project') : process.cwd());
 const SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
-const PID_FILE = path.join(SHARDS_DIR, 'ui.pid');
-const PORT_FILE = path.join(SHARDS_DIR, 'ui.port');
-const LOG_FILE = path.join(SHARDS_DIR, 'ui.log');
+const PID_FILE = path.join(SHARDS_DIR, 'studio.pid');
+const PORT_FILE = path.join(SHARDS_DIR, 'studio.port');
+const LOG_FILE = path.join(SHARDS_DIR, 'studio.log');
 const SERVER = path.join(__dirname, '..', 'server.js');
 
 function rm(f) { try { fs.unlinkSync(f); } catch {} }
