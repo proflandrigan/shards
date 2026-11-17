@@ -187,6 +187,18 @@ async function gitChecks(root) {
   return out;
 }
 
+// E6.8: external copy queue (copy_report). Stuck copies need a human; queued ones retry at the next gate.
+function copyCheck(root) {
+  let rows = [];
+  try { rows = require('../../runtime/copies').listAll(root).filter((r) => r.status !== 'done'); } catch (_) { /* no state */ }
+  const stuck = rows.filter((r) => r.status === 'stuck');
+  const queued = rows.filter((r) => r.status === 'queued');
+  const names = (rs) => rs.map((r) => `${r.gate_id}->${r.target}`).join(', ');
+  if (stuck.length) return { id: 'copies', status: 'FAIL', message: `${stuck.length} stuck external copy(ies) after 5 attempts: ${names(stuck)}${queued.length ? `; ${queued.length} queued` : ''}`, fix: 'see `shards sync --status`; fix the target (auth, space, project), then re-run the copy through its binding' };
+  if (queued.length) return { id: 'copies', status: 'WARN', message: `${queued.length} queued external copy(ies): ${names(queued)}`, fix: 'the agent retries them at the next gate; see `shards sync --status`' };
+  return { id: 'copies', status: 'PASS', message: 'no queued or stuck external copies' };
+}
+
 async function runChecks(opts = {}) {
   const root = path.resolve(opts.root || process.cwd());
   const home = opts.home || process.env.HOME || os.homedir();
@@ -226,6 +238,7 @@ async function runChecks(opts = {}) {
   checks.push(checkMcpCodex(root, home));
   checks.push(checkHooks(adapterDirs));
   checks.push(...await gitChecks(root));
+  checks.push(copyCheck(root));
 
   const hits = [
     ...scanClaudeSettings(path.join(root, '.claude', 'settings.json')),

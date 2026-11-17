@@ -40,6 +40,7 @@ async function handler(n, root) {
     try {
       const e = await require('./lib/enforce').enforce(n, root);
       if (e && e.deny) return require('./lib/enforce').denyOutput(e.deny);
+      if (e && e.ask) return require('./lib/enforce').askOutput(e.ask);
     } catch (e) { common.logError(root, 'pre-tool-use', e); }
     try { return await autoVerify(n, root); } catch (e) { common.logError(root, 'pre-tool-use', e); return ''; }
   }

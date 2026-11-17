@@ -52,6 +52,15 @@
         }
       }
     },
+    "guardrails": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "External-write guardrails (E6.11), enforced by the PreToolUse hook.",
+      "properties": {
+        "write_tools": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Extra MCP tool names (full mcp__server__tool, or bare tool name, `*` wildcard) treated as external writes, in addition to each configured binding's write_tools." },
+        "allow_raw_data": { "type": "boolean", "default": false, "description": "Let external writes carry raw query results (tabular dumps). Default false: summaries only." }
+      }
+    },
     "tiers": {
       "type": "object",
       "description": "Optional user-written map from tier hint to a model string. The only place a model name may appear.",

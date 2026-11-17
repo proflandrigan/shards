@@ -6,6 +6,7 @@
 //   <root>/.shards/state/.lock                               lock target (proper-lockfile -> .lock.lock dir)
 //   <root>/.shards/state/sessions/<sessionKey>/frames.json   {frames: []}   stack of {agent, mode, phase, ...}
 //   <root>/.shards/state/sessions/<sessionKey>/gates.json    {gates: {}}
+//   <root>/.shards/state/sessions/<sessionKey>/copies.json   {copies: {}}   external copy queue (E6.8)
 //   <root>/.shards/state/sessions/<sessionKey>/session.json  {sessionKey, createdAt, version}
 //
 // One lock covers every write in the state tree, so the monotonic `version`
@@ -37,6 +38,7 @@ const DEFAULTS = {
   global: () => ({ version: 0, schema: 1 }),
   frames: () => ({ frames: [] }),
   gates: () => ({ gates: {} }),
+  copies: () => ({ copies: {} }),
 };
 
 function sleepSync(ms) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); }

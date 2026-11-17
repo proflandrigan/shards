@@ -6,6 +6,9 @@
 //  1. caller agent_id bound to a slice of an active lease: heartbeat the lease; writes allowed only
 //     inside that slice. Exempt from the pending-gate block.
 //  2. fanout_claim tool calls bind agent_id -> {lease_id, slice_id} (works even with a gate pending).
+//  0. (E6.11) MCP tools declared as binding write tools (runtime/guardrails): need a [shards-gate:<id>] marker
+//     naming a confirmed gate, else Claude gets an `ask` (the human's yes is the explicit confirmation) and
+//     Codex a deny; raw query results are always denied. Applies to every caller, ahead of the other rules.
 //  3. unbound callers (lead, unleased subagent, any Codex caller: no agent_id, CX-6): denied while the
 //     active frame has a pending gate, and denied writes into an active fan-out lease's slice paths.
 // SHARDS_GATE_ENFORCE=0 disables every deny path (rules 1 and 3); binding (rule 2) still records.
@@ -23,6 +26,23 @@ function pendingGate(session) {
   const top = frames[frames.length - 1];
   if (!top) return null;
   return require('../../runtime/gates/machine').pendingForFrame(session, top.id);
+}
+
+async function externalWriteGuard(n, state, root, env) {
+  const tool = n.toolName || '';
+  if (!tool.startsWith('mcp__') || String(env.SHARDS_GUARDRAILS) === '0' || enforceOff(env)) return null;
+  const gr = require('../../runtime/guardrails');
+  if (gr.isShardsTool(tool)) return null;
+  const policy = gr.loadPolicy(root);
+  if (!policy.writeTools.length || !gr.isWriteTool(policy, tool)) return null;
+  const r = gr.evaluateWrite({ toolInput: n.toolInput, gatesById: state.read('gates').gates || {}, policy });
+  if (r.allow) return null;
+  try { await require('../../runtime/gates/operator').logViolation(root, { tool, session: n.sessionId || null, kind: `external_write_${r.kind}`, reason: r.reason, ...(r.gates && r.gates.length ? { gate: r.gates.join(',') } : {}) }); } catch (_) { /* best effort */ }
+  const msg = `shards: external write ${tool} refused: ${r.reason}.`;
+  if (r.kind !== 'raw_data' && n.host === host.HOSTS.CLAUDE) {
+    return { ask: `${msg} Approve only if you (the human) explicitly want this written to the external system.` };
+  }
+  return { deny: `${msg} Write the gate summary, get the gate confirmed, then include its [shards-gate:<id>] marker in the content.` };
 }
 
 async function enforce(n, root, env = process.env) {
@@ -46,6 +66,8 @@ async function enforce(n, root, env = process.env) {
     }
     return null;
   }
+  const g0 = await externalWriteGuard(n, state, root, env);
+  if (g0) return g0;
   if (!hasLeases && !hasGates) return null;
 
   const now = Date.now();
@@ -86,4 +108,8 @@ function denyOutput(reason) {
   return JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason } });
 }
 
-module.exports = { enforce, denyOutput, CLAIM_RE };
+function askOutput(reason) {
+  return JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'ask', permissionDecisionReason: reason } });
+}
+
+module.exports = { enforce, denyOutput, askOutput, CLAIM_RE };

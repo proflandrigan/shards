@@ -1,6 +1,6 @@
 'use strict';
 // State header: one line prepended to every tool response.
-// Format: [shards v12 | agent=data-analyst ph=2 gate=- q=0]
+// Format: [shards v12 | agent=data-analyst ph=2 gate=- q=0]   (q = queued external copies, E6.8; ` stuck=N` appended only when N>0)
 
 // Conservative token estimate: ~3.5 chars/token (real tokenizers average ~4 for English,
 // so this over-counts and keeps us safely under budget).
@@ -15,7 +15,7 @@ function clip(v, n) {
 }
 
 function render(i, agentMax, gateMax) {
-  return `[shards v${i.version} | agent=${clip(i.agent, agentMax)} ph=${clip(i.phase, FIELD_MAX)} gate=${clip(i.gate, gateMax)} q=${clip(i.queued, FIELD_MAX)}]`;
+  return `[shards v${i.version} | agent=${clip(i.agent, agentMax)} ph=${clip(i.phase, FIELD_MAX)} gate=${clip(i.gate, gateMax)} q=${clip(i.queued, FIELD_MAX)}${i.stuck > 0 ? ` stuck=${clip(i.stuck, FIELD_MAX)}` : ''}]`;
 }
 
 function buildHeader(info = {}) {
@@ -23,6 +23,7 @@ function buildHeader(info = {}) {
     version: Number.isInteger(info.version) ? info.version : 0,
     agent: info.agent, phase: info.phase, gate: info.gate,
     queued: Number.isFinite(info.queued) ? info.queued : 0,
+    stuck: Number.isFinite(info.stuck) ? info.stuck : 0,
   };
   let agentMax = FIELD_MAX, gateMax = FIELD_MAX;
   let h = render(i, agentMax, gateMax);
@@ -36,7 +37,7 @@ function buildHeader(info = {}) {
 
 // Derive header info from a StateStore. Never throws (a corrupt file yields defaults).
 function headerInfoFromStore(store) {
-  const info = { version: 0, agent: '-', phase: '-', gate: '-', queued: 0 };
+  const info = { version: 0, agent: '-', phase: '-', gate: '-', queued: 0, stuck: 0 };
   try { info.version = store.getVersion(); } catch (_) { /* ignore */ }
   try {
     const frames = store.read('frames').frames || [];
@@ -49,6 +50,7 @@ function headerInfoFromStore(store) {
       if (pending) info.gate = pending[1].id || pending[0];
     }
   } catch (_) { /* ignore */ }
+  try { const c = require('./copies').counts(store); info.queued = c.queued; info.stuck = c.stuck; } catch (_) { /* ignore */ }
   return info;
 }
 

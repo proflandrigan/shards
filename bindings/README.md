@@ -7,9 +7,9 @@ This document is the format spec for binding authors. The git binding is the wor
 ## Principles
 
 1. **The agent calls the host's MCP tools itself.** The Shards runtime never holds third-party credentials and never writes to an external system (decision D4). A binding's body tells the agent exactly which MCP tools to call and what to pass.
-2. **The agent then reports the result to the runtime.** After each external write, the agent calls `copy_report(gate_id, target, ok, error?)` (Milestone C). The runtime records the outcome and queues failures for retry at the next gate.
+2. **The agent then reports the result to the runtime.** After each external write, the agent calls `copy_report(gate_id, target, ok, error?)` (E6.8). The runtime records the outcome and queues failures for retry at the next gate.
 3. **Git is the source of truth.** Every output is first written to local files and committed. External copies are one-way: local to external. Nothing is read back from an external system as authoritative.
-4. **External writes need a confirmed gate or explicit user confirmation.** Never write to a shared system mid-phase.
+4. **External writes need a confirmed gate or explicit user confirmation.** Never write to a shared system mid-phase. The PreToolUse hook enforces this for the tools listed in `write_tools` (see `docs/config.md`, `guardrails`).
 5. **Summaries only.** Send summaries and decisions to external tools, not raw query results, data samples or file dumps. Raw data is a git-denylist concern and a compliance concern.
 6. **Writes are idempotent.** Every external write carries a marker such as `[shards-gate:<id>]` in its title, body or a property, so a retry finds and updates the earlier copy instead of duplicating it.
 
@@ -22,6 +22,7 @@ description: <optional one line>
 jobs: [record, tasks]
 required_settings: [space]
 expected_tools: [mcp_tool_name_a, mcp_tool_name_b]
+write_tools: [mcp_tool_name_b]
 verbs:
   record: [record.write, record.read]
   tasks: [tasks.create, tasks.update, tasks.list]
@@ -40,6 +41,7 @@ Validated by `core/schema/binding.schema.json`. Unknown keys are rejected.
 | `jobs` | yes | At least one of `record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`. No duplicates. |
 | `required_settings` | yes | Keys the user must set under `bindings.<name>` in `shards.config.yaml`. Lowercase with underscores (`^[a-z][a-z0-9_]*$`). Empty for tool-free bindings. |
 | `expected_tools` | yes | Host MCP tool names the agent calls. `/shards:doctor` checks that they are available. Empty for git. No duplicates. |
+| `write_tools` | no | Subset of `expected_tools` that write to the external system (create, update, comment). The PreToolUse hook lets these run only for content carrying a `[shards-gate:<id>]` marker of a confirmed gate, and refuses raw tabular payloads (E6.11). List every writing tool; a tool not listed is not policed. |
 | `verbs` | yes | Map from job name to a non-empty list of verbs for that job. Keys must be job names. |
 
 ### Verbs

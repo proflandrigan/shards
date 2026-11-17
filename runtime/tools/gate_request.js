@@ -48,7 +48,17 @@ function resolveRecord(root, recordRef) {
 }
 
 // The registry emits either text or data; emit prose followed by the JSON data block.
-function both(text, data) { return { text: `${text}\n\n${JSON.stringify(data, null, 2)}` }; }
+function bothBase(text, data) { return { text: `${text}\n\n${JSON.stringify(data, null, 2)}` }; }
+
+// E6.8: queued external copies ride on every gate_request response so the agent retries them at this gate.
+function copyNote(session) {
+  let queue = []; let stuck = [];
+  try { const c = require('../copies'); queue = c.queued(session); stuck = c.stuck(session); } catch (_) { /* best effort */ }
+  const lines = [];
+  if (queue.length) lines.push(`Queued external copies to retry now (redo each through its binding, then call copy_report): ${queue.map((q) => `${q.gate_id}->${q.target} (attempt ${q.attempts})`).join(', ')}`);
+  if (stuck.length) lines.push(`Stuck copies (do not retry; tell the user): ${stuck.map((q) => `${q.gate_id}->${q.target}`).join(', ')}`);
+  return { queue, stuck, text: lines.join('\n') };
+}
 
 function normPhase(p) { return typeof p === 'string' && /^\d+$/.test(p) ? Number(p) : p; }
 
@@ -63,6 +73,8 @@ module.exports = defineTool({
     const frame = frames[frames.length - 1];
     const session = { root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state };
     const phase = normPhase(args.phase);
+    const cq = copyNote(session);
+    const both = (text, data) => bothBase(cq.text ? `${text}\n${cq.text}` : text, { ...data, copy_queue: cq.queue, ...(cq.stuck.length ? { copy_stuck: cq.stuck } : {}) });
 
     const existing = gates.getGate(session, args.id);
     if (existing && existing.status === 'confirmed') {
@@ -132,7 +144,7 @@ module.exports = defineTool({
     if (replayed) lines.push(`(${replayed})`);
     return both(lines.join('\n'), {
       result, gate_id: entry.id, kind: entry.kind, phase: entry.phase, status: 'pending', frame: entry.frame,
-      copy_queue: [], confirm: { milestone: 'A', how },
+      confirm: { milestone: 'A', how },
       ...(replayed ? { note: replayed } : {}),
     });
   },

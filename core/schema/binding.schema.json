@@ -26,6 +26,12 @@
       "items": { "type": "string", "minLength": 1 },
       "description": "Host MCP tool names the agent will call; checked by /shards:doctor. Empty for tool-free bindings (git)."
     },
+    "write_tools": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Subset of expected_tools that write to the external system (create/update/comment). The PreToolUse hook only lets these run for content tied to a confirmed gate (E6.11). Optional; empty or absent means the binding declares no external writes."
+    },
     "verbs": {
       "type": "object",
       "minProperties": 1,

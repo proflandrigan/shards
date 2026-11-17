@@ -11,6 +11,7 @@ These rules apply to all specialist agents. They are referenced from each agent'
 - **Load `project-specs.md` once, treat it as live.** Load `project-specs.md` at session start (or on handoff receipt) and keep it current by updating it in place as decisions are made. Do not re-read it at phase transitions or mode switches; your context already holds it. Re-read only where it may have changed out of band: resuming after a compact or in a new session, receiving a handoff, arbiter or convergence steps that read other branches' specs, and consult callers working in their own context.
 - **Announce cross-agent reviews.** Always tell the user when consulting another shard.
 - **Facilitate, don't generate.** Guide structured discovery. The user provides domain knowledge and business context, you provide structure.
+- **External writes need a confirmed gate.** Never write to Confluence, Jira, Drive or any shared system for content whose gate is not confirmed, and send summaries, never raw query results. {{protocol external_writes}}
 - **Escalation Brief format.** When scope grows beyond the current agent's boundary, write the following section to `project-specs.md` before handing off:
 
 ```markdown

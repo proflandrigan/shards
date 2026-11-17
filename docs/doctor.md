@@ -51,6 +51,7 @@ Checks run in this order. `git.head` and `git.merge` appear only when the projec
 | `git.merge` | No merge, rebase, cherry-pick or revert in progress. | one is in progress (gate commits deferred). | n/a |
 | `git.pending` | No pending gate commit records. | records waiting to replay (not stuck). | one or more records are `stuck`. |
 | `git.ignore` | `.shards/` is ignored (`git check-ignore`). Not a repo: PASS. | `.shards/` is not ignored. | n/a |
+| `copies` | No queued or stuck external copies (E6.8, `copy_report`). | copies queued for retry at the next gate. | one or more copies are `stuck` after 5 attempts. See `shards sync --status`. |
 | `permissions.gate-tools` | No allow rule covers a gate tool (section 6). | n/a | Any rule covers `gate_advance`, `gate_force_close` or `gate_confirm`. |
 
 Notes on what the checks actually read:

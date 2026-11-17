@@ -11,6 +11,8 @@ const COMMANDS = {
   sessions: { summary: 'List, show, resume and end sessions without the UI', run: (argv) => require('./commands/sessions').run(argv) },
   migrate: { summary: 'Migrate a legacy v1 install to v2 (ledger export, gate-history import, manifest-driven cleanup)', run: (argv) => require('./commands/migrate').run(argv) },
   install: { summary: 'Opt-in project config: skills (--project), permission preset (--permissions) and CLAUDE.md conventions (--claude-md)', run: (argv) => require('./commands/install').run(argv) },
+  sync: { summary: 'List the external copy queue: pending and stuck copies per gate and target (--status)', run: (argv) => require('./commands/sync').run(argv) },
+  connect: { summary: 'Check which MCP servers (Atlassian, Google Drive, GitHub) are registered and print the official add commands', run: (argv) => require('./commands/connect').run(argv) },
   // EXTENSION POINT: register doctor / gates / sessions here, e.g.
   //   doctor: { summary: '...', run: (argv) => require('./doctor').run(argv) },
 };
@@ -24,6 +26,8 @@ function usage() {
   lines.push('gates: gates status [--session k] [--root d] | gates confirm <gate-id> [--session k] [--changes "note"] [--root d]');
   lines.push('doctor: doctor [--root d] [--json] [--fix]');
   lines.push('sessions: sessions list|show|resume|end [id] [--root d] [--status s] [--limit n] [--json]');
+  lines.push('sync: sync --status [--json] [--all] [--root d]');
+  lines.push('connect: connect [--host claude|codex] [--only atlassian,drive,github] [--json] [--root d] [--home d]  (read-only; prints commands, never runs them)');
   lines.push('install: install (--project | --permissions | --claude-md) [--root d] [--remove] [--dry-run] [--force]  (--remove is the uninstall: it removes only what install added)');
   lines.push('migrate: migrate [--export-ledger] [--root d] [--out d] [--dry-run] [--force]  (full legacy migrate; --export-ledger = ledger step only)');
   return lines.join('\n');

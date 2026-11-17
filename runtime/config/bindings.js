@@ -59,6 +59,9 @@ function parseBinding(text, expectedName) {
   if (expectedName && fm.name !== expectedName) {
     errors.push(`name "${fm.name}" must equal the file name "${expectedName}"`);
   }
+  for (const t of fm.write_tools || []) {
+    if (!fm.expected_tools.includes(t)) errors.push(`write_tools entry "${t}" must also be listed in expected_tools`);
+  }
   for (const job of fm.jobs) {
     if (!fm.verbs[job]) errors.push(`jobs lists "${job}" but verbs has no entry for it`);
   }

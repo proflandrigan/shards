@@ -134,7 +134,7 @@ Compiles to the delegated build loop: `tasks_set` (rejects cycles, overlapping o
 
 ## 4. Runtime tools and bindings
 
-Runtime tools referenced: `activate`, `return`, `load_phase`, `gate_request`, `gate_advance`, `gate_confirm` (the last two are never emitted into agent text: the user side confirms), `auto_verify_start`, `auto_verify_end`, `artifact_emit`, `fanout_start` (E5.9), `tasks_set`, `task_dispatch`, `task_report`, `task_status`, `task_verify` (E12, via `delegate`). Binding jobs (from `shards.config.yaml`): `record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`; macros render the job name, not a concrete tool.
+Runtime tools referenced: `activate`, `return`, `load_phase`, `gate_request`, `gate_advance`, `gate_confirm` (the last two are never emitted into agent text: the user side confirms), `auto_verify_start`, `auto_verify_end`, `artifact_emit`, `copy_report` (E6.8, used by bindings after an external write), `fanout_start` (E5.9), `tasks_set`, `task_dispatch`, `task_report`, `task_status`, `task_verify` (E12, via `delegate`). Binding jobs (from `shards.config.yaml`): `record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`; macros render the job name, not a concrete tool.
 
 ## 5. Rendering table
 

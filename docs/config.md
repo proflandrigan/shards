@@ -67,6 +67,31 @@ Default denylist globs: `*.parquet`, `*.feather`, `*.arrow`, `*.pkl`, `*.pickle`
 
 Setting `denylist.globs` replaces the default list (arrays are replaced, not merged). Re-list any defaults you still want.
 
+### `guardrails`
+
+External-write guardrails (E6.11). The runtime never writes to external systems and holds no credentials (D4); the agent writes through the host's MCP tools. The PreToolUse hook (`hooks/lib/enforce.js`, policy in `runtime/guardrails/`) polices those calls.
+
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `guardrails.write_tools` | `[]` | Extra MCP tool names treated as external writes. Full name (`mcp__server__tool`) or a bare tool name (matches any server prefix); `*` is a wildcard. Added to the `write_tools` of every binding configured under `jobs`. |
+| `guardrails.allow_raw_data` | `false` | Allow external writes that carry raw query results. Default: summaries only. |
+
+Which tools count as writes: a binding file lists them in its `write_tools` frontmatter (a subset of `expected_tools`). With only the git binding, nothing is policed.
+
+For a policed tool the hook checks the call before it runs:
+
+1. The content must carry a `[shards-gate:<id>]` marker (the idempotency marker every binding already adds) naming a gate that is **confirmed** in this session. All markers present must be confirmed.
+2. No marker, or a marker for an unknown, pending or changes-requested gate: on Claude Code the user gets a permission prompt (their yes is the explicit confirmation); on Codex, which cannot ask from a hook, the call is denied. Each refusal is logged to `.shards/state/gate-violations.jsonl` (see `shards gates violations`).
+3. A payload that looks like raw query results (25 or more table, TSV or CSV rows in one string) is denied even for a confirmed gate, unless `allow_raw_data` is `true`. This is a heuristic backstop; the protocol (`core/protocols/external_writes.md`) tells agents to send summaries only.
+
+`SHARDS_GUARDRAILS=0` or `SHARDS_GATE_ENFORCE=0` disables the hook check. The hook fails open on internal errors.
+
+```yaml
+guardrails:
+  write_tools: [createConfluencePage, updateConfluencePage]
+  allow_raw_data: false
+```
+
 ### `tiers`
 
 Optional map from a tier hint (`small`, `standard`, `large`) to a model string:
@@ -173,3 +198,17 @@ Notes:
 - `record` now points at Confluence, so the `{output_dir}/project-specs.md` default path no longer applies. Confluence receives the record through its own options.
 - Git still commits the local outputs, so the repo stays the source of truth (ADR 0005). Confluence and Jira receive one-way copies.
 - The `confluence` and `jira` binding files are not shipped in `bindings/` yet. Until they exist, `validateConfig` accepts the names but the runtime cannot load them.
+
+## External copies: `copy_report`, `shards sync --status`, `shards connect`
+
+**Copy reporting (E6.8).** After each external write the agent calls the runtime tool `copy_report(gate_id, target, ok, error?)`. The gate must be confirmed. The runtime records the outcome in `copies.json` in the session state:
+
+- `ok: false` queues the copy (`queued`). The state header shows it as `q=<n>`, and every `gate_request` response lists the queue (`copy_queue` in the data block plus a line of text), so the agent redoes the queued copies at the next gate and reports again.
+- After 5 failed attempts the copy becomes `stuck`: the header shows `stuck=<n>`, `gate_request` lists it under `copy_stuck`, the agent stops retrying and tells the user, and `shards doctor` reports a failing `copies` check.
+- `ok: true` marks the copy `done` and removes it from the queue.
+
+The runtime only records and queues; it never retries an external write itself. The retry relies on the agent following the instructions.
+
+**Queue status (E6.9, CLI half).** `shards sync --status [--json] [--all] [--root <dir>]` lists pending and stuck copies per gate and target across all sessions (`--all` adds completed ones). It is read-only. The `/shards:sync` skill that replays the queue through MCP is not built yet.
+
+**Connecting (E6.10, CLI half).** `shards connect [--host claude|codex] [--only atlassian,drive,github] [--json] [--root <dir>] [--home <dir>]` reads, never writes, the host config (`.mcp.json`, `.claude/settings*.json`, `~/.claude.json` including this project's entry, `.codex/config.toml`, `~/.codex/config.toml`) and reports which of Atlassian, Google Drive/Slides and GitHub are registered. For missing ones it prints the vendor's `claude mcp add ...` / `codex mcp add ...` command. It does not run the commands, call the network or handle credentials; authenticate in the host (Claude Code: `/mcp`). claude.ai connectors (for example Google Drive) are not visible in config files, so for those it prints the connector instructions. Verify the printed commands against `claude mcp add --help` for your version.
