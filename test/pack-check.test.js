@@ -11,7 +11,7 @@ const { stage } = require('../scripts/stage-runtime-package.js');
 const root = path.resolve(__dirname, '..');
 const SCRIPT = path.join(root, 'scripts', 'pack-check.js');
 let cached;
-const dryRunFiles = () => (cached ||= JSON.parse(spawnSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: root, encoding: 'utf8' }).stdout)[0].files.map((f) => f.path));
+const dryRunFiles = () => (cached ||= JSON.parse(spawnSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: root, encoding: 'utf8', shell: process.platform === 'win32' }).stdout)[0].files.map((f) => f.path));
 
 describe('pack-check (E10.4)', { timeout: 120000 }, () => {
   it('the real root tarball passes: allow-list, required paths, every bin and its require closure', () => {
@@ -22,7 +22,7 @@ describe('pack-check (E10.4)', { timeout: 120000 }, () => {
 
   it('the staged MCP package passes the mcp allow-list and closure', () => {
     const dir = stage(fs.mkdtempSync(path.join(os.tmpdir(), 'pack-check-mcp-')) + '/s');
-    const files = JSON.parse(spawnSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: dir, encoding: 'utf8' }).stdout)[0].files.map((f) => f.path);
+    const files = JSON.parse(spawnSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: dir, encoding: 'utf8', shell: process.platform === 'win32' }).stdout)[0].files.map((f) => f.path);
     expect(checkFiles(files, { kind: 'mcp', dir }).errors).toEqual([]);
   });
 
