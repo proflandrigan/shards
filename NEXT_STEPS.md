@@ -1,6 +1,6 @@
 # Shards v2: what's left
 
-Status as of 2026-11-17, `next` at `6008094` ([PR #72](https://github.com/proflandrigan/shards/pull/72) into `main`). Task IDs (E6.4 and so on) refer to `shards-agent-suite-plan.md`. The pre-migration state is tagged `v-legacy` (8e24069).
+Status as of 2026-11-17, `next` at `abb41d2` ([PR #72](https://github.com/proflandrigan/shards/pull/72) into `main`). Task IDs (E6.4 and so on) refer to `shards-agent-suite-plan.md`. The pre-migration state is tagged `v-legacy` (8e24069).
 
 ## Where things stand
 
@@ -13,7 +13,8 @@ Status as of 2026-11-17, `next` at `6008094` ([PR #72](https://github.com/profla
 | D · Shipped | 8 | ⬜ Not started. Waits for Stages 6 and 7 (section 5) |
 
 **Verified on `6008094`:**
-- `npm test` passes: 1203 tests.
+- `npm test` passes: 1126 tests. The count dropped because the removed v1 Studio modules' tests went with them.
+- `npm run release:dry-run` passes, including the pack check and `claude plugin validate --strict`.
 - GitHub Actions on PR #72:
   - `ci` (tests, lints, build, ratchet) is green on ubuntu, macOS and Windows.
   - `runtime` is green on all 3 OSes with Node 18, 20 and 22.
@@ -54,36 +55,47 @@ Status as of 2026-11-17, `next` at `6008094` ([PR #72](https://github.com/profla
 
 ---
 
-## 2. Can be done now (no external accounts)
+## 2. Can be done now (no external accounts): ✅ done 2026-11-17
 
-- [ ] **E10.4 release workflow.** It can be built and tested before Stage 8, but runs in Stage 8 (section 5).
-  - A tag-triggered workflow builds every target (claude plugin and marketplace, codex, skills) and attaches the artifacts.
-  - It also produces `plugins/shards`, which `/plugin marketplace add proflandrigan/shards` needs.
-  - Check `npm pack` against an explicit list: every bin target and everything it `require`s, `runtime/`, `hooks/`, and the generated adapters.
-  - Fix `package.json` `files`. The v1 `shards-ui` bin depends on files that are no longer shipped.
-  - Unify release `package.json` generation, which is duplicated in `build/package.js` and `scripts/stage-runtime-package.js`.
-  - *Done when:* a test tag produces the packages and plugin artifacts, and the pack check passes in CI.
-- [ ] **E10.5 prep: v1 bin deprecation.** `shards-ui`, `shards-gates`, `shards-sessions` and the v1 `install` print the v2 replacement and exit cleanly. *Done when:* tests cover each bin.
-- [ ] **Studio v1 leftovers** in `packages/studio`:
-  - the legacy gate-fence detection;
-  - the `/gate-state` and `/pre-tool-use` routes;
-  - `relay.js` and `ui-push.js`;
-  - the `ui.*` names;
-  - the stale `packages/studio/docs/manifest.json` copy of the old guide's table of contents.
+All the items below are merged on `next`. The open parts that need a live run are listed at the end of this section.
 
-  *Done when:* Studio reads only the v2 event and artifact contract (`docs/artifact-contract.md`), and the stale-term grep is clean.
-- [ ] **`prompt_lab` mode** (`core/agents/ai-engineer/modes/prompt_lab.md`) still assumes a browser panel. Rewrite it around `artifact_emit`.
-- [ ] **Remove the `src/ui/chat-session.js` shim.** Move `test/chat-session.test.js` into `packages/studio` (the shim re-exports `packages/studio/chat-session.js`), then delete the shim and whatever is left of `src/ui/`.
-- [ ] **CLI help gaps.** `shards --help` omits `install --agents-md`, `install --project` and the other `gates` subcommands.
-- [ ] **Plugin icon.** `claude plugin validate` warns `ICON_MISSING`.
-- [ ] **Coupling baseline.** Run `npm run coupling:ratchet -- --update` to lock in the lower counts (`via_task_prose` 21 → 20, `gate_fences`).
-- [ ] **Offline-testable parts of Stage 6**, once the scope is decided. The sandbox exit criteria still wait for section 3.
-  - E6.11 guardrails, with tests showing no external write happens without a gate or confirmation;
-  - E6.8 `copy_report` tool, failure queue, `stuck` after 5 tries, and the queue shown in the state header and `gate_request`;
-  - E6.9 `shards sync --status`;
-  - the E6.10 `shards connect` CLI half;
-  - binding files for each in-scope integration;
-  - the E7.2/E8.1 utility skills for connect, sync, doctor and publish-knowledge.
+- [x] **E10.4 release workflow** (`8e38f17`, ADR 0012).
+  - `.github/workflows/release.yml` runs on `v*` tags and on dispatch. Default permissions are read-only.
+  - It verifies, then builds the claude, codex and skills targets, packs, runs the pack check and uploads artifacts.
+  - A tag creates a GitHub Release and force-pushes the generated plugin to the `marketplace` branch. The root `marketplace.json` points there.
+  - npm publish runs only when repo variable `SHARDS_NPM_PUBLISH=true` and secret `NPM_TOKEN` are both set.
+- [x] **`npm pack` check** (`scripts/pack-check.js`, `npm run pack:check`) runs in `ci.yml`, `release.yml` and the dry run. It checks an explicit allow-list, the required paths and the bin/hook require closure. `package.json` `files` is fixed.
+- [x] **Release `package.json` generation** is unified in `build/package.js`, as `releasePackageJson`.
+- [x] **E10.5 prep: v1 bins.**
+  - `shards-gates` and `shards-sessions` print a notice and forward to `shards gates` / `shards sessions`.
+  - `shards-ui` points to Studio.
+  - `tools/install.js` refuses unless given `--legacy`; `uninstall` still works.
+- [x] **Studio v1 leftovers** (`cdf6c84`). The gate fences, relay, `ui-push`, permission cards, the `cc-readonly` and `permission-pattern` modules, and `ui.*` naming are gone. Gate state comes read-only from runtime state (`/gates`). The guide panel reads `src/docs/manifest.json`.
+- [x] **`prompt_lab`** now uses `artifact_emit` (`type=prompt-lab`).
+- [x] **`src/ui/` shim removed.** The chat-session test moved to `packages/studio/__tests__/`.
+- [x] **CLI help** lists every command, flag and subcommand. `test/cli-help.test.js` scrapes the sources to keep it that way.
+- [x] **Plugin icon:** `build/assets/icon.png` (512×512). `ICON_MISSING` is gone.
+- [x] **Coupling baseline refreshed** (`abb41d2`): `gate_fences` 11 → 1, `ledger_refs` 36 → 6, `ui_refs` 14 → 1, `via_task_prose` 21 → 3, `subagent_type` 2 → 0.
+- [x] **Offline parts of Stage 6** (`5ac642c`), limited to the in-scope core:
+  - **E6.11 guardrails:** binding `write_tools` and `guardrails.*` in the config. The PreToolUse hook requires a confirmed `[shards-gate:<id>]` marker, or asks you on Claude Code and denies on Codex, and refuses raw tables. Protocol: `core/protocols/external_writes.md`.
+  - **E6.8:** the `copy_report` tool, the queue, `stuck` after 5 tries, and the queue shown in the header, `gate_request` and `doctor`.
+  - **E6.9 CLI half:** `shards sync --status`.
+  - **E6.10 CLI half:** `shards connect` reads config only and prints `mcp add` commands.
+
+**Still OPEN from this section:**
+- [ ] The first real `release.yml` run on a tag. It creates the `marketplace` branch; until then `/plugin marketplace add proflandrigan/shards` cannot resolve.
+- [ ] Bumping the version means regenerating `.claude-plugin/marketplace.json`, or the drift test fails. The recipe is in `docs/release.md`.
+- [ ] Check the `mcp add` commands printed by `shards connect` against the vendors' docs: the Atlassian SSE URL, the GitHub MCP URL and the Codex forms. They were written from memory.
+- [ ] Stage 6 pieces that wait for real bindings or the scope decision:
+  - concrete Confluence, Jira and Drive binding files that declare `write_tools`;
+  - the `/shards:sync` and `/shards:connect` skills;
+  - backfill;
+  - publish-knowledge.
+- [ ] Minor:
+  - `runtime/sessions/index.js` still reads the v1 `.shards/gates/state.json`;
+  - dead `.permission-*` CSS rules remain in Studio's `chat.css`;
+  - Studio's `package.json` lists a `docs/` directory that no longer exists (copy `src/docs` in at pack time);
+  - the Studio gate banner has not been checked in a browser.
 
 ---
 
@@ -155,7 +167,7 @@ Stage 7 is merged: the Claude Code plugin (E7), the Codex package (E8), other ho
 ## Suggested order
 
 1. Section 1, first three items: revoke the token, protect `main`, merge PR #72.
-2. Section 2. It runs in parallel with you provisioning the section 1 resources.
+2. ~~Section 2~~ (done).
 3. Section 3 (Stage 6) and section 4 (the live checks), once the accounts, hosts and budget exist.
 4. Section 5 (Stage 8) last.
 
