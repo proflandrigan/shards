@@ -5,11 +5,14 @@
 //                  (a sidecar rather than a marker key inside settings.json: Claude Code validates
 //                  settings.json and unknown top-level keys are not guaranteed to be tolerated).
 //   --claude-md    insert/replace a marker-delimited conventions block in <root>/CLAUDE.md.
-// Both support --remove (exact unmerge) and --dry-run (writes nothing).
+//   --agents-md    (E8.5) same for the Codex fragment in <root>/AGENTS.md (build/assets/agents-md.md).
+// All support --remove (exact unmerge) and --dry-run (writes nothing).
 const fs = require('fs');
 const path = require('path');
 const { ruleCoversGateTools } = require('./doctor');
 const { conventionsBody } = require('../../build/conventions');
+
+const AGENTS_ASSET = path.join(__dirname, '..', '..', 'build', 'assets', 'agents-md.md');
 
 const PRESET_FILE = path.join(__dirname, '..', '..', 'build', 'assets', 'permissions.preset.json');
 const SIDECAR = '.shards-permissions.json';
@@ -17,12 +20,16 @@ const KINDS = ['allow', 'deny', 'ask'];
 const BEGIN = '<!-- shards:begin conventions v1 -->';
 const END = '<!-- shards:end conventions -->';
 const BLOCK_RE = /<!-- shards:begin conventions[^>]*-->[\s\S]*?<!-- shards:end conventions -->\n?/;
+const AGENTS_BEGIN = '<!-- shards:begin agents-md v1 -->';
+const AGENTS_END = '<!-- shards:end agents-md -->';
+const AGENTS_BLOCK_RE = /<!-- shards:begin agents-md[^>]*-->[\s\S]*?<!-- shards:end agents-md -->\n?/;
 
 function usage() {
   return [
-    'Usage: shards install (--permissions | --claude-md) [--root <dir>] [--remove] [--dry-run] [--force]',
+    'Usage: shards install (--permissions | --claude-md | --agents-md) [--root <dir>] [--remove] [--dry-run] [--force]',
     '  --permissions  merge the narrow permission preset into <root>/.claude/settings.json (never allows gate tools)',
     '  --claude-md    insert the Shards tool-call conventions block into <root>/CLAUDE.md (marker-delimited)',
+    '  --agents-md    insert the Shards Codex fragment into <root>/AGENTS.md (marker-delimited)',
     '  --remove       exact unmerge: remove only what this command added',
     '  --dry-run      print what would change; write nothing',
     '  --force        allow running inside the shards source repo',
@@ -31,12 +38,13 @@ function usage() {
 }
 
 function parse(argv) {
-  const o = { permissions: false, claudeMd: false, remove: false, dryRun: false, force: false, help: false };
+  const o = { permissions: false, claudeMd: false, agentsMd: false, remove: false, dryRun: false, force: false, help: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const val = () => { if (i + 1 >= argv.length) throw new Error(`${a} requires a value`); return argv[++i]; };
     if (a === '--permissions') o.permissions = true;
     else if (a === '--claude-md') o.claudeMd = true;
+    else if (a === '--agents-md') o.agentsMd = true;
     else if (a === '--remove') o.remove = true;
     else if (a === '--dry-run') o.dryRun = true;
     else if (a === '--force') o.force = true;
@@ -45,7 +53,7 @@ function parse(argv) {
     else if (a === '--help' || a === '-h') o.help = true;
     else throw new Error(`unknown option '${a}'`);
   }
-  if (!o.help && !o.permissions && !o.claudeMd) throw new Error('one of --permissions or --claude-md is required');
+  if (!o.help && !o.permissions && !o.claudeMd && !o.agentsMd) throw new Error('one of --permissions, --claude-md or --agents-md is required');
   return o;
 }
 
@@ -158,16 +166,12 @@ function removePermissions(root, opts = {}) {
   return { changed: true, removed, settingsFile: sFile };
 }
 
-// ---- CLAUDE.md ----
-function blockText() { return `${BEGIN}\n${conventionsBody()}${END}\n`; }
-
-function applyClaudeMd(root, opts = {}) {
-  const file = path.join(root, 'CLAUDE.md');
+// ---- marker-delimited blocks (CLAUDE.md, AGENTS.md) ----
+function applyBlock(file, block, re, heading, opts = {}) {
   const cur = readText(file);
-  const block = blockText();
   let next;
-  if (cur === null) next = `# Project\n\n${block}`;
-  else if (BLOCK_RE.test(cur)) next = cur.replace(BLOCK_RE, () => block);
+  if (cur === null) next = `${heading}${block}`;
+  else if (re.test(cur)) next = cur.replace(re, () => block);
   else {
     const sep = cur.length === 0 ? '' : cur.endsWith('\n\n') ? '' : cur.endsWith('\n') ? '\n' : '\n\n';
     next = cur + sep + block;
@@ -177,16 +181,23 @@ function applyClaudeMd(root, opts = {}) {
   return { changed: true, file, created: cur === null };
 }
 
-function removeClaudeMd(root, opts = {}) {
-  const file = path.join(root, 'CLAUDE.md');
+function removeBlock(file, re, heading, opts = {}) {
   const cur = readText(file);
-  if (cur === null || !BLOCK_RE.test(cur)) return { changed: false, file };
-  let next = cur.replace(BLOCK_RE, '');
+  if (cur === null || !re.test(cur)) return { changed: false, file };
+  let next = cur.replace(re, '');
   next = next.replace(/\n\n$/, '\n'); // the blank separator insert added before the block
-  const remove = !next.trim() || next.trim() === '# Project';
+  const remove = !next.trim() || next.trim() === heading.trim();
   if (!opts.dryRun) { if (remove) fs.rmSync(file, { force: true }); else writeAtomic(file, next); }
   return { changed: true, file, deleted: remove };
 }
+
+function blockText() { return `${BEGIN}\n${conventionsBody()}${END}\n`; }
+const applyClaudeMd = (root, opts) => applyBlock(path.join(root, 'CLAUDE.md'), blockText(), BLOCK_RE, '# Project\n\n', opts);
+const removeClaudeMd = (root, opts) => removeBlock(path.join(root, 'CLAUDE.md'), BLOCK_RE, '# Project', opts);
+
+function agentsBlockText() { return `${AGENTS_BEGIN}\n${fs.readFileSync(AGENTS_ASSET, 'utf8').replace(/\s+$/, '')}\n${AGENTS_END}\n`; }
+const applyAgentsMd = (root, opts) => applyBlock(path.join(root, 'AGENTS.md'), agentsBlockText(), AGENTS_BLOCK_RE, '# Project\n\n', opts);
+const removeAgentsMd = (root, opts) => removeBlock(path.join(root, 'AGENTS.md'), AGENTS_BLOCK_RE, '# Project', opts);
 
 function summary(label, r, remove) {
   const sets = remove ? r.removed : r.added;
@@ -209,6 +220,10 @@ function run(argv) {
       if (o.remove) console.log(summary('permissions', removePermissions(root, { dryRun: o.dryRun }), true) + dry);
       else console.log(summary('permissions', mergePermissions(root, loadPreset(o.preset), { dryRun: o.dryRun }), false) + dry);
     }
+    if (o.agentsMd) {
+      const r = o.remove ? removeAgentsMd(root, { dryRun: o.dryRun }) : applyAgentsMd(root, { dryRun: o.dryRun });
+      console.log(`agents-md: ${r.changed ? (o.remove ? (r.deleted ? 'removed block and deleted file' : 'removed block') : 'Shards fragment written') : 'no change'} (${r.file})${dry}`);
+    }
     if (o.claudeMd) {
       const r = o.remove ? removeClaudeMd(root, { dryRun: o.dryRun }) : applyClaudeMd(root, { dryRun: o.dryRun });
       console.log(`claude-md: ${r.changed ? (o.remove ? (r.deleted ? 'removed block and deleted file' : 'removed block') : 'conventions block written') : 'no change'} (${r.file})${dry}`);
@@ -217,4 +232,4 @@ function run(argv) {
   return 0;
 }
 
-module.exports = { run, usage, parse, loadPreset, mergePermissions, removePermissions, applyClaudeMd, removeClaudeMd, BEGIN, END, PRESET_FILE };
+module.exports = { run, usage, parse, loadPreset, mergePermissions, removePermissions, applyClaudeMd, removeClaudeMd, applyAgentsMd, removeAgentsMd, AGENTS_BEGIN, AGENTS_END, BEGIN, END, PRESET_FILE };

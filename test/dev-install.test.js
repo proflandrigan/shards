@@ -116,7 +116,7 @@ describe('non-dev and cli', () => {
       const { out } = build(t, false);
       expect(fs.existsSync(path.join(out, 'skills/agents/SKILL.md'))).toBe(true);
       expect(fs.existsSync(path.join(out, '.shards-dev'))).toBe(false);
-      expect(fs.existsSync(path.join(out, '.mcp.json'))).toBe(t === 'claude'); // release claude emits the packaged MCP entry (E7.4)
+      expect(fs.existsSync(path.join(out, '.mcp.json'))).toBe(t !== 'skills'); // release claude (E7.4) and codex (E8.3) emit the packaged MCP entry
       if (t === 'claude') expect(read(out, '.mcp.json')).toContain('CLAUDE_PLUGIN_ROOT');
     }
   });

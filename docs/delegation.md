@@ -237,6 +237,17 @@ The macro validates arguments only (`build/resolve.js`). It renders the build lo
 
 Tool names are prefixed per target (see `build/MACROS.md` section 5).
 
+## 8.1 Codex limits: `max_depth` and `max_threads` (E8.6)
+
+Both keys are docs-only and UNVERIFIED (`docs/compat.md` CX-4): one source says `agents.max_depth` defaults to 1 and `agents.max_threads` to 6; the fetched page names the thread limit `agents.max_concurrent_threads_per_session` (`max_threads` as legacy alias) and does not mention `max_depth`.
+
+| Use | Recommendation | Why |
+|-----|----------------|-----|
+| Consult (specialist asks Syn or a reviewer) | `agents.max_depth = 2` | main thread (0) spawns the specialist's consult at depth 1 only if the specialist runs in the main thread; a specialist that runs as a subagent and consults needs depth 2. With depth 1 the consult is blocked: flatten it (ask the reviewer from the main thread). |
+| Fan-out (`fanout_start`, `{{fanout}}`, `{{delegate}}`) | `agents.max_threads = 4` (or the plan's `max_parallel` if lower) | workers are leaf subagents; width, not depth, is the limit. Excess slices queue or run sequentially. |
+
+The Codex build emits these as commented lines in `.codex/config.toml` (`# [agents]`, `# max_depth = 2`, `# max_threads = 4`); uncomment the keys your Codex version accepts. The generated `AGENTS.md` fragment (`shards install --agents-md`) repeats the requirement. Workers never delegate, so depth beyond 2 is never needed.
+
 ## 9. Not done yet
 
 | Item | Status |

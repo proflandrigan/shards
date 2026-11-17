@@ -140,6 +140,7 @@ Sources: https://learn.chatgpt.com/docs/hooks.md, https://learn.chatgpt.com/docs
 
 - Finding: conflict. A search snippet of the subagents page says `agents.max_depth` defaults to 1 (a direct child may spawn, no deeper nesting) and `agents.max_threads` defaults to 6. The fetched subagents page does not mention `max_depth` and says `agents.max_concurrent_threads_per_session` with `max_threads` as a legacy alias, no default stated.
 - Status: docs-only, unverified; sources conflict.
+- E8.6: recommended values and the emitted (commented) config are in `docs/delegation.md` section 8.1.
 - Impact: D2 risk. If depth 1 is the default, a specialist that consults Syn or a reviewer (depth 2) is blocked on Codex unless config raises it. Plan an installer-written config setting and a depth-1 degradation path.
 
 ### CX-5 Skill taking over the main session

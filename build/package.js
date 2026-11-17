@@ -29,6 +29,30 @@ function releaseMcp() {
   return { mcpServers: { shards: { command: 'node', args: ['${CLAUDE_PLUGIN_ROOT}/runtime/server.js'], env: { SHARDS_PROJECT_ROOT: '${CLAUDE_PROJECT_DIR}' } } } };
 }
 
+// E8.1: Codex release manifest. UNVERIFIED (docs/compat.md): `.codex-plugin/plugin.json` field names are docs-only.
+function codexPluginManifest() {
+  return Object.assign(pluginManifest(), { skills: './skills/', mcpServers: './.mcp.json' });
+}
+
+// E8.3: Codex plugin MCP entry. Path is plugin-root-relative (UNVERIFIED: Codex has no documented ${PLUGIN_ROOT} expansion).
+function codexReleaseMcp() {
+  return { mcpServers: { shards: { command: 'node', args: ['./runtime/server.js'] } } };
+}
+
+// Placeholder in the packaged Codex config/hooks that the user (or a plugin loader) resolves to the plugin directory.
+const CODEX_PLUGIN_ROOT = '<PLUGIN_ROOT>';
+
+function codexReleaseReadme() {
+  return `# Shards (Codex)
+
+${pkg.description}.
+
+UNVERIFIED: this Codex plugin layout follows public docs only; it has not been run against a real Codex CLI (docs/compat.md CX-1 to CX-6).
+
+Contents: \`.codex-plugin/plugin.json\` (skills ./skills/), \`.mcp.json\` (MCP server \`shards\`, node ./runtime/server.js), \`.codex/agents/*.toml\` (consult subagents), \`.codex/config.toml\` (MCP entry with per-tool approval, per-agent profiles, agents.max_depth/max_threads guidance), \`.codex/hooks.json\` (hook shims). Replace \`${CODEX_PLUGIN_ROOT}\` in config.toml and hooks.json with the absolute path of this directory if your Codex does not load the plugin manifest. Requires Node.js 18 or newer. Optional: \`shards install --agents-md\` adds the Shards section to AGENTS.md. Source and docs: ${REPOSITORY}
+`;
+}
+
 function releaseReadme() {
   return `# Shards
 
@@ -108,4 +132,4 @@ function marketplaceManifest() {
 }
 const marketplaceText = () => jsonText(marketplaceManifest());
 
-module.exports = { releaseReadme, pluginManifest, releaseMcp, depClosure, copyRuntime, marketplaceManifest, marketplaceText, REPOSITORY };
+module.exports = { codexPluginManifest, codexReleaseMcp, codexReleaseReadme, CODEX_PLUGIN_ROOT, releaseReadme, pluginManifest, releaseMcp, depClosure, copyRuntime, marketplaceManifest, marketplaceText, REPOSITORY };

@@ -67,16 +67,31 @@ function generalPrompt(a, target, defaultAgent) {
 }
 
 // E8.7(b)/E5.7: per-agent profiles. UNVERIFIED (docs/compat.md): Codex profile table shape and `profile` key are docs-only.
+const AGENTS_GUIDANCE = `# Delegation limits (E8.6, UNVERIFIED docs-only: docs/compat.md CX-4). Key names differ between Codex doc versions, so these are
+# commented out; uncomment the ones your Codex version accepts.
+#   agents.max_depth: consult from a specialist (specialist -> Syn or reviewer) needs depth 2; the default may be 1.
+#   agents.max_threads (alias of agents.max_concurrent_threads_per_session): fan-out width; 4 is a safe recommendation.
+# [agents]
+# max_depth = 2
+# max_threads = 4
+`;
+
 function codexConfig(profiles, optIn, mcp) {
   const pre = CODEX_TOOL_PREFIX;
   let t = '# UNVERIFIED (docs-only): [profiles.*] and developer_instructions are not confirmed against a real Codex CLI.\n# Usage: codex --profile shards-<agent>\n';
   if (optIn) t += 'profile = "shards-syn"\n';
-  t += '\n';
+  t += `\n${AGENTS_GUIDANCE}\n`;
   for (const id of profiles) {
     const di = `You are the Shards agent ${id}. Before anything else call \`${pre}activate\`(agent="${id}", mode="switch"), adopt the returned persona_summary, then read content/agents/${id}/AGENT.md and follow it. Load phases with \`${pre}load_phase\`; leave with \`${pre}return\`.`;
     t += `[profiles.shards-${id}]\ndeveloper_instructions = ${tomlStr(di)}\n\n`;
   }
   return t + mcp;
+}
+
+// E8.3: MCP entry + per-tool approval_mode (Codex docs-only, UNVERIFIED: compat CX-1). Shared by dev and release.
+function codexMcpToml(runtimePath) {
+  const approvals = ['gate_advance', 'gate_force_close'].map((t) => `[mcp_servers.shards.tools.${t}]\napproval_mode = "prompt"\n`).join('\n');
+  return `[mcp_servers.shards]\ncommand = "node"\nargs = [${tomlStr(runtimePath)}]\n\n# Per-tool approval_mode below is docs-only / UNVERIFIED (docs/compat.md CX-1).\n${approvals}\n`;
 }
 
 function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, defaultAgent, bundleDeps = true }) {
@@ -128,16 +143,23 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
     } else if (target === 'codex') {
       out.set('.codex-plugin/plugin.json', jsonText({ name: 'shards', version: pkg.version, description: pkg.description, skills: './skills/' })); // docs-only, UNVERIFIED
       // E8.3: per-tool approval_mode (Codex docs-only, UNVERIFIED: compat CX-1).
-      const approvals = ['gate_advance', 'gate_force_close'].map((t) => `[mcp_servers.shards.tools.${t}]\napproval_mode = "prompt"\n`).join('\n');
-      codexMcp = `[mcp_servers.shards]\ncommand = "node"\nargs = [${tomlStr(runtime)}]\n\n# Per-tool approval_mode below is docs-only / UNVERIFIED (docs/compat.md CX-1).\n${approvals}\n`;
+      codexMcp = codexMcpToml(runtime);
       out.set('.codex/hooks.json', fs.readFileSync(path.join(REPO, 'hooks', 'codex.hooks.json'), 'utf8').split('{{SHARDS_HOOKS_DIR}}').join(hooksDir));
     }
   }
+  // Release packaging (codex, E8.1-E8.3): manifest, plugin MCP entry, config with approvals, hooks; runtime copied below.
+  if (!dev && target === 'codex') {
+    const root = relpkg.CODEX_PLUGIN_ROOT;
+    codexMcp = codexMcpToml(`${root}/runtime/server.js`);
+    out.set('.codex-plugin/plugin.json', jsonText(relpkg.codexPluginManifest()));
+    out.set('.mcp.json', jsonText(relpkg.codexReleaseMcp()));
+    out.set('README.md', relpkg.codexReleaseReadme());
+    out.set('.codex/hooks.json', fs.readFileSync(path.join(REPO, 'hooks', 'codex.hooks.json'), 'utf8').split('{{SHARDS_HOOKS_DIR}}').join(`${root}/hooks`));
+  }
   if (target === 'codex') out.set('.codex/config.toml', codexConfig(profiles, optIn, codexMcp));
   // Release packaging (claude): E7.1 manifest, E7.4 MCP entry, E7.5 hooks verbatim; runtime copied after the write loop.
-  // Codex release packaging stays TODO(E8.3).
-  const release = !dev && target === 'claude';
-  if (release) {
+  const release = !dev && (target === 'claude' || target === 'codex');
+  if (release && target === 'claude') {
     out.set('.claude-plugin/plugin.json', jsonText(relpkg.pluginManifest()));
     out.set('.mcp.json', jsonText(relpkg.releaseMcp()));
     out.set('README.md', relpkg.releaseReadme());
