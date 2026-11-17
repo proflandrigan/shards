@@ -10,7 +10,7 @@ const { resolveMacro, fileContext } = require('./resolve');
 const { render, TARGETS } = require('./render');
 const { buildReport, formatTable } = require('./size');
 const { emitTarget } = require('./emit');
-const { checkActivation, checkEmitted } = require('./activation-check');
+const { checkActivation, checkEmitted, checkSkillRefs } = require('./activation-check');
 const { lintNesting } = require('./lint-nesting');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -70,7 +70,7 @@ function processFile(core, rel, text, { target, strict }) {
   return { text: out, errors };
 }
 
-function compile({ target, coreDir = path.join(ROOT, 'core'), outDir, dev = false, strict = false, defaultAgent }) {
+function compile({ target, coreDir = path.join(ROOT, 'core'), outDir, dev = false, strict = false, defaultAgent, bundleDeps = true }) {
   if (!TARGETS.includes(target)) return { errors: [`unknown target '${target}'; expected ${TARGETS.join('|')}`] };
   coreDir = path.resolve(coreDir);
   const core = loadCore(coreDir);
@@ -111,9 +111,9 @@ function compile({ target, coreDir = path.join(ROOT, 'core'), outDir, dev = fals
   if (errors.length) return { errors: [...new Set(errors)] };
 
   const report = buildReport(target, rendered, personas);
-  const files = emitTarget({ target, core, rendered, agentBodies, report, dev, outDir: path.resolve(outDir), defaultAgent });
+  const files = emitTarget({ target, core, rendered, agentBodies, report, dev, outDir: path.resolve(outDir), defaultAgent, bundleDeps });
   if (target === 'claude' || target === 'codex') {
-    const emitErrs = checkEmitted(core, files, target);
+    const emitErrs = [...checkEmitted(core, files, target), ...checkSkillRefs(core, files, target)];
     if (emitErrs.length) return { errors: emitErrs };
   }
   return { errors: [], files, report, table: formatTable(report) };

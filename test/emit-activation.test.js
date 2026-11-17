@@ -20,7 +20,7 @@ function build(target, extra = {}) {
   // compile() does not forward opts.defaultAgent yet (captain wires the CLI flag); the env fallback is equivalent.
   if (defaultAgent) process.env.SHARDS_BUILD_DEFAULT_AGENT = '1';
   try {
-    const r = compile({ target, outDir: out, ...rest });
+    const r = compile({ bundleDeps: false, target, outDir: out, ...rest });
     expect(r.errors).toEqual([]);
   } finally { delete process.env.SHARDS_BUILD_DEFAULT_AGENT; }
   return out;
@@ -30,7 +30,7 @@ describe('E5.2 thin switch skills', () => {
   const out = build('claude');
   it('exists exactly for switchable agents and holds no persona text', () => {
     const sw = agents.filter((a) => a.y.activation.includes('switch')).map((a) => a.id);
-    expect(ls(path.join(out, 'skills')).filter((d) => d !== 'agents')).toEqual(sw);
+    expect(ls(path.join(out, 'skills')).filter((d) => !['agents', 'brainstorm', 'end', 'notebook-walkthrough', 'resume', 'review-pr', 'shards-conventions'].includes(d))).toEqual(sw);
     for (const id of sw) {
       const skill = read(out, 'skills', id, 'SKILL.md');
       expect(skill).toContain(`mcp__plugin_shards_shards__activate\`(agent="${id}", mode="switch")`);

@@ -53,7 +53,7 @@ describe('delegate host fallbacks', () => {
     const files = { 'agents/alpha/phases/phase-1.md': '# Phase 1\n\n{{delegate}}\n' };
     for (const target of ['claude', 'codex', 'skills']) {
       const out = tmpDir();
-      const r = compile({ target, coreDir: makeCore(files), outDir: out });
+      const r = compile({ bundleDeps: false, target, coreDir: makeCore(files), outDir: out });
       expect(r.errors).toEqual([]);
       const txt = fs.readFileSync(path.join(out, 'content/agents/alpha/phases/phase-1.md'), 'utf8');
       expect(txt).toContain(`${PREFIX[target]}task_verify`);

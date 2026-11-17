@@ -19,3 +19,6 @@ test/golden/runs/
 
 # Generated build output (shards build)
 adapters/
+
+# Generated release plugin output (shards build --marketplace; E10.4 publishes it)
+plugins/

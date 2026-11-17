@@ -75,6 +75,8 @@ No model runs were made (no spend). Nothing below was exercised by running a hoo
 - Status: FAILS/UNKNOWN.
 - Impact: until proven, E11.0 must not assume a plugin can set the main agent. Fallback is `claude --agent <plugin>:<name>` or a project `.claude/settings.json` `"agent"` key (documented in sub-agents page). Needs a no-cost local spike: `claude plugin validate` plus a `--plugin-dir` plugin with `settings.json`, checking `/status` or the debug log.
 
+- Note 2026-11-16: `claude plugin validate --strict` on a `--default-agent` release build passes, with this warning on `settings.json` (verbatim): "A plugin's `agent` setting is deprecated and will stop applying in a future release. Tell people to set `agent` in their own settings or pass --agent." Docs recommend `claude --agent shards:syn` or project settings; the plugin setting stays opt-in.
+
 ### CC-4 Hook fields `session_id`, `agent_id`, `permission_mode`
 
 - Question: which hook events carry these, especially PreToolUse, and is `permission_mode` reported at call time?

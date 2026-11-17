@@ -1,6 +1,7 @@
 'use strict';
 // Activation checks: static (core/) and post-emit (written file list per target).
 const { inventory } = require('./activation-inventory.js');
+const { referencedContent } = require('./skills.js');
 
 const has = (doc, kind) => Array.isArray(doc.activation) && doc.activation.includes(kind);
 
@@ -54,4 +55,12 @@ function checkEmitted(core, writtenFiles, target) {
   return errors;
 }
 
-module.exports = { checkActivation, checkEmitted };
+// Every content path a utility skill tells the model to read must be in the emitted file set.
+// Only enforced for cores that ship the Shards agents the skills point at (fixture cores are exempt).
+function checkSkillRefs(core, writtenFiles, target) {
+  if (!core.agents.has('syn')) return [];
+  const files = new Set([...writtenFiles].map((f) => String(f).replace(/\\/g, '/').replace(/^\.\//, '')));
+  return referencedContent().filter((p) => !files.has(p)).map((p) => `emit(${target}): utility skill references missing ${p}`);
+}
+
+module.exports = { checkActivation, checkEmitted, checkSkillRefs };

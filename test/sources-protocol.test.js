@@ -12,7 +12,7 @@ let out;
 
 beforeAll(() => {
   out = fs.mkdtempSync(path.join(os.tmpdir(), 'shards-sources-'));
-  const r = compile({ target: 'claude', outDir: out, strict: true });
+  const r = compile({ bundleDeps: false, target: 'claude', outDir: out, strict: true });
   expect(r.errors).toEqual([]);
 });
 

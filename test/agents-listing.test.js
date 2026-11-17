@@ -19,7 +19,7 @@ async function listed() {
 }
 function build(target) {
   const out = tmpDir();
-  expect(compile({ target, outDir: out }).errors).toEqual([]);
+  expect(compile({ bundleDeps: false, target, outDir: out }).errors).toEqual([]);
   return out;
 }
 

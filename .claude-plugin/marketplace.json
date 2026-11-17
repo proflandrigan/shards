@@ -1,0 +1,24 @@
+{
+  "name": "shards",
+  "owner": {
+    "name": "proflandrigan"
+  },
+  "description": "Shards of Syn's brain — a data-focused agent suite for Claude Code",
+  "plugins": [
+    {
+      "name": "shards",
+      "source": "./plugins/shards",
+      "description": "Shards of Syn's brain — a data-focused agent suite for Claude Code",
+      "version": "2.0.0-next.0",
+      "category": "productivity",
+      "keywords": [
+        "claude-code",
+        "agents",
+        "data-science",
+        "data-engineering",
+        "workflows",
+        "machine-learning"
+      ]
+    }
+  ]
+}

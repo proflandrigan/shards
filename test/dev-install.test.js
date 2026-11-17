@@ -20,7 +20,7 @@ const read = (d, rel) => fs.readFileSync(path.join(d, rel), 'utf8');
 function build(target, dev = true) {
   const parent = tmp();
   const out = path.join(parent, target === 'claude' ? 'claude-code' : target);
-  const r = compile({ target, outDir: out, dev });
+  const r = compile({ bundleDeps: false, target, outDir: out, dev });
   expect(r.errors).toEqual([]);
   return { parent, out };
 }
@@ -116,7 +116,8 @@ describe('non-dev and cli', () => {
       const { out } = build(t, false);
       expect(fs.existsSync(path.join(out, 'skills/agents/SKILL.md'))).toBe(true);
       expect(fs.existsSync(path.join(out, '.shards-dev'))).toBe(false);
-      expect(fs.existsSync(path.join(out, '.mcp.json'))).toBe(false);
+      expect(fs.existsSync(path.join(out, '.mcp.json'))).toBe(t === 'claude'); // release claude emits the packaged MCP entry (E7.4)
+      if (t === 'claude') expect(read(out, '.mcp.json')).toContain('CLAUDE_PLUGIN_ROOT');
     }
   });
   it('build --dev prints install hint; uninstall-dev removes only marked dirs', () => {

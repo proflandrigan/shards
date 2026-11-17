@@ -48,7 +48,7 @@ describe('UI mode fold into artifact_emit', () => {
 
   beforeAll(() => {
     outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ui-fold-'));
-    const r = compile({ target: 'claude', coreDir: CORE, outDir });
+    const r = compile({ bundleDeps: false, target: 'claude', coreDir: CORE, outDir });
     expect(r.errors).toEqual([]);
   });
 

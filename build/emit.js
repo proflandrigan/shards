@@ -5,6 +5,8 @@ const path = require('path');
 const YAML = require('yaml');
 
 const pkg = require('../package.json');
+const relpkg = require('./package');
+const { utilitySkills } = require('./skills');
 const { CLAUDE_TOOL_PREFIX, CODEX_TOOL_PREFIX, contentPath } = require('./render');
 
 const REPO = path.resolve(__dirname, '..');
@@ -64,15 +66,6 @@ function generalPrompt(a, target, defaultAgent) {
   return t;
 }
 
-function agentsSkill(target) {
-  const pre = target === 'claude' ? CLAUDE_TOOL_PREFIX : target === 'codex' ? CODEX_TOOL_PREFIX : '';
-  const description = 'List the available Shards agents with role, modes, description, switch command and consult subagent names.';
-  const hostT = target === 'codex' ? 'codex' : 'claude';
-  const profileNote = hostT === 'codex' ? ' Also show `activate.codex.profile` (start with `codex --profile <profile>`).' : '';
-  const body = `# Shards agents\n\nCall \`${pre}list_agents\`() (no arguments). Print the result as a table with the columns id, role, modes, description, switch command, consult subagents (one row per agent; modes = the \`modes\` field joined with commas; switch command = \`activate.${hostT}.switch\`, or - when null; consult subagents = \`activate.${hostT}.consult\` joined with commas, or - when empty).${profileNote} If an entry has an \`error\` field, show its id with the error in the description column. Do not call any other tool and do not start an agent.\n`;
-  return fm({ name: 'agents', description }) + '\n' + body;
-}
-
 // E8.7(b)/E5.7: per-agent profiles. UNVERIFIED (docs/compat.md): Codex profile table shape and `profile` key are docs-only.
 function codexConfig(profiles, optIn, mcp) {
   const pre = CODEX_TOOL_PREFIX;
@@ -86,7 +79,7 @@ function codexConfig(profiles, optIn, mcp) {
   return t + mcp;
 }
 
-function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, defaultAgent }) {
+function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, defaultAgent, bundleDeps = true }) {
   const optIn = defaultAgent === true || (defaultAgent === undefined && process.env.SHARDS_BUILD_DEFAULT_AGENT === '1');
   const out = new Map();
   for (const [rel, data] of rendered) out.set(rel, data);
@@ -118,7 +111,7 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
   }
   if (target === 'claude' && optIn) out.set('settings.json', jsonText({ agent: 'shards:syn' })); // UNVERIFIED (compat CC-3)
 
-  out.set('skills/agents/SKILL.md', agentsSkill(target));
+  for (const [p, t] of utilitySkills(target)) out.set(p, t);
 
   let codexMcp = '';
   if (dev) {
@@ -141,7 +134,15 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
     }
   }
   if (target === 'codex') out.set('.codex/config.toml', codexConfig(profiles, optIn, codexMcp));
-  // Non-dev packaging: TODO(E7.4/E8.3) plugin manifest, published MCP entry and hook shims are not emitted yet.
+  // Release packaging (claude): E7.1 manifest, E7.4 MCP entry, E7.5 hooks verbatim; runtime copied after the write loop.
+  // Codex release packaging stays TODO(E8.3).
+  const release = !dev && target === 'claude';
+  if (release) {
+    out.set('.claude-plugin/plugin.json', jsonText(relpkg.pluginManifest()));
+    out.set('.mcp.json', jsonText(relpkg.releaseMcp()));
+    out.set('README.md', relpkg.releaseReadme());
+    out.set('hooks/hooks.json', fs.readFileSync(path.join(REPO, 'hooks', 'claude-code.hooks.json'), 'utf8'));
+  }
 
   const written = [];
   for (const rel of [...out.keys()].sort()) {
@@ -150,6 +151,7 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
     fs.writeFileSync(full, out.get(rel));
     written.push(rel);
   }
+  if (release) relpkg.copyRuntime(outDir, { bundleDeps });
   return written;
 }
 

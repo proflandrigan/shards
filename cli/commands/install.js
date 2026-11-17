@@ -1,0 +1,220 @@
+'use strict';
+// `shards install --permissions | --claude-md` (E7.8 / E7.9): opt-in, removable project config.
+//   --permissions  merge build/assets/permissions.preset.json into <root>/.claude/settings.json.
+//                  Rules actually ADDED are recorded in the sidecar <root>/.claude/.shards-permissions.json
+//                  (a sidecar rather than a marker key inside settings.json: Claude Code validates
+//                  settings.json and unknown top-level keys are not guaranteed to be tolerated).
+//   --claude-md    insert/replace a marker-delimited conventions block in <root>/CLAUDE.md.
+// Both support --remove (exact unmerge) and --dry-run (writes nothing).
+const fs = require('fs');
+const path = require('path');
+const { ruleCoversGateTools } = require('./doctor');
+const { conventionsBody } = require('../../build/conventions');
+
+const PRESET_FILE = path.join(__dirname, '..', '..', 'build', 'assets', 'permissions.preset.json');
+const SIDECAR = '.shards-permissions.json';
+const KINDS = ['allow', 'deny', 'ask'];
+const BEGIN = '<!-- shards:begin conventions v1 -->';
+const END = '<!-- shards:end conventions -->';
+const BLOCK_RE = /<!-- shards:begin conventions[^>]*-->[\s\S]*?<!-- shards:end conventions -->\n?/;
+
+function usage() {
+  return [
+    'Usage: shards install (--permissions | --claude-md) [--root <dir>] [--remove] [--dry-run] [--force]',
+    '  --permissions  merge the narrow permission preset into <root>/.claude/settings.json (never allows gate tools)',
+    '  --claude-md    insert the Shards tool-call conventions block into <root>/CLAUDE.md (marker-delimited)',
+    '  --remove       exact unmerge: remove only what this command added',
+    '  --dry-run      print what would change; write nothing',
+    '  --force        allow running inside the shards source repo',
+    '  --preset <f>   use another preset JSON file (testing)',
+  ].join('\n');
+}
+
+function parse(argv) {
+  const o = { permissions: false, claudeMd: false, remove: false, dryRun: false, force: false, help: false };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    const val = () => { if (i + 1 >= argv.length) throw new Error(`${a} requires a value`); return argv[++i]; };
+    if (a === '--permissions') o.permissions = true;
+    else if (a === '--claude-md') o.claudeMd = true;
+    else if (a === '--remove') o.remove = true;
+    else if (a === '--dry-run') o.dryRun = true;
+    else if (a === '--force') o.force = true;
+    else if (a === '--root') o.root = val();
+    else if (a === '--preset') o.preset = val();
+    else if (a === '--help' || a === '-h') o.help = true;
+    else throw new Error(`unknown option '${a}'`);
+  }
+  if (!o.help && !o.permissions && !o.claudeMd) throw new Error('one of --permissions or --claude-md is required');
+  return o;
+}
+
+function readText(p) { try { return fs.readFileSync(p, 'utf8'); } catch (_) { return null; } }
+function isSourceRepo(root) {
+  return fs.existsSync(path.join(root, 'core', 'agents')) && fs.existsSync(path.join(root, 'cli', 'shards.js'));
+}
+function writeAtomic(p, text) {
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  const tmp = `${p}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, text);
+  fs.renameSync(tmp, p);
+}
+
+// `Bash(cmd:*)`, `Bash(cmd *)` and `Bash(cmd*)` match the same set; compare in canonical form.
+function canon(p) {
+  if (typeof p !== 'string' || !/^Bash\(/.test(p)) return p;
+  return p.replace(/(?:\s*:\*|(?<!\*)\s*\*)\)\s*$/, ')');
+}
+
+function loadPreset(file) {
+  const j = JSON.parse(fs.readFileSync(file || PRESET_FILE, 'utf8'));
+  const out = {};
+  for (const k of KINDS) out[k] = Array.isArray(j[k]) ? j[k].filter((x) => typeof x === 'string') : [];
+  return out;
+}
+
+function readSettings(file) {
+  const t = readText(file);
+  if (t === null) return { settings: null, text: null };
+  let settings;
+  try { settings = JSON.parse(t); } catch (e) { throw new Error(`${file} is not valid JSON: ${e.message}`); }
+  if (!settings || typeof settings !== 'object' || Array.isArray(settings)) throw new Error(`${file} is not a JSON object`);
+  return { settings, text: t };
+}
+
+// ---- permissions ----
+function mergePermissions(root, fragment, opts = {}) {
+  const bad = (fragment.allow || []).filter(ruleCoversGateTools);
+  if (bad.length) throw new Error(`refusing to merge: allow rule(s) cover gate tools: ${bad.join(', ')}`);
+  const sFile = path.join(root, '.claude', 'settings.json');
+  const sidecar = path.join(root, '.claude', SIDECAR);
+  const { settings: existing } = readSettings(sFile);
+  const created = [];
+  const settings = existing || {};
+  if (!existing) created.push('file');
+  if (!settings.permissions || typeof settings.permissions !== 'object') {
+    if (settings.permissions === undefined) created.push('permissions');
+    else throw new Error(`${sFile}: "permissions" is not an object`);
+    settings.permissions = {};
+  }
+  const added = { allow: [], deny: [], ask: [] };
+  for (const k of KINDS) {
+    const rules = fragment[k] || [];
+    if (!rules.length) continue;
+    if (settings.permissions[k] === undefined) { settings.permissions[k] = []; created.push(k); }
+    else if (!Array.isArray(settings.permissions[k])) throw new Error(`${sFile}: permissions.${k} is not an array`);
+    const have = new Set(settings.permissions[k].map(canon));
+    for (const r of rules) {
+      if (have.has(canon(r))) continue;
+      have.add(canon(r));
+      settings.permissions[k].push(r);
+      added[k].push(r);
+    }
+  }
+  const total = KINDS.reduce((n, k) => n + added[k].length, 0);
+  if (total === 0 && !created.length) return { changed: false, added, settingsFile: sFile };
+  if (!opts.dryRun) {
+    // Settings first, then the record. A crash in between leaves rules without a record (not removable by us), never the reverse.
+    let prev = { added: { allow: [], deny: [], ask: [] }, created: [] };
+    const pt = readText(sidecar);
+    if (pt) { try { prev = JSON.parse(pt); } catch (_) { /* overwrite corrupt record */ } }
+    const rec = { version: 1, added: {}, created: [...new Set([...(prev.created || []), ...created])] };
+    for (const k of KINDS) rec.added[k] = [...(prev.added && prev.added[k] || []), ...added[k]];
+    writeAtomic(sFile, JSON.stringify(settings, null, 2) + '\n');
+    writeAtomic(sidecar, JSON.stringify(rec, null, 2) + '\n');
+  }
+  return { changed: true, added, settingsFile: sFile };
+}
+
+function removePermissions(root, opts = {}) {
+  const sFile = path.join(root, '.claude', 'settings.json');
+  const sidecar = path.join(root, '.claude', SIDECAR);
+  const st = readText(sidecar);
+  if (st === null) return { changed: false, removed: { allow: [], deny: [], ask: [] }, settingsFile: sFile };
+  let rec;
+  try { rec = JSON.parse(st); } catch (e) { throw new Error(`${sidecar} is not valid JSON: ${e.message}`); }
+  const { settings } = readSettings(sFile);
+  const removed = { allow: [], deny: [], ask: [] };
+  const created = rec.created || [];
+  if (settings && settings.permissions && typeof settings.permissions === 'object') {
+    for (const k of KINDS) {
+      const arr = settings.permissions[k];
+      if (!Array.isArray(arr)) continue;
+      for (const r of (rec.added && rec.added[k]) || []) {
+        const i = arr.indexOf(r);
+        if (i >= 0) { arr.splice(i, 1); removed[k].push(r); }
+      }
+      if (!arr.length && created.includes(k)) delete settings.permissions[k];
+    }
+    if (!Object.keys(settings.permissions).length && created.includes('permissions')) delete settings.permissions;
+  }
+  if (!opts.dryRun) {
+    if (settings) {
+      if (created.includes('file') && !Object.keys(settings).length) fs.rmSync(sFile, { force: true });
+      else writeAtomic(sFile, JSON.stringify(settings, null, 2) + '\n');
+    }
+    fs.rmSync(sidecar, { force: true });
+  }
+  return { changed: true, removed, settingsFile: sFile };
+}
+
+// ---- CLAUDE.md ----
+function blockText() { return `${BEGIN}\n${conventionsBody()}${END}\n`; }
+
+function applyClaudeMd(root, opts = {}) {
+  const file = path.join(root, 'CLAUDE.md');
+  const cur = readText(file);
+  const block = blockText();
+  let next;
+  if (cur === null) next = `# Project\n\n${block}`;
+  else if (BLOCK_RE.test(cur)) next = cur.replace(BLOCK_RE, () => block);
+  else {
+    const sep = cur.length === 0 ? '' : cur.endsWith('\n\n') ? '' : cur.endsWith('\n') ? '\n' : '\n\n';
+    next = cur + sep + block;
+  }
+  if (next === cur) return { changed: false, file };
+  if (!opts.dryRun) writeAtomic(file, next);
+  return { changed: true, file, created: cur === null };
+}
+
+function removeClaudeMd(root, opts = {}) {
+  const file = path.join(root, 'CLAUDE.md');
+  const cur = readText(file);
+  if (cur === null || !BLOCK_RE.test(cur)) return { changed: false, file };
+  let next = cur.replace(BLOCK_RE, '');
+  next = next.replace(/\n\n$/, '\n'); // the blank separator insert added before the block
+  const remove = !next.trim() || next.trim() === '# Project';
+  if (!opts.dryRun) { if (remove) fs.rmSync(file, { force: true }); else writeAtomic(file, next); }
+  return { changed: true, file, deleted: remove };
+}
+
+function summary(label, r, remove) {
+  const sets = remove ? r.removed : r.added;
+  const n = sets ? KINDS.reduce((a, k) => a + sets[k].length, 0) : 0;
+  return `${label}: ${r.changed ? (remove ? `removed ${n} rule(s)` : `added ${n} rule(s)`) : 'no change'} (${r.settingsFile})`;
+}
+
+function run(argv) {
+  let o;
+  try { o = parse(argv); } catch (e) { console.error(`shards install: ${e.message}\n\n${usage()}`); return 2; }
+  if (o.help) { console.log(usage()); return 0; }
+  const root = path.resolve(o.root || process.cwd());
+  if (isSourceRepo(root) && !o.force) {
+    console.error(`shards install: ${root} is the shards source repo; refusing (use --force to override)`);
+    return 1;
+  }
+  const dry = o.dryRun ? ' [dry-run]' : '';
+  try {
+    if (o.permissions) {
+      if (o.remove) console.log(summary('permissions', removePermissions(root, { dryRun: o.dryRun }), true) + dry);
+      else console.log(summary('permissions', mergePermissions(root, loadPreset(o.preset), { dryRun: o.dryRun }), false) + dry);
+    }
+    if (o.claudeMd) {
+      const r = o.remove ? removeClaudeMd(root, { dryRun: o.dryRun }) : applyClaudeMd(root, { dryRun: o.dryRun });
+      console.log(`claude-md: ${r.changed ? (o.remove ? (r.deleted ? 'removed block and deleted file' : 'removed block') : 'conventions block written') : 'no change'} (${r.file})${dry}`);
+    }
+  } catch (e) { console.error(`shards install: ${e.message}`); return 1; }
+  return 0;
+}
+
+module.exports = { run, usage, parse, loadPreset, mergePermissions, removePermissions, applyClaudeMd, removeClaudeMd, BEGIN, END, PRESET_FILE };

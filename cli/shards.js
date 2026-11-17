@@ -10,6 +10,7 @@ const COMMANDS = {
   doctor: { summary: 'Check prerequisites, config, MCP, hooks, git state and gate permissions', run: (argv) => require('./commands/doctor').run(argv) },
   sessions: { summary: 'List, show, resume and end sessions without the UI', run: (argv) => require('./commands/sessions').run(argv) },
   migrate: { summary: 'Migrate a legacy v1 install to v2 (ledger export, gate-history import, manifest-driven cleanup)', run: (argv) => require('./commands/migrate').run(argv) },
+  install: { summary: 'Opt-in project config: permission preset (--permissions) and CLAUDE.md conventions (--claude-md)', run: (argv) => require('./commands/install').run(argv) },
   // EXTENSION POINT: register doctor / gates / sessions here, e.g.
   //   doctor: { summary: '...', run: (argv) => require('./doctor').run(argv) },
 };
@@ -17,11 +18,13 @@ const COMMANDS = {
 function usage() {
   const lines = ['Usage: shards <command> [options]', '', 'Commands:'];
   for (const [n, c] of Object.entries(COMMANDS)) lines.push(`  ${n.padEnd(14)} ${c.summary}`);
-  lines.push('', 'build options: --target <claude|codex|skills> [--dev] [--out dir] [--strict] [--default-agent] [--core dir]');
+  lines.push('', 'build options: --target <claude|codex|skills> [--dev] [--out dir] [--strict] [--default-agent] [--core dir] [--no-bundle-deps] [--marketplace]');
+  lines.push('  release (non-dev) claude builds are a self-contained plugin; --no-bundle-deps skips node_modules; --marketplace writes <out>/.claude-plugin/marketplace.json and the plugin at <out>/plugins/shards (claude only, default out adapters/marketplace)');
   lines.push('uninstall-dev options: [--target claude|codex|all] [--out dir]');
   lines.push('gates: gates status [--session k] [--root d] | gates confirm <gate-id> [--session k] [--changes "note"] [--root d]');
   lines.push('doctor: doctor [--root d] [--json] [--fix]');
   lines.push('sessions: sessions list|show|resume|end [id] [--root d] [--status s] [--limit n] [--json]');
+  lines.push('install: install (--permissions | --claude-md) [--root d] [--remove] [--dry-run] [--force]  (--remove is the uninstall: it removes only what install added)');
   lines.push('migrate: migrate [--export-ledger] [--root d] [--out d] [--dry-run] [--force]  (full legacy migrate; --export-ledger = ledger step only)');
   return lines.join('\n');
 }
@@ -36,10 +39,14 @@ function parseBuildArgs(argv) {
     else if (a === '--core') o.core = val();
     else if (a === '--dev') o.dev = true;
     else if (a === '--strict') o.strict = true;
+    else if (a === '--no-bundle-deps') o.bundleDeps = false;
+    else if (a === '--marketplace') o.marketplace = true;
     else if (a === '--default-agent') o.defaultAgent = true;
     else throw new Error(`unknown option '${a}'`);
   }
   if (!o.target) throw new Error('--target <claude|codex|skills> is required');
+  if (o.marketplace && o.target !== 'claude') throw new Error('--marketplace requires --target claude');
+  if (o.marketplace && o.dev) throw new Error('--marketplace builds the release plugin; it cannot be combined with --dev');
   return o;
 }
 
@@ -78,8 +85,9 @@ function runBuild(argv) {
   let o;
   try { o = parseBuildArgs(argv); } catch (e) { console.error(`shards build: ${e.message}\n\n${usage()}`); return 2; }
   const { compile } = require('../build/compile');
-  const outDir = o.out || defaultOutDir(o.target);
-  const r = compile({ target: o.target, coreDir: o.core, outDir, dev: o.dev, strict: o.strict, defaultAgent: o.defaultAgent });
+  const mktRoot = o.marketplace ? path.resolve(o.out || path.join(process.cwd(), 'adapters', 'marketplace')) : null;
+  const outDir = mktRoot ? path.join(mktRoot, 'plugins', 'shards') : (o.out || defaultOutDir(o.target));
+  const r = compile({ target: o.target, coreDir: o.core, outDir, dev: o.dev, strict: o.strict, defaultAgent: o.defaultAgent, bundleDeps: o.bundleDeps });
   if (r.errors.length) {
     for (const e of r.errors) console.error(e);
     console.error(`build failed: ${r.errors.length} error(s)`);
@@ -87,6 +95,13 @@ function runBuild(argv) {
   }
   console.log(r.table);
   console.log(`\nbuilt ${o.target} -> ${outDir} (${r.files.length} files)`);
+  if (mktRoot) {
+    const fs = require('fs');
+    const mf = path.join(mktRoot, '.claude-plugin', 'marketplace.json');
+    fs.mkdirSync(path.dirname(mf), { recursive: true });
+    fs.writeFileSync(mf, require('../build/package').marketplaceText());
+    console.log(`marketplace -> ${mf}`);
+  }
   if (o.dev) printDevHint(o.target, path.resolve(outDir));
   return 0;
 }

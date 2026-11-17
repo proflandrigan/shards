@@ -17,7 +17,7 @@ Claude (`adapters/claude-code/`):
 - `.claude-plugin/plugin.json`: plugin manifest (name `shards`).
 - `.mcp.json`: MCP server `shards` (`node <repo>/runtime/server.js`), env `SHARDS_PROJECT_ROOT=${CLAUDE_PROJECT_DIR}`.
 - `hooks/hooks.json`: SessionStart, UserPromptSubmit and PreToolUse shims.
-- `skills/<agent>/SKILL.md` per agent, `agents/<agent>.md`, plus `skills/agents/SKILL.md` (the `/shards:agents` listing).
+- `skills/<agent>/SKILL.md` per agent, `agents/<agent>.md`, plus utility skills emitted from `build/skills.js`: `skills/agents/` (the `/shards:agents` listing), `brainstorm/`, `review-pr/`, `notebook-walkthrough/`, `resume/`, `end/` and (claude only) `shards-conventions/`. The connect, sync, doctor and publish-knowledge skills are deferred to Stage 6.
 - `.shards-dev`: marker. `uninstall-dev` only deletes directories that have it.
 
 Codex (`adapters/codex/`), docs-only:
