@@ -26,7 +26,8 @@ const AGENTS_BLOCK_RE = /<!-- shards:begin agents-md[^>]*-->[\s\S]*?<!-- shards:
 
 function usage() {
   return [
-    'Usage: shards install (--permissions | --claude-md | --agents-md) [--root <dir>] [--remove] [--dry-run] [--force]',
+    'Usage: shards install (--project | --permissions | --claude-md | --agents-md) [--root <dir>] [--remove] [--dry-run] [--force]',
+    '  --project      copy the generated skills into <root>/.claude/skills and <root>/.agents/skills (content under .shards/content); manifest-tracked',
     '  --permissions  merge the narrow permission preset into <root>/.claude/settings.json (never allows gate tools)',
     '  --claude-md    insert the Shards tool-call conventions block into <root>/CLAUDE.md (marker-delimited)',
     '  --agents-md    insert the Shards Codex fragment into <root>/AGENTS.md (marker-delimited)',
@@ -38,11 +39,12 @@ function usage() {
 }
 
 function parse(argv) {
-  const o = { permissions: false, claudeMd: false, agentsMd: false, remove: false, dryRun: false, force: false, help: false };
+  const o = { project: false, permissions: false, claudeMd: false, agentsMd: false, remove: false, dryRun: false, force: false, help: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const val = () => { if (i + 1 >= argv.length) throw new Error(`${a} requires a value`); return argv[++i]; };
-    if (a === '--permissions') o.permissions = true;
+    if (a === '--project') o.project = true;
+    else if (a === '--permissions') o.permissions = true;
     else if (a === '--claude-md') o.claudeMd = true;
     else if (a === '--agents-md') o.agentsMd = true;
     else if (a === '--remove') o.remove = true;
@@ -53,7 +55,7 @@ function parse(argv) {
     else if (a === '--help' || a === '-h') o.help = true;
     else throw new Error(`unknown option '${a}'`);
   }
-  if (!o.help && !o.permissions && !o.claudeMd && !o.agentsMd) throw new Error('one of --permissions, --claude-md or --agents-md is required');
+  if (!o.help && !o.project && !o.permissions && !o.claudeMd && !o.agentsMd) throw new Error('one of --project, --permissions, --claude-md or --agents-md is required');
   return o;
 }
 
@@ -216,6 +218,18 @@ function run(argv) {
   }
   const dry = o.dryRun ? ' [dry-run]' : '';
   try {
+    if (o.project) {
+      const P = require('./install-project');
+      if (o.remove) {
+        const r = P.removeProject(root, { dryRun: o.dryRun });
+        console.log(`project: ${r.changed ? `removed ${r.removed} file(s)` : 'no change'}${r.kept.length ? `; kept ${r.kept.length} edited file(s): ${r.kept.join(', ')}` : ''}${dry}`);
+      } else {
+        const r = P.installProject(root, { dryRun: o.dryRun });
+        console.log(`project: wrote ${r.written}, unchanged ${r.unchanged} of ${r.total} file(s) (.claude/skills, .agents/skills, .shards/content)${dry}`);
+        if (r.conflicts.length) console.log(`project: skipped ${r.conflicts.length} existing file(s) not installed by shards: ${r.conflicts.join(', ')}`);
+        console.log('project: skills call the shards MCP tools; register the server (e.g. `claude mcp add shards -- npx -y @proflandrigan/shards-mcp@next`).');
+      }
+    }
     if (o.permissions) {
       if (o.remove) console.log(summary('permissions', removePermissions(root, { dryRun: o.dryRun }), true) + dry);
       else console.log(summary('permissions', mergePermissions(root, loadPreset(o.preset), { dryRun: o.dryRun }), false) + dry);

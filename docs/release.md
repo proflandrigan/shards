@@ -139,3 +139,9 @@ skills/ content/ runtime/ core/ bindings/ build/ hooks/ scripts/ package.json no
 `shards install --agents-md [--remove] [--dry-run] [--root <dir>]` inserts the Codex fragment (`build/assets/agents-md.md`) into `<root>/AGENTS.md` between `<!-- shards:begin agents-md v1 -->` and `<!-- shards:end agents-md -->`, mirroring `--claude-md`. `--remove` restores the file exactly (deleting it if the command created it).
 
 OPEN (needs a real Codex CLI): E8.1 `codex plugins install` from a local path, E8.2 named spawn returns a verdict (9/10), E8.3 tools visible and both gate tools prompt, E8.4 hooks fire with real payloads, E8.7 switch golden check.
+
+## Other hosts and CI (E9)
+
+- `shards install --project [--permissions] [--root dir] [--remove] [--dry-run]` copies the generated skills into `<root>/.claude/skills/` and `<root>/.agents/skills/` (their `content/` references are rewritten to `.shards/content/`, which holds the persona and phase files). Every file is recorded with a sha256 in `<root>/.shards/project-install.json`; `--remove` deletes exactly those files and keeps any you edited. Existing files it did not write are never overwritten. Register the MCP server separately (`claude mcp add shards -- npx -y @proflandrigan/shards-mcp@next`).
+- `shards build --target skills` is the generic Agent Skills package: `skills/`, `content/`, plus Agent Plugins `plugin.json` and `mcp.json` (schema UNVERIFIED against a live host; OPEN: other-host smoke test, T3 `/` composer listing).
+- `.github/workflows/ci.yml` runs tests, lints, build and the coupling ratchet on ubuntu/macos/windows for PRs. `.github/workflows/nightly.yml` runs `scripts/nightly-golden.js` (offline dry-run always; live `claude -p` only when `ANTHROPIC_API_KEY` is set; `codex exec` job only when repo variable `SHARDS_NIGHTLY_CODEX=true`) and publishes scores as artifacts plus a run summary. Neither workflow has run yet (OPEN: needs the repo pushed, secrets and API budget).

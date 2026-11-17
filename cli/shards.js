@@ -10,7 +10,7 @@ const COMMANDS = {
   doctor: { summary: 'Check prerequisites, config, MCP, hooks, git state and gate permissions', run: (argv) => require('./commands/doctor').run(argv) },
   sessions: { summary: 'List, show, resume and end sessions without the UI', run: (argv) => require('./commands/sessions').run(argv) },
   migrate: { summary: 'Migrate a legacy v1 install to v2 (ledger export, gate-history import, manifest-driven cleanup)', run: (argv) => require('./commands/migrate').run(argv) },
-  install: { summary: 'Opt-in project config: permission preset (--permissions) and CLAUDE.md conventions (--claude-md)', run: (argv) => require('./commands/install').run(argv) },
+  install: { summary: 'Opt-in project config: skills (--project), permission preset (--permissions) and CLAUDE.md conventions (--claude-md)', run: (argv) => require('./commands/install').run(argv) },
   // EXTENSION POINT: register doctor / gates / sessions here, e.g.
   //   doctor: { summary: '...', run: (argv) => require('./doctor').run(argv) },
 };
@@ -24,7 +24,7 @@ function usage() {
   lines.push('gates: gates status [--session k] [--root d] | gates confirm <gate-id> [--session k] [--changes "note"] [--root d]');
   lines.push('doctor: doctor [--root d] [--json] [--fix]');
   lines.push('sessions: sessions list|show|resume|end [id] [--root d] [--status s] [--limit n] [--json]');
-  lines.push('install: install (--permissions | --claude-md) [--root d] [--remove] [--dry-run] [--force]  (--remove is the uninstall: it removes only what install added)');
+  lines.push('install: install (--project | --permissions | --claude-md) [--root d] [--remove] [--dry-run] [--force]  (--remove is the uninstall: it removes only what install added)');
   lines.push('migrate: migrate [--export-ledger] [--root d] [--out d] [--dry-run] [--force]  (full legacy migrate; --export-ledger = ledger step only)');
   return lines.join('\n');
 }

@@ -156,6 +156,13 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
     out.set('README.md', relpkg.codexReleaseReadme());
     out.set('.codex/hooks.json', fs.readFileSync(path.join(REPO, 'hooks', 'codex.hooks.json'), 'utf8').split('{{SHARDS_HOOKS_DIR}}').join(`${root}/hooks`));
   }
+  // E9.2: generic Agent Skills package. skills/<name>/SKILL.md (Agent Skills format) plus Agent Plugins 1.0
+  // plugin.json / mcp.json. The schemas are UNVERIFIED against a live host (docs/compat.md); the MCP entry uses
+  // the published runtime package so the output needs no bundled runtime.
+  if (target === 'skills') {
+    out.set('plugin.json', jsonText(relpkg.agentPluginManifest()));
+    out.set('mcp.json', jsonText(relpkg.agentPluginMcp()));
+  }
   if (target === 'codex') out.set('.codex/config.toml', codexConfig(profiles, optIn, codexMcp));
   // Release packaging (claude): E7.1 manifest, E7.4 MCP entry, E7.5 hooks verbatim; runtime copied after the write loop.
   const release = !dev && (target === 'claude' || target === 'codex');

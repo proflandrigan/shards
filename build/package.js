@@ -53,6 +53,25 @@ Contents: \`.codex-plugin/plugin.json\` (skills ./skills/), \`.mcp.json\` (MCP s
 `;
 }
 
+// E9.2: Agent Plugins 1.0 manifest for the generic `skills` target (UNVERIFIED schema; docs-only).
+function agentPluginManifest() {
+  return {
+    name: 'shards',
+    version: pkg.version,
+    description: pkg.description,
+    license: pkg.license,
+    repository: REPOSITORY,
+    keywords: KEYWORDS.slice(),
+    skills: './skills/',
+    mcp: './mcp.json',
+  };
+}
+
+// E9.2: generic MCP entry. No host env var is assumed; the runtime defaults to the working directory.
+function agentPluginMcp() {
+  return { mcpServers: { shards: { command: 'npx', args: ['-y', '@proflandrigan/shards-mcp@next'] } } };
+}
+
 function releaseReadme() {
   return `# Shards
 
@@ -132,4 +151,4 @@ function marketplaceManifest() {
 }
 const marketplaceText = () => jsonText(marketplaceManifest());
 
-module.exports = { codexPluginManifest, codexReleaseMcp, codexReleaseReadme, CODEX_PLUGIN_ROOT, releaseReadme, pluginManifest, releaseMcp, depClosure, copyRuntime, marketplaceManifest, marketplaceText, REPOSITORY };
+module.exports = { codexPluginManifest, codexReleaseMcp, codexReleaseReadme, CODEX_PLUGIN_ROOT, agentPluginManifest, agentPluginMcp, releaseReadme, pluginManifest, releaseMcp, depClosure, copyRuntime, marketplaceManifest, marketplaceText, REPOSITORY };

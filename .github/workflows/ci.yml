@@ -1,0 +1,38 @@
+name: ci
+
+# E9.4(a): PR gate on Linux, macOS and Windows.
+# TODO(owner: proflandrigan): this workflow has never run (repo work is local only); the macOS and Windows legs
+# are OPEN (external) until it is pushed and observed green.
+on:
+  pull_request:
+  push:
+    branches: [next, main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Unit and integration tests
+        run: npm test
+      # Lints run before the build: lint:models would scan the bundled node_modules under adapters/.
+      - name: Lints
+        run: |
+          npm run validate:agents
+          npm run lint:models
+          npm run lint:verdicts
+      - name: Build all targets (claude, codex, skills)
+        run: npm run build:all
+      - name: Coupling ratchet
+        run: npm run coupling:ratchet
