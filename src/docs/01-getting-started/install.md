@@ -70,4 +70,5 @@ Doctor checks Node, Python, git, `shards.config.yaml`, MCP registration, hooks a
 
 - Dev build: `node cli/shards.js uninstall-dev [--target claude|codex|all]` (removes `adapters/<target>` only if it carries the `.shards-dev` marker), and stop passing `--plugin-dir`.
 - Project config: `shards install --project|--permissions|--claude-md|--agents-md --remove`.
+- Claude Code auto mode and the opt-in permission preset: see [Claude Code Auto Mode](claude-code-auto-mode.md).
 - Coming from v1: see [migrate](../05-commands/migrate.md).

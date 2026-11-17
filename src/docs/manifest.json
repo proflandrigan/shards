@@ -10,6 +10,10 @@
           "path": "01-getting-started/install.md"
         },
         {
+          "title": "Claude Code Auto Mode",
+          "path": "01-getting-started/claude-code-auto-mode.md"
+        },
+        {
           "title": "Your First Session",
           "path": "01-getting-started/first-session.md"
         },

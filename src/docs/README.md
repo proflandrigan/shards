@@ -17,6 +17,7 @@ This guide is the reference for agents, protocols, Studio, the CLI, outputs, wor
 ### Getting Started
 
 - [Installation](01-getting-started/install.md)
+- [Claude Code Auto Mode](01-getting-started/claude-code-auto-mode.md)
 - [Your First Session](01-getting-started/first-session.md)
 - [Core Concepts](01-getting-started/concepts.md)
 
