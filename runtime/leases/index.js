@@ -168,6 +168,31 @@ async function bindWorker(session, { agentId, agentType, leaseId, sliceId } = {}
   return out;
 }
 
+// SubagentStop (S5F): release the lease binding held by a worker that exited. The worker loses its
+// write rights at once. Its slice becomes claimable again (retry). Task-owned leases are
+// single-worker, so they are closed outright. Fan-out leases stay open until fanout_collect (collect needs
+// the active lease and the lead must not edit slice paths in the meantime). Idempotent: returns
+// {released:false} for an unbound or already released agent.
+async function releaseWorker(session, agentId, now = Date.now()) {
+  if (!agentId) return { released: false };
+  let out = { released: false };
+  await mutate(session, (cur) => {
+    for (const l of Object.values(leasesOf(cur))) {
+      if (l.status !== 'active' || !l.workers || !l.workers[agentId]) continue;
+      const w = l.workers[agentId];
+      const { [agentId]: _gone, ...rest } = l.workers;
+      l.workers = rest;
+      l.released = { ...(l.released || {}), [agentId]: { slice_id: w.slice_id, released_at: iso(now) } };
+      let closed = false;
+      if (l.owner === 'task') { l.status = 'closed'; l.closed_at = iso(now); closed = true; }
+      out = { released: true, lease_id: l.id, slice_id: w.slice_id, closed };
+      break;
+    }
+    return cur;
+  }, { bump: false });
+  return out;
+}
+
 function findWorkerLease(session, agentId, now = Date.now()) {
   if (!agentId) return null;
   for (const l of listActive(session, now)) {
@@ -227,4 +252,4 @@ function isPathAllowed(session, agentId, filePath, now = Date.now()) {
   return { allowed: false, lease_id: mine[0].id, reason: `path ${rel} is outside leased slices for ${agentId}` };
 }
 
-module.exports = { bindWorker, findWorkerLease, touchWorker, findSliceOwning, openLease, heartbeat, closeLease, listActive, expireStale, isPathAllowed, pathsOverlap, normalizeRel, OWNERS, DEFAULT_TTL_MS };
+module.exports = { releaseWorker, bindWorker, findWorkerLease, touchWorker, findSliceOwning, openLease, heartbeat, closeLease, listActive, expireStale, isPathAllowed, pathsOverlap, normalizeRel, OWNERS, DEFAULT_TTL_MS };

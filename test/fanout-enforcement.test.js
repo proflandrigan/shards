@@ -223,15 +223,19 @@ describe('end to end spawn', () => {
 });
 
 describe('lease sweep timer', () => {
+  afterEach(() => { vi.useRealTimers(); });
   it('uses an unref()d interval, expires stale leases, stops cleanly', async () => {
     const l = await openTwoSlice(1);
-    await new Promise((r) => setTimeout(r, 10));
+    // Deterministic: advance only the clock (not timers) past the 1ms TTL instead of a real 10ms sleep,
+    // which depended on timer and ISO-millisecond granularity under load.
+    vi.useFakeTimers({ toFake: ['Date'], now: Date.now() + 60000 });
     let fn; const handle = { unref: vi.fn() }; const clear = vi.fn();
     const sw = startLeaseSweep({ root: tmp, ms: 30000, setIntervalFn: (f, ms) => { fn = f; expect(ms).toBe(30000); return handle; }, clearIntervalFn: clear });
     expect(handle.unref).toHaveBeenCalled();
     fn();
     await sw.sweep();
     expect(new StateStore(tmp, SID).read('leases').leases[l.id].status).toBe('expired');
+    vi.useRealTimers();
     sw.stop(); expect(clear).toHaveBeenCalledWith(handle);
     expect(startLeaseSweep({ root: tmp, ms: 0, setIntervalFn: () => { throw new Error('no'); } }).sweep).toBeTypeOf('function');
   });

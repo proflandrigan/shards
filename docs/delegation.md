@@ -107,6 +107,7 @@ A fan-out is one `fanout`-owned lease over N worker slices, opened by the lead. 
 `fanout_start` refusals. Each is a thrown error and no lease is opened:
 
 - The top frame of the session has a pending gate: `fanout_start refused: the active frame has a pending gate (<id>)`. The check uses `pendingForFrame`, which matches a gate of any kind.
+- A gate owned by any frame on the stack is suspended: `fanout_start refused: a gate is suspended (<ids>)`. Resume and resolve it, or force-close it, first (S5F).
 - Unknown agent, or the agent's `activation` does not include `fanout_worker`.
 - `slices` is empty; a slice has no string `id`, a duplicate `id`, empty `acceptance`, or no `paths`.
 - Two slices in the same call overlap (equal, or one is a directory prefix of the other). Paths are normalised by `normalizeRel`: project-root-relative, no absolute paths, no `..`. The overlap check covers only the slices of this call. A new fan-out is not checked against other active leases.
@@ -127,11 +128,11 @@ Heartbeat and expiry:
 - `heartbeat(session, id)` in `runtime/leases` has no callers.
 - Expiry has two triggers. The hook runs `expireStale` inline on a PreToolUse call when any active lease is past `expires_at`. The MCP server runs `startLeaseSweep` (`runtime/server.js`) every `SHARDS_LEASE_SWEEP_MS` ms, default 30000. Zero, a negative value or a non-number disables the timer. The sweep covers every session directory under `.shards/state/sessions/` that has a `leases.json`. The timer is `unref()`'d, and it runs only while the MCP server process is alive.
 - `listActive` already excludes expired leases. A worker whose lease has expired loses its binding at once, and its later calls fall under rule 3.
-- SubagentStop does not close leases (see section 9).
+- SubagentStop (`hooks/subagent-stop.js`, S5F) calls `releaseWorker`: the exiting worker's binding is removed at once (its slice can be re-claimed for a retry) and recorded under `released`. A task-owned lease (one slice, one worker) is closed outright. A fan-out lease stays open until `fanout_collect` or TTL expiry, because collect needs the active lease and the lead must not edit slice paths meanwhile. Idempotent; no output.
 
 PreToolUse write rules (`hooks/lib/enforce.js`). They apply to non-gate tools. Write detection (`hooks/lib/writes.js`) covers `Write`, `Edit`, `MultiEdit`, `NotebookEdit`, and Bash commands with redirects, `tee`, `sed -i`, `cp`, `mv`, `rm` and similar commands, `git` write subcommands, `dd of=`, and inline script writes. Detection is best effort and nothing is executed. Enforcement runs only when the session has a `leases.json` or a `gates.json`.
 
-1. Bound caller (`agent_id` bound to a slice of an active lease). Writes must resolve inside one of that slice's paths. Other writes are denied, and the reason lists the allowed paths. A write whose target cannot be determined is denied. Bound callers are exempt from the pending-gate check in rule 3.
+1. Bound caller (`agent_id` bound to a slice of an active lease). Writes must resolve inside one of that slice's paths. Other writes are denied, and the reason lists the allowed paths. A write whose target cannot be determined is denied. Bound callers are exempt from the pending-gate check in rule 3 (policy: ADR 0011).
 2. `fanout_claim` binds (above). This runs even when a gate is pending.
 3. Unbound caller (no `agent_id`: the lead, an unleased subagent, or any Codex call). (a) If the top frame has a pending gate, every write or exec call is denied. (b) Otherwise a write whose target is inside, or contains, an active fan-out slice path is denied (`do not edit it from the lead`).
 
@@ -243,7 +244,7 @@ Tool names are prefixed per target (see `build/MACROS.md` section 5).
 | Write enforcement of owned paths for fan-out slices | Done (section 3.1, rules 1 and 3). |
 | Write enforcement of owned paths for task-owned leases | Not done. The hook binds only through `fanout_claim`, and `task_dispatch` workers have no claim tool. `TODO`. |
 | `fanout_claim` binding does not check the lease owner | Gap (section 3.1). `TODO`. |
-| SubagentStop does not close leases | Not wired. `hooks/claude-code.hooks.json` wires SessionStart, UserPromptSubmit and PreToolUse only. Leases close on `fanout_collect`, `task_report`, or TTL expiry. `TODO`. |
+| SubagentStop and leases | Wired (S5F). `hooks/subagent-stop.js` releases the exiting worker's binding. Codex documents SubagentStop with `agent_id` (CX-6, docs-only) but never binds workers (no `agent_id` on PreToolUse), so it is a no-op there. Unverified against a real host payload. |
 | PM 2-workstream live run | OPEN. The live-run budget is not spent. Harness: `scripts/pm-fanout-live-run.sh` (one sample, never a pass rate; `--dry-run` and `--check-only` modes). |
 | Lead verification of `reported` tasks | Done (E12.5): `task_verify` tool (section 3). Only `done` satisfies dependencies; each verification appends an evidence row to `## Validation` in `<output_dir>/project-specs.md`; max 2 retries, then `blocked` and escalated. |
 | Host fallbacks (E12.8) | Done: see `docs/compat.md` (Delegate host fallbacks). |

@@ -8,6 +8,7 @@ session-log file (enforced by `test/hooks-no-transcript.test.js`).
 |---|---|---|
 | `user-prompt-submit.js` | UserPromptSubmit | `.shards/state/sessions/<key>/prompts.jsonl`, `hooks.json` (`promptSeq`) |
 | `pre-tool-use.js` | PreToolUse (all tools; gate tools recorded, others only auto-verify) | `.shards/state/sessions/<key>/hooks.json` (`gateCalls`, `lastGateCall`) |
+| `subagent-stop.js` | SubagentStop | `.shards/state/sessions/<key>/leases.json` (releases the exiting worker's lease binding; no output) |
 | `session-start.js` | SessionStart `startup\|resume\|compact\|clear` | `.shards/state/handshake/<pid>.json`; stdout re-ground on `compact`/`resume` |
 
 `lib/host.js` normalises Claude Code vs Codex payloads (`docs/compat.md`); `lib/common.js` has stdin, error log, ppid chain.
@@ -34,7 +35,7 @@ substitute, UNVERIFIED). `agent_id` absent on PreToolUse. Hook payload field nam
 
 ## Config templates
 - `claude-code.hooks.json`: plugin `hooks/hooks.json` format, uses `${CLAUDE_PLUGIN_ROOT}`.
-- `codex.hooks.json`: `{{SHARDS_HOOKS_DIR}}` placeholder is substituted by the E1.10 build. Only SessionStart, UserPromptSubmit and PreToolUse are used (all supported by Codex per compat CX-6). Format assumed to mirror Claude's [docs-only].
+- `codex.hooks.json`: `{{SHARDS_HOOKS_DIR}}` placeholder is substituted by the E1.10 build. SessionStart, UserPromptSubmit, PreToolUse and SubagentStop are used (all documented for Codex per compat CX-6; SubagentStop is a no-op there because Codex never binds workers). Format assumed to mirror Claude's [docs-only].
 
 ## Platform notes
 ppid chain: Linux `/proc/<pid>/stat`; macOS `ps -o ppid= -p`; Windows best-effort `[process.ppid]` only. Needs `node` on PATH (compat WIN-3).

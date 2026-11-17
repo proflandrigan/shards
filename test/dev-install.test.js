@@ -49,7 +49,7 @@ describe('dev install: claude', () => {
     const { out } = build('claude');
     const hj = json(out, 'hooks/hooks.json');
     const ps = hookPaths(hj);
-    expect(ps.length).toBe(3);
+    expect(ps.length).toBe(4);
     for (const p of ps) { expect(path.isAbsolute(p)).toBe(true); expect(fs.existsSync(p), p).toBe(true); }
     expect(read(out, 'hooks/hooks.json')).not.toContain('CLAUDE_PLUGIN_ROOT');
   });

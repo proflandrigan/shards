@@ -5,8 +5,8 @@
 
 ## Create Mode — Phase 3: Implementation Blueprint (Gated)
 
-Goal: Translate the architecture into an engineering plan before the prototype
-is built, then scaffold it as delegated tasks.
+Goal: Translate the architecture into an engineering plan, and the plan into
+a task list, before the prototype is built.
 
 Define:
 - **Code structure:** module breakdown, class hierarchy, interfaces between
@@ -61,44 +61,25 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 ### Decompose the plan into tasks
 
 Turn the plan just agreed into `research/<project_name>/tasks.yaml`, the single task list for
-Phases 3 and 4 (tasks are grouped by `phase:`). One task per tested component,
+the build (every task is `phase: 4`). One task per tested component,
 each with id, goal, plan_ref (section of project-specs.md), inputs, owned_paths
 (no overlap between tasks that can run in parallel), acceptance command +
 expected evidence, depends_on, worker (your own agent id), size and phase.
 
-- `phase: 3` tasks: scaffold the project skeleton: `src/` module stubs with the interfaces from the Code Structure section, `requirements.txt` from Dependencies, and the training/evaluation config. Acceptance: modules import and the config loads.
-- `phase: 4` tasks: the build components named in the Phase 4 component
-  specifications (data, model/components, smoke-train, full-train, eval, and
-  the notebook sections that exercise them). Phase 4 dispatches these after
-  this gate is confirmed.
+Include the project skeleton as the first Phase 4 task(s) that the others
+depend on: `src/` module stubs with the interfaces from the Code Structure
+section, `requirements.txt` from Dependencies, and the training/evaluation
+config. Acceptance: modules import and the config loads. The other Phase 4
+tasks are the build components named in the Phase 4 component specifications
+(data, model/components, smoke-train, full-train, eval, and the notebook
+sections that exercise them).
 
-Validate with the `tasks_set` tool ({{protocol delegated_build}} has the
-rules). Add the `### Task list` table to the Phase 3 section below so you
-approve plan and tasks together at this gate; the gate summary must name the
-task count and the `tasks.yaml` path.
-
-### Lead loop
-
-{{delegate tasks=research/<project_name>/tasks.yaml max_parallel=3}}
-
-{{protocol delegated_build}} Dispatch only tasks with `phase: 3` here (Phase
-4 tasks wait for the next phase).
-
-1. **Load** the task list (call `tasks_set`; fix and re-validate if rejected).
-2. **Dispatch** ready `phase: 3` tasks (`task_dispatch`) in parallel up to
-   `max_parallel=3`.
-3. **Collect** each worker's result via `task_report`.
-4. **Verify before counting.** Re-run (or independently check) each acceptance
-   command and compare with the `plan_ref` spec, then write a per-task evidence
-   row to the `## Validation` Evidence table (Check = task id + component,
-   Expected, Observed, Pass/Fail). Never mark a task done on the worker's word
-   alone.
-5. **On failure** re-dispatch with the failure output as feedback, at most 2
-   retries; then stop and ask the user with a summary.
-6. **Deviations**: pause dependents and follow {{protocol plan_drift}}; amend
-   the plan only via a confirmed gate.
-7. **Dispatch** unblocked tasks until all `phase: 3` tasks are done.
-8. You write no build code yourself except for `delegate: inline` tasks.
+Nothing is dispatched in this phase: planning is approved at this gate and
+the build runs in Phase 4 (as for the other specialists). Validate the list
+with the `tasks_set` tool ({{protocol delegated_build}} has the rules). Add the
+`### Task list` table to the Phase 3 section below so you approve plan and
+tasks together at this gate; the gate summary must name the task count and
+the `tasks.yaml` path.
 
 ### Document Phase 3
 

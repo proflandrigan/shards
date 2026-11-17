@@ -6,6 +6,9 @@
     "UserPromptSubmit": [
       { "hooks": [ { "type": "command", "command": "node \"{{SHARDS_HOOKS_DIR}}/user-prompt-submit.js\"" } ] }
     ],
+    "SubagentStop": [
+      { "hooks": [ { "type": "command", "command": "node \"{{SHARDS_HOOKS_DIR}}/subagent-stop.js\"" } ] }
+    ],
     "PreToolUse": [
       { "matcher": ".*", "hooks": [ { "type": "command", "command": "node \"{{SHARDS_HOOKS_DIR}}/pre-tool-use.js\"" } ] }
     ]

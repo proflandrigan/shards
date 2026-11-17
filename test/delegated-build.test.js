@@ -14,8 +14,7 @@ const BUILD = [
   'ml-engineer/phases/phase-6-5', 'ai-engineer/phases/phase-6', 'analytics-engineer/phases_deep/phase-7',
   'analytics-engineer/phases_quick/phase-2', 'data-engineer/phases_deep/phase-6', 'data-engineer/phases_quick/phase-2',
   'data-modeller/phases_deep/phase-6', 'data-modeller/phases_quick/phase-2', 'bi-engineer/phases/phase-3',
-  'applied-ml-scientist/phases/phase-3', 'applied-ml-scientist/phases/phase-4', 'deep-learning-engineer/phases/phase-3',
-  'deep-learning-engineer/phases/phase-4', 'mlops-engineer/phases/phase-6',
+  'applied-ml-scientist/phases/phase-4', 'deep-learning-engineer/phases/phase-4', 'mlops-engineer/phases/phase-6',
 ];
 const PLAN = [
   'data-analyst/phases/phase-2', 'data-scientist/phases/phase-5', 'ml-engineer/phases/phase-5',
@@ -33,6 +32,17 @@ describe('build phases are delegated lead loops', () => {
       expect(t).toContain('{{protocol delegated_build}}');
       expect(t).not.toMatch(/\{\{gate kind=(checkpoint|confirm)/);
       expect(t).toMatch(/\{\{gate kind=(phase|final|execute|handoff)/);
+    });
+  }
+});
+
+// AMS/DLE Phase 3 is a plan phase only (S5F): it decomposes tasks but dispatches nothing; scaffolding is a Phase 4 task.
+describe('AMS/DLE phase 3 does not dispatch', () => {
+  for (const a of ['applied-ml-scientist', 'deep-learning-engineer']) {
+    it(a, () => {
+      const t = read(agents(`${a}/phases/phase-3`));
+      expect(t).not.toContain('{{delegate');
+      expect(t).not.toMatch(/phase: 3/);
     });
   }
 });

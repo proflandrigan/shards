@@ -5,7 +5,7 @@ const fanout = require('../fanout');
 
 module.exports = defineTool({
   name: 'fanout_start',
-  description: 'Start a fan-out: open one lease over non-overlapping worker slices and return one contract card per slice. Refused while the active frame has a pending gate. Launch one worker per card in parallel; each worker calls fanout_claim first, writes only inside its owned_paths, and returns verdict JSON. Then call fanout_collect.',
+  description: 'Start a fan-out: open one lease over non-overlapping worker slices and return one contract card per slice. Refused while the active frame has a pending or suspended gate. Launch one worker per card in parallel; each worker calls fanout_claim first, writes only inside its owned_paths, and returns verdict JSON. Then call fanout_collect.',
   inputSchema: {
     type: 'object', additionalProperties: false, required: ['agent', 'slices'],
     properties: {

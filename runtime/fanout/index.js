@@ -27,6 +27,10 @@ async function startFanout(session, { agent, slices, ttl_ms } = {}) {
     if (frame) {
       const p = gates.pendingForFrame(session, frame.id);
       if (p) throw new Error(`fanout_start refused: the active frame has a pending gate (${p.id}). Resolve the pending gate before fanning out.`);
+      // A suspended gate is an unresolved gate paused for chat. Fanning out would let workers run past it.
+      // Any suspended gate owned by a frame on the stack counts, not only the top frame's.
+      const susIds = require('../stack').suspendedGatesFor(session.state.read('gates').gates || {}, frames);
+      if (susIds.length) throw new Error(`fanout_start refused: a gate is suspended (${susIds.join(', ')}). Resume and resolve it (or force-close it) before fanning out.`);
     }
   }
   const a = loadAgents().get(agent);
