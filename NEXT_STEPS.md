@@ -33,7 +33,7 @@ Each step lists who can do it and what it waits on.
 
 | # | Step | Who | Waits on |
 |---|---|---|---|
-| 1 | Revoke the old token, protect `main`, merge PR #72 | You | — |
+| 1 | ~~Revoke the old token~~ ✅, protect `main`, merge PR #72 | You | — |
 | 2 | Decide the Stage 6 scope; provision accounts, hosts, the API budget and npm access | You | — |
 | 3 | First release dry run on GitHub: tag `v2.0.0-next.0` with npm publish **off**. This creates the GitHub Release and the `marketplace` branch. | You (push a tag), or Claude with your go-ahead | 1 |
 | 4 | Stage 6 bindings and sandbox exit criteria | Claude + sandbox | 2 |
@@ -55,7 +55,7 @@ Small items that can be done now with no accounts are listed under step 0.
 
 ## Step 1 · Owner actions
 
-- [ ] **Revoke the old GitHub personal access token** that was in the `origin` URL. Git now authenticates through `gh`.
+- [x] **Revoke the old GitHub personal access token** that was in the `origin` URL. *(Revoked 2026-11-17. Git authenticates through `gh`.)*
 - [ ] **E0.1: protect `main`.** Require a PR and the `ci`, `runtime` and `coupling-ratchet` checks.
 - [ ] **Review and merge PR #72.**
 
