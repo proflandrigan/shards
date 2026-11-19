@@ -167,7 +167,7 @@ Update `project-specs.md` with a `## Autonomous Research` section.
 
 **Typical slugs:** `ds-gbdt`, `ds-linear`, `ds-neural`, `ds-features-heavy`.
 
-Propose DIVERGE per `diverge_protocol.md` Section B with AR gate ID namespace.
+Propose DIVERGE per `protocols/diverge.md` Section B with AR gate ID namespace.
 
 ### Behavioral exception announcement
 
@@ -248,7 +248,7 @@ The Researcher is especially likely to return `RETRO_REVERT` for:
 - Temporal leakage (cross-validation folds that ignore time ordering)
 - Sample contamination (training on examples that appear in holdout)
 
-Apply `reviewer_verdict_protocol.md` afterward.
+Apply `protocols/reviewer_verdict.md` afterward.
 
 ### Hypothesis categories for Data Scientist
 

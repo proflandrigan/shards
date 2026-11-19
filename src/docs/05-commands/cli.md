@@ -84,7 +84,7 @@ Each has its own page: [sessions](sessions.md), [doctor](doctor.md), [migrate](m
 | Binary | Package | Status |
 |---|---|---|
 | `shards-mcp` | `@proflandrigan/shards-mcp` (staged) | The MCP runtime server (`runtime/server.js`). Started by the host, not run by hand. |
-| `shards-ui` | root package, `tools/` | Legacy. Starts the v1 web UI server. Kept in the 2.0 next line; Studio is the replacement. |
+| `shards-ui` | root package, `tools/` | Legacy, deprecated shim. Starts nothing: prints that the UI has moved to Studio (`npx @proflandrigan/shards-studio`) and exits (0 for `status`/`stop`/`help`, 1 otherwise). |
 | `shards-gates` | root package, `tools/` | Legacy. Alias for the v1 gate diagnostics. Use `shards gates`. |
 | `shards-sessions` | root package, `tools/` | Legacy. Same subcommands as `shards sessions`. Use `shards sessions`. |
 

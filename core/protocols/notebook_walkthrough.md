@@ -2,7 +2,7 @@
 
 This document defines the **interactive notebook walkthrough** mode shared by
 the Data Scientist, ML Engineer, and Syn shards. The per-agent variant files
-under `specific_instructions/<agent>/notebook_walkthrough.md` set the persona
+at `agents/<agent>/modes/notebook_walkthrough.md` set the persona
 spin and reference this document for the protocol.
 
 The walkthrough lets the agent guide the user through a Jupyter notebook

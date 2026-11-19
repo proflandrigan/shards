@@ -168,7 +168,7 @@ Update `project-specs.md` with `## Autonomous Research` section.
 
 **Typical slugs:** `dle-resnet`, `dle-vit`, `dle-convnext`, `dle-hybrid`.
 
-Propose DIVERGE per `diverge_protocol.md` Section B with AR gate ID namespace.
+Propose DIVERGE per `protocols/diverge.md` Section B with AR gate ID namespace.
 
 ### Behavioral exception announcement
 

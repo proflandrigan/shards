@@ -1,6 +1,6 @@
 # Data Scientist Validation Checklist
 
-Applied at the end of any phase that produces an analytical artifact (notebook, report, predictive model, feature table) that stakeholders will act on. Results render into the `## Validation` section of `project-specs.md` per `shared/validation_protocol.md`.
+Applied at the end of any phase that produces an analytical artifact (notebook, report, predictive model, feature table) that stakeholders will act on. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Check IDs (DS-01 through DS-12) are stable. Data Science validation blends data integrity, statistical methodology, and claims traceability — all three must be exercised.
 
@@ -142,7 +142,7 @@ Every quantitative claim in the report or summary is traceable to a specific que
 
 ## Track Calibration
 
-Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
+Rows are indexed by `(Track, Mode)` per `protocols/validation.md`.
 
 | Track | Mode | Required | Recommended | Skippable |
 |-------|------|----------|-------------|-----------|
@@ -152,7 +152,7 @@ Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
 | **quick** | `experiment` (kept `[X]` iteration) | DS-11 + headline metric diff vs prior | DS-12 | rest |
 | **fixer** | (Mode omitted) | DS-11, DS-12 + "what changed, what didn't break" | — | rest |
 
-Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. See `shared/validation_protocol.md` for the n/a convention.
+Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. See `protocols/validation.md` for the n/a convention.
 
 ## Artifacts Expected
 

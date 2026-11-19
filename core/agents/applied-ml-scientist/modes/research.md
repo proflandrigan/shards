@@ -178,7 +178,7 @@ Update `project-specs.md` with `## Autonomous Research` section.
 **Typical slugs:** `amls-contrastive`, `amls-reconstruction`,
 `amls-predictive`, `amls-graph-based`.
 
-Propose DIVERGE per `diverge_protocol.md` Section B with AR gate ID namespace.
+Propose DIVERGE per `protocols/diverge.md` Section B with AR gate ID namespace.
 For Applied ML Scientist, fan-out is often the right choice — different
 inductive biases are genuinely mutually exclusive and benefit from parallel
 exploration.

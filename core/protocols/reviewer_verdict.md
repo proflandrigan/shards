@@ -43,7 +43,7 @@ Document the resolution in specs:
 
 ## Final Review (Syn Sign-Off) — Validation Section Check
 
-When a specialist consults Syn (`entry=final_review`) for final sign-off on a validation-eligible phase, Syn's review must explicitly inspect the `## Validation` section in `project-specs.md` per `shared/validation_protocol.md`. This is distinct from the `gate_request` tool's structural check — Syn performs the *semantic* check the hook cannot.
+When a specialist consults Syn (`entry=final_review`) for final sign-off on a validation-eligible phase, Syn's review must explicitly inspect the `## Validation` section in `project-specs.md` per `protocols/validation.md`. This is distinct from the `gate_request` tool's structural check — Syn performs the *semantic* check the hook cannot.
 
 Syn's validation review looks for:
 

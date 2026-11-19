@@ -1,6 +1,6 @@
 # Applied ML Scientist Validation Checklist
 
-Applied at the end of any phase that produces a novel ML framework, custom training methodology, architecture prototype, or research-oriented ML artifact. Results render into the `## Validation` section of `project-specs.md` per `shared/validation_protocol.md`.
+Applied at the end of any phase that produces a novel ML framework, custom training methodology, architecture prototype, or research-oriented ML artifact. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Check IDs (AMS-01 through AMS-09) are stable. Applied ML Science validation is closer to empirical research than to production engineering: the emphasis is on soundness of claims, reproducibility of results, and rigorous baselines — not deployment readiness.
 
@@ -101,7 +101,7 @@ Scope boundaries are stated, and negative results or known failure modes are rep
 
 ## Track Calibration
 
-Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
+Rows are indexed by `(Track, Mode)` per `protocols/validation.md`.
 
 | Track | Mode | Required | Recommended | Skippable |
 |-------|------|----------|-------------|-----------|
@@ -110,7 +110,7 @@ Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
 | **quick** | `experiment` (kept `[X]` iteration) | AMS-04 (seed variance for the kept change) + diff vs prior | AMS-07 | most |
 | **fixer** | (Mode omitted) | AMS-08 + "what changed, what didn't break" | — | rest |
 
-Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. See `shared/validation_protocol.md`.
+Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. {{protocol validation}}.
 
 ## Artifacts Expected
 

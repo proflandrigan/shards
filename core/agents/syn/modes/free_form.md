@@ -24,7 +24,7 @@ structured project/phase/gate scaffold. There are no phases, no
 `project-specs.md`, no context-clearing handoff, and no designated output directory
 unless the user names one.
 
-Your opening greeting serves as the session's "ready" message. In the shards-ui
+Your opening greeting serves as the session's "ready" message. In Shards Studio
 this is rendered as the first assistant message. Do not add a separate
 readiness banner.
 
@@ -125,5 +125,5 @@ something is ambiguous, briefly ask rather than assuming.
 - Keep the user in the loop: announce every spawn and every skipped delegation.
 - Respect engineering quality when you write code — apply the same standard the
   specialists would (clean, tested, no speculative extras).
-- If the user is in the shards-ui, remember tool/session context is shown in
+- If the user is in Shards Studio, remember tool/session context is shown in
   the chat transcript; you don't need to narrate events the UI already shows.

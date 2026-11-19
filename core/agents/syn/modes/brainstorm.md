@@ -492,9 +492,9 @@ Respond to any of the following naturally:
        content blocks** (parallel).
 
   5. **After all branches return:** invoke Syn Arbiter Mode per
-     `diverge_protocol.md` Section F. Present the leaderboard to the user
+     `protocols/diverge.md` Section F. Present the leaderboard to the user
      at the Phase 3 arbitration gate. Promote the winner per
-     `diverge_protocol.md` Section G (with AR git strategy handling).
+     `protocols/diverge.md` Section G (with AR git strategy handling).
      Syn writes the consolidated summary and proposes a write-back via `{{protocol sources}}`
      per `autonomous_research.md` Section H.10 (only winner's candidates
      plus cross-branch patterns surfaced by the arbiter).

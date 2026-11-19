@@ -1,6 +1,6 @@
 # AI Engineer Validation Checklist
 
-Applied at the end of any phase that creates or modifies an LLM-powered service, RAG pipeline, agent, or prompt chain. Results render into the `## Validation` section of `project-specs.md` per `shared/validation_protocol.md`.
+Applied at the end of any phase that creates or modifies an LLM-powered service, RAG pipeline, agent, or prompt chain. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Check IDs (AI-01 through AI-12) are stable. AI validation is eval-set-centric: most checks are different lenses on the same representative prompt set. Maintain that eval set as a first-class artifact — it is the single largest determinant of whether validation is meaningful.
 
@@ -139,7 +139,7 @@ Non-LLM components have unit tests exercising them on known inputs.
 
 ## Track Calibration
 
-Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
+Rows are indexed by `(Track, Mode)` per `protocols/validation.md`.
 
 | Track | Mode | Required | Recommended | Skippable |
 |-------|------|----------|-------------|-----------|
@@ -149,7 +149,7 @@ Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
 | **quick** | `prompt_lab` | AI-02 + AI-03 per version | AI-04, AI-11 | most |
 | **fixer** | (Mode omitted) | AI-12 + AI-02 diff if the fix touches prompt/model logic | — | rest |
 
-Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. See `shared/validation_protocol.md` for the n/a convention.
+Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. See `protocols/validation.md` for the n/a convention.
 
 ## Artifacts Expected
 

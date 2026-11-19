@@ -52,6 +52,8 @@ Small items that can be done now with no accounts are listed under step 0.
   - remove the dead `.permission-*` CSS rules in `chat.css`.
 - [ ] **Check `shards connect`'s printed `mcp add` commands** against the vendors' current docs: the Atlassian SSE URL, the GitHub MCP URL, and the Codex `--url` / `mcp-remote` forms. They were written from memory.
 - [ ] **Studio gate banner:** check it in a browser (for example with `/run` or Chrome).
+- [ ] **Real-kernel notebook test never runs in CI.** `test/notebook-tools.test.js` "notebook real kernel" is `skipIf(!haveJupyter)`, and no workflow installs `jupyter_client`/`ipykernel`, so it is always skipped. Add a `pip install jupyter_client ipykernel` step to one CI job (for example `runtime.yml` on ubuntu).
+- [ ] **Studio session start in a live host:** Studio now lists agents from `core/agents/*/agent.yaml` and starts a session by asking the agent to call the runtime `activate` tool (`mode="switch"`). Check in a real Claude Code session that the tool name (`mcp__plugin_shards_shards__activate`) resolves and the persona loads.
 
 ## Step 1 · Owner actions
 

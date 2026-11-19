@@ -49,7 +49,7 @@ A component is not "one line of code" or "one cell". A tight group of 2-5 cells 
 
 - **Develop with `LIMIT 100`.** Every query in development carries a limit. Only remove it after the shape, sample, and `EXPLAIN` plan all look right.
 - **Run `EXPLAIN` / `EXPLAIN ANALYZE` on any join of 3+ tables** before running the real query. If the plan shows a cross-join or an unbounded scan, stop.
-- **Check count-before vs count-after** at every join (see `join_path_protocol.md`). A 10x fan-out that you didn't predict is a component failure, not a "the query took a while."
+- **Check count-before vs count-after** at every join (see `protocols/join_path.md`). A 10x fan-out that you didn't predict is a component failure, not a "the query took a while."
 - **Time out long-running queries.** If a dev query hasn't returned in 60 seconds, interrupt it and diagnose — don't assume it will "finish eventually."
 
 ### ML training
@@ -73,7 +73,7 @@ A component is not "one line of code" or "one cell". A tight group of 2-5 cells 
 
 - **Delegated build** ({{protocol delegated_build}}): defines the task list, the lead loop and who writes the evidence row.
 - **Validation protocol** ({{protocol validation}}): still required at the phase gate. Per-task evidence rows are the `## Validation` Evidence table.
-- **Join path protocol** (`join_path_protocol.md`): still required before writing any join. The acceptance check runs after the join has been executed and verified.
+- **Join path protocol** (`protocols/join_path.md`): still required before writing any join. The acceptance check runs after the join has been executed and verified.
 - **Experiment versioning** (`experiment_versioning.md`): task evidence is build-time; experiment snapshots are result-time. In `[X]` or `[AR]` modes both apply.
 - **Sources** ({{protocol sources}}): if a mid-phase search surfaces a pattern (known bad distribution, known grain issue), cite it in the Evidence block.
 

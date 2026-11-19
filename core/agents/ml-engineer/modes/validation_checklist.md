@@ -1,6 +1,6 @@
 # ML Engineer Validation Checklist
 
-Applied at the end of any phase that trains, retrains, or modifies a model, its feature pipeline, or its inference path. Results render into the `## Validation` section of `project-specs.md` per `shared/validation_protocol.md`.
+Applied at the end of any phase that trains, retrains, or modifies a model, its feature pipeline, or its inference path. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Check IDs (ML-01 through ML-12) are stable — reference them in the evidence table so coverage is auditable over time.
 
@@ -141,7 +141,7 @@ Transforms, feature engineering, and the inference path have unit tests that exe
 
 ## Track Calibration
 
-Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`. Declare both on the `## Validation` section; Mode selects the row within the Track.
+Rows are indexed by `(Track, Mode)` per `protocols/validation.md`. Declare both on the `## Validation` section; Mode selects the row within the Track.
 
 | Track | Mode | Required | Recommended | Skippable |
 |-------|------|----------|-------------|-----------|

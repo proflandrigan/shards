@@ -82,6 +82,19 @@ describe('artifact index', () => {
     expect(idx.list().map((e) => e.type)).toEqual(['chart']);
   });
 
+  it('keys by meta.panel_id: re-emits update in place, close {panel_id} removes it', () => {
+    const idx = createArtifactIndex();
+    idx.apply(ev('chart', 'rev-1.json', { meta: { panel_id: 'rev', n: 1 } }));
+    idx.apply(ev('chart', 'rev-2.json', { meta: { panel_id: 'rev', n: 2 } }));
+    expect(idx.list()).toHaveLength(1);
+    expect(idx.list()[0].meta.n).toBe(2);
+    expect(eventToPanelPayload(idx.list()[0], '/proj').panelId).toBe('rev');
+    const close = ev('close', null, { meta: { panel_id: 'rev' } });
+    expect(closePayloads(close, idx)).toEqual([{ eventType: 'panel-close', panelId: 'rev' }]);
+    idx.apply(close);
+    expect(idx.list()).toEqual([]);
+  });
+
   it('maps events to panel-open payloads with stable ids', () => {
     const p1 = eventToPanelPayload(ev('chart', 'out/a.json'), '/proj');
     const p2 = eventToPanelPayload(ev('chart', 'out/a.json'), '/proj');

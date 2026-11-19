@@ -1,6 +1,6 @@
 # MLOps Engineer Validation Checklist
 
-Applied at the end of any phase that deploys, retrains, or modifies the operational infrastructure of an ML or AI system — model serving, training pipelines, feature stores, monitoring, retraining triggers. Results render into the `## Validation` section of `project-specs.md` per `shared/validation_protocol.md`.
+Applied at the end of any phase that deploys, retrains, or modifies the operational infrastructure of an ML or AI system — model serving, training pipelines, feature stores, monitoring, retraining triggers. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Check IDs (MLO-01 through MLO-10) are stable. MLOps validation is about **operational readiness**: can this system run unattended, detect when it's broken, and recover without a human in the loop?
 
@@ -113,7 +113,7 @@ The deployed artifact has complete lineage recorded in the model registry.
 
 ## Track Calibration
 
-Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
+Rows are indexed by `(Track, Mode)` per `protocols/validation.md`.
 
 | Track | Mode | Required | Recommended | Skippable |
 |-------|------|----------|-------------|-----------|
@@ -123,7 +123,7 @@ Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
 | **quick** | `hotfix` | MLO-01, MLO-02 | MLO-03 | rest |
 | **fixer** | (Mode omitted) | MLO-01 + MLO-02 rehearsal + "what changed, what didn't break" | — | rest |
 
-Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. See `shared/validation_protocol.md`.
+Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. {{protocol validation}}.
 
 ## Artifacts Expected
 

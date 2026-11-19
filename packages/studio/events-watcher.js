@@ -100,23 +100,40 @@ function createEventsWatcher({ file, onEvent, onReset, pollMs = 500 }) {
   };
 }
 
-// ─── Artifact index (latest event per type+path, minus closed) ──────────────
+// ─── Artifact index (latest event per panel key, minus closed) ──────────────
+
+// docs/artifact-contract.md: an event whose meta.panel_id is set is keyed by
+// that id (a re-emit updates the panel in place); otherwise by type+path.
+const metaPanelId = (ev) => {
+  const id = ev && ev.meta && ev.meta.panel_id;
+  return typeof id === 'string' && id ? id : null;
+};
+
+// A close event closes the panel named by meta.panel_id (path may be null), or
+// else every panel at ev.path (optionally narrowed to meta.target/meta.panel type).
+function closeMatches(ev, v) {
+  const pid = metaPanelId(ev);
+  if (pid) return panelIdFor(v.type, v.path, v) === pid;
+  const target = ev.meta && (ev.meta.target || ev.meta.panel);
+  return typeof ev.path === 'string' && !!ev.path && v.path === ev.path && (!target || v.type === target);
+}
 
 function createArtifactIndex() {
   const map = new Map(); // key -> event
-  const key = (type, p) => `${type}\u0000${p}`;
+  const key = (ev) => {
+    const pid = metaPanelId(ev);
+    return pid ? `id\u0000${pid}` : `${ev.type}\u0000${ev.path}`;
+  };
   return {
     apply(ev) {
       if (ev.type === 'close') {
-        const target = ev.meta && (ev.meta.target || ev.meta.panel);
-        for (const [k, v] of map) {
-          if (v.path === ev.path && (!target || v.type === target)) map.delete(k);
-        }
+        for (const [k, v] of map) if (closeMatches(ev, v)) map.delete(k);
         return;
       }
       if (!PANEL_TYPES.includes(ev.type) || typeof ev.path !== 'string' || !ev.path) return;
-      map.delete(key(ev.type, ev.path)); // re-insert so order = recency
-      map.set(key(ev.type, ev.path), ev);
+      const k = key(ev);
+      map.delete(k); // re-insert so order = recency
+      map.set(k, ev);
     },
     clear() { map.clear(); },
     list() { return Array.from(map.values()); },
@@ -125,7 +142,10 @@ function createArtifactIndex() {
 
 // ─── Event -> panel payload ─────────────────────────────────────────────────
 
-function panelIdFor(type, p) {
+/** Panel id: meta.panel_id when the event (third arg) carries one, else a hash of type+path. */
+function panelIdFor(type, p, ev) {
+  const pid = metaPanelId(ev);
+  if (pid) return pid;
   return 'art-' + crypto.createHash('sha1').update(type + '\0' + p).digest('hex').slice(0, 12);
 }
 
@@ -136,7 +156,7 @@ function eventToPanelPayload(ev, projectDir) {
   return {
     eventType: 'panel-open',
     panel: ev.type,
-    panelId: panelIdFor(ev.type, ev.path),
+    panelId: panelIdFor(ev.type, ev.path, ev),
     title: meta.title || path.basename(ev.path),
     data: meta.data !== undefined ? meta.data : null,
     source: abs,
@@ -148,10 +168,9 @@ function eventToPanelPayload(ev, projectDir) {
 
 /** Payloads for every panel a close event closes, given the index BEFORE apply. */
 function closePayloads(ev, index) {
-  const target = ev.meta && (ev.meta.target || ev.meta.panel);
   return index.list()
-    .filter((v) => v.path === ev.path && (!target || v.type === target))
-    .map((v) => ({ eventType: 'panel-close', panelId: panelIdFor(v.type, v.path) }));
+    .filter((v) => closeMatches(ev, v))
+    .map((v) => ({ eventType: 'panel-close', panelId: panelIdFor(v.type, v.path, v) }));
 }
 
 module.exports = {

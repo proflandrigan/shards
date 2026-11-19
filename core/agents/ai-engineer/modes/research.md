@@ -202,7 +202,7 @@ Update `project-specs.md` with a new `## Autonomous Research` section.
 **Typical slugs:** `ai-single-prompt`, `ai-chain`, `ai-rag`, `ai-cheap-model`,
 `ai-expensive-model`.
 
-If fan-out is warranted, propose DIVERGE per `diverge_protocol.md` Section B
+If fan-out is warranted, propose DIVERGE per `protocols/diverge.md` Section B
 with AR gate ID namespace.
 
 Remember: fan-out multiplies cost by K. For overnight preset especially, do
@@ -369,7 +369,7 @@ Follow Section I of `autonomous_research.md`. Include in the recommendations:
 ### Fan-out specific
 
 If fan-out: arbitrate before writing the consolidated summary. Standard
-`diverge_protocol.md` flow.
+`protocols/diverge.md` flow.
 
 ### Phase 3 gate
 

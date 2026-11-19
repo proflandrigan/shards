@@ -130,7 +130,7 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
    - H.3 for parallel branch spawning (all branches in one message)
    - H.5 for git strategy (default `branch-local`)
    - Wait for all branches to complete
-5. Run arbiter per Section F of `diverge_protocol.md`.
+5. Run arbiter per Section F of `protocols/diverge.md`.
 6. On user winner selection: promote per Section G — copy artifacts, squash-merge
    on chosen git strategy, update `eval-results.json.bestCandidate` with the
    winning branch's converged metrics.

@@ -1,6 +1,6 @@
 # Data Engineer Validation Checklist
 
-Applied at the end of any phase that creates or modifies a data pipeline, dbt model, staging/intermediate layer, source ingestion, or warehouse infrastructure. Results render into the `## Validation` section of `project-specs.md` per `shared/validation_protocol.md`.
+Applied at the end of any phase that creates or modifies a data pipeline, dbt model, staging/intermediate layer, source ingestion, or warehouse infrastructure. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Check IDs (DE-01 through DE-09) are stable. Data Engineering validation is pipeline-mechanic focused: contract adherence, re-run correctness, recovery behavior — not the semantic meaning of the data (that's Analytics Engineer territory).
 
@@ -103,7 +103,7 @@ Logging, metrics, and alerting necessary to operate the pipeline are in place.
 
 ## Track Calibration
 
-Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
+Rows are indexed by `(Track, Mode)` per `protocols/validation.md`.
 
 | Track | Mode | Required | Recommended | Skippable |
 |-------|------|----------|-------------|-----------|
@@ -112,7 +112,7 @@ Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
 | **quick** | `fix` (bug fix or small change) | DE-01, DE-03, DE-08 | DE-02, DE-06 | rest |
 | **fixer** | (Mode omitted) | DE-03 + DE-08 + "what changed, what didn't break" | DE-01 | rest |
 
-Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. See `shared/validation_protocol.md`.
+Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. {{protocol validation}}.
 
 ## Artifacts Expected
 

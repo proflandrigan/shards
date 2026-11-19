@@ -1,6 +1,6 @@
 # Data Analyst Validation Checklist
 
-Applied at the end of any adhoc analysis that produces a number, table, chart, or claim stakeholders will act on. Results render into the `## Validation` section of `project-specs.md` per `shared/validation_protocol.md`.
+Applied at the end of any adhoc analysis that produces a number, table, chart, or claim stakeholders will act on. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Data Analyst work is quick-track by nature. This checklist is deliberately short — six checks, most land in Observed as a single measured value.
 
@@ -18,7 +18,7 @@ The query runs to completion and returns a row count consistent with expectation
 If the analysis aggregates, the aggregation is correct — totals tie out, grain collapses are intentional, no double-counting.
 
 - Spot-check: sum of a breakdown equals the aggregate total (or the gap is explained).
-- No implicit join fan-out inflating numbers. See `shared/join_path_protocol.md` if joins are involved.
+- No implicit join fan-out inflating numbers. See `protocols/join_path.md` if joins are involved.
 - Distinct-count vs count-of-rows chosen deliberately for the question being asked.
 
 **Observed format:** `sum by region = 14,207 | total query = 14,207 ✓ | distinct user_id used (not row count) for active-users question`
@@ -73,7 +73,7 @@ Data Analyst work is quick-track by default. Deep-track work should escalate to 
 | **quick** | (Mode omitted, or `adhoc`) | DA-01, DA-02, DA-03, DA-04, DA-06 | DA-05 (only if no chart) |
 | **fixer** | (Mode omitted) | DA-01, DA-04 + "what changed, what didn't break" | DA-02, DA-03, DA-05, DA-06 |
 
-Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. See `shared/validation_protocol.md`.
+Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. {{protocol validation}}.
 
 ## Artifacts Expected
 

@@ -58,7 +58,7 @@ Wait for any signal from the user before beginning build steps.
 3. Run `dbt build --select +model_name+` to validate
 4. **Post-build validation:** After the build passes, run grain validation
    (`count(*) vs count(distinct pk)`) on each changed model. For models with
-   joins, run the fan-out check from `join_path_protocol.md` Tier 2+. Run
+   joins, run the fan-out check from `protocols/join_path.md` Tier 2+. Run
    `dbt show --select <model> --limit 5` to confirm output looks right.
    If any check fails, fix before proceeding. Skip if no-data environment.
 5. Summarize what changed
@@ -382,7 +382,7 @@ to validate" in the build log.
    -- FAIL if total_rows != distinct_pks
    ```
 2. **Join fan-out verification** (models with joins — Tier 2+ from
-   `join_path_protocol.md`):
+   `protocols/join_path.md`):
    ```sql
    select 'before_join' as stage, count(*) as row_count from <left_model>
    union all

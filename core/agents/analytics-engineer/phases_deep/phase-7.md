@@ -56,7 +56,7 @@ Every model component comprises:
      -- FAIL if total_rows != distinct_pks
      ```
   2. **Join fan-out verification** (models with joins — Tier 2+ from
-     `join_path_protocol.md`):
+     `protocols/join_path.md`):
      ```sql
      select 'before_join' as stage, count(*) as row_count from <left_model>
      union all

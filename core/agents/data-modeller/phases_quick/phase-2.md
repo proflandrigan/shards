@@ -24,7 +24,7 @@ Each task in `data_models/<project_name>/tasks.yaml` cites one of these specific
 3. Validation with `dbt build --select +model_name+`.
 4. **Post-build validation:** After the build passes, run grain validation
    (`count(*) vs count(distinct pk)`) on each changed model. For models with
-   joins, run the fan-out check from `join_path_protocol.md` Tier 2+. Run
+   joins, run the fan-out check from `protocols/join_path.md` Tier 2+. Run
    `dbt show --select <model> --limit 5` to confirm output looks right.
    If any check fails, the task fails. Skip if no-data environment.
    **Auto-verify:** if 3+ models are being validated, open

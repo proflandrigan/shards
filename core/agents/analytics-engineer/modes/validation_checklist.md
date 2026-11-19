@@ -1,6 +1,6 @@
 # Analytics Engineer Validation Checklist
 
-Applied at the end of any phase that creates or modifies a mart, intermediate model, staging model, or macro with data-shaping logic. Results render into the `## Validation` section of `project-specs.md` per `shared/validation_protocol.md`.
+Applied at the end of any phase that creates or modifies a mart, intermediate model, staging model, or macro with data-shaping logic. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Check IDs (AE-01 through AE-09) are stable — reference them in the evidence table so coverage is auditable over time.
 
@@ -57,7 +57,7 @@ Value distributions are plausible.
 
 Fan-out from upstream joins is expected and bounded.
 
-- Uses the same join-path trace discipline from `shared/join_path_protocol.md`.
+- Uses the same join-path trace discipline from `protocols/join_path.md`.
 - For Tier 2+ queries, record the before/after row counts at the key join.
 - Flag any M:M or unexpected multiplier.
 
@@ -109,7 +109,7 @@ Run the subset of checks appropriate to the track. Mode is optional for AE — t
 | **quick** | AE-01, AE-02, AE-03, AE-08 | AE-05, AE-07 | AE-04, AE-06, AE-09 |
 | **fixer** | AE-02, AE-03 + "what changed, what didn't break" paragraph | AE-07 | rest |
 
-Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason (e.g., `skipped for track=quick`, or `n/a — materialized=view`). The audit trail must show *what was chosen to skip*, not an implicit gap. See `shared/validation_protocol.md` for the n/a convention.
+Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason (e.g., `skipped for track=quick`, or `n/a — materialized=view`). The audit trail must show *what was chosen to skip*, not an implicit gap. See `protocols/validation.md` for the n/a convention.
 
 ## When to Escalate
 

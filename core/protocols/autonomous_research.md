@@ -480,7 +480,7 @@ based on data leakage or a methodology flaw), execute:
 
 ### C.5 Per-iteration validation (Fixer-level)
 
-Each **kept** iteration (GREEN or kept-YELLOW) must produce a lightweight validation block following `shared/validation_protocol.md`. Reverted iterations (RED or reverted-YELLOW) do not — the change is gone, validation is moot.
+Each **kept** iteration (GREEN or kept-YELLOW) must produce a lightweight validation block following `protocols/validation.md`. Reverted iterations (RED or reverted-YELLOW) do not — the change is gone, validation is moot.
 
 The block is **not** written to `project-specs.md`. Instead, it is added to the iteration's entry in `experiments/results.json` under a new `validation` field:
 
@@ -535,7 +535,7 @@ suspect.
 ### D.2 Reviewer verdict schema
 
 Reviewers return one of four verdicts (in addition to the standard
-APPROVED/NEEDS REVISION/BLOCKED structure from `reviewer_verdict_protocol.md`):
+APPROVED/NEEDS REVISION/BLOCKED structure from `protocols/reviewer_verdict.md`):
 
 - **`CONTINUE`** — proceed as planned. Reviewer may include optional
   suggestions for the next hypothesis.
@@ -606,7 +606,7 @@ Please respond with:
 Keep it concise and actionable.
 ```
 
-Apply the standard reviewer verdict protocol afterward (`reviewer_verdict_protocol.md`).
+Apply the standard reviewer verdict protocol afterward (`protocols/reviewer_verdict.md`).
 
 ---
 
@@ -894,7 +894,7 @@ Fan-out can be initiated by either:
 
 - **The specialist** at its `[AR]` Phase 1 gate, when writing the research
   brief surfaces 2-3 viable approach families that satisfy DIVERGE
-  preconditions (see `diverge_protocol.md` Section A).
+  preconditions (see `protocols/diverge.md` Section A).
 - **Syn** during triage or brainstorm, when the user's request is broad
   ("improve metric X, try everything") and Syn identifies distinct approach
   families warranting parallel exploration, possibly across different
@@ -909,7 +909,7 @@ Fan-out preconditions (inherited from DIVERGE):
 ### H.2 DIVERGE proposal at AR Phase 1
 
 If fan-out is warranted, propose DIVERGE before the research brief gate.
-Follow `diverge_protocol.md` Section B (proposal format + gate), with these
+Follow `protocols/diverge.md` Section B (proposal format + gate), with these
 AR-specific adjustments:
 
 - **Gate ID namespace:** use
@@ -984,7 +984,7 @@ Produce:
    `experiments/results.json` (with `branchContext` populated), per-iteration
    files.
 2. A final `<branch_dir>/branch-report.md` summarizing the branch's best state
-   per the DIVERGE branch-report template (`diverge_protocol.md` Section E).
+   per the DIVERGE branch-report template (`protocols/diverge.md` Section E).
 3. Git commits on the chosen git strategy (H.5).
 ```
 
@@ -1006,7 +1006,7 @@ The main project dir keeps:
 - The global `experiments/research_brief.md` (applies to all branches unless
   overridden at the branch level).
 - The canonical `project-specs.md` with the DIVERGE section written per
-  `diverge_protocol.md` Section D.
+  `protocols/diverge.md` Section D.
 
 ### H.5 Concurrent git strategy
 
@@ -1074,7 +1074,7 @@ summary).
 ### H.9 Arbitration
 
 After all branches complete, the initiating specialist (or Syn) invokes Syn
-Arbiter Mode per `diverge_protocol.md` Section F, passing the list of
+Arbiter Mode per `protocols/diverge.md` Section F, passing the list of
 `branch-report.md` paths. The arbiter produces
 `.shards/branches/leaderboard.md`.
 
@@ -1098,7 +1098,7 @@ branches exploring similar territory.
 
 ### H.11 Promotion
 
-Follow `diverge_protocol.md` Section G with these extensions for AR git
+Follow `protocols/diverge.md` Section G with these extensions for AR git
 strategies:
 
 - **`branch-local`:** `git merge --squash ar/<winner>` onto the main working
@@ -1239,7 +1239,7 @@ Append / update the `## Autonomous Research` section in `project-specs.md`:
 - **Recommendations:** `experiments/research_recommendations.md`
 ```
 
-Also write a consolidated `## Validation` section to `project-specs.md` per `shared/validation_protocol.md`. The Phase 3 gate is validation-eligible (the AR run produces a durable set of kept iterations / final artifact), and `gate_request` checks the schema at Phase 3.
+Also write a consolidated `## Validation` section to `project-specs.md` per `protocols/validation.md`. The Phase 3 gate is validation-eligible (the AR run produces a durable set of kept iterations / final artifact), and `gate_request` checks the schema at Phase 3.
 
 Consolidation rules:
 - **Track:** `deep` (Phase 3 is the deep gate; per-iteration blocks were already Fixer-level)

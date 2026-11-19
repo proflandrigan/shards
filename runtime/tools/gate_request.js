@@ -28,7 +28,7 @@ function formatValidationToolError(checklist, id, kind, phase, errors) {
     ...errors.map((e) => `  - ${e.code}: ${describeErr(e)}`),
     '',
     'What to do:',
-    '  1. Re-read the validation protocol (shared/validation_protocol.md) for the required `## Validation` section schema.',
+    '  1. Re-read the validation protocol (protocols/validation.md) for the required `## Validation` section schema.',
     `  2. Re-read the ${checklist} validation checklist for the domain-specific checks.`,
     '  3. Run the checks, record observed values in the Evidence table of the record, then call gate_request again.',
     '',

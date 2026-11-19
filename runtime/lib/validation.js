@@ -1,5 +1,5 @@
 // Validation section parser + checker for the gate hook.
-// Implements src/agents/specific_instructions/shared/validation_protocol.md
+// Implements core/protocols/validation.md
 // and runtime/lib/VALIDATION_SPEC.md.
 'use strict';
 
@@ -289,7 +289,7 @@ function formatValidationError(checklist, gate, errors) {
     ...errors.map(e => `  - ${e.code}: ${describe(e)}`),
     '',
     'What to do:',
-    '  1. Re-read .claude/agents/specific_instructions/shared/validation_protocol.md',
+    '  1. Re-read the validation protocol (protocols/validation.md)',
     '     for the required `## Validation` section schema.',
     `  2. Re-read .claude/agents/specific_instructions/${checklist}/validation_checklist.md`,
     '     for the domain-specific checks.',

@@ -1,6 +1,6 @@
 # Deep Learning Engineer Validation Checklist
 
-Applied at the end of any phase that produces or modifies a deep learning model — architecture implementation, training protocol, fine-tuning recipe, or custom DL framework component. Results render into the `## Validation` section of `project-specs.md` per `shared/validation_protocol.md`.
+Applied at the end of any phase that produces or modifies a deep learning model — architecture implementation, training protocol, fine-tuning recipe, or custom DL framework component. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Check IDs (DL-01 through DL-10) are stable. DL validation has two characteristic concerns beyond standard ML: **training dynamics** (did the network actually learn what it was supposed to learn?) and **mode discipline** (is inference actually in eval mode?). Both have caused real-world bugs invisible to aggregate metrics.
 
@@ -79,7 +79,7 @@ Compute and memory fit the deployment or research budget.
 
 A model card describing the trained artifact exists and is complete.
 
-- Card references `src/templates/model-card.md` structure.
+- Card structure matches the model-card template. {{template model-card}}.
 - Includes: intended use, training data, evaluation results (linking to this validation section), known limitations, ethical considerations (escalate to Academic for review if deployment is user-facing).
 - For iteration: card updated, not appended to stale prior-version card.
 
@@ -109,7 +109,7 @@ The saved model artifact loads cleanly on a fresh kernel and produces the expect
 
 ## Track Calibration
 
-Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
+Rows are indexed by `(Track, Mode)` per `protocols/validation.md`.
 
 | Track | Mode | Required | Recommended | Skippable |
 |-------|------|----------|-------------|-----------|
@@ -119,7 +119,7 @@ Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
 | **quick** | `experiment` (kept `[X]` iteration) | DL-04 + diff vs prior | DL-03 | most |
 | **fixer** | (Mode omitted) | DL-09 + DL-04 diff if the fix touches model outputs | DL-10 | rest |
 
-Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. See `shared/validation_protocol.md`.
+Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. {{protocol validation}}.
 
 ## Artifacts Expected
 

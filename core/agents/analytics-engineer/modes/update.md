@@ -133,7 +133,7 @@ Wait for their response before taking any further action.
 - If yes → implement the changes immediately in this session, working from the spec.
   After each changed model's `dbt build` passes, run post-build validation:
   grain check on any model with a stated PK (`count(*) vs count(distinct pk)`),
-  fan-out verification on models with joins (Tier 2+ from `join_path_protocol.md`),
+  fan-out verification on models with joins (Tier 2+ from `protocols/join_path.md`),
   and `dbt show --select <model> --limit 5` to confirm output. If validation
   fails, halt and fix before advancing to the next model. Skip validation queries
   in no-data environments.

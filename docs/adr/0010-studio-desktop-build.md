@@ -6,7 +6,7 @@ Status: Accepted (proposed by E3.6, 2026-11-14)
 
 Studio is the browser UI for Shards. In v2 it is an optional add-on: the package `@proflandrigan/shards-studio` runs with `npx @proflandrigan/shards-studio` from a project root. It reads `.shards/events.jsonl` (written by `artifact_emit`, see `docs/runtime.md`) and the project's output folders. It serves a localhost page that the user opens in a browser. Studio has no runtime coupling: the runtime works the same with or without it.
 
-`DISTRIBUTE.md` describes an Electron desktop build, "Shards IDE", that wraps the same UI. Its documented scope is:
+`DISTRIBUTE.md` (now `docs/history/DISTRIBUTE.md`) describes an Electron desktop build, "Shards IDE", that wraps the same UI. Its documented scope is:
 
 - A separate `electron/` package with its own `npm install`, `download-vendor.sh` to vendor CDN assets (Tabulator, Plotly, Mermaid, xterm.js, Inter) for offline use, and per-platform icon sets.
 - Native dependencies such as `node-pty`, which must be compiled on the OS they run on. This forces a three-runner CI matrix (macOS, Ubuntu, Windows) in `.github/workflows/build-electron.yml`.
@@ -29,7 +29,7 @@ The Electron build would be a second release train for a UI that is optional. Th
 
 - Release scope is smaller. v2.0 ships one npm package for Studio, with no signing secrets, no notarization, and no per-OS build jobs to maintain.
 - No installer artifacts of roughly 100 MB or more are published, and no second release feed or auto-update channel is run.
-- The documented Electron steps in `DISTRIBUTE.md` describe work that is not on this branch. They should be marked as deferred, not as the v2.0 install path. Updating `DISTRIBUTE.md` is out of scope for this ADR.
+- The documented Electron steps in `DISTRIBUTE.md` (now `docs/history/DISTRIBUTE.md`) describe work that is not on this branch. They should be marked as deferred, not as the v2.0 install path. Updating `DISTRIBUTE.md` is out of scope for this ADR.
 - Users who want a window-like experience use the browser at the localhost address that Studio prints. Users who want a dock icon or an app-menu entry have no packaged option in v2.0.
 - The decision does not block a later shell. Studio reads files and talks to the runtime only through `.shards/events.jsonl` and the project folders, with no runtime-side hooks. A thin Electron wrapper can load the same local page later without changes to the runtime, the event format, or the Studio server.
 - Enterprise or managed-desktop users who need signed installers have no supported path in v2.0.

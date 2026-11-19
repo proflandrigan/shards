@@ -1,6 +1,6 @@
 # BI Engineer Validation Checklist
 
-Applied at the end of any phase that creates or modifies a dashboard, report, or interactive visualization (Streamlit, Dash, Altair, Plotly, Superset, Grafana, Metabase, etc.). Results render into the `## Validation` section of `project-specs.md` per `shared/validation_protocol.md`.
+Applied at the end of any phase that creates or modifies a dashboard, report, or interactive visualization (Streamlit, Dash, Altair, Plotly, Superset, Grafana, Metabase, etc.). Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Check IDs (BI-01 through BI-08) are stable. BI validation centers on one question: **does what the user sees match the underlying data, under every interaction path?** A beautiful dashboard showing subtly wrong numbers is worse than no dashboard.
 
@@ -91,7 +91,7 @@ The target user has actually used the dashboard to answer the question it was bu
 
 ## Track Calibration
 
-Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
+Rows are indexed by `(Track, Mode)` per `protocols/validation.md`.
 
 | Track | Mode | Required | Recommended | Skippable |
 |-------|------|----------|-------------|-----------|
@@ -100,7 +100,7 @@ Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
 | **quick** | `design-only` (chart design description, no data access) | BI-01 replaced by "design intent matches spec question" | BI-06 | rest (no executable dashboard produced) |
 | **fixer** | (Mode omitted) | BI-01 for the fixed chart + "what changed, what didn't break" | BI-02 if filters touched | rest |
 
-Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. See `shared/validation_protocol.md`.
+Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. {{protocol validation}}.
 
 ## Artifacts Expected
 

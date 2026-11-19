@@ -30,6 +30,14 @@ try {
   };
 }
 
+// v2 agent catalog: core/agents/*/agent.yaml, read through the runtime loader
+// (same packaging caveat as above). When it is unreachable, listAgents() falls
+// back to the legacy v1 layout (<project>/.claude/agents/*.md).
+let agentCatalog = null;
+try {
+  agentCatalog = require('../../runtime/agents.js');
+} catch {}
+
 let PROJECT_DIR = process.cwd();
 let SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
 let PORT_FILE = path.join(SHARDS_DIR, 'studio.port');
@@ -671,7 +679,22 @@ function handlePanelEvent(data) {
 
 // ─── Agent listing ──────────────────────────────────────────────────────────
 
-function listAgents() {
+// Agents that can start a Studio session: v2 core agents whose activation
+// includes "switch". Legacy v1 projects (no runtime/core reachable) fall back
+// to <project>/.claude/agents/*.md.
+function listCoreAgents() {
+  if (!agentCatalog) return [];
+  const agents = [];
+  try {
+    for (const a of agentCatalog.loadAgents(agentCatalog.coreDir()).values()) {
+      if (a.error || !(a.activation || []).includes('switch')) continue;
+      agents.push({ name: a.id, description: a.description || '', source: 'core' });
+    }
+  } catch {}
+  return agents;
+}
+
+function listLegacyAgents() {
   const agents = [];
   try {
     const entries = fs.readdirSync(AGENTS_DIR, { withFileTypes: true });
@@ -689,9 +712,15 @@ function listAgents() {
         if (descMatch) description = descMatch[1];
       }
 
-      agents.push({ name, description });
+      agents.push({ name, description, source: 'legacy' });
     }
   } catch {}
+  return agents;
+}
+
+function listAgents() {
+  let agents = listCoreAgents();
+  if (!agents.length) agents = listLegacyAgents();
   // Enrich with metadata
   for (const a of agents) {
     const meta = AGENT_META[a.name] || {};
@@ -891,6 +920,27 @@ function parseSlashCommand(message) {
   return { type: 'passthrough' };
 }
 
+// ─── Agent activation prompt ────────────────────────────────────────────────
+
+// v2: the agent is activated through the shards runtime `activate` tool
+// (mcp__plugin_shards_shards__activate when installed as the Claude Code
+// plugin). A legacy v1 agent (listed from .claude/agents) keeps using its
+// .claude/commands/<agent>.md activation prompt when that file exists.
+function buildActivationPrompt(agent) {
+  const legacy = listAgents().find((a) => a.name === agent && a.source === 'legacy');
+  if (legacy) {
+    try {
+      const raw = fs.readFileSync(path.join(COMMANDS_DIR, `${agent}.md`), 'utf8');
+      const body = raw.replace(/^---\n[\s\S]*?\n---\n*/, '').trim();
+      if (body) return body;
+    } catch {}
+  }
+  return `Activate the ${agent} agent: call the shards runtime \`activate\` tool ` +
+    `(mcp__plugin_shards_shards__activate in the Claude Code plugin) with ` +
+    `agent="${agent}" and mode="switch", adopt the persona it returns, then greet ` +
+    'the user and show your activation menu.';
+}
+
 // ─── Chat session creation helper ───────────────────────────────────────────
 
 function startNewChatSession(agent, options = {}) {
@@ -934,19 +984,13 @@ function startNewChatSession(agent, options = {}) {
   store.chatSession = chatSess;
   chatSess.start();
 
-  // Opening message. For an agent session this is the activation prompt from
-  // .claude/commands/<agent>.md; for a plain session it's the user's own first
+  // Opening message. For an agent session this is the activation prompt (see
+  // buildActivationPrompt); for a plain session it's the user's own first
   // message, or nothing at all if they haven't typed yet.
   let firstMessage = null;
 
   if (agent) {
-    const cmdFile = path.join(COMMANDS_DIR, `${agent}.md`);
-    try {
-      const raw = fs.readFileSync(cmdFile, 'utf8');
-      firstMessage = raw.replace(/^---\n[\s\S]*?\n---\n*/, '').trim();
-    } catch {
-      firstMessage = `You are now activated as the ${agent} agent. Greet the user and display your activation menu.`;
-    }
+    firstMessage = buildActivationPrompt(agent);
     if (initialMessage) {
       firstMessage += '\n\nThe user has already provided their request upfront. ' +
         '**Skip the greeting and activation menu entirely.** Go directly to Phase 0 triage.' +
@@ -2566,4 +2610,4 @@ if (require.main === module) {
   startServer(0);
 }
 
-module.exports = { createServer };
+module.exports = { createServer, listAgents, buildActivationPrompt };

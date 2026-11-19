@@ -187,7 +187,7 @@ referencing the brief path, metric, budget, and preset.
 
 While drafting the brief, consider whether 2-3 viable, fundamentally different
 approach families warrant parallel exploration. Fan-out preconditions (per
-`diverge_protocol.md` Section A and `autonomous_research.md` Section H):
+`protocols/diverge.md` Section A and `autonomous_research.md` Section H):
 - 2-3 mutually exclusive approach families, not tuning variations
 - No single family is clearly superior
 - The user's iteration budget multiplied by K is acceptable
@@ -201,7 +201,7 @@ approach families warrant parallel exploration. Fan-out preconditions (per
 
 **Typical slugs:** `ml-xgboost`, `ml-neural-net`, `ml-linear-baseline`, `ml-ensemble`.
 
-If fan-out is warranted, propose DIVERGE per `diverge_protocol.md` Section B,
+If fan-out is warranted, propose DIVERGE per `protocols/diverge.md` Section B,
 using the AR gate ID namespace
 (`specific-instructions-shared-diverge-protocol-ar-<project>`). The user
 confirms either solo AR (current brief) or fan-out.
@@ -286,7 +286,7 @@ of the shared protocol. Standard cadence:
 - When Steering Notes change
 
 Apply the reviewer verdict protocol
-(`reviewer_verdict_protocol.md`) afterward. AR-specific verdicts: `CONTINUE`,
+(`protocols/reviewer_verdict.md`) afterward. AR-specific verdicts: `CONTINUE`,
 `REDIRECT`, `PAUSE`, `RETRO_REVERT`.
 
 ### Hypothesis categories for ML Engineer
@@ -377,10 +377,10 @@ Follow **Section I** of
 If this was a fan-out session, between step 1 and step 2 above:
 
 a. Wait for all branch Tasks to return.
-b. Invoke Syn Arbiter per `diverge_protocol.md` Section F.
+b. Invoke Syn Arbiter per `protocols/diverge.md` Section F.
 c. Present the leaderboard to the user and gate on winner selection per
-   `diverge_protocol.md` Section F final gate.
-d. Promote the winner per `diverge_protocol.md` Section G (with the AR git
+   `protocols/diverge.md` Section F final gate.
+d. Promote the winner per `protocols/diverge.md` Section G (with the AR git
    strategy handling).
 e. Propose write-backs only after promotion. Include cross-branch patterns from the
    leaderboard in the write-back candidates ({{protocol sources}}, AR fan-out special

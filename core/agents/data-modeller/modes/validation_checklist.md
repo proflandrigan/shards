@@ -1,6 +1,6 @@
 # Data Modeller Validation Checklist
 
-Applied at the end of any phase that produces or modifies a logical or physical data model — entity-relationship diagrams, grain specifications, key designs, SCD strategies, conformed dimensions. Results render into the `## Validation` section of `project-specs.md` per `shared/validation_protocol.md`.
+Applied at the end of any phase that produces or modifies a logical or physical data model — entity-relationship diagrams, grain specifications, key designs, SCD strategies, conformed dimensions. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Data Modeller validation is **structural**, not executable. Most evidence takes the form of "I walked through the design with X and confirmed Y" rather than numeric measurements. Record the walkthroughs explicitly — they are the evidence.
 
@@ -90,7 +90,7 @@ The model has been walked through with the teams that will consume it.
 
 ## Track Calibration
 
-Rows are indexed by `(Track, Mode)` per `shared/validation_protocol.md`.
+Rows are indexed by `(Track, Mode)` per `protocols/validation.md`.
 
 | Track | Mode | Required | Recommended | Skippable |
 |-------|------|----------|-------------|-----------|

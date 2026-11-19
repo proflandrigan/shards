@@ -53,7 +53,7 @@ simplify.
 - **SQL:** no CTEs you don't reference, no joins that don't tighten the
   result, no defensive `COALESCE` against nulls that can't occur, no
   `DISTINCT` slapped on to hide a join-path mistake (trace the join path
-  instead — see `join_path_protocol.md`).
+  instead — see `protocols/join_path.md`).
 - **Notebooks:** no exploratory cells left in a "final" notebook; no helper
   functions used once that could be inline; no `try/except` swallowing
   errors the user should see.
@@ -120,7 +120,7 @@ confidently sign off on.
 
 **Composition with Shards protocols:**
 
-- `validation_protocol.md` is the gate-level expression of this rule —
+- `protocols/validation.md` is the gate-level expression of this rule —
   evidence over assertion before closing any artifact-producing phase.
 - `incremental_testing.md` is the build-loop expression — each task is one
   tested component with its own evidence row; don't batch failures to the end.
