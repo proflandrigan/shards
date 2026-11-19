@@ -84,7 +84,8 @@ describe('git binding: leases excluded from gate commits', () => {
 });
 
 describe('git binding: errors never lose a commit', () => {
-  it('a throw inside commitGate keeps a pending record; replay commits it and writes the sha back', async () => {
+  // chmod 0 cannot make a file unreadable on Windows; the next test covers the throw path on every OS.
+  it.skipIf(process.platform === 'win32')('a throw inside commitGate keeps a pending record; replay commits it and writes the sha back', async () => {
     repoSession();
     const top = root;
     write(root, 'out/a.md', 'A\n');

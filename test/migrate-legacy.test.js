@@ -161,7 +161,7 @@ describe('shards migrate (full)', () => {
       const r = await migrate();
       expect(r.code).toBe(0);
       for (const f of MANIFEST_FILES.filter((x) => x !== 'templates/project-specs.md')) expect(exists(f)).toBe(false);
-      expect(read('templates/project-specs.md')).toBe('my edited template\n');
+      expect(read('templates/project-specs.md').replace(/\r\n/g, '\n')).toBe('my edited template\n'); // git may check out CRLF on Windows
       expect(r.out).toMatch(/SKIPPED templates\/project-specs\.md: modified after install/);
       expect(r.err).not.toContain('WARNING');
     } finally { fs.rmSync(src, { recursive: true, force: true }); }
