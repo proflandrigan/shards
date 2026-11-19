@@ -10,7 +10,8 @@
 //      files missing on disk are removals.
 //   2. Snapshot: hash the files (`hash-object -w`), diff against HEAD, and write the
 //      changed entries into a TEMPORARY index (GIT_INDEX_FILE in a temp dir, seeded by
-//      `read-tree HEAD`) -> write-tree -> commit-tree -> `update-ref refs/shards/pending/<gate>`.
+//      `read-tree HEAD`) -> write-tree -> commit-tree -> `update-ref refs/shards/pending/<gate>-<seq>`
+//      (one ref per record, so two records for a reused gate id never share a snapshot).
 //      The user's index and working tree are not touched.
 //   3. Commit. Two paths, both honouring the user's pre-commit hook and leaving the
 //      user's staged files outside the gate untouched:
@@ -26,7 +27,15 @@
 //   4. Success deletes the pending record + snapshot ref. Failure keeps both.
 //
 // Pending store: <root>/.shards/state/git-pending.json (atomicWrite) guarded by its own
-// proper-lockfile lock (git-pending.lock). It is NOT the StateStore lock, but callers must
+// proper-lockfile lock (git-pending.lock). `records` is keyed by an opaque record key
+// (`<gate>@<session>#<seq>`, kept on the record as `rec.key`); `rec.gate` is the gate id.
+// Gate ids repeat (they are scoped by agent/project/track), so the key must not be the bare
+// id: a reused id confirmed for another project must not drop an earlier uncommitted record.
+// A new record replaces an existing one only when it is the same gate instance (same gate
+// id + session + agent + project + track, i.e. a re-confirm). Stores written before this
+// change are keyed by bare gate id and their records carry no `project`; they load as-is
+// (the old key becomes `rec.key`) and are treated as the same instance as a new
+// confirmation of the same gate id, session and agent. It is NOT the StateStore lock, but callers must
 // still not call commitGate from a context that already holds git-pending.lock; calling it
 // while holding the StateStore lock is fine technically but can block for hookTimeoutMs.
 //
@@ -201,6 +210,13 @@ function isLeased(p, leased) {
   return leased.some((l) => l && (p === l || p.startsWith(`${l}/`)));
 }
 
+// Snapshot ref of one pending record: `<gateRef(gate)>-<seq>`. Unique per record, so a reused
+// gate id never overwrites another record's snapshot. (Pre-existing records keep the ref
+// they stored in `snapshot_ref`, which may be the bare gateRef(gate).)
+function recordRef(gate, seq) {
+  return Number.isInteger(seq) ? `${gateRef(gate)}-${seq}` : gateRef(gate);
+}
+
 function gateRef(gate) {
   let s = String(gate).replace(/[^A-Za-z0-9._-]/g, '_');
   s = s.replace(/\.{2,}/g, '_').replace(/^\.+/, '_').replace(/\.+$/, '_').replace(/\.lock$/, '_lock');
@@ -316,8 +332,8 @@ function msgParts(rec) {
   return [`shards gate ${rec.gate}`, `Shards-Gate: ${rec.gate}\nShards-Agent: ${rec.agent || 'unknown'}`];
 }
 
-async function createSnapshot(root, st, gate, entries, ident, message) {
-  const ref = gateRef(gate);
+async function createSnapshot(root, st, gate, entries, ident, message, seq) {
+  const ref = recordRef(gate, seq);
   const sha = await withTmpDir(async (dir) => {
     const env = { GIT_INDEX_FILE: path.join(dir, 'index'), ...ident };
     if (st.headSha) await gitOk(root, ['read-tree', st.headSha], { env });
@@ -473,7 +489,7 @@ async function attempt(root, rec, ctx) {
     const changed = await diffAgainstHead(root, st, probe);
     if (!changed.length) return { outcome: 'skipped', reason: 'nothing_to_commit' };
     rec.files = changed.map((e) => e.path);
-    rec.snapshot_ref = await createSnapshot(root, st, rec.gate, changed, ident, `shards snapshot ${rec.gate}`);
+    rec.snapshot_ref = await createSnapshot(root, st, rec.gate, changed, ident, `shards snapshot ${rec.gate}`, rec.seq);
   }
 
   if (ctx.cfg.commit === false) return { outcome: 'commit_pending', reason: 'commit_disabled' };
@@ -527,9 +543,46 @@ function loadStore(root) {
     if (e.code === 'ENOENT') return { version: 1, next_seq: 1, records: {} };
     throw e;
   }
-  try { const s = JSON.parse(text); s.records = s.records || {}; s.next_seq = s.next_seq || 1; return s; } catch (e) {
+  let s;
+  try { s = JSON.parse(text); } catch (e) {
     throw new Error(`Corrupt git pending store ${file}: ${e.message}. Refusing to overwrite; fix or delete it.`);
   }
+  s.records = s.records && typeof s.records === 'object' ? s.records : {};
+  s.next_seq = s.next_seq || 1;
+  // Old stores were keyed by bare gate id with no `key` field: the existing key is the record key.
+  for (const [k, r] of Object.entries(s.records)) {
+    if (!r || typeof r !== 'object') { delete s.records[k]; continue; }
+    if (typeof r.key !== 'string' || !r.key) r.key = k;
+    if (typeof r.gate !== 'string' || !r.gate) r.gate = k;
+  }
+  return s;
+}
+
+function recordKey(store, gate, session, seq) {
+  const base = `${gate}@${session || '-'}#${seq}`;
+  let k = base; let n = 2;
+  while (store.records[k]) k = `${base}.${n++}`;
+  return k;
+}
+
+// Is pending record `r` the same gate instance as {gate, session, agent, project, track}?
+// Legacy records (no `project` field) match on gate id + session + agent, as before.
+function sameInstance(r, { gate, session, agent, project, track }) {
+  if (!r || r.gate !== gate) return false;
+  if ((r.session || null) !== (session || null)) return false;
+  if ((r.agent || null) !== (agent || null)) return false;
+  if (!Object.prototype.hasOwnProperty.call(r, 'project')) return true;
+  if ((r.project || null) !== (project || null)) return false;
+  return !r.track || !track || r.track === track;
+}
+
+// Does gate-state entry `g` belong to the instance that pending record `rec` was made for?
+function entryMatches(g, rec) {
+  if (!g || g.id !== rec.gate) return false;
+  if (rec.agent && g.agent && g.agent !== rec.agent) return false;
+  if (!Object.prototype.hasOwnProperty.call(rec, 'project')) return true;
+  if ((g.project || null) !== (rec.project || null)) return false;
+  return !g.track || !rec.track || g.track === rec.track;
 }
 
 function saveStore(root, store) {
@@ -586,7 +639,11 @@ async function writeBackGate(root, rec, res) {
     const { StateStore } = require('../state/store');
     if (!fs.existsSync(path.join(root, '.shards', 'state', 'sessions', rec.session, 'gates.json'))) return;
     await new StateStore(root, rec.session).update('gates', (cur) => {
-      const g = (cur.gates || {})[rec.gate];
+      // The id may have been reused (another project) since this record was made: the original
+      // instance then lives in the current entry's `previous` list.
+      const top = (cur.gates || {})[rec.gate];
+      const cands = top ? [top, ...(Array.isArray(top.previous) ? top.previous.slice().reverse() : [])] : [];
+      const g = cands.find((c) => entryMatches(c, rec));
       if (g && g.status === 'confirmed' && (!g.commit || g.commit.outcome !== 'committed')) {
         g.commit = res.outcome === 'committed'
           ? { outcome: 'committed', sha: res.sha, files: res.files || rec.files, replayed: true }
@@ -631,8 +688,8 @@ function applyResult(rec, res, t) {
 async function finishRecord(root, store, rec, status) {
   if (status === 'done') {
     await deleteRef(root, rec.snapshot_ref);
-    delete store.records[rec.gate];
-  } else store.records[rec.gate] = rec;
+    delete store.records[rec.key];
+  } else store.records[rec.key] = rec;
 }
 
 // ---------- replay ----------
@@ -691,7 +748,7 @@ function commitGate(args) {
   return withPendingLock(root, () => commitGateLocked({ ...args, config }));
 }
 
-async function commitGateLocked({ root, gate, agent, outputDirs, config, session, seq, getLeasedPaths, hookTimeoutMs }) {
+async function commitGateLocked({ root, gate, agent, project, track, outputDirs, config, session, seq, getLeasedPaths, hookTimeoutMs }) {
   const cfg = normalizeConfig(config);
   const timeout = hookTimeoutMs || DEFAULT_HOOK_TIMEOUT_MS;
   const t = Date.now();
@@ -701,29 +758,40 @@ async function commitGateLocked({ root, gate, agent, outputDirs, config, session
   let mySeq;
   if (Number.isInteger(seq)) mySeq = seq; else mySeq = store.next_seq;
   store.next_seq = Math.max(store.next_seq, mySeq + 1);
-  const stale = store.records[gate];
-  if (stale) { delete store.records[gate]; saveStore(root, store); }
+  const sessionKey = sessionKeyOf(session);
+  const inst = { gate, session: sessionKey, agent, project: project || null, track: track || null };
+  // Only a re-confirm of the same gate instance replaces its record; other records sharing
+  // the gate id (another project/session) stay pending.
+  const staleRecs = Object.values(store.records).filter((r) => sameInstance(r, inst));
+  if (staleRecs.length) {
+    for (const r of staleRecs) delete store.records[r.key];
+    saveStore(root, store);
+    const live = new Set(Object.values(store.records).map((r) => r.snapshot_ref).filter(Boolean));
+    for (const r of staleRecs) if (r.snapshot_ref && !live.has(r.snapshot_ref)) await deleteRef(root, r.snapshot_ref);
+  }
 
   const rec = {
-    gate, agent, seq: mySeq, session: sessionKeyOf(session), output_dirs: outputDirs, snapshot_ref: null, files: [], tries: 0,
+    key: recordKey(store, gate, sessionKey, mySeq),
+    gate, agent, project: project || null, track: track || null,
+    seq: mySeq, session: sessionKey, output_dirs: outputDirs, snapshot_ref: null, files: [], tries: 0,
     next_try_at: 0, status: 'pending', reason: null, created_at: new Date(t).toISOString(),
   };
   const pendingResult = (reason) => ({ outcome: 'commit_pending', reason, snapshot_ref: rec.snapshot_ref, files: rec.files, pending: true });
 
   try {
-    return await commitGateBody({ root, gate, config, session, getLeasedPaths, cfg, timeout, t, store, stale, rec, mySeq, pendingResult });
+    return await commitGateBody({ root, gate, config, session, getLeasedPaths, cfg, timeout, t, store, rec, mySeq, pendingResult });
   } catch (e) {
     // Never lose the gate's commit: keep a pending record so replay can retry it.
     const fresh = loadStore(root);
     fresh.next_seq = Math.max(fresh.next_seq, store.next_seq);
     applyResult(rec, { outcome: 'commit_pending', reason: `commit_error: ${e && e.message ? e.message : e}`, tried: true }, Date.now());
-    fresh.records[gate] = rec;
+    fresh.records[rec.key] = rec;
     saveStore(root, fresh);
     return pendingResult(rec.reason);
   }
 }
 
-async function commitGateBody({ root, gate, config, session, getLeasedPaths, cfg, timeout, t, store, stale, rec, mySeq, pendingResult }) {
+async function commitGateBody({ root, gate, config, session, getLeasedPaths, cfg, timeout, t, store, rec, mySeq, pendingResult }) {
   const st = await gitState(root);
   const leased = typeof getLeasedPaths === 'function' ? await getLeasedPaths(session) : await leases.getLeasedPaths(sessionOf(root, session));
   const files = await collectFiles(root, rec.output_dirs, st, cfg, leased || []);
@@ -733,7 +801,7 @@ async function commitGateBody({ root, gate, config, session, getLeasedPaths, cfg
     rec.files = files.filter((f) => !f.del).map((f) => f.path);
     rec.reason = 'no_repo';
     rec.next_try_at = t + PRECONDITION_RETRY_MS;
-    store.records[gate] = rec;
+    store.records[rec.key] = rec;
     saveStore(root, store);
     return pendingResult('no_repo');
   }
@@ -741,13 +809,14 @@ async function commitGateBody({ root, gate, config, session, getLeasedPaths, cfg
   const ident = await identEnv(root);
   const changed = await diffAgainstHead(root, st, files);
   if (!changed.length) {
-    await deleteRef(root, stale && stale.snapshot_ref);
-    await deleteRef(root, gateRef(gate));
+    // Clear a leftover bare-id ref (pre-per-record naming) unless another record still uses it.
+    const legacyRef = gateRef(gate);
+    if (!Object.values(store.records).some((r) => r.snapshot_ref === legacyRef)) await deleteRef(root, legacyRef);
     saveStore(root, store);
     return { outcome: 'skipped', reason: 'nothing_to_commit', files: [] };
   }
   rec.files = changed.map((e) => e.path);
-  rec.snapshot_ref = await createSnapshot(root, st, gate, changed, ident, `shards snapshot ${gate}`);
+  rec.snapshot_ref = await createSnapshot(root, st, gate, changed, ident, `shards snapshot ${gate}`, rec.seq);
 
   // Ordering guard: older pending records go first.
   let blockedBy = null;
@@ -763,7 +832,7 @@ async function commitGateBody({ root, gate, config, session, getLeasedPaths, cfg
 
   if (blockedBy) {
     rec.reason = `blocked_by_${blockedBy}`;
-    fresh.records[gate] = rec;
+    fresh.records[rec.key] = rec;
     saveStore(root, fresh);
     return pendingResult(rec.reason);
   }
@@ -781,4 +850,4 @@ function listPendingFrom(store, beforeSeq) {
   return Object.values(store.records).filter((r) => (r.status === 'pending' || r.status === 'stuck') && r.seq < beforeSeq).sort((a, b) => a.seq - b.seq);
 }
 
-module.exports = { commitGate, replayPending, listPending, gitState, gateRef, makeDenyMatcher, BACKOFF_MS, MAX_TRIES };
+module.exports = { commitGate, replayPending, listPending, loadStore, gitState, gateRef, recordRef, makeDenyMatcher, BACKOFF_MS, MAX_TRIES };

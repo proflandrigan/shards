@@ -318,3 +318,63 @@ describe('lease sweep timer', () => {
     expect(startLeaseSweep({ root: tmp, ms: 0, setIntervalFn: () => { throw new Error('no'); } }).sweep).toBeTypeOf('function');
   });
 });
+
+describe('Codex apply_patch with a bare-string tool_input (CX-6)', () => {
+  const ADD = '*** Begin Patch\n*** Add File: notes.md\n+x\n*** End Patch';
+  const UPD = '*** Begin Patch\n*** Update File: models/a/x.py\n@@\n-x\n+y\n*** End Patch';
+  const cx = async (input, extra = {}) => {
+    const n = host.normalize({ session_id: SID, cwd: tmp, hook_event_name: 'PreToolUse', turn_id: 't1', tool_name: 'apply_patch', tool_input: input, ...extra }, { SHARDS_HOST: 'codex' });
+    const out = await handler(n, tmp);
+    return out ? JSON.parse(out).hookSpecificOutput : null;
+  };
+  it('normalize keeps a string tool_input as {input}; other non-objects still become {}', () => {
+    const n = (v) => host.normalize({ tool_name: 'apply_patch', tool_input: v }, { SHARDS_HOST: 'codex' }).toolInput;
+    expect(n(ADD)).toEqual({ input: ADD });
+    expect(n(undefined)).toEqual({}); expect(n(null)).toEqual({}); expect(n(42)).toEqual({}); expect(n(true)).toEqual({});
+    expect(n({ input: ADD })).toEqual({ input: ADD });
+  });
+  it('every documented payload form yields the parsed paths', () => {
+    const { writesOf } = require('../hooks/lib/writes');
+    for (const v of [UPD, { input: UPD }, { patch: UPD }, { command: UPD }, { command: ['apply_patch', UPD] }]) {
+      const n = host.normalize({ cwd: tmp, tool_name: 'apply_patch', tool_input: v }, { SHARDS_HOST: 'codex' });
+      expect(writesOf(n), JSON.stringify(v)).toEqual({ write: true, paths: [path.resolve(tmp, 'models/a/x.py')], unknown: false, exec: false });
+    }
+  });
+  it('pending gate: string apply_patch is denied and the reason names the parsed path', async () => {
+    await pendGate();
+    const d = await cx(ADD);
+    expect(denied(d)).toBe(true);
+    expect(d.permissionDecisionReason).toContain('gate g1 is pending');
+    expect(d.permissionDecisionReason).toContain('notes.md');
+  });
+  it('fan-out lease: lead string apply_patch into a worker slice is a known-path slice violation', async () => {
+    const l = await openTwoSlice();
+    await bind(l, 'ag1', 's1');
+    const d = await cx(UPD);
+    expect(denied(d)).toBe(true);
+    expect(d.permissionDecisionReason).toContain('models/a/x.py is inside slice owned by worker s1');
+    expect(d.permissionDecisionReason).not.toContain('could not be determined');
+  });
+  it('no gate, patch outside any slice: allowed', async () => {
+    await openTwoSlice();
+    expect(await cx('*** Begin Patch\n*** Add File: docs/notes.md\n+x\n*** End Patch')).toBeNull();
+    fs.rmSync(path.join(tmp, '.shards'), { recursive: true, force: true });
+    expect(await cx(ADD)).toBeNull();
+  });
+  it('spawned hook: string apply_patch denied under a gate; malformed/missing input still fails open', async () => {
+    const e = { ...process.env, SHARDS_HOST: 'codex' };
+    for (const k of ['CLAUDE_PROJECT_DIR', 'CLAUDE_PLUGIN_ROOT', 'CLAUDECODE', 'SHARDS_PROJECT_ROOT', 'SHARDS_GATE_ENFORCE']) delete e[k];
+    const run = (input) => spawnSync('node', [SHIM], { input, cwd: tmp, env: e, encoding: 'utf8' });
+    const base = { session_id: SID, cwd: tmp, hook_event_name: 'PreToolUse', turn_id: 't1' };
+    await pendGate();
+    const r = run(JSON.stringify({ ...base, tool_name: 'apply_patch', tool_input: ADD }));
+    expect(r.status).toBe(0);
+    expect(JSON.parse(r.stdout).hookSpecificOutput).toMatchObject({ permissionDecision: 'deny' });
+    expect(r.stdout).toContain('notes.md');
+    for (const raw of ['{not json', '', 'null', JSON.stringify({ ...base, tool_name: 'Read' }), JSON.stringify({ ...base, tool_name: 'Read', tool_input: 42 })]) {
+      const q = run(raw);
+      expect(q.status, raw).toBe(0);
+      expect(q.stdout, raw).toBe('');
+    }
+  });
+});

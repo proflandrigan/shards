@@ -9,13 +9,15 @@ const os = require('os');
 const path = require('path');
 
 // `match` is tested against a server's name, url, command and args. Commands are the vendors' documented
-// registration commands; they carry no credentials. `claude: null` = no CLI command exists (connector UI).
+// registration commands (verified 2026-11 against code.claude.com/docs/en/mcp, Atlassian's Rovo MCP v2 upgrade
+// guide and github/github-mcp-server docs/installation-guides); they carry only placeholders or env-var names,
+// never credentials. `claude: null` = no CLI command exists (connector UI).
 const INTEGRATIONS = [
   {
     id: 'atlassian', label: 'Atlassian (Confluence + Jira)', match: /atlassian|confluence|jira/i,
     claude: 'claude mcp add --transport http atlassian https://mcp.atlassian.com/v2/mcp',
     codex: 'codex mcp add atlassian --url https://mcp.atlassian.com/v2/mcp',
-    note: 'Authenticate in the host after adding (Claude Code: /mcp). Choose the Atlassian site when /shards:connect runs.',
+    note: 'OAuth sign-in after adding: Claude Code: /mcp (or `claude mcp login atlassian`); Codex: complete the browser sign-in `codex mcp add` opens (or `codex mcp login atlassian`). Choose the Atlassian site when /shards:connect runs.',
   },
   {
     id: 'drive', label: 'Google Drive / Slides', match: /google.?(drive|slides|docs|workspace)|gdrive/i,
@@ -25,9 +27,9 @@ const INTEGRATIONS = [
   },
   {
     id: 'github', label: 'GitHub', match: /github/i,
-    claude: 'claude mcp add --transport http github https://api.githubcopilot.com/mcp/',
-    codex: 'codex mcp add github --url https://api.githubcopilot.com/mcp/',
-    note: 'Authenticate in the host after adding (Claude Code: /mcp). Shards never stores a token.',
+    claude: 'claude mcp add --transport http github https://api.githubcopilot.com/mcp/ --header "Authorization: Bearer YOUR_GITHUB_PAT"',
+    codex: 'codex mcp add github --url https://api.githubcopilot.com/mcp/ --bearer-token-env-var GITHUB_PAT_TOKEN',
+    note: 'GitHub\'s remote server is set up with a GitHub personal access token in GitHub\'s Claude Code and Codex guides (fine-grained, least privilege). Claude Code: replace YOUR_GITHUB_PAT before running. Codex: export GITHUB_PAT_TOKEN in the environment Codex runs in. Shards never sees or stores the token.',
   },
 ];
 const HOSTS = ['claude', 'codex'];

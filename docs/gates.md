@@ -127,7 +127,7 @@ The prose for a pending gate says to stop and wait, and gives the interim `gates
 1. **Collect.** `git ls-files -co --exclude-standard -z -- <outputDirs>` inside a repo, or a filesystem walk outside one. Output directories come from the agent's `output_dir` with `{project}` substituted. Agents with `output_dir: null` return `skipped: no_output_dirs`.
 2. **Filter.** Drops `.git`, leased paths, denylisted paths, directories, and files over `max_file_size_bytes`. Keeps tracked files missing from disk as deletions.
 3. **Diff.** Hashes the files and diffs them against HEAD. Keeps only changed entries. None changed means `skipped: nothing_to_commit`.
-4. **Snapshot.** Writes a commit object (parent = HEAD) to `refs/shards/pending/<gate>` through a temporary index.
+4. **Snapshot.** Writes a commit object (parent = HEAD) to `refs/shards/pending/<gate>-<seq>` (one ref per pending record) through a temporary index.
 5. **Commit.** Normal path or plumbing path (section 6.3).
 6. **Finish.** On success the snapshot ref and pending record are deleted. On failure both are kept.
 
@@ -171,12 +171,16 @@ If `commitGate` throws, `confirmGate` stores `commit_pending` with `reason: comm
 `<root>/.shards/state/git-pending.json` (project-level, not per session), written atomically. Lock target `.shards/state/git-pending.lock` (proper-lockfile, stale 10 s, up to 600 retries). A corrupt file throws and is never overwritten.
 
 ```
-{ "version": 1, "next_seq": <n>, "records": { "<gate>": Record } }
+{ "version": 1, "next_seq": <n>, "records": { "<gate>@<session>#<seq>": Record } }
 ```
 
-Record fields: `gate, agent, seq, session, snapshot_ref, files, tries, next_try_at (epoch ms), status (pending|stuck|done), reason, created_at`. A record that reaches `done` is deleted, not kept.
+Record fields: `key, gate, agent, project, track, seq, session, output_dirs, snapshot_ref, files, tries, next_try_at (epoch ms), status (pending|stuck|done), reason, created_at`. A record that reaches `done` is deleted, not kept.
 
-Snapshot refs are `refs/shards/pending/<gate>`. Characters outside `[A-Za-z0-9._-]` become `_`. If anything changed, the name gets a `-<8 hex>` sha1 suffix.
+Records are keyed by an opaque record key (`rec.key`), not the gate id: gate ids repeat across projects and tracks (a closed id only counts for the same agent/project/track, see `requestGate`), so a reused id such as `data-analyst-phase-1` confirmed for another project, in the same or another session, gets its own record and does not drop an earlier uncommitted one. A new confirmation replaces an existing record only when it is the same gate instance: same gate id, session, agent, project and track (a re-confirm, for example after `changes_requested`). The replaced record's snapshot ref is deleted. Replay writes the commit outcome back to the matching instance: the current gate entry, or the entry kept in its `previous` list when the id has since been reused.
+
+Older stores keyed by bare gate id load unchanged: the existing key becomes `rec.key`, and their records (which have no `project`) count as the same instance as a new confirmation of the same gate id, session and agent.
+
+Snapshot refs are `refs/shards/pending/<gate>-<seq>`. In `<gate>`, characters outside `[A-Za-z0-9._-]` become `_`; if anything changed, the name gets a `-<8 hex>` sha1 suffix. Records from older stores keep the ref they stored (`refs/shards/pending/<gate>`).
 
 ### 6.6 Ordering, retries and backoff
 

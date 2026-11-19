@@ -18,7 +18,7 @@
 The agent writes files and reports the gate; it never stages, commits or pushes for a gate. When a human confirms an advancing gate, the runtime does the git work:
 
 - It takes the diff of each file under the agent's `output_dir` and commits only those paths on the current branch with subject `shards gate <gate-id>` and `Shards-Gate:` / `Shards-Agent:` trailers. Files you staged elsewhere are not included.
-- Before committing it writes a snapshot to `refs/shards/pending/<gate>` and a record to `.shards/state/git-pending.json`, so a failed commit can be replayed.
+- Before committing it writes a snapshot to `refs/shards/pending/<gate>-<seq>` and a record to `.shards/state/git-pending.json`, so a failed commit can be replayed.
 - Denylisted and oversized files are skipped, never deleted. Agents with `output_dir: null` produce no commit.
 - Non-advancing gates (`checkpoint`, `confirm`) do not commit.
 - The runtime never pushes; `git.push` has no effect today.

@@ -44,16 +44,21 @@ Small items that can be done now with no accounts are listed under step 0.
 
 ---
 
-## Step 0 · Small offline items (Claude can do these now)
+## Step 0 · Small offline items
 
-- [ ] **`runtime/sessions/index.js`** still reads the v1 `.shards/gates/state.json`. Read gate state from runtime state instead.
-- [ ] **Studio packaging:**
-  - `packages/studio/package.json` lists a `docs/` directory that no longer exists, so copy `src/docs` in at pack time;
-  - remove the dead `.permission-*` CSS rules in `chat.css`.
-- [ ] **Check `shards connect`'s printed `mcp add` commands** against the vendors' current docs: the Atlassian SSE URL, the GitHub MCP URL, and the Codex `--url` / `mcp-remote` forms. They were written from memory.
-- [ ] **Studio gate banner:** check it in a browser (for example with `/run` or Chrome).
-- [ ] **Real-kernel notebook test never runs in CI.** `test/notebook-tools.test.js` "notebook real kernel" is `skipIf(!haveJupyter)`, and no workflow installs `jupyter_client`/`ipykernel`, so it is always skipped. Add a `pip install jupyter_client ipykernel` step to one CI job (for example `runtime.yml` on ubuntu).
-- [ ] **Studio session start in a live host:** Studio now lists agents from `core/agents/*/agent.yaml` and starts a session by asking the agent to call the runtime `activate` tool (`mode="switch"`). Check in a real Claude Code session that the tool name (`mcp__plugin_shards_shards__activate`) resolves and the persona loads.
+Done on `next` (follow-up to the PR #72 review):
+- [x] `runtime/sessions/index.js` reads open gates from v2 runtime state (v1 `.shards/gates/state.json` only as a fallback for un-migrated projects).
+- [x] Pending-commit store keyed per gate instance (`<gate>@<session>#<seq>`, refs `refs/shards/pending/<gate>-<seq>`), so a reused gate id no longer drops an uncommitted commit; old stores still load.
+- [x] Hooks keep a bare-string `tool_input`, so Codex `apply_patch` targets are parsed (docs-only payload forms, see `docs/compat.md` CX-6).
+- [x] Studio package bundles `src/docs` at pack time (`prepack`/`postpack`); dead `.permission-*` CSS removed; standalone-install limits documented in `docs/studio.md`.
+- [x] `notebook-kernel` CI job in `runtime.yml` installs `jupyter_client`/`ipykernel` and fails if the real-kernel test is skipped.
+- [x] `shards connect` commands checked against vendor docs (2026-11-19): Atlassian v2 URL confirmed; GitHub commands now carry the required PAT (`--header` placeholder for Claude Code, `--bearer-token-env-var` for Codex).
+- [x] Studio gate banner checked headlessly against a fabricated pending gate (renders id, summary and confirm command).
+
+Still open:
+- [ ] **Studio session start in a live host:** Studio lists agents from `core/agents/*/agent.yaml` and starts a session by asking the agent to call the runtime `activate` tool (`mode="switch"`). Check in a real Claude Code session that `mcp__plugin_shards_shards__activate` resolves and the persona loads.
+- [ ] **Standalone Studio** (installed without the repo) has no sessions index and an empty v2 agent list, because it cannot reach `runtime/`. Decide whether to depend on `@proflandrigan/shards-mcp` or accept the limit (`docs/studio.md`).
+- [ ] **`shards connect` Google Drive/Slides:** the claude.ai connector path and whether an official Drive MCP server exists for Codex were not verified.
 
 ## Step 1 · Owner actions
 

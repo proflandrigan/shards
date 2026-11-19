@@ -132,14 +132,70 @@ function markEnded(sessionsDir, sessionId, { gateOpenAtEnd, reason } = {}) {
   return entry;
 }
 
-// Read the current gate state from .shards/gates/state.json. Returns the open
-// gate id (string) or null. Caller passes the shards root, not the gates dir.
-// Tolerant of missing/corrupt state — never throws. Mirrors readGateSnapshot
-// in src/ui/server.js and tools/shards-sessions.js so all three end-of-session
-// code paths produce identical `gateOpenAtEnd` shapes.
-function readGateOpenId(shardsDir) {
-  if (!shardsDir) return null;
+const OPEN_GATE_STATUSES = new Set(['pending', 'suspended']);
+
+function gateTime(g) {
+  const t = Date.parse((g && (g.requested_at || g.updated_at)) || '');
+  return Number.isFinite(t) ? t : 0;
+}
+
+// Most recently requested open (pending or suspended) gate in one session's runtime state, or null.
+// Reads <root>/.shards/state/sessions/<key>/gates.json through StateStore (written by
+// runtime/gates/machine.js). Missing, invalid-key or corrupt state -> null.
+function openGateInSession(root, sessionKey) {
   try {
+    const { StateStore } = require('../state/store');
+    const store = new StateStore(root, sessionKey); // throws on an invalid key
+    if (!fs.existsSync(store.file('gates'))) return null;
+    const gates = Object.values(store.read('gates').gates || {})
+      .filter((g) => g && typeof g.id === 'string' && OPEN_GATE_STATUSES.has(g.status));
+    if (!gates.length) return null;
+    gates.sort((a, b) => gateTime(b) - gateTime(a));
+    return gates[0];
+  } catch {
+    return null;
+  }
+}
+
+// Session-index ids are host session ids; runtime state uses the StateStore key derived from
+// them (same mapping the hooks and the correlator use; UUIDs map to themselves).
+function toStateKey(sessionId) {
+  try { return require('../../hooks/lib/host').toSessionKey(sessionId); } catch { return sessionId; }
+}
+
+// Id of the gate holding a session open, for `gateOpenAtEnd`. Never throws; null when none.
+//
+// `shardsDir` is the project's `.shards` directory (the project root is its parent).
+// v2 gate state is per session in runtime state (`.shards/state/sessions/<key>/gates.json`,
+// `{gates: {<id>: {status, frame, agent, project, requested_at, ...}}}`); a gate is open while
+// `pending` or `suspended`.
+//   - With `sessionId`: the most recently requested open gate of that session only (another
+//     session's gate is never attributed to it).
+//   - Without: the most recently requested open gate across all sessions.
+// Legacy fallback: only when the project has no v2 session state at all (an un-migrated v1
+// project; nothing in v2 writes the v1 file, and `shards migrate` imports and archives it) the
+// v1 single-slot `.shards/gates/state.json` ({open, id}) is read. It has no session scoping.
+function readGateOpenId(shardsDir, sessionId) {
+  if (!shardsDir || typeof shardsDir !== 'string') return null;
+  try {
+    const root = path.dirname(shardsDir);
+    const sessionsRoot = path.join(shardsDir, 'state', 'sessions');
+    let haveV2 = false;
+    try { haveV2 = fs.statSync(sessionsRoot).isDirectory(); } catch { haveV2 = false; }
+    if (haveV2 && path.basename(shardsDir) === '.shards') {
+      if (sessionId) {
+        const key = toStateKey(sessionId);
+        const g = key ? openGateInSession(root, key) : null;
+        return g ? g.id : null;
+      }
+      let best = null;
+      for (const key of fs.readdirSync(sessionsRoot)) {
+        const g = openGateInSession(root, key);
+        if (g && (!best || gateTime(g) > gateTime(best))) best = g;
+      }
+      return best ? best.id : null;
+    }
+    if (haveV2) return null;
     const raw = fs.readFileSync(path.join(shardsDir, 'gates', 'state.json'), 'utf8');
     const state = JSON.parse(raw);
     if (state && state.open) return state.id || null;
@@ -149,35 +205,32 @@ function readGateOpenId(shardsDir) {
   }
 }
 
-// On server startup, anything still tagged `active` past the abandonment
-// window is reclassified — we can't know if the process actually died, but
-// 24h of inactivity is a strong enough signal to surface it differently in
-// the UI than a healthy live session.
+// Reclassify `active` sessions idle past the abandonment window as `abandoned`. We can't know
+// whether the process actually died, but 24h of inactivity is a strong enough signal to show
+// it differently from a healthy live session (`shards sessions list`, Studio).
 //
-// On `gateOpenAtEnd`: at sweep time we don't know what the gate state was
-// *when the session actually went idle* — that ship sailed 24h+ ago. We
-// snapshot whatever's open right now anyway, because:
-//   (a) For UI-Sessions display, showing the currently-open gate is more
-//       informative than leaving the field null and indistinguishable from
-//       a clean exit.
-//   (b) In the common case (single project, one session at a time) the gate
-//       state is unlikely to have moved on much since the session went idle.
-//   (c) If the field is null, we leave it null rather than fabricating an
-//       'unknown' sentinel that downstream code would need to special-case.
-// Pass `shardsDir` to enable the snapshot; omit it (e.g. in unit tests) to
-// skip the read entirely.
+// On `gateOpenAtEnd`: at sweep time we don't know what the gate state was *when the session
+// actually went idle*. We snapshot that session's currently open gate (readGateOpenId with the
+// entry's session id) anyway, because:
+//   (a) showing the gate still holding the session open is more informative than leaving the
+//       field null and indistinguishable from a clean exit;
+//   (b) an abandoned session's runtime state does not move on by itself, so its open gate is
+//       very likely the one it was left at;
+//   (c) if nothing is open we leave the field null rather than fabricating an 'unknown'
+//       sentinel that downstream code would need to special-case.
+// Pass `shardsDir` (the project's `.shards` dir) to enable the snapshot; omit it (e.g. in unit
+// tests, or Studio's startup sweep) to skip the read entirely.
 function sweepAbandoned(sessionsDir, { nowMs = Date.now(), maxAgeMs = ABANDON_AFTER_MS, shardsDir } = {}) {
   const data = readIndex(sessionsDir);
   let changed = 0;
-  let cachedGateId; // undefined sentinel — read at most once per sweep
   for (const entry of data.sessions) {
     if (entry.status !== 'active') continue;
     const last = Date.parse(entry.lastActivityAt || entry.createdAt || 0);
     if (Number.isFinite(last) && nowMs - last > maxAgeMs) {
       entry.status = 'abandoned';
       if (shardsDir && entry.gateOpenAtEnd == null) {
-        if (cachedGateId === undefined) cachedGateId = readGateOpenId(shardsDir);
-        if (cachedGateId) entry.gateOpenAtEnd = cachedGateId;
+        const gateId = readGateOpenId(shardsDir, entry.sessionId);
+        if (gateId) entry.gateOpenAtEnd = gateId;
       }
       changed += 1;
     }

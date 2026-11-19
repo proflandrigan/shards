@@ -8,7 +8,8 @@ Every Shards chat is recorded in a durable index so the user can list past chats
 
 - Index file: `.shards/sessions/INDEX.json` under the project root.
 - Index module: `runtime/sessions/index.js`. It moved from `src/ui/session-index.js`.
-- Statuses: `active`, `ended`, `abandoned`. A sweep on startup marks stale `active` rows past 24h as `abandoned`.
+- Statuses: `active`, `ended`, `abandoned`. A sweep on startup marks stale `active` rows past 24h as `abandoned`. `sweepAbandoned(sessionsDir, { shardsDir })` also records `gateOpenAtEnd` for each swept row when `shardsDir` is given.
+- `gateOpenAtEnd` comes from `readGateOpenId(shardsDir, sessionId?)`: the most recently requested `pending` or `suspended` gate in that session's runtime state (`.shards/state/sessions/<key>/gates.json`), or across all sessions when no id is given. It never throws and returns `null` when nothing is open. Only a project with no `.shards/state/sessions/` at all (un-migrated v1) falls back to the legacy `.shards/gates/state.json`.
 
 ## 2. MCP tools
 

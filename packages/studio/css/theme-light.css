@@ -376,20 +376,6 @@
 [data-theme="light"] .session-tab.needs-attention { border-color: #d09020; }
 [data-theme="light"] .session-tab.needs-attention::after { background: #d09020; box-shadow: 0 0 4px rgba(208, 144, 32, 0.4); }
 
-/* Permission cards */
-[data-theme="light"] .permission-card { background: #ffffff; border-color: #ddd; }
-[data-theme="light"] .permission-title { color: #333; }
-[data-theme="light"] .permission-tool { color: #888; }
-[data-theme="light"] .permission-command { background: #f5f5f8; border-color: #ddd; }
-[data-theme="light"] .permission-command-text { color: #333; }
-[data-theme="light"] .permission-btn { background: #f0f0f4; border-color: #ccc; color: #555; }
-[data-theme="light"] .permission-btn-allow { background: #e8f5e8; border-color: #a0d0a0; color: #2a7a2a; }
-[data-theme="light"] .permission-btn-always { background: #e8f5e8; border-color: #a0d0a0; color: #2a6a2a; }
-[data-theme="light"] .permission-btn-deny { background: #f5e8e8; border-color: #d0a0a0; color: #7a2a2a; }
-[data-theme="light"] .permission-btn-always-deny { background: #f5e8e8; border-color: #d0a0a0; color: #6a2a2a; }
-
-/* Gate confirmation buttons */
-
 /* Project-specs latest section highlight (light) */
 [data-theme="light"] .specs-latest-section {
   background: rgba(56, 96, 192, 0.06);

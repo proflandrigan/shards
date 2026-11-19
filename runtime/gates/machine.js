@@ -151,6 +151,8 @@ async function confirmGate(session, id, opts = {}, deps = {}) {
     commit = await commitGate({
       root: session.root, session: state.sessionKey, gate: entry.id,
       agent: entry.agent, outputDirs, config: gitCfg,
+      // Gate ids repeat across projects/tracks; the pending-commit store keys records by instance.
+      project: entry.project || null, track: entry.track || null,
       // Leases need the session object (root + store), not just its key.
       getLeasedPaths: () => require('../git/leases').getLeasedPaths({ root: session.root, sessionKey: state.sessionKey, state }),
     });

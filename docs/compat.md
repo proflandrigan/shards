@@ -158,6 +158,7 @@ Sources: https://learn.chatgpt.com/docs/hooks.md, https://learn.chatgpt.com/docs
   - PreToolUse payload: `turn_id`, `tool_name`, `tool_use_id`, `tool_input`; covers Bash, `apply_patch`, MCP tools (`mcp__...`) and local function tools; not hosted tools such as WebSearch. `write_stdin` does not re-run it. The page calls hooks a guardrail, not a complete enforcement boundary.
   - Decisions: PreToolUse supports `deny` and `allow` with `updatedInput`; `ask` is explicitly UNSUPPORTED (marks the hook failed and the tool call continues). PermissionRequest hooks (`allow`/`deny`) run only when Codex is about to ask for approval.
   - `agent_id` only on SubagentStart/SubagentStop/model-request events, not documented on PreToolUse.
+  - `apply_patch` `tool_input` shape is not pinned down by the page. `hooks/lib/host.js` normalises a bare-string `tool_input` (the patch text) to `{input: <string>}`; `hooks/lib/writes.js` also reads `{input|patch|command}` as a string or a `["apply_patch", "<patch>"]` array. The `*** Add/Update/Delete File:` and `*** Move to:` paths are then checked against gates and fan-out slices; a patch with no parseable path is an unknown-target write. Not checked against a real payload.
 - Status: docs-only, unverified.
 - Impact: E11.4 cannot use `ask` on Codex; use `deny` or the PermissionRequest hook. D2 cannot tell consult from main on PreToolUse via `agent_id`. D6/E11.6 SessionStart `compact` is available.
 

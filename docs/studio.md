@@ -56,4 +56,12 @@ The `/shards-ui` and `/shards-guide` commands are retired. Start Studio with `np
 
 ## Developer Guide
 
-The Developer Guide is the markdown tree under `src/docs/` with its `manifest.json` as the table of contents. Studio's guide panel reads that one manifest; there is no separate copy. It looks for the guide in this order: the project's `docs/shards-guide/` (the installed copy), `docs/` inside the Studio package, then `src/docs/` of a monorepo checkout. When you add or remove a guide page, update `src/docs/manifest.json` only.
+The Developer Guide is the markdown tree under `src/docs/` with its `manifest.json` as the table of contents. Studio's guide panel reads that one manifest; there is no separate copy. It looks for the guide in this order: the project's `docs/shards-guide/` (the installed copy), `docs/` inside the Studio package, then `src/docs/` of a monorepo checkout. When you add or remove a guide page, update `src/docs/manifest.json` only. The published package carries its own copy: `npm pack`/`npm publish` in `packages/studio` runs `prepack` (`node scripts/pack-docs.js copy`, which copies `src/docs` into `packages/studio/docs/`) and `postpack` (removes it again). `packages/studio/docs/` is gitignored; never edit it.
+
+## Standalone install
+
+Installed from npm, Studio cannot reach the repo's `runtime/` (`server.js` requires `../../runtime/sessions/index.js` and `../../runtime/agents.js`). Both requires are optional and Studio still starts, serves the guide, artifacts and the gate banner. What a standalone install cannot do:
+
+- **Sessions index.** It falls back to a no-op index: `.shards/sessions/INDEX.json` is not maintained and the Sessions panel (`GET /sessions/index`) lists nothing, so sessions started from Studio cannot be found again through the index.
+- **v2 agent list.** Without `runtime/agents.js` it cannot read `core/agents/*/agent.yaml`; the agent list falls back to the v1 `<project>/.claude/agents/*.md` files and is empty in a v2 project.
+

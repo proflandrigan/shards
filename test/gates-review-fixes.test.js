@@ -125,7 +125,7 @@ describe('git binding: errors never lose a commit', () => {
     // Corrupt g1's record so attempt() throws (files is not iterable).
     const file = path.join(root, '.shards', 'state', 'git-pending.json');
     const store = JSON.parse(fs.readFileSync(file, 'utf8'));
-    store.records.g1.files = 42;
+    Object.values(store.records).find((r) => r.gate === 'g1').files = 42;
     fs.writeFileSync(file, JSON.stringify(store));
     const out = await git.replayPending(root, { config: {}, force: true });
     // The throw is a failed try for g1 (store saved, others still reported), not a rejected replay.

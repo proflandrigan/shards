@@ -86,9 +86,16 @@ describe('shards connect', () => {
     expect(t).toContain('claude mcp add --transport http atlassian https://mcp.atlassian.com/v2/mcp');
     expect(t).not.toContain('/v1/sse');
     expect(t).toContain('codex mcp add atlassian');
-    expect(t).toContain('claude mcp add --transport http github https://api.githubcopilot.com/mcp/');
+    expect(t).toContain('codex mcp add atlassian --url https://mcp.atlassian.com/v2/mcp');
+    expect(t).toContain('claude mcp add --transport http github https://api.githubcopilot.com/mcp/ --header "Authorization: Bearer YOUR_GITHUB_PAT"');
+    expect(t).toContain('codex mcp add github --url https://api.githubcopilot.com/mcp/ --bearer-token-env-var GITHUB_PAT_TOKEN');
     expect(t).toMatch(/Google Drive connector/);
-    for (const l of t.split('\n').filter((x) => /run: /.test(x))) expect(l).not.toMatch(/--header|Bearer|token=|-e [A-Z_]+=|--env/i);
+    // Commands carry only a placeholder or an env-var name, never a credential value.
+    for (const l of t.split('\n').filter((x) => /run: /.test(x))) {
+      expect(l).not.toMatch(/token=|-e [A-Z_]+=|--env /i);
+      expect(l).not.toMatch(/gh[pousr]_|github_pat_/);
+      if (/Bearer/.test(l)) expect(l).toMatch(/Bearer YOUR_GITHUB_PAT"/);
+    }
     expect(fs.readdirSync(tmp).sort()).toEqual(before);
     expect(fs.readdirSync(home)).toEqual([]);
   });

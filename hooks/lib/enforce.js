@@ -97,7 +97,10 @@ async function enforce(n, root, env = process.env) {
   if (bound) return null; // exec only (tests, scripts): bound workers keep working
   if (hasGates) {
     const g = pendingGate(session);
-    if (g) return { deny: `shards: gate ${g.id} is pending; write/exec tools are blocked until it is confirmed (a subagent needs a fanout_claim lease binding to keep working)` };
+    if (g) {
+      const tgt = w.paths.length ? ` (target: ${w.paths.map((p) => path.relative(root, p) || p).join(', ')})` : '';
+      return { deny: `shards: gate ${g.id} is pending; write/exec tools are blocked until it is confirmed${tgt} (a subagent needs a fanout_claim lease binding to keep working)` };
+    }
   }
   if (hasLeases && w.write) {
     for (const p of w.paths) {

@@ -31,6 +31,15 @@ function detectHost(payload, env = process.env) {
 
 function str(v) { return typeof v === 'string' && v ? v : undefined; }
 
+// tool_input is always an object for consumers. Codex may send apply_patch input as a bare
+// string (the patch text, CX-6 [docs-only]); keep it as {input: <string>}, the field
+// hooks/lib/writes.js patchText reads, instead of dropping it. Other non-objects still
+// become {}.
+function toolInputOf(v) {
+  if (typeof v === 'string') return { input: v };
+  return v && typeof v === 'object' ? v : {};
+}
+
 function normalize(payload, env = process.env) {
   const p = payload && typeof payload === 'object' ? payload : {};
   return {
@@ -42,7 +51,7 @@ function normalize(payload, env = process.env) {
     source: str(p.source),
     toolName: str(p.tool_name),
     toolUseId: str(p.tool_use_id),
-    toolInput: p.tool_input && typeof p.tool_input === 'object' ? p.tool_input : {},
+    toolInput: toolInputOf(p.tool_input),
     permissionMode: str(p.permission_mode), // absent on some events; undefined means "host did not report"
     agentId: str(p.agent_id),     // Claude Code subagents only; absent on Codex PreToolUse (CX-6)
     agentType: str(p.agent_type),
