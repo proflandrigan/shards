@@ -105,6 +105,24 @@ describe('dispatch / report / status', () => {
     expect(text(r2)).toMatch(/a: status is dispatched/);
     expect(text(await call('task_dispatch', { ids: ['zz'] }))).toMatch(/unknown task/);
   });
+  it('concurrent dispatch of the same id: one wins, the loser leaves no active lease (re-checked under the lock)', async () => {
+    const rs = await Promise.all([call('task_dispatch', { ids: ['a'] }), call('task_dispatch', { ids: ['a'] })]);
+    expect(rs.filter((r) => !r.isError)).toHaveLength(1);
+    const loser = rs.find((r) => r.isError);
+    expect(text(loser)).toMatch(/status is dispatched/);
+    const st = state.read('tasks').tasks.a;
+    expect(st.attempts).toBe(1);
+    const active = leases.listActive(sess());
+    expect(active).toHaveLength(1);
+    expect(active[0].id).toBe(st.lease_id);
+  });
+  it('concurrent report of the same task: one is recorded, the other refused', async () => {
+    await call('task_dispatch', { ids: ['a'] });
+    const rs = await Promise.all([call('task_report', { id: 'a', result: result() }), call('task_report', { id: 'a', result: result({ status: 'failed' }) })]);
+    expect(rs.filter((r) => !r.isError)).toHaveLength(1);
+    expect(text(rs.find((r) => r.isError))).toMatch(/not dispatched/);
+    expect(leases.listActive(sess())).toHaveLength(0);
+  });
   it('report validates, closes lease, maps status; dependents become ready', async () => {
     await call('task_dispatch', { ids: ['a'] });
     const bad = await call('task_report', { id: 'a', result: { status: 'done' } });

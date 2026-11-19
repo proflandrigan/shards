@@ -3,6 +3,7 @@
 // as {leases: {<id>: lease}}; every mutation goes through state.update (locked).
 // A lease grants a worker (worker_type) exclusive-ish slices of the project.
 const crypto = require('crypto');
+const fs = require('fs');
 const path = require('path');
 const { StateStore } = require('../state/store');
 
@@ -110,17 +111,31 @@ async function expireStale(session, now = Date.now()) {
   return expired;
 }
 
+// Resolve symlinks on the longest existing prefix of p (the rest may not exist yet: a new file).
+function realish(p) {
+  let cur = path.resolve(p); const tail = [];
+  for (;;) {
+    try { return path.join(fs.realpathSync.native(cur), ...tail); } catch (_) { /* not there yet */ }
+    const parent = path.dirname(cur);
+    if (parent === cur) return path.join(cur, ...tail);
+    tail.unshift(path.basename(cur)); cur = parent;
+  }
+}
+
+// macOS and Windows file systems are case-insensitive by default: `Models/A` is `models/a`.
+const CASE_INSENSITIVE = process.platform === 'darwin' || process.platform === 'win32';
+const fold = (s) => (CASE_INSENSITIVE ? s.toLowerCase() : s);
+
 function relOf(session, filePath) {
   const s = String(filePath || '').replace(/\\/g, '/');
-  let rel;
-  if (path.isAbsolute(filePath) || /^[A-Za-z]:\//.test(s)) rel = path.relative(session.root, filePath).replace(/\\/g, '/');
-  else rel = path.posix.normalize(s || '.');
+  const abs = path.isAbsolute(filePath) || /^[A-Za-z]:\//.test(s) ? filePath : path.resolve(session.root, path.posix.normalize(s || '.'));
+  let rel = path.relative(realish(session.root), realish(abs)).replace(/\\/g, '/');
   rel = rel.replace(/^(\.\/)+/, '').replace(/\/+$/, '');
   if (!rel || rel === '.' || rel === '..' || rel.startsWith('../') || path.isAbsolute(rel)) return null;
   return rel;
 }
 
-const inside = (rel, p) => rel === p || rel.startsWith(`${p}/`);
+const inside = (rel, p) => { const r = fold(rel); const q = fold(p); return r === q || r.startsWith(`${q}/`); };
 
 // Mutate the leases state under the state lock. bump=false (hook-owned writes: worker binding and
 // heartbeats) does NOT bump the session version, so they never trigger version-change re-grounding.

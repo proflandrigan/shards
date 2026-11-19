@@ -24,14 +24,19 @@ module.exports = defineTool({
     if (!v.ok) throw new Error(`task_report: result rejected:\n${v.errors.map((e) => `  - ${e}`).join('\n')}`);
 
     const session = { root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state };
-    if (s0.lease_id) { try { await require('../leases').closeLease(session, s0.lease_id); } catch (_) { /* already closed/expired */ } }
     let status = MAP[args.result.status];
     const escalate = status === 'failed' && (s0.attempts || 0) >= T.MAX_ATTEMPTS;
     if (escalate) status = 'blocked';
     const next = await ctx.state.update(T.STATE_NAME, (cur) => {
-      cur.tasks[args.id] = { ...cur.tasks[args.id], status, result: args.result, ...(escalate ? { escalated: true } : {}), updated_at: new Date().toISOString() };
+      // Re-check under the state lock: a concurrent task_report may have recorded this task since s0 was read.
+      const s = cur.tasks[args.id];
+      if (!s || (s.status !== 'dispatched' && !(s.status === 'paused' && s.lease_id)) || s.lease_id !== s0.lease_id || (s.attempts || 0) !== (s0.attempts || 0)) {
+        throw new Error(`task_report: task ${args.id} is ${s ? s.status : 'missing'}, not dispatched (it changed concurrently); nothing was recorded.`);
+      }
+      cur.tasks[args.id] = { ...s, status, result: args.result, ...(escalate ? { escalated: true } : {}), updated_at: new Date().toISOString() };
       return cur;
     });
+    if (s0.lease_id) { try { await require('../leases').closeLease(session, s0.lease_id); } catch (_) { /* already closed/expired */ } }
     const hookOut = await T.onDeviations(session, args.id, args.result);
     const mirror = T.mirrorTasksMd(ctx, { ...next, manifest: st0.manifest, path: st0.path });
     const st = { ...next, manifest: st0.manifest };

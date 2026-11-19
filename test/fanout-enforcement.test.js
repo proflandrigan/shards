@@ -177,6 +177,19 @@ describe('bash write detection', () => {
     ['python3 -c "open(\'f\',\'w\').write(1)"', true, []], ['node -e "require(\'fs\').writeFileSync(\'f\',1)"', true, []],
     ['python3 -c "print(1)"', false], ['cat <<EOF > f.txt\nhello > not-a-target\nEOF', true, ['f.txt']],
     ['cd x && echo a > $OUT', true, []], ['echo "a > b"', false], ['FOO=1 rm f', true, ['f']],
+    // review fixes (PR #72): denylist gaps
+    ['git -C . checkout -- .', true, []], ['git -C sub rm a', true, ['sub/a']], ['git -c a=b status', false],
+    ['tar -xf x.tgz -C src', true, ['src']], ['tar xzf x.tgz', true, ['.']], ['tar -czf out.tgz src', true, ['out.tgz']], ['tar -tf x.tgz', false],
+    ['curl -o a.txt http://x', true, ['a.txt']], ['curl -sSLo a.txt http://x', true, ['a.txt']], ['curl -O http://x/f', true, []], ['curl http://x', false],
+    ['wget -O b.txt http://x', true, ['b.txt']], ['wget -O - http://x', false],
+    ['find . -name "*.py" -delete', true, []], ['find . -exec touch {} +', true, []], ['find . -name x', false],
+    ['awk -i inplace 1 f.txt', true, ['f.txt']], ["awk '{print $1}' f.txt", false],
+    ['rsync -a /tmp/x models/a/', true, ['models/a/']], ['rsync -a src/ host:/dst', false],
+    ['sh -c "rm x"', true, []], ['bash -c "echo x > f"', true, []], ['curl http://x | bash', true, []], ['eval "$X"', true, []],
+    ['cat <(touch x)', true], ['diff <(ls a) <(ls b)', true, []], ['echo $(rm x)', true, ['x']], ['ls $(pwd)', false],
+    ['cd models && rm a/x.py', true, []], ['(cd x; rm y)', true, []], ['if true; then rm z; fi', true, ['z']],
+    ['python3 train.py', false], ['node models/a/s.js', false], ['npm install', false], ['ls -la; git diff', false],
+    ['apply_patch <<\'EOF\'\n*** Begin Patch\n*** Update File: a.py\n@@\n-x\n+y\n*** End Patch\nEOF', true, ['a.py']],
   ];
   for (const [cmd, w, paths] of table) {
     it(JSON.stringify(cmd), () => {
@@ -188,6 +201,11 @@ describe('bash write detection', () => {
       }
     });
   }
+  it('exec flag: interpreter on a file, package scripts, source', () => {
+    for (const c of ['python3 train.py', 'node x.js', 'npm install', 'npm test', 'bash run.sh', 'source env.sh', 'cd a && pytest']) expect(bashWrites(c, T).exec, c).toBe(true);
+    for (const c of ['ls', 'git status', 'cat f', 'npm ls', 'grep -r x .']) expect(bashWrites(c, T).exec, c).toBe(false);
+    expect(bashWrites('cat <(touch x)', T).unknown).toBe(true); // process substitution: always unknown target
+  });
   it('bound worker: write with unknown target is denied; outside-slice bash write denied', async () => {
     const l = await openTwoSlice();
     await bind(l, 'ag1', 's1');
@@ -195,6 +213,66 @@ describe('bash write detection', () => {
     expect(denied(await call('Bash', { command: 'echo a > models/b/f' }, { agent_id: 'ag1' }))).toBe(true);
     expect(await call('Bash', { command: 'echo a > models/a/f && ls' }, { agent_id: 'ag1' })).toBeNull();
     expect(await call('Bash', { command: 'python3 train.py --out /tmp/x' }, { agent_id: 'ag1' })).toBeNull();
+  });
+});
+
+describe('review fixes (PR #72): unknown-target writes, exec, apply_patch, notebook tools, path canonicalisation', () => {
+  const NB = 'mcp__plugin_shards_shards__notebook_exec';
+  it('pending gate: lead exec/unknown-target writes, apply_patch and notebook execution are denied; reads allowed', async () => {
+    await pendGate();
+    for (const c of ['git -C . checkout -- .', 'tar -xf x.tgz -C src', 'curl -o a.txt http://x', 'find . -delete', 'awk -i inplace 1 f', 'cat <(touch x)', 'python3 train.py', 'sh -c "true"', 'cd src && rm x', 'rsync -a a/ b/']) {
+      expect(denied(await call('Bash', { command: c })), c).toBe(true);
+    }
+    for (const c of ['ls -la', 'cat a', 'git status', 'git diff', 'git log --oneline', 'grep -r x .']) expect(await call('Bash', { command: c }), c).toBeNull();
+    expect(denied(await call(NB, { session: 's', cell: 0 }))).toBe(true);
+    expect(denied(await call('mcp__plugin_shards_shards__notebook_run_all', { session: 's' }))).toBe(true);
+    expect(await call('mcp__plugin_shards_shards__notebook_status', { session: 's' })).toBeNull();
+    const cx = (input) => call('apply_patch', input);
+    expect(denied(await cx({ input: '*** Begin Patch\n*** Add File: notes.md\n+x\n*** End Patch' }))).toBe(true);
+    expect(denied(await cx({ command: ['apply_patch', '*** Begin Patch\n*** Delete File: a\n*** End Patch'] }))).toBe(true);
+    expect(denied(await cx({}))).toBe(true);
+  });
+  it('apply_patch targets are parsed (Add/Update/Delete/Move to); unparseable -> unknown', () => {
+    const { writesOf } = require('../hooks/lib/writes');
+    const p = '*** Begin Patch\n*** Add File: a.md\n+x\n*** Update File: b.py\n*** Move to: c.py\n@@\n*** Delete File: d.txt\n*** End Patch';
+    expect(writesOf({ toolName: 'apply_patch', toolInput: { input: p }, cwd: tmp })).toEqual({ write: true, paths: ['a.md', 'b.py', 'c.py', 'd.txt'].map((f) => path.resolve(tmp, f)), unknown: false, exec: false });
+    expect(writesOf({ toolName: 'apply_patch', toolInput: { patch: 'garbage' }, cwd: tmp })).toMatchObject({ write: true, unknown: true, paths: [] });
+  });
+  it('lead with an active fan-out lease: apply_patch/rsync into a slice denied; unknown target asks on Claude, denied on Codex', async () => {
+    await openTwoSlice();
+    expect(denied(await call('apply_patch', { input: '*** Begin Patch\n*** Update File: models/a/x.py\n*** End Patch' }))).toBe(true);
+    expect(denied(await call('Bash', { command: 'rsync -a /tmp/x models/a/' }))).toBe(true);
+    expect(denied(await call('Bash', { command: 'tar -xf x.tgz -C models/b' }))).toBe(true);
+    for (const c of ['cd models && rm a/x.py', 'sh -c "rm models/a/x"', 'find models/a -delete']) {
+      expect((await call('Bash', { command: c }))?.permissionDecision, c).toBe('ask');
+    }
+    expect((await call(NB, { session: 's', cell: 0 }))?.permissionDecision).toBe('ask');
+    const n = host.normalize({ session_id: SID, cwd: tmp, hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'sh -c "rm models/a/x"' } }, { SHARDS_HOST: 'codex' });
+    expect(JSON.parse(await handler(n, tmp)).hookSpecificOutput.permissionDecision).toBe('deny');
+    expect(await call('Bash', { command: 'python3 train.py' })).toBeNull(); // exec only: no gate pending
+    expect(await call('Bash', { command: 'echo x > other.txt' })).toBeNull();
+  });
+  it('bound worker: may run scripts/tests, but cd-tainted, sh -c and notebook execution writes are denied', async () => {
+    const l = await openTwoSlice();
+    await bind(l, 'ag1', 's1');
+    for (const c of ['node models/a/s.js', 'python3 -m pytest', 'npm test']) expect(await call('Bash', { command: c }, { agent_id: 'ag1' }), c).toBeNull();
+    for (const c of ['cd models/b; touch models/a/y', 'sh -c "touch models/a/y"', 'curl -o models/b/f http://x']) expect(denied(await call('Bash', { command: c }, { agent_id: 'ag1' })), c).toBe(true);
+    expect(await call('Bash', { command: 'curl -o models/a/f http://x' }, { agent_id: 'ag1' })).toBeNull();
+    expect(denied(await call(NB, { session: 's', cell: 0 }, { agent_id: 'ag1' }))).toBe(true);
+  });
+  it('lead protection resolves symlinks (and case on case-insensitive platforms)', async () => {
+    fs.mkdirSync(path.join(tmp, 'models/a'), { recursive: true });
+    fs.mkdirSync(path.join(tmp, 'models/b'), { recursive: true });
+    fs.symlinkSync(path.join(tmp, 'models/a'), path.join(tmp, 'link'));
+    const l = await openTwoSlice();
+    expect(denied(await W('link/x.py'))).toBe(true);
+    expect(denied(await call('Bash', { command: 'rm link/x.py' }))).toBe(true);
+    if (process.platform === 'darwin' || process.platform === 'win32') expect(denied(await W('Models/A/x.py'))).toBe(true);
+    // a bound worker writing through a symlink inside its slice that points into another slice is denied
+    await bind(l, 'ag1', 's1');
+    fs.symlinkSync(path.join(tmp, 'models/b'), path.join(tmp, 'models/a/lnk'));
+    expect(denied(await W('models/a/lnk/z', { agent_id: 'ag1' }))).toBe(true);
+    expect(await W('models/a/ok.py', { agent_id: 'ag1' })).toBeNull();
   });
 });
 

@@ -89,6 +89,7 @@ const DESTRUCTIVE_MARKERS = [
   /\|\s*sh\b/, /\|\s*bash\b/,       // pipe-to-shell
   /\$\([^)]/,                       // command substitution — bail (could hide anything)
   /`[^`]/,                          // backtick command substitution
+  /[<>]\(/,                         // process substitution <(...) / >(...) runs a command
   // find — -delete and -exec/-execdir/-ok/-okdir run arbitrary (often
   // destructive) work with no `rm`/`;` present to trip the other markers;
   // -fprint/-fprint0/-fprintf/-fls write output to a file (path-controlled

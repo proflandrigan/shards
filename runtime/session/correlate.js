@@ -3,9 +3,8 @@
 // SessionStart handshake files written by hooks/session-start.js:
 //   <root>/.shards/state/handshake/<hook-pid>.json
 //   {session_id, source, cwd, ts, pid, ppid_chain:[parent, grandparent, ...]}
-// We intersect OUR ancestry with each handshake's ppid_chain and pick the handshake whose
-// matching ancestor is nearest to us (smallest index in our ancestry); ties -> newest ts
-// (a /clear re-keys the session under the same ancestor). Docs: docs/compat.md, and
+// A handshake matches when our parent (the host) is the hook's parent or grandparent; among
+// matches the newest ts wins (a /clear re-keys the session under the same host process). Docs: docs/compat.md, and
 // docs/gate-audit-2026-06.md Bug 1 (cross-session gate interference).
 const fs = require('fs');
 const path = require('path');
@@ -75,20 +74,24 @@ function readHandshakes(root, { now = Date.now } = {}) {
 }
 
 // matchHandshake(handshakes, ancestry, {startTimeMs}) -> handshake | null.
+// The shared ancestor must be the host process itself: our direct parent (ancestry[0], the host
+// spawns the stdio MCP server) and the hook's parent or grandparent (ppid_chain[0] or [1]: the host
+// may run the hook through a shell). A match only through a farther ancestor (a shared login shell,
+// tmux, terminal) would bind this server to another session's handshake, so it is refused.
 function matchHandshake(handshakes, ancestry, { startTimeMs } = {}) {
   let best = null;
+  const hostPid = ancestry[0];
+  if (!Number.isInteger(hostPid)) return null;
   for (const h of handshakes) {
-    let idx = -1;
-    for (let i = 0; i < ancestry.length && idx < 0; i++) if (h.ppid_chain.includes(ancestry[i])) idx = i;
-    if (idx < 0) continue;
+    if (!h.ppid_chain.slice(0, 2).includes(hostPid)) continue;
     if (typeof startTimeMs === 'function') { // PID-reuse guard
       let started;
-      try { started = startTimeMs(ancestry[idx]); } catch (_) { started = undefined; }
+      try { started = startTimeMs(hostPid); } catch (_) { started = undefined; }
       if (Number.isFinite(started) && h.tsMs < started) continue;
     }
-    if (!best || idx < best.idx || (idx === best.idx && h.tsMs > best.h.tsMs)) best = { idx, h };
+    if (!best || h.tsMs > best.tsMs) best = h;
   }
-  return best ? best.h : null;
+  return best;
 }
 
 function createCorrelator({ root, env = process.env, ancestry, host, now = Date.now, processKey } = {}) {

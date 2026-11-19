@@ -22,7 +22,7 @@ describe('correlate', () => {
   it('matches by ancestry intersection', () => {
     hs('1.json', { sid: SID(1), chain: [50, 60, 70] });
     hs('2.json', { sid: SID(2), chain: [51, 61] });
-    const r = mk([10, 60, 20]).resolve();
+    const r = mk([60, 10, 20]).resolve(); // host 60 is the hook's grandparent (hook run via a shell)
     expect(r).toMatchObject({ key: SID(1), source: 'handshake', host: 'claude-code' });
   });
 
@@ -32,6 +32,15 @@ describe('correlate', () => {
     hs('b.json', { sid: SID(2), chain: [201, 500], ts: new Date(Date.now() + 5000).toISOString() });
     expect(mk([101, 500]).resolve().key).toBe(SID(1));
     expect(mk([201, 500]).resolve().key).toBe(SID(2));
+  });
+
+  it('refuses a match only through a shared farther ancestor (login shell, tmux)', () => {
+    hs('a.json', { sid: SID(1), chain: [101, 500, 600] });
+    expect(mk([999, 500, 600]).resolve().source).toBe('process'); // shared shell 500 only
+    expect(matchHandshake(readHandshakes(root), [999, 500])).toBeNull();
+    hs('b.json', { sid: SID(2), chain: [7, 8, 999] }); // host is the hook's great-grandparent: too far
+    expect(matchHandshake(readHandshakes(root), [999])).toBeNull();
+    expect(matchHandshake(readHandshakes(root), [101, 500]).key).toBe(SID(1));
   });
 
   it('newest ts wins on equal distance and a later handshake re-keys', () => {

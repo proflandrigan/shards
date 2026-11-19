@@ -143,4 +143,45 @@ describe('isAutoApprovable', () => {
       expect(isAutoApprovable('Bash', { command: 'git diff -O /tmp/orderfile HEAD' })).toBe(true);
     });
   });
+
+  describe('warehouse CLI: extra SQL flags, dangerous flags, extra positionals, side-effect functions', () => {
+    const no = [
+      'psql -c "SELECT 1" -c "DROP TABLE users"',
+      'psql -c "SELECT 1" -f evil.sql',
+      'psql -c "SELECT 1" --file=evil.sql',
+      'psql -c "SELECT 1" -o /Users/x/.zshrc',
+      'psql -c "SELECT 1" --output /tmp/x',
+      'duckdb db.duckdb -c "SELECT 1" -c "DROP TABLE t"',
+      'duckdb -cmd "DROP TABLE t" db.duckdb -c "SELECT 1"',
+      'duckdb db.duckdb "DROP TABLE t" -c "SELECT 1"',
+      'mysql -e "SELECT 1" --init-command="DROP TABLE t"',
+      'mysql -e "SELECT 1" --tee=/tmp/x',
+      'snowsql -q "SELECT 1" -o output_file=/tmp/x',
+      'clickhouse-client -q "SELECT 1" --queries-file x.sql',
+      'bq query --nouse_legacy_sql "DELETE FROM d.t WHERE true;" \'SELECT 1\'',
+      'bq query --schedule="every 1 hours" "SELECT 1"',
+      'psql -c "SELECT dblink_exec(\'dbname=x\',\'DROP TABLE t\')"',
+      'psql -c \'SELECT "dblink_exec"(1)\'',
+      'psql -c "SELECT lo_export(1, \'/tmp/x\')"',
+      'psql -c "SELECT pg_terminate_backend(123)"',
+      'psql -c "SELECT set_config(\'a.b\', \'c\', false)"',
+      'psql -c \'SELECT $$\'\'$$, dblink_exec(1)\'',
+      'psql -c "SELECT 1" *.sql',
+      'cat <(touch /tmp/pwned)',
+      'ls <(python3 -c "print(1)")',
+    ];
+    for (const c of no) it(`vetoes ${c}`, () => { expect(isAutoApprovable('Bash', { command: c })).toBe(false); });
+    const yes = [
+      'psql -h localhost -U me mydb -c "SELECT count(*) FROM t"',
+      'psql --command="SELECT 1"',
+      'psql -X -A -t -c "SELECT 1"',
+      'duckdb db.duckdb -c "SELECT 1"',
+      'mysql -u root -e "SELECT 1" mydb',
+      'bq query --nouse_legacy_sql --format=json "SELECT 1"',
+      'snowsql -c prod -q "SELECT 1"',
+      'clickhouse-client --host h -q "SELECT 1"',
+      'psql -c "SELECT \'dblink_exec(x)\' AS s"',
+    ];
+    for (const c of yes) it(`approves ${c}`, () => { expect(isAutoApprovable('Bash', { command: c })).toBe(true); });
+  });
 });

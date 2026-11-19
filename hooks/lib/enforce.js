@@ -10,7 +10,10 @@
 //     naming a confirmed gate, else Claude gets an `ask` (the human's yes is the explicit confirmation) and
 //     Codex a deny; raw query results are always denied. Applies to every caller, ahead of the other rules.
 //  3. unbound callers (lead, unleased subagent, any Codex caller: no agent_id, CX-6): denied while the
-//     active frame has a pending gate, and denied writes into an active fan-out lease's slice paths.
+//     active frame has a pending gate (writes and exec: scripts, package scripts, notebook execution),
+//     and denied writes into an active fan-out lease's slice paths. A write whose target can't be
+//     determined (cd, sh -c, eval, find -exec, ...) while a fan-out lease is active: Claude `ask`, Codex deny.
+//  Bound workers: exec-only calls (python x.py, npm test) are not write-checked; unknown-target writes are denied.
 // SHARDS_GATE_ENFORCE=0 disables every deny path (rules 1 and 3); binding (rule 2) still records.
 const fs = require('fs');
 const path = require('path');
@@ -79,9 +82,9 @@ async function enforce(n, root, env = process.env) {
   if (bound) await leases.touchWorker(session, n.agentId, now);
 
   const w = writesOf(n);
-  if (!w.write || enforceOff(env)) return null;
+  if ((!w.write && !w.exec) || enforceOff(env)) return null;
 
-  if (bound) {
+  if (bound && w.write) {
     const { lease, slice } = bound;
     if (w.unknown && !w.paths.length) return { deny: `shards: write target could not be determined; worker for slice ${slice.id} (lease ${lease.id}) may only write inside ${slice.paths.join(', ')}` };
     for (const p of w.paths) {
@@ -91,14 +94,24 @@ async function enforce(n, root, env = process.env) {
     if (w.unknown) return { deny: `shards: a write target could not be determined; worker for slice ${slice.id} may only write inside ${slice.paths.join(', ')}` };
     return null;
   }
+  if (bound) return null; // exec only (tests, scripts): bound workers keep working
   if (hasGates) {
     const g = pendingGate(session);
     if (g) return { deny: `shards: gate ${g.id} is pending; write/exec tools are blocked until it is confirmed (a subagent needs a fanout_claim lease binding to keep working)` };
   }
-  if (hasLeases) {
+  if (hasLeases && w.write) {
     for (const p of w.paths) {
       const o = leases.findSliceOwning(session, p, now);
       if (o) return { deny: `shards: ${path.relative(root, p) || p} is inside slice owned by worker ${o.slice.id} (lease ${o.lease.id}); do not edit it from the lead` };
+    }
+    if (w.unknown) {
+      const fan = leases.listActive(session, now).filter((l) => l.owner === 'fanout');
+      if (fan.length) {
+        const owned = fan.flatMap((l) => l.slices.flatMap((sl) => sl.paths)).join(', ');
+        const msg = `shards: write target could not be determined while fan-out lease(s) ${fan.map((l) => l.id).join(', ')} are active; it may touch worker-owned paths (${owned}).`;
+        if (n.host === host.HOSTS.CLAUDE) return { ask: `${msg} Approve only if you (the human) know it stays outside those paths.` };
+        return { deny: `${msg} Use explicit file paths, or wait until fanout_collect closes the lease.` };
+      }
     }
   }
   return null;
