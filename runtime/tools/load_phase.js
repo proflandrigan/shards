@@ -64,8 +64,10 @@ function advancingGate(src, agent, track, phase) {
   return null;
 }
 
-function findGate(list, agent, track, phase, id) {
+// Scoped to the active frame's project: a gate confirmed for another project never satisfies this one.
+function findGate(list, agent, track, phase, id, project) {
   const cand = list.filter((g) => gates.ADVANCING_KINDS.includes(g.kind)
+    && (!project || (g.project || null) === project)
     && (g.id === id || (g.agent === agent && String(g.phase) === String(phase) && (!track || !g.track || g.track === track))));
   return cand.find((g) => g.status === 'confirmed') || cand[0] || null;
 }
@@ -141,7 +143,7 @@ module.exports = defineTool({
       if (g0) need = { id: id0, phase: 0, track };
     }
     if (need) {
-      const g = findGate(all, agent.id, track, need.phase, need.id);
+      const g = findGate(all, agent.id, track, need.phase, need.id, top.project || null);
       if (!g || g.status !== 'confirmed') throw new Error(refusal(need.id, need.phase, g ? g.status : 'missing', ctx.sessionKey));
     }
 

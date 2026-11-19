@@ -46,10 +46,11 @@ function stateOf(session) {
   return session.state || new (require('../state/store').StateStore)(session.root, session.sessionKey);
 }
 
-function planStatus(session, budget) {
+// `cur`: policy state already read under the lock (apply() checks and increments in one update).
+function planStatus(session, budget, cur) {
   const plan = machine.getGate(session, PLAN_GATE_ID);
   if (!plan || plan.status !== 'confirmed') return { active: false };
-  const st = stateOf(session).read('policy') || {};
+  const st = cur || stateOf(session).read('policy') || {};
   const used = Number(st.notices) || 0;
   const maxGates = budget && budget.max_gates != null ? budget.max_gates : DEFAULT_MAX_GATES;
   if (used >= maxGates) return { active: true, exhausted: `max_gates (${maxGates}) exhausted` };
@@ -78,7 +79,14 @@ async function apply(session, entry, evidence, cfg = {}, deps = {}) {
     if (ps.active) {
       if (failed) return { handled: false, reason: `evidence ${ev.status}: human required` };
       if (ps.exhausted) return { handled: false, reason: `budget exhausted: ${ps.exhausted}` };
-      await stateOf(session).update('policy', (cur) => { cur.notices = (Number(cur.notices) || 0) + 1; cur.plan_gate = PLAN_GATE_ID; return cur; });
+      // Re-check the budget under the policy lock so concurrent gates cannot overspend it.
+      let exhausted = null;
+      await stateOf(session).update('policy', (cur) => {
+        exhausted = planStatus(session, cfg.budget, cur).exhausted || null;
+        if (exhausted) return cur;
+        cur.notices = (Number(cur.notices) || 0) + 1; cur.plan_gate = PLAN_GATE_ID; return cur;
+      });
+      if (exhausted) return { handled: false, reason: `budget exhausted: ${exhausted}` };
       const { entry: done, commit } = await machine.confirmGate(session, entry.id, { decision: 'confirmed', proof: { tier: 'plan-notice', level: 0, plan_gate: PLAN_GATE_ID, ts: new Date().toISOString() }, ...(ev && ev.summary ? { note: ev.summary } : {}) }, deps);
       return { handled: true, mode: 'notice', entry: done, commit: commit || done.commit || null };
     }

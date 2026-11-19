@@ -36,13 +36,31 @@ async function requestGate(session, req) {
   let result; let entry;
   await state.update('gates', (cur) => {
     const gates = cur.gates = cur.gates || {};
-    const existing = gates[id];
-    if (existing && existing.status === 'confirmed') { result = 'already_confirmed'; entry = existing; return cur; }
+    let existing = gates[id];
+    const project = req.project !== undefined ? req.project : (frame.project || null);
+    const track = req.track !== undefined ? req.track : (frame.track || null);
+    // Phase gate ids (`<agent>-phase-N`) repeat across runs: a closed gate only counts for the same
+    // agent/project/track. Otherwise the id starts over as a fresh gate (old one kept in `previous`).
+    let previous;
+    const same = existing && existing.agent === frame.agent && (existing.project || null) === (project || null)
+      && (!existing.track || !track || existing.track === track);
+    if (existing && !same && (existing.status === 'pending' || existing.status === 'suspended')) {
+      throw new Error(`gate ${id} is already ${existing.status} for ${existing.agent}${existing.project ? ` (project ${existing.project})` : ''}; resolve it or use a different gate id`);
+    }
+    if (existing && existing.status === 'confirmed' && same) { result = 'already_confirmed'; entry = existing; return cur; }
+    if (existing && !same) {
+      const { previous: older, ...rest } = existing;
+      previous = [...(older || []), rest];
+      existing = null;
+    }
     if (existing && existing.status === 'suspended') throw new Error(`gate ${id} is suspended; resume it first`);
     const other = Object.values(gates).find((g) => g && g.id !== id && g.frame === frame.id && (g.status === 'pending' || g.status === 'suspended'));
     if (other) throw new Error(`Frame ${frame.id} already has ${other.status} gate ${other.id}; resolve it before requesting ${id}`);
     const ts = now();
+    const stack = (state.read('frames').frames || []).map((f) => f.id);
+    const rehome = (e) => { if (e.frame !== frame.id && !stack.includes(e.frame)) e.frame = frame.id; };
     if (existing && existing.status === 'pending') {
+      rehome(existing);
       if (req.summary !== undefined) existing.summary = req.summary;
       if (req.record_ref !== undefined) existing.record_ref = req.record_ref;
       existing.updated_at = ts;
@@ -50,6 +68,8 @@ async function requestGate(session, req) {
     }
     if (existing && (existing.status === 'changes_requested' || existing.status === 'force_closed')) {
       transition(existing, 'pending');
+      // Reopened from a (possibly dead) frame: it belongs to the requesting frame now.
+      existing.frame = frame.id; existing.agent = frame.agent;
       Object.assign(existing, {
         summary: req.summary !== undefined ? req.summary : existing.summary,
         record_ref: req.record_ref !== undefined ? req.record_ref : existing.record_ref,
@@ -60,12 +80,12 @@ async function requestGate(session, req) {
     entry = gates[id] = {
       id, status: 'pending', kind,
       phase: req.phase === undefined ? (frame.phase === undefined ? null : frame.phase) : req.phase,
-      track: req.track !== undefined ? req.track : (frame.track || null),
-      project: req.project !== undefined ? req.project : (frame.project || null),
+      track, project,
       agent: frame.agent, frame: frame.id,
       summary: req.summary || '', record_ref: req.record_ref || null, validates: req.validates || null,
       requested_at: ts, updated_at: ts,
       history: [{ ts, from: null, to: 'pending' }],
+      ...(previous ? { previous } : {}),
     };
     result = 'opened';
     return cur;
@@ -131,6 +151,8 @@ async function confirmGate(session, id, opts = {}, deps = {}) {
     commit = await commitGate({
       root: session.root, session: state.sessionKey, gate: entry.id,
       agent: entry.agent, outputDirs, config: gitCfg,
+      // Leases need the session object (root + store), not just its key.
+      getLeasedPaths: () => require('../git/leases').getLeasedPaths({ root: session.root, sessionKey: state.sessionKey, state }),
     });
     if (!commit || typeof commit !== 'object') commit = { outcome: 'commit_pending', reason: 'no_result' };
   } catch (e) {
@@ -144,7 +166,7 @@ async function confirmGate(session, id, opts = {}, deps = {}) {
   return { entry, result, commit };
 }
 
-async function setSuspension(session, id, proof, from, to, what) {
+async function setSuspension(session, id, proof, from, to, what, check) {
   // TODO(E5.5, E11.3-5): human-proof verification belongs to Stage 5; not exposed as a tool.
   requireProof(proof, what);
   let entry;
@@ -152,6 +174,7 @@ async function setSuspension(session, id, proof, from, to, what) {
     const g = (cur.gates || {})[id];
     if (!g) throw new Error(`Unknown gate ${id}`);
     if (g.status !== from) throw new Error(`Gate ${id} is ${g.status}; can only ${what} a ${from} gate`);
+    if (check) check(g, cur.gates);
     if (to === 'suspended') g.suspended_from = g.status;
     transition(g, to, proof.tier);
     if (to === 'pending') delete g.suspended_from;
@@ -160,8 +183,13 @@ async function setSuspension(session, id, proof, from, to, what) {
   return entry;
 }
 const suspendGate = (s, id, { proof } = {}) => setSuspension(s, id, proof, 'pending', 'suspended', 'suspendGate');
-const resumeGate = async (s, id, { proof } = {}) => {
-  const entry = await setSuspension(s, id, proof, 'suspended', 'pending', 'resumeGate');
+// `frame`: re-home the gate to that frame in the same update, refusing if it already has an open gate.
+const resumeGate = async (s, id, { proof, frame } = {}) => {
+  const entry = await setSuspension(s, id, proof, 'suspended', 'pending', 'resumeGate', frame ? (g, all) => {
+    const other = Object.values(all).find((o) => o && o.id !== id && o.frame === frame && (o.status === 'pending' || o.status === 'suspended'));
+    if (other) throw new Error(`Frame ${frame} already has ${other.status} gate ${other.id}; resolve it before resuming ${id}`);
+    g.frame = frame;
+  } : undefined);
   // E11.5: a chat reply sent while suspended can never confirm; move the high-water mark.
   await require('./tier3').markRequest(s, id);
   return entry;

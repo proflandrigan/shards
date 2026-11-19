@@ -459,6 +459,12 @@ async function attempt(root, rec, ctx) {
   const ident = ctx.ident || (ctx.ident = await identEnv(root));
   ctx.ident = ident;
 
+  // A record saved after a commit_error before its files were known: re-collect from its output dirs.
+  if (!rec.snapshot_ref && !(rec.files || []).length && Array.isArray(rec.output_dirs) && rec.output_dirs.length) {
+    const leased = await leases.getLeasedPaths(sessionOf(root, rec.session));
+    rec.files = (await collectFiles(root, rec.output_dirs, st, ctx.cfg, leased || [])).map((f) => f.path);
+  }
+
   if (!rec.snapshot_ref) {
     const probe = rec.files.map((p) => {
       let s = null; try { s = fs.lstatSync(path.join(root, p)); } catch (_) { /* missing */ }
@@ -546,6 +552,52 @@ function nowMs(now) {
   return typeof now === 'number' ? now : Date.now();
 }
 
+// Callers that pass no config (sessions end, force-close, doctor) get the project's git config,
+// so `git.commit: false` is honoured on replay too. No config file -> defaults (none is created).
+function projectGitConfig(root, config) {
+  if (config !== undefined) return config;
+  const { loadOrCreateConfig, CONFIG_FILENAME } = require('../config');
+  if (!fs.existsSync(path.join(root, CONFIG_FILENAME))) return undefined;
+  const c = loadOrCreateConfig(root).config;
+  return c ? c.git : undefined;
+}
+
+// Session key (string) or session object -> what leases.getLeasedPaths expects.
+function sessionOf(root, session) {
+  if (typeof session === 'string' && session) return { root, sessionKey: session };
+  return session || null;
+}
+function sessionKeyOf(session) {
+  if (session && typeof session === 'object') return session.sessionKey || null;
+  return session || null;
+}
+
+// An attempt that throws is a failed try for that record, never an abort of the whole replay.
+async function safeAttempt(root, rec, ctx) {
+  try { return await attempt(root, rec, ctx); } catch (e) {
+    return { outcome: 'commit_pending', reason: `commit_error: ${e && e.message ? e.message : e}`, tried: true };
+  }
+}
+
+// Best-effort: write a replayed record's final outcome back to its gate entry in gates.json.
+async function writeBackGate(root, rec, res) {
+  if (!rec.session || typeof rec.session !== 'string') return;
+  try {
+    const { StateStore } = require('../state/store');
+    if (!fs.existsSync(path.join(root, '.shards', 'state', 'sessions', rec.session, 'gates.json'))) return;
+    await new StateStore(root, rec.session).update('gates', (cur) => {
+      const g = (cur.gates || {})[rec.gate];
+      if (g && g.status === 'confirmed' && (!g.commit || g.commit.outcome !== 'committed')) {
+        g.commit = res.outcome === 'committed'
+          ? { outcome: 'committed', sha: res.sha, files: res.files || rec.files, replayed: true }
+          : { outcome: 'skipped', reason: res.reason, replayed: true };
+        g.updated_at = new Date().toISOString();
+      }
+      return cur;
+    });
+  } catch (_) { /* best-effort */ }
+}
+
 function normalizeConfig(config) {
   const c = config || {};
   const d = c.denylist || {};
@@ -605,13 +657,14 @@ async function replayLocked(root, { config, now, force, hookTimeoutMs, before } 
     if (blocker) { results.push(row({ outcome: 'skipped', reason: `blocked_by_${blocker}` })); continue; }
     if (rec.status === 'stuck' && !force) { blocker = rec.gate; results.push(row({ outcome: 'skipped', reason: 'stuck' })); continue; }
     if (!force && rec.next_try_at && rec.next_try_at > t) { blocker = rec.gate; results.push(row({ outcome: 'skipped', reason: 'not_due' })); continue; }
-    const res = await attempt(root, rec, ctx);
+    const res = await safeAttempt(root, rec, ctx);
     const wasStuck = rec.status === 'stuck';
     const status = applyResult(rec, res, t);
     if (wasStuck && status === 'pending' && res.tried === undefined) rec.status = 'stuck';
     await finishRecord(root, store, rec, status);
     saveStore(root, store);
     if (status !== 'done') blocker = rec.gate;
+    else await writeBackGate(root, rec, res);
     results.push({ gate: rec.gate, outcome: res.outcome, sha: res.sha, reason: res.reason, tries: rec.tries, status: rec.status });
   }
   saveStore(root, store);
@@ -619,7 +672,9 @@ async function replayLocked(root, { config, now, force, hookTimeoutMs, before } 
 }
 
 function replayPending(root, opts = {}) {
-  return withPendingLock(root, async () => (await replayLocked(root, opts)).results);
+  let config;
+  try { config = projectGitConfig(root, opts.config); } catch (e) { return Promise.reject(e); }
+  return withPendingLock(root, async () => (await replayLocked(root, { ...opts, config })).results);
 }
 
 function listPending(root) {
@@ -631,7 +686,9 @@ function listPending(root) {
 function commitGate(args) {
   const root = args.root;
   if (!root) return Promise.reject(new Error('commitGate requires root'));
-  return withPendingLock(root, () => commitGateLocked(args));
+  let config;
+  try { config = projectGitConfig(root, args.config); } catch (e) { return Promise.reject(e); }
+  return withPendingLock(root, () => commitGateLocked({ ...args, config }));
 }
 
 async function commitGateLocked({ root, gate, agent, outputDirs, config, session, seq, getLeasedPaths, hookTimeoutMs }) {
@@ -647,14 +704,30 @@ async function commitGateLocked({ root, gate, agent, outputDirs, config, session
   const stale = store.records[gate];
   if (stale) { delete store.records[gate]; saveStore(root, store); }
 
-  const st = await gitState(root);
-  const leased = typeof getLeasedPaths === 'function' ? await getLeasedPaths(session) : await leases.getLeasedPaths(session);
-  const files = await collectFiles(root, outputDirs, st, cfg, leased || []);
   const rec = {
-    gate, agent, seq: mySeq, session: session || null, snapshot_ref: null, files: [], tries: 0,
+    gate, agent, seq: mySeq, session: sessionKeyOf(session), output_dirs: outputDirs, snapshot_ref: null, files: [], tries: 0,
     next_try_at: 0, status: 'pending', reason: null, created_at: new Date(t).toISOString(),
   };
   const pendingResult = (reason) => ({ outcome: 'commit_pending', reason, snapshot_ref: rec.snapshot_ref, files: rec.files, pending: true });
+
+  try {
+    return await commitGateBody({ root, gate, config, session, getLeasedPaths, cfg, timeout, t, store, stale, rec, mySeq, pendingResult });
+  } catch (e) {
+    // Never lose the gate's commit: keep a pending record so replay can retry it.
+    const fresh = loadStore(root);
+    fresh.next_seq = Math.max(fresh.next_seq, store.next_seq);
+    applyResult(rec, { outcome: 'commit_pending', reason: `commit_error: ${e && e.message ? e.message : e}`, tried: true }, Date.now());
+    fresh.records[gate] = rec;
+    saveStore(root, fresh);
+    return pendingResult(rec.reason);
+  }
+}
+
+async function commitGateBody({ root, gate, config, session, getLeasedPaths, cfg, timeout, t, store, stale, rec, mySeq, pendingResult }) {
+  const st = await gitState(root);
+  const leased = typeof getLeasedPaths === 'function' ? await getLeasedPaths(session) : await leases.getLeasedPaths(sessionOf(root, session));
+  const files = await collectFiles(root, rec.output_dirs, st, cfg, leased || []);
+  rec.files = files.map((f) => f.path);
 
   if (!st.inRepo) {
     rec.files = files.filter((f) => !f.del).map((f) => f.path);
@@ -695,7 +768,7 @@ async function commitGateLocked({ root, gate, agent, outputDirs, config, session
     return pendingResult(rec.reason);
   }
 
-  const res = await attempt(root, rec, { cfg, ident, hookTimeoutMs: timeout });
+  const res = await safeAttempt(root, rec, { cfg, ident, hookTimeoutMs: timeout });
   const status = applyResult(rec, res, Date.now());
   await finishRecord(root, fresh, rec, status);
   saveStore(root, fresh);
