@@ -13,8 +13,8 @@ const path = require('path');
 const INTEGRATIONS = [
   {
     id: 'atlassian', label: 'Atlassian (Confluence + Jira)', match: /atlassian|confluence|jira/i,
-    claude: 'claude mcp add --transport sse atlassian https://mcp.atlassian.com/v1/sse',
-    codex: 'codex mcp add atlassian -- npx -y mcp-remote https://mcp.atlassian.com/v1/sse',
+    claude: 'claude mcp add --transport http atlassian https://mcp.atlassian.com/v2/mcp',
+    codex: 'codex mcp add atlassian --url https://mcp.atlassian.com/v2/mcp',
     note: 'Authenticate in the host after adding (Claude Code: /mcp). Choose the Atlassian site when /shards:connect runs.',
   },
   {

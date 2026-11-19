@@ -76,7 +76,8 @@ function installProject(root, opts = {}) {
     const digest = sha(buf);
     if (fs.existsSync(full)) {
       const cur = sha(fs.readFileSync(full));
-      if (cur === digest) { unchanged++; files.push({ path: rel, sha256: digest }); continue; }
+      // Identical already: stays ours only if a previous install recorded it; a user's own copy is never claimed.
+      if (cur === digest) { unchanged++; if (owned.has(rel)) files.push({ path: rel, sha256: digest }); continue; }
       // Ours and unedited since install: safe to update. Anything else is the user's file.
       if (!(owned.has(rel) && owned.get(rel) === cur)) { conflicts.push(rel); continue; }
     }

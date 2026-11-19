@@ -94,6 +94,25 @@ function codexMcpToml(runtimePath) {
   return `[mcp_servers.shards]\ncommand = "node"\nargs = [${tomlStr(runtimePath)}]\n\n# Per-tool approval_mode below is docs-only / UNVERIFIED (docs/compat.md CX-1).\n${approvals}\n`;
 }
 
+// A previous Shards build: the dev marker, or size-report.json next to a plugin manifest named shards.
+function isShardsBuild(dir) {
+  if (fs.existsSync(path.join(dir, DEV_MARKER))) return true;
+  if (!fs.existsSync(path.join(dir, 'size-report.json'))) return false;
+  for (const m of ['.claude-plugin/plugin.json', '.codex-plugin/plugin.json', 'plugin.json']) {
+    try { if (JSON.parse(fs.readFileSync(path.join(dir, m), 'utf8')).name === 'shards') return true; } catch (_) { /* absent */ }
+  }
+  return false;
+}
+
+// Remove stale output (old agents/skills, a dev marker in a release dir, ...) before emitting, but only when the dir
+// is recognisably a previous Shards build; any other non-empty dir is written over without deleting anything.
+function cleanOutDir(dir) {
+  let ents;
+  try { ents = fs.readdirSync(dir); } catch (_) { return; }
+  if (!ents.length || !isShardsBuild(dir)) return;
+  for (const e of ents) if (e !== '.git') fs.rmSync(path.join(dir, e), { recursive: true, force: true });
+}
+
 function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, defaultAgent, bundleDeps = true }) {
   const optIn = defaultAgent === true || (defaultAgent === undefined && process.env.SHARDS_BUILD_DEFAULT_AGENT === '1');
   const out = new Map();
@@ -173,6 +192,8 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
     out.set('hooks/hooks.json', fs.readFileSync(path.join(REPO, 'hooks', 'claude-code.hooks.json'), 'utf8'));
   }
 
+  cleanOutDir(outDir);
+  if (!dev) fs.rmSync(path.join(outDir, DEV_MARKER), { force: true }); // a release dir must never look like a dev build
   const written = [];
   for (const rel of [...out.keys()].sort()) {
     const full = path.join(outDir, rel);
@@ -184,4 +205,4 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
   return written;
 }
 
-module.exports = { emitTarget, DEV_MARKER, REPO };
+module.exports = { emitTarget, isShardsBuild, DEV_MARKER, REPO };

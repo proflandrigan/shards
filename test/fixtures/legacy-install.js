@@ -25,6 +25,7 @@ const HOOK_ENTRIES = [
   { event: 'Stop', matcher: '', command: 'node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js stop' },
   { event: 'PreToolUse', matcher: 'Bash', command: 'node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js pre-tool-use' },
   { event: 'PostToolUse', matcher: '', command: 'node $CLAUDE_PROJECT_DIR/.shards/ui/ui-push.js tool' },
+  { event: 'UserPromptSubmit', matcher: '', command: 'node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js user-prompt-submit' },
 ];
 
 const CLAUDE_MD = `# My Project
@@ -81,7 +82,7 @@ function buildLegacyProject(dir, opts = {}) {
       Stop: [{ hooks: [hook(HOOK_ENTRIES[0].command)] }, { hooks: [hook('echo user-stop-hook')] }],
       PreToolUse: [{ matcher: 'Bash', hooks: [hook(HOOK_ENTRIES[1].command)] }],
       PostToolUse: [{ hooks: [hook(HOOK_ENTRIES[2].command)] }],
-      UserPromptSubmit: [{ hooks: [hook('node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js user-prompt-submit'), hook('echo user-prompt-hook')] }],
+      UserPromptSubmit: [{ hooks: [hook(HOOK_ENTRIES[3].command), hook('echo user-prompt-hook')] }],
     },
   }, null, 2));
 

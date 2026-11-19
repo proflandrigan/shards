@@ -765,7 +765,7 @@ explicit user approval regardless of permission mode.
 ║               ipykernel)                 ║
 ║                                          ║
 ║  To uninstall:                           ║
-║    npx shards uninstall                  ║
+║    npx shards migrate                    ║
 ║                                          ║
 ╚══════════════════════════════════════════╝
 `);

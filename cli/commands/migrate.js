@@ -20,12 +20,17 @@ Full migrate (no --export-ledger): moves a legacy v1 Shards install to the v2 la
      .shards/archive/legacy-gates/, not deleted.
   3. Removes what the install manifest (.claude/.shards-manifest.json) recorded: legacy
      .claude/agents and .claude/commands files, .shards/ui, templates/, docs/shards-guide/.
-     Files changed after install (mtime later than the manifest's installedAt) are NOT
-     deleted; they are reported as skipped. Files not in the manifest are never touched.
-  4. Removes the legacy gate and relay hook entries from .claude/settings.json (manifest
-     hookEntries, plus gate-hook.js / relay.js / ui-push matches) and .shards/hooks/gate-hook*.
-  5. Removes the "## Shards — Agent Suite" and "## Shards — Tool-call conventions" blocks
-     from CLAUDE.md.
+     Files changed after install are NOT deleted; they are reported as skipped (use --force
+     to remove them anyway). A file counts as changed when its mtime is later than the
+     manifest's installedAt, unless git shows it is tracked, unchanged against HEAD and was
+     last committed together with the install manifest (fresh clones reset every mtime).
+     Files not in the manifest are never touched.
+  4. Removes the legacy gate and relay hook entries from .claude/settings.json (exactly the
+     manifest's hookEntries; only manifests without them fall back to matching the v1 hook
+     paths .shards/hooks/gate-hook.js and .shards/ui/relay.js|ui-push) and .shards/hooks/gate-hook*.
+  5. Removes the v1 "## Shards — Agent Suite" and "## Shards — Tool-call conventions" blocks
+     from CLAUDE.md. Blocks added by \`shards install --claude-md\` (between
+     <!-- shards:begin --> / <!-- shards:end --> markers) are kept.
 Output folders (analysis/, studies/, models/, ...) are never touched.
 
 --export-ledger runs only step 1 (see below).
@@ -41,7 +46,8 @@ Options:
   --root <dir>      project root (default: cwd)
   --out <dir>       ledger output dir (default: <root>/docs/knowledge)
   --dry-run         report what would change, write and delete nothing
-  --force           overwrite differing existing ledger-export files (otherwise conflicts, exit 1)
+  --force           overwrite differing existing ledger-export files (otherwise conflicts, exit 1),
+                    and remove manifest-recorded files even when they look changed after install
 
 Idempotent: re-running is a no-op. Does not commit; afterwards run:
   git add -A docs && git commit -m "chore: migrate legacy shards install"
@@ -206,18 +212,23 @@ async function runFull(o) {
   }
 
   console.log(`${tag}3/4 legacy install`);
-  const rep = removeLegacyInstall({ root: o.root, dryRun: o.dryRun });
+  const rep = removeLegacyInstall({ root: o.root, dryRun: o.dryRun, force: o.force });
   if (!rep.manifestFound) console.log('  no readable install manifest (.claude/.shards-manifest.json); manifest-driven removal skipped');
-  for (const f of rep.removed) console.log(`  ${o.dryRun ? 'would remove' : 'removed'} ${f}`);
+  for (const f of rep.removed) console.log(`  ${o.dryRun ? 'would remove' : 'removed'} ${f}${rep.forced.includes(f) ? ' (changed after install; --force)' : ''}`);
   for (const d of rep.prunedDirs) console.log(`  ${o.dryRun ? 'would remove empty dir' : 'removed empty dir'} ${d}`);
   for (const h of rep.hooksRemoved) console.log(`  ${o.dryRun ? 'would remove' : 'removed'} hook ${h}`);
   if (rep.claudeMd) console.log(`  ${o.dryRun ? 'would remove' : 'removed'} ${rep.claudeMd.blocksRemoved} Shards block(s) from CLAUDE.md${rep.claudeMd.fileRemoved ? ' (file was installer-created and is now empty: removed)' : ''}`);
   if (rep.manifestFound) console.log(`  manifest: ${rep.manifestAction}`);
   for (const s of rep.skipped) console.log(`  SKIPPED ${s.path}: ${s.reason}`);
   if (rep.failures) code = 1;
+  if (rep.allSkippedModified) {
+    console.error(`\n  WARNING: all ${rep.allSkippedModified} file(s) recorded in the install manifest look changed after install, so none were removed.`);
+    console.error('  This is expected on a fresh clone or copy (mtimes are reset) when git cannot vouch for them. Review the SKIPPED list;');
+    console.error('  if those files are unedited v1 copies, re-run with --force to remove them.');
+  }
 
   const changed = (gh.imported || 0) + (gh.archived ? gh.archived.length : 0) + led.written.length + rep.removed.length + rep.hooksRemoved.length + (rep.claudeMd ? 1 : 0);
-  console.log(`4/4 summary: ${changed ? `${o.dryRun ? 'would change' : 'changed'} ${changed} item(s)` : 'nothing to do (already migrated)'}; ${rep.skipped.length} skipped; output folders untouched`);
+  console.log(`4/4 summary: ${changed ? `${o.dryRun ? 'would change' : 'changed'} ${changed} item(s)` : (rep.allSkippedModified ? 'nothing removed (see WARNING above)' : 'nothing to do (already migrated)')}; ${rep.skipped.length} skipped; output folders untouched`);
   if (!o.dryRun && changed && code === 0) console.log('\nNot committed. Review, then run:\n  git add -A && git commit -m "chore: migrate legacy shards install"');
   return code;
 }

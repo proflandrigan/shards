@@ -22,7 +22,7 @@ function usage() {
   for (const [n, c] of Object.entries(COMMANDS)) lines.push(`  ${n.padEnd(14)} ${c.summary}`);
   lines.push('', 'build options: --target <claude|codex|skills> [--dev] [--out dir] [--strict] [--default-agent] [--core dir] [--no-bundle-deps] [--marketplace]');
   lines.push('  release (non-dev) claude builds are a self-contained plugin; --no-bundle-deps skips node_modules; --marketplace writes <out>/.claude-plugin/marketplace.json and the plugin at <out>/plugins/shards (claude only, default out adapters/marketplace)');
-  lines.push('uninstall-dev options: [--target claude|codex|all] [--out dir]');
+  lines.push('uninstall-dev options: [--target claude|codex|all] [--out dir]  (with --out only that dir is removed, and only if it has the .shards-dev marker)');
   lines.push('gates: gates <status|history|checkpoints|violations|force-close|confirm> [options]');
   lines.push('  gates status [--session k] [--root d]');
   lines.push('  gates history [--session k] [--gate id] [--json] [--root d]');
@@ -78,17 +78,29 @@ function runUninstallDev(argv) {
     else if (argv[i] === '--out' && argv[i + 1]) out = argv[++i];
     else { console.error(`shards uninstall-dev: unknown option '${argv[i]}'\n\n${usage()}`); return 2; }
   }
-  const targets = target === 'all' ? ['claude', 'codex'] : [target];
-  if (!targets.every((t) => t === 'claude' || t === 'codex')) { console.error(`shards uninstall-dev: --target must be claude|codex|all`); return 2; }
+  if (!['claude', 'codex', 'all'].includes(target)) { console.error(`shards uninstall-dev: --target must be claude|codex|all`); return 2; }
+  // --out names exactly one dir (whatever its target); never fall back to the default adapters/<target> dirs.
+  const dirs = out ? [path.resolve(out)] : (target === 'all' ? ['claude', 'codex'] : [target]).map(defaultOutDir);
   const fs = require('fs');
-  for (const t of targets) {
-    const dir = out && targets.length === 1 ? path.resolve(out) : defaultOutDir(t);
+  for (const dir of dirs) {
     if (!fs.existsSync(path.join(dir, '.shards-dev'))) { console.log(`skip ${dir} (no .shards-dev marker)`); continue; }
     fs.rmSync(dir, { recursive: true, force: true });
     console.log(`removed ${dir}`);
   }
   console.log('Reminders: claude --plugin-dir is not persistent (just stop passing it). Codex: remove any symlink or copied files and the [mcp_servers.shards] entry you added to ~/.codex/config.toml.');
   return 0;
+}
+
+// v1 had `npx shards uninstall` (tools/install.js). v2 has no global install to undo; point at the replacements.
+function runUninstall() {
+  console.error([
+    'shards uninstall: removed in v2.',
+    '  Legacy v1 install in this project:  shards migrate --dry-run   then   shards migrate',
+    '  Project opt-ins (install --project | --permissions | --claude-md | --agents-md):  shards install <flag> --remove',
+    '  Dev build output:  shards uninstall-dev',
+    '  Plugin:  /plugin uninstall shards@shards  (Claude Code)',
+  ].join('\n'));
+  return 1;
 }
 
 function runBuild(argv) {
@@ -119,6 +131,7 @@ function runBuild(argv) {
 function main(argv) {
   const [cmd, ...rest] = argv;
   if (!cmd || cmd === '--help' || cmd === '-h' || cmd === 'help') { console.log(usage()); return cmd ? 0 : 2; }
+  if (cmd === 'uninstall') return runUninstall(); // removed v1 command: not listed, prints its replacements
   const c = COMMANDS[cmd];
   if (!c) { console.error(`shards: unknown command '${cmd}'\n\n${usage()}`); return 2; }
   return c.run(rest);

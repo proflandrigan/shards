@@ -60,6 +60,21 @@ describe('shards install --project (E9.1)', () => {
     expect(fs.existsSync(path.join(root, '.claude/skills/agents/SKILL.md'))).toBe(false);
   });
 
+  it('a pre-existing identical file is not claimed, so --remove keeps the user copy', () => {
+    const rel = '.claude/skills/syn/SKILL.md';
+    const mine = path.join(root, rel);
+    fs.mkdirSync(path.dirname(mine), { recursive: true });
+    fs.writeFileSync(mine, P.planFiles().get(rel));
+    expect(inst.run(['--project', '--root', root])).toBe(0);
+    const man = JSON.parse(fs.readFileSync(path.join(root, P.MANIFEST), 'utf8'));
+    expect(man.files.map((f) => f.path)).not.toContain(rel);
+    expect(inst.run(['--project', '--root', root])).toBe(0); // re-run keeps it unclaimed
+    expect(JSON.parse(fs.readFileSync(path.join(root, P.MANIFEST), 'utf8')).files.map((f) => f.path)).not.toContain(rel);
+    expect(inst.run(['--project', '--root', root, '--remove'])).toBe(0);
+    expect(fs.existsSync(mine)).toBe(true);
+    expect(fs.existsSync(path.join(root, '.claude/skills/agents/SKILL.md'))).toBe(false);
+  });
+
   it('--dry-run writes nothing', () => {
     expect(inst.run(['--project', '--root', root, '--dry-run'])).toBe(0);
     expect(snapshot()).toEqual([]);

@@ -117,6 +117,28 @@ build_ok() {
 }
 step "shards build --target claude --dev from installed package" build_ok
 
+# ---- 6b. bundled release build from the installed package (hoisted deps) ----
+# npm hoists the CLI's dependencies to <proj>/node_modules; they must still land in <out>/node_modules, nothing may be
+# written outside --out, and the built runtime must start using only its own bundled node_modules.
+REL_PARENT="$SCRATCH/rel"; REL_OUT="$REL_PARENT/plugin"
+release_build_ok() {
+  mkdir -p "$REL_PARENT"; : >"$SCRATCH/rel.log"
+  local before; before="$(ls -A "$SCRATCH" | sort | tr '\n' ' ')"
+  (cd "$PROJ" && "$BIN/shards" build --target claude --out "$REL_OUT" >"$SCRATCH/rel.log" 2>&1) || { tail -20 "$SCRATCH/rel.log"; return 1; }
+  [ "$(ls -A "$REL_PARENT")" = "plugin" ] || { echo "  files written next to --out: $(ls -A "$REL_PARENT" | tr '\n' ' ')"; return 1; }
+  [ "$(ls -A "$SCRATCH" | sort | tr '\n' ' ')" = "$before" ] || { echo "  files written outside --out in $SCRATCH"; return 1; }
+  [ ! -e "$REL_OUT/.shards-dev" ] || { echo "  release build has the dev marker"; return 1; }
+  [ -f "$REL_OUT/node_modules/@modelcontextprotocol/sdk/package.json" ] || { echo "  bundled node_modules missing the MCP SDK"; return 1; }
+  # every require of the built runtime resolves inside the plugin (NODE_PATH cleared; no parent node_modules on the path)
+  (cd "$REL_OUT" && NODE_PATH= node -e '
+    const path=require("path");const root=process.cwd();
+    require("./runtime/server.js"); require("./runtime/tools");
+    const out=Object.keys(require.cache).filter((f)=>!f.startsWith(root+path.sep));
+    if(out.length){console.log("  resolved outside the plugin: "+out.slice(0,5).join(", "));process.exit(1);}' ) || return 1
+  node "$REPO/scripts/mcp-smoke-client.js" "$REL_OUT/runtime/server.js" "$PROJ" --sdk-from "$PROJ"
+}
+step "shards build --target claude (bundled release) from installed package; runtime starts from its own node_modules" release_build_ok
+
 # ---- 7. deprecated v1 bins (E10.5): each prints its v2 replacement ----
 legacy_ok() {
   local out

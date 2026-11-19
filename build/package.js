@@ -125,10 +125,33 @@ function resolvePkgDir(name, fromDir) {
   }
 }
 
+// Bundle destination for a package dir found by resolvePkgDir from `root`: node_modules/<path below the deepest
+// node_modules whose parent is root or one of its ancestors>. In a repo checkout that is just the path relative to
+// root; in an npm install (root = <proj>/node_modules/@proflandrigan/shards) hoisted deps live at <proj>/node_modules/x
+// and must land at node_modules/x, not ../../x. Nested node_modules (version conflicts) are kept as they are. A dir
+// outside root's lookup chain (symlinked node_modules, reached via a dependency's real path) maps from its first
+// node_modules; depClosure rejects two packages mapping to the same destination.
+function bundleRel(root, dir) {
+  const r = path.resolve(root);
+  const isAncestorOrSelf = (b) => b === r || r.startsWith(b.endsWith(path.sep) ? b : b + path.sep);
+  const segs = path.resolve(dir).split(path.sep);
+  let best = -1; let first = -1;
+  for (let i = 0; i < segs.length - 1; i++) {
+    if (segs[i] !== 'node_modules') continue;
+    if (first < 0) first = i;
+    const base = segs.slice(0, i).join(path.sep) || path.sep;
+    if (isAncestorOrSelf(base)) best = i;
+  }
+  if (best < 0) best = first;
+  if (best < 0) throw new Error(`dependency ${dir} is not under a node_modules directory visible from ${root}`);
+  return path.join('node_modules', ...segs.slice(best + 1));
+}
+
 // Production dependency closure from package.json `dependencies` (no network). Sorted [{ name, dir, rel }];
-// dir is the real directory, rel its path relative to the repo root (node_modules/...).
+// dir is the real directory, rel its bundle destination inside the package (always node_modules/..., see bundleRel).
 function depClosure(root = REPO) {
   const rootPkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  const realRoot = fs.realpathSync(root); // transitive deps are resolved from real dirs
   const seen = new Map();
   const missing = [];
   const walk = (name, fromDir, optional) => {
@@ -136,18 +159,24 @@ function depClosure(root = REPO) {
     if (!dir) { if (!optional) missing.push(name); return; }
     const real = fs.realpathSync(dir);
     if (seen.has(real)) return;
-    seen.set(real, { name, dir: real, rel: path.relative(root, dir) });
+    seen.set(real, { name, dir: real, rel: bundleRel(realRoot, fs.realpathSync(path.dirname(dir)) + path.sep + path.basename(dir)) });
     const p = JSON.parse(fs.readFileSync(path.join(real, 'package.json'), 'utf8'));
     for (const d of Object.keys(p.dependencies || {})) walk(d, real, false);
     for (const d of Object.keys(p.optionalDependencies || {})) walk(d, real, true);
   };
   for (const d of Object.keys(rootPkg.dependencies || {})) walk(d, root, false);
   if (missing.length) throw new Error(`missing production dependencies in node_modules: ${[...new Set(missing)].sort().join(', ')}`);
+  const byRel = new Map();
+  for (const d of seen.values()) {
+    const prev = byRel.get(d.rel);
+    if (prev) throw new Error(`cannot bundle dependencies: ${prev.dir} and ${d.dir} both map to ${d.rel} (conflicting versions outside the package); run npm install inside the package or use --no-bundle-deps`);
+    byRel.set(d.rel, d);
+  }
   return [...seen.values()].sort((a, b) => (a.rel < b.rel ? -1 : 1));
 }
 
 // Copies the self-contained runtime tree into out. Layout mirrors the repo so relative requires resolve.
-function copyRuntime(out, { bundleDeps = true } = {}) {
+function copyRuntime(out, { bundleDeps = true, depRoot = REPO } = {}) {
   for (const d of ['runtime', 'core', 'bindings', 'build']) fs.cpSync(path.join(REPO, d), path.join(out, d), { recursive: true });
   fs.mkdirSync(path.join(out, 'hooks'), { recursive: true });
   fs.cpSync(path.join(REPO, 'hooks', 'lib'), path.join(out, 'hooks', 'lib'), { recursive: true });
@@ -160,7 +189,12 @@ function copyRuntime(out, { bundleDeps = true } = {}) {
   fs.copyFileSync(path.join(REPO, 'scripts', 'validate-agents.js'), path.join(out, 'scripts', 'validate-agents.js'));
   fs.writeFileSync(path.join(out, 'package.json'), jsonText(releasePackageJson('plugin')));
   if (bundleDeps) {
-    for (const { dir, rel } of depClosure()) fs.cpSync(dir, path.join(out, rel), { recursive: true, dereference: true });
+    const nm = path.resolve(out, 'node_modules') + path.sep;
+    for (const { dir, rel } of depClosure(depRoot)) {
+      const dest = path.resolve(out, rel);
+      if (!dest.startsWith(nm)) throw new Error(`refusing to bundle ${dir} outside ${nm}: ${dest}`);
+      fs.cpSync(dir, dest, { recursive: true, dereference: true });
+    }
   }
 }
 
@@ -188,4 +222,4 @@ function marketplaceManifest({ local = false } = {}) {
 }
 const marketplaceText = (opts) => jsonText(marketplaceManifest(opts));
 
-module.exports = { MARKETPLACE_BRANCH, releasePackageJson, MCP_FILES, ICON_PATH, ICON_SRC, codexPluginManifest, codexReleaseMcp, codexReleaseReadme, CODEX_PLUGIN_ROOT, agentPluginManifest, agentPluginMcp, releaseReadme, pluginManifest, releaseMcp, depClosure, copyRuntime, marketplaceManifest, marketplaceText, REPOSITORY };
+module.exports = { bundleRel, MARKETPLACE_BRANCH, releasePackageJson, MCP_FILES, ICON_PATH, ICON_SRC, codexPluginManifest, codexReleaseMcp, codexReleaseReadme, CODEX_PLUGIN_ROOT, agentPluginManifest, agentPluginMcp, releaseReadme, pluginManifest, releaseMcp, depClosure, copyRuntime, marketplaceManifest, marketplaceText, REPOSITORY };

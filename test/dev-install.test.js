@@ -134,6 +134,41 @@ describe('non-dev and cli', () => {
     expect(fs.existsSync(path.join(cwd, 'adapters', 'codex'))).toBe(true);
     expect(u.stdout).toContain('not persistent');
   });
+  it('uninstall-dev --out removes only that dir, never the default adapters/ dirs', () => {
+    const cwd = tmp();
+    const def = path.join(cwd, 'adapters', 'claude-code');
+    const other = path.join(cwd, 'elsewhere');
+    for (const d of [def, other]) expect(compile({ bundleDeps: false, target: 'claude', outDir: d, dev: true }).errors).toEqual([]);
+    const u = spawnSync('node', [CLI, 'uninstall-dev', '--out', other], { cwd, encoding: 'utf8' });
+    expect(u.status, u.stderr).toBe(0);
+    expect(fs.existsSync(other)).toBe(false);
+    expect(fs.existsSync(path.join(def, '.shards-dev'))).toBe(true);
+    // an unmarked --out dir is skipped, still without touching the default
+    const plain = path.join(cwd, 'plain'); fs.mkdirSync(plain);
+    const u2 = spawnSync('node', [CLI, 'uninstall-dev', '--target', 'codex', '--out', plain], { cwd, encoding: 'utf8' });
+    expect(u2.stdout).toContain('no .shards-dev marker');
+    expect(fs.existsSync(plain) && fs.existsSync(def)).toBe(true);
+  });
+  it('release build into a former dev dir drops the dev marker and stale files; foreign dirs are never wiped', () => {
+    const out = path.join(tmp(), 'claude-code');
+    expect(compile({ bundleDeps: false, target: 'claude', outDir: out, dev: true }).errors).toEqual([]);
+    fs.writeFileSync(path.join(out, 'agents', 'stale-agent.md'), 'old');
+    expect(compile({ bundleDeps: false, target: 'claude', outDir: out, dev: false }).errors).toEqual([]);
+    expect(fs.existsSync(path.join(out, '.shards-dev'))).toBe(false);
+    expect(fs.existsSync(path.join(out, 'agents', 'stale-agent.md'))).toBe(false);
+    expect(read(out, '.mcp.json')).toContain('CLAUDE_PLUGIN_ROOT');
+    // a non-empty dir that is not a Shards build: files are written over, nothing of the user's is deleted
+    const foreign = path.join(tmp(), 'mine');
+    fs.mkdirSync(foreign); fs.writeFileSync(path.join(foreign, 'notes.txt'), 'keep');
+    expect(compile({ bundleDeps: false, target: 'claude', outDir: foreign, dev: false }).errors).toEqual([]);
+    expect(read(foreign, 'notes.txt')).toBe('keep');
+  });
+  it('`shards uninstall` (removed v1 command) points at shards migrate and exits 1', () => {
+    const r = spawnSync('node', [CLI, 'uninstall'], { encoding: 'utf8' });
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('shards migrate');
+    expect(r.stderr).not.toContain('unknown command');
+  });
   it('codex dev hint is marked UNVERIFIED', () => {
     const out = path.join(tmp(), 'codex');
     const b = spawnSync('node', [CLI, 'build', '--target', 'codex', '--dev', '--out', out], { encoding: 'utf8' });

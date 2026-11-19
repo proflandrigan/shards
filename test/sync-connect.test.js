@@ -83,7 +83,8 @@ describe('shards connect', () => {
     expect(run()).toBe(0);
     const t = out();
     expect(t).toMatch(/MISSING\s+claude\s+Atlassian/);
-    expect(t).toContain('claude mcp add --transport sse atlassian https://mcp.atlassian.com/v1/sse');
+    expect(t).toContain('claude mcp add --transport http atlassian https://mcp.atlassian.com/v2/mcp');
+    expect(t).not.toContain('/v1/sse');
     expect(t).toContain('codex mcp add atlassian');
     expect(t).toContain('claude mcp add --transport http github https://api.githubcopilot.com/mcp/');
     expect(t).toMatch(/Google Drive connector/);

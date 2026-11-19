@@ -8,8 +8,8 @@ import { execFileSync } from 'child_process';
 const require = createRequire(import.meta.url);
 const { run } = require('../cli/commands/migrate');
 const { importLegacyGateHistory, NOTES_REF } = require('../runtime/gates/legacy-import');
-const { stripClaudeMd } = require('../cli/commands/migrate-legacy');
-const { buildLegacyProject, MANIFEST_FILES } = require('./fixtures/legacy-install');
+const { stripClaudeMd, filterHooks } = require('../cli/commands/migrate-legacy');
+const { buildLegacyProject, MANIFEST_FILES, HOOK_ENTRIES } = require('./fixtures/legacy-install');
 const { StateStore } = require('../runtime/state/store');
 
 let tmp;
@@ -149,6 +149,55 @@ describe('shards migrate (full)', () => {
     expect(read('.claude/commands/shards.md')).toBe('my customised command\n');
   });
 
+  it('fresh clone (all mtimes reset): git provenance shows files are pristine, so they are removed', async () => {
+    const src = fs.mkdtempSync(path.join(os.tmpdir(), 'migrate-src-'));
+    try {
+      buildLegacyProject(src, { gateState: 'none' });
+      // a file the user edited and committed after install must still be kept
+      fs.writeFileSync(path.join(src, 'templates/project-specs.md'), 'my edited template\n');
+      execFileSync('git', ['commit', '-qam', 'edit template'], { cwd: src });
+      fs.rmSync(tmp, { recursive: true, force: true });
+      execFileSync('git', ['clone', '-q', src, tmp]);
+      const r = await migrate();
+      expect(r.code).toBe(0);
+      for (const f of MANIFEST_FILES.filter((x) => x !== 'templates/project-specs.md')) expect(exists(f)).toBe(false);
+      expect(read('templates/project-specs.md')).toBe('my edited template\n');
+      expect(r.out).toMatch(/SKIPPED templates\/project-specs\.md: modified after install/);
+      expect(r.err).not.toContain('WARNING');
+    } finally { fs.rmSync(src, { recursive: true, force: true }); }
+  });
+
+  it('copy without git (all mtimes new): warns loudly, removes nothing; --force removes them', async () => {
+    buildLegacyProject(tmp, { gateState: 'none', git: false });
+    const now = new Date();
+    for (const f of MANIFEST_FILES) fs.utimesSync(path.join(tmp, f), now, now);
+    const r = await migrate();
+    expect(r.code).toBe(0);
+    for (const f of MANIFEST_FILES) expect(exists(f)).toBe(true);
+    expect(r.err).toContain(`WARNING: all ${MANIFEST_FILES.length} file(s)`);
+    expect(r.err).toContain('--force');
+    expect(r.out).not.toContain('already migrated');
+    const r2 = await migrate(['--force']);
+    expect(r2.code).toBe(0);
+    for (const f of MANIFEST_FILES) expect(exists(f)).toBe(false);
+    expect(r2.out).toContain('(changed after install; --force)');
+    expect(exists('.claude/.shards-manifest.json')).toBe(false);
+  });
+
+  it('keeps user hooks that merely look similar (manifest hookEntries are exact)', async () => {
+    buildLegacyProject(tmp, { gateState: 'none' });
+    const sf = path.join(tmp, '.claude/settings.json');
+    const s = JSON.parse(fs.readFileSync(sf, 'utf8'));
+    s.hooks.Stop.push({ hooks: [{ type: 'command', command: 'node scripts/webhook-relay.js' }, { type: 'command', command: 'bash ui-push-notify.sh' }] });
+    fs.writeFileSync(sf, JSON.stringify(s));
+    const r = await migrate();
+    expect(r.code).toBe(0);
+    const cmds = JSON.stringify(JSON.parse(read('.claude/settings.json')).hooks);
+    expect(cmds).toContain('webhook-relay.js');
+    expect(cmds).toContain('ui-push-notify.sh');
+    expect(cmds).not.toContain('.shards/hooks/gate-hook.js');
+  });
+
   it('ignores manifest paths that escape the project root', async () => {
     buildLegacyProject(tmp, { gateState: 'none' });
     const outside = path.join(os.tmpdir(), `migrate-outside-${process.pid}.txt`);
@@ -247,5 +296,58 @@ describe('stripClaudeMd', () => {
     expect(text).toContain('## Keep\nz');
     expect(text).not.toContain('sub');
     expect(text).not.toContain('q');
+  });
+
+  it('keeps user content after a block that ends at a "# " heading', () => {
+    const { text, removed } = stripClaudeMd('# A\n\n## Shards — Agent Suite\nx\n### sub\ny\n\n# Appendix\nuser text\n');
+    expect(removed).toBe(1);
+    expect(text).toContain('# Appendix\nuser text');
+    expect(text).not.toContain('sub');
+  });
+
+  it('keeps plain text appended after the v1 block\'s known last line', () => {
+    const md = '# A\n\n## Shards — Tool-call conventions\n\n### What is unusual\n- x\n\nThese cases are not part of routine Shards workflow and should prompt for\nexplicit user approval regardless of permission mode.\n\nMy own trailing note.\n';
+    const { text, removed } = stripClaudeMd(md);
+    expect(removed).toBe(1);
+    expect(text).toContain('My own trailing note.');
+    expect(text).not.toContain('What is unusual');
+    expect(text).not.toContain('regardless of permission mode');
+  });
+
+  it('never touches a v2 marker region (shards install --claude-md), so --remove still works', () => {
+    const v2 = '<!-- shards:begin conventions v1 -->\n## Shards — Tool-call conventions\n\n### File writes\nbody\n<!-- shards:end conventions -->';
+    const md = `# A\n\n## Shards — Agent Suite\nold v1\n\n${v2}\n\nafter\n`;
+    const { text, removed } = stripClaudeMd(md);
+    expect(removed).toBe(1);
+    expect(text).not.toContain('old v1');
+    expect(text).toContain(v2);
+    expect(text).toContain('after');
+    // the v2 block remover still finds a complete region
+    expect(/<!-- shards:begin conventions[^>]*-->[\s\S]*?<!-- shards:end conventions -->/.test(text)).toBe(true);
+  });
+});
+
+describe('filterHooks', () => {
+  const settings = () => ({ hooks: {
+    Stop: [{ hooks: [
+      { type: 'command', command: 'node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js stop' },
+      { type: 'command', command: 'node $CLAUDE_PROJECT_DIR/.shards/ui/relay.js stop' },
+      { type: 'command', command: 'node scripts/webhook-relay.js' },
+      { type: 'command', command: 'node tools/gate-hook.js' },
+    ] }],
+  } });
+  it('uses only the recorded entries when the manifest has hookEntries; reports unrecorded v1-looking hooks', () => {
+    const s = settings();
+    const dropped = filterHooks(s, { hookEntries: [{ event: 'Stop', matcher: '', command: 'node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js stop' }] });
+    expect([...dropped]).toEqual(['Stop: node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js stop']);
+    expect(dropped.unrecorded).toEqual(['Stop: node $CLAUDE_PROJECT_DIR/.shards/ui/relay.js stop']);
+    expect(s.hooks.Stop[0].hooks.map((h) => h.command)).toEqual(['node $CLAUDE_PROJECT_DIR/.shards/ui/relay.js stop', 'node scripts/webhook-relay.js', 'node tools/gate-hook.js']);
+  });
+  it('falls back to the anchored v1 paths only without hookEntries', () => {
+    const s = settings();
+    const dropped = filterHooks(s, null);
+    expect(dropped).toHaveLength(2);
+    expect(s.hooks.Stop[0].hooks.map((h) => h.command)).toEqual(['node scripts/webhook-relay.js', 'node tools/gate-hook.js']);
+    expect(HOOK_ENTRIES.length).toBeGreaterThan(0);
   });
 });
