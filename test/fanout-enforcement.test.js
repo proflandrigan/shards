@@ -352,7 +352,7 @@ describe('Codex apply_patch with a bare-string tool_input (CX-6)', () => {
     await bind(l, 'ag1', 's1');
     const d = await cx(UPD);
     expect(denied(d)).toBe(true);
-    expect(d.permissionDecisionReason).toContain('models/a/x.py is inside slice owned by worker s1');
+    expect(d.permissionDecisionReason).toMatch(/models[\\/]a[\\/]x\.py is inside slice owned by worker s1/); // Windows reports backslashes
     expect(d.permissionDecisionReason).not.toContain('could not be determined');
   });
   it('no gate, patch outside any slice: allowed', async () => {
