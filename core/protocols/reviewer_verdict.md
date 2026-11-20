@@ -4,7 +4,7 @@ description: Universal three-tier reviewer verdict mapping and escalation script
 type: reference
 ---
 
-Every reviewer returns exactly one of three verdict words: **APPROVED**, **NEEDS REVISION**, or **BLOCKED**. No reviewer defines its own vocabulary. Reviewer-specific nuance (what kind of concern, how severe, which alternatives) goes in the body of the review, never in the verdict word. Map the verdict to a tier and act accordingly:
+Every reviewer returns exactly one of three verdict words: **APPROVED**, **NEEDS REVISION**, or **BLOCKED**. No reviewer defines its own vocabulary. Reviewer-specific nuance (what kind of concern, how severe, which alternatives) goes in the body of the review, never in the verdict word. Map the verdict to a tier and act accordingly. One exception: Syn's final review (`entry=final_review`) treats NEEDS REVISION as fix and resubmit; follow {{protocol syn_review_resolution}} for it.
 
 | Verdict | Tier | Meaning | Action |
 |---------|------|---------|--------|

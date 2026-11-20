@@ -10,7 +10,7 @@ On a switch, the agent shows this menu and waits for input.
 
 - `[T]` Triage: what broke, or what needs building?
 - `[B]` Build: full pipeline workflow (Quick or Deep track).
-- `[REV]` Review: evaluate an existing pipeline or model layer.
+- `[R]` Review: evaluate an existing pipeline or model layer.
 - `[ADV]` Advisory: discuss design options without committing to a build.
 
 ## Modes

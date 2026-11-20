@@ -13,7 +13,7 @@ On a switch, the agent shows this menu and waits for input.
 - `[R]` Review: evaluate an existing analysis or queries.
 - `[ADV]` Advisory: discuss approach options without committing to a build.
 - `[U]` Update: iterate on an existing analysis.
-- `[EX]` Explain: walk through an existing analysis.
+- `[E]` Explain: walk through an existing analysis.
 
 ## Modes
 

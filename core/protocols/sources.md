@@ -8,7 +8,7 @@ type: reference
 
 Prior knowledge (data quirks, patterns, infrastructure behavior) lives in whatever source the `knowledge` job is bound to in `shards.config.yaml` (default git binding: `docs/` and the git log). Shards keeps no store of its own. Everything retrieved is a **hint to verify**, never a fact to rely on.
 
-**Scope:** Build mode (Phase 0 through final) and Autonomous Research (`[AR]`) setup. Skip in Review, Advise, Service, Explain, Experiment, Prompt Lab, Notebook Walkthrough and Slides modes. Syn handoff sessions still run it.
+**Scope:** Build mode (Phase 0 through final) and Autonomous Research (`[AR]`) setup. Skip in Review, Advise, Service, Explain, Experiment, Prompt Lab, and Notebook Walkthrough modes. Syn handoff sessions still run it.
 
 ## 1. Before Phase 1 (non-blocking)
 

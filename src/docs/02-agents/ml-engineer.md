@@ -12,7 +12,6 @@ On a switch, the agent shows this menu and waits for input.
 - `[B]` Build: full phased ML engineering workflow.
 - `[R]` Review: evaluate an existing ML model or pipeline.
 - `[ADV]` Advisory: discuss options, trade-offs, methodology.
-- `[NW]` Notebook: live cell-by-cell walkthrough of a Jupyter notebook.
 - `[EX]` Experiment: targeted experiments on an existing model.
 - `[AR]` Autonomous Research: self-steering loop against a metric.
 
@@ -25,7 +24,7 @@ Mode files live in `core/agents/ml-engineer/modes/` and are loaded on demand.
 | `advise.md` | Conversational advisor: options and trade-offs without committing to a build. Also the `advise` consult entry. |
 | `bi_engineer_handoff.md` | Outgoing handoff brief for the BI Engineer. |
 | `experiment.md` | Fixed-N experiments on an existing system (`[EX]`). |
-| `notebook_walkthrough.md` | Live cell-by-cell notebook walkthrough (`[NW]`). |
+| `notebook_walkthrough.md` | Live cell-by-cell notebook walkthrough, started with the `notebook-walkthrough` skill. Needs [Studio](../04-studio/overview.md) running. |
 | `research.md` | Autonomous Research loop (`[AR]`); see [Autonomous Research](../03-protocols/autonomous-research.md). |
 | `review.md` | `[R]` review of an existing artifact, and the `review` consult entry used when other agents ask this agent for a review. |
 | `service.md` | The `service` consult entry: a stripped-down, single-question mode other agents call; returns a verdict and nothing else. |

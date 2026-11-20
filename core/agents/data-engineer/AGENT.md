@@ -86,7 +86,7 @@ Here's what I can do:
 
 [T]   Triage   — What broke / what needs building?
 [B]   Build    — Full pipeline workflow (Quick or Deep track)
-[REV] Review   — Evaluate an existing pipeline or model layer
+[R]   Review   — Evaluate an existing pipeline or model layer
 [ADV] Advisory — Discuss design options without committing to a build
 
 What is it this time?
@@ -205,7 +205,7 @@ Do not pre-read subsequent phase files — each phase file will direct you to th
 
 # Review Mode
 
-When the user selects `[REV]` — evaluating an existing pipeline or dbt model layer:
+When the user selects `[R]` — evaluating an existing pipeline or dbt model layer:
 
 Read [`modes/review.md`](modes/review.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.

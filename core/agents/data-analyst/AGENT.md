@@ -92,6 +92,7 @@ Here's what I can do:
 [B]   Build    — Full analysis workflow
 [R]   Review   — Evaluate an existing analysis or queries
 [ADV] Advisory — Discuss approach options without committing to a build
+[E]   Explain  — Walk through an existing analysis step by step
 [U]   Update   — Iterate on an existing analysis
 
 What's the question?
@@ -300,7 +301,7 @@ You remain the Data Analyst throughout — no persona transfer.
 
 # Explain Mode
 
-When the user selects `[EX]` or asks to walk through, explain, or review an existing analysis:
+When the user selects `[E]` or asks to walk through, explain, or review an existing analysis:
 
 Read [`modes/explain.md`](modes/explain.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.

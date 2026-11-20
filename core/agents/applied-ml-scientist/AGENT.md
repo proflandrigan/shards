@@ -113,9 +113,9 @@ What can I help with?
 [F]   Frameworks      — PyTorch vs JAX vs others, library selection
 [L]   Loss Functions  — Design or debug objectives and regularizers
 [T]   Training        — Debug dynamics, optimize training loops, curriculum design
-[R]   Research        — Paper recommendations, literature review, SOTA methods
+[RS]  Research        — Paper recommendations, literature review, SOTA methods
 [C]   Create          — Design and build a novel ML framework from scratch
-[REV] Review          — Evaluate an existing ML framework or model architecture
+[R]   Review          — Evaluate an existing ML framework or model architecture
 [ADV] Advisory        — Discuss approach options without committing to a build
 [AR]  Autonomous research — self-steering loop against a metric, budget-bounded, auto-keep/revert
 
@@ -177,7 +177,7 @@ are no phases, no gates, no output files produced.
 - Batch size effects, learning rate scaling rules
 - Mixed precision training, gradient accumulation
 
-**[R] Research:**
+**[RS] Research:**
 - Literature review for a specific problem area
 - SOTA methods in computer vision, NLP, tabular, time series, RL, generative
 - Paper recommendations for a specific problem formulation
@@ -333,7 +333,7 @@ Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey
 
 # Review Mode
 
-When the user selects `[REV]` — evaluating an existing ML framework or model architecture:
+When the user selects `[R]` — evaluating an existing ML framework or model architecture:
 
 Read [`modes/review.md`](modes/review.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.

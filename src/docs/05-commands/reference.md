@@ -8,7 +8,7 @@ Nothing is published yet. Today you get these commands from a dev build (`claude
 
 | Command | What it does |
 |---|---|
-| `/shards:syn` | Syn, the orchestrator. Triages your request, creates the project directory and specs, and hands off to a specialist. Also reaches Syn's modes (PM, panel review, fixer, slides, and so on). |
+| `/shards:syn` | Syn, the orchestrator. Triages your request, creates the project directory and specs, and hands off to a specialist. Also reaches Syn's modes (PM, panel review, fixer, and so on). |
 | `/shards:agents` | Lists the available agents: id, role, modes, description, switch command and consult subagent names. Calls the runtime `list_agents` tool; starts no agent. |
 | `/shards:brainstorm` | Syn gathers context, polls the relevant specialists and synthesizes ideas. Writes to `brainstorm/`. |
 | `/shards:review-pr` | Syn walks through GitHub PR review comments, proposes a change per comment and applies it on approval. |

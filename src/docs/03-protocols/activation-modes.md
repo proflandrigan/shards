@@ -14,7 +14,7 @@ An agent can be activated in three ways, plus a build pattern that uses the thir
 
 ## Consult
 
-A consult is a native subagent (`<id>`, or `<id>-<entry>` for entries such as `review`, `advise`, `service`, `final_review`). Specialists use consults at defined checkpoints, for example the Researcher for methodology or Syn for final sign-off. The reviewer returns APPROVED, NEEDS REVISION or BLOCKED (see [Reviewer Verdicts](reviewer-verdicts.md)). The build fails if a consult entry expands another consult, fan-out or switch, so depth stays 1.
+A consult is a native subagent (`<id>`, or `<id>-<entry>` for entries such as `review`, `advise`, `service`, `final_review`). Specialists use consults at defined checkpoints, for example the Researcher for methodology or Syn for final sign-off. The reviewer returns APPROVED, NEEDS REVISION or BLOCKED (see [Reviewer Verdicts](reviewer-verdicts.md)). The build fails if a consult entry expands another consult, fan-out or switch, so depth stays 1. Entries written for a user at the keyboard (`review`, `advise`) start with a pointer to `core/protocols/consult_mode.md`: as a consultant the agent asks you nothing, raises no gates, writes no files, lists any further consults as open questions for the caller, and answers in one message.
 
 ## Fan-out
 

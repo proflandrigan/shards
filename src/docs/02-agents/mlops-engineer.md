@@ -47,7 +47,7 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 ## Output directory
 
-`services/<project_name>/` (terraform, helm charts, pipeline configs, serving configs)
+`services/<project_name>/mlops/` (terraform, helm charts, pipeline configs, serving configs)
 
 Gate-confirmed phases are committed to git as the record. Where each agent writes is listed in [Output Directory Map](../06-outputs/directory-map.md).
 

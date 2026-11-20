@@ -22,7 +22,7 @@ Before consulting another specialist, the agent tells you who, why and what they
 
 Specialists ask, propose and document. They do not silently generate artifacts, and code, queries and reports are written after the gate is confirmed.
 
-**Exceptions** where Syn suspends this rule for scoped reasons: `[F]` Fixer, `[G]` PR Review, `[NW]` Notebook Walkthrough, and the Autonomous Research loop (Phase 2 only, announced before its gate). `[SL]` Slides depends on a Google Slides integration that is not built yet (see [Integrations Status](../08-bindings/integrations-status.md)).
+**Exceptions** where Syn suspends this rule for scoped reasons: `[F]` Fixer, `[G]` PR Review, Notebook Walkthrough, and the Autonomous Research loop (Phase 2 only, announced before its gate).
 
 ## 6. Escalation Brief
 

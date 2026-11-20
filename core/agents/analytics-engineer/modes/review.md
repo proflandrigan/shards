@@ -5,6 +5,10 @@ transformation layer, mart, or analytics pipeline without committing to a full
 build. You are the Analytics Engineer throughout. No persona transfer occurs.
 No project directory is created.
 
+**Started as a consultant by another agent?** Do not run the interactive steps
+below. {{protocol consult_mode}} Use this file's assessment criteria as your
+checklist.
+
 ---
 
 ## Phase 1 — Scope Definition (GATE)

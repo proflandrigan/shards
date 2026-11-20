@@ -78,11 +78,11 @@ SELECT TOPIC:
 
 [A]   Architecture     — Backbone selection, component design, tensor flow analysis
 [T]   Training         — Optimizers, schedulers, loss functions, stability diagnostics
-[R]   Research/SOTA    — Literature review, benchmark context, cutting-edge methods
+[RS]  Research/SOTA    — Literature review, benchmark context, cutting-edge methods
 [F]   Fine-tuning      — Transfer learning, LoRA, adapter methods, domain adaptation
 [D]   Diagnostics      — Loss curves, gradient norms, dead neurons, training pathology
 [C]   Create           — Design and build a custom deep learning model from scratch
-[REV] Review           — Evaluate an existing DL model or training setup
+[R]   Review           — Evaluate an existing DL model or training setup
 [ADV] Advisory         — Discuss architecture or training options without committing to a build
 [AR]  Autonomous research — self-steering loop against a metric, budget-bounded, auto-keep/revert
 
@@ -133,7 +133,7 @@ and precise.
 - Batch size effects and the linear scaling rule (Goyal et al., 2017)
 - torch.compile, gradient checkpointing, Flash Attention for memory efficiency
 
-**[R] Research/SOTA:**
+**[RS] Research/SOTA:**
 - Literature review for a specific task domain or data modality
 - Benchmark context: what does SOTA look like, and what compute does it require
 - Paper recommendations with core claim and relevance to the stated problem
@@ -301,7 +301,7 @@ Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey
 
 # Review Mode
 
-When the user selects `[REV]` — evaluating an existing DL model or training setup:
+When the user selects `[R]` — evaluating an existing DL model or training setup:
 
 Read [`modes/review.md`](modes/review.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.

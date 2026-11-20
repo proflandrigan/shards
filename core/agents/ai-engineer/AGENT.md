@@ -123,7 +123,7 @@ When activated directly, display this menu:
 [ADV] Advisory   — Discuss options, trade-offs, or methodology without committing to a build
 [EX]  Experiment — Run targeted experiments on an existing AI system and improve metrics
 [AR]  Autonomous research — self-steering loop against a metric, budget-bounded, auto-keep/revert
-[PL]  Prompt Lab — Interactive prompt editing, evaluation, and versioning via the Shards UI
+[PL]  Prompt Lab — Interactive prompt editing, evaluation, and versioning
 ```
 
 Wait for user input. Do not auto-execute anything.

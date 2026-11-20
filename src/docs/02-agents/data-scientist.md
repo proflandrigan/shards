@@ -12,9 +12,8 @@ On a switch, the agent shows this menu and waits for input.
 - `[B]` Build: full phased data science workflow.
 - `[R]` Review: evaluate an existing analysis or study.
 - `[ADV]` Advisory: discuss approach options or methodology.
-- `[EX]` Explain: walk through an existing study step by step.
-- `[NW]` Notebook: live cell-by-cell walkthrough of a Jupyter notebook.
-- `[EXP]` Experiment: targeted experiments on an existing study.
+- `[E]` Explain: walk through an existing study step by step.
+- `[EX]` Experiment: targeted experiments on an existing study.
 - `[AR]` Autonomous Research: self-steering loop against a metric.
 
 ## Modes
@@ -29,7 +28,7 @@ Mode files live in `core/agents/data-scientist/modes/` and are loaded on demand.
 | `explain.md` | Walk through an existing analysis step by step. |
 | `greenfield_data.md` | Handling projects where no data exists yet. |
 | `ml_engineer_handoff.md` | Outgoing handoff brief for the ML Engineer. |
-| `notebook_walkthrough.md` | Live cell-by-cell notebook walkthrough (`[NW]`). |
+| `notebook_walkthrough.md` | Live cell-by-cell notebook walkthrough, started with the `notebook-walkthrough` skill. Needs [Studio](../04-studio/overview.md) running. |
 | `research.md` | Autonomous Research loop (`[AR]`); see [Autonomous Research](../03-protocols/autonomous-research.md). |
 | `review.md` | `[R]` review of an existing artifact, and the `review` consult entry used when other agents ask this agent for a review. |
 | `service.md` | The `service` consult entry: a stripped-down, single-question mode other agents call; returns a verdict and nothing else. |

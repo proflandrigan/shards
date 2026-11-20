@@ -5,6 +5,11 @@ the Data Scientist, ML Engineer, and Syn shards. The per-agent variant files
 at `agents/<agent>/modes/notebook_walkthrough.md` set the persona
 spin and reference this document for the protocol.
 
+**Requires Studio.** The walkthrough is built around the Studio notebook panel
+(Studio is the optional Shards browser UI, started with
+`npx @proflandrigan/shards-studio` in the project directory). Without it
+there is no panel, and the cell controls and live state view are missing.
+
 The walkthrough lets the agent guide the user through a Jupyter notebook
 **cell by cell**: execute the cell against a live kernel, explain it in chat,
 take questions, and (when asked) edit, insert, or delete cells and re-run
@@ -87,7 +92,7 @@ it shows the current state and dispatches user actions back as chat messages.
 
    Write this JSON to `<project_root>/.shards/notebook-walkthrough.json`.
 
-6. **Emit the panel** (always, whether or not a UI exists), substituting the
+6. **Emit the panel** (always), substituting the
    notebook basename and session id:
 
    {{artifact.emit type=notebook-walkthrough path=.shards/notebook-walkthrough.json meta="title=Walkthrough: <notebook_basename> panel_id=nw-<session_id>"}}

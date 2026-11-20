@@ -1,12 +1,12 @@
 # Sources:
 #   - src/agents/specific_instructions/syn/{final_review,arbiter,code_review,pm,brainstorm}.md
 #   - src/agents/specific_instructions/shared/{swarm,diverge}_protocol.md
-#   - output_dir null: mode-dependent (fixes/, presentations/, panels/, projects/)
+#   - output_dir null: mode-dependent (fixes/, panels/, projects/)
 #   - src/agents/syn.md (frontmatter, persona)
 #   - CLAUDE.md output directory table, shards-agent-suite-plan.md E1.1/E5.1/E12.2
 id: syn
 display_name: "Syn"
-description: "Orchestrator of the Shards suite: triages requests, creates the project directory and specs, hands off to the right specialist, and serves as final reviewer and branch arbiter. Also runs PM, panel review, brainstorm, fixer, slides and other modes."
+description: "Orchestrator of the Shards suite: triages requests, creates the project directory and specs, hands off to the right specialist, and serves as final reviewer and branch arbiter. Also runs PM, panel review, brainstorm, fixer and other modes."
 role: orchestrator
 activation: [switch, consult]
 consult_entries:

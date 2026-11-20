@@ -49,7 +49,7 @@ describe('3.3 Syn-review resolution is a single shared protocol', () => {
 
   it('shared protocol exists and keeps the escalation and code-review blocks', () => {
     const s = read(shared);
-    expect(s).toContain('If Syn returns NEEDS REVISION a second time');
+    expect(s).toContain('If Syn returns NEEDS REVISION or BLOCKED a second time');
     expect(s).toContain('Syn has flagged concerns twice');
     expect(s).toContain('Syn review resolution:');
     expect(s).toContain('Code artifacts found: Yes');

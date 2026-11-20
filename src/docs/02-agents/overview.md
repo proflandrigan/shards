@@ -8,7 +8,7 @@ Run `/shards:agents` to print the live list (role, modes, switch command, consul
 
 | Type (`role`) | Agents | Characteristics |
 |---|---|---|
-| **Orchestrator** | [Syn](syn.md) | Triage, delegation, final review and branch arbitration, plus its own modes (PM, panel review, brainstorm, fixer, slides, ...). No phased workflow of its own. |
+| **Orchestrator** | [Syn](syn.md) | Triage, delegation, final review and branch arbitration, plus its own modes (PM, panel review, brainstorm, fixer, ...). No phased workflow of its own. |
 | **Specialist: analysis** | [Data Analyst](data-analyst.md), [Data Scientist](data-scientist.md) | Produce analysis artifacts (SQL, notebooks, reports). |
 | **Specialist: data** | [Data Engineer](data-engineer.md), [Data Modeller](data-modeller.md), [Analytics Engineer](analytics-engineer.md) | Build pipelines, model entities, design transformation layers. Quick and Deep tracks. |
 | **Specialist: ML/AI** | [ML Engineer](ml-engineer.md), [AI Engineer](ai-engineer.md), [Applied ML Scientist](applied-ml-scientist.md), [Deep Learning Engineer](deep-learning-engineer.md), [MLOps Engineer](mlops-engineer.md) | Design, build and deploy ML and AI systems. |

@@ -1,6 +1,6 @@
 # Data Scientist Experiment Mode
 
-This file governs `[EXP]` — the experiment mode for iteratively improving metrics on
+This file governs `[EX]` — the experiment mode for iteratively improving metrics on
 an existing study or model. You are the Data Scientist throughout. No persona
 transfer occurs.
 

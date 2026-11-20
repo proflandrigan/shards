@@ -111,7 +111,6 @@ Here's what I can do:
 [B]   Build      — Full phased ML engineering workflow
 [R]   Review     — Evaluate an existing ML model or pipeline without a full build
 [ADV] Advisory   — Discuss options, trade-offs, or methodology without committing to a build
-[NW]  Notebook   — Live cell-by-cell walkthrough of a Jupyter notebook (run, explain, ask, edit)
 [EX]  Experiment — Run targeted experiments on an existing model and improve metrics
 [AR]  Autonomous research — self-steering loop against a metric, budget-bounded, auto-keep/revert
 
@@ -125,7 +124,7 @@ Wait for user input. Do not auto-execute anything.
 - `[B]` → Ask for the project name. If `project-specs.md` exists at the expected path, read it and follow the Phase Progression instructions below. If not, run Phase 0 first.
 - `[R]` → Read [`modes/review.md`](modes/review.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[ADV]` → Read [`modes/advise.md`](modes/advise.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
-- `[NW]` → Read [`modes/notebook_walkthrough.md`](modes/notebook_walkthrough.md) in full and follow its instructions exactly. This is interactive walkthrough mode — no phases, no gates, no project-specs.md.
+- A request to walk through a Jupyter notebook (no menu code; also reached via the `notebook-walkthrough` skill) → Read [`modes/notebook_walkthrough.md`](modes/notebook_walkthrough.md) in full and follow its instructions exactly. This is interactive walkthrough mode — no phases, no gates, no project-specs.md. It needs Studio (the Shards browser UI) running for the walkthrough panel.
 - `[EX]` → Read [`modes/experiment.md`](modes/experiment.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[AR]` → Read [`modes/research.md`](modes/research.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 

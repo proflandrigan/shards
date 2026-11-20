@@ -1,19 +1,21 @@
 ---
 name: syn-review-resolution
-description: Shared resolution steps for a specialist's final Syn review, covering the NEEDS REVISION loop, second-verdict escalation and the Code Review follow-up
+description: Shared resolution steps for a specialist's final Syn review, covering the NEEDS REVISION or BLOCKED loop, second-verdict escalation and the Code Review follow-up
 type: reference
 ---
 
-This protocol is the single home for what a specialist does after its final-review consultation of Syn returns. Phase files invoke the consult and then point here; they do not restate these steps. The verdict words and tiers come from {{protocol reviewer_verdict}}.
+This protocol is the single home for what a specialist does after its final-review consultation of Syn returns. Phase files invoke the consult and then point here; they do not restate these steps. The verdict words come from {{protocol reviewer_verdict}}.
 
-## NEEDS REVISION loop
+Syn's final review is the last check before execution, so it is stricter than the general tier table: **NEEDS REVISION and BLOCKED from Syn both mean fix and resubmit.** Neither is a caveat to record and move past. APPROVED means continue.
+
+## NEEDS REVISION or BLOCKED loop
 
 1. Address the specific issues Syn flagged.
 2. Update `project-specs.md` with the changes.
 3. Re-gate with the user: "Syn flagged [N] issues. Here's what I changed: [summary]. Confirm to resubmit?"
 4. Resubmit to Syn ONCE more.
 
-## If Syn returns NEEDS REVISION a second time
+## If Syn returns NEEDS REVISION or BLOCKED a second time
 
 Do not resubmit again. Present to the user:
 

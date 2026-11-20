@@ -12,13 +12,10 @@ On a switch, Syn shows this menu and waits for input.
 - `[F]` **Fix**: a quick fix or minor update to something that exists. Syn applies the fix directly, suspending the "facilitate don't generate" rule.
 - `[P]` **Project**: a multi-specialist project. Syn plans, coordinates and reviews the whole thing.
 - `[S]` **Status**: check on a current project.
-- `[R]` **Review**: review a specialist's plan before execution.
 - `[B]` **Brainstorm**: bring a problem (or nothing) and let the shards ideate.
 - `[D]` **Diff**: compare two projects side by side.
 - `[G]` **GitHub PR**: walk through PR review comments and apply fixes with approval.
-- `[NW]` **Notebook**: a live cell-by-cell walkthrough of a Jupyter notebook (run, explain, ask, edit).
 - `[PR]` **Panel Review**: convene a panel of specialists to review a directory, coalesce findings, and plan sequenced fixes.
-- `[SL]` **Slides**: build a Google Slides deck with specialist gut-checks at the outline and after the build.
 - `[FF]` **Free Form**: general assistant mode. Chat or work directly, spawning shards or any installed agents or skills as subagents.
 
 `[PR]` reviews a local directory. To walk through GitHub PR review comments, use `[G]`.
@@ -34,8 +31,7 @@ Syn's mode files live in `core/agents/syn/modes/`. Three of them are also consul
 | PM | `pm.md` | `[P]` Project Manager. Orchestrates a multi-specialist project from a `project-plan.md`; each workstream runs under its specialist. |
 | Free Form | `free_form.md` | `[FF]` General assistant mode: no phases or gates, direct work plus spawning shards or any installed agents or skills as subagents. |
 | Panel Review | `panel_review.md` | `[PR]` Multi-specialist review of any directory, coalesced into a prioritized report and a sequencing plan. |
-| Slides | `slides.md` | `[SL]` Google Slides deck drafting with specialist polls at the outline and after the build. Needs a Google Slides MCP server; the Slides binding is part of Stage 6 and is not built yet, see [Integrations Status](../08-bindings/integrations-status.md). |
-| Notebook Walkthrough | `notebook_walkthrough.md` | `[NW]` Live cell-by-cell notebook walkthrough through the runtime's notebook kernel. Also reached through the `notebook-walkthrough` skill. |
+| Notebook Walkthrough | `notebook_walkthrough.md` | Live cell-by-cell notebook walkthrough through the runtime's notebook kernel. Started with the `notebook-walkthrough` skill (no menu code). Needs [Studio](../04-studio/overview.md) running for the walkthrough panel. |
 | PR Review | `pr_review.md` | `[G]` Walks through GitHub PR comments with guided fixes. Also reached through the `review-pr` skill. |
 | Diff | `diff.md` | `[D]` Cross-project comparison into a structured diff report. |
 | Final Review | `final_review.md` | Consult entry `final_review`. Specialists call it for sign-off; it checks `gates_open` and returns `APPROVED` / `NEEDS REVISION` / `BLOCKED`. |
@@ -61,7 +57,6 @@ Syn has no single output directory (`output_dir: null`). It writes to:
 - `brainstorm/` for brainstorm sessions.
 - `fixes/<project_name>/` for Fixer mode.
 - `projects/<project_name>/` for PM Mode (`project-plan.md` and `workstreams.json`).
-- `presentations/<deck_slug>/` for Slides mode.
 - `panels/<dirname>/` for Panel Review (the default; you can override it).
 - `<project_dir>/.shards/branches/` for DIVERGE branches.
 - The target project directory when acting as final reviewer.

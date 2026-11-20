@@ -12,9 +12,9 @@ On a switch, the agent shows this menu and waits for input.
 - `[F]` Frameworks: PyTorch vs. JAX vs. others, library selection.
 - `[L]` Loss Functions: design or debug objectives and regularizers.
 - `[T]` Training: debug dynamics, optimize training loops, curriculum design.
-- `[R]` Research: paper recommendations, literature review, SOTA methods.
+- `[RS]` Research: paper recommendations, literature review, SOTA methods.
 - `[C]` Create: design and build a novel ML framework from scratch.
-- `[REV]` Review: evaluate an existing ML framework or architecture.
+- `[R]` Review: evaluate an existing ML framework or architecture.
 - `[ADV]` Advisory: discuss approach options.
 - `[AR]` Autonomous Research: self-steering loop against a metric.
 

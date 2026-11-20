@@ -97,7 +97,7 @@ consultation. Announce that you're skipping it:
 
 Then proceed directly to Step 4.
 
-### Task call format
+### Consult format
 
 For non-trivial fixes, call the specialist:
 
@@ -120,10 +120,10 @@ applying it.
 **Context:** <relevant code snippets or project-specs.md summary if applicable>
 
 Review the proposed fix and return:
-1. **Verdict:** GOOD / CAUTION / TOO COMPLEX
-   - GOOD: fix is correct, apply it
-   - CAUTION: fix is directionally right but note these concerns: [list]
-   - TOO COMPLEX: this should not be a quick fix because [reason]
+1. **Verdict:** APPROVED / NEEDS REVISION / BLOCKED (per the reviewer-verdict protocol)
+   - APPROVED: fix is correct, apply it
+   - NEEDS REVISION: fix is directionally right but note these concerns: [list]
+   - BLOCKED: this should not be a quick fix (too complex, or unsafe) because [reason]
 2. **Issues** (if any): specific problems with the proposed changes
 3. **Alternative** (optional): if you'd do it differently, say how in 1-2 sentences
 
@@ -136,16 +136,16 @@ Announce the consultation to the user:
 ### Incorporate feedback
 
 After the specialist responds:
-- If **GOOD**: proceed to Step 4 with the plan as-is.
-- If **CAUTION**: adjust the plan to address valid concerns. Note what changed.
-- If **TOO COMPLEX**: recommend escalation to `[T]` Triage. The user can still
+- If **APPROVED**: proceed to Step 4 with the plan as-is.
+- If **NEEDS REVISION**: adjust the plan to address valid concerns. Note what changed.
+- If **BLOCKED**: recommend escalation to `[T]` Triage. The user can still
   override, but surface the specialist's reasoning clearly.
 
 ### Multi-domain fixes
 
 If the fix spans two specialist domains (e.g., a SQL query file and a Python
 script), call both specialists in parallel. Present both verdicts. If either
-returns TOO COMPLEX, recommend escalation.
+returns BLOCKED, recommend escalation.
 
 ---
 
@@ -165,7 +165,7 @@ Gate readback (pass this as the `summary`):
 
 {{gate kind=phase phase=0 id=specific-instructions-syn-fixer-phase0}}
 
-If the specialist returned TOO COMPLEX and the user hasn't already decided:
+If the specialist returned BLOCKED and the user hasn't already decided:
 > "[Specialist] thinks this is bigger than a quick fix: [reason]. Want me to
 > proceed anyway, or escalate to `[T]`?"
 
@@ -200,7 +200,7 @@ If the user says yes, write a lightweight fix log entry:
 - **Date:** <date>
 - **Fixed by:** Syn (Fixer Mode)
 - **Specialist consulted:** <specialist name> | None (trivial)
-- **Verdict:** GOOD | CAUTION | TOO COMPLEX (overridden)
+- **Verdict:** APPROVED | NEEDS REVISION | BLOCKED (overridden)
 - **Files changed:**
   - `<file path>` — <one-line description of change>
 - **Problem:** <1-2 sentences>
@@ -220,7 +220,7 @@ If the user says yes, write a lightweight fix log entry:
 - **Date:** <date>
 - **Fixed by:** Syn (Fixer Mode)
 - **Specialist consulted:** <specialist name> | None (trivial)
-- **Verdict:** GOOD | CAUTION | TOO COMPLEX (overridden)
+- **Verdict:** APPROVED | NEEDS REVISION | BLOCKED (overridden)
 - **Files changed:**
   - `<file path>` — <one-line description of change>
 - **Problem:** <1-2 sentences>

@@ -15,11 +15,11 @@ full before executing this file.
 
 ---
 
-## When to use `[AR]` vs `[EXP]`
+## When to use `[AR]` vs `[EX]`
 
 | Mode | Shape | Use when |
 |------|-------|----------|
-| `[EXP]` | 3-5 pre-planned experiments on an existing study | You know what to try |
+| `[EX]` | 3-5 pre-planned experiments on an existing study | You know what to try |
 | `[AR]` interactive | 10 adaptive iterations against a metric | You want to push a modeling or feature-engineering result, conversationally |
 | `[AR]` overnight | 100 adaptive iterations | You want a long AR session against a single metric |
 | `[AR]` fan-out | K parallel AR loops per approach family | You want methodology alternatives compared head-to-head |
@@ -41,7 +41,7 @@ full before executing this file.
 ### Versioning detection
 
 Per `experiment_versioning.md` Section A. AR requires git (or DVC). If
-versioning is `none`, warn and offer to init, drop to `[EXP]`, or cancel.
+versioning is `none`, warn and offer to init, drop to `[EX]`, or cancel.
 
 ### Knowledge retrieval
 

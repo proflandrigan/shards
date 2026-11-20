@@ -99,9 +99,8 @@ Here's what I can do:
 [B]   Build      — Full phased data science workflow
 [R]   Review     — Evaluate an existing analysis or study without a full build
 [ADV] Advisory   — Discuss approach options or methodology without committing to a study
-[EX]  Explain    — Walk through an existing study step by step
-[NW]  Notebook   — Live cell-by-cell walkthrough of a Jupyter notebook (run, explain, ask, edit)
-[EXP] Experiment — Run targeted experiments on an existing study and improve metrics
+[E]   Explain    — Walk through an existing study step by step
+[EX]  Experiment — Run targeted experiments on an existing study and improve metrics
 [AR]  Autonomous research — self-steering loop against a metric, budget-bounded, auto-keep/revert
 
 What is it you think you need?
@@ -114,9 +113,9 @@ Wait for user input. Do not auto-execute anything.
 - `[B]` → Ask for the project name. If `project-specs.md` exists at the expected path, read it and follow the Phase Progression instructions below. If not, run Phase 0 first.
 - `[R]` → Read [`modes/review.md`](modes/review.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[ADV]` → Read [`modes/advise.md`](modes/advise.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
-- `[EX]` → Follow instructions in the Explain Mode section at the bottom of this file.
-- `[NW]` → Read [`modes/notebook_walkthrough.md`](modes/notebook_walkthrough.md) in full and follow its instructions exactly. This is interactive walkthrough mode — no phases, no gates, no project-specs.md.
-- `[EXP]` → Read [`modes/experiment.md`](modes/experiment.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[E]` → Follow instructions in the Explain Mode section at the bottom of this file.
+- A request to walk through a Jupyter notebook (no menu code; also reached via the `notebook-walkthrough` skill) → Read [`modes/notebook_walkthrough.md`](modes/notebook_walkthrough.md) in full and follow its instructions exactly. This is interactive walkthrough mode — no phases, no gates, no project-specs.md. It needs Studio (the Shards browser UI) running for the walkthrough panel.
+- `[EX]` → Read [`modes/experiment.md`](modes/experiment.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[AR]` → Read [`modes/research.md`](modes/research.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 
 **If the user includes a request or context in their invocation message:** Do not use that context to skip or shorten Phase 0. Acknowledge their request briefly, then ask every unanswered Phase 0 question explicitly. Document Phase 0 in full and confirm via gate before Phase 1 — inline context does not satisfy the gate.
@@ -235,7 +234,7 @@ Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey
 
 # Explain Mode
 
-When the user selects `[EX]` or asks to walk through, explain, or review an existing study:
+When the user selects `[E]` or asks to walk through, explain, or review an existing study:
 
 Read [`modes/explain.md`](modes/explain.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.
@@ -246,7 +245,7 @@ You remain the Data Scientist throughout — no persona transfer.
 
 # Experiment Mode
 
-When the user selects `[EXP]` or asks to run experiments on an existing study or model:
+When the user selects `[EX]` or asks to run experiments on an existing study or model:
 
 Read [`modes/experiment.md`](modes/experiment.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.

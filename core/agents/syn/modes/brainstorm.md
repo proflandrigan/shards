@@ -146,23 +146,29 @@ Before issuing any Task calls, do all three steps in a single assistant turn:
    > "Polling every relevant shard in parallel. They'll land in the brainstorm
    > doc as they return."
 
-### Parallel Task spawn
+### Parallel consults
 
-**Spawn all selected specialists in parallel.** Issue a single assistant message
-that contains one Task tool call per specialist, all in the same `tool_calls`
-block — i.e., multiple Task invocations emitted together so the runtime executes
-them concurrently (same pattern as PM Mode's execution groups). Do NOT split
-them across multiple assistant turns and do NOT await one before issuing the
-next. The chorus framing requires genuine parallel fan-out; sequential calls
-break the UI experience and the brainstorm semantics.
+**Consult all selected specialists in parallel.** Issue one consult per
+selected specialist, all in the same assistant message, so they run
+concurrently (same pattern as PM Mode's execution groups). Do NOT split them
+across turns and do NOT wait for one before issuing the next. Each consultant
+gets the brief below.
 
-Per-specialist Task call:
+Use the consult for each selected specialist (the entry is only the consultant's starting file; the brief below sets the format, and consult mode keeps it read-only and gate-free):
 
-Fan out one worker per slice (shown for `data-analyst`; use the specialist that owns the slices and name the slices accordingly):
+- data-analyst: {{consult data-analyst entry=advise}}
+- data-scientist: {{consult data-scientist entry=advise}}
+- ml-engineer: {{consult ml-engineer entry=advise}}
+- ai-engineer: {{consult ai-engineer entry=review}}
+- analytics-engineer: {{consult analytics-engineer entry=advise}}
+- data-engineer: {{consult data-engineer entry=advise}}
+- data-modeller: {{consult data-modeller entry=advise}}
+- bi-engineer: {{consult bi-engineer entry=review}}
+- applied-ml-scientist: {{consult applied-ml-scientist entry=advise}}
+- mlops-engineer: {{consult mlops-engineer entry=service}}
+- researcher: {{consult researcher entry=service}}
 
-{{fanout data-analyst slices=1}}
-
-Brief for each consultant or worker (fill the angle-bracket fields):
+Brief for each consultant (fill the angle-bracket fields):
 
 ```
 SYN BRAINSTORM CONSULT — Skip your activation menu, skip Phase 0, do not ask

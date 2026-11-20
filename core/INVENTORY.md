@@ -245,7 +245,7 @@ Legend: "-> deleted (orphaned v1 monolith...)" marks the per-agent `modes/phases
 | 224 | `src/agents/specific_instructions/syn/panel_review.md` | `core/agents/syn/modes/panel_review.md` |  |
 | 225 | `src/agents/specific_instructions/syn/pm.md` | `core/agents/syn/modes/pm.md` |  |
 | 226 | `src/agents/specific_instructions/syn/pr_review.md` | `core/agents/syn/modes/pr_review.md` |  |
-| 227 | `src/agents/specific_instructions/syn/slides.md` | `core/agents/syn/modes/slides.md` |  |
+| 227 | `src/agents/specific_instructions/syn/slides.md` | (dropped) | Slides mode removed (Google Slides integration not built); `templates/presentation-spec.md` removed with it |
 | 228 | `src/agents/syn.md` | `core/agents/syn/AGENT.md` |  |
 | 229 | `src/templates/analysis-template.md` | `core/templates/analysis-template.md` |  |
 | 230 | `src/templates/branch-report.md` | `core/templates/branch-report.md` |  |

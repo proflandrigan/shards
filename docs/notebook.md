@@ -1,6 +1,6 @@
 # Notebook execution (shards runtime)
 
-Developer notes for the notebook tools that drive a Jupyter kernel for `[NW]` Notebook Walkthrough and for any agent that runs notebook cells. Covers `runtime/notebook/kernel.py`, the `notebook_*` MCP tools, and the `notebook-walkthrough` command. Describes what the code does today. Open items are marked `OPEN` or `TODO(owner: proflandrigan)`.
+Developer notes for the notebook tools that drive a Jupyter kernel for the `notebook-walkthrough` skill (which needs Studio running for its panel, see `studio.md`) and for any agent that runs notebook cells. Covers `runtime/notebook/kernel.py`, the `notebook_*` MCP tools, and the `notebook-walkthrough` command. Describes what the code does today. Open items are marked `OPEN` or `TODO(owner: proflandrigan)`.
 
 ## 1. Purpose
 

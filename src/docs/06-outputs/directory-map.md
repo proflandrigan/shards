@@ -15,7 +15,7 @@ Where each agent writes. Output directories live at the project root and are cre
 | AI Engineer | `services/<project>/` (greenfield); the existing service directory when iterating |
 | Applied ML Scientist | `research/<project>/` |
 | Deep Learning Engineer | `models/<project>/` |
-| MLOps Engineer | `services/<project>/` |
+| MLOps Engineer | `services/<project>/mlops/` (greenfield); the existing service directory when iterating |
 | BI Engineer | `dashboards/<project>/` |
 | Researcher, Academic, Backend Engineer | none (review only) |
 
@@ -27,12 +27,9 @@ Syn's `output_dir` is mode-dependent.
 |---|---|
 | Fixer | `fixes/<project>/` (fix notes as `fix_<slug>.md`) |
 | Brainstorm | `brainstorm/` (`brainstorm_<project>.md` plus a `.state.json` sidecar) |
-| Slides | `presentations/<deck_slug>/` |
 | Panel Review | `panels/<dirname>/` |
 | PM | `projects/<project>/` (`project-plan.md`; specialists still write to their own directories) |
 | PR Review | none |
-
-Slides depends on a presentation binding, which is not built yet; see [integrations status](../08-bindings/integrations-status.md).
 
 ## Project files
 
