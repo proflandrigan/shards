@@ -27,9 +27,18 @@ Studio has no relay and no runtime hooks. It reads three things:
 2. **The project's output folders.** Studio reads the files at the paths named in the events, and watches them, so a re-written file refreshes its view.
 3. **Gate state.** `.shards/state/sessions/<sessionKey>/gates.json`, written by the runtime (see [`docs/gates.md`](gates.md)). Studio polls these files and shows a banner while a gate is `pending`, with the `shards gates confirm` command to run. Studio never parses chat text for gates and never writes gate state. Server routes: `GET /gates`, `GET /gates/stream` (SSE `gate-update` events), `GET /gates/mode`.
 
-Studio writes no Claude Code hooks and shows no permission cards; Claude Code handles approvals itself. Its state files are `.shards/studio.pid`, `.shards/studio.port` and `.shards/studio.log`.
+Studio writes no Claude Code hooks and shows no permission cards; Claude Code handles approvals itself (for Studio's own headless chat sessions, see Chat sessions below). Its state files are `.shards/studio.pid`, `.shards/studio.port` and `.shards/studio.log`.
 
 If Studio shows nothing, check that the agent has emitted events (`.shards/events.jsonl` exists and has lines) and that the artifact path is inside the project.
+
+## Chat sessions
+
+Studio's chat panel runs `claude -p` headless (`packages/studio/chat-session.js`, `buildClaudeArgs`). Two rules make agent start work on Claude Code 2.1.329:
+
+- **No `--agent` for v2 agents.** With the v2 plugin, `--agent <id>` resolves to the plugin's consult subagent (`agents/<id>.md`), which has no MCP tools, so `activate` cannot be called. A v2 (`core`) session starts plain and the activation prompt asks the model to call `activate` with `mode="switch"`. Only legacy v1 agents (`<project>/.claude/agents/<id>.md`) are still started with `--agent`.
+- **Pre-allowed runtime tools.** Headless `-p` cannot show a permission prompt, so any tool not pre-allowed is denied. Studio passes `--allowedTools` with `STUDIO_ALLOWED_RUNTIME_TOOLS` under both prefixes (`mcp__plugin_shards_shards__` for the plugin, `mcp__shards__` for a `claude mcp add shards` registration). It deliberately leaves out `gate_advance`, `gate_confirm`, `gate_suspend` and `gate_force_close` (they need a human prompt, the user's verbatim reply, or an operator), `auto_verify_start` (widens auto-approval) and `notebook_start`/`notebook_exec`/`notebook_run_all` (run code). A gate opened from a Studio chat is therefore confirmed outside the chat, with `shards gates confirm` (the gate banner shows the command). A test keeps every `runtime/tools/*.js` tool in exactly one of the two lists.
+
+A denied tool call (`permission_denied` in the stream) is logged to `.shards/studio.log` and shown as a notice in the chat.
 
 ## Artifact types
 

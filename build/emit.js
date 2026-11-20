@@ -8,6 +8,7 @@ const pkg = require('../package.json');
 const relpkg = require('./package');
 const { utilitySkills } = require('./skills');
 const { CLAUDE_TOOL_PREFIX, CODEX_TOOL_PREFIX, contentPath } = require('./render');
+const { codexMcpToml } = relpkg;
 
 const REPO = path.resolve(__dirname, '..');
 const DEV_MARKER = '.shards-dev';
@@ -66,32 +67,28 @@ function generalPrompt(a, target, defaultAgent) {
   return t;
 }
 
-// E8.7(b)/E5.7: per-agent profiles. UNVERIFIED (docs/compat.md): Codex profile table shape and `profile` key are docs-only.
-const AGENTS_GUIDANCE = `# Delegation limits (E8.6, UNVERIFIED docs-only: docs/compat.md CX-4). Key names differ between Codex doc versions, so these are
-# commented out; uncomment the ones your Codex version accepts.
+// E8.6 delegation limits. Codex 0.169.0 accepts agents.max_depth, agents.max_threads and
+// agents.max_concurrent_threads_per_session (docs/compat.md CX-4); left commented so merging into a config.toml
+// that already has an [agents] table cannot create a duplicate table.
+const AGENTS_GUIDANCE = `# Delegation limits (E8.6; keys accepted by Codex 0.169.0, docs/compat.md CX-4). Uncomment, or merge into your [agents] table:
 #   agents.max_depth: consult from a specialist (specialist -> Syn or reviewer) needs depth 2; the default may be 1.
-#   agents.max_threads (alias of agents.max_concurrent_threads_per_session): fan-out width; 4 is a safe recommendation.
+#   agents.max_threads (alias of agents.max_concurrent_threads_per_session, >= 1): fan-out width; 4 is a safe recommendation.
 # [agents]
 # max_depth = 2
 # max_threads = 4
 `;
 
-function codexConfig(profiles, optIn, mcp) {
-  const pre = CODEX_TOOL_PREFIX;
-  let t = '# UNVERIFIED (docs-only): [profiles.*] and developer_instructions are not confirmed against a real Codex CLI.\n# Usage: codex --profile shards-<agent>\n';
-  if (optIn) t += 'profile = "shards-syn"\n';
+// .codex/config.toml. Release: guidance only (the MCP entry needs the installed plugin's absolute path, so
+// `shards install --codex` writes it). Dev: also the MCP entry pointing at this repo's runtime.
+// E5.7 opt-in: Codex 0.169 rejects a top-level `profile = ...` ("legacy profile config is no longer supported"),
+// so the default-agent opt-in is a comment naming the `codex -p shards-syn` command.
+function codexConfig(optIn, mcp) {
+  let t = '# Shards for Codex. Per-agent profiles are the files shards-<agent>.config.toml (Codex profiles v2);\n# `shards install --codex` copies them to $CODEX_HOME. Usage: codex -p shards-<agent>\n';
+  if (optIn) t += '# Default agent: start sessions with `codex -p shards-syn` (Codex has no config key for a default profile).\n';
   t += `\n${AGENTS_GUIDANCE}\n`;
-  for (const id of profiles) {
-    const di = `You are the Shards agent ${id}. Before anything else call \`${pre}activate\`(agent="${id}", mode="switch"), adopt the returned persona_summary, then read content/agents/${id}/AGENT.md and follow it. Load phases with \`${pre}load_phase\`; leave with \`${pre}return\`.`;
-    t += `[profiles.shards-${id}]\ndeveloper_instructions = ${tomlStr(di)}\n\n`;
-  }
-  return t + mcp;
-}
-
-// E8.3: MCP entry + per-tool approval_mode (Codex docs-only, UNVERIFIED: compat CX-1). Shared by dev and release.
-function codexMcpToml(runtimePath) {
-  const approvals = ['gate_advance', 'gate_force_close'].map((t) => `[mcp_servers.shards.tools.${t}]\napproval_mode = "prompt"\n`).join('\n');
-  return `[mcp_servers.shards]\ncommand = "node"\nargs = [${tomlStr(runtimePath)}]\n\n# Per-tool approval_mode below is docs-only / UNVERIFIED (docs/compat.md CX-1).\n${approvals}\n`;
+  if (mcp) t += mcp;
+  else t += '# MCP server: run `shards install --codex` (writes [mcp_servers.shards] into $CODEX_HOME/config.toml with\n# the absolute path of the installed plugin\'s runtime/server.js). A plugin .mcp.json is not used (docs/compat.md CX-7).\n';
+  return t;
 }
 
 // A previous Shards build: the dev marker, or size-report.json next to a plugin manifest named shards.
@@ -160,20 +157,17 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
       const hooks = fs.readFileSync(path.join(REPO, 'hooks', 'claude-code.hooks.json'), 'utf8').split('${CLAUDE_PLUGIN_ROOT}/hooks/').join(`${hooksDir}/`);
       out.set('hooks/hooks.json', hooks);
     } else if (target === 'codex') {
-      out.set('.codex-plugin/plugin.json', jsonText({ name: 'shards', version: pkg.version, description: pkg.description, skills: './skills/' })); // docs-only, UNVERIFIED
-      // E8.3: per-tool approval_mode (Codex docs-only, UNVERIFIED: compat CX-1).
+      out.set('.codex-plugin/plugin.json', jsonText({ name: 'shards', version: pkg.version, description: pkg.description, skills: './skills/' }));
       codexMcp = codexMcpToml(runtime);
-      out.set('.codex/hooks.json', fs.readFileSync(path.join(REPO, 'hooks', 'codex.hooks.json'), 'utf8').split('{{SHARDS_HOOKS_DIR}}').join(hooksDir));
+      // Codex discovers plugin hooks at <plugin>/hooks/hooks.json (verified 0.169.0). Dev: absolute repo hooks dir.
+      out.set('hooks/hooks.json', relpkg.codexHooksJson(hooksDir));
     }
   }
-  // Release packaging (codex, E8.1-E8.3): manifest, plugin MCP entry, config with approvals, hooks; runtime copied below.
+  // Release packaging (codex, E8.1-E8.3): manifest, hooks; MCP entry via `shards install --codex`; runtime copied below.
   if (!dev && target === 'codex') {
-    const root = relpkg.CODEX_PLUGIN_ROOT;
-    codexMcp = codexMcpToml(`${root}/runtime/server.js`);
     out.set('.codex-plugin/plugin.json', jsonText(relpkg.codexPluginManifest()));
-    out.set('.mcp.json', jsonText(relpkg.codexReleaseMcp()));
     out.set('README.md', relpkg.codexReleaseReadme());
-    out.set('.codex/hooks.json', fs.readFileSync(path.join(REPO, 'hooks', 'codex.hooks.json'), 'utf8').split('{{SHARDS_HOOKS_DIR}}').join(`${root}/hooks`));
+    out.set('hooks/hooks.json', relpkg.codexHooksJson());
   }
   // E9.2: generic Agent Skills package. skills/<name>/SKILL.md (Agent Skills format) plus Agent Plugins 1.0
   // plugin.json / mcp.json. The schemas are UNVERIFIED against a live host (docs/compat.md); the MCP entry uses
@@ -182,7 +176,10 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
     out.set('plugin.json', jsonText(relpkg.agentPluginManifest()));
     out.set('mcp.json', jsonText(relpkg.agentPluginMcp()));
   }
-  if (target === 'codex') out.set('.codex/config.toml', codexConfig(profiles, optIn, codexMcp));
+  if (target === 'codex') {
+    out.set('.codex/config.toml', codexConfig(optIn, codexMcp));
+    for (const id of profiles) out.set(`.codex/shards-${id}.config.toml`, relpkg.codexProfileToml(id, CODEX_TOOL_PREFIX));
+  }
   // Release packaging (claude): E7.1 manifest, E7.4 MCP entry, E7.5 hooks verbatim; runtime copied after the write loop.
   const release = !dev && (target === 'claude' || target === 'codex');
   if (release && target === 'claude') {

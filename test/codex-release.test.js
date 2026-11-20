@@ -24,14 +24,17 @@ afterAll(() => { fs.rmSync(root, { recursive: true, force: true }); });
 describe('codex release package (E8.1/E8.2/E8.3)', () => {
   it('emits the plugin manifest', () => {
     const m = JSON.parse(read('.codex-plugin/plugin.json'));
-    expect(m).toMatchObject({ name: 'shards', version: pkg.version, skills: './skills/', mcpServers: './.mcp.json' });
+    expect(m).toMatchObject({ name: 'shards', version: pkg.version, skills: './skills/' });
+    // No plugin MCP server: Codex 0.169 runs it from the plugin cache with a scrubbed env (split-brain state, CX-7).
+    expect(m.mcpServers).toBeUndefined();
+    expect(exists('.mcp.json')).toBe(false);
     expect(exists('.shards-dev')).toBe(false);
   });
   it('skills are the same set as the claude release (minus claude-only conventions)', () => {
     const skills = (d) => fs.readdirSync(path.join(d, 'skills')).sort();
     expect(skills(OUT)).toEqual(skills(CLAUDE).filter((s) => s !== 'shards-conventions'));
     for (const s of skills(OUT)) expect(exists(`skills/${s}/SKILL.md`)).toBe(true);
-    expect(read('skills/agents/SKILL.md')).toContain('`shards.list_agents`');
+    expect(read('skills/agents/SKILL.md')).toContain('`mcp__shards__list_agents`');
   });
   it('packages consult subagents as .codex/agents/<id>.toml', () => {
     const agents = fs.readdirSync(path.join(OUT, '.codex/agents')).filter((f) => f.endsWith('.toml'));
@@ -47,32 +50,34 @@ describe('codex release package (E8.1/E8.2/E8.3)', () => {
     const claudeAgents = fs.readdirSync(path.join(CLAUDE, 'agents')).map((f) => f.replace(/\.md$/, '')).sort();
     expect(agents.map((f) => f.replace(/\.toml$/, '')).sort()).toEqual(claudeAgents);
   });
-  it('registers the MCP server with prompt approval for gate_advance and gate_force_close', () => {
+  it('leaves MCP registration to shards install --codex (no placeholder paths)', () => {
     const toml = read('.codex/config.toml');
-    expect(toml).toContain('[mcp_servers.shards]');
-    expect(toml).toContain('args = ["<PLUGIN_ROOT>/runtime/server.js"]');
-    for (const t of ['gate_advance', 'gate_force_close']) {
-      expect(toml).toMatch(new RegExp(`\\[mcp_servers\\.shards\\.tools\\.${t}\\]\\napproval_mode = "prompt"`));
-    }
-    expect(toml).not.toMatch(/tools\.gate_request\]/);
-    expect(JSON.parse(read('.mcp.json')).mcpServers.shards).toEqual({ command: 'node', args: ['./runtime/server.js'] });
+    expect(toml).not.toMatch(/^\[mcp_servers\.shards\]/m);
+    expect(toml).not.toContain('<PLUGIN_ROOT>');
+    expect(toml).toContain('shards install --codex');
   });
-  it('emits max_depth / max_threads guidance and per-agent profiles', () => {
+  it('emits max_depth / max_threads guidance and v2 profile files (no [profiles.*] tables)', () => {
     const toml = read('.codex/config.toml');
     expect(toml).toMatch(/# max_depth = 2/);
     expect(toml).toMatch(/# max_threads = 4/);
-    expect(toml).toContain('[profiles.shards-syn]');
+    expect(toml).not.toMatch(/^\[profiles\./m);
+    expect(toml).not.toMatch(/^profile\s*=/m);
+    const prof = read('.codex/shards-syn.config.toml');
+    expect(prof.startsWith('# shards:generated codex profile v1')).toBe(true);
+    expect(prof).toMatch(/^developer_instructions = "You are the Shards agent syn\./m);
+    expect(prof).not.toMatch(/^\[/m); // top-level keys only
   });
-  it('hooks are consistent with the packaged runtime layout', () => {
-    const h = JSON.parse(read('.codex/hooks.json'));
+  it('hooks live at hooks/hooks.json with ${PLUGIN_ROOT} commands and the --host codex marker', () => {
+    expect(exists('.codex/hooks.json')).toBe(false);
+    const h = JSON.parse(read('hooks/hooks.json'));
     const cmds = [];
     for (const arr of Object.values(h.hooks)) for (const g of arr) for (const x of g.hooks) cmds.push(x.command);
-    expect(cmds.length).toBeGreaterThan(0);
+    expect(cmds.length).toBe(4);
     for (const c of cmds) {
       expect(c).not.toContain('{{');
-      const m = /<PLUGIN_ROOT>\/(hooks\/[\w.-]+\.js)/.exec(c);
+      const m = /^node "\$\{PLUGIN_ROOT\}\/(hooks\/[\w.-]+\.js)" --host codex$/.exec(c);
       expect(m, c).toBeTruthy();
-      expect(fs.existsSync(path.join(REPO, m[1])), m[1]).toBe(true);
+      expect(exists(m[1]), m[1]).toBe(true); // packaged next to hooks.json
     }
   });
 });
@@ -95,8 +100,14 @@ describe('codex dev build keeps absolute paths', () => {
     const o = path.join(root, 'dev');
     expect(compile({ target: 'codex', outDir: o, dev: true, bundleDeps: false }).errors).toEqual([]);
     const toml = read('.codex/config.toml', o);
-    expect(toml).toContain(JSON.stringify(path.join(REPO, 'runtime', 'server.js').replace(/\\/g, '/')));
-    expect(toml).toContain('approval_mode = "prompt"');
+    expect(toml).toContain(`args = [${JSON.stringify(path.join(REPO, 'runtime', 'server.js').replace(/\\/g, '/'))}, "--host", "codex"]`);
+    expect(toml).toContain('default_tools_approval_mode = "approve"');
+    for (const t of ['gate_advance', 'gate_force_close', 'gate_confirm', 'gate_suspend']) {
+      expect(toml).toMatch(new RegExp(`\\[mcp_servers\\.shards\\.tools\\.${t}\\]\\napproval_mode = "prompt"`));
+    }
+    expect(toml).not.toMatch(/tools\.gate_request\]/);
     expect(toml).toMatch(/# max_depth = 2/);
+    const hooks = read('hooks/hooks.json', o);
+    expect(hooks).toContain(`${path.join(REPO, 'hooks').replace(/\\/g, '/')}/pre-tool-use.js\\" --host codex`);
   });
 });

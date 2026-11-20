@@ -44,7 +44,7 @@ describe('E5.2 thin switch skills', () => {
   it('codex skill uses the codex prefix and relative content path', () => {
     const c = build('codex');
     const s = read(c, 'skills/syn/SKILL.md');
-    expect(s).toContain('shards.activate`(agent="syn", mode="switch")');
+    expect(s).toContain('mcp__shards__activate`(agent="syn", mode="switch")');
     expect(s).toContain('content/agents/syn/AGENT.md');
     expect(s).not.toContain('CLAUDE_PLUGIN_ROOT');
   });
@@ -93,17 +93,22 @@ describe('E5.3 native subagents', () => {
   });
 });
 
-describe('E8.7 codex switch mechanics (UNVERIFIED)', () => {
-  it('profiles exist per switchable agent in codex only', () => {
-    const cx = read(build('codex'), '.codex/config.toml');
-    for (const a of agents.filter((x) => x.y.activation.includes('switch'))) expect(cx).toContain(`[profiles.shards-${a.id}]`);
+describe('E8.7 codex switch mechanics (profiles v2, Codex 0.169.0)', () => {
+  it('profile files exist per switchable agent in codex only', () => {
+    const out = build('codex');
+    const cx = read(out, '.codex/config.toml');
+    for (const a of agents.filter((x) => x.y.activation.includes('switch'))) {
+      expect(read(out, `.codex/shards-${a.id}.config.toml`)).toMatch(new RegExp(`^developer_instructions = "You are the Shards agent ${a.id}\\.`, 'm'));
+    }
+    expect(cx).not.toMatch(/^\[profiles\./m);
     expect(cx).not.toMatch(/^profile = /m);
     expect(fs.existsSync(path.join(build('claude'), '.codex'))).toBe(false);
   });
-  it('dev codex config keeps mcp server and profile key stays top-level', () => {
+  it('dev codex config keeps the mcp server; the default-agent opt-in is a comment (no legacy profile key)', () => {
     const cx = read(build('codex', { dev: true, defaultAgent: true }), '.codex/config.toml');
     expect(cx).toContain('[mcp_servers.shards]');
-    expect(cx.indexOf('profile = "shards-syn"')).toBeLessThan(cx.search(/^\[/m));
+    expect(cx).not.toMatch(/^profile\s*=/m);
+    expect(cx).toContain('codex -p shards-syn');
   });
   it('header after activate carries agent=<id>', () => {
     const store = { getVersion: () => 3, read: (k) => (k === 'frames' ? { frames: [{ id: 'f1', agent: 'data-analyst', phase: 1 }] } : { gates: {} }) };
@@ -122,7 +127,7 @@ describe('E5.7 optional default agent', () => {
     const syn = read(c, 'agents/syn.md');
     expect(syn.split('---')[1]).not.toMatch(/^tools:/m);
     expect(syn).toContain('mode="switch"');
-    expect(read(build('codex', { defaultAgent: true }), '.codex/config.toml')).toMatch(/^profile = "shards-syn"$/m);
+    expect(read(build('codex', { defaultAgent: true }), '.codex/config.toml')).toMatch(/^# Default agent: start sessions with `codex -p shards-syn`/m);
   });
   it('env fallback', () => {
     process.env.SHARDS_BUILD_DEFAULT_AGENT = '1';

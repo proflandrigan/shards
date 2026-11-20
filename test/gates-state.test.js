@@ -125,7 +125,7 @@ describe('gates state', () => {
 
   it('interim confirm text', () => {
     const t = G.describeInterimConfirm('g1', 'k');
-    expect(t).toContain('node cli/shards.js gates confirm g1 --session k');
+    expect(t).toContain('npx @proflandrigan/shards@next gates confirm g1 --session k');
     expect(t).toContain('--changes');
   });
 

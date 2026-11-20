@@ -3,6 +3,7 @@
 // previous phase's gate being confirmed (D5/D8). Refusal text is fixed (see refusal()).
 const fs = require('fs');
 const path = require('path');
+const confirmCmd = require('../gates/confirm-command');
 const { defineTool } = require('../registry');
 const { coreDir, loadAgents } = require('../agents');
 const gates = require('../gates');
@@ -73,7 +74,8 @@ function findGate(list, agent, track, phase, id, project) {
 }
 
 function refusal(gateId, prev, status, sessionKey) {
-  const cmd = `node cli/shards.js gates confirm ${gateId} --session ${sessionKey}`;
+  const local = confirmCmd.localConfirmCommand(gateId, sessionKey);
+  const cmd = confirmCmd.confirmCommand(gateId, sessionKey) + (local ? ` (repo checkout: ${local})` : '');
   return `load_phase refused: gate ${gateId} for phase ${prev} is not confirmed (status: ${status}). Ask the user to confirm it: ${cmd}`;
 }
 

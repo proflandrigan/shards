@@ -18,14 +18,42 @@ function findPython(env = process.env, opts = {}) {
   return null;
 }
 
+const PIP_DEPS = 'jupyter_client ipykernel';
+
+// Homebrew and other PEP 668 Pythons refuse `pip install` ("externally-managed-environment"),
+// so the hint also gives the project-venv route. SHARDS_PYTHON is read from the MCP server's own
+// environment on every notebook tool call (findPython), so it must be an absolute path set where
+// the host launches the server.
+function venvHint(platform = process.platform) {
+  const win = platform === 'win32';
+  const vpip = win ? '.venv\\Scripts\\pip' : '.venv/bin/pip';
+  const vpy = win ? '.venv\\Scripts\\python.exe' : '.venv/bin/python';
+  const setEnv = win ? `set SHARDS_PYTHON=%CD%\\${vpy}` : `export SHARDS_PYTHON="$PWD/${vpy}"`;
+  return `If pip reports "externally-managed-environment" (Homebrew or another PEP 668 Python), create a project virtual environment instead: `
+    + `${win ? 'py' : 'python3'} -m venv .venv && ${vpip} install ${PIP_DEPS} - then point Shards at it with the absolute path, `
+    + `e.g. ${setEnv}, in the environment the host (and so the Shards MCP server) is launched from, and restart the session.`;
+}
+
 function checkDeps(python, opts = {}) {
   const spawnSync = opts.spawnSync || cp.spawnSync;
+  const platform = opts.platform || process.platform;
   if (!python) {
-    return { ok: false, hint: 'No Python interpreter found (tried SHARDS_PYTHON, python3, python). Install Python 3, then: pip install jupyter_client ipykernel' };
+    return { ok: false, hint: `No Python interpreter found (tried SHARDS_PYTHON, python3, python). Install Python 3, then: pip install ${PIP_DEPS}. ${venvHint(platform)}` };
   }
   const r = spawnSync(python, ['-c', 'import jupyter_client, ipykernel'], { shell: false, encoding: 'utf8', timeout: 30000 });
   if (r && !r.error && r.status === 0) return { ok: true, hint: '' };
-  return { ok: false, hint: `Notebook tools need jupyter_client and ipykernel in the interpreter "${python}". Install with: ${python} -m pip install jupyter_client ipykernel (or set SHARDS_PYTHON to an interpreter that has them).` };
+  return { ok: false, hint: `Notebook tools need jupyter_client and ipykernel in the interpreter "${python}". Install with: ${python} -m pip install ${PIP_DEPS} (or set SHARDS_PYTHON to an interpreter that has them). ${venvHint(platform)}` };
+}
+
+// kernel.py reports failures as {ok:false, error, ...}. Tools surface those as MCP errors
+// (isError) instead of a successful result carrying ok:false.
+function unwrap(tool, result) {
+  if (result && result.ok === false) {
+    const { ok, error, ...extra } = result;
+    const more = Object.keys(extra).length ? ` ${JSON.stringify(extra)}` : '';
+    throw new Error(`${tool} failed: ${error || 'unknown kernel error'}${more}`);
+  }
+  return result;
 }
 
 function validateSession(sid) {
@@ -87,4 +115,4 @@ function preparePython(opts = {}) {
   return python;
 }
 
-module.exports = { KERNEL_PY, SESSION_RE, findPython, checkDeps, validateSession, resolveNotebook, runKernel, preparePython };
+module.exports = { KERNEL_PY, SESSION_RE, findPython, checkDeps, venvHint, unwrap, validateSession, resolveNotebook, runKernel, preparePython };

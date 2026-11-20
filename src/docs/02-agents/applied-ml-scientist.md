@@ -57,7 +57,7 @@ Gate-confirmed phases are committed to git as the record. Where each agent write
 ## How to start
 
 - **Claude Code:** `/shards:applied-ml-scientist` (switch skill; calls `activate`).
-- **Codex:** `$applied-ml-scientist`, or `codex --profile shards-applied-ml-scientist`.
+- **Codex:** `$shards:applied-ml-scientist`, or `codex -p shards-applied-ml-scientist`.
 - **Through Syn:** `/shards:syn` triages and calls `activate(agent="applied-ml-scientist", mode="switch")`.
 - **Consult subagents:** `applied-ml-scientist`, `applied-ml-scientist-review`, `applied-ml-scientist-advise`, `applied-ml-scientist-worker`.
 - **Fan-out and delegated build:** the `applied-ml-scientist-worker` entry; see [Activation Modes](../03-protocols/activation-modes.md) and [Delegated Build](../03-protocols/delegated-build.md).

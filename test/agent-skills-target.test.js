@@ -40,6 +40,13 @@ describe('generic agent-skills target (E9.2)', () => {
     expect(m.mcpServers.shards.args).toContain('@proflandrigan/shards-mcp@next');
   });
 
+  it('no gemini-extension.json while the package bundles no runtime/ (docs/release.md, Gemini CLI)', () => {
+    // A Gemini manifest needs ${extensionPath}/runtime/server.js; if runtime/ is ever bundled, emit one and update the doc.
+    const hasRuntime = fs.existsSync(path.join(out, 'runtime', 'server.js'));
+    expect(fs.existsSync(path.join(out, 'gemini-extension.json'))).toBe(hasRuntime);
+    expect(hasRuntime).toBe(false);
+  });
+
   it('is deterministic and the codex target does not get these files', () => {
     const o2 = tmp();
     compile({ target: 'skills', outDir: o2 });

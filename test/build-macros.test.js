@@ -49,7 +49,7 @@ describe('macro expansion', () => {
 
   it('switch', () => {
     expect(ok('{{switch beta}}', 'claude')).toContain('mcp__plugin_shards_shards__activate');
-    expect(ok('{{switch beta}}', 'codex')).toContain('shards.activate');
+    expect(ok('{{switch beta}}', 'codex')).toContain('mcp__shards__activate');
     expect(ok('{{switch beta}}', 'skills')).toMatch(/`activate`\(agent="beta", mode="switch"\)/);
   });
   it('consult renders per target and resolves the entry file', () => {
@@ -73,7 +73,7 @@ describe('macro expansion', () => {
   });
   it('return', () => {
     expect(ok('{{return}}', 'claude')).toContain('mcp__plugin_shards_shards__return');
-    expect(ok('{{return to=beta}}', 'codex')).toContain('shards.return');
+    expect(ok('{{return to=beta}}', 'codex')).toContain('mcp__shards__return');
   });
   it('phase incl. 6-5 and tracks', () => {
     expect(ok('{{phase 6-5}}', 'claude')).toContain('load_phase');
@@ -88,7 +88,7 @@ describe('macro expansion', () => {
     expect(ok('{{template schema.json}}', 'codex')).toContain('templates/schema.json');
   });
   it('gate derives id and renders a tool call on all targets', () => {
-    for (const [t, name] of [['claude', 'mcp__plugin_shards_shards__gate_request'], ['codex', 'shards.gate_request'], ['skills', '`gate_request`']]) {
+    for (const [t, name] of [['claude', 'mcp__plugin_shards_shards__gate_request'], ['codex', 'mcp__shards__gate_request'], ['skills', '`gate_request`']]) {
       const g = ok('{{gate kind=phase validates=beta}}', t);
       expect(g).toContain(name);
       expect(g).toContain('"alpha-phase-1"');
@@ -106,7 +106,7 @@ describe('macro expansion', () => {
   });
   it('auto_verify', () => {
     expect(ok('{{auto_verify start tool_budget=5 ttl=60}}', 'claude')).toContain('mcp__plugin_shards_shards__auto_verify_start');
-    expect(ok('{{auto_verify end}}', 'codex')).toContain('shards.auto_verify_end');
+    expect(ok('{{auto_verify end}}', 'codex')).toContain('mcp__shards__auto_verify_end');
   });
   it('binding macros', () => {
     expect(ok('{{record.write section="Phase 1"}}')).toContain('`record` job');

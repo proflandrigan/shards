@@ -847,6 +847,11 @@ function handleChatEvent(event) {
     case 'chat-stderr':
       broadcast({ type: 'chat-stderr', text: event.text, sessionId });
       break;
+
+    case 'chat-permission-denied':
+      log(`chat ${sessionId}: permission denied for ${event.tool || '(unknown tool)'}`);
+      broadcast({ type: 'chat-permission-denied', tool: event.tool, message: event.message, sessionId });
+      break;
   }
 }
 
@@ -969,8 +974,13 @@ function startNewChatSession(agent, options = {}) {
     log(`session-index appendSession failed: ${err.message}`);
   }
 
+  // v2 core agents start plain and switch via the activation prompt; only
+  // legacy v1 agents are launched with --agent (see buildClaudeArgs).
+  const agentInfo = agent ? listAgents().find((a) => a.name === agent) : null;
+
   const chatSess = new ChatSession({
     agent,
+    agentSource: agentInfo ? agentInfo.source : 'core',
     sessionId,
     resumeSessionId,
     cwd: PROJECT_DIR,

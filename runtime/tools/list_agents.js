@@ -20,7 +20,7 @@ module.exports = defineTool({
         activation: a.activation, modes: act, consult_entries: entries, output_dir: a.output_dir === undefined ? null : a.output_dir,
         activate: {
           claude: { switch: sw ? `/shards:${a.id}` : null, consult },
-          codex: { switch: sw ? `$${a.id}` : null, profile: `shards-${a.id}`, consult: consult.slice() },
+          codex: { switch: sw ? `$shards:${a.id}` : null, profile: `shards-${a.id}`, consult: consult.slice() },
         },
       };
     });

@@ -134,7 +134,7 @@ module.exports = defineTool({
       const { entry: done } = await gates.confirmGate(session, entry.id, { decision: 'changes_requested', note: el.note, proof: { tier: 'elicitation', level: 1, ts: new Date().toISOString(), action: 'accept' } });
       return both(`The user requested changes to gate ${done.id}. Note: ${el.note}\nRevise the work, then call gate_request again.`, { result: 'changes_requested', gate_id: done.id, kind: done.kind, phase: done.phase, status: done.status, note: el.note, tier: 'elicitation' });
     }
-    const how = tier1.describeConfirmHow(entry.id, ctx.sessionKey, { elicitation: el.outcome !== 'unsupported', host: ctx.host });
+    const how = tier1.describeConfirmHow(entry.id, ctx.sessionKey, { outcome: el.outcome, host: ctx.host });
     lines.push(`Gate ${entry.id} is ${result === 'already_pending' ? 'already pending' : result} (kind ${entry.kind}, phase ${entry.phase}).`);
     if (result === 'reopened' && entry.note) lines.push(`Earlier change request note: ${entry.note}`);
     lines.push('', 'STOP now and wait. You cannot confirm this gate yourself; only the user can.',

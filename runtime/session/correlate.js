@@ -8,7 +8,7 @@
 // docs/gate-audit-2026-06.md Bug 1 (cross-session gate interference).
 const fs = require('fs');
 const path = require('path');
-const { toSessionKey, detectHost, HOSTS } = require('../../hooks/lib/host');
+const { toSessionKey, detectHost, argvHost, HOSTS } = require('../../hooks/lib/host');
 const { ppidChain } = require('../../hooks/lib/common');
 const { provisionalSessionKey } = require('../state/store');
 
@@ -34,9 +34,15 @@ const FALLBACK_POLICY = {
 // none today, so this is intentionally empty. If one is documented, add e.g. {codex: 'VAR'}.
 const HOST_SESSION_ENV = {};
 
-function detectHostName(env = process.env) {
+// The MCP server has no hook payload, so this is marker- and env-based. Codex 0.169 starts a config.toml MCP server
+// with a scrubbed env (HOME, LANG, LOGNAME, PATH, SHELL, TERM, TMPDIR, USER only; live-verified), so env sniffing
+// alone saw claude-code there. The `shards install --codex` entry therefore passes `--host codex` in args and
+// SHARDS_HOST=codex in env; either marker wins over env sniffing.
+function detectHostName(env = process.env, argv = process.argv.slice(2)) {
+  const a = argvHost(argv);
+  if (a) return a;
   if (env.SHARDS_HOST && Object.prototype.hasOwnProperty.call(FALLBACK_POLICY, env.SHARDS_HOST) && env.SHARDS_HOST !== 'unknown') return env.SHARDS_HOST;
-  return detectHost(null, env) === HOSTS.CODEX ? 'codex' : 'claude-code';
+  return detectHost(null, env, []) === HOSTS.CODEX ? 'codex' : 'claude-code';
 }
 
 function handshakeDir(root) { return path.join(root, '.shards', 'state', 'handshake'); }
@@ -94,13 +100,13 @@ function matchHandshake(handshakes, ancestry, { startTimeMs } = {}) {
   return best;
 }
 
-function createCorrelator({ root, env = process.env, ancestry, host, now = Date.now, processKey } = {}) {
+function createCorrelator({ root, env = process.env, argv = process.argv.slice(2), ancestry, host, now = Date.now, processKey } = {}) {
   if (!root) throw new Error('createCorrelator requires a root');
   root = path.resolve(root);
   let defaultChain;
   const getAncestry = typeof ancestry === 'function' ? ancestry
     : () => (defaultChain || (defaultChain = ppidChain(process.ppid)));
-  const hostName = host || detectHostName(env);
+  const hostName = host || detectHostName(env, argv);
   let procKey = processKey;
   let cache = null; // {sig, chainSig, result}
 

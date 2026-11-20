@@ -72,7 +72,7 @@ Syn's jobs are `record`, `tasks`, `knowledge`, `review`, `artifacts` and `presen
 ## How to start
 
 - **Claude Code:** `/shards:syn` (switch skill; calls `activate`).
-- **Codex:** `$syn`, or `codex --profile shards-syn` (unverified).
+- **Codex:** `$shards:syn`, or `codex -p shards-syn` (profile file installed by `shards install --codex`).
 - **Utility skills:** `/shards:brainstorm`, `/shards:review-pr`, `/shards:notebook-walkthrough`, `/shards:resume`, `/shards:end`, `/shards:agents`.
 - **Consult subagents:** `syn-final_review`, `syn-code_review`, `syn-arbiter`.
 

@@ -121,12 +121,14 @@ describe('emission', () => {
     expect(rd(out, 'hooks/hooks.json')).not.toMatch(/allow/i);
     expect(fs.existsSync(path.join(out, 'settings.json'))).toBe(false);
   });
-  it('codex config prompts for gate tools and hooks match all tools', () => {
+  it('codex MCP entry prompts for gate tools, approves the rest, and hooks match all tools', () => {
+    const toml = require('../build/package').codexMcpToml('/x/runtime/server.js');
+    for (const t of ['gate_advance', 'gate_force_close', 'gate_confirm', 'gate_suspend']) expect(toml).toContain(`[mcp_servers.shards.tools.${t}]\napproval_mode = "prompt"`);
+    expect(toml).toContain('default_tools_approval_mode = "approve"');
+    expect(toml).not.toContain('gate_request');
     const out = build('codex');
-    const toml = rd(out, '.codex/config.toml');
-    for (const t of ['gate_advance', 'gate_force_close']) expect(toml).toContain(`[mcp_servers.shards.tools.${t}]\napproval_mode = "prompt"`);
-    expect(toml).not.toContain('gate_confirm');
-    expect(toml).toContain('UNVERIFIED');
-    expect(JSON.parse(rd(out, '.codex/hooks.json')).hooks.PreToolUse[0].matcher).toBe('.*');
+    const hj = JSON.parse(rd(out, 'hooks/hooks.json'));
+    expect(hj.hooks.PreToolUse[0].matcher).toBe('.*');
+    expect(rd(out, 'hooks/hooks.json')).not.toMatch(/allow/i);
   });
 });

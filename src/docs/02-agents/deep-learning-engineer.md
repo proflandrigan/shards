@@ -57,7 +57,7 @@ Gate-confirmed phases are committed to git as the record. Where each agent write
 ## How to start
 
 - **Claude Code:** `/shards:deep-learning-engineer` (switch skill; calls `activate`).
-- **Codex:** `$deep-learning-engineer`, or `codex --profile shards-deep-learning-engineer`.
+- **Codex:** `$shards:deep-learning-engineer`, or `codex -p shards-deep-learning-engineer`.
 - **Through Syn:** `/shards:syn` triages and calls `activate(agent="deep-learning-engineer", mode="switch")`.
 - **Consult subagents:** `deep-learning-engineer`, `deep-learning-engineer-review`, `deep-learning-engineer-advise`, `deep-learning-engineer-worker`.
 - **Fan-out and delegated build:** the `deep-learning-engineer-worker` entry; see [Activation Modes](../03-protocols/activation-modes.md) and [Delegated Build](../03-protocols/delegated-build.md).

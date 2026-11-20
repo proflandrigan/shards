@@ -92,16 +92,16 @@ describe('dev install: claude', () => {
 describe('dev install: codex', () => {
   it('emits config, hooks and plugin docs', () => {
     const { out } = build('codex');
-    for (const f of ['.codex-plugin/plugin.json', '.codex/config.toml', '.codex/hooks.json', '.shards-dev', 'skills/agents/SKILL.md']) expect(fs.existsSync(path.join(out, f)), f).toBe(true);
+    for (const f of ['.codex-plugin/plugin.json', '.codex/config.toml', 'hooks/hooks.json', '.shards-dev', 'skills/agents/SKILL.md']) expect(fs.existsSync(path.join(out, f)), f).toBe(true);
     expect(json(out, '.codex-plugin/plugin.json')).toMatchObject({ name: 'shards', skills: './skills/' });
     const toml = read(out, '.codex/config.toml');
     expect(toml).toContain('[mcp_servers.shards]');
     expect(toml).toContain('command = "node"');
     expect(toml).toContain(JSON.stringify(path.join(REPO, 'runtime', 'server.js').replace(/\\/g, '/')));
-    expect(read(out, '.codex/hooks.json')).not.toContain('{{SHARDS_HOOKS_DIR}}');
-    for (const p of hookPaths(json(out, '.codex/hooks.json'))) expect(fs.existsSync(p), p).toBe(true);
+    expect(read(out, 'hooks/hooks.json')).not.toContain('{{SHARDS_HOOKS_DIR}}');
+    for (const p of hookPaths(json(out, 'hooks/hooks.json'))) expect(fs.existsSync(p), p).toBe(true);
     const skill = read(out, 'skills/agents/SKILL.md');
-    expect(skill).toContain('`shards.list_agents`');
+    expect(skill).toContain('`mcp__shards__list_agents`');
   });
   it('lint-models is clean', () => {
     const { parent } = build('codex');
@@ -116,7 +116,7 @@ describe('non-dev and cli', () => {
       const { out } = build(t, false);
       expect(fs.existsSync(path.join(out, 'skills/agents/SKILL.md'))).toBe(true);
       expect(fs.existsSync(path.join(out, '.shards-dev'))).toBe(false);
-      expect(fs.existsSync(path.join(out, '.mcp.json'))).toBe(t !== 'skills'); // release claude (E7.4) and codex (E8.3) emit the packaged MCP entry
+      expect(fs.existsSync(path.join(out, '.mcp.json'))).toBe(t === 'claude'); // release claude (E7.4); codex registers via shards install --codex (CX-7)
       if (t === 'claude') expect(read(out, '.mcp.json')).toContain('CLAUDE_PLUGIN_ROOT');
     }
   });
@@ -169,10 +169,11 @@ describe('non-dev and cli', () => {
     expect(r.stderr).toContain('shards migrate');
     expect(r.stderr).not.toContain('unknown command');
   });
-  it('codex dev hint is marked UNVERIFIED', () => {
+  it('codex dev hint names the verified install route', () => {
     const out = path.join(tmp(), 'codex');
     const b = spawnSync('node', [CLI, 'build', '--target', 'codex', '--dev', '--out', out], { encoding: 'utf8' });
     expect(b.status, b.stderr).toBe(0);
-    expect(b.stdout).toContain('UNVERIFIED');
+    expect(b.stdout).toContain('shards install --codex');
+    expect(b.stdout).toContain('codex plugin add shards@shards-local');
   });
 });

@@ -33,27 +33,66 @@ function releaseMcp() {
   return { mcpServers: { shards: { command: 'node', args: ['${CLAUDE_PLUGIN_ROOT}/runtime/server.js'], env: { SHARDS_PROJECT_ROOT: '${CLAUDE_PROJECT_DIR}' } } } };
 }
 
-// E8.1: Codex release manifest. UNVERIFIED (docs/compat.md): `.codex-plugin/plugin.json` field names are docs-only.
+// E8.1: Codex release manifest (live-checked on Codex 0.169.0, docs/compat.md CX-7). No mcpServers entry: a plugin
+// .mcp.json server runs from the plugin cache dir with a scrubbed env, so its state would land in
+// <plugin cache>/.shards while the hooks write <project>/.shards (split brain: gates invisible to PreToolUse). The
+// MCP server is registered in config.toml by `shards install --codex` instead (codexMcpToml below).
 function codexPluginManifest() {
-  return Object.assign(pluginManifest(), { skills: './skills/', mcpServers: './.mcp.json' });
+  return Object.assign(pluginManifest(), { skills: './skills/' });
 }
 
-// E8.3: Codex plugin MCP entry. Path is plugin-root-relative (UNVERIFIED: Codex has no documented ${PLUGIN_ROOT} expansion).
-function codexReleaseMcp() {
-  return { mcpServers: { shards: { command: 'node', args: ['./runtime/server.js'] } } };
+// Codex hook commands: Codex discovers plugin hooks at <plugin>/hooks/hooks.json and expands ${PLUGIN_ROOT} there
+// (verified). `--host codex` is the explicit host marker hooks/lib/host.js honours first.
+const CODEX_HOOKS_ROOT = '${PLUGIN_ROOT}/hooks';
+function codexHooksJson(hooksDir = CODEX_HOOKS_ROOT) {
+  return fs.readFileSync(path.join(REPO, 'hooks', 'codex.hooks.json'), 'utf8').split('{{SHARDS_HOOKS_DIR}}').join(hooksDir);
 }
 
-// Placeholder in the packaged Codex config/hooks that the user (or a plugin loader) resolves to the plugin directory.
-const CODEX_PLUGIN_ROOT = '<PLUGIN_ROOT>';
+// Gate tools that must reach the human through Codex's own approval prompt (approval_mode = "prompt"). Same set
+// `shards doctor` checks (cli/commands/doctor.js GATE_TOOLS). Every other shards tool is "approve": the tools carry
+// no readOnlyHint, so without a default every call needs approval and all of them fail under `codex exec`.
+const CODEX_PROMPT_TOOLS = ['gate_advance', 'gate_force_close', 'gate_confirm', 'gate_suspend'];
+const tomlStr = (s) => JSON.stringify(String(s));
+
+// E8.3: config.toml MCP entry (live-verified keys on Codex 0.169.0, CX-1). `--host codex` and SHARDS_HOST mark the
+// host for runtime/session/correlate.js (the server env is scrubbed, so env sniffing cannot see Codex).
+function codexMcpToml(serverPath) {
+  const tools = CODEX_PROMPT_TOOLS.map((t) => `[mcp_servers.shards.tools.${t}]\napproval_mode = "prompt"\n`).join('\n');
+  return `[mcp_servers.shards]\ncommand = "node"\nargs = [${tomlStr(serverPath)}, "--host", "codex"]\nenv = { SHARDS_HOST = "codex" }\ndefault_tools_approval_mode = "approve"\n\n${tools}`;
+}
+
+// Profiles v2 (Codex 0.169: `[profiles.<n>] developer_instructions` is rejected; a profile is the file
+// $CODEX_HOME/<name>.config.toml, used with `codex -p <name>`). PROFILE_MARK lets the installer recognise its files.
+const CODEX_PROFILE_MARK = '# shards:generated codex profile v1';
+function codexProfileToml(id, prefix) {
+  const di = `You are the Shards agent ${id}. Before anything else call \`${prefix}activate\`(agent="${id}", mode="switch"), adopt the returned persona_summary, then read content/agents/${id}/AGENT.md and follow it. Load phases with \`${prefix}load_phase\`; leave with \`${prefix}return\`.`;
+  return `${CODEX_PROFILE_MARK} (shards install --codex copies it to $CODEX_HOME; use: codex -p shards-${id})\ndeveloper_instructions = ${tomlStr(di)}\n`;
+}
+
+// Local Codex marketplace (`shards build --target codex --marketplace`): <out>/.agents/plugins/marketplace.json with
+// the plugin at <out>/plugins/shards. Shape verified with `codex plugin marketplace add` on Codex 0.169.0.
+const CODEX_MARKETPLACE = 'shards-local';
+function codexMarketplaceManifest() {
+  return {
+    name: CODEX_MARKETPLACE,
+    interface: { displayName: 'Shards (local)' },
+    plugins: [{ name: 'shards', source: { source: 'local', path: './plugins/shards' }, policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' }, category: 'Developer Tools' }],
+  };
+}
 
 function codexReleaseReadme() {
   return `# Shards (Codex)
 
 ${pkg.description}.
 
-UNVERIFIED: this Codex plugin layout follows public docs only; it has not been run against a real Codex CLI (docs/compat.md CX-1 to CX-6).
+Checked against Codex CLI 0.169.0 (docs/compat.md CX-1 to CX-7). Requires Node.js 18 or newer.
 
-Contents: \`.codex-plugin/plugin.json\` (skills ./skills/), \`.mcp.json\` (MCP server \`shards\`, node ./runtime/server.js), \`.codex/agents/*.toml\` (consult subagents), \`.codex/config.toml\` (MCP entry with per-tool approval, per-agent profiles, agents.max_depth/max_threads guidance), \`.codex/hooks.json\` (hook shims). Replace \`${CODEX_PLUGIN_ROOT}\` in config.toml and hooks.json with the absolute path of this directory if your Codex does not load the plugin manifest. Requires Node.js 18 or newer. Optional: \`shards install --agents-md\` adds the Shards section to AGENTS.md. Source and docs: ${REPOSITORY}
+Install:
+1. \`codex plugin marketplace add <dir>\` where <dir> holds \`.agents/plugins/marketplace.json\` listing this plugin (\`shards build --target codex --marketplace\` writes one), then \`codex plugin add shards@${CODEX_MARKETPLACE}\`.
+2. Register the MCP server: \`shards install --codex\` (writes \`[mcp_servers.shards]\` into $CODEX_HOME/config.toml pointing at this plugin's runtime/server.js, plus the \`shards-<agent>\` profile files). Rerun it after a plugin upgrade; \`--remove\` undoes it.
+3. Trust the hooks: Codex skips untrusted plugin hooks silently. Approve them when Codex asks (or set \`[hooks.state."<key>"] trusted_hash\` in config.toml).
+
+Contents: \`.codex-plugin/plugin.json\` (skills ./skills/), \`hooks/hooks.json\` (hook shims, \`node "\${PLUGIN_ROOT}/hooks/<shim>.js" --host codex\`), \`.codex/config.toml\` (agents.max_depth/max_threads guidance), \`.codex/shards-<agent>.config.toml\` (profiles), \`.codex/agents/*.toml\` (consult subagents), \`runtime/\` (the MCP server). Optional: \`shards install --agents-md\` adds the Shards section to AGENTS.md. Source and docs: ${REPOSITORY}
 `;
 }
 
@@ -222,4 +261,4 @@ function marketplaceManifest({ local = false } = {}) {
 }
 const marketplaceText = (opts) => jsonText(marketplaceManifest(opts));
 
-module.exports = { bundleRel, MARKETPLACE_BRANCH, releasePackageJson, MCP_FILES, ICON_PATH, ICON_SRC, codexPluginManifest, codexReleaseMcp, codexReleaseReadme, CODEX_PLUGIN_ROOT, agentPluginManifest, agentPluginMcp, releaseReadme, pluginManifest, releaseMcp, depClosure, copyRuntime, marketplaceManifest, marketplaceText, REPOSITORY };
+module.exports = { bundleRel, MARKETPLACE_BRANCH, releasePackageJson, MCP_FILES, ICON_PATH, ICON_SRC, codexPluginManifest, codexReleaseReadme, codexHooksJson, CODEX_HOOKS_ROOT, codexMcpToml, CODEX_PROMPT_TOOLS, codexProfileToml, CODEX_PROFILE_MARK, codexMarketplaceManifest, CODEX_MARKETPLACE, agentPluginManifest, agentPluginMcp, releaseReadme, pluginManifest, releaseMcp, depClosure, copyRuntime, marketplaceManifest, marketplaceText, REPOSITORY };

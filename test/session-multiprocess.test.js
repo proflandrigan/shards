@@ -48,6 +48,7 @@ describe('multi-process session correlation', () => {
     const a0 = await status(ca); const b0 = await status(cb);
     expect(a0.data.sessionKey).toBe(toSessionKey(SA));
     expect(b0.data.sessionKey).toBe(toSessionKey(SB));
+    expect(a0.data.sessionSource).toBe('handshake');
 
     const sa = new StateStore(root, toSessionKey(SA));
     const sb = new StateStore(root, toSessionKey(SB));
@@ -76,6 +77,7 @@ describe('multi-process session correlation', () => {
     const c = await connect([serverJs, '--root', root], { SHARDS_HOST: 'claude-code' });
     const s = await status(c);
     expect(s.data.sessionKey).toMatch(/^mcp-/);
+    expect(s.data.sessionSource).toBe('process');
   }, 30000);
 
   it('no handshake: codex refuses with a clear isError', async () => {

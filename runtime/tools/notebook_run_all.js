@@ -10,6 +10,6 @@ module.exports = defineTool({
   async handler(args, ctx) {
     nb.validateSession(args.session);
     const python = nb.preparePython(ctx.notebookOpts);
-    return { data: await nb.runKernel(python, ctx.root, ['run-all', args.session], { ...(ctx.notebookOpts || {}), timeout: 900000 }) };
+    return { data: nb.unwrap('notebook_run_all', await nb.runKernel(python, ctx.root, ['run-all', args.session], { ...(ctx.notebookOpts || {}), timeout: 900000 })) };
   },
 });

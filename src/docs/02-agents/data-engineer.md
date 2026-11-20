@@ -58,7 +58,7 @@ Gate-confirmed phases are committed to git as the record. Where each agent write
 ## How to start
 
 - **Claude Code:** `/shards:data-engineer` (switch skill; calls `activate`).
-- **Codex:** `$data-engineer`, or `codex --profile shards-data-engineer`.
+- **Codex:** `$shards:data-engineer`, or `codex -p shards-data-engineer`.
 - **Through Syn:** `/shards:syn` triages and calls `activate(agent="data-engineer", mode="switch")`.
 - **Consult subagents:** `data-engineer`, `data-engineer-review`, `data-engineer-advise`, `data-engineer-worker`.
 - **Fan-out and delegated build:** the `data-engineer-worker` entry; see [Activation Modes](../03-protocols/activation-modes.md) and [Delegated Build](../03-protocols/delegated-build.md).

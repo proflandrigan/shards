@@ -160,25 +160,61 @@ OPEN (needs the repo pushed with Actions enabled): the workflow has not run; fir
 
 ## Codex release package (E8.1 to E8.3, E8.5)
 
-`shards build --target codex` without `--dev` emits a self-contained package (dev mode unchanged). All Codex formats are docs-only and UNVERIFIED: the Codex CLI is not installed (`docs/compat.md` CX-1 to CX-6).
+`shards build --target codex` without `--dev` emits a self-contained plugin. The layout and install steps below were checked against Codex CLI 0.169.0 on macOS (2026-11-19, `docs/compat.md` CX-1, CX-6, CX-7).
 
 ```
-.codex-plugin/plugin.json    claude manifest fields + skills ./skills/ + mcpServers ./.mcp.json
-.mcp.json                    node ./runtime/server.js (plugin-root-relative; UNVERIFIED)
+.codex-plugin/plugin.json    claude manifest fields + skills ./skills/ (no mcpServers: see "MCP server" below)
+hooks/hooks.json             hooks/codex.hooks.json with node "${PLUGIN_ROOT}/hooks/<shim>.js" --host codex
 .codex/agents/<id>[-<entry>].toml   consult subagents (same set as claude agents/)
-.codex/config.toml           [mcp_servers.shards] (args <PLUGIN_ROOT>/runtime/server.js), approval_mode = "prompt" for gate_advance and gate_force_close, [profiles.shards-<agent>], commented [agents] max_depth/max_threads
-.codex/hooks.json            hooks/codex.hooks.json with <PLUGIN_ROOT>/hooks/<shim>.js
+.codex/config.toml           commented [agents] max_depth/max_threads guidance; points at shards install --codex for the MCP entry
+.codex/shards-<agent>.config.toml   profiles v2 (top-level developer_instructions), one per switchable agent
 skills/ content/ runtime/ core/ bindings/ build/ hooks/ scripts/ package.json node_modules/ README.md size-report.json
 ```
 
-`skills/` is the same set as the Claude plugin minus `shards-conventions`. `<PLUGIN_ROOT>` in `config.toml` and `hooks.json` must be replaced with the package's absolute path unless Codex loads the plugin manifest itself (unknown). `--no-bundle-deps` skips `node_modules`.
+`skills/` is the same set as the Claude plugin minus `shards-conventions`. `--no-bundle-deps` skips `node_modules`. `--marketplace` (codex too) writes the plugin at `<out>/plugins/shards` and `<out>/.agents/plugins/marketplace.json` (marketplace `shards-local`; default out `adapters/codex-marketplace`).
+
+Install (Codex 0.169.0):
+
+1. Plugin (skills + hooks): `shards build --target codex --marketplace --out <dir>`, then `codex plugin marketplace add <dir>` and `codex plugin add shards@shards-local`. `codex plugin add <path>` alone does not work. Codex copies the plugin to `$CODEX_HOME/plugins/cache/shards-local/shards/<version>/`.
+2. MCP server and profiles: `shards install --codex`. It finds the newest installed copy in that cache and writes a marker-delimited block (`# shards:begin codex-mcp v1` ... `# shards:end codex-mcp`) into `$CODEX_HOME/config.toml`:
+   `[mcp_servers.shards]` with `command = "node"`, `args = ["<plugin>/runtime/server.js", "--host", "codex"]`, `env = { SHARDS_HOST = "codex" }`, `default_tools_approval_mode = "approve"`, and `approval_mode = "prompt"` tables for `gate_advance`, `gate_force_close`, `gate_confirm`, `gate_suspend`. It also copies the `shards-<agent>.config.toml` profiles into `$CODEX_HOME` (use `codex -p shards-<agent>`). Options: `--codex-home <dir>`, `--codex-config <file>` (for example a project `.codex/config.toml`), `--server <runtime/server.js>` or `--plugin-dir <dir>` instead of the cache lookup, `--dry-run`, `--remove` (deletes exactly the block, the file if the command created it, and only the profile files it wrote). Rerunning is idempotent and replaces the block in place; rerun it after a plugin upgrade because the path contains the version. An existing hand-written `[mcp_servers.shards]` table is refused, not overwritten.
+3. Trust the hooks. Codex skips untrusted hooks silently, and without the hooks nothing blocks writes while a gate is pending. Approve them when Codex asks, or add one table per hook to config.toml: `[hooks.state."<key>"]` with `trusted_hash` and `trusted_content_hash` set to the two halves of `currentHash` (`sha256:<a>/sha256:<b>`) that app-server `hooks/list` reports for that key (`shards@shards-local:hooks/hooks.json:pre_tool_use:0:0` and so on). `--dangerously-bypass-hook-trust` skips the check for one run.
+4. Optional: `shards install --agents-md` (below).
+
+MCP server: why config.toml and not a plugin `.mcp.json`. Codex 0.169 starts a plugin `.mcp.json` server in the plugin cache dir with a scrubbed env and does not expand `${PLUGIN_ROOT}` in its args, so the runtime kept its state in `<plugin cache>/.shards` while the hooks wrote `<project>/.shards`, and pending gates were invisible to the PreToolUse hook. A config.toml server started for a thread runs with cwd = the project and correlates to the Codex session through the SessionStart handshake. Live check: a `codex exec` run that called `activate`, `gate_request`, then `apply_patch` got "Command blocked by PreToolUse hook: shards: gate data-analyst-phase-1 is pending", and the gate was in `<project>/.shards/state/sessions/<codex session id>/gates.json`.
+
+Approval defaults: the Shards tools carry no `readOnlyHint`, so with no default every call needs approval and every tool fails under `codex exec`; hence `approve` for the server. The gate tools stay on `prompt`, so they reach the human (under `codex exec` they are refused, which is correct). `codex exec -s workspace-write` reports `permission_mode: bypassPermissions`; tier 2 (`gate_advance` through a host prompt) is off on Codex anyway, so confirm gates with tier 3 (a chat reply, then `gate_confirm`) or `shards gates confirm`. `shards doctor` fails a Codex config whose server default would auto-approve a gate tool.
+
+Skills: Codex lists the plugin skills as `shards:<id>`; mention them as `$shards:syn`, `$shards:agents`, and so on.
 
 `shards install --agents-md [--remove] [--dry-run] [--root <dir>]` inserts the Codex fragment (`build/assets/agents-md.md`) into `<root>/AGENTS.md` between `<!-- shards:begin agents-md v1 -->` and `<!-- shards:end agents-md -->`, mirroring `--claude-md`. `--remove` restores the file exactly (deleting it if the command created it).
 
-OPEN (needs a real Codex CLI): E8.1 `codex plugins install` from a local path, E8.2 named spawn returns a verdict (9/10), E8.3 tools visible and both gate tools prompt, E8.4 hooks fire with real payloads, E8.7 switch golden check.
+OPEN: E8.2 named spawn returns a verdict (9/10), the interactive TUI approval prompt for the gate tools, a live fan-out run (worker `fanout_claim` binding on Codex is unit-tested only), a hooks-trust step in the installer, Windows, E8.7 switch golden check.
 
 ## Other hosts and CI (E9)
 
 - `shards install --project [--permissions] [--root dir] [--remove] [--dry-run]` copies the generated skills into `<root>/.claude/skills/` and `<root>/.agents/skills/` (their `content/` references are rewritten to `.shards/content/`, which holds the persona and phase files). Every file is recorded with a sha256 in `<root>/.shards/project-install.json`; `--remove` deletes exactly those files and keeps any you edited. Existing files it did not write are never overwritten. Register the MCP server separately (`claude mcp add shards -- npx -y @proflandrigan/shards-mcp@next`).
-- `shards build --target skills` is the generic Agent Skills package: `skills/`, `content/`, plus Agent Plugins `plugin.json` and `mcp.json` (schema UNVERIFIED against a live host; OPEN: other-host smoke test, T3 `/` composer listing).
+- `shards build --target skills` is the generic Agent Skills package: `skills/`, `content/`, plus Agent Plugins `plugin.json` and `mcp.json` (schema UNVERIFIED against a live host; OPEN: other-host smoke test, T3 `/` composer listing). Gemini CLI does not read either file (verified below). The package ships no `runtime/`, and its `mcp.json` points at `@proflandrigan/shards-mcp@next`, which is not published yet (npm 404), so it has no working MCP entry today.
+
+### Gemini CLI (verified live with Gemini CLI 0.44.1, 2026-11)
+
+Verified without model calls (no inference was run; skill triggering by the model is not verified):
+
+- Gemini ignores the skills target's `plugin.json` and `mcp.json`. Its extension manifest is `gemini-extension.json`; `gemini extensions validate adapters/skills` fails with `Configuration file not found at .../gemini-extension.json`. The build does not emit a `gemini-extension.json` because the skills package ships no `runtime/` to point it at (Gemini's documented variable for the extension directory is `${extensionPath}`, per the CLI's `docs/extensions/reference.md`; a manifest would use `"args": ["${extensionPath}/runtime/server.js"]` once a runtime is bundled).
+- `gemini skills install <pkg>/skills --scope workspace` copies only each `SKILL.md`, so the skills' `content/...` references (personas, phases, protocols) break. Do not use it.
+- `shards install --project` works: it writes `<project>/.agents/skills/` (with `content/` references rewritten to `.shards/content/`), and Gemini discovers workspace skills in `.agents/skills/` (it also reads `.gemini/skills/`; `.agents/skills/` wins within a tier).
+- Project MCP works: `gemini mcp add -s project shards node <abs>/runtime/server.js` writes `.gemini/settings.json` `{"mcpServers":{"shards":{"command":"node","args":["<abs>/runtime/server.js"]}}}` and `gemini mcp list` shows it Connected. `<abs>` is a directory holding the Shards `runtime/` with its dependencies (a repo checkout after `npm install`, or the installed Claude Code plugin's directory).
+- Folder trust: in an untrusted folder Gemini silently disables workspace skills and does not connect MCP servers. Trust the project folder when Gemini asks (or via its trusted-folders settings). `GEMINI_CLI_TRUST_WORKSPACE=true` trusts the workspace for a run, which is enough for subcommands such as `gemini mcp list` and `gemini extensions validate`.
+- From the code (not live-verified): Gemini is not a recognised host for session correlation: the runtime treats it as `claude-code` and uses a per-process session key (`shards_status` reports `sessionSource: "process"`). No hooks run on Gemini, so nothing blocks writes while a gate is pending; gates rely on the agent calling the tools.
+
+Recommended setup for Gemini CLI:
+
+```bash
+cd <project>
+npx @proflandrigan/shards@next install --project      # or: node <repo>/cli/shards.js install --project
+gemini mcp add -s project shards node <abs>/runtime/server.js
+# then trust the folder when Gemini prompts
+```
+
+The npm packages are not published yet; until they are, use a repo checkout (`node <repo>/cli/shards.js install --project` and `<repo>/runtime/server.js`).
 - `.github/workflows/ci.yml` runs tests, lints, build and the coupling ratchet on ubuntu/macos/windows for PRs. `.github/workflows/nightly.yml` runs `scripts/nightly-golden.js` (offline dry-run always; live `claude -p` only when `ANTHROPIC_API_KEY` is set; `codex exec` job only when repo variable `SHARDS_NIGHTLY_CODEX=true`) and publishes scores as artifacts plus a run summary. Neither workflow has run yet (OPEN: needs the repo pushed, secrets and API budget).

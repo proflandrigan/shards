@@ -44,7 +44,7 @@ Checks run in this order. `git.head` and `git.merge` appear only when the projec
 | `git` | `git --version` runs. | n/a | git not found. |
 | `config` | No `shards.config.yaml` (defaults used), or the file validates against the runtime config schema. | n/a | YAML does not parse, or schema errors. Doctor never creates the file. |
 | `mcp.claude` | A dev plugin is built (`adapters/claude-code/.claude-plugin/plugin.json` and `.shards-dev` marker), or a `shards` MCP entry is found in `.mcp.json`, `.claude/settings.json`, `.claude/settings.local.json`, `~/.claude.json` or `~/.claude/settings.json`. | none registered. | n/a |
-| `mcp.codex` | `[mcp_servers.shards]` (or `plugin_shards_shards`) in `.codex/config.toml` or `~/.codex/config.toml`. Message says support is UNVERIFIED. | none registered. Never FAIL. | n/a |
+| `mcp.codex` | `[mcp_servers.shards]` (or `plugin_shards_shards`) in `.codex/config.toml` or `~/.codex/config.toml` (written by `shards install --codex`). | none registered (fix: `shards install --codex`). Never FAIL. | n/a |
 | `hooks` | `adapters/claude-code/hooks/hooks.json` exists, parses, and every `.js` command shim exists and passes `node --check`. Looked up in the project root, then this repo. | no `hooks.json`; no node command shims; a shim is missing or has a syntax error. | `hooks.json` is not valid JSON or has no `hooks` key. |
 | `git.repo` | Inside a git repository. | not a repo (gate commits skipped). | n/a |
 | `git.head` | HEAD is on a branch. | detached HEAD (gate commits skipped). | n/a |
@@ -106,7 +106,7 @@ Output lines are `fixed: appended .shards/ to .gitignore`, `fixed: replayed N st
 | `gate_request` | no. It opens gates and confirms nothing. |
 | Non-MCP rules such as `Bash(...)` | no |
 
-**Where it looks.** `permissions.allow` in `<root>/.claude/settings.json`, `<root>/.claude/settings.local.json` and `~/.claude/settings.json`. Codex: in `~/.codex/config.toml` and `<root>/.codex/config.toml`, a shards MCP section that sets a gate tool's `approval_mode` to anything other than `prompt`, or an auto-approve style key (`auto_approve*`, `allow*`, `approved_tools`) that names a gate tool or uses `"*"`.
+**Where it looks.** `permissions.allow` in `<root>/.claude/settings.json`, `<root>/.claude/settings.local.json` and `~/.claude/settings.json`. Codex: in `~/.codex/config.toml` and `<root>/.codex/config.toml`, a shards MCP section that sets a gate tool's `approval_mode` to anything other than `prompt`, a `default_tools_approval_mode` other than `prompt` that leaves any gate tool without its own `approval_mode = "prompt"` table, or an auto-approve style key (`auto_approve*`, `allow*`, `approved_tools`) that names a gate tool or uses `"*"`.
 
 **Remedy shown.** Remove the rules. Gate tools must always prompt.
 

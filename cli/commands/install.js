@@ -6,6 +6,7 @@
 //                  settings.json and unknown top-level keys are not guaranteed to be tolerated).
 //   --claude-md    insert/replace a marker-delimited conventions block in <root>/CLAUDE.md.
 //   --agents-md    (E8.5) same for the Codex fragment in <root>/AGENTS.md (build/assets/agents-md.md).
+//   --codex        (E8.3) [mcp_servers.shards] block in $CODEX_HOME/config.toml + profile files (install-codex.js).
 // All support --remove (exact unmerge) and --dry-run (writes nothing).
 const fs = require('fs');
 const path = require('path');
@@ -26,11 +27,16 @@ const AGENTS_BLOCK_RE = /<!-- shards:begin agents-md[^>]*-->[\s\S]*?<!-- shards:
 
 function usage() {
   return [
-    'Usage: shards install (--project | --permissions | --claude-md | --agents-md) [--root <dir>] [--remove] [--dry-run] [--force]',
+    'Usage: shards install (--project | --permissions | --claude-md | --agents-md | --codex) [--root <dir>] [--remove] [--dry-run] [--force]',
     '  --project      copy the generated skills into <root>/.claude/skills and <root>/.agents/skills (content under .shards/content); manifest-tracked',
     '  --permissions  merge the narrow permission preset into <root>/.claude/settings.json (never allows gate tools)',
     '  --claude-md    insert the Shards tool-call conventions block into <root>/CLAUDE.md (marker-delimited)',
     '  --agents-md    insert the Shards Codex fragment into <root>/AGENTS.md (marker-delimited)',
+    '  --codex        register the shards MCP server in Codex config.toml (marker-delimited [mcp_servers.shards] block,',
+    '                 gate tools on approval_mode "prompt", the rest "approve") and copy shards-<agent>.config.toml profiles',
+    '                 into $CODEX_HOME. Options: --codex-home <dir> (default $CODEX_HOME or ~/.codex),',
+    '                 --codex-config <file> (default <codex-home>/config.toml; e.g. <project>/.codex/config.toml),',
+    '                 --server <runtime/server.js> | --plugin-dir <dir> (default: newest installed shards plugin in the Codex cache)',
     '  --remove       exact unmerge: remove only what this command added',
     '  --dry-run      print what would change; write nothing',
     '  --force        allow running inside the shards source repo',
@@ -39,7 +45,7 @@ function usage() {
 }
 
 function parse(argv) {
-  const o = { project: false, permissions: false, claudeMd: false, agentsMd: false, remove: false, dryRun: false, force: false, help: false };
+  const o = { project: false, permissions: false, claudeMd: false, agentsMd: false, codex: false, remove: false, dryRun: false, force: false, help: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const val = () => { if (i + 1 >= argv.length) throw new Error(`${a} requires a value`); return argv[++i]; };
@@ -47,6 +53,11 @@ function parse(argv) {
     else if (a === '--permissions') o.permissions = true;
     else if (a === '--claude-md') o.claudeMd = true;
     else if (a === '--agents-md') o.agentsMd = true;
+    else if (a === '--codex') o.codex = true;
+    else if (a === '--codex-home') o.codexHome = val();
+    else if (a === '--codex-config') o.codexConfig = val();
+    else if (a === '--server') o.server = val();
+    else if (a === '--plugin-dir') o.pluginDir = val();
     else if (a === '--remove') o.remove = true;
     else if (a === '--dry-run') o.dryRun = true;
     else if (a === '--force') o.force = true;
@@ -55,7 +66,8 @@ function parse(argv) {
     else if (a === '--help' || a === '-h') o.help = true;
     else throw new Error(`unknown option '${a}'`);
   }
-  if (!o.help && !o.project && !o.permissions && !o.claudeMd && !o.agentsMd) throw new Error('one of --project, --permissions, --claude-md or --agents-md is required');
+  if (!o.help && !o.project && !o.permissions && !o.claudeMd && !o.agentsMd && !o.codex) throw new Error('one of --project, --permissions, --claude-md, --agents-md or --codex is required');
+  if (!o.codex && (o.codexHome || o.codexConfig || o.server || o.pluginDir)) throw new Error('--codex-home, --codex-config, --server and --plugin-dir require --codex');
   return o;
 }
 
@@ -212,7 +224,8 @@ function run(argv) {
   try { o = parse(argv); } catch (e) { console.error(`shards install: ${e.message}\n\n${usage()}`); return 2; }
   if (o.help) { console.log(usage()); return 0; }
   const root = path.resolve(o.root || process.cwd());
-  if (isSourceRepo(root) && !o.force) {
+  const projectScoped = o.project || o.permissions || o.claudeMd || o.agentsMd; // --codex alone writes the Codex home
+  if (projectScoped && isSourceRepo(root) && !o.force) {
     console.error(`shards install: ${root} is the shards source repo; refusing (use --force to override)`);
     return 1;
   }
@@ -237,6 +250,10 @@ function run(argv) {
     if (o.agentsMd) {
       const r = o.remove ? removeAgentsMd(root, { dryRun: o.dryRun }) : applyAgentsMd(root, { dryRun: o.dryRun });
       console.log(`agents-md: ${r.changed ? (o.remove ? (r.deleted ? 'removed block and deleted file' : 'removed block') : 'Shards fragment written') : 'no change'} (${r.file})${dry}`);
+    }
+    if (o.codex) {
+      const r = require('./install-codex').installCodex({ home: o.codexHome, config: o.codexConfig, server: o.server, pluginDir: o.pluginDir, remove: o.remove, dryRun: o.dryRun });
+      for (const l of r.lines) console.log(l);
     }
     if (o.claudeMd) {
       const r = o.remove ? removeClaudeMd(root, { dryRun: o.dryRun }) : applyClaudeMd(root, { dryRun: o.dryRun });

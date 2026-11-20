@@ -53,7 +53,7 @@ describe('E7.2 utility skills', () => {
     expect(c('resume')).toContain('mcp__plugin_shards_shards__sessions_list');
     expect(c('resume')).toContain('mcp__plugin_shards_shards__sessions_resume');
     const x = read(D.codex, 'skills/brainstorm/SKILL.md');
-    expect(x).toContain('shards.activate`(agent="syn", mode="switch")');
+    expect(x).toContain('mcp__shards__activate`(agent="syn", mode="switch")');
     expect(x).toContain('content/agents/syn/modes/brainstorm.md');
     expect(x).not.toContain('CLAUDE_PLUGIN_ROOT');
   });

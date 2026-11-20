@@ -1,0 +1,89 @@
+{
+  "_note": "Codex CLI 0.169.0 hook payloads (live test 2026-11-19). pre_tool_use_* are captured payloads (paths anonymised). session_start, user_prompt_submit, subagent_stop are reconstructed from the observed field lists (values synthetic).",
+  "pre_tool_use_apply_patch": {
+    "session_id": "01a1f6ce-3b63-76f2-9b7c-0ba9eec408ac",
+    "turn_id": "01a1f6ce-3dfb-7d62-bae2-53a07f85b8ff",
+    "transcript_path": "/home/u/.codex/sessions/2026/11/19/rollout-x.jsonl",
+    "cwd": "/proj",
+    "hook_event_name": "PreToolUse",
+    "model": "gpt-6.1-terra",
+    "permission_mode": "bypassPermissions",
+    "tool_name": "apply_patch",
+    "tool_input": {
+      "command": "*** Begin Patch\n*** Add File: hello.txt\n+hi\n*** End Patch"
+    },
+    "tool_use_id": "exec-aa27ced9-b0f2-45c3-a122-f1e20c3bc7ab"
+  },
+  "pre_tool_use_subagent_apply_patch": {
+    "session_id": "01a1f6d3-1c7f-7222-975d-b133707db9c6",
+    "turn_id": "01a1f6d3-2d31-74c2-bcdb-c26102bcc1b6",
+    "agent_id": "01a1f6d3-2cdc-7f22-959a-b8e1ddf1331d",
+    "agent_type": "default",
+    "transcript_path": "/home/u/.codex/sessions/2026/11/19/rollout-x.jsonl",
+    "cwd": "/proj",
+    "hook_event_name": "PreToolUse",
+    "model": "gpt-6.1-terra",
+    "permission_mode": "bypassPermissions",
+    "tool_name": "apply_patch",
+    "tool_input": {
+      "command": "*** Begin Patch\n*** Add File: sub.txt\n+sub\n*** End Patch"
+    },
+    "tool_use_id": "exec-4a3381e9-2e66-47e9-93e3-09c598460da6"
+  },
+  "pre_tool_use_mcp": {
+    "session_id": "01a1f6ce-3b63-76f2-9b7c-0ba9eec408ac",
+    "turn_id": "01a1f6ce-3dfb-7d62-bae2-53a07f85b8ff",
+    "transcript_path": "/home/u/.codex/sessions/2026/11/19/rollout-x.jsonl",
+    "cwd": "/proj",
+    "hook_event_name": "PreToolUse",
+    "model": "gpt-6.1-terra",
+    "permission_mode": "bypassPermissions",
+    "tool_name": "mcp__shards__gates_open",
+    "tool_input": {},
+    "tool_use_id": "exec-7d3ef524-14a1-48c1-9902-9838511e6770"
+  },
+  "pre_tool_use_gate_advance": {
+    "session_id": "01a1f6ce-3b63-76f2-9b7c-0ba9eec408ac",
+    "turn_id": "01a1f6ce-3dfb-7d62-bae2-53a07f85b8ff",
+    "transcript_path": "/home/u/.codex/sessions/2026/11/19/rollout-x.jsonl",
+    "cwd": "/proj",
+    "hook_event_name": "PreToolUse",
+    "model": "gpt-6.1-terra",
+    "permission_mode": "bypassPermissions",
+    "tool_name": "mcp__shards__gate_advance",
+    "tool_input": {},
+    "tool_use_id": "exec-7d3ef524-14a1-48c1-9902-9838511e6770"
+  },
+  "session_start": {
+    "session_id": "01a1f6d3-1c7f-7222-975d-b133707db9c6",
+    "transcript_path": "/home/u/.codex/sessions/2026/11/19/rollout-x.jsonl",
+    "cwd": "/proj",
+    "hook_event_name": "SessionStart",
+    "model": "gpt-6.1-terra",
+    "permission_mode": "bypassPermissions",
+    "source": "startup"
+  },
+  "user_prompt_submit": {
+    "session_id": "01a1f6d3-1c7f-7222-975d-b133707db9c6",
+    "turn_id": "01a1f6d3-2d31-74c2-bcdb-c26102bcc1b6",
+    "transcript_path": "/home/u/.codex/sessions/2026/11/19/rollout-x.jsonl",
+    "cwd": "/proj",
+    "hook_event_name": "UserPromptSubmit",
+    "model": "gpt-6.1-terra",
+    "permission_mode": "bypassPermissions",
+    "prompt": "hello"
+  },
+  "subagent_stop": {
+    "session_id": "01a1f6d3-1c7f-7222-975d-b133707db9c6",
+    "turn_id": "01a1f6d3-2d31-74c2-bcdb-c26102bcc1b6",
+    "agent_id": "01a1f6d3-2cdc-7f22-959a-b8e1ddf1331d",
+    "agent_type": "default",
+    "transcript_path": "/home/u/.codex/sessions/2026/11/19/rollout-x.jsonl",
+    "cwd": "/proj",
+    "hook_event_name": "SubagentStop",
+    "model": "gpt-6.1-terra",
+    "permission_mode": "bypassPermissions",
+    "last_assistant_message": "done",
+    "agent_transcript_path": "/home/u/.codex/sessions/2026/11/19/rollout-y.jsonl"
+  }
+}

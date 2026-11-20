@@ -67,6 +67,8 @@ function scanCodexToml(file) {
   const t = readText(file);
   if (t === null) return [];
   const hits = [];
+  const defaults = [];
+  const prompted = new Set();
   let section = '';
   for (const raw of t.split(/\r?\n/)) {
     const line = raw.replace(/\s#.*$/, '').trim();
@@ -82,6 +84,15 @@ function scanCodexToml(file) {
     } else if (/^(auto[_-]?approve\w*|allow\w*|approved?_tools)\s*=/.test(line) && (GATE_TOOLS.some((g) => line.includes(g)) || /["']\*["']/.test(line))) {
       hits.push({ file, rule: `[${section}] ${line}` });
     }
+    // A server-wide default other than "prompt" (shards install --codex sets "approve") also covers every gate tool
+    // that has no approval_mode = "prompt" table of its own.
+    const dm = !toolSec && line.match(/^default_tools_approval_mode\s*=\s*["']?(\w+)["']?\s*$/);
+    if (dm && dm[1] !== 'prompt') defaults.push({ server: section, rule: `[${section}] ${line}` });
+    if (toolSec && GATE_TOOLS.includes(toolSec[1]) && /^approval_mode\s*=\s*["']?prompt["']?\s*$/.test(line)) prompted.add(`${section.replace(/\.tools\.\w+$/, '')}|${toolSec[1]}`);
+  }
+  for (const d of defaults) {
+    const missing = GATE_TOOLS.filter((g) => !prompted.has(`${d.server}|${g}`));
+    if (missing.length) hits.push({ file, rule: `${d.rule} without approval_mode = "prompt" for ${missing.join(', ')}` });
   }
   return hits;
 }
@@ -147,10 +158,10 @@ function checkMcpCodex(root, home) {
   for (const f of [path.join(root, '.codex', 'config.toml'), path.join(home, '.codex', 'config.toml')]) {
     const t = readText(f);
     if (t !== null && /^\s*\[mcp_servers\.(shards|plugin_shards_shards)\]/m.test(t)) {
-      return { id: 'mcp.codex', status: 'PASS', message: `[mcp_servers.shards] registered in ${f} (Codex support is UNVERIFIED)` };
+      return { id: 'mcp.codex', status: 'PASS', message: `[mcp_servers.shards] registered in ${f}` };
     }
   }
-  return { id: 'mcp.codex', status: 'WARN', message: 'no [mcp_servers.shards] in Codex config (Codex support is docs-only, UNVERIFIED)', fix: 'shards build --target codex --dev and append adapters/codex/.codex/config.toml to ~/.codex/config.toml' };
+  return { id: 'mcp.codex', status: 'WARN', message: 'no [mcp_servers.shards] in Codex config', fix: 'install the Codex plugin, then shards install --codex (docs/release.md)' };
 }
 
 // ---- git ----

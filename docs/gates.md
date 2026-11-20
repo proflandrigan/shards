@@ -239,9 +239,11 @@ The project root may be a subdirectory of the git toplevel. Index paths are conv
 The operator CLI is interim. It is replaced by the Stage 5 tiers (E11.3 to E11.5) and E11.13. No agent can call it.
 
 ```
-node cli/shards.js gates status  [--session <key>] [--root <dir>]
-node cli/shards.js gates confirm <gate-id> [--session <key>] [--changes "<note>"] [--root <dir>]
+npx @proflandrigan/shards@next gates status  [--session <key>] [--root <dir>]
+npx @proflandrigan/shards@next gates confirm <gate-id> [--session <key>] [--changes "<note>"] [--root <dir>]
 ```
+
+From a repo checkout, `node cli/shards.js gates ...` is the same command. Plugin and skills installs ship no `cli/`, so the runtime prints the `npx` form (`runtime/gates/confirm-command.js`, one helper used by `gate_request`, `describeInterimConfirm` and the `load_phase` refusal). When the runtime has a sibling `cli/shards.js` (a repo checkout or `--dev` build) it also prints that local form with an absolute path. The package spec follows `package.json` `name` + `publishConfig.tag` (checked by `test/gates-confirm-command.test.js`). The npm package is not published yet; until it is, use the local form.
 
 - Root: `--root`, else `SHARDS_PROJECT_ROOT`, else the current directory.
 - Without `--session`, the CLI searches sessions for a pending gate with that id. It fails with exit 1 if none match, and with exit 2 if several match (it lists them).
@@ -310,7 +312,7 @@ Loading phase N requires the advancing gate of the phase immediately before N, i
 - **Refusal text** (exact form; `prev` is the preceding phase, `0` for the first-phase rule, and `status` is `missing`, `pending`, `changes_requested` or `suspended`):
 
   ```
-  load_phase refused: gate <gate-id> for phase <prev> is not confirmed (status: <status>). Ask the user to confirm it: node cli/shards.js gates confirm <gate-id> --session <session-key>
+  load_phase refused: gate <gate-id> for phase <prev> is not confirmed (status: <status>). Ask the user to confirm it: npx @proflandrigan/shards@next gates confirm <gate-id> --session <session-key>[ (repo checkout: node <abs>/cli/shards.js gates confirm <gate-id> --session <session-key>)]
   ```
 
   The agent cannot confirm the gate itself (D8). The user runs the command.
@@ -369,7 +371,7 @@ Other tool responses carry only the state header (`docs/runtime.md` section 4).
 
 ## 8. Stage 5 confirmation tiers (E11.3 to E11.13)
 
-- Tier 1: `gate_request` elicits (Approve / Request changes + note) when the client advertises elicitation (`runtime/gates/tier1.js`). Proof `{tier:'elicitation',level:1}`. Interactive Claude Code only (compat CC-1); otherwise the gate stays pending.
+- Tier 1: `gate_request` elicits (Approve / Request changes + note) when the client advertises elicitation (`runtime/gates/tier1.js`). Proof `{tier:'elicitation',level:1}`. Interactive Claude Code only (compat CC-1); otherwise the gate stays pending. `elicitGate` outcomes: `approved`, `changes`, `declined` (the client answered `decline` or `cancel`: a form was shown and dismissed), `timeout`, `error` (the request failed or returned nothing usable, e.g. headless `claude -p` failing at once) and `unsupported` (no elicitation capability). Only `declined` prints "A confirmation form was shown but dismissed without a decision"; `timeout`/`error` print the neutral "No confirmation form could be completed in this client"; `unsupported` prints neither.
 - Tier 2: `gate_advance(id, note?)`. Confirms only if the PreToolUse shim recorded, at call time, `permission_mode` `default` or `plan` and returned `ask` (record `decision:'ask'`), the record is fresh (120 s) and unconsumed, no allow rule covers the tool, and the host is not Codex (tier 2 is off there: use tier 1 or 3). Proof `{tier:'host-prompt',level:2}`.
 - Tier 3: `gate_confirm(id, decision, user_reply)` (`runtime/gates/tier3.js`). `user_reply` must equal the whole, first, previously unused user message after `gate_request`/resume (prompt_id high-water mark in `confirm.json`). One fixed refusal message, shown in full once per gate. Proof `{tier:'chat-reply',level:3}`, reply stored as `gate.reply`.
 - Policies (`runtime/gates/policy.js`): `strict`, `phase` (checkpoint/confirm with `evidence.status:'pass'` auto-recorded), `plan` (after confirmed `plan-approval`, every kind is a notice until failure/anomaly/budget). Counting harness: `scripts/count-approvals.js` (OPEN: live 3/3 runs).

@@ -12,9 +12,91 @@ function log(msg) {
   try { fs.appendFileSync(LOG_FILE, `[${ts}] [chat-session] ${msg}\n`); } catch {}
 }
 
+// Shards runtime MCP tools a headless Studio session may call without a
+// permission prompt. `claude -p` has no interactive prompt, so any tool not
+// pre-allowed here is denied outright ("you haven't granted it yet"), which
+// broke `activate` on Claude Code 2.1.329.
+//
+// Deliberately NOT allowed (STUDIO_EXCLUDED_RUNTIME_TOOLS): the human-in-the-loop
+// gate tools. gate_advance (tier 2) exists to raise the host permission prompt,
+// so pre-allowing it would let the model confirm its own gate; gate_confirm
+// (tier 3) and gate_suspend carry the user's verbatim reply as proof, and
+// gate_force_close is operator-only. auto_verify_start widens auto-approval.
+// notebook_start/exec/run_all execute arbitrary code in a kernel (same class as
+// Bash, which acceptEdits still prompts for). None of the allowed tools writes
+// an external system: they touch .shards/state, .shards/events.jsonl, the
+// session's output_dir or local git only. A test checks that every
+// runtime/tools/*.js tool is listed in exactly one of the two lists.
+const STUDIO_ALLOWED_RUNTIME_TOOLS = Object.freeze([
+  'activate', 'return', 'active', 'list_agents', 'shards_status',
+  'load_phase', 'gate_request', 'gates_open', 'gate_resume',
+  'artifact_emit', 'copy_report', 'auto_verify_end',
+  'fanout_start', 'fanout_claim', 'fanout_collect',
+  'tasks_set', 'task_dispatch', 'task_report', 'task_status', 'task_verify',
+  'sessions_list', 'sessions_resume', 'sessions_end',
+  'notebook_stop',
+]);
+
+const STUDIO_EXCLUDED_RUNTIME_TOOLS = Object.freeze([
+  'gate_advance', 'gate_confirm', 'gate_force_close', 'gate_suspend',
+  'auto_verify_start', 'notebook_start', 'notebook_exec', 'notebook_run_all',
+]);
+
+// Plugin install (`claude --plugin-dir` / marketplace): server "shards" inside
+// plugin "shards" -> mcp__plugin_shards_shards__<tool> (docs/dev-install.md).
+// Project/user registration (`claude mcp add shards ...`, see `shards install`)
+// -> mcp__shards__<tool>. Allowing a prefix whose server is absent is harmless.
+const SHARDS_MCP_PREFIXES = Object.freeze(['mcp__plugin_shards_shards__', 'mcp__shards__']);
+
+function studioAllowedTools() {
+  const out = [];
+  for (const prefix of SHARDS_MCP_PREFIXES) {
+    for (const t of STUDIO_ALLOWED_RUNTIME_TOOLS) out.push(prefix + t);
+  }
+  return out;
+}
+
+// argv for the `claude` child. v2 core agents (source 'core') are NOT passed
+// as --agent: with the v2 plugin, `--agent <id>` resolves to the plugin's
+// consult subagent (agents/<id>.md), which has no MCP tools, so the activation
+// prompt could never call `activate`. The session starts plain and the
+// activation prompt switches it via the runtime. Only legacy v1 agents
+// (<project>/.claude/agents/<id>.md, source 'legacy') still use --agent.
+function buildClaudeArgs({ agent, agentSource, sessionId, resumeSessionId, permissionMode, model, addDir, mcpConfig, betas } = {}) {
+  const args = [
+    '-p',
+    '--output-format', 'stream-json',
+    '--input-format', 'stream-json',
+    '--verbose',
+    '--include-partial-messages',
+    '--forward-subagent-text',
+    '--permission-mode', permissionMode || 'acceptEdits',
+    '--allowedTools', studioAllowedTools().join(','),
+  ];
+
+  if (agent && agentSource === 'legacy') {
+    args.push('--agent', agent);
+  }
+
+  if (resumeSessionId) {
+    args.push('--resume', resumeSessionId);
+    args.push('--fork-session');
+    // Omit --session-id when forking; CLI generates the new ID
+  } else if (sessionId) {
+    args.push('--session-id', sessionId);
+  }
+
+  if (model) args.push('--model', model);
+  if (addDir) args.push('--add-dir', addDir);
+  if (mcpConfig) args.push('--mcp-config', mcpConfig);
+  if (betas) args.push('--betas', betas);
+  return args;
+}
+
 class ChatSession {
-  constructor({ agent, sessionId, resumeSessionId, cwd, sessionsDir, permissionMode, model, onEvent, onExit, addDir, mcpConfig, betas }) {
+  constructor({ agent, agentSource, sessionId, resumeSessionId, cwd, sessionsDir, permissionMode, model, onEvent, onExit, addDir, mcpConfig, betas }) {
     this.agent = agent;
+    this.agentSource = agentSource || 'core';
     this.sessionId = sessionId || randomUUID();
     this.resumeSessionId = resumeSessionId || null;
     this.cwd = cwd || process.cwd();
@@ -32,44 +114,22 @@ class ChatSession {
     this._responding = false;
   }
 
+  buildArgs() {
+    return buildClaudeArgs({
+      agent: this.agent,
+      agentSource: this.agentSource,
+      sessionId: this.sessionId,
+      resumeSessionId: this.resumeSessionId,
+      permissionMode: this.permissionMode,
+      model: this.model,
+      addDir: this.addDir,
+      mcpConfig: this.mcpConfig,
+      betas: this.betas,
+    });
+  }
+
   start() {
-    const args = [
-      '-p',
-      '--output-format', 'stream-json',
-      '--input-format', 'stream-json',
-      '--verbose',
-      '--include-partial-messages',
-      '--forward-subagent-text',
-      '--permission-mode', this.permissionMode,
-    ];
-
-    if (this.agent) {
-      args.push('--agent', this.agent);
-    }
-
-    if (this.resumeSessionId) {
-      args.push('--resume', this.resumeSessionId);
-      args.push('--fork-session');
-      // Omit --session-id when forking; CLI generates the new ID
-    } else {
-      args.push('--session-id', this.sessionId);
-    }
-
-    if (this.model) {
-      args.push('--model', this.model);
-    }
-
-    if (this.addDir) {
-      args.push('--add-dir', this.addDir);
-    }
-
-    if (this.mcpConfig) {
-      args.push('--mcp-config', this.mcpConfig);
-    }
-
-    if (this.betas) {
-      args.push('--betas', this.betas);
-    }
+    const args = this.buildArgs();
 
     log(`Spawning claude CLI for agent="${this.agent || '(plain)'}" session="${this.sessionId}" permissionMode="${this.permissionMode}"${this.resumeSessionId ? ` resume="${this.resumeSessionId}"` : ''}`);
 
@@ -183,6 +243,19 @@ class ChatSession {
       // reconnectOrCleanup to find. See the integration audit for the full
       // trace of why this.sessionId must stay unchanged.
       this.onEvent({ type: 'chat-init', sessionId: this.sessionId, data });
+      return;
+    }
+
+    if (type === 'system' && data.subtype === 'permission_denied') {
+      // Headless -p cannot prompt, so a tool outside --allowedTools is denied.
+      // Surface it rather than letting it vanish into chat-unknown.
+      log(`permission denied: ${data.tool_name || '(unknown tool)'}`);
+      this.onEvent({
+        type: 'chat-permission-denied',
+        tool: data.tool_name || null,
+        message: data.message || null,
+        sessionId: this.sessionId,
+      });
       return;
     }
 
@@ -463,4 +536,12 @@ function reconnectOrCleanup(sessionsDir, sessionsMap, SessionStoreClass, onEvent
   }
 }
 
-module.exports = { ChatSession, reconnectOrCleanup };
+module.exports = {
+  ChatSession,
+  reconnectOrCleanup,
+  buildClaudeArgs,
+  studioAllowedTools,
+  STUDIO_ALLOWED_RUNTIME_TOOLS,
+  STUDIO_EXCLUDED_RUNTIME_TOOLS,
+  SHARDS_MCP_PREFIXES,
+};

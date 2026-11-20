@@ -63,7 +63,7 @@ node cli/shards.js migrate --dry-run
 
 **Sessions** (`docs/sessions.md`): state under `.shards/state/`; `shards sessions list|show|resume|end` and the `resume`/`end` skills.
 
-**Build targets** (`docs/release.md`): `claude` (plugin), `codex` (docs-only, unverified), `skills` (generic Agent Skills); `shards install --project/--permissions/--claude-md/--agents-md` for project-level opt-ins.
+**Build targets** (`docs/release.md`): `claude` (plugin), `codex` (plugin + `shards install --codex`; verified on Codex 0.169.0, see `docs/compat.md`), `skills` (generic Agent Skills); `shards install --project/--permissions/--claude-md/--agents-md` for project-level opt-ins.
 
 **No model names in `core/`** (ADR 0007): use tiers; `npm run lint:models` enforces it. **No host-specific coupling in `core/`** (ratchet at 0).
 

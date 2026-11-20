@@ -63,13 +63,16 @@ describe('tier 1 elicitation', () => {
     expect(data(r).status).toBe('pending');
     expect(body(r)).toContain('STOP');
     expect(body(r)).toContain('gate_confirm');
-    expect(body(r)).toContain('node cli/shards.js gates confirm data-analyst-phase-1 --session s1');
+    expect(body(r)).toContain('npx @proflandrigan/shards@next gates confirm data-analyst-phase-1 --session s1');
+    expect(body(r)).toContain('form was shown but dismissed');
     expect(gates.getGate(session(), ARGS.id).status).toBe('pending');
   });
-  it('handler error leaves pending', async () => {
+  it('handler error leaves pending without claiming a form was shown', async () => {
     const c = await connect(async () => { throw new Error('boom'); });
     const r = await req(c);
     expect(data(r).status).toBe('pending');
+    expect(body(r)).not.toContain('form was shown');
+    expect(body(r)).toContain('No confirmation form could be completed');
   });
   it('client without elicitation falls back and stays pending', async () => {
     const c = await connect(null);
@@ -80,7 +83,28 @@ describe('tier 1 elicitation', () => {
   });
   it('timeout leaves pending', async () => {
     const out = await tier1.elicitGate({ elicit: () => new Promise(() => {}), clientCapabilities: () => ({ elicitation: { form: {} } }), elicitTimeoutMs: 30 }, { id: 'x', kind: 'phase', phase: 1, summary: '' });
-    expect(out.outcome).toBe('error');
+    expect(out.outcome).toBe('timeout');
+  });
+  it('decline and cancel are declined; malformed or immediate errors are not', async () => {
+    const caps = () => ({ elicitation: { form: {} } });
+    const run = (elicit) => tier1.elicitGate({ elicit, clientCapabilities: caps, elicitTimeoutMs: 1000 }, { id: 'x', kind: 'phase', phase: 1 });
+    expect((await run(async () => ({ action: 'decline' }))).outcome).toBe('declined');
+    expect((await run(async () => ({ action: 'cancel' }))).outcome).toBe('declined');
+    expect((await run(async () => undefined)).outcome).toBe('error');
+    expect((await run(async () => { throw new Error('Request timed out'); })).outcome).toBe('timeout');
+    expect((await run(async () => { throw new Error('Method not found'); })).outcome).toBe('error');
+  });
+  it('describeConfirmHow wording follows the outcome', () => {
+    const shown = 'form was shown';
+    expect(tier1.describeConfirmHow('g', 'k', { outcome: 'declined' })).toContain(shown);
+    for (const outcome of ['error', 'timeout']) {
+      const t = tier1.describeConfirmHow('g', 'k', { outcome });
+      expect(t).not.toContain(shown);
+      expect(t).toContain('No confirmation form could be completed');
+    }
+    const u = tier1.describeConfirmHow('g', 'k', { outcome: 'unsupported' });
+    expect(u).not.toContain(shown);
+    expect(u).not.toContain('No confirmation form');
   });
   it('unsupported without ctx hooks; no elicitation while validation failed', async () => {
     expect((await tier1.elicitGate({}, { id: 'x' })).outcome).toBe('unsupported');

@@ -138,7 +138,7 @@ Runtime tools referenced: `activate`, `return`, `load_phase`, `gate_request`, `g
 
 ## 5. Rendering table
 
-Tool-name prefix by target (`CLAUDE_TOOL_PREFIX` / `CODEX_TOOL_PREFIX` in `build/render.js`): **claude** `mcp__plugin_shards_shards__<tool>` (the real name inside a Claude Code plugin: `mcp__plugin_<plugin>_<server>__<tool>`); **codex** `shards.<tool>` (the `shards` MCP server's tool); **skills** bare `<tool>`.
+Tool-name prefix by target (`CLAUDE_TOOL_PREFIX` / `CODEX_TOOL_PREFIX` in `build/render.js`): **claude** `mcp__plugin_shards_shards__<tool>` (the real name inside a Claude Code plugin: `mcp__plugin_<plugin>_<server>__<tool>`); **codex** `mcp__shards__<tool>` (the name Codex 0.169 exposes for the `shards` MCP server's tools); **skills** bare `<tool>`.
 
 | Macro | claude | codex | skills |
 |---|---|---|---|
@@ -165,8 +165,8 @@ Design choice, consult on Claude Code: a named subagent invocation ("run subagen
 <out>/size-report.json
 claude : agents/<id>.md  skills/<id>/SKILL.md  skills/agents/SKILL.md
          (--dev: .shards-dev, .claude-plugin/plugin.json, .mcp.json, hooks/hooks.json)
-codex  : .codex/agents/<id>.toml  skills/<id>/SKILL.md  skills/agents/SKILL.md
-         (--dev: .shards-dev, .codex-plugin/plugin.json, .codex/config.toml, .codex/hooks.json)
+codex  : .codex/agents/<id>.toml  .codex/shards-<id>.config.toml  .codex/config.toml  skills/<id>/SKILL.md  skills/agents/SKILL.md
+         .codex-plugin/plugin.json  hooks/hooks.json  (--dev: .shards-dev; .codex/config.toml also gets the [mcp_servers.shards] block)
 skills : skills/<id>/SKILL.md  skills/agents/SKILL.md
 ```
 

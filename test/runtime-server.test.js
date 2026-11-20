@@ -43,6 +43,8 @@ describe('shards-mcp server', () => {
       expect(estimateTokens(header(r))).toBeLessThanOrEqual(60);
       const data = JSON.parse(r.content[1].text);
       expect(data.root).toBe(dir);
+      expect(data).toHaveProperty('sessionSource');
+      expect(['handshake', 'host-env', 'process', 'explicit']).toContain(data.sessionSource);
       expect(data.jobs.record).toBe('git');
       expect(fs.existsSync(path.join(dir, 'shards.config.yaml'))).toBe(true);
 

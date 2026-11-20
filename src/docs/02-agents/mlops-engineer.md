@@ -54,7 +54,7 @@ Gate-confirmed phases are committed to git as the record. Where each agent write
 ## How to start
 
 - **Claude Code:** `/shards:mlops-engineer` (switch skill; calls `activate`).
-- **Codex:** `$mlops-engineer`, or `codex --profile shards-mlops-engineer`.
+- **Codex:** `$shards:mlops-engineer`, or `codex -p shards-mlops-engineer`.
 - **Through Syn:** `/shards:syn` triages and calls `activate(agent="mlops-engineer", mode="switch")`.
 - **Consult subagents:** `mlops-engineer`, `mlops-engineer-review`, `mlops-engineer-advise`, `mlops-engineer-service`, `mlops-engineer-worker`.
 - **Fan-out and delegated build:** the `mlops-engineer-worker` entry; see [Activation Modes](../03-protocols/activation-modes.md) and [Delegated Build](../03-protocols/delegated-build.md).

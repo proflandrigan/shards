@@ -64,7 +64,7 @@ Any specialist can also ask for a review of user-facing impact or behavioral eff
 ## How to start
 
 - **Claude Code:** `/shards:academic` (switch skill; calls `activate`).
-- **Codex:** `$academic`, or `codex --profile shards-academic`.
+- **Codex:** `$shards:academic`, or `codex -p shards-academic`.
 - **As a consult:** subagents `academic` and `academic-service`, called by other agents.
 
 Reference material is reached through the `knowledge` job; see [Knowledge](../03-protocols/knowledge.md). Nothing is published yet, so install from source: [Install](../01-getting-started/install.md).

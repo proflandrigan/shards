@@ -471,7 +471,7 @@ def cmd_start(session_id: str, nb_path_str: str) -> None:
 def cmd_exec(session_id: str, cell_index: int) -> None:
     nb_pf = notebook_path_file(session_id)
     if not nb_pf.exists():
-        fail("session not started — run `start` first")
+        fail("session not started — call notebook_start first")
         return
     nb_path = Path(nb_pf.read_text().strip())
     if not nb_path.exists():
@@ -479,7 +479,7 @@ def cmd_exec(session_id: str, cell_index: int) -> None:
         return
 
     if not kernel_alive(session_id):
-        fail("kernel not alive — run `restart` or `start`")
+        fail("kernel not alive (stopped or exited) — call notebook_start to start a new kernel, or notebook_run_all to restart it and re-run every cell")
         return
 
     nb = read_notebook(nb_path)
@@ -574,7 +574,7 @@ def cmd_exec(session_id: str, cell_index: int) -> None:
 def cmd_restart(session_id: str) -> None:
     nb_pf = notebook_path_file(session_id)
     if not nb_pf.exists():
-        fail("session not started — run `start` first")
+        fail("session not started — call notebook_start first")
         return
 
     stop_kernel(session_id)
@@ -610,7 +610,7 @@ def cmd_run_all(session_id: str) -> None:
     state.json per cell as it goes."""
     nb_pf = notebook_path_file(session_id)
     if not nb_pf.exists():
-        fail("session not started — run `start` first")
+        fail("session not started — call notebook_start first")
         return
     nb_path = Path(nb_pf.read_text().strip())
     if not nb_path.exists():

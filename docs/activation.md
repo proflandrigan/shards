@@ -8,7 +8,7 @@ How a Shards agent becomes active, on which host, with which command. The per-ag
 - **consult**: an isolated native subagent (Claude `agents/<id>.md` or `agents/<id>-<entry>.md`; Codex `.codex/agents/<id>-<entry>.toml`). It answers one question and returns a verdict. It never nests: a consult may not itself consult, switch or fan out (decision D2, depth stays 1).
 - **fanout_worker**: a `<id>-worker` consult entry used by the task manifest and fan-out (see `docs/delegation.md`).
 
-Naming rule: consult subagents exist only if `consult` is in `activation`. The general subagent is `<id>`; each `consult_entries` key gives `<id>-<entry>` (underscores kept, e.g. `syn-final_review`). Switch skills exist only if `switch` is in `activation`: Claude `/shards:<id>`, Codex `$<id>` with profile `shards-<id>` (`codex --profile shards-<id>`).
+Naming rule: consult subagents exist only if `consult` is in `activation`. The general subagent is `<id>`; each `consult_entries` key gives `<id>-<entry>` (underscores kept, e.g. `syn-final_review`). Switch skills exist only if `switch` is in `activation`: Claude `/shards:<id>`, Codex `$shards:<id>` with profile `shards-<id>` (`codex -p shards-<id>`, profile file `$CODEX_HOME/shards-<id>.config.toml` from `shards install --codex`).
 
 ## Commands per agent
 
@@ -47,11 +47,11 @@ Syn is the router: the "Routing Reference" in `core/agents/syn/AGENT.md` maps in
 ## Default agent (opt-in)
 
 - Claude: `shards build --target claude --default-agent` (or env `SHARDS_BUILD_DEFAULT_AGENT=1`) writes plugin-root `settings.json` `{"agent":"shards:syn"}`. Manual route without a rebuild: `claude --agent shards:syn`. Whether a plugin `settings.json` honors `agent` is UNVERIFIED (CC-3).
-- Codex: a top-level `profile = "shards-syn"` in `.codex/config.toml`. UNVERIFIED.
+- Codex: no config key (Codex 0.169.0 rejects a top-level `profile`); start sessions with `codex -p shards-syn`. The opt-in only adds that hint as a comment in `.codex/config.toml`.
 
 ## Codex switch mechanics (E8.7)
 
-Docs-only, UNVERIFIED. Switching is by skill takeover (`$<id>` loads the thin skill, which calls `activate`), the per-tool header carries the active agent, and per-agent profiles (`codex --profile shards-<id>`) are the fallback when takeover does not hold. TODO(owner: proflandrigan): verify on a real Codex CLI (docs/compat.md, docs/test-infra.md row 12).
+Switching is by skill takeover (`$shards:<id>` loads the thin skill, which calls `activate`), the per-tool header carries the active agent, and per-agent profiles (`codex -p shards-<id>`, profiles v2 files) are the fallback when takeover does not hold. Codex 0.169.0 checks (docs/compat.md CX-7): skills are listed as `shards:<id>`, the profile files pass `--strict-config`, and `activate` works over MCP. TODO(owner: proflandrigan): model-test that `$shards:<id>` and `-p shards-<id>` make the model call `activate` (docs/test-infra.md row 12).
 
 ## Eval scripts and open criteria
 

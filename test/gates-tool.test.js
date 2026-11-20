@@ -37,7 +37,7 @@ describe('gate_request tool', () => {
     const r = await call(ok());
     expect(r.isError).toBeFalsy();
     expect(header(r)).toContain('data-analyst-phase-1');
-    expect(text(r)).toContain('node cli/shards.js gates confirm data-analyst-phase-1 --session s1');
+    expect(text(r)).toContain('npx @proflandrigan/shards@next gates confirm data-analyst-phase-1 --session s1');
     expect(text(r)).toContain('STOP');
     const data = JSON.parse(text(r).slice(text(r).indexOf('{')));
     expect(data).toMatchObject({ result: 'opened', gate_id: 'data-analyst-phase-1', kind: 'phase', phase: 1, status: 'pending', copy_queue: [], confirm: { milestone: 'A' } });

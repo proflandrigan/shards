@@ -43,7 +43,7 @@ None. It returns conversational findings, or edits files in place in Clean mode 
 ## How to start
 
 - **Claude Code:** `/shards:backend-engineer` (switch skill; calls `activate`).
-- **Codex:** `$backend-engineer`, or `codex --profile shards-backend-engineer`.
+- **Codex:** `$shards:backend-engineer`, or `codex -p shards-backend-engineer`.
 - **As a consult:** subagents `backend-engineer`, `backend-engineer-review` and `backend-engineer-service`.
 
 Nothing is published yet, so install from source: [Install](../01-getting-started/install.md).

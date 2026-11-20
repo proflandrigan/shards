@@ -60,7 +60,7 @@ Gate-confirmed phases are committed to git as the record. Where each agent write
 ## How to start
 
 - **Claude Code:** `/shards:data-modeller` (switch skill; calls `activate`).
-- **Codex:** `$data-modeller`, or `codex --profile shards-data-modeller`.
+- **Codex:** `$shards:data-modeller`, or `codex -p shards-data-modeller`.
 - **Through Syn:** `/shards:syn` triages and calls `activate(agent="data-modeller", mode="switch")`.
 - **Consult subagents:** `data-modeller`, `data-modeller-review`, `data-modeller-advise`, `data-modeller-service`, `data-modeller-worker`.
 - **Fan-out and delegated build:** the `data-modeller-worker` entry; see [Activation Modes](../03-protocols/activation-modes.md) and [Delegated Build](../03-protocols/delegated-build.md).

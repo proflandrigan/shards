@@ -153,6 +153,16 @@ describe('marketplace', () => {
     expect(r.status, r.stderr).toBe(0);
     expect(fs.readFileSync(path.join(out, '.claude-plugin/marketplace.json'), 'utf8')).toBe(relpkg.marketplaceText({ local: true }));
     expect(fs.existsSync(path.join(out, 'plugins/shards/.claude-plugin/plugin.json'))).toBe(true);
-    expect(spawnSync('node', [CLI, 'build', '--target', 'codex', '--marketplace'], { encoding: 'utf8' }).status).toBe(2);
+    expect(spawnSync('node', [CLI, 'build', '--target', 'skills', '--marketplace'], { encoding: 'utf8' }).status).toBe(2);
   });
+  it('CLI --marketplace for codex writes .agents/plugins/marketplace.json (Codex 0.169 shape) and the plugin', () => {
+    const out = path.join(root, 'cxmkt');
+    const r = spawnSync('node', [CLI, 'build', '--target', 'codex', '--marketplace', '--no-bundle-deps', '--out', out], { encoding: 'utf8' });
+    expect(r.status, r.stderr).toBe(0);
+    const m = JSON.parse(fs.readFileSync(path.join(out, '.agents/plugins/marketplace.json'), 'utf8'));
+    expect(m).toMatchObject({ name: 'shards-local', plugins: [{ name: 'shards', source: { source: 'local', path: './plugins/shards' }, policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' } }] });
+    for (const f of ['.codex-plugin/plugin.json', 'hooks/hooks.json', 'hooks/pre-tool-use.js', 'runtime/server.js', '.codex/shards-syn.config.toml']) {
+      expect(fs.existsSync(path.join(out, 'plugins/shards', f)), f).toBe(true);
+    }
+  }, 60000);
 });

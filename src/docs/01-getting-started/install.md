@@ -28,9 +28,19 @@ Runtime state lands in `<project>/.shards/state/`. Hook errors are appended to `
 
 To make Syn the main-thread agent, use `claude --agent shards:syn` or set `{"agent":"shards:syn"}` in your project `.claude/settings.json`. The build flag `--default-agent` exists but is transitional.
 
-## Codex (docs-only, unverified)
+## Codex (checked on Codex CLI 0.169.0)
 
-`shards build --target codex` emits a package with `.codex-plugin/plugin.json`, `.codex/config.toml`, `.codex/hooks.json` and `.codex/agents/*.toml`. Codex is not installed where this was developed, so plugin loading, hook payloads and gate approval prompts are assumptions taken from Codex documentation. Use `shards build --target codex --dev` and follow the manual steps it prints. To add the Codex conventions fragment to your project:
+`shards build --target codex --marketplace --out <dir>` emits the plugin (skills, `hooks/hooks.json`, consult subagents, profile files, bundled runtime) plus a local marketplace file. Install it in three steps:
+
+```bash
+codex plugin marketplace add <dir>
+codex plugin add shards@shards-local      # skills and hooks
+shards install --codex                    # MCP server entry and profiles in $CODEX_HOME
+```
+
+`shards install --codex` writes a marked `[mcp_servers.shards]` block into `$CODEX_HOME/config.toml` that points at the installed plugin's runtime (gate tools ask for approval, the other Shards tools are approved), and copies the `shards-<agent>` profiles. Rerun it after upgrading the plugin; `--remove` undoes it and `--dry-run` previews it. Then trust the plugin's hooks when Codex asks: untrusted hooks are skipped silently, and without them pending gates do not block writes. The release guide (`docs/release.md`) has the details, including the manual trust entry.
+
+Start an agent with `$shards:syn` (or any `$shards:<agent>`), or a whole session with `codex -p shards-syn`. To add the Codex conventions fragment to your project:
 
 ```bash
 shards install --agents-md [--dry-run] [--remove]
@@ -46,6 +56,18 @@ shards install --project [--dry-run]      # copy skills into .claude/skills and 
 ```
 
 `--project` writes `.shards/content/` (persona and phase files) and records every file with a sha256 in `.shards/project-install.json`. `--project --remove` deletes exactly those files and keeps any you edited. Existing files it did not write are never overwritten. The MCP server is registered separately, for example `claude mcp add shards -- npx -y @proflandrigan/shards-mcp@next`, which only works once that package is published. The generic package schema is unverified against a live host.
+
+### Gemini CLI
+
+Gemini CLI does not read the generic package's `plugin.json` or `mcp.json` (its extensions use `gemini-extension.json`), and `gemini skills install` copies only `SKILL.md`, which breaks the skills' references to persona and phase files. Use the project route instead (verified with Gemini CLI 0.44.1):
+
+```bash
+cd <project>
+shards install --project                                   # Gemini reads .agents/skills/
+gemini mcp add -s project shards node <abs>/runtime/server.js   # writes .gemini/settings.json
+```
+
+`<abs>` is a directory holding the Shards `runtime/` with its dependencies, such as a repo checkout. Gemini disables workspace skills and MCP servers in untrusted folders without saying so, so trust the project folder when it asks. Details: `docs/release.md`, "Gemini CLI".
 
 ## Opt-in project config
 

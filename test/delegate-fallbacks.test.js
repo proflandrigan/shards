@@ -7,7 +7,7 @@ const { loadCore } = require('../build/core.js');
 const { processFile, compile } = require('../build/compile.js');
 const { makeCore, tmpDir } = require('./build-fixture.js');
 
-const PREFIX = { claude: 'mcp__plugin_shards_shards__', codex: 'shards.', skills: '' };
+const PREFIX = { claude: 'mcp__plugin_shards_shards__', codex: 'mcp__shards__', skills: '' };
 function run(src, target) {
   const core = loadCore(makeCore({}));
   return processFile(core, 'agents/alpha/phases/phase-1.md', src, { target, strict: false });

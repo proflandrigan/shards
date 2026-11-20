@@ -75,6 +75,8 @@ shards gates confirm <gate-id> [--changes "<note>"]
 shards gates force-close <gate-id> | --all [--reason "<text>"]
 ```
 
+Without a global `shards` install (plugin users have no `cli/`), run the same commands as `npx @proflandrigan/shards@next gates ...` from the project directory; that is the form the runtime prints when a gate is waiting. From a repo checkout, `node cli/shards.js gates ...` also works.
+
 `force-close` ends a stuck gate as `force_closed`. It is never counted as confirmed, and the agent can request a fresh gate afterwards. It also resets any open auto-verify block. The `gate_force_close` tool does the same for one gate but follows the tier 2 rule (you must approve the host prompt). See [CLI](../05-commands/cli.md).
 
 ## Exceptions

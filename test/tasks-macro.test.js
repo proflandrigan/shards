@@ -22,7 +22,7 @@ describe('delegate macro', () => {
   }
   it('uses per-target prefixes and worker mechanics', () => {
     expect(run('{{delegate}}', 'claude').text).toContain('mcp__plugin_shards_shards__task_dispatch');
-    expect(run('{{delegate}}', 'codex').text).toContain('shards.task_dispatch');
+    expect(run('{{delegate}}', 'codex').text).toContain('mcp__shards__task_dispatch');
     expect(run('{{delegate}}', 'codex').text).toContain('spawn_agent');
     expect(run('{{delegate}}', 'skills').text).toContain('inline');
   });

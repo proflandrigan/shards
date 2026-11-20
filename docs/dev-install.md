@@ -20,8 +20,8 @@ Claude (`adapters/claude-code/`):
 - `skills/<agent>/SKILL.md` per agent, `agents/<agent>.md`, plus utility skills emitted from `build/skills.js`: `skills/agents/` (the `/shards:agents` listing), `brainstorm/`, `review-pr/`, `notebook-walkthrough/`, `resume/`, `end/` and (claude only) `shards-conventions/`. The connect, sync, doctor and publish-knowledge skills are deferred to Stage 6.
 - `.shards-dev`: marker. `uninstall-dev` only deletes directories that have it.
 
-Codex (`adapters/codex/`), docs-only:
-- `.codex-plugin/plugin.json`, `.codex/config.toml` (`[mcp_servers.shards]`), `.codex/hooks.json`, `.codex/agents/<agent>.toml`, `skills/`, `.shards-dev`.
+Codex (`adapters/codex/`, or `adapters/codex-marketplace/plugins/shards/` with `--marketplace`); layout checked on Codex 0.169.0:
+- `.codex-plugin/plugin.json`, `hooks/hooks.json` (absolute repo hook paths, each with `--host codex`), `.codex/config.toml` (agents guidance plus a `[mcp_servers.shards]` block pointing at the repo runtime), `.codex/shards-<agent>.config.toml` (profiles), `.codex/agents/<agent>.toml`, `skills/`, `.shards-dev`.
 
 Dev mode points hook commands and the MCP server at the repo's own `hooks/` and `runtime/` by absolute path. Edits to `runtime/` or `hooks/` apply on the next session with no rebuild. Rebuild only after changes to `core/` or to macros (`build/MACROS.md`, `build/render.js`, `build/emit.js`), because those are compiled into the generated skills and agents.
 
@@ -41,11 +41,20 @@ Then, in the session, run `/shards:agents` to list agents.
 
 `--plugin-dir` is not persistent. Stop passing it to unload the plugin; hooks are plugin-scoped, so they go away with it.
 
-## 4. Codex (OPEN, external TODO)
+## 4. Codex (checked on Codex 0.169.0, 2026-11-19)
 
-Owner: proflandrigan. Codex is not installed, so nothing here is verified. Plugin loading and the field names in `.codex-plugin/plugin.json` and `.codex/hooks.json` are assumptions. Codex cannot use `permissionDecision: "ask"` (compat CX-6).
+```bash
+node cli/shards.js build --target codex --dev --marketplace          # -> adapters/codex-marketplace
+codex plugin marketplace add "$PWD/adapters/codex-marketplace"
+codex plugin add shards@shards-local                                  # skills + hooks
+node cli/shards.js install --codex --plugin-dir "$PWD/adapters/codex-marketplace/plugins/shards"
+```
 
-`shards build --target codex --dev` prints the manual options. Follow that printed guidance: add the `.codex/config.toml` MCP entry to `~/.codex/config.toml`, copy or symlink `.codex/hooks.json` into the project, and copy or symlink `skills/` into `~/.codex/skills`.
+The last step writes the `[mcp_servers.shards]` block into `$CODEX_HOME/config.toml` (default `~/.codex`) pointing at this repo's `runtime/server.js` (a dev build has the `.shards-dev` marker, so the installer uses the repo runtime) and copies the profiles. Then trust the hooks (Codex skips untrusted hooks silently; see `docs/release.md`, Codex install step 3). Use a scratch `CODEX_HOME` to keep experiments out of your real config.
+
+- MCP tool names: `mcp__shards__<tool>`. Skills: `$shards:<id>`. Profiles: `codex -p shards-<agent>`.
+- Codex ignores `permissionDecision: "ask"` (compat CX-6); the gate tools prompt through `approval_mode = "prompt"` instead.
+- Codex copies the plugin into its cache, but the dev hook commands use absolute repo paths, so hook and runtime edits still apply on the next session. Re-run `codex plugin add` after changes to `core/` (skills).
 
 ## 5. Uninstall
 
@@ -54,7 +63,7 @@ node cli/shards.js uninstall-dev                    # both targets
 node cli/shards.js uninstall-dev --target claude    # or codex
 ```
 
-Removes `adapters/<target>` only if it has the `.shards-dev` marker. Claude: nothing to undo beyond not passing `--plugin-dir`. Codex: remove the copied or symlinked files and the `[mcp_servers.shards]` entry you added to `~/.codex/config.toml`.
+Removes `adapters/<target>` only if it has the `.shards-dev` marker (`--out adapters/codex-marketplace/plugins/shards` for a marketplace dev build). Claude: nothing to undo beyond not passing `--plugin-dir`. Codex: `codex plugin remove shards@shards-local` and `node cli/shards.js install --codex --remove`.
 
 ## 6. Troubleshooting
 
@@ -62,6 +71,6 @@ Removes `adapters/<target>` only if it has the `.shards-dev` marker. Claude: not
 - Hook errors are appended to `<project>/.shards/state/hook-errors.log`. The hooks always exit 0, so check this log when a hook seems silent.
 - MCP server not appearing: confirm the tool prefix in section 3 and that `node` is on PATH.
 
-## 7. Codex gate approval (docs-only, UNVERIFIED)
+## 7. Codex gate approval
 
-The generated `.codex/config.toml` also sets `approval_mode = "prompt"` under `[mcp_servers.shards.tools.gate_advance]` and `[mcp_servers.shards.tools.gate_force_close]`. This is the Codex substitute for the Claude `ask` hook decision (Codex PreToolUse cannot `ask`, compat CX-6). The key and value come from Codex docs only (CX-1); Codex is not installed, so this is unverified. Copy those tables along with the `[mcp_servers.shards]` entry.
+The `[mcp_servers.shards]` block sets `default_tools_approval_mode = "approve"` and `approval_mode = "prompt"` for `gate_advance`, `gate_force_close`, `gate_confirm` and `gate_suspend`. Without the server default every Shards tool needs approval (they carry no `readOnlyHint`) and all fail under `codex exec`; the gate tools stay on `prompt`, the Codex substitute for the Claude `ask` hook decision. Verified on Codex 0.169.0 under `codex exec` (compat CX-1); the interactive prompt was not seen.

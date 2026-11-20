@@ -61,7 +61,7 @@ The Researcher's declared reviewer is the Data Modeller, but consults never nest
 ## How to start
 
 - **Claude Code:** `/shards:researcher` (switch skill; calls `activate`).
-- **Codex:** `$researcher`, or `codex --profile shards-researcher`.
+- **Codex:** `$shards:researcher`, or `codex -p shards-researcher`.
 - **As a consult:** subagents `researcher` and `researcher-service`.
 
 Reference material is reached through the `knowledge` job; see [Knowledge](../03-protocols/knowledge.md). Nothing is published yet, so install from source: [Install](../01-getting-started/install.md).

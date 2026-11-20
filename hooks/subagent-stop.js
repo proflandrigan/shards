@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 // SubagentStop shim (S5F). When a subagent exits, release the lease binding it held (runtime/leases
-// releaseWorker). No output, never blocks. Codex documents SubagentStop with agent_id (compat CX-6, docs-only),
-// but Codex PreToolUse carries no agent_id so nothing is ever bound there and this is a harmless no-op.
+// releaseWorker). No output, never blocks. Both hosts send agent_id on SubagentStop and on PreToolUse inside a
+// subagent (Codex 0.169 live-verified payloads, compat CX-6), so Codex workers bound by fanout_claim are released too.
 const fs = require('fs');
 const host = require('./lib/host');
 const common = require('./lib/common');

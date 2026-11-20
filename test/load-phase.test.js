@@ -61,7 +61,8 @@ describe('load_phase', () => {
     await gate('ml-engineer-phase-1', 1, 'ml-engineer');
     const r = await call({ agent: 'ml-engineer', n: '2' });
     expect(r.isError).toBe(true);
-    expect(text(r)).toBe('load_phase refused: gate ml-engineer-phase-1 for phase 1 is not confirmed (status: pending). Ask the user to confirm it: node cli/shards.js gates confirm ml-engineer-phase-1 --session s1');
+    expect(text(r)).toBe('load_phase refused: gate ml-engineer-phase-1 for phase 1 is not confirmed (status: pending). Ask the user to confirm it: npx @proflandrigan/shards@next gates confirm ml-engineer-phase-1 --session s1'
+      + ` (repo checkout: node ${path.join(__dirname, '..', 'cli', 'shards.js')} gates confirm ml-engineer-phase-1 --session s1)`);
     expect(frames()[0].phase).toBe(1);
     await gates.confirmGate(sess(), 'ml-engineer-phase-1', { decision: 'confirmed', proof: PROOF }, DEPS);
     const ok = await call({ agent: 'ml-engineer', n: '2' });
@@ -195,7 +196,7 @@ describe('load_phase', () => {
     const c = text(await call({ agent: 'ml-engineer', n: 1 }, { host: 'claude-code' }));
     expect(c).toContain('mcp__plugin_shards_shards__');
     const x = text(await call({ agent: 'ml-engineer', n: 1 }, { host: 'codex' }));
-    expect(x).toContain('`shards.load_phase`');
+    expect(x).toContain('`mcp__shards__load_phase`');
     expect(x).not.toContain('mcp__plugin_shards_shards__');
   });
 });

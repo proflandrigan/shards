@@ -35,7 +35,7 @@ describe('E5.8 list_agents matches the registry', () => {
       const consult = y.activation.includes('consult') ? [y.id, ...Object.keys(y.consult_entries || {}).map((e) => `${y.id}-${e}`)] : [];
       const sw = y.activation.includes('switch');
       expect(a.activate.claude).toEqual({ switch: sw ? `/shards:${y.id}` : null, consult });
-      expect(a.activate.codex).toEqual({ switch: sw ? `$${y.id}` : null, profile: `shards-${y.id}`, consult });
+      expect(a.activate.codex).toEqual({ switch: sw ? `$shards:${y.id}` : null, profile: `shards-${y.id}`, consult });
     }
   });
 
@@ -48,7 +48,7 @@ describe('E5.8 list_agents matches the registry', () => {
       if (a.activate.claude.switch) expect(fs.existsSync(path.join(co, 'skills', a.id, 'SKILL.md'))).toBe(true);
       if (a.activate.codex.switch) {
         expect(fs.existsSync(path.join(cx, 'skills', a.id, 'SKILL.md'))).toBe(true);
-        expect(cfg).toContain(`[profiles.${a.activate.codex.profile}]`);
+        expect(fs.existsSync(path.join(cx, '.codex', `${a.activate.codex.profile}.config.toml`))).toBe(true);
       }
       for (const n of a.activate.claude.consult) expect(fs.existsSync(path.join(co, 'agents', `${n}.md`))).toBe(true);
       for (const n of a.activate.codex.consult) expect(fs.existsSync(path.join(cx, '.codex/agents', `${n}.toml`))).toBe(true);

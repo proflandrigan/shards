@@ -29,17 +29,21 @@ auto-verify (E11.12) needs every tool call; the gate-tool-only fast exit stays i
 - E11.6 enforcement (`hooks/lib/enforce.js`, runtime state only): for write/exec tools, `deny` while the active frame has a pending gate (unless the caller's `agent_id` is bound to a fan-out lease slice), deny writes outside a bound worker's slice, deny lead writes inside a leased slice; `fanout_claim` calls bind agent_id to a slice. `SHARDS_GATE_ENFORCE=0` disables the deny paths.
 - Nothing emitted adds an allow rule for gate tools.
 
-## Codex gaps (docs-only, CX-6 / CX-1)
-No `ask` on PreToolUse (tier-2 host-prompt proof unavailable; per-tool `approval_mode = "prompt"` in `.codex/config.toml` is the
-substitute, UNVERIFIED). `agent_id` absent on PreToolUse. Hook payload field names and hooks.json format are assumed to mirror Claude's.
+## Codex (live-checked on Codex 0.169.0, compat CX-6 / CX-7)
+Codex ignores `ask` on PreToolUse (tier 2 is off there); the gate tools prompt through `approval_mode = "prompt"` in the
+`[mcp_servers.shards]` block that `shards install --codex` writes. `agent_id`/`agent_type` are present on PreToolUse inside
+subagents, so fan-out binding works (unit-tested, not live). `apply_patch` arrives as `{command: "<patch>"}`.
+Host detection (`lib/host.js`): the `--host codex` argv flag on every emitted Codex hook command wins; then `SHARDS_HOST`, then
+`turn_id` in the payload, then `PLUGIN_ROOT` without `CLAUDE_PROJECT_DIR`. Env alone is not enough: Codex sets `CLAUDE_PLUGIN_ROOT`
+for plugin hooks, and a Codex launched from Claude Code inherits `CLAUDECODE`.
 
 ## Config templates
 - `claude-code.hooks.json`: plugin `hooks/hooks.json` format, uses `${CLAUDE_PLUGIN_ROOT}`.
-- `codex.hooks.json`: `{{SHARDS_HOOKS_DIR}}` placeholder is substituted by the E1.10 build. SessionStart, UserPromptSubmit, PreToolUse and SubagentStop are used (all documented for Codex per compat CX-6; SubagentStop is a no-op there because Codex never binds workers). Format assumed to mirror Claude's [docs-only].
+- `codex.hooks.json`: `{{SHARDS_HOOKS_DIR}}` placeholder is substituted by the build (`${PLUGIN_ROOT}/hooks` in the release plugin, which Codex expands; the repo `hooks/` dir in dev) and emitted as the plugin's `hooks/hooks.json`, where Codex 0.169 discovers it. Every command ends in `--host codex`. SessionStart, UserPromptSubmit, PreToolUse and SubagentStop are used. Codex skips the hooks until they are trusted (docs/release.md).
 
 ## Platform notes
 ppid chain: Linux `/proc/<pid>/stat`; macOS `ps -o ppid= -p`; Windows best-effort `[process.ppid]` only. Needs `node` on PATH (compat WIN-3).
 Handshake files older than 24h are pruned on each SessionStart.
 
 ## Status
-Claude Code: live-checked headless (see test notes in the commit). Codex: OPEN (external), CLI not installed; Codex field names are docs-only.
+Claude Code: live-checked headless (see test notes in the commit). Codex: live-checked on Codex 0.169.0 (2026-11-19): payload fields, plugin hook discovery, a pending gate denying `apply_patch`. Fixtures: `test/fixtures/codex/`.

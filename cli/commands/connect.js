@@ -18,6 +18,13 @@ const INTEGRATIONS = [
     claude: 'claude mcp add --transport http atlassian https://mcp.atlassian.com/v2/mcp',
     codex: 'codex mcp add atlassian --url https://mcp.atlassian.com/v2/mcp',
     note: 'OAuth sign-in after adding: Claude Code: /mcp (or `claude mcp login atlassian`); Codex: complete the browser sign-in `codex mcp add` opens (or `codex mcp login atlassian`). Choose the Atlassian site when /shards:connect runs.',
+    // Atlassian's v1 endpoints (/v1/sse, /v1/mcp) are deprecated (removal announced for 2027-03-01) in favour of /v2/mcp.
+    deprecated: {
+      match: /mcp\.atlassian\.com\/v1\b/i,
+      message: 'registered against the deprecated Atlassian MCP v1 endpoint (mcp.atlassian.com/v1/...); Atlassian is removing it. Re-register on https://mcp.atlassian.com/v2/mcp and sign in again.',
+      claude: (name, scope) => { const sc = scope ? ` -s ${scope}` : ''; return `claude mcp remove${sc} ${name} && claude mcp add${sc} --transport http ${name} https://mcp.atlassian.com/v2/mcp`; },
+      codex: (name) => `codex mcp remove ${name} && codex mcp add ${name} --url https://mcp.atlassian.com/v2/mcp`,
+    },
   },
   {
     id: 'drive', label: 'Google Drive / Slides', match: /google.?(drive|slides|docs|workspace)|gdrive/i,
@@ -64,15 +71,16 @@ const flat = (name, def) => [name, def && def.url, def && def.command, ...(def &
 // -> [{name, file, text}] for Claude Code: project .mcp.json, ~/.claude.json (top level + this project's entry).
 function claudeServers(root, home) {
   const out = [];
-  const add = (file, map) => { if (map && typeof map === 'object') for (const [n, d] of Object.entries(map)) out.push({ name: n, file, text: flat(n, d) }); };
-  add(path.join(root, '.mcp.json'), (readJson(path.join(root, '.mcp.json')) || {}).mcpServers);
+  // scope = the `claude mcp -s` scope the entry lives in (undefined when not a CLI-managed file).
+  const add = (file, map, scope) => { if (map && typeof map === 'object') for (const [n, d] of Object.entries(map)) out.push({ name: n, file, text: flat(n, d), scope }); };
+  add(path.join(root, '.mcp.json'), (readJson(path.join(root, '.mcp.json')) || {}).mcpServers, 'project');
   for (const f of [path.join(root, '.claude', 'settings.json'), path.join(root, '.claude', 'settings.local.json'), path.join(home, '.claude', 'settings.json')]) add(f, (readJson(f) || {}).mcpServers);
   const cj = readJson(path.join(home, '.claude.json')) || {};
   const cjFile = path.join(home, '.claude.json');
-  add(cjFile, cj.mcpServers);
+  add(cjFile, cj.mcpServers, 'user');
   if (cj.projects && typeof cj.projects === 'object') {
     const hit = Object.entries(cj.projects).find(([p]) => path.resolve(p) === root);
-    if (hit) add(cjFile, hit[1] && hit[1].mcpServers);
+    if (hit) add(cjFile, hit[1] && hit[1].mcpServers, 'local');
   }
   return out;
 }
@@ -101,11 +109,19 @@ function check({ root, home, host, only }) {
   for (const integ of INTEGRATIONS) {
     if (only && !only.includes(integ.id)) continue;
     for (const h of hosts) {
-      const hit = servers[h].find((s) => integ.match.test(s.text));
+      const hits = servers[h].filter((s) => integ.match.test(s.text));
+      const dep = integ.deprecated;
+      const isDep = (s) => !!(dep && dep.match.test(s.text));
+      const hit = hits.find((s) => !isDep(s)) || hits[0];
+      const warnings = hits.filter(isDep).map((s) => ({
+        code: 'deprecated-endpoint', server: s.name, file: s.file,
+        message: `'${s.name}' is ${dep.message}`, command: dep[h](s.name, s.scope),
+      }));
       rows.push({
         integration: integ.id, label: integ.label, host: h,
         registered: !!hit, ...(hit ? { server: hit.name, file: hit.file } : { command: integ[h] }),
         note: integ.note,
+        ...(warnings.length ? { warnings } : {}),
       });
     }
   }
@@ -120,10 +136,16 @@ function run(argv) {
   const home = path.resolve(o.home || process.env.HOME || os.homedir());
   const rows = check({ root, home, host: o.host, only: o.only });
   const missing = rows.filter((r) => !r.registered);
-  if (o.json) { console.log(JSON.stringify({ integrations: rows, missing: missing.length }, null, 2)); return 0; }
+  const warned = rows.filter((r) => r.warnings);
+  if (o.json) { console.log(JSON.stringify({ integrations: rows, missing: missing.length, warnings: warned.reduce((n, r) => n + r.warnings.length, 0) }, null, 2)); return 0; }
   for (const r of rows) {
-    if (r.registered) console.log(`OK       ${r.host.padEnd(6)} ${r.label}: registered as '${r.server}' (${r.file})`);
-    else {
+    if (r.registered) {
+      console.log(`${r.warnings ? 'WARN    ' : 'OK      '} ${r.host.padEnd(6)} ${r.label}: registered as '${r.server}' (${r.file})`);
+      for (const w of r.warnings || []) {
+        console.log(`           warning: ${w.message}`);
+        console.log(`           run: ${w.command}`);
+      }
+    } else {
       console.log(`MISSING  ${r.host.padEnd(6)} ${r.label}`);
       if (r.command) console.log(`           run: ${r.command}`);
       console.log(`           ${r.note}`);
@@ -131,7 +153,7 @@ function run(argv) {
   }
   console.log(missing.length
     ? '\nShards prints these commands but never runs them, and never handles credentials. After adding a server, restart the host session, then run /shards:connect (when available) to pick the site, space and project.'
-    : '\nAll listed integrations are registered. (claude.ai connectors are not visible in config files; they show in /mcp.)');
+    : `\nAll listed integrations are registered${warned.length ? ', but some need attention (see warnings above)' : ''}. (claude.ai connectors are not visible in config files; they show in /mcp.)`);
   return 0;
 }
 

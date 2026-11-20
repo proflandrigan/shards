@@ -54,7 +54,7 @@ Gate-confirmed phases are committed to git as the record. Where each agent write
 ## How to start
 
 - **Claude Code:** `/shards:bi-engineer` (switch skill; calls `activate`).
-- **Codex:** `$bi-engineer`, or `codex --profile shards-bi-engineer`.
+- **Codex:** `$shards:bi-engineer`, or `codex -p shards-bi-engineer`.
 - **Through Syn:** `/shards:syn` triages and calls `activate(agent="bi-engineer", mode="switch")`.
 - **Consult subagents:** `bi-engineer`, `bi-engineer-review`, `bi-engineer-advise`, `bi-engineer-worker`.
 - **Fan-out and delegated build:** the `bi-engineer-worker` entry; see [Activation Modes](../03-protocols/activation-modes.md) and [Delegated Build](../03-protocols/delegated-build.md).

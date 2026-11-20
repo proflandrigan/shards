@@ -4,7 +4,7 @@
 const TARGETS = ['claude', 'codex', 'skills'];
 // Real tool name inside a Claude Code plugin: mcp__plugin_<plugin>_<server>__<tool> (verified live: plugin 'shards', server 'shards').
 const CLAUDE_TOOL_PREFIX = 'mcp__plugin_shards_shards__';
-const CODEX_TOOL_PREFIX = 'shards.';
+const CODEX_TOOL_PREFIX = 'mcp__shards__'; // verified on Codex 0.169.0 (docs/compat.md)
 
 function tool(target, t) {
   if (target === 'claude') return `${CLAUDE_TOOL_PREFIX}${t}`;

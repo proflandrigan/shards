@@ -9,11 +9,11 @@ Plan reference: `shards-agent-suite-plan.md` task E0.6; decisions D2, D4, D6, D8
 | Tool | Version | How checked |
 |---|---|---|
 | Claude Code | 2.1.325 | `~/.local/bin/claude --version`; `--help`, `agents --help`, `mcp --help`, `plugin --help`; `strings` on the installed binary (`~/.local/share/claude/versions/2.1.325`) |
-| Codex CLI | not installed | public docs only (developers.openai.com redirects to learn.chatgpt.com/docs/...) |
+| Codex CLI | 0.169.0 (live test 2026-11-19) | public docs, then a live test on macOS with a scratch `CODEX_HOME`: `codex plugin marketplace add` / `plugin add`, app-server `hooks/list`, `skills/list`, `mcpServerStatus/list`, `codex exec --strict-config` as a config validator, `codex mcp list`, and a few `codex exec` model runs with recorder hooks. Rows marked "live-verified on Codex 0.169.0, 2026-11-19" come from that test |
 | T3 Code | not installed | public GitHub README (github.com/pingdotgg/t3code) and search results only |
 | Windows | no Windows host | docs only |
 
-No model runs were made (no spend). Nothing below was exercised by running a hook, agent or MCP server end to end.
+The E0.6 pass (2026-11-14) made no model runs. The Codex rows were later checked live (2026-11-19, Codex 0.169.0); Claude Code rows are as of E0.6 unless they say otherwise.
 
 ## Status legend
 
@@ -35,12 +35,13 @@ No model runs were made (no spend). Nothing below was exercised by running a hoo
 | CC-5 | Claude Code | SessionStart sources incl. `compact` | documented (docs), not exercised locally | D6, E11.6 |
 | CC-6 | Claude Code | PreToolUse `permissionDecision: "ask"` vs allow rules | documented (docs), not exercised; allow-rule interaction NOT stated | E11.4 |
 | CC-7 | Claude Code | subagent nesting depth (extra, relevant to D2) | documented (docs), not exercised locally | D2 |
-| CX-1 | Codex | per-tool `approval_mode` | docs-only, unverified (key exists; values for per-tool key not listed) | D8, E11.4 |
-| CX-2 | Codex | MCP elicitation | FAILS/UNKNOWN (not mentioned in MCP docs) | E11.3, E11.5 |
+| CX-1 | Codex | MCP config keys and `approval_mode` | live-verified on Codex 0.169.0, 2026-11-19 (values `auto`/`prompt`/`writes`/`approve`; `prompt` refuses under `codex exec`) | D8, E11.4 |
+| CX-2 | Codex | MCP elicitation | partly observed (0.169.0): a `gate_request` form was sent and dismissed without a decision under `codex exec`; the interactive TUI was not tested | E11.3, E11.5 |
 | CX-3 | Codex | named custom-agent spawn | docs-only, unverified (by `name`; no explicit spawn syntax) | D2, D4 |
-| CX-4 | Codex | `max_depth` | docs-only, unverified; sources conflict | D2 |
+| CX-4 | Codex | `max_depth` | keys live-verified on Codex 0.169.0 (accepted by `--strict-config`); defaults not checked | D2 |
 | CX-5 | Codex | a skill taking over the main session | docs-only, unverified: NO | D4, E11.0 |
-| CX-6 | Codex | hook events and payloads | docs-only, unverified (rich; `ask` unsupported) | D6, D8, E11.4, E11.6 |
+| CX-6 | Codex | hook events and payloads | live-verified on Codex 0.169.0, 2026-11-19 (`ask` ignored; `agent_id` on PreToolUse inside subagents) | D6, D8, E11.4, E11.6 |
+| CX-7 | Codex | plugin packaging (marketplace, hooks, MCP, trust, profiles) | live-verified on Codex 0.169.0, 2026-11-19 | E8.1-E8.3, E8.7 |
 | T3-1 | T3 Code | host hooks fire | UNKNOWN | D8, E11.4, E11.6 |
 | T3-2 | T3 Code | elicitation and approval prompt display | UNKNOWN (approval shown for Codex per README caption only) | E11.3, E11.5 |
 | T3-3 | T3 Code | plugin and project skill discovery | UNKNOWN | D4, E11.0 |
@@ -87,8 +88,8 @@ No model runs were made (no spend). Nothing below was exercised by running a hoo
 - Evidence: https://code.claude.com/docs/en/hooks (common input fields, subagent identity). Repo: `tools/gate-hook.js` (removed in E11.9) reads only `payload.session_id` (lines 133, 270, 398); it never reads `agent_id` or `permission_mode`. `.claude/settings.json` wires `Stop`, `PreToolUse`, `UserPromptSubmit` only. Local binary strings: `permission_mode` (187 hits), `agent_id` (168 hits), string presence only.
 - Status: `session_id`: VERIFIED locally (repo code consumes it). `agent_id`, `permission_mode`: documented (docs), not exercised locally.
 - Impact: D8 and E11.4 need `permission_mode` at PreToolUse to decide enforcement; D2 needs `agent_id` to tell a main-thread call from a consult. Capture one real PreToolUse payload (log `JSON.stringify(payload)` from a throwaway hook in a free local session) before E11.4 starts.
-- SubagentStop (S5F): `hooks/subagent-stop.js` releases the exiting worker's lease binding via `agent_id`. Wired in both `claude-code.hooks.json` and `codex.hooks.json`. Codex documents SubagentStop (CX-6) but has no `agent_id` on PreToolUse, so nothing is ever bound there and the hook is a no-op: a Codex gap, not a failure. Not checked against a real payload on either host.
-- Fan-out (E5.9): `hooks/lib/enforce.js` binds subagents by `agent_id` on `fanout_claim` and applies slice write rules to them. This is Claude Code only: Codex PreToolUse has no `agent_id` (CX-6), so Codex calls are unbound. Neither the binding nor the slice rules have been checked against a real payload (`docs/delegation.md` section 3.1).
+- SubagentStop (S5F): `hooks/subagent-stop.js` releases the exiting worker's lease binding via `agent_id`. Wired in both `claude-code.hooks.json` and `codex.hooks.json`. Codex 0.169 sends `agent_id`/`agent_type` on SubagentStop and on PreToolUse inside a subagent (CX-6, live payloads), so Codex workers bound by `fanout_claim` are released too. The release path is unit-tested with a real-shaped Codex payload (`test/codex-host.test.js`), not exercised live on either host.
+- Fan-out (E5.9): `hooks/lib/enforce.js` binds subagents by `agent_id` on `fanout_claim` (`mcp__plugin_shards_shards__fanout_claim` on Claude, `mcp__shards__fanout_claim` on Codex) and applies slice write rules to them. Both hosts: Codex 0.169 PreToolUse inside a subagent carries `agent_id` and `agent_type` (CX-6, live payload). Codex reports its built-in role (`default` observed) as `agent_type`; that is not compared with the lease `worker_type` (custom agents keep their name and are compared). The Codex binding is unit-tested with real-shaped payloads only; no live fan-out run on either host (`docs/delegation.md` section 3.1).
 
 ### CC-5 SessionStart `compact` (and `startup`/`resume`)
 
@@ -114,53 +115,69 @@ No model runs were made (no spend). Nothing below was exercised by running a hoo
 - Status: documented (docs), not exercised locally.
 - Impact: D2 fan-out and consult chains fit Claude Code defaults. Managed settings could lower the env var.
 
-## Codex (not installed; all findings docs-only, unverified)
+## Codex
 
-Sources: https://learn.chatgpt.com/docs/hooks.md, https://learn.chatgpt.com/docs/agent-configuration/subagents.md, https://learn.chatgpt.com/docs/extend/mcp.md (these are the redirect targets of developers.openai.com/codex/*). Some details come from search snippets of https://developers.openai.com/codex/subagents and third-party blogs (codex.danielvaughan.com), which are lower confidence.
+Sources: https://learn.chatgpt.com/docs/hooks.md, https://learn.chatgpt.com/docs/agent-configuration/subagents.md, https://learn.chatgpt.com/docs/extend/mcp.md (these are the redirect targets of developers.openai.com/codex/*), then a live test of Codex CLI 0.169.0 on macOS (2026-11-19) with a scratch `CODEX_HOME`. Items marked "live-verified on Codex 0.169.0, 2026-11-19" were observed there; the rest is still docs-only.
 
-### CX-1 Per-tool `approval_mode`
+### CX-1 MCP config keys and `approval_mode`
 
-- Finding: MCP config has `tools.<tool>.approval_mode` ("Per-tool approval behavior override"), example value `"approve"`. The server-level `default_tools_approval_mode` supports `auto`, `prompt`, `writes`, `approve`; only `writes` is defined (prompts for tools not marked read-only). Allowed values for the per-tool key are not listed. Plugin servers are configured under `plugins.<plugin>.mcp_servers.<server>`.
-- Status: docs-only, unverified.
-- Impact: gives a Codex lever for D8/E11.4 (gate mutating tools by prompting). Which value forces a prompt per call needs confirming.
+- Finding (live-verified on Codex 0.169.0, 2026-11-19): a server entry (config.toml `[mcp_servers.<n>]` or a plugin `.mcp.json`) accepts `command`, `args`, `cwd`, `env`, `env_vars`, `enabled`, `default_tools_approval_mode`, `tools.<tool>.approval_mode`, `startup_timeout_sec`, `tool_timeout_sec`. `approval_mode` values: `auto`, `prompt`, `writes`, `approve`. The Shards tools carry no `readOnlyHint`, so with no default every Shards tool needs approval and all of them fail under `codex exec` (approval policy never). `default_tools_approval_mode = "approve"` made `gates_open` work. `tools.gate_advance.approval_mode = "prompt"` was refused under `codex exec` and fired a PermissionRequest hook, which is the intended behaviour.
+- Shards setting (`shards install --codex`, `build/package.js codexMcpToml`): `default_tools_approval_mode = "approve"`, and `approval_mode = "prompt"` for `gate_advance`, `gate_force_close`, `gate_confirm`, `gate_suspend` (the set `shards doctor` checks; doctor also fails a non-prompt server default that leaves any of them without a prompt table).
+- Status: live-verified on Codex 0.169.0, 2026-11-19. The interactive TUI prompt for a `prompt` tool was not seen (exec only).
 
 ### CX-2 Elicitation
 
-- Finding: the MCP docs do not mention elicitation. No source found on how it is routed to subagents.
-- Status: FAILS/UNKNOWN.
-- Impact: E11.3/E11.5 cannot assume elicitation on Codex. Needs a plain-chat question fallback.
+- Finding: the MCP docs do not mention elicitation. In the 0.169.0 live run, `gate_request` reported "A confirmation form was shown but dismissed without a decision" under `codex exec`, so Codex accepts the elicitation request and exec dismisses it. Whether the interactive TUI shows the form was not tested.
+- Status: partly observed (exec only).
+- Impact: E11.3/E11.5 keep the plain-chat fallback (tier 3, `gate_confirm`) as the Codex path.
 
 ### CX-3 Named custom-agent spawns
 
-- Finding: custom agents are TOML files (`~/.codex/agents/`, `.codex/agents/`); "Codex identifies the custom agent by its `name` field"; a custom agent overrides a built-in of the same name. The docs show prompts that name an agent in words ("Have pr_explorer map...") but give no explicit spawn syntax or API, so the user cannot be guaranteed to force a specific agent. Subagents inherit the parent turn's sandbox and approval settings and cannot replace them.
-- Status: docs-only, unverified.
+- Finding: custom agents are TOML files (`~/.codex/agents/`, `.codex/agents/`); "Codex identifies the custom agent by its `name` field"; a custom agent overrides a built-in of the same name. The docs show prompts that name an agent in words ("Have pr_explorer map...") but give no explicit spawn syntax or API, so the user cannot be guaranteed to force a specific agent. Subagents inherit the parent turn's sandbox and approval settings and cannot replace them. Live (0.169.0): a plain spawned subagent reports `agent_type: "default"` in hook payloads.
+- Status: docs-only, unverified (named spawn not tested).
 - Impact: D2/D4 consult via a named agent is plausible but model-mediated on Codex, so E11.0 needs a Codex test that the right agent runs.
 
 ### CX-4 `max_depth`
 
-- Finding: conflict. A search snippet of the subagents page says `agents.max_depth` defaults to 1 (a direct child may spawn, no deeper nesting) and `agents.max_threads` defaults to 6. The fetched subagents page does not mention `max_depth` and says `agents.max_concurrent_threads_per_session` with `max_threads` as a legacy alias, no default stated.
-- Status: docs-only, unverified; sources conflict.
+- Finding: Codex 0.169.0 accepts `agents.max_depth`, `agents.max_threads`, `agents.max_concurrent_threads_per_session` (must be >= 1) and `features.multi_agent_v2.max_concurrent_threads_per_session` (`codex exec --strict-config`). Defaults were not checked; one docs snippet says `max_depth` defaults to 1 and `max_threads` to 6.
+- Status: keys live-verified on Codex 0.169.0, 2026-11-19; defaults docs-only.
 - E8.6: recommended values and the emitted (commented) config are in `docs/delegation.md` section 8.1.
-- Impact: D2 risk. If depth 1 is the default, a specialist that consults Syn or a reviewer (depth 2) is blocked on Codex unless config raises it. Plan an installer-written config setting and a depth-1 degradation path.
+- Impact: D2 risk. If depth 1 is the default, a specialist that consults Syn or a reviewer (depth 2) is blocked on Codex unless config raises it.
 
 ### CX-5 Skill taking over the main session
 
-- Finding: no. Docs describe subagents as delegated work; custom agents cannot override sandbox, approval policy, provider or MCP servers; skills inherit from the parent. No mechanism for a skill or agent to become the main session (no `--agent` equivalent found).
+- Finding: no. Docs describe subagents as delegated work; custom agents cannot override sandbox, approval policy, provider or MCP servers; skills inherit from the parent. No mechanism for a skill or agent to become the main session (no `--agent` equivalent found). Profiles (CX-7) are the whole-session route: `codex -p shards-<agent>`.
 - Status: docs-only, unverified: NO.
-- Impact: D4/E11.0 persona transfer (Syn becoming a specialist in-session) must be done by skill instructions on Codex, not by agent switch. Plan an AGENTS.md or skill-based persona path.
+- Impact: D4/E11.0 persona transfer (Syn becoming a specialist in-session) is done by skill instructions plus the `agent=<id>` tool header on Codex, not by agent switch.
 
 ### CX-6 Hook events and payloads
 
-- Finding (from the hooks page):
-  - Events: `PreToolUse`, `PermissionRequest`, `PostToolUse`, `PreCompact`, `PostCompact`, `UserPromptSubmit`, `SubagentStop`, `Stop`, `PreModelRequest`, `PostModelRequest`, `Interrupt`, `SessionStart`, `SubagentStart`, `SessionEnd`.
-  - Common fields: `session_id` (subagents use the parent's), `transcript_path`, `cwd`, `hook_event_name`, `model`, `turn_id`; `permission_mode` on SessionStart, PreToolUse, PermissionRequest, PostToolUse, UserPromptSubmit, SubagentStart, SubagentStop, Stop, Interrupt (values `default`, `acceptEdits`, `plan`, `dontAsk`, `bypassPermissions`).
-  - SessionStart `source`: `startup`, `resume`, `clear`, `compact`, `fork`; compact hooks run before the next model request.
-  - PreToolUse payload: `turn_id`, `tool_name`, `tool_use_id`, `tool_input`; covers Bash, `apply_patch`, MCP tools (`mcp__...`) and local function tools; not hosted tools such as WebSearch. `write_stdin` does not re-run it. The page calls hooks a guardrail, not a complete enforcement boundary.
-  - Decisions: PreToolUse supports `deny` and `allow` with `updatedInput`; `ask` is explicitly UNSUPPORTED (marks the hook failed and the tool call continues). PermissionRequest hooks (`allow`/`deny`) run only when Codex is about to ask for approval.
-  - `agent_id` only on SubagentStart/SubagentStop/model-request events, not documented on PreToolUse.
-  - `apply_patch` `tool_input` shape is not pinned down by the page. `hooks/lib/host.js` normalises a bare-string `tool_input` (the patch text) to `{input: <string>}`; `hooks/lib/writes.js` also reads `{input|patch|command}` as a string or a `["apply_patch", "<patch>"]` array. The `*** Add/Update/Delete File:` and `*** Move to:` paths are then checked against gates and fan-out slices; a patch with no parseable path is an unknown-target write. Not checked against a real payload.
-- Status: docs-only, unverified.
-- Impact: E11.4 cannot use `ask` on Codex; use `deny` or the PermissionRequest hook. D2 cannot tell consult from main on PreToolUse via `agent_id`. D6/E11.6 SessionStart `compact` is available.
+- Finding (live-verified on Codex 0.169.0, 2026-11-19, from recorder hooks; fixtures in `test/fixtures/codex/payloads-0.169.0.json`):
+  - SessionStart: `{session_id, transcript_path, cwd, hook_event_name, model, permission_mode, source}`. No `turn_id`.
+  - UserPromptSubmit: the same plus `turn_id` and `prompt`.
+  - PreToolUse: `{session_id, turn_id, transcript_path, cwd, hook_event_name, model, permission_mode, tool_name, tool_input, tool_use_id}`, plus `agent_id` and `agent_type` when the call runs inside a subagent (the subagent keeps the parent's `session_id`).
+  - SubagentStart/SubagentStop carry `agent_id` and `agent_type`; SubagentStop also `last_assistant_message` and `agent_transcript_path`.
+  - `apply_patch` `tool_input` is `{"command": "*** Begin Patch\n*** Add File: x\n..."}` (patch text as a string under `command`); `hooks/lib/writes.js` reads it and checks the `*** Add/Update/Delete File:` and `*** Move to:` paths. MCP tool names are `mcp__shards__<tool>`.
+  - `permissionDecision: "ask"` is ignored: the tool runs anyway. `deny` blocks the call ("Command blocked by PreToolUse hook: ...").
+  - `permission_mode` was `bypassPermissions` under `codex exec -s workspace-write`. Tier 2 (`gate_advance` via a host prompt) is off on Codex anyway; this also means a tier-2 check would refuse there.
+  - Hook commands run with cwd = the project. Plugin hook commands get `PLUGIN_ROOT`, `PLUGIN_DATA` and also `CLAUDE_PLUGIN_ROOT` in their env, and `${PLUGIN_ROOT}` in the command string is expanded by Codex (hooks/list shows the absolute path).
+- Host detection (`hooks/lib/host.js`): because Codex sets `CLAUDE_PLUGIN_ROOT` (and a Codex started from a Claude Code terminal inherits `CLAUDECODE`), env-based detection called Codex `claude-code`, so the `ask` paths (gate tools, external writes, unknown-target writes during fan-out) failed open. Order now: the `--host codex` argv flag that every emitted Codex hook command carries, then `SHARDS_HOST`, then the payload (`turn_id` means Codex), then `PLUGIN_ROOT`/`PLUGIN_DATA` without `CLAUDE_PROJECT_DIR` (Codex), then the Claude env vars. The MCP server (`runtime/session/correlate.js`) gets `--host codex` in its args and `SHARDS_HOST=codex` in its env from `shards install --codex`.
+- Still docs-only: the full event list (`PermissionRequest`, `PostToolUse`, `PreCompact`, `PostCompact`, `Stop`, `PreModelRequest`, `PostModelRequest`, `Interrupt`, `SessionEnd`), SessionStart `compact`, `allow` with `updatedInput`.
+- Status: live-verified on Codex 0.169.0, 2026-11-19 (the fields and behaviours listed above).
+- Impact: E11.4 cannot use `ask` on Codex; it uses `deny` and `approval_mode = "prompt"`. Fan-out binding by `agent_id` works on Codex (unit-tested, not live-verified).
+
+### CX-7 Plugin packaging, hooks trust, MCP registration and profiles
+
+- Finding (live-verified on Codex 0.169.0, 2026-11-19):
+  - Install: `codex plugin marketplace add <dir>` where `<dir>/.agents/plugins/marketplace.json` is `{"name":"shards-local","plugins":[{"name":"shards","source":{"source":"local","path":"./plugins/shards"},"policy":{"installation":"AVAILABLE","authentication":"ON_INSTALL"},"category":"Developer Tools"}]}`, then `codex plugin add shards@shards-local`. `codex plugin add <path>` alone fails. The plugin is copied to `$CODEX_HOME/plugins/cache/<marketplace>/shards/<version>/`.
+  - Hooks: Codex discovers plugin hooks at `<plugin>/hooks/hooks.json` (not `.codex/hooks.json`). `node "${PLUGIN_ROOT}/hooks/<shim>.js" --host codex` works.
+  - Hooks trust: untrusted hooks are skipped silently in exec. Trust is `[hooks.state."<key>"]` in config.toml with `trusted_hash` and `trusted_content_hash`, the two halves of the `currentHash` (`sha256:<a>/sha256:<b>`) that app-server `hooks/list` reports with the key; `--dangerously-bypass-hook-trust` skips the check.
+  - Plugin `.mcp.json`: with `args ["./runtime/server.js"]` and no `cwd` the handshake fails; `${PLUGIN_ROOT}` is not expanded in `.mcp.json` args; with `cwd "."` the server runs in the plugin cache dir with an env of only HOME, LANG, LOGNAME, PATH, SHELL, TERM, TMPDIR, USER. The runtime then keeps its state in `<plugin cache>/.shards` while the hooks write `<project>/.shards`, so pending gates are invisible to PreToolUse (split brain). So the plugin ships no `.mcp.json`.
+  - config.toml route: `[mcp_servers.shards] command = "node", args = ["<abs>/runtime/server.js", "--host", "codex"]` works; started for a thread, the server's cwd is the project and SessionStart handshake correlation matched the Codex session id. A live `codex exec` run (activate, gate_request, then apply_patch) got "Command blocked by PreToolUse hook: shards: gate data-analyst-phase-1 is pending" and the gate was in `<project>/.shards/state/sessions/<codex session id>/gates.json`, none in the plugin cache.
+  - Skills: app-server `skills/list` names plugin skills `shards:<id>`. The `$shards:<id>` mention form follows Codex's `$<skill>` syntax; a model run with it was not made.
+  - Profiles: `[profiles.<n>] developer_instructions` is rejected ("unknown configuration field"), and a top-level `profile = "..."` is rejected ("legacy `profile` config is no longer supported; use `--profile <n>` with `<n>.config.toml`"). Profiles v2 are files `$CODEX_HOME/<name>.config.toml` with top-level keys such as `developer_instructions`, used with `codex -p <name>`; `--strict-config` validates them.
+- Shards packaging: `shards build --target codex [--marketplace]` emits `hooks/hooks.json`, `.codex/shards-<agent>.config.toml` profiles and no `.mcp.json`; `shards install --codex` writes the config.toml MCP block and copies the profiles (`docs/release.md`).
+- Status: live-verified on Codex 0.169.0, 2026-11-19 (macOS only; Windows hook commands untested).
 
 ## T3 Code (not installed)
 
@@ -221,12 +238,13 @@ Owner for every row: proflandrigan. Every non-VERIFIED item above appears here. 
 | CC-5 | `compact` SessionStart payload and context survival unobserved | D6, E11.6 | E0.6-F4: run `/compact` in a throwaway session with a SessionStart hook; confirm source and injected context | proflandrigan |
 | CC-6 | `ask` may not override a matching allow rule; repo never emits `ask` | E11.4 | E0.6-F5: local test with allow rule plus hook returning `ask`; if it fails, design E11.4 around `deny` or removing allow rules | proflandrigan |
 | CC-7 | Depth default (3) documented only; managed settings can lower it | D2 | E0.6-F6: confirm with a 2-deep Task chain locally; installer should check `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` | proflandrigan |
-| CX-1 | Per-tool `approval_mode` value list unknown; docs only | D8, E11.4 | E0.6-F7: install Codex, test each value on one MCP tool | proflandrigan |
-| CX-2 | No Codex elicitation documented | E11.3, E11.5 | E0.6-F8: test on installed Codex; design plain-chat fallback | proflandrigan |
+| CX-1 | DONE (0.169.0): values known; `shards install --codex` sets default `approve`, gate tools `prompt`. Open: the interactive TUI prompt | D8, E11.4 | E0.6-F7: see the prompt in the TUI | proflandrigan |
+| CX-2 | Elicitation request accepted, dismissed under exec; TUI untested | E11.3, E11.5 | E0.6-F8: test the form in the TUI; plain-chat fallback (tier 3) stays the Codex path | proflandrigan |
 | CX-3 | Custom agents selected by model reading `name`, not forced | D2, D4 | E0.6-F9: Codex test that a named agent is reliably chosen; fall back to inline persona text | proflandrigan |
-| CX-4 | `max_depth` default 1 (snippet) vs not mentioned (page); consult from a specialist may be blocked | D2 | E0.6-F10: check `codex` config schema and set `agents.max_depth` in installer; add depth-1 degradation path (flatten consults to the main thread) | proflandrigan |
+| CX-4 | Keys accepted by 0.169.0; defaults unchecked; consult from a specialist may be blocked at depth 1 | D2 | E0.6-F10: check defaults; add depth-1 degradation path (flatten consults to the main thread) | proflandrigan |
 | CX-5 | No skill or agent can take over the main session on Codex | D4, E11.0 | E0.6-F11: design the Codex persona path (skill or AGENTS.md) and test | proflandrigan |
-| CX-6 | PreToolUse `ask` unsupported on Codex; hooks are a guardrail not a boundary; `agent_id` absent on PreToolUse | D8, E11.4, D2, D6, E11.6 | E0.6-F12: design E11.4 around `deny`/PermissionRequest on Codex; test hook payloads on installed Codex | proflandrigan |
+| CX-6 | Payloads DONE (0.169.0). `ask` ignored on Codex; hooks are a guardrail not a boundary; `agent_id` present on PreToolUse inside subagents | D8, E11.4, D2, D6, E11.6 | E0.6-F12: live fan-out run (worker calls `fanout_claim`); SessionStart `compact` payload | proflandrigan |
+| CX-7 | DONE (0.169.0): marketplace install, plugin hooks, config.toml MCP route, profiles v2. Open: hooks trust has no Shards installer step (manual or TUI); Windows hook commands untested | E8.1-E8.3 | E0.6-F13: TUI trust flow; Windows run | proflandrigan |
 | T3-1 | Hooks may not fire under T3 Code | D8, E11.4, E11.6 | E0.6-F13: install T3 Code with both providers; test whether Shards hooks fire; otherwise mark enforcement as unsupported there | proflandrigan |
 | T3-2 | Elicitation and approval display unknown | E11.3, E11.5 | E0.6-F14: same T3 test session; trigger an MCP elicitation and an approval | proflandrigan |
 | T3-3 | Skill/plugin discovery unknown | D4, E11.0 | E0.6-F15: check whether T3 loads plugin and `.claude/skills` or `.agents` skills per provider | proflandrigan |
@@ -240,22 +258,22 @@ Owner for every row: proflandrigan. Every non-VERIFIED item above appears here. 
 
 For D8 / E11.4 (gating mutating actions):
 
-1. Codex PreToolUse does not support `ask` (the hook is marked failed and the tool runs anyway). Enforcement on Codex must use `deny`, a PermissionRequest hook, or `approval_mode`, and the docs call hooks a guardrail, not a complete boundary.
+1. Codex PreToolUse ignores `ask` (live-verified on 0.169.0: the tool runs anyway). Enforcement on Codex uses `deny` and `approval_mode = "prompt"`, and the docs call hooks a guardrail, not a complete boundary.
 2. On Claude Code, `ask` versus an existing allow rule is not documented in the text fetched, and the repo has never emitted `ask`. Test it before building E11.4 on it.
 3. Hook firing under T3 Code is UNKNOWN for both providers, and `permission_mode`/`agent_id` have not been seen in a real PreToolUse payload locally (the repo reads only `session_id`).
 
 For D2 (consult / fan-out depth):
 
-1. Codex `max_depth` is reported as default 1 in one source and absent in the fetched page. At depth 1 a specialist cannot consult Syn or a reviewer (depth 2).
-2. Codex custom agents are chosen by the model from `name`/`description` with no documented forced spawn, and `agent_id` is not on Codex PreToolUse, so a consult cannot be reliably told apart from main-thread calls.
+1. Codex `max_depth` is reported as default 1 in one source (the key is accepted by 0.169.0; the default was not checked). At depth 1 a specialist cannot consult Syn or a reviewer (depth 2).
+2. Codex custom agents are chosen by the model from `name`/`description` with no documented forced spawn. Codex PreToolUse does carry `agent_id` inside subagents (0.169.0), so subagent calls can be told apart from main-thread calls.
 3. Claude Code allows three layers by default, so the Syn to specialist to Syn review path (depth 2) fits, but managed settings or `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` would break it.
 
-### E5/E8.7/E5.7 findings (build/emit.js; docs-only notes, none verified live)
+### E5/E8.7/E5.7 findings (build/emit.js; Codex profile and skill-name facts checked on Codex 0.169.0, the rest docs-only)
 
-- E5.2: switch skills are thin (frontmatter plus an `activate(agent, mode="switch")` instruction and a pointer to `content/agents/<id>/AGENT.md`); only agents with `switch` in `activation` get one. Claude invokes them as `/shards:<id>`, Codex as `$<id>`. The plugin is named `shards`, so a `syn` skill is `/shards:syn`; a bare `/shards` alias is not possible and is not emitted. `scripts/eval/switch-eval.js` scores whether `claude -p "/shards:<id>"` makes the model call `activate` for the right agent. UNVERIFIED: that `-p "/shards:<id>"` expands a plugin skill headless; the first live run decides.
+- E5.2: switch skills are thin (frontmatter plus an `activate(agent, mode="switch")` instruction and a pointer to `content/agents/<id>/AGENT.md`); only agents with `switch` in `activation` get one. Claude invokes them as `/shards:<id>`, Codex as `$shards:<id>` (Codex 0.169 `skills/list` names plugin skills `shards:<id>`; the `$` mention was not model-tested). The plugin is named `shards`, so a `syn` skill is `/shards:syn`; a bare `/shards` alias is not possible and is not emitted. `scripts/eval/switch-eval.js` scores whether `claude -p "/shards:<id>"` makes the model call `activate` for the right agent. UNVERIFIED: that `-p "/shards:<id>"` expands a plugin skill headless; the first live run decides.
 - E5.3: subagents are `agents/<id>.md` (general: persona summary plus entry file list) and `agents/<id>-<entry>.md` (summary, rendered entry file, plus `worker_contract.md` for `worker`), Codex `.codex/agents/<id>[-<entry>].toml`. No `model` key anywhere (D7); `tools` never includes `Task` or `Agent`, default `Read, Glob, Grep, Bash` when the persona has none. Consult and fanout text now names `<id>-<entry>`. Codex still picks agents by model reading `name` (CX-3).
-- E8.7: on Codex, the skill takes over instructions after `activate`, and every tool response header carries `agent=<id>` (runtime/header.js), which re-asserts the persona. Fallback outside T3: the codex build writes `[profiles.shards-<agent>]` tables (with `developer_instructions`) into `.codex/config.toml`; use `codex --profile shards-<agent>`. UNVERIFIED: the profile table shape and whether a profile accepts `developer_instructions` were not found in fetched docs.
-- E5.7: opt-in only (`opts.defaultAgent` to emitTarget, or env `SHARDS_BUILD_DEFAULT_AGENT=1`; the CLI flag `--default-agent` still needs wiring in build/compile.js). Claude: writes plugin-root `settings.json` `{"agent": "shards:syn"}`, and `agents/syn.md` then omits `tools` (full tool set, so the main thread can spawn subagents and call MCP tools) and gains a main-thread instruction to call `activate(agent="syn", mode="switch")` first. Manual route: `claude --agent shards:syn`. UNVERIFIED (CC-3): whether a plugin `settings.json` honors `agent`. Codex: a top-level `profile = "shards-syn"` in `.codex/config.toml`, also UNVERIFIED.
+- E8.7: on Codex, the skill takes over instructions after `activate`, and every tool response header carries `agent=<id>` (runtime/header.js), which re-asserts the persona. Fallback outside T3: the codex build writes v2 profile files `.codex/shards-<agent>.config.toml` (top-level `developer_instructions`), which `shards install --codex` copies to `$CODEX_HOME`; use `codex -p shards-<agent>`. `[profiles.*]` tables with `developer_instructions` are rejected by Codex 0.169.0 (CX-7); the v2 files pass `--strict-config`. Whether the model then calls `activate` was not model-tested.
+- E5.7: opt-in only (`opts.defaultAgent` to emitTarget, or env `SHARDS_BUILD_DEFAULT_AGENT=1`; the CLI flag `--default-agent` still needs wiring in build/compile.js). Claude: writes plugin-root `settings.json` `{"agent": "shards:syn"}`, and `agents/syn.md` then omits `tools` (full tool set, so the main thread can spawn subagents and call MCP tools) and gains a main-thread instruction to call `activate(agent="syn", mode="switch")` first. Manual route: `claude --agent shards:syn`. UNVERIFIED (CC-3): whether a plugin `settings.json` honors `agent`. Codex: no config key exists (0.169.0 rejects a top-level `profile`), so the opt-in only adds a comment naming `codex -p shards-syn`.
 
 ## Delegate host fallbacks (E12.8)
 

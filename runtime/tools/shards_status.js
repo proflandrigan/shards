@@ -3,7 +3,7 @@ const { defineTool } = require('../registry');
 
 module.exports = defineTool({
   name: 'shards_status',
-  description: 'Report Shards runtime status: project root, session, state version, config and job bindings, active agent.',
+  description: 'Report Shards runtime status: project root, session (and how it was correlated), state version, config and job bindings, active agent.',
   inputSchema: { type: 'object', properties: {}, additionalProperties: false },
   async handler(_args, ctx) {
     const cfg = ctx.getConfig();
@@ -15,6 +15,10 @@ module.exports = defineTool({
       data: {
         root: ctx.root,
         sessionKey: ctx.sessionKey,
+        // How the session key was chosen: 'handshake' (SessionStart hook matched this process),
+        // 'host-env', 'process' (per-process fallback key) or 'explicit' (fixed --session key).
+        sessionSource: ctx.sessionSource || null,
+        host: ctx.host || null,
         stateVersion: ctx.state.getVersion(),
         configPath: cfg.path,
         configCreated: cfg.created,

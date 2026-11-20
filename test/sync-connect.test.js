@@ -113,6 +113,32 @@ describe('shards connect', () => {
     expect(by('github', 'codex').command).toMatch(/^codex mcp add github/);
     expect(by('drive', 'claude').registered).toBe(false); // other project's entry is not ours
   });
+  it('warns about Atlassian servers on the deprecated v1 endpoint (text and --json)', () => {
+    w(path.join(home, '.claude.json'), JSON.stringify({ mcpServers: { atlassian: { type: 'http', url: 'https://mcp.atlassian.com/v1/mcp' } } }));
+    w(path.join(home, '.codex', 'config.toml'), '[mcp_servers.jira]\nurl = "https://mcp.atlassian.com/v2/mcp"\n');
+    run('--json', '--only', 'atlassian');
+    const j = JSON.parse(out());
+    const by = (h) => j.integrations.find((r) => r.host === h);
+    expect(by('claude')).toMatchObject({ registered: true, server: 'atlassian' });
+    expect(by('claude').warnings).toEqual([expect.objectContaining({
+      code: 'deprecated-endpoint', server: 'atlassian',
+      command: 'claude mcp remove -s user atlassian && claude mcp add -s user --transport http atlassian https://mcp.atlassian.com/v2/mcp',
+    })]);
+    expect(by('codex').warnings).toBeUndefined();
+    expect(j.warnings).toBe(1);
+    run('--only', 'atlassian', '--host', 'claude');
+    const t = out();
+    expect(t).toMatch(/WARN\s+claude\s+Atlassian/);
+    expect(t).toMatch(/warning: .*deprecated Atlassian MCP v1 endpoint/);
+    expect(t).toContain('run: claude mcp remove -s user atlassian && claude mcp add -s user --transport http atlassian https://mcp.atlassian.com/v2/mcp');
+  });
+  it('a v2 registration alongside a v1 one is the reported server; v1 still warned (codex form)', () => {
+    w(path.join(home, '.codex', 'config.toml'), '[mcp_servers.old]\nurl = "https://mcp.atlassian.com/v1/sse"\n\n[mcp_servers.atlassian]\nurl = "https://mcp.atlassian.com/v2/mcp"\n');
+    run('--json', '--only', 'atlassian', '--host', 'codex');
+    const r = JSON.parse(out()).integrations[0];
+    expect(r).toMatchObject({ registered: true, server: 'atlassian' });
+    expect(r.warnings).toEqual([expect.objectContaining({ server: 'old', command: 'codex mcp remove old && codex mcp add old --url https://mcp.atlassian.com/v2/mcp' })]);
+  });
   it('--host and --only filter; invalid values are rejected', () => {
     run('--json', '--host', 'codex', '--only', 'github');
     const j = JSON.parse(out());

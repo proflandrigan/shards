@@ -4,6 +4,7 @@
 // All mutations run inside state.update('gates', fn); fn is synchronous and does no slow work.
 const path = require('path');
 const { StateStore } = require('../state/store');
+const { operatorConfirmLines } = require('./confirm-command');
 
 const KINDS = ['phase', 'final', 'execute', 'handoff', 'checkpoint', 'confirm'];
 const ADVANCING_KINDS = ['phase', 'final', 'execute', 'handoff'];
@@ -224,10 +225,8 @@ function formatConfirmedMessage(entry) {
 
 function describeInterimConfirm(gateId, sessionKey) {
   return [
-    `Gate ${gateId} is waiting for human confirmation. Ask the user to run:`,
-    `  node cli/shards.js gates confirm ${gateId} --session ${sessionKey}`,
-    `or, to request changes:`,
-    `  node cli/shards.js gates confirm ${gateId} --session ${sessionKey} --changes "<note>"`,
+    `Gate ${gateId} is waiting for human confirmation. Ask the user to run (add --changes "<note>" to request changes instead):`,
+    ...operatorConfirmLines(gateId, sessionKey),
     `(Interim Milestone A operator CLI; replaced by Stage 5 confirmation tiers.)`,
   ].join('\n');
 }

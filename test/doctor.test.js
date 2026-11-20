@@ -167,6 +167,15 @@ describe('permissions.gate-tools', () => {
     fs.rmSync(path.join(home, '.codex'), { recursive: true });
     expect((await check('permissions.gate-tools')).status).toBe('FAIL');
   });
+  it('Codex default_tools_approval_mode other than prompt needs a prompt table for every gate tool', async () => {
+    const block = require('../build/package').codexMcpToml('/p/runtime/server.js');
+    w(path.join(home, '.codex', 'config.toml'), block);
+    expect((await check('permissions.gate-tools')).status).toBe('PASS');
+    w(path.join(home, '.codex', 'config.toml'), block.replace(/\[mcp_servers\.shards\.tools\.gate_confirm\]\napproval_mode = "prompt"\n/, ''));
+    const c = await check('permissions.gate-tools');
+    expect(c.status).toBe('FAIL');
+    expect(c.message).toContain('gate_confirm');
+  });
   it('ruleCoversGateTools ignores unrelated servers', () => {
     expect(ruleCoversGateTools('mcp__other__*')).toBe(false);
     expect(ruleCoversGateTools('mcp__other__gate_x')).toBe(false);

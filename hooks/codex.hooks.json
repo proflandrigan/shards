@@ -1,16 +1,16 @@
 {
   "hooks": {
     "SessionStart": [
-      { "matcher": "startup|resume|compact|clear", "hooks": [ { "type": "command", "command": "node \"{{SHARDS_HOOKS_DIR}}/session-start.js\"" } ] }
+      { "matcher": "startup|resume|compact|clear", "hooks": [ { "type": "command", "command": "node \"{{SHARDS_HOOKS_DIR}}/session-start.js\" --host codex" } ] }
     ],
     "UserPromptSubmit": [
-      { "hooks": [ { "type": "command", "command": "node \"{{SHARDS_HOOKS_DIR}}/user-prompt-submit.js\"" } ] }
+      { "hooks": [ { "type": "command", "command": "node \"{{SHARDS_HOOKS_DIR}}/user-prompt-submit.js\" --host codex" } ] }
     ],
     "SubagentStop": [
-      { "hooks": [ { "type": "command", "command": "node \"{{SHARDS_HOOKS_DIR}}/subagent-stop.js\"" } ] }
+      { "hooks": [ { "type": "command", "command": "node \"{{SHARDS_HOOKS_DIR}}/subagent-stop.js\" --host codex" } ] }
     ],
     "PreToolUse": [
-      { "matcher": ".*", "hooks": [ { "type": "command", "command": "node \"{{SHARDS_HOOKS_DIR}}/pre-tool-use.js\"" } ] }
+      { "matcher": ".*", "hooks": [ { "type": "command", "command": "node \"{{SHARDS_HOOKS_DIR}}/pre-tool-use.js\" --host codex" } ] }
     ]
   }
 }

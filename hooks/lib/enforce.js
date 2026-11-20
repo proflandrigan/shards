@@ -5,11 +5,13 @@
 // Rules (write/exec tools only: Write, Edit, MultiEdit, NotebookEdit, Bash writes):
 //  1. caller agent_id bound to a slice of an active lease: heartbeat the lease; writes allowed only
 //     inside that slice. Exempt from the pending-gate block.
-//  2. fanout_claim tool calls bind agent_id -> {lease_id, slice_id} (works even with a gate pending).
+//  2. fanout_claim tool calls bind agent_id -> {lease_id, slice_id} (works even with a gate pending). Both hosts:
+//     Codex 0.169 sends agent_id/agent_type on PreToolUse inside a subagent (live-verified payload; the Codex
+//     binding path itself is unit-tested only, not live-verified).
 //  0. (E6.11) MCP tools declared as binding write tools (runtime/guardrails): need a [shards-gate:<id>] marker
 //     naming a confirmed gate, else Claude gets an `ask` (the human's yes is the explicit confirmation) and
 //     Codex a deny; raw query results are always denied. Applies to every caller, ahead of the other rules.
-//  3. unbound callers (lead, unleased subagent, any Codex caller: no agent_id, CX-6): denied while the
+//  3. unbound callers (lead, unleased subagent): denied while the
 //     active frame has a pending gate (writes and exec: scripts, package scripts, notebook execution),
 //     and denied writes into an active fan-out lease's slice paths. A write whose target can't be
 //     determined (cd, sh -c, eval, find -exec, ...) while a fan-out lease is active: Claude `ask`, Codex deny.
@@ -21,6 +23,15 @@ const host = require('./host');
 const { writesOf } = require('./writes');
 
 const CLAIM_RE = /__fanout_claim$/;
+
+// Codex reports its built-in roles as agent_type (live: "default" for a plain spawned subagent; "worker"/"explorer"
+// per Codex docs). They name no Shards agent, so they are not compared with the lease worker_type; the lease id and
+// slice id in the claim still have to match. Custom agents (.codex/agents/<name>.toml) keep their name.
+const CODEX_BUILTIN_TYPES = new Set(['default', 'worker', 'explorer']);
+function claimAgentType(n) {
+  if (n.host === host.HOSTS.CODEX && CODEX_BUILTIN_TYPES.has(String(n.agentType || '').toLowerCase())) return undefined;
+  return n.agentType;
+}
 
 const enforceOff = (env) => String(env.SHARDS_GATE_ENFORCE) === '0';
 
@@ -60,10 +71,10 @@ async function enforce(n, root, env = process.env) {
   const hasGates = fs.existsSync(state.file('gates'));
 
   if (claim) {
-    if (!n.agentId) return null; // Codex: cannot bind without agent_id
+    if (!n.agentId) return null; // a main-thread call (no agent_id) has nothing to bind
     const i = n.toolInput || {};
     try {
-      await leases.bindWorker(session, { agentId: n.agentId, agentType: n.agentType, leaseId: i.lease_id || i.leaseId, sliceId: i.slice_id || i.sliceId });
+      await leases.bindWorker(session, { agentId: n.agentId, agentType: claimAgentType(n), leaseId: i.lease_id || i.leaseId, sliceId: i.slice_id || i.sliceId });
     } catch (e) {
       return enforceOff(env) ? null : { deny: `shards fanout_claim refused: ${e.message}` };
     }

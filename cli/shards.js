@@ -10,7 +10,7 @@ const COMMANDS = {
   doctor: { summary: 'Check prerequisites, config, MCP, hooks, git state and gate permissions', run: (argv) => require('./commands/doctor').run(argv) },
   sessions: { summary: 'List, show, resume and end sessions without the UI', run: (argv) => require('./commands/sessions').run(argv) },
   migrate: { summary: 'Migrate a legacy v1 install to v2 (ledger export, gate-history import, manifest-driven cleanup)', run: (argv) => require('./commands/migrate').run(argv) },
-  install: { summary: 'Opt-in project config: skills (--project), permission preset (--permissions), CLAUDE.md conventions (--claude-md) and AGENTS.md section (--agents-md)', run: (argv) => require('./commands/install').run(argv) },
+  install: { summary: 'Opt-in project config: skills (--project), permission preset (--permissions), CLAUDE.md conventions (--claude-md) and AGENTS.md section (--agents-md), Codex MCP entry and profiles (--codex)', run: (argv) => require('./commands/install').run(argv) },
   sync: { summary: 'List the external copy queue: pending and stuck copies per gate and target (--status)', run: (argv) => require('./commands/sync').run(argv) },
   connect: { summary: 'Check which MCP servers (Atlassian, Google Drive, GitHub) are registered and print the official add commands', run: (argv) => require('./commands/connect').run(argv) },
   // EXTENSION POINT: register doctor / gates / sessions here, e.g.
@@ -21,7 +21,7 @@ function usage() {
   const lines = ['Usage: shards <command> [options]', '', 'Commands:'];
   for (const [n, c] of Object.entries(COMMANDS)) lines.push(`  ${n.padEnd(14)} ${c.summary}`);
   lines.push('', 'build options: --target <claude|codex|skills> [--dev] [--out dir] [--strict] [--default-agent] [--core dir] [--no-bundle-deps] [--marketplace]');
-  lines.push('  release (non-dev) claude builds are a self-contained plugin; --no-bundle-deps skips node_modules; --marketplace writes <out>/.claude-plugin/marketplace.json and the plugin at <out>/plugins/shards (claude only, default out adapters/marketplace)');
+  lines.push('  release (non-dev) claude builds are a self-contained plugin; --no-bundle-deps skips node_modules; --marketplace writes the plugin at <out>/plugins/shards plus <out>/.claude-plugin/marketplace.json (claude, default out adapters/marketplace) or <out>/.agents/plugins/marketplace.json (codex, default out adapters/codex-marketplace; then: codex plugin marketplace add <out>; codex plugin add shards@shards-local)');
   lines.push('uninstall-dev options: [--target claude|codex|all] [--out dir]  (with --out only that dir is removed, and only if it has the .shards-dev marker)');
   lines.push('gates: gates <status|history|checkpoints|violations|force-close|confirm> [options]');
   lines.push('  gates status [--session k] [--root d]');
@@ -34,7 +34,8 @@ function usage() {
   lines.push('sessions: sessions list|show|resume|end [id] [--root d] [--status s] [--limit n] [--json]');
   lines.push('sync: sync --status [--json] [--all] [--root d]');
   lines.push('connect: connect [--host claude|codex] [--only atlassian,drive,github] [--json] [--root d] [--home d]  (read-only; prints commands, never runs them)');
-  lines.push('install: install (--project | --permissions | --claude-md | --agents-md) [--root d] [--preset name] [--remove] [--dry-run] [--force]  (--remove is the uninstall: it removes only what install added)');
+  lines.push('install: install (--project | --permissions | --claude-md | --agents-md | --codex) [--root d] [--preset name] [--remove] [--dry-run] [--force]  (--remove is the uninstall: it removes only what install added)');
+  lines.push('  --codex: [mcp_servers.shards] in Codex config.toml + shards-<agent> profiles [--codex-home d] [--codex-config file] [--server path | --plugin-dir d]');
   lines.push('migrate: migrate [--export-ledger] [--root d] [--out d] [--dry-run] [--force]  (full legacy migrate; --export-ledger = ledger step only)');
   return lines.join('\n');
 }
@@ -55,8 +56,8 @@ function parseBuildArgs(argv) {
     else throw new Error(`unknown option '${a}'`);
   }
   if (!o.target) throw new Error('--target <claude|codex|skills> is required');
-  if (o.marketplace && o.target !== 'claude') throw new Error('--marketplace requires --target claude');
-  if (o.marketplace && o.dev) throw new Error('--marketplace builds the release plugin; it cannot be combined with --dev');
+  if (o.marketplace && o.target !== 'claude' && o.target !== 'codex') throw new Error('--marketplace requires --target claude or codex');
+  if (o.marketplace && o.dev && o.target === 'claude') throw new Error('--marketplace builds the release plugin; it cannot be combined with --dev');
   return o;
 }
 
@@ -67,7 +68,7 @@ function defaultOutDir(target) { return path.join(process.cwd(), 'adapters', OUT
 function printDevHint(target, outDir) {
   if (target === 'claude') console.log(`\nInstall (dev): claude --plugin-dir ${outDir}\n  skills: /shards:agents`);
   else if (target === 'codex') {
-    console.log(`\nInstall (dev, UNVERIFIED, docs-only): Codex plugin loading is not confirmed. Options:\n  - add the MCP entry: cat ${path.join(outDir, '.codex', 'config.toml')} >> ~/.codex/config.toml\n  - copy or symlink hooks: ${path.join(outDir, '.codex', 'hooks.json')} -> <project>/.codex/hooks.json\n  - copy or symlink skills: ${path.join(outDir, 'skills')} -> ~/.codex/skills (or a local plugin marketplace pointing at ${outDir})\n  skills: $agents`);
+    console.log(`\nInstall (dev; Codex 0.169.0 checked, docs/release.md):\n  - plugin (skills + hooks): shards build --target codex --dev --marketplace, then codex plugin marketplace add <out>; codex plugin add shards@shards-local\n  - MCP server + profiles: shards install --codex --plugin-dir ${outDir}   (or append the [mcp_servers.shards] block from ${path.join(outDir, '.codex', 'config.toml')} to $CODEX_HOME/config.toml)\n  - trust the hooks when Codex asks (untrusted hooks are skipped silently)\n  skills: $shards:agents`);
   }
 }
 
@@ -87,7 +88,7 @@ function runUninstallDev(argv) {
     fs.rmSync(dir, { recursive: true, force: true });
     console.log(`removed ${dir}`);
   }
-  console.log('Reminders: claude --plugin-dir is not persistent (just stop passing it). Codex: remove any symlink or copied files and the [mcp_servers.shards] entry you added to ~/.codex/config.toml.');
+  console.log('Reminders: claude --plugin-dir is not persistent (just stop passing it). Codex: codex plugin remove shards@shards-local and shards install --codex --remove.');
   return 0;
 }
 
@@ -107,7 +108,7 @@ function runBuild(argv) {
   let o;
   try { o = parseBuildArgs(argv); } catch (e) { console.error(`shards build: ${e.message}\n\n${usage()}`); return 2; }
   const { compile } = require('../build/compile');
-  const mktRoot = o.marketplace ? path.resolve(o.out || path.join(process.cwd(), 'adapters', 'marketplace')) : null;
+  const mktRoot = o.marketplace ? path.resolve(o.out || path.join(process.cwd(), 'adapters', o.target === 'codex' ? 'codex-marketplace' : 'marketplace')) : null;
   const outDir = mktRoot ? path.join(mktRoot, 'plugins', 'shards') : (o.out || defaultOutDir(o.target));
   const r = compile({ target: o.target, coreDir: o.core, outDir, dev: o.dev, strict: o.strict, defaultAgent: o.defaultAgent, bundleDeps: o.bundleDeps });
   if (r.errors.length) {
@@ -119,9 +120,10 @@ function runBuild(argv) {
   console.log(`\nbuilt ${o.target} -> ${outDir} (${r.files.length} files)`);
   if (mktRoot) {
     const fs = require('fs');
-    const mf = path.join(mktRoot, '.claude-plugin', 'marketplace.json');
+    const pk = require('../build/package');
+    const mf = path.join(mktRoot, o.target === 'codex' ? '.agents/plugins' : '.claude-plugin', 'marketplace.json');
     fs.mkdirSync(path.dirname(mf), { recursive: true });
-    fs.writeFileSync(mf, require('../build/package').marketplaceText({ local: true }));
+    fs.writeFileSync(mf, o.target === 'codex' ? `${JSON.stringify(pk.codexMarketplaceManifest(), null, 2)}\n` : pk.marketplaceText({ local: true }));
     console.log(`marketplace -> ${mf}`);
   }
   if (o.dev) printDevHint(o.target, path.resolve(outDir));

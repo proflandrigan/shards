@@ -69,6 +69,15 @@ describe('notebook mocked', () => {
     expect(d.hint).toMatch(/pyx/);
     expect(() => nb.preparePython({ python: 'pyx', spawnSync })).toThrow(/pip install jupyter_client ipykernel/);
   });
+  it('install hint covers PEP 668 externally-managed Pythons with a venv + SHARDS_PYTHON', () => {
+    const d = nb.checkDeps('python3', { spawnSync: () => ({ status: 1 }), platform: 'darwin' });
+    expect(d.hint).toContain('externally-managed-environment');
+    expect(d.hint).toContain('python3 -m venv .venv && .venv/bin/pip install jupyter_client ipykernel');
+    expect(d.hint).toContain('SHARDS_PYTHON="$PWD/.venv/bin/python"');
+    const w = nb.checkDeps('py', { spawnSync: () => ({ status: 1 }), platform: 'win32' });
+    expect(w.hint).toContain('.venv\\Scripts\\pip install');
+    expect(nb.checkDeps(null, { platform: 'linux' }).hint).toContain('externally-managed-environment');
+  });
   it('findPython order and override', () => {
     const seen = [];
     const spawnSync = (c) => { seen.push(c); return { status: c === 'py' ? 0 : 1 }; };
@@ -85,6 +94,49 @@ describe('notebook mocked', () => {
     await expect(nb.runKernel('p', root, ['status', 's'], { spawnImpl: fakeSpawn({ stdout: 'hello' }) })).rejects.toThrow(/non-JSON/);
     await expect(nb.runKernel('p', root, ['status', 's'], { spawnImpl: fakeSpawn({ stdout: '', code: 2 }) })).rejects.toThrow(/exited with code 2/);
   });
+});
+
+describe('notebook ok:false results are MCP errors', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nbe-'));
+  const { Registry } = require('../runtime/registry');
+  const reg = new Registry(Object.values(tools));
+  const baseCtx = (sp) => ({ ...ctxFor(root, sp), getConfig: () => ({ config: {} }), state: null, sessionKey: null });
+  const FAIL = '{"ok":false,"error":"kernel not alive (stopped or exited) — call notebook_start to start a new kernel"}\n';
+
+  for (const [name, args] of [['notebook_exec', { session: 's1', cell: 0 }], ['notebook_run_all', { session: 's1' }], ['notebook_stop', { session: 's1' }], ['notebook_start', { notebook: 'n.ipynb', session: 's1' }]]) {
+    it(`${name}: handler throws and registry returns isError`, async () => {
+      await expect(tools[name].handler(args, ctxFor(root, fakeSpawn({ stdout: FAIL })))).rejects.toThrow(`${name} failed: kernel not alive`);
+      const r = await reg.call(name, args, baseCtx(fakeSpawn({ stdout: FAIL })));
+      expect(r.isError).toBe(true);
+      expect(r.content[1].text).toContain('notebook_start');
+      const ok = await reg.call(name, args, baseCtx(fakeSpawn({ stdout: '{"ok":true}' })));
+      expect(ok.isError).toBeFalsy();
+    });
+  }
+  it('notebook_start: ok:false from new-session is an error too', async () => {
+    await expect(tools.notebook_start.handler({ notebook: 'n.ipynb' }, ctxFor(root, fakeSpawn({ stdout: '{"ok":false,"error":"boom"}' })))).rejects.toThrow(/notebook_start failed: boom/);
+  });
+  it('extra failure fields are kept in the message', () => {
+    expect(() => nb.unwrap('notebook_exec', { ok: false, error: 'x', cell: 3 })).toThrow('notebook_exec failed: x {"cell":3}');
+    expect(nb.unwrap('t', { ok: true, a: 1 })).toEqual({ ok: true, a: 1 });
+  });
+  it('kernel.py messages name MCP tools, not CLI subcommands', () => {
+    const src = fs.readFileSync(nb.KERNEL_PY, 'utf8');
+    expect(src).not.toMatch(/run `restart`|run `start`/);
+    expect(src).toContain('call notebook_start');
+  });
+  const havePy = (() => { const r = cp.spawnSync('python3', ['--version'], { shell: false }); return !r.error && r.status === 0; })();
+  it.skipIf(!havePy)('real kernel.py: exec after stop (no live kernel) is an isError naming notebook_start', async () => {
+    const r2 = fs.mkdtempSync(path.join(os.tmpdir(), 'nbs-'));
+    fs.writeFileSync(path.join(r2, 't.ipynb'), JSON.stringify({ cells: [], metadata: {}, nbformat: 4, nbformat_minor: 5 }));
+    const sd = path.join(r2, '.shards', 'notebooks', 's1');
+    fs.mkdirSync(sd, { recursive: true });
+    fs.writeFileSync(path.join(sd, 'notebook.path'), path.join(r2, 't.ipynb'));
+    const ctx = { root: r2, notebookOpts: { python: 'python3', skipDeps: true } };
+    await expect(tools.notebook_exec.handler({ session: 's1', cell: 0 }, ctx)).rejects.toThrow(/notebook_exec failed: kernel not alive .*call notebook_start/);
+    const fresh = { root: fs.mkdtempSync(path.join(os.tmpdir(), 'nbs-')), notebookOpts: { python: 'python3', skipDeps: true } };
+    await expect(tools.notebook_exec.handler({ session: 's2', cell: 0 }, fresh)).rejects.toThrow(/session not started — call notebook_start first/);
+  }, 30000);
 });
 
 // Real-kernel test: skipped when jupyter_client/ipykernel are absent from python3.

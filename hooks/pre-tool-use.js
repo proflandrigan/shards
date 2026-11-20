@@ -14,7 +14,8 @@ const MAX_GATE_CALLS = 20;
 const MODE_ASK_TOOLS = /__gate_(advance|force_close)$/i;
 const ASK_REASON = 'Shards gate confirmation: approve only if you (the human) want this gate advanced/closed.';
 
-// E11.4: returns {decision, output}. `ask` is Claude-only (Codex cannot, compat CX-6).
+// E11.4: returns {decision, output}. `ask` is Claude-only: Codex 0.169 ignores permissionDecision "ask" and runs
+// the tool (live-verified, compat CX-6); there the gate tools prompt via approval_mode = "prompt" instead.
 // E11.6 enforcement for non-gate tools lives in lib/enforce.js (see handler below).
 function decide(n) {
   if (n.host === host.HOSTS.CLAUDE && MODE_ASK_TOOLS.test(n.toolName || '')) {

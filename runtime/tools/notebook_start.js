@@ -14,9 +14,9 @@ module.exports = defineTool({
     const o = { ...(ctx.notebookOpts || {}) };
     let sid = args.session;
     if (!sid) {
-      const r = await nb.runKernel(python, ctx.root, ['new-session'], o);
+      const r = nb.unwrap('notebook_start', await nb.runKernel(python, ctx.root, ['new-session'], o));
       sid = nb.validateSession(r.sessionId);
     }
-    return { data: await nb.runKernel(python, ctx.root, ['start', sid, abs], { ...o, timeout: 120000 }) };
+    return { data: nb.unwrap('notebook_start', await nb.runKernel(python, ctx.root, ['start', sid, abs], { ...o, timeout: 120000 })) };
   },
 });

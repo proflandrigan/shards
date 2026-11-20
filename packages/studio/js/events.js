@@ -437,6 +437,14 @@ function handleChatEventForSession(data, session, isActive) {
       break;
     }
 
+    case 'chat-permission-denied':
+      if (typeof pushTimeline === 'function') pushTimeline(session, 'error', 'Permission denied: ' + (data.tool || 'tool'), null);
+      if (isActive) {
+        addSystemNotice('Permission denied for ' + (data.tool || 'a tool') +
+          ' (Studio runs claude headless and cannot show a permission prompt).');
+      }
+      break;
+
     case 'chat-agent-switching':
       session.chatTransitioning = true;
       if (isActive) {
