@@ -474,3 +474,26 @@ describe('sweepAbandoned — v2 gate snapshot per session', () => {
     expect(sessionIndex.getEntry(sessionsDir, 'stale-b').gateOpenAtEnd).toBeNull();
   });
 });
+
+describe('touchLiveSession', () => {
+  it('reactivates an abandoned row, clears gateOpenAtEnd, and leaves ended rows ended', () => {
+    sessionIndex.appendSession(sessionsDir, { sessionId: 'live' });
+    sessionIndex.appendSession(sessionsDir, { sessionId: 'done' });
+    sessionIndex.markEnded(sessionsDir, 'done', { gateOpenAtEnd: 'g1' });
+    writeGateState({ open: true, id: 'g-open', phase: 2, kind: 'phase' });
+    const last = Date.parse(sessionIndex.getEntry(sessionsDir, 'live').lastActivityAt);
+    sessionIndex.sweepAbandoned(sessionsDir, { nowMs: last + 25 * 3600e3, shardsDir });
+    expect(sessionIndex.getEntry(sessionsDir, 'live').status).toBe('abandoned');
+    expect(sessionIndex.getEntry(sessionsDir, 'live').gateOpenAtEnd).toBe('g-open');
+
+    const e = sessionIndex.touchLiveSession(sessionsDir, 'live');
+    expect(e.status).toBe('active');
+    expect(e.gateOpenAtEnd).toBeNull();
+    expect(sessionIndex.getEntry(sessionsDir, 'live').status).toBe('active');
+
+    sessionIndex.touchLiveSession(sessionsDir, 'done');
+    const done = sessionIndex.getEntry(sessionsDir, 'done');
+    expect(done.status).toBe('ended');
+    expect(done.gateOpenAtEnd).toBe('g1');
+  });
+});

@@ -49,7 +49,7 @@ let SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
 let INDEX_HTML = path.join(__dirname, 'index.html');
 
 function initPaths(projectDir, options = {}) {
-  PROJECT_DIR = projectDir;
+  PROJECT_DIR = path.resolve(projectDir || process.cwd());
   SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
   PORT_FILE = path.join(SHARDS_DIR, 'studio.port');
   PID_FILE = path.join(SHARDS_DIR, 'studio.pid');
@@ -310,17 +310,33 @@ const GATE_ENFORCE = process.env.SHARDS_GATE_ENFORCE !== '0';
 const artifactIndex = eventsWatcher.createArtifactIndex();
 let artifactTailer = null;
 
-// An event path is only read when its realpath (or, if it does not exist yet, its
-// lexical path) stays inside the project.
-function insideProject(p) {
+// An event path is only read when it stays inside the project: an existing path is
+// judged by its realpath (so symlinks cannot escape, and a different spelling of a
+// symlinked project dir, e.g. /tmp vs /private/tmp, still matches); a path that does
+// not exist yet is judged by the realpath of its nearest existing ancestor.
+function insideProject(p, projectDir = PROJECT_DIR) {
   if (typeof p !== 'string' || !p) return false;
-  const within = (x, root) => x === root || x.startsWith(root + path.sep);
-  const abs = path.resolve(p);
-  if (!within(abs, PROJECT_DIR)) return false;
+  const within = (x, root) => x === root || x.startsWith(root.endsWith(path.sep) ? root : root + path.sep);
+  const root = path.resolve(projectDir);
+  let realRoot = root;
+  try { realRoot = fs.realpathSync(root); } catch {}
+  const abs = path.resolve(root, p);
   try {
-    return within(fs.realpathSync(abs), fs.realpathSync(PROJECT_DIR));
+    return within(fs.realpathSync(abs), realRoot);
   } catch (e) {
-    return e && e.code === 'ENOENT';
+    if (!e || e.code !== 'ENOENT') return false;
+    // Resolve the nearest existing ancestor and judge that realpath: a missing file
+    // under a symlink pointing out of the project stays outside, and a missing file
+    // spelled through an alias of the project dir is still inside.
+    let anc = path.dirname(abs);
+    while (anc !== path.dirname(anc)) {
+      try { return within(fs.realpathSync(anc), realRoot); } catch (err) {
+        if (!err || err.code !== 'ENOENT') return false;
+      }
+      anc = path.dirname(anc);
+    }
+    // Nothing on the way up exists: fall back to the lexical check.
+    return within(abs, root) || within(abs, realRoot);
   }
 }
 
@@ -1074,32 +1090,91 @@ function rejectAuth(res, cors) {
   jsonResponse(res, cors, 401, { error: 'Unauthorized' });
 }
 
-const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]']);
+const LOOPBACK_HOSTS = ['127.0.0.1', 'localhost', '[::1]'];
 
 function splitHostHeader(value) {
   const m = /^(\[[^\]]+\]|[^:]+)(?::(\d+))?$/.exec(String(value || '').trim().toLowerCase());
   return m ? { host: m[1], port: m[2] || null } : null;
 }
 
+// Host-header form of an address or name: IPv6 literals in brackets, lower case.
+function hostForm(value) {
+  const v = String(value || '').trim().toLowerCase();
+  if (!v) return '';
+  if (v.startsWith('[')) return v;
+  return v.includes(':') ? `[${v}]` : v;
+}
+
+function isExposedBind(bind) {
+  return bind === '0.0.0.0' || bind === '::' || bind === '[::]';
+}
+
 /**
- * Guard against cross-origin takeover and DNS rebinding. The Host header must name a
- * loopback host (or the configured bind host) on the port the request arrived on, and
- * an Origin header, when present, must be that same origin.
+ * Build the set of Host values Studio answers to.
+ *  - portBound: hosts that must carry the port the request arrived on (loopback names,
+ *    the bind host and, when bound to 0.0.0.0/::, os.hostname() and every interface
+ *    address).
+ *  - extra: SHARDS_ALLOWED_HOSTS entries. "host" (no port) matches any port, for a
+ *    reverse proxy whose public port differs from Studio's; "host:port" matches only
+ *    that port.
  */
-function requestOriginAllowed(req) {
+function buildHostPolicy({
+  bind = '127.0.0.1',
+  allowedHosts = '',
+  hostname = () => os.hostname(),
+  interfaces = () => os.networkInterfaces(),
+} = {}) {
+  const portBound = new Set(LOOPBACK_HOSTS);
+  const bindStr = String(bind || '').trim().toLowerCase();
+  if (isExposedBind(bindStr)) {
+    try { const n = hostForm(hostname()); if (n) portBound.add(n); } catch {}
+    try {
+      for (const list of Object.values(interfaces() || {})) {
+        for (const a of list || []) if (a && a.address) portBound.add(hostForm(a.address));
+      }
+    } catch {}
+  } else if (bindStr) {
+    portBound.add(hostForm(bindStr));
+  }
+  const extra = new Set();
+  for (const raw of String(allowedHosts || '').split(',')) {
+    const entry = raw.trim().toLowerCase();
+    if (!entry) continue;
+    // A bare IPv6 literal (more than one colon, no brackets) has no port.
+    const h = !entry.startsWith('[') && (entry.match(/:/g) || []).length > 1
+      ? { host: `[${entry}]`, port: null }
+      : splitHostHeader(entry);
+    if (!h) continue;
+    extra.add(h.port ? `${h.host}:${h.port}` : h.host);
+  }
+  return { portBound, extra };
+}
+
+let HOST_POLICY = null;
+function defaultHostPolicy() {
+  if (!HOST_POLICY) {
+    HOST_POLICY = buildHostPolicy({ bind: BIND_ADDR, allowedHosts: process.env.SHARDS_ALLOWED_HOSTS || '' });
+  }
+  return HOST_POLICY;
+}
+
+/**
+ * Guard against cross-origin takeover and DNS rebinding. The Host header must be in the
+ * host policy (see buildHostPolicy) and an Origin header, when present, must be that
+ * same origin. The Host check applies on every bind address, including 0.0.0.0/::.
+ */
+function requestOriginAllowed(req, policy = defaultHostPolicy()) {
   const hostHeader = req.headers.host;
   const h = splitHostHeader(hostHeader);
   if (!h) return false;
   const localPort = req.socket && req.socket.localPort;
   const defaultPort = req.socket && req.socket.encrypted ? '443' : '80';
   const port = h.port || defaultPort;
-  const bindHost = BIND_ADDR === '0.0.0.0' || BIND_ADDR === '::' ? null : String(BIND_ADDR).toLowerCase();
-  const exposed = BIND_ADDR === '0.0.0.0' || BIND_ADDR === '::';
-  if (!exposed) {
-    if (localPort && String(localPort) !== port) return false;
-    const okHost = LOOPBACK_HOSTS.has(h.host) || h.host === bindHost || h.host === `[${bindHost}]`;
-    if (!okHost) return false;
-  }
+  const portOk = !localPort || String(localPort) === port;
+  const okHost = (policy.portBound.has(h.host) && portOk)
+    || policy.extra.has(h.host)
+    || policy.extra.has(`${h.host}:${port}`);
+  if (!okHost) return false;
   const origin = req.headers.origin;
   if (origin !== undefined) {
     let o;
@@ -2584,8 +2659,11 @@ function startServer(portIndex, resolve, reject) {
   }
 
   // P5: Warn if binding to 0.0.0.0 without TLS
-  if (BIND_ADDR === '0.0.0.0' && protocol === 'http') {
+  if (isExposedBind(BIND_ADDR) && protocol === 'http') {
     console.warn('WARNING: Binding to 0.0.0.0 without TLS. All traffic is unencrypted. Use SHARDS_TLS_CERT and SHARDS_TLS_KEY for secure transport, or use a reverse proxy.');
+  }
+  if (TRUST_PROXY && !String(process.env.SHARDS_ALLOWED_HOSTS || '').trim()) {
+    console.warn('WARNING: SHARDS_TRUST_PROXY=1 without SHARDS_ALLOWED_HOSTS. Requests through the proxy carry its public Host name and are refused; list that name in SHARDS_ALLOWED_HOSTS.');
   }
 
   server.on('error', (e) => {
@@ -2692,4 +2770,8 @@ if (require.main === module) {
   startServer(0);
 }
 
-module.exports = { createServer, listAgents, buildActivationPrompt };
+module.exports = {
+  createServer, listAgents, buildActivationPrompt,
+  // Exported for tests.
+  buildHostPolicy, requestOriginAllowed, insideProject,
+};

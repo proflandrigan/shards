@@ -44,6 +44,23 @@ describe('stripClaudeMd fences', () => {
     expect(r.text).not.toContain('also not');
     expect(r.text).toContain('# Keep me\nuser content');
   });
+
+  it('an unclosed fence in a v1 block does not swallow the following heading, user text or v2 markers', () => {
+    const md = ['# Project', '', '## Shards — Agent Suite', 'some text', '```bash', 'npx shards', '', '## My own notes', 'keep me', '<!-- shards:begin x -->', 'v2', '<!-- shards:end x -->'].join('\n');
+    const r = stripClaudeMd(md);
+    expect(r.removed).toBe(1);
+    expect(r.text).not.toContain('some text');
+    expect(r.text).toContain('## My own notes\nkeep me');
+    expect(r.text).toContain('<!-- shards:begin x -->\nv2\n<!-- shards:end x -->');
+  });
+
+  it('an unclosed fence open at EOF falls back to ending the block at the next heading', () => {
+    const md = ['# P', '## Shards — Agent Suite', '```bash', 'npx x', '', '## notes', 'keep'].join('\n');
+    const r = stripClaudeMd(md);
+    expect(r.removed).toBe(1);
+    expect(r.text).not.toContain('npx x');
+    expect(r.text).toContain('## notes\nkeep');
+  });
 });
 
 describe('shards migrate (full)', () => {

@@ -108,6 +108,24 @@ function updateActivity(sessionsDir, sessionId, { lastUserPrompt, projectName, p
   return entry;
 }
 
+// The runtime is actively serving this session: bump its activity and, if a startup sweep
+// marked it `abandoned` while it was still live (another process started after >24h of index
+// silence), flip it back to `active` and drop the `gateOpenAtEnd` snapshot that sweep took (it
+// only describes sessions that went away). `ended` rows are left untouched: ending is explicit.
+function touchLiveSession(sessionsDir, sessionId) {
+  if (!sessionId) return null;
+  const data = readIndex(sessionsDir);
+  const entry = findEntry(data, sessionId);
+  if (!entry || entry.status === 'ended') return entry || null;
+  if (entry.status === 'abandoned') {
+    entry.status = 'active';
+    entry.gateOpenAtEnd = null;
+  }
+  entry.lastActivityAt = nowIso();
+  writeIndex(sessionsDir, data);
+  return entry;
+}
+
 function updatePhase(sessionsDir, sessionId, phase) {
   if (!sessionId || typeof phase !== 'number') return null;
   const data = readIndex(sessionsDir);
@@ -268,6 +286,7 @@ module.exports = {
   writeIndex,
   appendSession,
   updateActivity,
+  touchLiveSession,
   updatePhase,
   markEnded,
   sweepAbandoned,

@@ -7,14 +7,13 @@ const index = require('./index');
 
 function sessionsDir(root) { return path.join(root, '.shards', 'sessions'); }
 
-// Idempotent: add the session to INDEX.json if missing and bump its activity. A session already
-// marked ended or abandoned is left as is.
+// Idempotent: add the session to INDEX.json if missing and bump its activity. The caller is
+// serving this session right now, so a row a sweep marked `abandoned` goes back to `active`;
+// an `ended` row is left as is.
 function registerSession(root, sessionKey, hostName) {
   const dir = sessionsDir(root);
   index.appendSession(dir, { sessionId: sessionKey, agent: null, projectDir: root, projectName: path.basename(root), resumedFrom: null });
-  const e = index.getEntry(dir, sessionKey);
-  if (e && e.status === 'active') index.updateActivity(dir, sessionKey);
-  return e;
+  return index.touchLiveSession(dir, sessionKey);
 }
 
 // Startup sweep: mark stale active rows abandoned and record the gate each was left at.

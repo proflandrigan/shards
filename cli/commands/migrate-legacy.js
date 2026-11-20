@@ -184,28 +184,42 @@ function removeGateHookFiles(root, dryRun, rep) {
 // Remove v1 "## Shards — ..." blocks: heading through the line before the next "# "/"## " heading or v2 marker, or
 // through the v1 block's known last line. v2 marker regions (<!-- shards:begin ... --> ... <!-- shards:end ... -->,
 // written by `shards install --claude-md`) are v2-managed and kept verbatim, even though they contain the same heading.
+// Headings inside a closed code fence in a v1 block do not end the block. An
+// unbalanced fence must never swallow content past the block: a v2 `<!-- shards:begin` marker
+// always ends the skip (fence or not), and if any fence is left open (at EOF, or cut off by a
+// marker, an end line or a new v1 block) the strip is redone without fence tracking (the next
+// heading ends the block, as before fences were tracked).
 function stripClaudeMd(text) {
   const lines = text.split('\n');
+  const first = stripLines(lines, true);
+  const { text: t, removed } = first.unbalanced ? stripLines(lines, false) : first;
+  return { text: t, removed };
+}
+
+function stripLines(lines, trackFences) {
   const out = [];
   let removed = 0;
   let skipping = false;
   let inV2 = false;
   let fence = null; // open code fence marker (``` or ~~~) inside a skipped block
+  let unbalanced = false;
+  const cut = () => { if (fence) unbalanced = true; fence = null; };
   for (const line of lines) {
-    if (skipping) {
+    if (skipping && trackFences && !line.includes('<!-- shards:begin')) {
       const m = /^\s*(```|~~~)/.exec(line);
       if (m && !fence) fence = m[1];
       else if (m && fence === m[1]) fence = null;
       if (fence || m) { if (!BLOCK_LAST_LINES.includes(line.trim())) continue; }
     }
     if (inV2) { out.push(line); if (line.includes('<!-- shards:end')) inV2 = false; continue; }
-    if (line.includes('<!-- shards:begin')) { skipping = false; inV2 = !line.includes('<!-- shards:end'); out.push(line); continue; }
-    if (BLOCK_HEADINGS.includes(line.trimEnd())) { skipping = true; removed++; continue; }
+    if (line.includes('<!-- shards:begin')) { skipping = false; cut(); inV2 = !line.includes('<!-- shards:end'); out.push(line); continue; }
+    if (BLOCK_HEADINGS.includes(line.trimEnd())) { skipping = true; cut(); removed++; continue; }
     if (skipping && /^#{1,2} /.test(line)) skipping = false;
-    if (skipping && BLOCK_LAST_LINES.includes(line.trim())) { skipping = false; continue; }
+    if (skipping && BLOCK_LAST_LINES.includes(line.trim())) { skipping = false; cut(); continue; }
     if (!skipping) out.push(line);
   }
-  return { text: out.join('\n'), removed };
+  cut();
+  return { text: out.join('\n'), removed, unbalanced };
 }
 
 function cleanClaudeMd(root, dryRun, rep) {

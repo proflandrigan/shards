@@ -48,7 +48,10 @@ function startLeaseSweep({ root, ms, setIntervalFn = setInterval, clearIntervalF
   return { sweep, stop() { if (t) { clearIntervalFn(t); t = null; } } };
 }
 
-function createServer({ root, sessionKey, ancestry, env, host, leaseSweepMs } = {}) {
+// Minimum gap between session-index activity bumps for one session key.
+const ACTIVITY_THROTTLE_MS = 5 * 60 * 1000;
+
+function createServer({ root, sessionKey, ancestry, env, host, leaseSweepMs, activityThrottleMs, now } = {}) {
   root = path.resolve(root || resolveRoot());
   const registry = new Registry(loadTools());
   let cached = null; let cachedSig = null;
@@ -65,12 +68,19 @@ function createServer({ root, sessionKey, ancestry, env, host, leaseSweepMs } = 
     cached = c; cachedSig = configSig();
     return c;
   };
-  // Session index (docs/sessions.md): the runtime registers each session it serves, once per
-  // process, so sessions_list / sessions_resume work without Studio. Best effort.
-  const registered = new Set();
+  // Session index (docs/sessions.md): the runtime registers each session it serves so
+  // sessions_list / sessions_resume work without Studio, and keeps bumping its activity on tool
+  // calls (throttled per key) so a long-lived session is not swept as abandoned by another
+  // process's startup sweep; a row swept anyway goes back to active. Best effort.
+  const touchEveryMs = Number.isFinite(activityThrottleMs) && activityThrottleMs >= 0 ? activityThrottleMs : ACTIVITY_THROTTLE_MS;
+  const clock = typeof now === 'function' ? now : Date.now;
+  const lastTouch = new Map();
   const registerSession = (key, hostName) => {
-    if (!key || registered.has(key)) return;
-    registered.add(key);
+    if (!key) return;
+    const t = clock();
+    const prev = lastTouch.get(key);
+    if (prev !== undefined && t - prev < touchEveryMs) return;
+    lastTouch.set(key, t);
     try { require('./sessions/ops').registerSession(root, key, hostName); } catch (e) { process.stderr.write(`shards-mcp session index: ${e.message}\n`); }
   };
   try { require('./sessions/ops').sweepStale(root); } catch (e) { process.stderr.write(`shards-mcp session sweep: ${e.message}\n`); }

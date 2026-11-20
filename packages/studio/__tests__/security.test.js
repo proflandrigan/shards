@@ -81,3 +81,83 @@ describe('event path containment', () => {
     expect(list.map((a) => a.path)).toEqual(['ok.json']);
   });
 });
+
+describe('host policy (proxies and exposed binds)', () => {
+  const { buildHostPolicy, requestOriginAllowed } = require('../server.js');
+  const mk = (host, { localPort = 7842, origin, encrypted = false } = {}) => ({
+    headers: origin === undefined ? { host } : { host, origin },
+    socket: { localPort, encrypted },
+  });
+  const ifaces = () => ({
+    lo: [{ address: '127.0.0.1' }, { address: '::1' }],
+    eth0: [{ address: '192.168.1.20' }, { address: 'fe80::abcd' }],
+  });
+
+  it('default bind: loopback on the arrival port only', () => {
+    const p = buildHostPolicy({ bind: '127.0.0.1', allowedHosts: '' });
+    expect(requestOriginAllowed(mk('localhost:7842'), p)).toBe(true);
+    expect(requestOriginAllowed(mk('[::1]:7842'), p)).toBe(true);
+    expect(requestOriginAllowed(mk('localhost:9999'), p)).toBe(false);
+    expect(requestOriginAllowed(mk('evil.example:7842'), p)).toBe(false);
+  });
+
+  it('accepts a reverse proxy public name listed in SHARDS_ALLOWED_HOSTS without a port', () => {
+    const p = buildHostPolicy({ bind: '127.0.0.1', allowedHosts: 'studio.example.com, other.example:8443' });
+    expect(requestOriginAllowed(mk('studio.example.com'), p)).toBe(true);
+    expect(requestOriginAllowed(mk('studio.example.com', { origin: 'https://studio.example.com' }), p)).toBe(true);
+    expect(requestOriginAllowed(mk('STUDIO.example.com:443'), p)).toBe(true);
+    expect(requestOriginAllowed(mk('other.example:8443'), p)).toBe(true);
+    expect(requestOriginAllowed(mk('other.example:80'), p)).toBe(false);
+    expect(requestOriginAllowed(mk('studio.example.com', { origin: 'https://evil.example' }), p)).toBe(false);
+    expect(requestOriginAllowed(mk('evil.example'), p)).toBe(false);
+  });
+
+  it('still checks Host when bound to 0.0.0.0 or :: (DNS rebinding)', () => {
+    for (const bind of ['0.0.0.0', '::']) {
+      const p = buildHostPolicy({ bind, allowedHosts: '', hostname: () => 'MyBox', interfaces: ifaces });
+      expect(requestOriginAllowed(mk('evil.example:7842'), p)).toBe(false);
+      expect(requestOriginAllowed(mk('evil.example:7842', { origin: 'http://evil.example:7842' }), p)).toBe(false);
+      expect(requestOriginAllowed(mk('192.168.1.20:7842'), p)).toBe(true);
+      expect(requestOriginAllowed(mk('[fe80::abcd]:7842'), p)).toBe(true);
+      expect(requestOriginAllowed(mk('mybox:7842'), p)).toBe(true);
+      expect(requestOriginAllowed(mk('localhost:7842'), p)).toBe(true);
+      expect(requestOriginAllowed(mk('192.168.1.20:9999'), p)).toBe(false);
+    }
+  });
+
+  it('allows a non-loopback bind host on the arrival port, IPv6 in brackets', () => {
+    expect(requestOriginAllowed(mk('10.0.0.5:7842'), buildHostPolicy({ bind: '10.0.0.5' }))).toBe(true);
+    expect(requestOriginAllowed(mk('[fd00::5]:7842'), buildHostPolicy({ bind: 'fd00::5' }))).toBe(true);
+    expect(requestOriginAllowed(mk('[fd00::6]:7842'), buildHostPolicy({ bind: 'fd00::5', allowedHosts: 'fd00::6' }))).toBe(true);
+  });
+});
+
+describe('insideProject path normalization', () => {
+  const { insideProject } = require('../server.js');
+  let alias;
+  beforeAll(() => {
+    alias = path.join(os.tmpdir(), `studio-alias-${process.pid}-${Date.now()}`);
+    fs.symlinkSync(dir, alias);
+  });
+  afterAll(() => { try { fs.unlinkSync(alias); } catch {} });
+
+  it('accepts files under a trailing-slash or relative project dir', () => {
+    expect(insideProject(path.join(dir, 'ok.json'), dir + path.sep)).toBe(true);
+    const rel = path.relative(process.cwd(), dir) || '.';
+    expect(insideProject(path.join(dir, 'ok.json'), rel)).toBe(true);
+    expect(insideProject(path.join(dir, 'new-file.json'), dir + path.sep)).toBe(true);
+  });
+
+  it('accepts an event path spelled through a symlinked alias of the project dir', () => {
+    expect(insideProject(path.join(alias, 'ok.json'), dir)).toBe(true);
+    expect(insideProject(path.join(dir, 'ok.json'), alias)).toBe(true);
+    expect(insideProject(path.join(alias, 'not-yet.json'), dir)).toBe(true);
+  });
+
+  it('still rejects paths outside the project and symlinks escaping it', () => {
+    expect(insideProject(path.join(outside, 'secret.json'), dir)).toBe(false);
+    expect(insideProject(path.join(dir, 'link', 'secret.json'), dir)).toBe(false);
+    expect(insideProject(path.join(dir, 'link', 'missing.json'), dir)).toBe(false);
+    expect(insideProject(path.join(dir, '..', 'x.json'), dir)).toBe(false);
+  });
+});
