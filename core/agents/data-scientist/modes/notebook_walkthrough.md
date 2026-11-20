@@ -59,7 +59,7 @@ If the user invoked `[NW]` from the menu:
    methodology.
 3. Run the protocol's bootstrap sequence.
 
-If invoked via `/notebook-walkthrough` and the user already named the
+If invoked via `shards:notebook-walkthrough` and the user already named the
 agent + notebook, skip step 1 and go straight to step 2 + bootstrap.
 
 ## What you do not do in walkthrough mode

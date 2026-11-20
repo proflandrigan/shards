@@ -109,11 +109,11 @@ Write `dashboards/<project_name>/ae-intake.md`:
 - Data exists: Yes | No | Partial — <details>
 
 ## Next Step
-Run `/analytics-engineer` or `/shards`. In Phase 1, reference this file:
+Run `shards:analytics-engineer` or `shards:syn`. In Phase 1, reference this file:
 dashboards/<project_name>/ae-intake.md
 ```
 
-Tell the user: "I've written `dashboards/<project_name>/ae-intake.md` with the mart requirements for the Analytics Engineer. Run `/analytics-engineer` or `/shards` and reference that file in Phase 1."
+Tell the user: "I've written `dashboards/<project_name>/ae-intake.md` with the mart requirements for the Analytics Engineer. Run `shards:analytics-engineer` or `shards:syn` and reference that file in Phase 1."
 
 Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain gap>`
 

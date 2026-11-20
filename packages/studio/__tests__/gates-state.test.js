@@ -42,6 +42,20 @@ describe('readGateState (v2 runtime gates.json)', () => {
     expect(s.history.map((h) => h.id)).toEqual(['a-phase-1']);
   });
 
+  it('never offers a confirm command for a suspended gate (gates confirm refuses one)', () => {
+    writeGates('s1', {
+      p: { id: 'p', status: 'pending', requested_at: '2026-01-01T00:00:00Z' },
+      s: { id: 's', status: 'suspended', requested_at: '2026-01-02T00:00:00Z' },
+    });
+    const both = gs.readGateState(shards);
+    expect(both).toMatchObject({ open: true, id: 'p', status: 'pending' });
+    expect(both.confirmCommand).toMatch(/^shards gates confirm p --session s1 /);
+    expect(both.pending.map((g) => g.id)).toEqual(['p', 's']);
+    writeGates('s1', { s: { id: 's', status: 'suspended', requested_at: '2026-01-02T00:00:00Z' } });
+    const only = gs.readGateState(shards);
+    expect(only).toMatchObject({ open: true, id: 's', status: 'suspended', confirmCommand: null });
+  });
+
   it('ignores corrupt files and falls back to closed', () => {
     const d = path.join(shards, 'state', 'sessions', 's1');
     fs.mkdirSync(d, { recursive: true });

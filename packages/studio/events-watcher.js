@@ -113,7 +113,7 @@ const metaPanelId = (ev) => {
 // else every panel at ev.path (optionally narrowed to meta.target/meta.panel type).
 function closeMatches(ev, v) {
   const pid = metaPanelId(ev);
-  if (pid) return panelIdFor(v.type, v.path, v) === pid;
+  if (pid) return panelIdFor(v.type, v.path, v) === panelIdFor(null, null, ev);
   const target = ev.meta && (ev.meta.target || ev.meta.panel);
   return typeof ev.path === 'string' && !!ev.path && v.path === ev.path && (!target || v.type === target);
 }
@@ -142,10 +142,17 @@ function createArtifactIndex() {
 
 // ─── Event -> panel payload ─────────────────────────────────────────────────
 
-/** Panel id: meta.panel_id when the event (third arg) carries one, else a hash of type+path. */
+/**
+ * Panel id: meta.panel_id when the event (third arg) carries one, else a hash of type+path.
+ * panel_id is agent-written free text and the browser builds element ids/HTML from it, so
+ * anything outside a plain id charset is replaced by a stable hash of it.
+ */
 function panelIdFor(type, p, ev) {
   const pid = metaPanelId(ev);
-  if (pid) return pid;
+  if (pid) {
+    if (/^[A-Za-z0-9_-]{1,128}$/.test(pid)) return pid;
+    return 'pid-' + crypto.createHash('sha1').update(pid).digest('hex').slice(0, 12);
+  }
   return 'art-' + crypto.createHash('sha1').update(type + '\0' + p).digest('hex').slice(0, 12);
 }
 

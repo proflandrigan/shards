@@ -46,4 +46,16 @@ describe('lint-models', () => {
     put(r, 'core/agents/a/AGENT.md', '---\nname: a\n---\nhi\n');
     expect(lint({ core: path.join(r, 'core'), adapters: path.join(r, 'adapters') })).toEqual([]);
   });
+  it('does not treat path components as model ids (e.g. a /tmp/claude-502/ checkout)', () => {
+    const r = tmp();
+    put(r, '.mcp.json', JSON.stringify({ mcpServers: { shards: { command: 'node', args: ['/private/tmp/claude-502/x/runtime/server.js'] } } }, null, 2));
+    put(r, '.codex/config.toml', 'command = "node"\nargs = ["/tmp/claude-502/runtime/server.js", "C:\\\\Users\\\\gpt-dev\\\\server.js"]\ncwd = "./opus-dir/x"\n');
+    put(r, 'hooks/hooks.json', JSON.stringify({ hooks: { Stop: [{ command: 'node "/Users/me/claude-sonnet-4/hooks/x.js" --host codex' }] } }, null, 2));
+    expect(lintAdapters(r)).toEqual([]);
+    // a bare id, or a vendor/model token that is not path-shaped, is still caught
+    put(r, 'hooks/hooks.json', '{"x": "anthropic/claude-sonnet-4", "y": "/tmp/ok"}\n');
+    put(r, '.mcp.json', '{"env": {"M": "claude-opus-4"}}\n');
+    const files = new Set(lintAdapters(r).map((x) => path.basename(x.file)));
+    expect([...files].sort()).toEqual(['.mcp.json', 'hooks.json']);
+  });
 });

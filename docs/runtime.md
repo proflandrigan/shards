@@ -235,7 +235,7 @@ Lease handling in the hook: worker binding (`fanout_claim`) and worker heartbeat
 
 Handshake: `{session_id, source (startup|resume|compact|clear), cwd, ts, pid, ppid_chain: [parent, grandparent, ...]}`. `pid` is the hook process; the host process is a common ancestor of the hook and the MCP server, so E2.11 intersects `ppid_chain` with the MCP process's own ancestry and takes the newest `ts`. Windows records `[process.ppid]` only.
 
-Field assumptions from docs only (not seen in real payloads): Codex payloads, Codex `additionalContext` output shape, `permission_mode` on PreToolUse. Claude Code SessionStart and UserPromptSubmit were observed live (headless `claude -p`). Codex live check: OPEN (external), `TODO(owner: proflandrigan)`.
+Field assumptions from docs only (not seen in real payloads): Codex `additionalContext` output shape, `permission_mode` on Claude Code PreToolUse. Claude Code SessionStart and UserPromptSubmit were observed live (headless `claude -p`). Codex SessionStart, UserPromptSubmit, PreToolUse and SubagentStop payloads (including `permission_mode`) were captured live on Codex 0.169.0, 2026-11-19 (`docs/compat.md` CX-6; fixtures in `test/fixtures/codex/payloads-0.169.0.json`).
 
 ## 9. Registry and agent stack (E2.2)
 

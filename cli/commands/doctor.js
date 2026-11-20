@@ -154,8 +154,8 @@ function checkMcpClaude(root, home, adapterDirs) {
   return { id: 'mcp.claude', status: 'WARN', message: 'no shards MCP server found for Claude Code (no dev plugin build, no mcp config entry)', fix };
 }
 
-function checkMcpCodex(root, home) {
-  for (const f of [path.join(root, '.codex', 'config.toml'), path.join(home, '.codex', 'config.toml')]) {
+function checkMcpCodex(root, codexHome) {
+  for (const f of [path.join(root, '.codex', 'config.toml'), path.join(codexHome, 'config.toml')]) {
     const t = readText(f);
     if (t !== null && /^\s*\[mcp_servers\.(shards|plugin_shards_shards)\]/m.test(t)) {
       return { id: 'mcp.codex', status: 'PASS', message: `[mcp_servers.shards] registered in ${f}` };
@@ -213,6 +213,9 @@ function copyCheck(root) {
 async function runChecks(opts = {}) {
   const root = path.resolve(opts.root || process.cwd());
   const home = opts.home || process.env.HOME || os.homedir();
+  // Codex reads $CODEX_HOME/config.toml (default ~/.codex), the file `shards install --codex` writes. An explicit
+  // opts.home (tests) pins it to <home>/.codex so the caller's real CODEX_HOME is never read.
+  const codexHome = path.resolve(opts.codexHome || (!opts.home && process.env.CODEX_HOME) || path.join(home, '.codex'));
   const repoRoot = opts.repoRoot || REPO_ROOT;
   const checks = [];
   const adapterDirs = findAdapterDirs(root, repoRoot);
@@ -246,7 +249,7 @@ async function runChecks(opts = {}) {
   }
 
   checks.push(checkMcpClaude(root, home, adapterDirs));
-  checks.push(checkMcpCodex(root, home));
+  checks.push(checkMcpCodex(root, codexHome));
   checks.push(checkHooks(adapterDirs));
   checks.push(...await gitChecks(root));
   checks.push(copyCheck(root));
@@ -255,7 +258,7 @@ async function runChecks(opts = {}) {
     ...scanClaudeSettings(path.join(root, '.claude', 'settings.json')),
     ...scanClaudeSettings(path.join(root, '.claude', 'settings.local.json')),
     ...scanClaudeSettings(path.join(home, '.claude', 'settings.json')),
-    ...scanCodexToml(path.join(home, '.codex', 'config.toml')),
+    ...scanCodexToml(path.join(codexHome, 'config.toml')),
     ...scanCodexToml(path.join(root, '.codex', 'config.toml')),
   ];
   checks.push(hits.length

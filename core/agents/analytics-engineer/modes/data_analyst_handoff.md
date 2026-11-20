@@ -74,10 +74,10 @@ This file governs Step 7 of Phase 8 (Deliver and Document) for the Analytics Eng
    - Known limitations: <from Phase 8 or "none">
 
    ## Next Step
-   Run `/data-analyst` or `/shards`. In Phase 0, reference this file:
+   Run `shards:data-analyst` or `shards:syn`. In Phase 0, reference this file:
    data_models/<project_name>/data_analyst_handoff.md
    ```
 
-   Tell the user: "Handoff file written. Run `/data-analyst` or `/shards` and
+   Tell the user: "Handoff file written. Run `shards:data-analyst` or `shards:syn` and
    reference `data_models/<project_name>/data_analyst_handoff.md` in Phase 0."
    Do NOT attempt to morph into or invoke the Data Analyst.

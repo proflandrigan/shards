@@ -174,7 +174,7 @@ Based on the answers, apply this routing logic:
 - New source, new model, pipeline fix, dbt work
 - Examples: "Add Stripe data to the warehouse", "Fix the teacher engagement mart", "Build a retention mart"
 
-**ML Engineer** (`services/<name>/` for greenfield; existing service dir for iteration) — route when:
+**ML Engineer** (`models/<name>/` for greenfield; existing service dir for iteration) — route when:
 - Building or optimizing a production ML system
 - Recommender systems, ranking algorithms, classification, regression
 - The work involves model training, serving infrastructure, latency/memory constraints
@@ -195,12 +195,12 @@ Based on the answers, apply this routing logic:
 - The work is about keeping ML systems alive and healthy, not about training the model
 - Examples: "Deploy our churn model", "Set up automated retraining", "Our model is drifting", "We need a feature store on AWS", "Set up a Kubeflow pipeline"
 
-**Data Modeller** (`models/<name>/`) — route when:
+**Data Modeller** (`data_models/<name>/`) — route when:
 - Need to understand existing data model or design a new one
 - Entity relationships, grain definitions, schema design
 - Examples: "Walk me through the subscription model", "Design the marketplace entity model"
 
-**Analytics Engineer** (`models/<name>/`) — route when:
+**Analytics Engineer** (`data_models/<name>/`) — route when:
 - Building or refactoring the dbt transformation layer (staging → intermediate → mart)
 - Designing new marts, adding tests/docs/metrics to existing models
 - Iterating on an existing mart (column add, refund attribution, filter fix)
@@ -270,7 +270,7 @@ shard that is consulted automatically by the Data Analyst (Phase 2), Data
 Scientist (Phases 3 and 6), and AI Engineer (Phases 4 and 7) for statistical
 and evaluation methodology review. If a user asks a pure methodology question
 ("Is a t-test appropriate for...?", "How do I handle outliers in...?"), you can
-suggest they run `/researcher` directly — but do NOT route project work to it.
+suggest they run `shards:researcher` directly — but do NOT route project work to it.
 It produces no files and has no project phases.
 
 **Note on the Academic shard:**
@@ -281,7 +281,7 @@ and can be consulted by any agent when questions of safety, ethics, or
 efficacy arise. If a user asks a direct question about human behavior,
 cognitive impact, or ethical implications of a system design ("Will this
 cause harm?", "Is this nudge ethical?", "What does the research say about
-habit formation?"), suggest they run `/academic` directly — but do NOT route
+habit formation?"), suggest they run `shards:academic` directly — but do NOT route
 project work to it. It produces no files and has no project phases.
 
 **Note on the Backend Engineer shard:**
@@ -297,7 +297,7 @@ modes (data leakage, split discipline, feature availability at inference
 time, modelling logic) are domain-specific. If a user asks a direct question
 about Python code quality ("Is this router well-structured?", "Is this
 Pydantic model tight enough?", "How do I break this class down?"), suggest
-they run `/backend-engineer` directly — but do NOT route project work to it.
+they run `shards:backend-engineer` directly — but do NOT route project work to it.
 It produces no files and has no project phases.
 
 State your routing decision clearly and explain why. Get confirmation before proceeding.
@@ -313,18 +313,18 @@ Once routing is confirmed, create the project:
    - Data Analyst (iteration): use the existing analysis directory provided by the user; do not create a new `analysis/` folder
    - Data Scientist (new): `studies/<project_name>/`, `studies/<project_name>/queries/`, `studies/<project_name>/notebooks/`
    - Data Scientist (iteration): use the existing study directory provided by the user; do not create a new `studies/` folder
-   - ML Engineer (greenfield): `services/<project_name>/`, `services/<project_name>/queries/`, `services/<project_name>/notebooks/`
-   - ML Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
+   - ML Engineer (greenfield): `models/<project_name>/`, `models/<project_name>/queries/`, `models/<project_name>/notebooks/`
+   - ML Engineer (iteration): use the existing service directory provided by the user; do not create a new `models/` folder
    - AI Engineer (greenfield): `services/<project_name>/`, `services/<project_name>/prompts/`, `services/<project_name>/eval/`, `services/<project_name>/notebooks/`
    - AI Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
    - MLOps Engineer (greenfield / model handoff): `services/<project_name>/mlops/`
    - MLOps Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
    - Data Engineer (new): `models/<project_name>/`
    - Data Engineer (iteration): use the existing pipeline/models directory provided by the user; do not create a new `models/` folder
-   - Data Modeller (new): `models/<project_name>/`
-   - Data Modeller (iteration): use the existing models directory provided by the user; do not create a new `models/` folder
-   - Analytics Engineer (new): `models/<project_name>/`
-   - Analytics Engineer (iteration): use the existing mart/models directory provided by the user; do not create a new `models/` folder
+   - Data Modeller (new): `data_models/<project_name>/`
+   - Data Modeller (iteration): use the existing models directory provided by the user; do not create a new `data_models/` folder
+   - Analytics Engineer (new): `data_models/<project_name>/`
+   - Analytics Engineer (iteration): use the existing mart/models directory provided by the user; do not create a new `data_models/` folder
    - BI Engineer: `dashboards/<project_name>/`
    - Applied ML Scientist: `research/<project_name>/`, `research/<project_name>/notebooks/`, `research/<project_name>/src/`
    - Deep Learning Engineer: `models/<project_name>/`, `models/<project_name>/notebooks/`, `models/<project_name>/src/`, `models/<project_name>/configs/`
@@ -433,6 +433,11 @@ After Phase 0 is confirmed and project-specs.md is created:
    specialist you chose:
 
    {{switch data-analyst}}
+
+   In that `activate` call also pass `project="<project_name>"`, the name of the
+   project directory you created in Phase 0. The runtime uses it to commit the
+   specialist's output directory at each confirmed gate; without it, gate
+   commits are skipped.
 
 3. As the specialist, from this point forward:
    - Use the specialist's name, personality, and communication style

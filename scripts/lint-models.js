@@ -17,6 +17,10 @@ const ID_RES = [
   /\b[a-z][a-z0-9-]*-20\d{6}\b/i, // dated ids, e.g. foo-20250101
 ];
 const KEY_RES = [/^\s*model\s*[:=]/i, /^\s*model_id\s*[:=]/i, /"model(?:_id)?"\s*:/];
+// Filesystem paths (absolute, ~/, ./, ../, C:\ or C:/) are blanked before the id scan: a dev build writes absolute
+// paths into .mcp.json / config.toml / hooks.json, and a directory like /tmp/claude-502/ is not a model id.
+// A bare 'vendor/model' token is not path-shaped (no leading separator) and is still scanned.
+const PATH_RE = /(?<=^|[\s"'`=:(\[,])(?:[A-Za-z]:[\\/]|~?\.{0,2}[\\/])[^\s"'`,;)\]]*/g;
 
 function frontmatter(text) {
   const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
@@ -28,7 +32,8 @@ function scanText(text, file, startLine, out) {
     const bare = line.replace(/#.*$/, (c) => (/^\s*#/.test(line) ? '' : c)); // skip pure comment lines
     if (!bare.trim()) return;
     for (const re of KEY_RES) if (re.test(bare)) out.push({ file, line: startLine + i, what: `model key: ${bare.trim().slice(0, 60)}` });
-    for (const re of ID_RES) { const m = re.exec(bare); if (m) out.push({ file, line: startLine + i, what: `model id '${m[0]}'` }); }
+    const noPaths = bare.replace(PATH_RE, ' ');
+    for (const re of ID_RES) { const m = re.exec(noPaths); if (m) out.push({ file, line: startLine + i, what: `model id '${m[0]}'` }); }
   });
 }
 

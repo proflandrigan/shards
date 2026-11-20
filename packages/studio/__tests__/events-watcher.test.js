@@ -95,6 +95,17 @@ describe('artifact index', () => {
     expect(idx.list()).toEqual([]);
   });
 
+  it('never passes a markup-bearing meta.panel_id to the browser, and close still matches it', () => {
+    // panels.js builds `id="chart-' + panelId + '"` etc. without escaping.
+    const evil = 'x"><img src=x onerror=alert(1)>';
+    const idx = createArtifactIndex();
+    idx.apply(ev('chart', 'a.json', { meta: { title: 't', panel_id: evil } }));
+    const pid = eventToPanelPayload(idx.list()[0], '/proj').panelId;
+    expect(pid).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(eventToPanelPayload(ev('chart', 'b.json', { meta: { panel_id: evil } }), '/proj').panelId).toBe(pid);
+    expect(closePayloads(ev('close', null, { meta: { panel_id: evil } }), idx)).toEqual([{ eventType: 'panel-close', panelId: pid }]);
+  });
+
   it('maps events to panel-open payloads with stable ids', () => {
     const p1 = eventToPanelPayload(ev('chart', 'out/a.json'), '/proj');
     const p2 = eventToPanelPayload(ev('chart', 'out/a.json'), '/proj');

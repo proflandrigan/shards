@@ -210,9 +210,8 @@ tools for one whose name ends in `create_presentation`.
 **If no Slides MCP is detected**, do not gate. Tell the user:
 
 > "I don't see a Google Slides MCP configured. To enable building, add one to
-> the host's user-level MCP server configuration. The Shards
-> guide page on Google Slides has setup instructions
-> (`docs/shards-guide/08-integrations/google-slides.md`). Want me to save the
+> the host's user-level MCP server configuration. Run `shards connect` in a
+> terminal for the setup commands for this host. Want me to save the
 > spec doc and outline as a markdown-only deliverable for now? You can come
 > back and run `[SL]` again once the MCP is set up — I'll pick up from the
 > spec."

@@ -1,5 +1,7 @@
 # Shards Agent Suite — Analysis & Backlog
 
+> **Legacy (v1) analysis.** Written against the v1 layout (`src/agents/*.md`, `Task` calls, prose gates). Those files moved to `core/agents/<id>/` in v2 (mapping in [`core/INVENTORY.md`](core/INVENTORY.md)) and gates are now tool calls ([ADR 0008](docs/adr/0008-gates-are-tool-calls.md)), so file and line references below are stale. Check an item against `core/` before acting on it; current v2 work is tracked in [`NEXT_STEPS.md`](NEXT_STEPS.md).
+
 ---
 
 ## 1. System Health Overview

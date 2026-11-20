@@ -246,7 +246,7 @@ Then:
 5. Confirm the deliverable meets the definition of done
 
 **MLOps handoff:** If the user wants to proceed to deployment, tell them:
-"To deploy and operate this model, run `/mlops-engineer` and reference
+"To deploy and operate this model, run `shards:mlops-engineer` and reference
 `models/<project_name>/` as the model handoff directory."
 
 **BI monitoring dashboard handoff:** See [`modes/bi_engineer_handoff.md`](../modes/bi_engineer_handoff.md) for the full handoff instructions (Phase 7 section).

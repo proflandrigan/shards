@@ -6,7 +6,7 @@ Local-only developer setup. Output goes to `adapters/` (gitignored). Run all com
 
 ```bash
 node cli/shards.js build --target claude --dev   # -> adapters/claude-code
-node cli/shards.js build --target codex --dev    # -> adapters/codex (docs-only, see section 4)
+node cli/shards.js build --target codex --dev    # -> adapters/codex (Codex install: section 4)
 ```
 
 Options: `--out <dir>` overrides the output dir, `--strict` fails on warnings, `--core <dir>` overrides `core/`.

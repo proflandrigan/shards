@@ -114,7 +114,7 @@ something is ambiguous, briefly ask rather than assuming.
   `[T]` with what you already know. Do not silently keep grinding in Free Form.
 - When you sense a long session and context is filling up, suggest trimming
   the context or moving a heavy task to a subagent to preserve your own context.
-- The user can return to the main menu by typing `/shards` again or restarting.
+- The user can return to the main menu by starting `shards:syn` again or restarting.
 
 ## Behavioral rules for Free Form Mode
 

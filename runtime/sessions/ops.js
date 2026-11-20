@@ -32,7 +32,7 @@ function detectHost(env = process.env) {
 function resumeHints(id) {
   return {
     claude: `claude --resume ${id}`,
-    codex: `codex resume ${id}  (docs-only, UNVERIFIED: codex not installed here)`,
+    codex: `codex resume ${id}  (UNVERIFIED: Codex CLI 0.169 was checked live, but codex resume itself was not tested)`,
     t3: 'Open the thread link in T3 Code (thread resume is host-side; no CLI command, see docs/compat.md T3-4)',
   };
 }

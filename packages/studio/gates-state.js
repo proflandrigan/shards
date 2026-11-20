@@ -58,7 +58,7 @@ function brief(g) {
  * Reduce runtime gate state to the browser shape:
  *   { open, id, session, phase, kind, agent, summary, opened_at, confirmCommand, pending: [...], history: [...] }
  * `open` is true when any gate is pending/suspended; the flat fields describe the
- * most recently requested one.
+ * most recently requested pending gate, else the most recent suspended one.
  */
 // Quote one argument for the user's shell. POSIX: single quotes. Windows (cmd.exe and
 // PowerShell both accept it): double quotes; backslashes and ~ (8.3 names) are plain there.
@@ -70,8 +70,10 @@ function shellQuote(s, platform = process.platform) {
 function readGateState(shardsDir) {
   const projectDir = path.dirname(path.resolve(shardsDir));
   const all = readAllGates(shardsDir);
+  // Pending gates first (only those can be confirmed), each group newest first.
   const pending = all.filter((g) => OPEN_STATUSES.has(g.status))
-    .sort((a, b) => ts(b.requested_at) - ts(a.requested_at));
+    .sort((a, b) => ((a.status === 'pending') === (b.status === 'pending') ? 0 : a.status === 'pending' ? -1 : 1)
+      || ts(b.requested_at) - ts(a.requested_at));
   const history = all.filter((g) => g.status === 'confirmed' || g.status === 'changes_requested' || g.status === 'force_closed')
     .sort((a, b) => ts(a.decided_at || a.updated_at) - ts(b.decided_at || b.updated_at))
     .slice(-HISTORY_LIMIT).map(brief);
@@ -87,7 +89,10 @@ function readGateState(shardsDir) {
     agent: top.agent || null,
     summary: top.summary || null,
     opened_at: top.requested_at || null,
-    confirmCommand: `shards gates confirm ${top.id} --session ${top.session} --root ${shellQuote(projectDir)}`,
+    // `gates confirm` refuses a suspended gate (it must be resumed first), so offer no command for one.
+    confirmCommand: top.status === 'pending'
+      ? `shards gates confirm ${top.id} --session ${top.session} --root ${shellQuote(projectDir)}`
+      : null,
     pending: pending.map(brief),
     history,
   };

@@ -50,6 +50,7 @@ describe('sessions tools', () => {
     expect(d.hints.claude).toBe('claude --resume abcd1234-0000');
     expect(d.hints.codex).toContain('codex resume abcd1234-0000');
     expect(d.hints.codex).toContain('UNVERIFIED');
+    expect(d.hints.codex).not.toContain('not installed');
     expect(d.hints.t3).toContain('T3 Code');
     expect(typeof d.host).toBe('string');
   });

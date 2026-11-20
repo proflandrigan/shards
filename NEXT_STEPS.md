@@ -1,6 +1,6 @@
 # Shards v2: what's left
 
-Status as of 2026-11-17, on `next` ([PR #72](https://github.com/proflandrigan/shards/pull/72) into `main`). Task IDs (E6.4 and so on) refer to `shards-agent-suite-plan.md`. The pre-migration state is tagged `v-legacy` (8e24069).
+Status as of 2026-11-19, on `next` ([PR #72](https://github.com/proflandrigan/shards/pull/72) into `main`). Task IDs (E6.4 and so on) refer to `shards-agent-suite-plan.md`. The pre-migration state is tagged `v-legacy` (8e24069).
 
 ## Where things stand
 
@@ -9,7 +9,7 @@ Status as of 2026-11-17, on `next` ([PR #72](https://github.com/proflandrigan/sh
 | A · Core | 1–4 | ✅ Done |
 | B · Separated | 5 | ✅ Done, including the QA follow-ups |
 | C · Connected | 6 | 🟨 Offline core built: guardrails, `copy_report` queue, `shards sync --status`, `shards connect`. The bindings and the sandbox exit criteria are not started (step 4). |
-| D · Shipped | 7 | 🟨 Everything is built and tested offline. Live host checks are still open (step 5). |
+| D · Shipped | 7 | 🟨 Everything is built and tested offline. Live checks on Claude Code 2.1.329 and Codex CLI 0.169.0 (macOS) passed on 2026-11-19; the rest of the live checks are open (step 5). |
 | D · Shipped | 8 | ⬜ Not started. Waits for steps 4 and 5 (step 6). |
 
 **Verified on `next`:**
@@ -84,7 +84,7 @@ Still open:
   - `ANTHROPIC_API_KEY` and an API budget, for `nightly.yml`;
   - optionally `OPENAI_API_KEY` or `CODEX_API_KEY`, and `SHARDS_NIGHTLY_CODEX=true`;
   - later, `NPM_TOKEN` and `SHARDS_NPM_PUBLISH=true` for step 6.
-- [ ] **Hosts:** Codex CLI, T3 Code, a macOS machine and a Windows machine.
+- [ ] **Hosts:** T3 Code and a Windows machine (Codex CLI and macOS were used for the 2026-11-19 live checks).
 - [ ] **npm access** to `@proflandrigan/shards` and `@proflandrigan/shards-mcp`.
 
 ## Step 3 · First release run (no publish)
@@ -127,17 +127,14 @@ Stage 7 is fully built. These need real hosts or API spend:
   - skills appear under `/shards:`;
   - subagents appear in the @-mention list;
   - the runtime starts when the plugin is enabled.
-- [ ] **Codex CLI** (E8.1–E8.4, E8.7, E0.6). Every Codex format is docs-only so far. Check:
-  - `codex plugins install` from a local path;
+- [ ] **Codex CLI** (E8.1–E8.4, E8.7, E0.6). Live-verified on Codex 0.169.0, macOS, 2026-11-19 (`docs/compat.md` CX-1, CX-4, CX-6, CX-7): install through a local marketplace (`codex plugin add shards@shards-local`), all 32 runtime tools visible, hooks fire with real payloads (SubagentStop carries `agent_id`), `${PLUGIN_ROOT}` in hook commands, and the `max_depth` / `max_threads` key names. Still to check:
   - named spawn returns a verdict in at least 9 of 10 runs;
-  - the runtime tools are visible, and `gate_advance` and `gate_force_close` always prompt;
-  - the hooks fire with real payloads, including whether SubagentStop carries `agent_id`;
+  - the gate tools prompt in the interactive TUI (only `codex exec` was checked);
   - the switch golden check passes in at least 9 of 10 runs;
-  - whether `<PLUGIN_ROOT>` can become a plugin-relative path;
-  - the real `max_depth` / `max_threads` key names (CX-4).
+  - a live fan-out run, hooks trust in the TUI, and Windows.
 - [ ] **T3 Code with both providers** (E9.1, E0.6). Skills appear in the `/` composer, and switching works on the primary path (manual run against the checklist).
-- [ ] **Generic agent-skills package** (E9.2). Smoke test it in a host other than Claude Code and Codex, and confirm the Agent Plugins 1.0 `plugin.json` / `mcp.json` schema.
-- [ ] **Notebook kernel on macOS and Windows.** Check the install hint, kernel start and `py` discovery (`docs/notebook.md`).
+- [ ] **Generic agent-skills package** (E9.2). Smoke test it in a host other than Claude Code and Codex, and confirm the Agent Plugins 1.0 `plugin.json` / `mcp.json` schema. Gemini CLI 0.44.1 (partial, 2026-11-19): `install --project` skills are discovered and a project MCP server connects, but Gemini ignores `plugin.json` / `mcp.json` and no tool call was made (`docs/release.md`).
+- [ ] **Notebook kernel on Windows.** Check the install hint, kernel start and `py` discovery (`docs/notebook.md`). macOS was checked live on 2026-11-19 (start, exec, run_all, stop).
 - [ ] **Live pass-rate runs**, through `nightly.yml` or by hand:
   - golden sessions score at least 90% across 3 runs (E0.4);
   - the E11 gate pass-rate criteria;
@@ -185,7 +182,8 @@ Stage 7 is fully built. These need real hosts or API spend:
   - Codex package, E8 (`286b65c`);
   - other hosts + CI, E9.1/E9.2/E9.4 (`c30a81c`);
   - docs, E10.2/E10.3, including `syn.md` (`b872b73`, `ae813f9`, `905fb0b`);
-  - Windows and Node 18 portability (`a2b168a`).
+  - Windows and Node 18 portability (`a2b168a`);
+  - live host tests on Claude Code 2.1.329 and Codex CLI 0.169.0, with the fixes they found (`b8e3a8d`..`7c7eded`).
 - **Section 2 offline work:**
   - **E10.4 release workflow, pack check, `files` fix, unified package generation, v1 bin deprecations, plugin icon, CLI help** (`8e38f17`, ADR 0012):
     - `release.yml` runs on `v*` tags and on dispatch;

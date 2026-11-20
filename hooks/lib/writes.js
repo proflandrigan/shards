@@ -85,6 +85,34 @@ function flagValue(args, shorts, longs) {
   return undefined;
 }
 
+// File operands of `sed -i` / `perl -i`: skips the script (first operand, or the values of -e/-f/--expression/--file
+// and perl -e/-E) and option values, so `sed -i -e 's/a/b/' f`, BSD `sed -i '' 's/a/b/' f` and `perl -pi -e '...' f` name f only.
+function inPlaceFiles(cmd, args) {
+  const files = []; let script = false; let operands = false;
+  for (let k = 0; k < args.length; k++) {
+    const a = args[k];
+    if (operands) { if (script) files.push(a); else script = true; continue; }
+    if (a === '--') { operands = true; continue; }
+    if (cmd === 'sed' && a.startsWith('--')) {
+      if (a === '--expression' || a === '--file') { script = true; k++; } else if (a.startsWith('--expression=') || a.startsWith('--file=')) script = true;
+      else if (a === '--line-length') k++;
+      continue;
+    }
+    if (a.startsWith('-') && a.length > 1) {
+      const body = a.slice(1);
+      for (let j = 0; j < body.length; j++) {
+        const ch = body[j];
+        if (ch === 'i') { if (cmd === 'sed' && j === body.length - 1 && /^(\.[\w.~-]*)?$/.test(args[k + 1] === undefined ? '-' : args[k + 1]) && k + 2 < args.length) k++; break; } // -i[SUFFIX]; BSD `-i ''` / `-i .bak`
+        if ((cmd === 'sed' && (ch === 'e' || ch === 'f')) || (cmd === 'perl' && (ch === 'e' || ch === 'E'))) { script = true; if (j === body.length - 1) k++; break; }
+        if ((cmd === 'sed' && ch === 'l') || (cmd === 'perl' && /[0lFICMmxdD]/.test(ch))) { if (cmd === 'sed' && j === body.length - 1) k++; break; } // value attached (or next, sed -l N)
+      }
+      continue;
+    }
+    if (script) files.push(a); else script = true; // first operand without -e/-f is the script / program file
+  }
+  return files;
+}
+
 // Segment result: write (modifies files), targets (relative or absolute strings), unknown (a write
 // whose target can't be determined), exec (runs code from a file or a package script: only counts for the
 // pending-gate check, so leased workers can still run tests/scripts), cwdChange (cd/pushd/popd seen).
@@ -115,9 +143,8 @@ function analyzeSegment(seg) {
   if (cmd === 'apply_patch') { write = true; unknown = true; return out(); }
   if (cmd === 'tee') { write = true; nonFlags(args).forEach(add); return out(); }
   if ((cmd === 'sed' || cmd === 'perl') && args.some((a) => /^-[A-Za-z]*i/.test(a) || a === '--in-place' || a.startsWith('--in-place='))) {
-    write = true; const nf = nonFlags(args);
-    if (!nf.length) unknown = true; else nf.slice(args.includes('-e') || args.includes('-f') ? 0 : 1).forEach(add);
-    if (nf.length <= 1 && !args.includes('-e')) unknown = unknown || nf.length === 0;
+    write = true; const files = inPlaceFiles(cmd, args);
+    if (!files.length) unknown = true; else files.forEach(add);
     return out();
   }
   if (cmd === 'sed') return out();

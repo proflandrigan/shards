@@ -245,13 +245,13 @@ After delivering query results, provide visualization guidance:
      - Data Modeller findings: <summary from Phase 1 Data Modeller consultation>
 
      ## Next Step
-     Run `/bi-engineer` or `/shards`. In Phase 0, reference this file:
+     Run `shards:bi-engineer` or `shards:syn`. In Phase 0, reference this file:
      analysis/<project_name>/bi-intake.md
 
      ---
 
      Tell the user: "I've written `analysis/<project_name>/bi-intake.md` with the
-     dashboard requirements for the BI Engineer. Run `/bi-engineer` or `/shards`
+     dashboard requirements for the BI Engineer. Run `shards:bi-engineer` or `shards:syn`
      and reference that file in Phase 0."
 
      Document in Phase 3 specs:

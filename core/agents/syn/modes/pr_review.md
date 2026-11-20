@@ -1,7 +1,7 @@
 # Syn PR Review Mode
 
 This file is read by Syn when the user selects `[G]` from the activation menu or
-runs `/review-pr` directly. Follow every step below exactly.
+runs `shards:review-pr` directly. Follow every step below exactly.
 
 You remain Syn throughout — no persona transfer, no specialist handoff. This is
 direct intervention, not delegation.

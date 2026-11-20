@@ -126,13 +126,23 @@ function realish(p) {
 const CASE_INSENSITIVE = process.platform === 'darwin' || process.platform === 'win32';
 const fold = (s) => (CASE_INSENSITIVE ? s.toLowerCase() : s);
 
-function relOf(session, filePath) {
+function rawRel(session, filePath) {
   const s = String(filePath || '').replace(/\\/g, '/');
   const abs = path.isAbsolute(filePath) || /^[A-Za-z]:\//.test(s) ? filePath : path.resolve(session.root, path.posix.normalize(s || '.'));
-  let rel = path.relative(realish(session.root), realish(abs)).replace(/\\/g, '/');
-  rel = rel.replace(/^(\.\/)+/, '').replace(/\/+$/, '');
+  const rel = path.relative(realish(session.root), realish(abs)).replace(/\\/g, '/');
+  return rel.replace(/^(\.\/)+/, '').replace(/\/+$/, '');
+}
+
+function relOf(session, filePath) {
+  const rel = rawRel(session, filePath);
   if (!rel || rel === '.' || rel === '..' || rel.startsWith('../') || path.isAbsolute(rel)) return null;
   return rel;
+}
+
+// The project root itself or one of its ancestors (`.`, `..`, the absolute root): contains every slice.
+function containsRoot(session, filePath) {
+  const rel = rawRel(session, filePath);
+  return !rel || rel === '.' || /^\.\.(\/\.\.)*$/.test(rel);
 }
 
 const inside = (rel, p) => { const r = fold(rel); const q = fold(p); return r === q || r.startsWith(`${q}/`); };
@@ -238,7 +248,12 @@ async function touchWorker(session, agentId, now = Date.now()) {
 // Active fanout-owned slice that contains (or is contained by) rel, or null. For the lead/unbound caller.
 function findSliceOwning(session, filePath, now = Date.now()) {
   const rel = relOf(session, filePath);
-  if (!rel) return null;
+  if (!rel) {
+    // A write aimed at the root or an ancestor (`rm -rf .`, `unzip x.zip`) reaches every slice.
+    if (!containsRoot(session, filePath)) return null;
+    for (const l of listActive(session, now)) if (l.owner === 'fanout' && l.slices.length) return { lease: l, slice: l.slices[0], rel: '.' };
+    return null;
+  }
   for (const l of listActive(session, now)) {
     if (l.owner !== 'fanout') continue;
     for (const sl of l.slices) for (const p of sl.paths) if (inside(rel, p) || inside(p, rel)) return { lease: l, slice: sl, rel };

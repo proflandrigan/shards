@@ -173,6 +173,9 @@ describe('non-dev and cli', () => {
     expect(r.status).toBe(1);
     expect(r.stderr).toContain('shards migrate');
     expect(r.stderr).not.toContain('unknown command');
+    // every removable install flag is named, including the Codex home opt-in
+    for (const f of ['--project', '--permissions', '--claude-md', '--agents-md']) expect(r.stderr).toContain(f);
+    expect(r.stderr).toContain('shards install --codex --remove');
   });
   it('codex dev hint names the verified install route', () => {
     const out = path.join(tmp(), 'codex');

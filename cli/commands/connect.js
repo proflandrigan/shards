@@ -86,9 +86,9 @@ function claudeServers(root, home) {
 }
 
 // Codex config.toml: `[mcp_servers.<name>]` tables with url / command / args. Minimal line-based read.
-function codexServers(root, home) {
+function codexServers(root, codexHome) {
   const out = [];
-  for (const file of [path.join(root, '.codex', 'config.toml'), path.join(home, '.codex', 'config.toml')]) {
+  for (const file of [path.join(root, '.codex', 'config.toml'), path.join(codexHome, 'config.toml')]) {
     const t = readText(file);
     if (t === null) continue;
     let cur = null;
@@ -102,8 +102,8 @@ function codexServers(root, home) {
   return out;
 }
 
-function check({ root, home, host, only }) {
-  const servers = { claude: claudeServers(root, home), codex: codexServers(root, home) };
+function check({ root, home, codexHome, host, only }) {
+  const servers = { claude: claudeServers(root, home), codex: codexServers(root, codexHome || path.join(home, '.codex')) };
   const hosts = host ? [host] : HOSTS;
   const rows = [];
   for (const integ of INTEGRATIONS) {
@@ -134,7 +134,9 @@ function run(argv) {
   if (o.help) { console.log(usage()); return 0; }
   const root = path.resolve(o.root || process.env.SHARDS_PROJECT_ROOT || process.cwd());
   const home = path.resolve(o.home || process.env.HOME || os.homedir());
-  const rows = check({ root, home, host: o.host, only: o.only });
+  // Codex reads $CODEX_HOME/config.toml (default ~/.codex); an explicit --home pins it to <home>/.codex.
+  const codexHome = path.resolve((!o.home && process.env.CODEX_HOME) || path.join(home, '.codex'));
+  const rows = check({ root, home, codexHome, host: o.host, only: o.only });
   const missing = rows.filter((r) => !r.registered);
   const warned = rows.filter((r) => r.warnings);
   if (o.json) { console.log(JSON.stringify({ integrations: rows, missing: missing.length, warnings: warned.reduce((n, r) => n + r.warnings.length, 0) }, null, 2)); return 0; }

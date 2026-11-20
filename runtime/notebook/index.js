@@ -94,6 +94,8 @@ function runKernel(python, root, args, opts = {}) {
       try { child.kill(); } catch (_) { /* ignore */ }
       finish(reject, new Error(`kernel command timed out after ${timeout}ms: ${args[0]}`));
     }, timeout);
+    // Decode as a stream: `out += buffer` decodes each chunk alone and garbles a multi-byte character split across chunks.
+    for (const s of [child.stdout, child.stderr]) if (s && typeof s.setEncoding === 'function') s.setEncoding('utf8');
     child.stdout.on('data', (d) => { out += d; });
     child.stderr.on('data', (d) => { err += d; });
     child.on('error', (e) => finish(reject, new Error(`failed to run ${python}: ${e.message}`)));

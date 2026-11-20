@@ -52,14 +52,14 @@ In a phase or mode file, write the macros; they render to runtime tool calls wit
 {{auto_verify end}}
 ```
 
-These correspond to the runtime tools `auto_verify_start(agent, phase, tool_budget, ttl)` and `auto_verify_end()`. The `agent` must be the currently active agent; the block is scoped to the session.
+These correspond to the runtime tools `auto_verify_start(agent, phase, tool_budget, ttl_s)` (the macro's `ttl` is passed as `ttl_s`) and `auto_verify_end()`. The `agent` must be the currently active agent; the block is scoped to the session.
 
 | Parameter | Required | Bounds | Meaning |
 |---|---|---|---|
 | `agent` | yes | the active agent | Whose verification stretch this is |
 | `phase` | yes | phase number | Which phase the block belongs to |
 | `tool_budget` | yes | 1–200 | Max auto-approvals before the block ends |
-| `ttl` (seconds) | yes | 30–3600 | Wall-clock lifetime from open |
+| `ttl_s` (seconds) | yes | 30–3600 | Wall-clock lifetime from open |
 
 Out-of-range values are rejected. Only one block can be active per session at a time; starting a second while one is live is refused, and starting one while a gate is open on the active frame is refused. Size the budget to the work: a handful of models needs tens of calls, not the maximum.
 

@@ -154,9 +154,9 @@ For each workstream, create:
    - Data Analyst: `analysis/<workstream_name>/`
    - Data Scientist: `studies/<workstream_name>/`
    - Data Engineer: `models/<workstream_name>/`
-   - Data Modeller: `models/<workstream_name>/`
-   - Analytics Engineer: `models/<workstream_name>/`
-   - ML Engineer: `services/<workstream_name>/`
+   - Data Modeller: `data_models/<workstream_name>/`
+   - Analytics Engineer: `data_models/<workstream_name>/`
+   - ML Engineer: `models/<workstream_name>/`
    - AI Engineer: `services/<workstream_name>/`
    - MLOps Engineer: `services/<workstream_name>/mlops/`
    - BI Engineer: `dashboards/<workstream_name>/`

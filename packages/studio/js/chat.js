@@ -1483,10 +1483,10 @@ function renderGateBanner(state) {
   if (state.agent) detail.push(state.agent);
   var extra = state.pending && state.pending.length > 1 ? ' (+' + (state.pending.length - 1) + ' more)' : '';
   var html =
-    '<span class="gate-banner-label">Gate pending: <strong>' + esc(state.id || '') + '</strong>' +
+    '<span class="gate-banner-label">Gate ' + (state.status === 'suspended' ? 'suspended' : 'pending') + ': <strong>' + esc(state.id || '') + '</strong>' +
       (detail.length ? ' (' + esc(detail.join(', ')) + ')' : '') + esc(extra) + '</span>' +
     (state.summary ? '<span class="gate-banner-summary">' + esc(state.summary) + '</span>' : '') +
-    '<span class="gate-banner-cmd">Confirm in your terminal: <code>' + esc(state.confirmCommand || '') + '</code></span>';
+    (state.confirmCommand ? '<span class="gate-banner-cmd">Confirm in your terminal: <code>' + esc(state.confirmCommand) + '</code></span>' : '');
   if (!existing) {
     existing = document.createElement('div');
     existing.id = 'gate-banner';

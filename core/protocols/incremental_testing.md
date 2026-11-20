@@ -87,7 +87,7 @@ The lead runs this check **once, at the end** — after every task is done and i
 - **Standalone** (no walkthrough session), run `jupyter nbconvert --execute --to notebook --inplace <notebook>` (or `jupyter execute <notebook> --inplace`) and confirm a zero exit code.
 - **Set seeds** (`numpy`, `random`, and any framework — `sklearn`, `torch`) so the fresh run is deterministic and headline metrics reproduce. A run-all that "works" but produces different numbers each time is not reproducible.
 
-For the Data Scientist this is the **DS-11** validation check (`Restart & Run All: N cells, no errors | seed=42 | log: results/notebook_rerun.log`); the `run-all` subcommand is how that evidence is produced. Other notebook-producing agents apply the same check at their final notebook validation.
+For the Data Scientist this is the **DS-11** validation check (`Restart & Run All: N cells, no errors | seed=42 | log: results/notebook_rerun.log`); the `notebook_run_all` tool (or the standalone `jupyter nbconvert` run above) is how that evidence is produced. Other notebook-producing agents apply the same check at their final notebook validation.
 
 ## Failure Modes to Avoid
 

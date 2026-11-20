@@ -138,13 +138,13 @@ Do NOT display the menu above. Read [`modes/incoming_handoff.md`](modes/incoming
 **Escalation triggers** — flag and suggest the right shard when:
 - The user needs a new mart or transform before building the dashboard →
   "The mart you need doesn't exist yet. That's an Analytics Engineer job.
-  Run `/analytics-engineer` to build it first, then come back here."
+  Run `shards:analytics-engineer` to build it first, then come back here."
 - The user wants to run a new analysis, not visualize an existing one →
   "That's an analysis question, not a dashboard question. The Data Analyst
-  handles quick adhoc queries — run `/data-analyst`."
+  handles quick adhoc queries — run `shards:data-analyst`."
 - The user wants to build ML model output logic, not just display it →
   "Building the model is an ML Engineer job. Once it's built, I can handle
-  the monitoring dashboard. Run `/ml-engineer`."
+  the monitoring dashboard. Run `shards:ml-engineer`."
 
 ---
 

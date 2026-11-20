@@ -15,7 +15,7 @@ Wait for any signal from the user before beginning Phase 6. "Beginning Phase 6" 
 
 **Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
-Goal: Have the SQL queries and the notebook written, one tested component per task, under a lead loop. **No execution.** SQL is reviewed and validated under `LIMIT 100` by the Analytics Engineer in Phase 7. The notebook is run by the user (or via the `/notebook-walkthrough` mode) outside the build flow. Phase 6 is a write-only phase.
+Goal: Have the SQL queries and the notebook written, one tested component per task, under a lead loop. **No execution.** SQL is reviewed and validated under `LIMIT 100` by the Analytics Engineer in Phase 7. The notebook is run by the user (or via the `shards:notebook-walkthrough` mode) outside the build flow. Phase 6 is a write-only phase.
 
 **Join path self-check:** Before requesting the Data Modeller review, trace the
 join path for each query following [`protocols/join_path.md`](../../../protocols/join_path.md).
@@ -168,7 +168,7 @@ When all tasks are verified done, run the final integration read-back as the lea
 - **Notebook cell count:** <total> (<markdown>/<code>)
 - **Requirements file:** <file path or "N/A — base Python only">
 - **Deviations from plan:** <changes from Phases 3–5 and why, or "none">
-- **Phase 6 produced no execution evidence by design** — SQL validation runs in Phase 7 (Analytics Engineer); notebook execution is user-managed or via `/notebook-walkthrough`.
+- **Phase 6 produced no execution evidence by design** — SQL validation runs in Phase 7 (Analytics Engineer); notebook execution is user-managed or via `shards:notebook-walkthrough`.
 
 ### Validation
 

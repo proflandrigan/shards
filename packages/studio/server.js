@@ -710,6 +710,21 @@ function handlePanelEvent(data) {
 
 }
 
+// ─── Developer Guide roots ──────────────────────────────────────────────────
+
+// The guide is the v2 docs tree (src/docs/manifest.json + pages). Roots, in
+// order: the project's installed copy (docs/shards-guide/), the monorepo source
+// (src/docs/), and the copy prepack ships inside this package (docs/). The
+// monorepo source comes before the package copy so a docs/ left behind by an
+// interrupted `npm pack` (postpack never ran) cannot shadow the live source.
+function docRoots() {
+  return [
+    path.join(PROJECT_DIR, 'docs', 'shards-guide'),
+    path.join(__dirname, '..', '..', 'src', 'docs'),
+    path.join(__dirname, 'docs'),
+  ];
+}
+
 // ─── Agent listing ──────────────────────────────────────────────────────────
 
 // Agents that can start a Studio session: v2 core agents whose activation
@@ -1301,14 +1316,7 @@ function createHandler() {
     }
 
     // ─── Developer Guide (docs) ──────────────────────────────────────────────
-    // The guide is the v2 docs tree (src/docs/manifest.json + pages). Roots, in
-    // order: the project's installed copy (docs/shards-guide/), a copy shipped
-    // inside this package (docs/), and the monorepo source (src/docs/).
-    const DOC_ROOTS = [
-      path.join(PROJECT_DIR, 'docs', 'shards-guide'),
-      path.join(__dirname, 'docs'),
-      path.join(__dirname, '..', '..', 'src', 'docs'),
-    ];
+    const DOC_ROOTS = docRoots();
 
     if (req.method === 'GET' && parsedUrl.pathname === '/docs/manifest') {
       for (const root of DOC_ROOTS) {
@@ -1360,7 +1368,7 @@ function createHandler() {
         } catch { /* try next root */ }
       }
       res.writeHead(404, { ...cors, 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('This guide page is not available in this installation (looked in docs/shards-guide/, the Studio package docs and src/docs/).');
+      res.end('This guide page is not available in this installation (looked in docs/shards-guide/, src/docs/ and the Studio package docs).');
       return;
     }
 
@@ -2263,10 +2271,10 @@ function createHandler() {
       const { agent, permissionMode, sessionId: callerSessionId, initialMessage,
               resumeSessionId, model } = params;
 
-      // agent is optional — null/omitted starts a plain session.
+      // agent is optional — null/omitted starts a plain session. It must be one
+      // listAgents() offers (v2 core catalog, else legacy .claude/agents).
       if (agent) {
-        const agentFile = path.join(AGENTS_DIR, `${agent}.md`);
-        if (!fs.existsSync(agentFile)) {
+        if (typeof agent !== 'string' || !listAgents().some((a) => a.name === agent)) {
           jsonResponse(res, cors, 404, { error: `Agent "${agent}" not found` });
           return;
         }
@@ -2386,8 +2394,7 @@ function createHandler() {
       if (slashCmd) {
         if (slashCmd.type === 'agent') {
           const toAgent = slashCmd.agent;
-          const agentFile = path.join(AGENTS_DIR, `${toAgent}.md`);
-          if (!fs.existsSync(agentFile)) {
+          if (!listAgents().some((a) => a.name === toAgent)) {
             jsonResponse(res, cors, 404, { error: `Agent "${toAgent}" not found` });
             return;
           }
@@ -2771,7 +2778,7 @@ if (require.main === module) {
 }
 
 module.exports = {
-  createServer, listAgents, buildActivationPrompt,
+  createServer, listAgents, buildActivationPrompt, docRoots,
   // Exported for tests.
   buildHostPolicy, requestOriginAllowed, insideProject,
 };

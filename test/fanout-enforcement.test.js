@@ -105,6 +105,14 @@ describe('lead / unbound caller', () => {
     await openTwoSlice();
     expect(denied(await W('models/a/f.py'))).toBe(true);
   });
+  it('a write aimed at the project root or an ancestor reaches every slice and is denied', async () => {
+    await openTwoSlice();
+    for (const command of ['rm -rf .', 'rm -rf ./', 'rm -rf ..', `rm -rf ${tmp}`, 'unzip big.zip', 'tar -xf a.tar']) {
+      expect(denied(await call('Bash', { command })), command).toBe(true);
+    }
+    expect(await call('Bash', { command: 'rm -rf docs' })).toBeNull();
+    expect(await call('Bash', { command: `rm -rf ${path.join(os.tmpdir(), 'elsewhere-x')}` })).toBeNull();
+  });
 });
 
 describe('crash recovery', () => {
@@ -189,6 +197,10 @@ describe('bash write detection', () => {
     ['cat <(touch x)', true], ['diff <(ls a) <(ls b)', true, []], ['echo $(rm x)', true, ['x']], ['ls $(pwd)', false],
     ['cd models && rm a/x.py', true, []], ['(cd x; rm y)', true, []], ['if true; then rm z; fi', true, ['z']],
     ['python3 train.py', false], ['node models/a/s.js', false], ['npm install', false], ['ls -la; git diff', false],
+    // sed/perl in-place: the script (-e/-f values, first operand) is not a target
+    ["sed -i -e 's/a/b/' f.txt", true, ['f.txt']], ["sed -i '' 's/a/b/' f.txt", true, ['f.txt']], ["sed -i .bak -e 's/a/b/' -e 's/c/d/' f g", true, ['f', 'g']],
+    ["perl -pi -e 's/a/b/' f.txt", true, ['f.txt']], ["perl -i.bak -pe 's/a/b/' x y", true, ['x', 'y']], ['sed -i.bak -f s.sed f', true, ['f']],
+    ["sed -i 's/a/b/'", true, []], ["perl -pi -e 's/a/b/'", true, []],
     ['apply_patch <<\'EOF\'\n*** Begin Patch\n*** Update File: a.py\n@@\n-x\n+y\n*** End Patch\nEOF', true, ['a.py']],
   ];
   for (const [cmd, w, paths] of table) {
@@ -213,6 +225,11 @@ describe('bash write detection', () => {
     expect(denied(await call('Bash', { command: 'echo a > models/b/f' }, { agent_id: 'ag1' }))).toBe(true);
     expect(await call('Bash', { command: 'echo a > models/a/f && ls' }, { agent_id: 'ag1' })).toBeNull();
     expect(await call('Bash', { command: 'python3 train.py --out /tmp/x' }, { agent_id: 'ag1' })).toBeNull();
+    // in-place edits inside the slice: the sed/perl script is not mistaken for a path outside it
+    for (const command of ["sed -i -e 's/a/b/' models/a/f.py", "sed -i '' 's/a/b/' models/a/f.py", "perl -pi -e 's/a/b/' models/a/f.py"]) {
+      expect(await call('Bash', { command }, { agent_id: 'ag1' }), command).toBeNull();
+    }
+    expect(denied(await call('Bash', { command: "perl -pi -e 's/a/b/' models/b/f.py" }, { agent_id: 'ag1' }))).toBe(true);
   });
 });
 

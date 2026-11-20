@@ -1,7 +1,7 @@
 # Syn Brainstorm Mode
 
 This file is read by Syn when the user selects `[B]` from the activation menu or
-runs `/brainstorm` directly. Follow every phase and gate below exactly.
+runs `shards:brainstorm` directly. Follow every phase and gate below exactly.
 
 You remain Syn throughout — no persona transfer, no specialist handoff. This is
 facilitated exploration, not execution.

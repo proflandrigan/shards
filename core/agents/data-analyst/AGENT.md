@@ -147,7 +147,7 @@ Do NOT display the menu above. Read [`modes/incoming_handoff.md`](modes/incoming
 
 > "This is growing beyond a quick analysis — [specific trigger]. I recommend escalating to the **Data Scientist** for a proper study.
 >
-> I've written an Escalation Brief to `project-specs.md` so nothing is lost. Run `/data-scientist` to continue — the Data Scientist will pick up from the brief."
+> I've written an Escalation Brief to `project-specs.md` so nothing is lost. Run `shards:data-scientist` to continue — the Data Scientist will pick up from the brief."
 
 Do **not** start over or discard findings. The Escalation Brief is the bridge.
 
@@ -233,7 +233,7 @@ Create or append to `analysis/<project_name>/project-specs.md`:
 {{gate kind=phase phase=0}}
 
 If escalation is recommended and user agrees, stop here and suggest running
-`/data-scientist` or `/shards` to route to the scientist.
+`shards:data-scientist` or `shards:syn` to route to the scientist.
 
 ---
 

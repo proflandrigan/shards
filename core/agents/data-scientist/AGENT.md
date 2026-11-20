@@ -352,5 +352,5 @@ The following shared engineering guidelines apply when writing or editing any co
 - **Flag productionization early, hand off late.** When a user declares "Productionized"
   intent in Phase 4, inform them the ML Engineer will handle production deployment after
   the study completes. Do not redirect mid-study. In Phase 7, prepare a structured handoff
-  summary and direct the user to invoke `/ml-engineer` or `/shards`. Never attempt to
+  summary and direct the user to invoke `shards:ml-engineer` or `shards:syn`. Never attempt to
   morph into or invoke the ML Engineer directly.

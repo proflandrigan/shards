@@ -227,6 +227,29 @@ describe('shards migrate (full)', () => {
     expect(cmds).not.toContain('.shards/hooks/gate-hook.js');
   });
 
+  it('re-run keeps an unrecorded v1-looking hook the first run kept (rewritten manifest keeps hookEntries)', async () => {
+    buildLegacyProject(tmp, { gateState: 'none' });
+    // one edited file keeps the manifest alive (rewritten) after the first run
+    const f = path.join(tmp, '.claude/commands/shards.md');
+    fs.writeFileSync(f, 'my customised command\n');
+    const future = new Date(Date.parse('2026-05-01T00:00:00.000Z') + 3600e3);
+    fs.utimesSync(f, future, future);
+    const sf = path.join(tmp, '.claude/settings.json');
+    const s = JSON.parse(fs.readFileSync(sf, 'utf8'));
+    const mine = 'node $CLAUDE_PROJECT_DIR/.shards/ui/relay.js my-notifier';
+    s.hooks.Stop.push({ hooks: [{ type: 'command', command: mine }] });
+    fs.writeFileSync(sf, JSON.stringify(s));
+    const r = await migrate();
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('hook not recorded in the install manifest, kept');
+    expect(read('.claude/settings.json')).toContain(mine);
+    const before = tree();
+    const r2 = await migrate();
+    expect(r2.code).toBe(0);
+    expect(read('.claude/settings.json')).toContain(mine);
+    expect(tree()).toEqual(before);
+  });
+
   it('ignores manifest paths that escape the project root', async () => {
     buildLegacyProject(tmp, { gateState: 'none' });
     const outside = path.join(os.tmpdir(), `migrate-outside-${process.pid}.txt`);

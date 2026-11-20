@@ -39,7 +39,7 @@ it shows the current state and dispatches user actions back as chat messages.
 ## Bootstrap sequence (on activation)
 
 1. **Ask** the user for the notebook path. Validate it exists and ends in
-   `.ipynb`. (If invoked via `/notebook-walkthrough` slash command, the path
+   `.ipynb`. (If invoked via `shards:notebook-walkthrough` slash command, the path
    may already be in the user's first message.)
 
 2. **Start the kernel** by calling `notebook_start` with `notebook` = the

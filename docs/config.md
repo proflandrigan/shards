@@ -150,7 +150,7 @@ The `tasks` job mirrors the task manifest to `TASKS.md`, so the checklist is rea
 Your file is merged over the defaults with these rules:
 
 - **Top-level objects deep-merge.** Keys you do not set keep their defaults.
-- **Arrays are replaced.** `git.denylist.globs` and `knowledge.paths` replace the default array.
+- **Arrays are replaced.** `git.denylist.globs` and `jobs.knowledge.options.paths` replace the default array.
 - **Job default options apply only while the job keeps the git binding.** If you set `jobs.record: confluence`, the `path: {output_dir}/project-specs.md` default is dropped, because it belongs to git. Pass the options the new binding needs under `options`.
 - **String form is normalized** to `{ binding, options: {} }` before merging.
 

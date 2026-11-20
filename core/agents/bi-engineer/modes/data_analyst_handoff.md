@@ -67,10 +67,10 @@ If writing the file (either automatically or after user confirmation), write `da
 - Known limitations: <from Phase 4 or "none">
 
 ## Next Step
-Run `/data-analyst` or `/shards`. In Phase 0, reference this file:
+Run `shards:data-analyst` or `shards:syn`. In Phase 0, reference this file:
 dashboards/<project_name>/data_analyst_handoff.md
 ```
 
-Tell the user: "Handoff file written. Run `/data-analyst` or `/shards` and
+Tell the user: "Handoff file written. Run `shards:data-analyst` or `shards:syn` and
 reference `dashboards/<project_name>/data_analyst_handoff.md` in Phase 0."
 Do NOT attempt to morph into or invoke the Data Analyst.

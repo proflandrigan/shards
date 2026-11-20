@@ -8,7 +8,7 @@ The **shards** source repository: a suite of data-focused agents (Syn plus 14 sh
 
 Three layers (ADR 0001): `core/` (content) -> `build/` (generated host packages) -> `runtime/` (the `shards-mcp` server that enforces gates and keeps session state). Git is the source of truth for everything agents write (ADR 0005); Shards owns no storage (ADR 0003).
 
-Node.js 18+. Run the suite with `npm test` (`vitest run`; add `--exclude '.claude/**'` when other worktrees live under `.claude/worktrees`).
+Node.js 18+. Run the suite with `npm test` (`vitest run`; `vitest.config.js` already excludes `.claude/**` worktrees and `adapters/**`).
 
 ## Layout
 
@@ -23,7 +23,7 @@ Node.js 18+. Run the suite with `npm test` (`vitest run`; add `--exclude '.claud
 | `hooks/` | Host hook shims (SessionStart, UserPromptSubmit, PreToolUse, SubagentStop) for Claude Code and Codex; `hooks/lib/enforce.js` holds the write-blocking rules |
 | `bindings/` | Binding files (`bindings/<name>.md`); only `git.md` exists. Format spec in `bindings/README.md` |
 | `cli/` | The `shards` CLI (`cli/shards.js`, commands in `cli/commands/`) |
-| `packages/studio/` | Studio, the optional browser view (`@proflandrigan/shards-studio`); files-only add-on that reads `.shards/events.jsonl` |
+| `packages/studio/` | Studio, the optional browser view (`@proflandrigan/shards-studio`); files-only add-on that reads `.shards/events.jsonl` and the v2 gate state in `.shards/state/` |
 | `src/docs/` | The Developer Guide (sections 01-08, `manifest.json`, `README.md`) |
 | `docs/` | Runtime and design docs (`runtime.md`, `gates.md`, `activation.md`, `delegation.md`, `sessions.md`, `config.md`, `release.md`, `compat.md`, `knowledge.md`, `studio.md`, `doctor.md`, `dev-install.md`) and `docs/adr/` |
 | `test/` | vitest suite |
@@ -72,7 +72,7 @@ node cli/shards.js migrate --dry-run
 - **Agent persona, Phase 0, rules:** `core/agents/<id>/AGENT.md`. Metadata and activation: `agent.yaml` (validated by `core/schema/agent.schema.json` and `scripts/validate-agents.js`).
 - **Phases:** `core/agents/<id>/phases*/phase-<N>.md`. Update `index.md` and the "When this gate is confirmed" pointers if you add or remove a phase. Gate ids follow `<agent>-phase-<N>`.
 - **Shared protocols:** `core/protocols/`. **Templates:** `core/templates/`.
-- **Runtime behaviour:** `runtime/` plus its doc in `docs/`. If `runtime/` gains a `require` that reaches outside it, update `scripts/stage-runtime-package.js` and the allowed/required lists in `scripts/release-dry-run.sh` (see `docs/release.md`).
+- **Runtime behaviour:** `runtime/` plus its doc in `docs/`. If `runtime/` gains a `require` that reaches outside it, update `scripts/stage-runtime-package.js`, `MCP_FILES` in `build/package.js` and the allowed/required lists (`KINDS`) in `scripts/pack-check.js` (see `docs/release.md`).
 - **Developer Guide:** edit pages under `src/docs/`; if you add or remove a page, update `src/docs/manifest.json` (every page must be listed there and linked).
 - Never hand-edit generated output (`adapters/`, `plugins/`).
 - Before finishing: `npm test`, `npm run build:all`, `npm run coupling:ratchet`, `npm run lint:models`, `npm run lint:verdicts`.

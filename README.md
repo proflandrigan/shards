@@ -32,7 +32,7 @@ Shards v2 (`2.0.0-next.0`) is built and tested locally but **not published yet**
 
 - The npm packages `@proflandrigan/shards` and `@proflandrigan/shards-mcp` are pending (E10.4). `npx @proflandrigan/shards ...` will not work until they are published.
 - The Claude Code marketplace plugin (`plugins/shards`) is generated and pushed to the `marketplace` branch by the release workflow (`.github/workflows/release.yml`), which has not run yet, so the `marketplace` branch is not published and `/plugin marketplace add proflandrigan/shards` cannot install it yet.
-- The Codex and T3 Code paths are docs-only and unverified against a live host (see [`docs/compat.md`](docs/compat.md)).
+- The Codex path was checked live on Codex CLI 0.169.0 (macOS); the interactive TUI prompts and a live fan-out run are not. The T3 Code path is docs-only and unverified against a live host (see [`docs/compat.md`](docs/compat.md)).
 
 Everything below marked "from source" works today.
 
@@ -64,15 +64,17 @@ claude --plugin-dir /abs/path/to/shards/adapters/claude-code
 Then run `/shards:syn` (or `/shards:agents` to list agents). `--plugin-dir` is per launch; stop passing it to unload.
 Once published this becomes `/plugin marketplace add proflandrigan/shards` then `/plugin install shards@shards` (pending E10.4/E10.5).
 
-### Codex (docs-only, unverified)
+### Codex (checked on Codex CLI 0.169.0)
 
 ```bash
-node cli/shards.js build --target codex --dev           # prints the manual setup options
-# follow the printed guidance: add the [mcp_servers.shards] entry from adapters/codex/.codex/config.toml to ~/.codex/config.toml
-node cli/shards.js install --agents-md --root /your/project
+node cli/shards.js build --target codex --dev --marketplace     # from the shards clone -> adapters/codex-marketplace
+codex plugin marketplace add "$PWD/adapters/codex-marketplace"
+codex plugin add shards@shards-local                            # skills + hooks
+node cli/shards.js install --codex --plugin-dir "$PWD/adapters/codex-marketplace/plugins/shards"   # MCP entry + profiles in ~/.codex
+node cli/shards.js install --agents-md --root /your/project     # optional
 ```
 
-The Codex CLI is not installed in the development environment, so these steps are unverified. See [`docs/dev-install.md`](docs/dev-install.md) section 4.
+Trust the Shards hooks when Codex asks (it skips untrusted hooks silently). See [`docs/dev-install.md`](docs/dev-install.md) section 4 and [`docs/release.md`](docs/release.md).
 
 ### T3 Code and other Agent Skills hosts (unverified)
 
@@ -118,7 +120,7 @@ Agents also review each other. The Data Scientist asks the Data Modeller to veri
 | **Researcher** | Reviewer | Nerdy | Statistical review, methodology validation |
 | **Academic** | Reviewer | Cool professor | Safety, ethics, cognitive science |
 
-Utility skills: `agents` (list agents), `brainstorm`, `review-pr`, `notebook-walkthrough`, `resume`, `end`. In the Claude Code plugin they are namespaced, for example `/shards:syn`, `/shards:data-analyst`.
+Utility skills: `agents` (list agents), `brainstorm`, `review-pr`, `notebook-walkthrough`, `resume`, `end`, plus `shards-conventions` in the Claude Code plugin. In the Claude Code plugin they are namespaced, for example `/shards:syn`, `/shards:data-analyst`.
 
 ## Common commands
 

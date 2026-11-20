@@ -99,6 +99,7 @@ function runUninstall() {
     'shards uninstall: removed in v2.',
     '  Legacy v1 install in this project:  shards migrate --dry-run   then   shards migrate',
     '  Project opt-ins (install --project | --permissions | --claude-md | --agents-md):  shards install <flag> --remove',
+    '  Codex MCP entry and profiles (install --codex):  shards install --codex --remove  (same --codex-home/--codex-config as install)',
     '  Dev build output:  shards uninstall-dev',
     '  Plugin:  /plugin uninstall shards@shards  (Claude Code)',
   ].join('\n'));

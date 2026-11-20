@@ -57,6 +57,6 @@ The walkthrough runs in chat-only mode. When the Shards UI is running, it can sh
 
 ## 6. Open items
 
-- OPEN: macOS and Windows verification is not done for the kernel path.
-- TODO(owner: proflandrigan): run the install-hint and kernel-start path on macOS and on Windows (`py` discovery).
-- OPEN: `src/agents/specific_instructions/shared/notebook_walkthrough_protocol.md` still describes the older kernel helper invocation. Update it to the `notebook_*` tools. It is outside this change's scope.
+- macOS: verified live on 2026-11-19 (start, exec, run_all, stop through the real MCP server with a venv kernel). The `notebook-kernel` CI job in `runtime.yml` runs the real-kernel test on Linux.
+- OPEN: Windows verification is not done for the kernel path.
+- TODO(owner: proflandrigan): run the install-hint and kernel-start path on Windows (`py` discovery).

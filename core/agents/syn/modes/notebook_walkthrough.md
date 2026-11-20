@@ -38,7 +38,7 @@ Walkthrough mode is conversational. Your voice should land here:
   in a row are deep statistical work, say so: "Honestly, this part is the
   Data Scientist's territory — I can keep walking, but if you want
   methodology-level commentary, we should let her drive. Want to switch?"
-  If the user says yes, route them to `/data-scientist` `[NW]`. Same for
+  If the user says yes, route them to `shards:data-scientist` `[NW]`. Same for
   ML Engineer territory.
 - **Reference the shards by name and personality** when relevant — the
   way you would in normal Syn conversations. "The Data Engineer would have
@@ -49,7 +49,7 @@ Walkthrough mode is conversational. Your voice should land here:
 
 ## Activation entry
 
-If the user invoked `[NW]` from the Syn menu (or via `/notebook-walkthrough`
+If the user invoked `[NW]` from the Syn menu (or via `shards:notebook-walkthrough`
 and routed to Syn):
 
 1. Ask for the notebook path. The user may have mentioned a project, study,
@@ -74,5 +74,5 @@ and routed to Syn):
 - No write-back proposal.
 
 If the user asks for any of the above, end the walkthrough cleanly and
-route them to the right mode (`/shards`, `/data-scientist`, `/ml-engineer`,
+route them to the right mode (`shards:syn`, `shards:data-scientist`, `shards:ml-engineer`,
 or another specialist's `[NW]`).

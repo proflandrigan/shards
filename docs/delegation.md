@@ -134,13 +134,13 @@ PreToolUse write rules (`hooks/lib/enforce.js`). They apply to non-gate tools. W
 
 1. Bound caller (`agent_id` bound to a slice of an active lease). Writes must resolve inside one of that slice's paths. Other writes are denied, and the reason lists the allowed paths. A write whose target cannot be determined is denied. Bound callers are exempt from the pending-gate check in rule 3 (policy: ADR 0011).
 2. `fanout_claim` binds (above). This runs even when a gate is pending.
-3. Unbound caller (no `agent_id`: the lead, an unleased subagent, or any Codex call). (a) If the top frame has a pending gate, every write or exec call is denied. (b) Otherwise a write whose target is inside, or contains, an active fan-out slice path is denied (`do not edit it from the lead`).
+3. Unbound caller (no `agent_id` bound to a lease: the lead or an unleased subagent). (a) If the top frame has a pending gate, every write or exec call is denied. (b) Otherwise a write whose target is inside, or contains, an active fan-out slice path is denied (`do not edit it from the lead`).
 
 `SHARDS_GATE_ENFORCE=0` turns off every deny in rules 1 and 3 and the claim refusal. Binding still records when it succeeds.
 
 Fail-open. An exception in the enforcement step is logged to `<root>/.shards/state/hook-errors.log`, and the call goes ahead. The hook exits 0 in all cases. One exception: an error while binding a `fanout_claim` (including a state I/O error) is turned into a deny, unless `SHARDS_GATE_ENFORCE=0`.
 
-Codex. The PreToolUse payload has no `agent_id` (compat CX-6), so every Codex call is unbound. Codex workers cannot be bound, and `fanout_claim` binds nothing. As the code reads, rule 3(b) would deny a Codex worker's writes inside its own active slice. Whether the Codex hook fires at all is unverified.
+Codex. Codex 0.169.0 sends `agent_id` and `agent_type` on PreToolUse inside a subagent (live-verified payload, compat CX-6), and the hook fires (CX-7), so Codex workers bind through `fanout_claim` like Claude workers. The Codex binding path itself is unit-tested only; a live Codex fan-out run is still open.
 
 ## 4. Task statuses
 
@@ -255,7 +255,7 @@ The Codex build emits these as commented lines in `.codex/config.toml` (`# [agen
 | Write enforcement of owned paths for fan-out slices | Done (section 3.1, rules 1 and 3). |
 | Write enforcement of owned paths for task-owned leases | Not done. The hook binds only through `fanout_claim`, and `task_dispatch` workers have no claim tool. `TODO`. |
 | `fanout_claim` binding does not check the lease owner | Gap (section 3.1). `TODO`. |
-| SubagentStop and leases | Wired (S5F). `hooks/subagent-stop.js` releases the exiting worker's binding. Codex documents SubagentStop with `agent_id` (CX-6, docs-only) but never binds workers (no `agent_id` on PreToolUse), so it is a no-op there. Unverified against a real host payload. |
+| SubagentStop and leases | Wired (S5F). `hooks/subagent-stop.js` releases the exiting worker's binding. Codex 0.169.0 sends `agent_id` on SubagentStop and on PreToolUse inside a subagent (CX-6, live-verified payloads), so release works there too; a live Codex fan-out run is not done. |
 | PM 2-workstream live run | OPEN. The live-run budget is not spent. Harness: `scripts/pm-fanout-live-run.sh` (one sample, never a pass rate; `--dry-run` and `--check-only` modes). |
 | Lead verification of `reported` tasks | Done (E12.5): `task_verify` tool (section 3). Only `done` satisfies dependencies; each verification appends an evidence row to `## Validation` in `<output_dir>/project-specs.md`; max 2 retries, then `blocked` and escalated. |
 | Host fallbacks (E12.8) | Done: see `docs/compat.md` (Delegate host fallbacks). |

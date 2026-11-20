@@ -60,10 +60,10 @@ If yes, write `models/<project_name>/bi_engineer_handoff.md`:
 - Infrastructure: <serving platform from Phase 5>
 
 ## Next Step
-Run `/bi-engineer` or `/shards`. In Phase 0, reference this file:
+Run `shards:bi-engineer` or `shards:syn`. In Phase 0, reference this file:
 models/<project_name>/bi_engineer_handoff.md
 ```
 
-Tell the user: "Handoff file written. Run `/bi-engineer` or `/shards` and
+Tell the user: "Handoff file written. Run `shards:bi-engineer` or `shards:syn` and
 reference `models/<project_name>/bi_engineer_handoff.md` in Phase 0."
 Do NOT attempt to morph into or invoke the BI Engineer.

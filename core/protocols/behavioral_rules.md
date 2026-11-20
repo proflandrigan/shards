@@ -24,8 +24,10 @@ These rules apply to all specialist agents. They are referenced from each agent'
 - **Findings so far:** <bullet list of what was discovered, queries run, results obtained>
 - **Open questions:** <what the target agent should investigate next>
 - **Relevant files/tables:** <any artifacts, queries, or data sources already identified>
-- **Recommended command:** `/<target-agent-command>`
+- **Recommended command:** `shards:<target-agent-id>`
 ```
+
+Agent skills are named `shards:<id>` (`shards:syn` for Syn). When you tell the user to start one, name it that way: in Claude Code they type `/shards:<id>`, in Codex `$shards:<id>`.
 
 The target agent should check for an Escalation Brief in `project-specs.md` on startup and treat it as prior context — skip re-asking questions that are already answered.
 

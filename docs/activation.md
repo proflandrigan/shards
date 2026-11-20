@@ -14,21 +14,21 @@ Naming rule: consult subagents exist only if `consult` is in `activation`. The g
 
 | id | role | modes | Claude switch | Codex switch / profile | consult subagents (both hosts) |
 |----|------|-------|---------------|------------------------|--------------------------------|
-| academic | reviewer | consult, switch | /shards:academic | $academic / shards-academic | academic, academic-service |
-| ai-engineer | specialist | switch, consult, fanout_worker | /shards:ai-engineer | $ai-engineer / shards-ai-engineer | ai-engineer, ai-engineer-review, ai-engineer-advise, ai-engineer-worker |
-| analytics-engineer | specialist | switch, consult, fanout_worker | /shards:analytics-engineer | $analytics-engineer / shards-analytics-engineer | analytics-engineer, -review, -advise, -service, -worker |
-| applied-ml-scientist | specialist | switch, consult, fanout_worker | /shards:applied-ml-scientist | $applied-ml-scientist / shards-applied-ml-scientist | applied-ml-scientist, -review, -advise, -worker |
-| backend-engineer | reviewer | switch, consult | /shards:backend-engineer | $backend-engineer / shards-backend-engineer | backend-engineer, -review, -service |
-| bi-engineer | specialist | switch, consult, fanout_worker | /shards:bi-engineer | $bi-engineer / shards-bi-engineer | bi-engineer, -review, -advise, -worker |
-| data-analyst | specialist | switch, consult, fanout_worker | /shards:data-analyst | $data-analyst / shards-data-analyst | data-analyst, -review, -advise, -worker |
-| data-engineer | specialist | switch, consult, fanout_worker | /shards:data-engineer | $data-engineer / shards-data-engineer | data-engineer, -review, -advise, -worker |
-| data-modeller | specialist | switch, consult, fanout_worker | /shards:data-modeller | $data-modeller / shards-data-modeller | data-modeller, -review, -advise, -service, -worker |
-| data-scientist | specialist | switch, consult, fanout_worker | /shards:data-scientist | $data-scientist / shards-data-scientist | data-scientist, -review, -advise, -service, -worker |
-| deep-learning-engineer | specialist | switch, consult, fanout_worker | /shards:deep-learning-engineer | $deep-learning-engineer / shards-deep-learning-engineer | deep-learning-engineer, -review, -advise, -worker |
-| ml-engineer | specialist | switch, consult, fanout_worker | /shards:ml-engineer | $ml-engineer / shards-ml-engineer | ml-engineer, -review, -advise, -service, -worker |
-| mlops-engineer | specialist | switch, consult, fanout_worker | /shards:mlops-engineer | $mlops-engineer / shards-mlops-engineer | mlops-engineer, -review, -advise, -service, -worker |
-| researcher | reviewer | consult, switch | /shards:researcher | $researcher / shards-researcher | researcher, researcher-service |
-| syn | orchestrator | switch, consult | /shards:syn | $syn / shards-syn | syn, syn-final_review, syn-arbiter, syn-code_review |
+| academic | reviewer | consult, switch | /shards:academic | $shards:academic / shards-academic | academic, academic-service |
+| ai-engineer | specialist | switch, consult, fanout_worker | /shards:ai-engineer | $shards:ai-engineer / shards-ai-engineer | ai-engineer, ai-engineer-review, ai-engineer-advise, ai-engineer-worker |
+| analytics-engineer | specialist | switch, consult, fanout_worker | /shards:analytics-engineer | $shards:analytics-engineer / shards-analytics-engineer | analytics-engineer, -review, -advise, -service, -worker |
+| applied-ml-scientist | specialist | switch, consult, fanout_worker | /shards:applied-ml-scientist | $shards:applied-ml-scientist / shards-applied-ml-scientist | applied-ml-scientist, -review, -advise, -worker |
+| backend-engineer | reviewer | switch, consult | /shards:backend-engineer | $shards:backend-engineer / shards-backend-engineer | backend-engineer, -review, -service |
+| bi-engineer | specialist | switch, consult, fanout_worker | /shards:bi-engineer | $shards:bi-engineer / shards-bi-engineer | bi-engineer, -review, -advise, -worker |
+| data-analyst | specialist | switch, consult, fanout_worker | /shards:data-analyst | $shards:data-analyst / shards-data-analyst | data-analyst, -review, -advise, -worker |
+| data-engineer | specialist | switch, consult, fanout_worker | /shards:data-engineer | $shards:data-engineer / shards-data-engineer | data-engineer, -review, -advise, -worker |
+| data-modeller | specialist | switch, consult, fanout_worker | /shards:data-modeller | $shards:data-modeller / shards-data-modeller | data-modeller, -review, -advise, -service, -worker |
+| data-scientist | specialist | switch, consult, fanout_worker | /shards:data-scientist | $shards:data-scientist / shards-data-scientist | data-scientist, -review, -advise, -service, -worker |
+| deep-learning-engineer | specialist | switch, consult, fanout_worker | /shards:deep-learning-engineer | $shards:deep-learning-engineer / shards-deep-learning-engineer | deep-learning-engineer, -review, -advise, -worker |
+| ml-engineer | specialist | switch, consult, fanout_worker | /shards:ml-engineer | $shards:ml-engineer / shards-ml-engineer | ml-engineer, -review, -advise, -service, -worker |
+| mlops-engineer | specialist | switch, consult, fanout_worker | /shards:mlops-engineer | $shards:mlops-engineer / shards-mlops-engineer | mlops-engineer, -review, -advise, -service, -worker |
+| researcher | reviewer | consult, switch | /shards:researcher | $shards:researcher / shards-researcher | researcher, researcher-service |
+| syn | orchestrator | switch, consult | /shards:syn | $shards:syn / shards-syn | syn, syn-final_review, syn-arbiter, syn-code_review |
 
 Entries abbreviated with a leading `-` are `<id>` plus the suffix (e.g. `analytics-engineer-review`). Regenerate by reading `activation` and `consult_entries` keys from each `agent.yaml`.
 
@@ -46,7 +46,7 @@ Syn is the router: the "Routing Reference" in `core/agents/syn/AGENT.md` maps in
 
 ## Default agent (opt-in)
 
-- Claude: `shards build --target claude --default-agent` (or env `SHARDS_BUILD_DEFAULT_AGENT=1`) writes plugin-root `settings.json` `{"agent":"shards:syn"}`. Manual route without a rebuild: `claude --agent shards:syn`. Whether a plugin `settings.json` honors `agent` is UNVERIFIED (CC-3).
+- Claude: `shards build --target claude --default-agent` (or env `SHARDS_BUILD_DEFAULT_AGENT=1`) writes plugin-root `settings.json` `{"agent":"shards:syn"}`. Manual route without a rebuild: `claude --agent shards:syn`. A plugin `settings.json` honors `agent`, but Claude Code warns it will stop working in a future release (CC-3, live finding 3 below).
 - Codex: no config key (Codex 0.169.0 rejects a top-level `profile`); start sessions with `codex -p shards-syn`. The opt-in only adds that hint as a comment in `.codex/config.toml`.
 
 ## Codex switch mechanics (E8.7)
@@ -71,4 +71,4 @@ Five live `claude -p` runs against a `--dev --default-agent` build (Claude Code,
 4. Router sample "bring in the data modeller" -> `activate`. PASS.
 5. Router sample "just ask the researcher whether a t-test works..." -> `Agent` consult, no switch. PASS.
 
-OPEN (live budget): switch >= 9/10 x3 (`scripts/eval/switch-eval.js`), consult verdict >= 9/10, router 18/20 x3 (`scripts/eval/router-eval.js`), 2 live default-agent tests per host. OPEN (external): all Codex behaviour (skill takeover, profiles, max_depth, default profile).
+OPEN (live budget): switch >= 9/10 x3 (`scripts/eval/switch-eval.js`), consult verdict >= 9/10, router 18/20 x3 (`scripts/eval/router-eval.js`), 2 live default-agent tests per host. OPEN (external): Codex model behaviour (skill takeover, `-p shards-<id>` making the model call `activate`) and the `max_depth` defaults; the profile files, the `max_depth`/`max_threads` keys and the missing default-profile key were checked on Codex 0.169.0 (`docs/compat.md` CX-4, CX-7).

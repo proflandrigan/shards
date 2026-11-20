@@ -252,7 +252,9 @@ function removeLegacyInstall({ root, dryRun = false, force = false }) {
     cleanSettings(root, manifest, dryRun, rep);
     if (!dryRun) {
       if (keep.length) {
-        fs.writeFileSync(file, JSON.stringify({ ...manifest, files: keep, hookEntries: [] }, null, 2));
+        // hookEntries stay: an empty list would make the next run fall back to LEGACY_HOOK_RE and delete
+        // unrecorded v1-looking hooks this run reported as kept (the recorded ones are already gone).
+        fs.writeFileSync(file, JSON.stringify({ ...manifest, files: keep }, null, 2));
         rep.manifestAction = 'rewritten (skipped files remain recorded)';
       } else { fs.unlinkSync(file); rep.manifestAction = 'removed'; }
     } else rep.manifestAction = keep.length ? 'would rewrite' : 'would remove';

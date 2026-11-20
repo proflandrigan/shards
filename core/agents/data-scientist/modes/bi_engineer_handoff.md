@@ -52,10 +52,10 @@ A handoff is offered when the user wants a live dashboard built from the study's
    - Data availability: <exists and accessible / design only>
 
    ## Next Step
-   Run `/bi-engineer` or `/shards`. In Phase 0, reference this file:
+   Run `shards:bi-engineer` or `shards:syn`. In Phase 0, reference this file:
    studies/<project_name>/bi_engineer_handoff.md
    ```
 
-   Tell the user: "Handoff file written. Run `/bi-engineer` or `/shards` and
+   Tell the user: "Handoff file written. Run `shards:bi-engineer` or `shards:syn` and
    reference `studies/<project_name>/bi_engineer_handoff.md` in Phase 0."
    Do NOT attempt to morph into or invoke the BI Engineer.

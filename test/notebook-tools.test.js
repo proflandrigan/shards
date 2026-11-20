@@ -90,6 +90,14 @@ describe('notebook mocked', () => {
     const sp = fakeSpawn({ hang: true });
     await expect(nb.runKernel('p', root, ['status', 's'], { spawnImpl: sp, timeout: 30 })).rejects.toThrow(/timed out/);
   });
+  it('multi-byte characters split across stdout chunks are decoded intact', async () => {
+    // A real child process: 300k two-byte characters behind an odd-length prefix straddle the pipe's chunk boundaries.
+    const script = "process.stdout.write(' ' + JSON.stringify({ ok: true, out: '\\u00e9'.repeat(300000) }) + '\\n')";
+    const spawnImpl = (_py, _args, o) => cp.spawn(process.execPath, ['-e', script], o);
+    const r = await nb.runKernel('p', root, ['exec', 's', '0'], { spawnImpl });
+    expect(r.out.length).toBe(300000);
+    expect(r.out.includes('�')).toBe(false);
+  });
   it('non-JSON and non-zero exit', async () => {
     await expect(nb.runKernel('p', root, ['status', 's'], { spawnImpl: fakeSpawn({ stdout: 'hello' }) })).rejects.toThrow(/non-JSON/);
     await expect(nb.runKernel('p', root, ['status', 's'], { spawnImpl: fakeSpawn({ stdout: '', code: 2 }) })).rejects.toThrow(/exited with code 2/);

@@ -45,8 +45,8 @@ Write the file `studies/<project_name>/ml_engineer_handoff.md`:
 - Constraints flagged: <any from ML Engineer review in Phase 4, or "None">
 
 ## Next Step
-Run `/ml-engineer` or `/shards`. Reference this file in Phase 0.
+Run `shards:ml-engineer` or `shards:syn`. Reference this file in Phase 0.
 ```
 
-Stop here and suggest running `/ml-engineer` or `/shards` to start the productionization project.
+Stop here and suggest running `shards:ml-engineer` or `shards:syn` to start the productionization project.
 Do NOT attempt to morph into or invoke the ML Engineer.
