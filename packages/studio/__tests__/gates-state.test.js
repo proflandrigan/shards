@@ -29,13 +29,14 @@ describe('readGateState (v2 runtime gates.json)', () => {
     writeGates('s2', { 'b-phase-1': { id: 'b-phase-1', status: 'pending', kind: 'final', phase: 1, requested_at: '2026-01-01T00:00:00Z' } });
     const s = gs.readGateState(shards);
     expect(s).toMatchObject({ open: true, id: 'a-phase-2', session: 's1', phase: 2, kind: 'phase', agent: 'ml-engineer' });
-    expect(s.confirmCommand).toBe(`shards gates confirm a-phase-2 --session s1 --root ${path.dirname(shards)}`);
+    expect(s.confirmCommand).toBe(`shards gates confirm a-phase-2 --session s1 --root ${gs.shellQuote(path.dirname(shards))}`);
     // The project root (parent of .shards) is quoted when it has special characters.
     const spaced = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'gs sp ')), '.shards');
     const d = path.join(spaced, 'state', 'sessions', 's1');
     fs.mkdirSync(d, { recursive: true });
     fs.writeFileSync(path.join(d, 'gates.json'), JSON.stringify({ gates: { g: { id: 'g', status: 'pending', requested_at: '2026-01-01T00:00:00Z' } } }));
-    expect(gs.readGateState(spaced).confirmCommand).toBe(`shards gates confirm g --session s1 --root '${path.dirname(spaced)}'`);
+    expect(gs.readGateState(spaced).confirmCommand).toBe(`shards gates confirm g --session s1 --root ${gs.shellQuote(path.dirname(spaced))}`);
+    expect(gs.readGateState(spaced).confirmCommand).toMatch(process.platform === 'win32' ? /--root "[^"]+"$/ : /--root '[^']+'$/);
     fs.rmSync(path.dirname(spaced), { recursive: true, force: true });
     expect(s.pending).toHaveLength(2);
     expect(s.history.map((h) => h.id)).toEqual(['a-phase-1']);
@@ -60,5 +61,17 @@ describe('readGateState (v2 runtime gates.json)', () => {
     const a = gs.gateSignature(shards);
     writeGates('s1', { g1: { id: 'g1', status: 'confirmed', decided_at: 'x' } });
     expect(gs.gateSignature(shards)).not.toBe(a);
+  });
+});
+
+describe('shellQuote', () => {
+  it('leaves plain POSIX paths bare and single-quotes the rest', () => {
+    expect(gs.shellQuote('/tmp/proj', 'linux')).toBe('/tmp/proj');
+    expect(gs.shellQuote('/tmp/a b', 'linux')).toBe(`'/tmp/a b'`);
+    expect(gs.shellQuote(`/tmp/it's`, 'darwin')).toBe(`'/tmp/it'\\''s'`);
+  });
+  it('leaves plain Windows paths bare and double-quotes the rest (no POSIX single quotes)', () => {
+    expect(gs.shellQuote('C:\\Users\\RUNNER~1\\AppData\\Local\\Temp', 'win32')).toBe('C:\\Users\\RUNNER~1\\AppData\\Local\\Temp');
+    expect(gs.shellQuote('C:\\Users\\a b\\proj', 'win32')).toBe('"C:\\Users\\a b\\proj"');
   });
 });

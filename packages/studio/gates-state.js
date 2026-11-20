@@ -60,7 +60,12 @@ function brief(g) {
  * `open` is true when any gate is pending/suspended; the flat fields describe the
  * most recently requested one.
  */
-const shellQuote = (s) => (/^[A-Za-z0-9_\/.:@%+=,-]+$/.test(s) ? s : `'${s.replace(/'/g, `'\\''`)}'`);
+// Quote one argument for the user's shell. POSIX: single quotes. Windows (cmd.exe and
+// PowerShell both accept it): double quotes; backslashes and ~ (8.3 names) are plain there.
+function shellQuote(s, platform = process.platform) {
+  if (platform === 'win32') return /^[A-Za-z0-9_\\\/.:@%+=,~-]+$/.test(s) ? s : `"${s.replace(/"/g, '""')}"`;
+  return /^[A-Za-z0-9_\/.:@%+=,-]+$/.test(s) ? s : `'${s.replace(/'/g, `'\\''`)}'`;
+}
 
 function readGateState(shardsDir) {
   const projectDir = path.dirname(path.resolve(shardsDir));
@@ -118,4 +123,4 @@ function watchGateState(shardsDir, onChange, pollMs = 1000) {
   return { stop() { clearInterval(timer); } };
 }
 
-module.exports = { readGateState, readGateSnapshot, watchGateState, gateSignature };
+module.exports = { shellQuote, readGateState, readGateSnapshot, watchGateState, gateSignature };
