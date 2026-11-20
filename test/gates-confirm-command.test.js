@@ -36,7 +36,7 @@ describe('operator confirm command', () => {
     expect(cc.localConfirmCommand('g', 'k', { runtimeDir })).toBe(`node ${q(path.join(d, 'cli', 'shards.js'))} gates confirm g --session k`);
     const lines = cc.operatorConfirmLines('g', 'k', { runtimeDir });
     expect(lines[0]).toContain('npx @proflandrigan/shards@next');
-    expect(lines.join('\n')).toContain(`${path.join(d, 'cli', 'shards.js')} gates confirm g --session k --changes`);
+    expect(lines.join('\n')).toContain(`${q(path.join(d, 'cli', 'shards.js'))} gates confirm g --session k --changes`);
   });
 
   it('no runtime message still prints node cli/shards.js', () => {
