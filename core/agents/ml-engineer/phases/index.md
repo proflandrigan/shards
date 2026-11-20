@@ -14,7 +14,7 @@ phase's gate has been confirmed by the user.** Do not pre-read ahead.
 | 4   | phase-4.md     | Choose model architecture, baselines, and candidate approaches        | yes   |
 | 5   | phase-5.md     | Design training pipeline, serving infrastructure, and monitoring      | yes   |
 | 6   | phase-6.md     | Build feature queries, training notebook, and pipeline artifacts      | yes (validated) |
-| 6.5 | phase-6-5.md   | Winner selection (OPTIONAL — phase-6.md will tell you when to skip)   | yes   |
+| 6.5 | phase-6-5.md   | Winner selection (OPTIONAL — phase-6.md will tell you when to skip)   | yes (optional) |
 | 7   | phase-7.md     | Backend + MLOps review, Syn sign-off, model card, handoff             | final |
 
 ## How to proceed

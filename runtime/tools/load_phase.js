@@ -25,14 +25,18 @@ function hostTarget(ctx) {
   return host === 'codex' ? 'codex' : 'claude';
 }
 
-// Phase order = index row order; the File column names phase-<n>.md.
+// Phase order = index row order; the File column names phase-<n>.md. A row whose last (Gated)
+// column contains the word `optional` (e.g. `yes (optional)`) marks a phase the previous phase may
+// tell the agent to skip; see the optional-phase fallback in the handler.
 function readIndex(agentDir, dirName) {
   let text;
   try { text = fs.readFileSync(path.join(agentDir, dirName, 'index.md'), 'utf8'); } catch (_) { return []; }
   const out = [];
   for (const ln of text.split('\n')) {
     const m = /^\|\s*[^|]*\|\s*`?phase-(\d+(?:-\d+)*)\.md`?\s*\|/.exec(ln);
-    if (m) out.push(m[1]);
+    if (!m) continue;
+    const cells = ln.trim().replace(/^\||\|$/g, '').split('|');
+    out.push({ n: m[1], optional: /\boptional\b/i.test(cells[cells.length - 1] || '') });
   }
   return out;
 }
@@ -113,7 +117,8 @@ module.exports = defineTool({
       if (args.track) throw new Error(`Agent ${agent.id} is single-track; do not pass track`);
       dirName = 'phases';
     }
-    const order = readIndex(agent.dir, dirName);
+    const index = readIndex(agent.dir, dirName);
+    const order = index.map((e) => e.n);
     const files = listPhaseFiles(agent.dir, dirName);
     const valid = order.length ? order : files;
     if (!files.includes(n)) throw new Error(`Unknown phase "${n}" for ${agent.id}${track ? ` (${track} track)` : ''}. Valid phases: ${valid.join(', ')}`);
@@ -133,11 +138,20 @@ module.exports = defineTool({
     const idx = order.indexOf(n);
     let need = null; let prev = null;
     if (idx > 0) {
-      prev = order[idx - 1];
-      let src = '';
-      try { src = fs.readFileSync(path.join(agent.dir, dirName, `phase-${prev}.md`), 'utf8'); } catch (_) { /* unguarded */ }
-      const g = advancingGate(src, agent.id, track, prev);
-      if (g) need = { id: g.id, phase: prev, track };
+      // Walk back over skipped optional phases: an index entry marked optional whose gate was never
+      // requested (and which is not the phase the frame is on) was skipped, so the nearest earlier
+      // phase's gate governs. A started optional phase (gate requested, or loaded) still blocks.
+      for (let j = idx - 1; j >= 0; j--) {
+        prev = order[j];
+        let src = '';
+        try { src = fs.readFileSync(path.join(agent.dir, dirName, `phase-${prev}.md`), 'utf8'); } catch (_) { /* unguarded */ }
+        const g = advancingGate(src, agent.id, track, prev);
+        const skipped = index[j].optional && j > 0 && String(top.phase) !== prev
+          && (!g || !findGate(all, agent.id, track, prev, g.id, top.project || null));
+        if (skipped) continue;
+        if (g) need = { id: g.id, phase: prev, track };
+        break;
+      }
     } else {
       const id0s = [`${agent.id}-phase-0`, ...(track ? [`${agent.id}-${track}-phase-0`] : [])];
       const g0 = all.find((g) => id0s.includes(g.id) && gates.ADVANCING_KINDS.includes(g.kind));

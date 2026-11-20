@@ -3,6 +3,7 @@
 // See build/MACROS.md section 3.
 const fs = require('fs');
 const path = require('path');
+const { parseMeta, typeMeta, loadSchema } = require('./meta');
 
 const ENTRIES = ['review', 'advise', 'service', 'final_review', 'arbiter', 'code_review', 'worker'];
 const KINDS = ['phase', 'final', 'execute', 'handoff', 'checkpoint', 'confirm'];
@@ -148,6 +149,9 @@ function resolveMacro(macro, core, ctx) {
       if (!['start', 'end'].includes(vals.action)) { err(`{{auto_verify}} first argument must be start|end`); break; }
       if (vals.action === 'start') {
         for (const k of ['tool_budget', 'ttl']) if (!/^[1-9]\d*$/.test(vals[k] || '')) err(`{{auto_verify start}} requires ${k}=<positive integer>`);
+        // Bounds of the runtime tool's inputSchema (tool_budget 1-200, ttl_s 30-3600).
+        if (/^\d+$/.test(vals.tool_budget || '') && Number(vals.tool_budget) > 200) err('{{auto_verify start}} tool_budget must be at most 200');
+        if (/^\d+$/.test(vals.ttl || '') && (Number(vals.ttl) < 30 || Number(vals.ttl) > 3600)) err('{{auto_verify start}} ttl must be 30-3600 seconds');
       } else if (vals.tool_budget !== undefined || vals.ttl !== undefined) err('{{auto_verify end}} takes no arguments');
       Object.assign(model, { action: vals.action, tool_budget: vals.tool_budget, ttl: vals.ttl, agent: ctx.agent, phase: ctx.phase });
       break;
@@ -169,8 +173,15 @@ function resolveMacro(macro, core, ctx) {
       Object.assign(model, vals);
       break;
     case 'artifact.emit':
-      if (!/^[a-z][a-z0-9_-]*$/.test(vals.type)) err(`invalid artifact type '${vals.type}'`);
-      Object.assign(model, vals);
+      if (!/^[a-z][a-z0-9_-]*$/.test(vals.type)) { err(`invalid artifact type '${vals.type}'`); break; }
+      Object.assign(model, { type: vals.type, path: vals.path });
+      if (vals.meta !== undefined) {
+        let raw;
+        try { raw = parseMeta(vals.meta); } catch (e) { err(`${e.message} in {{artifact.emit}}`); break; }
+        const typed = typeMeta(raw, loadSchema(core.coreDir, vals.type));
+        for (const e of typed.errors) err(`${e} in {{artifact.emit type=${vals.type}}}`);
+        model.meta = typed.meta;
+      }
       break;
     default:
       break;

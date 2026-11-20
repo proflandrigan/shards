@@ -33,7 +33,7 @@ Each switchable agent gets a skill that switches the current session to that age
 | `/shards:ml-engineer` | ML Engineer | `models/<project>/` or existing service dir |
 | `/shards:ai-engineer` | AI Engineer | `services/<project>/` |
 | `/shards:applied-ml-scientist` | Applied ML Scientist | `research/<project>/` |
-| `/shards:deep-learning-engineer` | Deep Learning Engineer | `services/<project>/` |
+| `/shards:deep-learning-engineer` | Deep Learning Engineer | `models/<project>/` |
 | `/shards:mlops-engineer` | MLOps Engineer | `services/<project>/` |
 | `/shards:bi-engineer` | BI Engineer | `dashboards/<project>/` |
 | `/shards:backend-engineer` | Backend Engineer | review only, no files |

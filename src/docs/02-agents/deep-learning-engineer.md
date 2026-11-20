@@ -50,7 +50,7 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 ## Output directory
 
-`services/<project_name>/`
+`models/<project_name>/`
 
 Gate-confirmed phases are committed to git as the record. Where each agent writes is listed in [Output Directory Map](../06-outputs/directory-map.md).
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
 import fs from 'fs';
 import os from 'os';
@@ -38,6 +38,7 @@ beforeEach(async () => {
   reg = new Registry(loadTools());
   await pushFrame(store('s1'), { agent: 'ml-engineer', project: 'p' });
 });
+afterEach(() => { fs.rmSync(root, { recursive: true, force: true }); });
 
 describe('load_phase', () => {
   it('registered with the specified schema', () => {
@@ -107,6 +108,47 @@ describe('load_phase', () => {
     expect(text(r)).toContain('gate ml-engineer-phase-6-5 for phase 6-5');
     await gate('ml-engineer-phase-6-5', '6-5', 'ml-engineer', { confirm: true });
     expect((await call({ agent: 'ml-engineer', n: 7 })).isError).toBeFalsy();
+  });
+
+  it('optional 6-5 is marked optional in the ml-engineer index', () => {
+    const idx = fs.readFileSync(path.join(__dirname, '..', 'core/agents/ml-engineer/phases/index.md'), 'utf8');
+    expect(idx).toMatch(/^\|[^|]*\|\s*phase-6-5\.md\s*\|[^|]*\|[^|]*\boptional\b[^|]*\|\s*$/m);
+    expect(idx).not.toMatch(/^\|[^|]*\|\s*phase-7\.md\s*\|[^|]*\|[^|]*\boptional\b/m);
+  });
+
+  it('skipped optional 6-5: phase 7 falls back to the confirmed phase-6 gate', async () => {
+    await gate('ml-engineer-phase-6', 6, 'ml-engineer', { confirm: true });
+    const r = await call({ agent: 'ml-engineer', n: 7 });
+    expect(r.isError).toBeFalsy();
+    expect(frames()[0].phase).toBe(7);
+  });
+
+  it('skipped optional 6-5 with phase 6 unconfirmed: phase 7 refused on the phase-6 gate', async () => {
+    let r = await call({ agent: 'ml-engineer', n: 7 });
+    expect(r.isError).toBe(true);
+    expect(text(r)).toContain('gate ml-engineer-phase-6 for phase 6 is not confirmed (status: missing)');
+    await gate('ml-engineer-phase-6', 6, 'ml-engineer');
+    r = await call({ agent: 'ml-engineer', n: 7 });
+    expect(text(r)).toContain('gate ml-engineer-phase-6 for phase 6 is not confirmed (status: pending)');
+  });
+
+  it('started optional 6-5 (gate requested, not confirmed) still blocks phase 7', async () => {
+    await gate('ml-engineer-phase-6', 6, 'ml-engineer', { confirm: true });
+    await gate('ml-engineer-phase-6-5', '6-5', 'ml-engineer');
+    let r = await call({ agent: 'ml-engineer', n: 7 });
+    expect(r.isError).toBe(true);
+    expect(text(r)).toContain('gate ml-engineer-phase-6-5 for phase 6-5 is not confirmed (status: pending)');
+    await gates.confirmGate(sess(), 'ml-engineer-phase-6-5', { decision: 'confirmed', proof: PROOF }, DEPS);
+    r = await call({ agent: 'ml-engineer', n: 7 });
+    expect(r.isError).toBeFalsy();
+  });
+
+  it('started optional 6-5 (loaded, gate not yet requested) still blocks phase 7', async () => {
+    await gate('ml-engineer-phase-6', 6, 'ml-engineer', { confirm: true });
+    expect((await call({ agent: 'ml-engineer', n: '6-5' })).isError).toBeFalsy();
+    const r = await call({ agent: 'ml-engineer', n: 7 });
+    expect(r.isError).toBe(true);
+    expect(text(r)).toContain('gate ml-engineer-phase-6-5 for phase 6-5 is not confirmed (status: missing)');
   });
 
   it('phase-0 gate: ignored when absent, enforced when present and unconfirmed', async () => {

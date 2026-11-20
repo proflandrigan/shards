@@ -101,8 +101,8 @@ Compiles to runtime `gate_request(id, kind, phase, summary, record_ref, validate
 ### 3.9 `{{auto_verify start tool_budget=<int> ttl=<seconds>}}` / `{{auto_verify end}}`
 
 Example: `{{auto_verify start tool_budget=40 ttl=900}}`
-Args: first positional `start|end`; `start` requires `tool_budget` and `ttl` (positive integers); `end` takes none.
-Compiles to runtime `auto_verify_start(agent, phase, tool_budget, ttl)` (agent and phase are the enclosing ones when known) and `auto_verify_end()`. Only read-only operations on the runtime allowlist are auto-approved. Gates always win.
+Args: first positional `start|end`; `start` requires `tool_budget` (1-200) and `ttl` (seconds, 30-3600), the bounds of the runtime tool; `end` takes none.
+Compiles to runtime `auto_verify_start(agent, phase, tool_budget, ttl_s)`: the macro's `ttl` is passed as the tool's `ttl_s` (agent and phase are the enclosing ones when known) and `auto_verify_end()`. Only read-only operations on the runtime allowlist are auto-approved. Gates always win.
 
 ### 3.10 `{{record.write section=<name> [file=<path>]}}`
 
@@ -119,11 +119,11 @@ Args by verb: `create`: `title` required, `owns`, `accept` optional. `update`: `
 Example: `{{knowledge.search query="grain of orders table"}}`
 Args: `query` required; `scope` optional. Binding job `knowledge` (any bound MCP, never a Shards store). Renders as "search the knowledge source bound to the knowledge job; treat results as hints to verify".
 
-### 3.13 `{{artifact.emit type=<type> path=<path> [meta=<text>]}}`
+### 3.13 `{{artifact.emit type=<type> path=<path> [meta="<k>=<v> ..."]}}`
 
-Example: `{{artifact.emit type=report path=analysis/churn/report.md}}`
-Args: `type` required (`[a-z][a-z0-9_-]*`), `path` required, `meta` optional.
-Compiles to runtime `artifact_emit(type, path, meta)`, which appends to `.shards/events.jsonl`.
+Example: `{{artifact.emit type=report path=analysis/churn/report.md}}`, `{{artifact.emit type=pr-review path=.shards/pr-review-<number>.json meta="title=PR #<number> pr=<number>"}}`
+Args: `type` required (`[a-z][a-z0-9_-]*`), `path` required, `meta` optional: space-separated `key=value` pairs. An unquoted value runs up to the next ` key=`, so it may contain spaces; single-quote it (`note='a b=c'`) if it contains ` key=` text. When `core/schema/artifacts/<type>.schema.json` exists, `meta` is typed by it at build time: `integer`/`number`/`boolean` fields become JSON values (a `<placeholder>` renders unquoted for the agent to fill in), other values stay strings, and a missing `required` key or a non-numeric integer field is a build error.
+Compiles to runtime `artifact_emit(type, path, meta)` with `meta` rendered as a JSON object (e.g. `meta={"title": "PR #<number>", "pr": <number>}`), which appends to `.shards/events.jsonl`.
 
 ### 3.14 `{{delegate [tasks=<path>] [max_parallel=<n>] [mode=parallel|sequential|inline]}}`
 

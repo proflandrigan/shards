@@ -1,6 +1,8 @@
 'use strict';
 // Renders a resolved macro model to text for a target (claude | codex | skills). See MACROS.md section 5.
 
+const { formatMeta } = require('./meta');
+
 const TARGETS = ['claude', 'codex', 'skills'];
 // Real tool name inside a Claude Code plugin: mcp__plugin_<plugin>_<server>__<tool> (verified live: plugin 'shards', server 'shards').
 const CLAUDE_TOOL_PREFIX = 'mcp__plugin_shards_shards__';
@@ -16,6 +18,17 @@ function contentPath(target, rel) {
   return target === 'claude' ? `\${CLAUDE_PLUGIN_ROOT}/${p}` : p;
 }
 const q = (s) => JSON.stringify(String(s));
+
+// The argument object a macro's rendered instruction passes to its runtime tool (auto_verify start,
+// artifact.emit). Placeholders the agent fills in stay as '<...>' strings; meta integer placeholders
+// are { placeholder }. Exported so tests can validate it against the tools' inputSchema.
+function toolArgs(m) {
+  if (m.macro === 'auto_verify' && m.action === 'start') {
+    return { agent: m.agent || '<current agent>', phase: m.phase || '<current phase>', tool_budget: Number(m.tool_budget), ttl_s: Number(m.ttl) };
+  }
+  if (m.macro === 'artifact.emit') return m.meta ? { type: m.type, path: m.path, meta: m.meta } : { type: m.type, path: m.path };
+  return null;
+}
 
 function render(m, target) {
   const T = (t) => `\`${tool(target, t)}\``;
@@ -86,10 +99,11 @@ function render(m, target) {
       const adv = m.advancing ? 'Write the decisions to the project record first.' : 'This is a checkpoint: it does not advance the phase.';
       return `**Gate \`${m.id}\`** (kind \`${m.kind}\`). ${adv} Then call ${T('gate_request')}(id=${q(m.id)}, kind=${q(m.kind)}, phase=${q(m.phase)}, summary=<one short paragraph>, record_ref=<the record section you wrote>${v}) and stop. Do not continue until the tool reports the gate confirmed; "already confirmed" means continue. Never approve or confirm the gate yourself, and do not write gate fences in text.`;
     }
-    case 'auto_verify':
-      return m.action === 'start'
-        ? `Start auto-verify: call ${T('auto_verify_start')}(agent=${q(m.agent || '<current agent>')}, phase=${q(m.phase || '<current phase>')}, tool_budget=${m.tool_budget}, ttl=${m.ttl}). Only read-only operations on the allowlist are auto-approved.`
-        : `End auto-verify: call ${T('auto_verify_end')}().`;
+    case 'auto_verify': {
+      if (m.action !== 'start') return `End auto-verify: call ${T('auto_verify_end')}().`;
+      const a = toolArgs(m);
+      return `Start auto-verify: call ${T('auto_verify_start')}(agent=${q(a.agent)}, phase=${q(a.phase)}, tool_budget=${a.tool_budget}, ttl_s=${a.ttl_s}). Only read-only operations on the allowlist are auto-approved.`;
+    }
     case 'record.write':
       return `Write ${q(m.section)} to the project record (\`${m.file}\`) through the \`record\` job configured in shards.config.yaml, and keep the returned reference as \`record_ref\`.`;
     case 'tasks.create':
@@ -102,11 +116,13 @@ function render(m, target) {
       return `Read task ${q(m.id)} through the \`tasks\` job.`;
     case 'knowledge.search':
       return `Search the knowledge source bound to the \`knowledge\` job for ${q(m.query)}${m.scope ? ` (scope ${q(m.scope)})` : ''}. Treat results as hints to verify.`;
-    case 'artifact.emit':
-      return `Announce the output: call ${T('artifact_emit')}(type=${q(m.type)}, path=${q(m.path)}${m.meta ? `, meta=${q(m.meta)}` : ''}).`;
+    case 'artifact.emit': {
+      const a = toolArgs(m);
+      return `Announce the output: call ${T('artifact_emit')}(type=${q(a.type)}, path=${q(a.path)}${a.meta ? `, meta=${formatMeta(a.meta)}` : ''}).${a.meta ? ' Pass meta as an object, not a string.' : ''}`;
+    }
     default:
       throw new Error(`no renderer for ${m.macro}`);
   }
 }
 
-module.exports = { render, tool, CLAUDE_TOOL_PREFIX, CODEX_TOOL_PREFIX, contentPath, TARGETS };
+module.exports = { render, toolArgs, tool, CLAUDE_TOOL_PREFIX, CODEX_TOOL_PREFIX, contentPath, TARGETS };

@@ -14,7 +14,7 @@ Where each agent writes. Output directories live at the project root and are cre
 | ML Engineer | `models/<project>/` (greenfield); the existing service directory when iterating |
 | AI Engineer | `services/<project>/` (greenfield); the existing service directory when iterating |
 | Applied ML Scientist | `research/<project>/` |
-| Deep Learning Engineer | `services/<project>/` |
+| Deep Learning Engineer | `models/<project>/` |
 | MLOps Engineer | `services/<project>/` |
 | BI Engineer | `dashboards/<project>/` |
 | Researcher, Academic, Backend Engineer | none (review only) |

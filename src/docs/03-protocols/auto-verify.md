@@ -18,14 +18,14 @@ In phase and mode files the agent writes macros, which render to runtime tool ca
 {{auto_verify end}}
 ```
 
-These are the tools `auto_verify_start(agent, phase, tool_budget, ttl)` and `auto_verify_end()`.
+These are the tools `auto_verify_start(agent, phase, tool_budget, ttl_s)` and `auto_verify_end()`. The macro's `ttl` is passed as the tool's `ttl_s`.
 
 | Parameter | Bounds |
 |---|---|
 | `agent` | must be the active agent |
 | `phase` | phase number |
 | `tool_budget` | 1 to 200 auto-approvals |
-| `ttl` (seconds) | 30 to 3600 |
+| `ttl_s` (seconds; `ttl` in the macro) | 30 to 3600 |
 
 Out-of-range values are rejected. Only one block can be live per session. Starting a block while a gate is open on the active frame is refused.
 
