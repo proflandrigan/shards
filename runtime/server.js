@@ -10,7 +10,7 @@ const { Registry } = require('./registry');
 const { loadTools } = require('./tools');
 const { StateStore } = require('./state/store');
 const { createCorrelator } = require('./session/correlate');
-const { loadOrCreateConfig } = require('./config');
+const { loadOrCreateConfig, CONFIG_FILENAME } = require('./config');
 
 const VERSION = require('../package.json').version;
 
@@ -51,9 +51,29 @@ function startLeaseSweep({ root, ms, setIntervalFn = setInterval, clearIntervalF
 function createServer({ root, sessionKey, ancestry, env, host, leaseSweepMs } = {}) {
   root = path.resolve(root || resolveRoot());
   const registry = new Registry(loadTools());
-  let cached;
-  // Lazy + cached. A ConfigError propagates to the handler, which becomes isError.
-  const getConfig = () => (cached || (cached = loadOrCreateConfig(root)));
+  let cached = null; let cachedSig = null;
+  const configSig = () => {
+    try { const st = fs.statSync(path.join(root, CONFIG_FILENAME)); return `${st.mtimeMs}:${st.size}`; } catch (_) { return null; }
+  };
+  // Lazy; reloaded whenever shards.config.yaml's mtime or size changes, so edits apply on the next
+  // tool call. A ConfigError propagates to the handler (never cached, so a fix is picked up too).
+  const getConfig = () => {
+    const sig = configSig();
+    if (cached && sig !== null && sig === cachedSig) return cached;
+    cached = null; cachedSig = null;
+    const c = loadOrCreateConfig(root);
+    cached = c; cachedSig = configSig();
+    return c;
+  };
+  // Session index (docs/sessions.md): the runtime registers each session it serves, once per
+  // process, so sessions_list / sessions_resume work without Studio. Best effort.
+  const registered = new Set();
+  const registerSession = (key, hostName) => {
+    if (!key || registered.has(key)) return;
+    registered.add(key);
+    try { require('./sessions/ops').registerSession(root, key, hostName); } catch (e) { process.stderr.write(`shards-mcp session index: ${e.message}\n`); }
+  };
+  try { require('./sessions/ops').sweepStale(root); } catch (e) { process.stderr.write(`shards-mcp session sweep: ${e.message}\n`); }
   const stores = new Map();
   const storeFor = (key) => {
     let s = stores.get(key);
@@ -65,11 +85,12 @@ function createServer({ root, sessionKey, ancestry, env, host, leaseSweepMs } = 
   let resolveSession;
   if (sessionKey) {
     // Explicit fixed key: behave exactly as before.
-    resolveSession = () => ({ state: storeFor(sessionKey), sessionKey, sessionSource: 'explicit', host });
+    resolveSession = () => { registerSession(sessionKey, host); return { state: storeFor(sessionKey), sessionKey, sessionSource: 'explicit', host }; };
   } else {
     correlator = createCorrelator({ root, env: env || process.env, ancestry, host });
     resolveSession = () => {
       const r = correlator.resolve();
+      registerSession(r.key, r.host || host);
       return { state: storeFor(r.key), sessionKey: r.key, sessionSource: r.source, host: r.host || host };
     };
   }
@@ -87,7 +108,7 @@ function createServer({ root, sessionKey, ancestry, env, host, leaseSweepMs } = 
   const sweeper = startLeaseSweep({ root, ms });
   server.onclose = () => sweeper.stop();
   return {
-    server, registry, root, correlator, sweeper,
+    server, registry, root, correlator, sweeper, getConfig,
     get state() { return resolveSession().state; },
     get sessionKey() { return resolveSession().sessionKey; },
   };

@@ -184,4 +184,28 @@ describe('isAutoApprovable', () => {
     ];
     for (const c of yes) it(`approves ${c}`, () => { expect(isAutoApprovable('Bash', { command: c })).toBe(true); });
   });
+
+  describe('per-command argument rules (no prefix-match side effects)', () => {
+    const no = [
+      'git branch -v -D x', 'git branch -r -m a b', 'git branch --show-current newbr', 'git branch newbr',
+      'git branch -a -d x', 'git branch -u origin/x', 'git branch --set-upstream-to=o/x', 'git branch -c a b',
+      'git branch --edit-description', 'git branch -f a HEAD', 'git branch --list -D x', 'git branch --merged main newbr',
+      'git tag -l -d v1', 'git tag v1', 'git tag -l -f v1', 'git tag --delete v1', 'git tag -a v1 -m x',
+      'git remote -v add e http://x', 'git remote add e http://x', 'git remote rm o', 'git remote remove o',
+      'git remote rename a b', 'git remote set-url o http://x', 'git remote set-head o -a', 'git remote prune o',
+      'git remote update', 'git remote show -x o', 'git remote set-branches o x',
+      'file -C -m /tmp/mg', 'file -C', 'file -m /tmp/mg a', 'file --compile', 'file --magic-file=/tmp/mg a', 'file -bC',
+      'dbt deps', 'dbt compile', 'dbt parse', 'dbt ls', 'dbt list', 'dbt source freshness',
+    ];
+    for (const c of no) it(`vetoes ${c}`, () => { expect(isAutoApprovable('Bash', { command: c })).toBe(false); });
+    const yes = [
+      'git branch', 'git branch --list', 'git branch -a', 'git branch -r', 'git branch -v', 'git branch -vv',
+      'git branch --remotes', 'git branch --merged main', 'git branch --no-merged main', 'git branch --show-current',
+      'git branch --contains abc123', 'git branch --list "fe*"', 'git branch -vv --merged main',
+      'git tag', 'git tag -l', 'git tag --list', 'git tag -l "v*"', 'git tag -n5', 'git tag --contains abc',
+      'git remote', 'git remote -v', 'git remote show origin', 'git remote get-url origin',
+      'file a.txt', 'file -b a.txt', 'file --mime-type a.bin', 'dbt show --select m', 'dbt debug',
+    ];
+    for (const c of yes) it(`approves ${c}`, () => { expect(isAutoApprovable('Bash', { command: c })).toBe(true); });
+  });
 });

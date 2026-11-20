@@ -99,4 +99,17 @@ async function apply(session, entry, evidence, cfg = {}, deps = {}) {
   return { handled: false, reason: NON_ADVANCING.includes(entry.kind) ? (ev ? `evidence ${ev.status}: human required` : 'no evidence: human required') : 'human required' };
 }
 
-module.exports = { PLAN_GATE_ID, DEFAULT_MAX_GATES, decide, recordEvidence, planStatus, apply };
+// Resolve the gates config for a tool call. Fails closed: if the config cannot be loaded or
+// validated, the policy is `strict` (every gate needs a human) and the error is returned so the
+// tool result can surface it. A missing getConfig (no config in play) keeps the defaults.
+function resolveGatesConfig(ctx) {
+  if (!ctx || typeof ctx.getConfig !== 'function') return { gates: {}, error: null };
+  try {
+    const c = ctx.getConfig();
+    return { gates: (c && c.config && c.config.gates) || {}, error: null };
+  } catch (e) {
+    return { gates: { policy: 'strict' }, error: (e && e.message) || String(e) };
+  }
+}
+
+module.exports = { resolveGatesConfig, PLAN_GATE_ID, DEFAULT_MAX_GATES, decide, recordEvidence, planStatus, apply };

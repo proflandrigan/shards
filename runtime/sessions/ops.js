@@ -7,6 +7,21 @@ const index = require('./index');
 
 function sessionsDir(root) { return path.join(root, '.shards', 'sessions'); }
 
+// Idempotent: add the session to INDEX.json if missing and bump its activity. A session already
+// marked ended or abandoned is left as is.
+function registerSession(root, sessionKey, hostName) {
+  const dir = sessionsDir(root);
+  index.appendSession(dir, { sessionId: sessionKey, agent: null, projectDir: root, projectName: path.basename(root), resumedFrom: null });
+  const e = index.getEntry(dir, sessionKey);
+  if (e && e.status === 'active') index.updateActivity(dir, sessionKey);
+  return e;
+}
+
+// Startup sweep: mark stale active rows abandoned and record the gate each was left at.
+function sweepStale(root) {
+  return index.sweepAbandoned(sessionsDir(root), { shardsDir: path.join(root, '.shards') });
+}
+
 function detectHost(env = process.env) {
   try {
     const c = require('../session/correlate');
@@ -107,4 +122,4 @@ async function endSession(root, { id, currentKey, state, deps = {}, reason = 'en
   return out;
 }
 
-module.exports = { sessionsDir, detectHost, resumeHints, resolveEntry, listRows, resumeInfo, collectOpenGates, pickSession, endSession };
+module.exports = { sessionsDir, registerSession, sweepStale, detectHost, resumeHints, resolveEntry, listRows, resumeInfo, collectOpenGates, pickSession, endSession };

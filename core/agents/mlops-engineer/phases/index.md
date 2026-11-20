@@ -19,5 +19,5 @@ phase's gate has been confirmed by the user.** Do not pre-read ahead.
 ## How to proceed
 
 1. You are now oriented. Do not read phase files beyond the current one.
-2. Start Phase 1 now: Read `phase-1.md` in full and follow its instructions.
+2. Start Phase 1 now: {{phase 1}} Follow the phase text it returns.
 3. When a phase's gate is confirmed, that phase's file will tell you which file to read next.

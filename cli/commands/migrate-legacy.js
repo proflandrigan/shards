@@ -190,7 +190,14 @@ function stripClaudeMd(text) {
   let removed = 0;
   let skipping = false;
   let inV2 = false;
+  let fence = null; // open code fence marker (``` or ~~~) inside a skipped block
   for (const line of lines) {
+    if (skipping) {
+      const m = /^\s*(```|~~~)/.exec(line);
+      if (m && !fence) fence = m[1];
+      else if (m && fence === m[1]) fence = null;
+      if (fence || m) { if (!BLOCK_LAST_LINES.includes(line.trim())) continue; }
+    }
     if (inV2) { out.push(line); if (line.includes('<!-- shards:end')) inV2 = false; continue; }
     if (line.includes('<!-- shards:begin')) { skipping = false; inV2 = !line.includes('<!-- shards:end'); out.push(line); continue; }
     if (BLOCK_HEADINGS.includes(line.trimEnd())) { skipping = true; removed++; continue; }

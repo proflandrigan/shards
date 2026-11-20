@@ -139,9 +139,14 @@ describe('non-dev and cli', () => {
     const def = path.join(cwd, 'adapters', 'claude-code');
     const other = path.join(cwd, 'elsewhere');
     for (const d of [def, other]) expect(compile({ bundleDeps: false, target: 'claude', outDir: d, dev: true }).errors).toEqual([]);
-    const u = spawnSync('node', [CLI, 'uninstall-dev', '--out', other], { cwd, encoding: 'utf8' });
+    const u = spawnSync('node', [CLI, 'uninstall-dev', '--target', 'claude', '--out', other], { cwd, encoding: 'utf8' });
     expect(u.status, u.stderr).toBe(0);
     expect(fs.existsSync(other)).toBe(false);
+    expect(fs.existsSync(path.join(def, '.shards-dev'))).toBe(true);
+    // --out with the default --target all is ambiguous: error, remove nothing
+    const amb = spawnSync('node', [CLI, 'uninstall-dev', '--out', def], { cwd, encoding: 'utf8' });
+    expect(amb.status).not.toBe(0);
+    expect(amb.stderr).toContain('--out');
     expect(fs.existsSync(path.join(def, '.shards-dev'))).toBe(true);
     // an unmarked --out dir is skipped, still without touching the default
     const plain = path.join(cwd, 'plain'); fs.mkdirSync(plain);

@@ -28,6 +28,15 @@ function requireProof(proof, what) {
   }
 }
 
+// A gate entry belongs to one agent/project/track; confirmed ids only count within that scope.
+// `scope` is a frame ({agent, project, track}). Entries from older gates.json lack nothing new.
+function sameScope(entry, scope) {
+  // Entries with no recorded agent predate scoping (or were hand-built): treat them as unscoped.
+  if (entry && !entry.agent) return true;
+  return !!entry && entry.agent === scope.agent && (entry.project || null) === (scope.project || null)
+    && (!entry.track || !scope.track || entry.track === scope.track);
+}
+
 async function requestGate(session, req) {
   const { frame, id, kind } = req || {};
   if (!frame || !frame.id) throw new Error('requestGate requires a frame object with an id');
@@ -43,8 +52,7 @@ async function requestGate(session, req) {
     // Phase gate ids (`<agent>-phase-N`) repeat across runs: a closed gate only counts for the same
     // agent/project/track. Otherwise the id starts over as a fresh gate (old one kept in `previous`).
     let previous;
-    const same = existing && existing.agent === frame.agent && (existing.project || null) === (project || null)
-      && (!existing.track || !track || existing.track === track);
+    const same = existing && sameScope(existing, { agent: frame.agent, project, track });
     if (existing && !same && (existing.status === 'pending' || existing.status === 'suspended')) {
       throw new Error(`gate ${id} is already ${existing.status} for ${existing.agent}${existing.project ? ` (project ${existing.project})` : ''}; resolve it or use a different gate id`);
     }
@@ -116,7 +124,7 @@ function defaultLoadConfig(root) { return require('../config').loadOrCreateConfi
 
 async function confirmGate(session, id, opts = {}, deps = {}) {
   const { decision, proof, note, reply } = opts;
-  // TODO(E11.3-E11.5): Stage 5 tiers supply `proof`; there is no agent-callable confirm tool (D8).
+  // TODO(E11.3-E11.5): Stage 5 tiers supply `proof`; `gate_confirm` (tier 3) and `gate_advance` (tier 2) exist, but each verifies human proof; no agent-callable path confirms without it (D8).
   requireProof(proof, 'confirmGate');
   if (decision !== 'confirmed' && decision !== 'changes_requested') throw new Error(`Invalid decision ${JSON.stringify(decision)}`);
   const state = storeOf(session);
@@ -237,6 +245,6 @@ function confirmedGates(session) {
 }
 
 module.exports = {
-  KINDS, ADVANCING_KINDS, requestGate, getGate, listGates, pendingForFrame, confirmGate,
+  KINDS, ADVANCING_KINDS, sameScope, requestGate, getGate, listGates, pendingForFrame, confirmGate,
   suspendGate, resumeGate, forceCloseGate, FORCE_CLOSABLE, formatConfirmedMessage, describeInterimConfirm, confirmedGates,
 };

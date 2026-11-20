@@ -29,7 +29,14 @@ describe('readGateState (v2 runtime gates.json)', () => {
     writeGates('s2', { 'b-phase-1': { id: 'b-phase-1', status: 'pending', kind: 'final', phase: 1, requested_at: '2026-01-01T00:00:00Z' } });
     const s = gs.readGateState(shards);
     expect(s).toMatchObject({ open: true, id: 'a-phase-2', session: 's1', phase: 2, kind: 'phase', agent: 'ml-engineer' });
-    expect(s.confirmCommand).toBe('shards gates confirm a-phase-2 --session s1');
+    expect(s.confirmCommand).toBe(`shards gates confirm a-phase-2 --session s1 --root ${path.dirname(shards)}`);
+    // The project root (parent of .shards) is quoted when it has special characters.
+    const spaced = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'gs sp ')), '.shards');
+    const d = path.join(spaced, 'state', 'sessions', 's1');
+    fs.mkdirSync(d, { recursive: true });
+    fs.writeFileSync(path.join(d, 'gates.json'), JSON.stringify({ gates: { g: { id: 'g', status: 'pending', requested_at: '2026-01-01T00:00:00Z' } } }));
+    expect(gs.readGateState(spaced).confirmCommand).toBe(`shards gates confirm g --session s1 --root '${path.dirname(spaced)}'`);
+    fs.rmSync(path.dirname(spaced), { recursive: true, force: true });
     expect(s.pending).toHaveLength(2);
     expect(s.history.map((h) => h.id)).toEqual(['a-phase-1']);
   });

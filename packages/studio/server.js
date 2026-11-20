@@ -310,6 +310,20 @@ const GATE_ENFORCE = process.env.SHARDS_GATE_ENFORCE !== '0';
 const artifactIndex = eventsWatcher.createArtifactIndex();
 let artifactTailer = null;
 
+// An event path is only read when its realpath (or, if it does not exist yet, its
+// lexical path) stays inside the project.
+function insideProject(p) {
+  if (typeof p !== 'string' || !p) return false;
+  const within = (x, root) => x === root || x.startsWith(root + path.sep);
+  const abs = path.resolve(p);
+  if (!within(abs, PROJECT_DIR)) return false;
+  try {
+    return within(fs.realpathSync(abs), fs.realpathSync(PROJECT_DIR));
+  } catch (e) {
+    return e && e.code === 'ENOENT';
+  }
+}
+
 function replayPanelEvent(p) {
   // Same shape handlePanelEvent broadcasts for a panel-open event, without file watchers.
   let data = p.data;
@@ -330,8 +344,10 @@ function handleArtifactEvent(ev) {
     return;
   }
   if (!eventsWatcher.PANEL_TYPES.includes(ev.type) || typeof ev.path !== 'string' || !ev.path) return;
+  const payload = eventsWatcher.eventToPanelPayload(ev, PROJECT_DIR);
+  if (!insideProject(payload.source)) return;
   artifactIndex.apply(ev);
-  handlePanelEvent(eventsWatcher.eventToPanelPayload(ev, PROJECT_DIR));
+  handlePanelEvent(payload);
 }
 
 function startArtifactWatcher() {
@@ -634,6 +650,7 @@ function handlePanelEvent(data) {
       let resolvedData = panelData !== undefined ? panelData : null;
 
       // If source file path provided, read it and watch for changes
+      if (source && !insideProject(source)) break;
       if (source) {
         const content = readFileSafe(source);
         if (content !== null) {
@@ -1057,13 +1074,67 @@ function rejectAuth(res, cors) {
   jsonResponse(res, cors, 401, { error: 'Unauthorized' });
 }
 
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]']);
+
+function splitHostHeader(value) {
+  const m = /^(\[[^\]]+\]|[^:]+)(?::(\d+))?$/.exec(String(value || '').trim().toLowerCase());
+  return m ? { host: m[1], port: m[2] || null } : null;
+}
+
+/**
+ * Guard against cross-origin takeover and DNS rebinding. The Host header must name a
+ * loopback host (or the configured bind host) on the port the request arrived on, and
+ * an Origin header, when present, must be that same origin.
+ */
+function requestOriginAllowed(req) {
+  const hostHeader = req.headers.host;
+  const h = splitHostHeader(hostHeader);
+  if (!h) return false;
+  const localPort = req.socket && req.socket.localPort;
+  const defaultPort = req.socket && req.socket.encrypted ? '443' : '80';
+  const port = h.port || defaultPort;
+  const bindHost = BIND_ADDR === '0.0.0.0' || BIND_ADDR === '::' ? null : String(BIND_ADDR).toLowerCase();
+  const exposed = BIND_ADDR === '0.0.0.0' || BIND_ADDR === '::';
+  if (!exposed) {
+    if (localPort && String(localPort) !== port) return false;
+    const okHost = LOOPBACK_HOSTS.has(h.host) || h.host === bindHost || h.host === `[${bindHost}]`;
+    if (!okHost) return false;
+  }
+  const origin = req.headers.origin;
+  if (origin !== undefined) {
+    let o;
+    try { o = new URL(origin); } catch { return false; }
+    if (o.protocol !== 'http:' && o.protocol !== 'https:') return false;
+    if (o.host.toLowerCase() !== String(hostHeader).trim().toLowerCase()) return false;
+  }
+  return true;
+}
+
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.plot.ly https://cdn.jsdelivr.net",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net",
+  "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
+  "img-src 'self' data: blob:",
+  "connect-src 'self' https://cdn.jsdelivr.net",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
 function createHandler() {
   return async (req, res) => {
-    const cors = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    };
+    // No CORS headers: the page is only ever used at its own origin. Cross-origin
+    // callers and DNS-rebinding hosts are refused below.
+    const cors = {};
+
+    if (!requestOriginAllowed(req)) {
+      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Forbidden: unexpected Host or Origin');
+      return;
+    }
 
     // Log client IP if trust-proxy is enabled
     if (TRUST_PROXY) {
@@ -1074,7 +1145,7 @@ function createHandler() {
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
 
     if (req.method === 'OPTIONS') {
-      res.writeHead(200, cors);
+      res.writeHead(204);
       res.end();
       return;
     }
@@ -1104,7 +1175,7 @@ function createHandler() {
               '</head>');
           }
         }
-        res.writeHead(200, { ...cors, 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, { ...cors, 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': CSP, 'X-Content-Type-Options': 'nosniff' });
         res.end(html);
       } catch {
         res.writeHead(500);
@@ -1344,6 +1415,7 @@ function createHandler() {
       // Replay current artifacts so a fresh browser sees them.
       for (const ev of artifactIndex.list()) {
         const p = eventsWatcher.eventToPanelPayload(ev, PROJECT_DIR);
+        if (!insideProject(p.source)) continue;
         try {
           res.write(`data: ${JSON.stringify(replayPanelEvent(p))}\n\n`);
         } catch {}

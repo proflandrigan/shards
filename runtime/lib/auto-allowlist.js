@@ -22,15 +22,12 @@ const READ_ONLY_TOOLS = new Set([
 // Use the most specific prefix (e.g. "dbt show" not just "dbt") so that
 // destructive subcommands like "dbt run" or "dbt build" are NOT matched.
 const READ_ONLY_BASH_PREFIXES = [
-  // dbt — read-only subcommands only
+  // dbt — only subcommands that do not install packages or write project
+  // artifacts. `deps` installs packages; `compile`/`parse`/`ls`/`list`/
+  // `source freshness` write target/ (manifest, compiled SQL, sources.json), so
+  // they fall through to the normal prompt. `show` and `debug` only touch logs/.
   'dbt show',
-  'dbt ls',
-  'dbt list',
-  'dbt parse',
-  'dbt compile',
-  'dbt deps',
   'dbt debug',
-  'dbt source freshness',
 
   // BigQuery CLI — metadata reads
   'bq show',
@@ -39,29 +36,14 @@ const READ_ONLY_BASH_PREFIXES = [
 
   // git — already in the readonly preset, but listed here too as a
   // belt-and-braces guarantee for users who edited their settings.json.
-  // Only read-only subcommand forms: bare `git branch`/`git tag`/`git remote`
-  // also match -d/-D/-m/-M, add/remove/set-url, and positional-arg creation.
+  // `git branch`/`git tag`/`git remote` are NOT prefix-matched: their argument
+  // forms are checked by gitListingIsReadOnly() below.
   'git status',
   'git log',
   'git diff',
   'git show',
   'git rev-parse',
   'git stash list',
-  'git branch --list',
-  'git branch -a',
-  'git branch -r',
-  'git branch -v',
-  'git branch -vv',
-  'git branch --remotes',
-  'git branch --merged',
-  'git branch --no-merged',
-  'git branch --show-current',
-  'git branch --contains',
-  'git tag --list',
-  'git tag -l',
-  'git remote -v',
-  'git remote show',
-  'git remote get-url',
 
   // python/pip metadata
   'pip list',
@@ -75,8 +57,80 @@ const READ_ONLY_BASH_PREFIXES = [
   'npm view',
 
   // generic file inspection
+  // (`file` is arg-checked by fileIsReadOnly(): -C/-m write or load a magic file)
   'ls', 'cat', 'head', 'tail', 'wc', 'file', 'stat',
 ];
+
+// Whitespace tokenizer that honors simple quotes. Compound/substitution forms
+// are already vetoed before this runs.
+function tokenize(cmd) {
+  const out = []; let cur = ''; let has = false;
+  for (let i = 0; i < cmd.length; i++) {
+    const c = cmd[i];
+    if (c === "'" || c === '"') {
+      const e = cmd.indexOf(c, i + 1);
+      if (e === -1) return null;
+      cur += cmd.slice(i + 1, e); has = true; i = e;
+    } else if (/\s/.test(c)) {
+      if (has) { out.push(cur); cur = ''; has = false; }
+    } else { cur += c; has = true; }
+  }
+  if (has) out.push(cur);
+  return out;
+}
+
+// `file -C` compiles a magic file (writes it); `-m`/`--magic-file` selects one.
+function fileIsReadOnly(args) {
+  for (const a of args) {
+    if (a === '--compile' || a === '--magic-file' || a.startsWith('--magic-file=')) return false;
+    if (/^-[A-Za-z]+/.test(a) && !a.startsWith('--') && /[Cm]/.test(a)) return false;
+  }
+  return true;
+}
+
+// Read-only forms of git branch / tag / remote. Anything unrecognised is
+// rejected: unknown flags (-d/-D/-m/-M/-c/-C/-u/-f/--delete/--move/--copy/
+// --set-upstream-to/--edit-description/--force ...) and bare positionals, which
+// CREATE a ref unless they are list patterns (-l/--list) or the value of a
+// commit-taking filter (--contains/--merged/--no-merged/--no-contains/--points-at).
+function gitListingIsReadOnly(sub, args) {
+  if (sub === 'remote') {
+    let i = 0;
+    while (i < args.length && (args[i] === '-v' || args[i] === '--verbose')) i++;
+    if (i === args.length) return true;
+    const verb = args[i];
+    const rest = args.slice(i + 1);
+    if (verb === 'show') return rest.every((a) => a === '-n' || !a.startsWith('-'));
+    if (verb === 'get-url') return rest.every((a) => a === '--push' || a === '--all' || !a.startsWith('-'));
+    return false;
+  }
+  const VALUE_FLAGS = new Set(['--contains', '--no-contains', '--merged', '--no-merged', '--points-at']);
+  const LONG_OK = new Set(['--list', '--all', '--remotes', '--verbose', '--show-current', '--ignore-case',
+    '--color', '--no-color', '--column', '--no-column', '--abbrev', '--no-abbrev', ...VALUE_FLAGS]);
+  const LONG_EQ_OK = /^--(sort|format|abbrev|color|column|contains|no-contains|merged|no-merged|points-at)=/;
+  const SHORT_OK = sub === 'branch' ? /^[arvli]+$/ : /^(?:[li]+|n\d*)$/; // tag: -l -i -n[num]
+  let list = false; let showCurrent = false; let positional = 0; let expectValue = false;
+  for (const a of args) {
+    if (expectValue && !a.startsWith('-')) { expectValue = false; continue; }
+    expectValue = false;
+    if (a.startsWith('--')) {
+      if (LONG_EQ_OK.test(a)) continue;
+      if (!LONG_OK.has(a)) return false;
+      if (a === '--list') list = true;
+      if (a === '--show-current') showCurrent = true;
+      if (VALUE_FLAGS.has(a)) expectValue = true;
+    } else if (a.startsWith('-') && a.length > 1) {
+      const body = a.slice(1);
+      if (!SHORT_OK.test(body)) return false;
+      if (/l/.test(body) || (sub === 'tag' && body[0] === 'n')) list = true;
+    } else {
+      positional++;
+    }
+  }
+  if (showCurrent && positional) return false;
+  if (positional && !list) return false;
+  return true;
+}
 
 // Bash patterns that indicate destructive intent. Even if a more permissive
 // prefix matches above, these veto the auto-approval. Belt-and-braces.
@@ -185,6 +239,14 @@ function isAutoApprovable(toolName, toolInput) {
       return false;
     }
   }
+
+  // Argument-checked commands (prefix matching alone would accept side effects).
+  const toks = tokenize(cmd);
+  if (!toks) return false;
+  if (toks[0] === 'git' && ['branch', 'tag', 'remote'].includes(toks[1])) {
+    return gitListingIsReadOnly(toks[1], toks.slice(2));
+  }
+  if (toks[0] === 'file' && !fileIsReadOnly(toks.slice(1))) return false;
 
   // Prefix match against the read-only list.
   for (const prefix of READ_ONLY_BASH_PREFIXES) {

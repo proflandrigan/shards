@@ -6,6 +6,7 @@
 //   unknown : looks like a write but at least one target could not be determined
 //   exec    : runs code from a file / package script (counts only while a gate is pending)
 const path = require('path');
+const os = require('os');
 
 const FILE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
 
@@ -89,7 +90,14 @@ function flagValue(args, shorts, longs) {
 // pending-gate check, so leased workers can still run tests/scripts), cwdChange (cd/pushd/popd seen).
 function analyzeSegment(seg) {
   const targets = []; let unknown = false; let write = false; let exec = false; let cwdChange = false;
-  const add = (p) => { if (!p || SKIP_TARGET.test(p)) return; if (/[$`*?]/.test(p)) { unknown = true; return; } targets.push(p); };
+  const add = (p) => {
+    if (!p || SKIP_TARGET.test(p)) return;
+    if (/[$`*?]/.test(p)) { unknown = true; return; }
+    // Leading tilde: `~`/`~/x` is the home directory; `~user`, `~+`, `~-` we cannot resolve.
+    if (p === '~' || p.startsWith('~/')) p = path.join(os.homedir(), p.slice(1));
+    else if (p[0] === '~') { unknown = true; return; }
+    targets.push(p);
+  };
   const out = () => ({ write, targets, unknown, exec, cwdChange });
   for (const r of seg.redirects) { if (SKIP_TARGET.test(r)) continue; write = true; add(r); }
   let w = seg.words.filter((x) => x !== ')' && x !== '}');

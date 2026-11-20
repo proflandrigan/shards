@@ -25,7 +25,7 @@ auto-verify (E11.12) needs every tool call; the gate-tool-only fast exit stays i
   gateCalls record carries `decision: 'ask'`. On Codex `ask` is unsupported (CX-6): returns '' and records `decision: ''`
   (tier 2 is off on Codex). `gate_confirm` is recorded only.
 - E11.12: for non-gate tools, `runtime/auto-verify` `isActive(session)` is checked first (cheap, lock-free, no writes);
-  only when a block is active does the shim `await check(...)` and print `permissionDecision: "allow"`. Both hosts. Gate tools are never auto-approved.
+  only when a block is active does the shim `await check(...)` and print `permissionDecision: "allow"`. Both hosts. Gate tools are never auto-approved. What it approves is `runtime/lib/auto-allowlist.js`: the read-only tools (`Read`, `Glob`, `Grep`, `WebSearch`), single (non-compound) Bash commands from a hardcoded read-only list, and SELECT-only warehouse CLI calls. Arguments are checked per command: `git branch`/`tag`/`remote` only in listing forms, `file` without `-C`/`-m`, and only `dbt show`/`dbt debug` (other dbt subcommands install packages or write `target/`).
 - E11.6 enforcement (`hooks/lib/enforce.js`, runtime state only): for write/exec tools, `deny` while the active frame has a pending gate (unless the caller's `agent_id` is bound to a fan-out lease slice), deny writes outside a bound worker's slice, deny lead writes inside a leased slice; `fanout_claim` calls bind agent_id to a slice. `SHARDS_GATE_ENFORCE=0` disables the deny paths.
 - Nothing emitted adds an allow rule for gate tools.
 

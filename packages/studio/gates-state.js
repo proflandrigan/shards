@@ -60,7 +60,10 @@ function brief(g) {
  * `open` is true when any gate is pending/suspended; the flat fields describe the
  * most recently requested one.
  */
+const shellQuote = (s) => (/^[A-Za-z0-9_\/.:@%+=,-]+$/.test(s) ? s : `'${s.replace(/'/g, `'\\''`)}'`);
+
 function readGateState(shardsDir) {
+  const projectDir = path.dirname(path.resolve(shardsDir));
   const all = readAllGates(shardsDir);
   const pending = all.filter((g) => OPEN_STATUSES.has(g.status))
     .sort((a, b) => ts(b.requested_at) - ts(a.requested_at));
@@ -79,7 +82,7 @@ function readGateState(shardsDir) {
     agent: top.agent || null,
     summary: top.summary || null,
     opened_at: top.requested_at || null,
-    confirmCommand: `shards gates confirm ${top.id} --session ${top.session}`,
+    confirmCommand: `shards gates confirm ${top.id} --session ${top.session} --root ${shellQuote(projectDir)}`,
     pending: pending.map(brief),
     history,
   };

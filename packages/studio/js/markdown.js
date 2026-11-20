@@ -7,7 +7,7 @@
 
   renderer.code = function(code, lang) {
     var highlighted = highlightCode(esc(code), lang || '');
-    return '<div class="code-block-wrapper"><button class="copy-code-btn" onclick="copyCodeBlock(this)">Copy</button><pre><code>' + highlighted + '</code></pre></div>';
+    return '<div class="code-block-wrapper"><button class="copy-code-btn">Copy</button><pre><code>' + highlighted + '</code></pre></div>';
   };
 
   marked.setOptions({
@@ -17,9 +17,18 @@
   });
 })();
 
+// Copy buttons carry no inline handler (sanitizing strips them); one delegated listener serves all.
+document.addEventListener('click', function(e) {
+  var t = e.target;
+  if (t && t.classList && t.classList.contains('copy-code-btn')) copyCodeBlock(t);
+});
+
 function renderMarkdown(md) {
   if (!md) return '';
-  return marked.parse(md);
+  var html = marked.parse(md);
+  // Untrusted markdown (READMEs, notebooks, agent output): never inject raw HTML.
+  if (typeof DOMPurify === 'undefined') return esc(String(md));
+  return DOMPurify.sanitize(html, { FORBID_TAGS: ['style', 'form', 'iframe', 'object', 'embed'] });
 }
 
 // ═══════════════════════════════════════════════════════════════

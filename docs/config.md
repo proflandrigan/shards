@@ -6,6 +6,8 @@
 
 - **Created automatically on first use.** If the file is missing, the runtime writes a commented template with git-only defaults (`loadOrCreateConfig` in `runtime/config/index.js`). No setup is required to start.
 - **Never rewritten once it exists.** The runtime reads the file but never re-serializes it, so your comments, ordering and formatting are preserved. Edit it freely.
+- **Edits apply on the next tool call.** The server re-reads the file whenever its mtime or size changes; no restart is needed. A file that fails validation is never cached.
+- **Config errors fail closed for gates.** If the file cannot be loaded, `gate_request` and `load_phase` treat the gate policy as `strict` (a human confirms every gate; nothing auto-confirms) and include the `ConfigError` text in their result (`config_error` in `gate_request`'s data, a `WARNING` line in both texts).
 - **Validated on every load.** Invalid YAML, unknown keys, bad values or model names outside `tiers` raise a `ConfigError` that lists every problem.
 
 The schema is `core/schema/shards-config.schema.json`. Unknown top-level keys are rejected.

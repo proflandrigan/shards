@@ -34,7 +34,7 @@ function usage() {
   lines.push('sessions: sessions list|show|resume|end [id] [--root d] [--status s] [--limit n] [--json]');
   lines.push('sync: sync --status [--json] [--all] [--root d]');
   lines.push('connect: connect [--host claude|codex] [--only atlassian,drive,github] [--json] [--root d] [--home d]  (read-only; prints commands, never runs them)');
-  lines.push('install: install (--project | --permissions | --claude-md | --agents-md | --codex) [--root d] [--preset name] [--remove] [--dry-run] [--force]  (--remove is the uninstall: it removes only what install added)');
+  lines.push('install: install (--project | --permissions | --claude-md | --agents-md | --codex) [--root d] [--preset <file>] [--remove] [--dry-run] [--force]  (--remove is the uninstall: it removes only what install added)');
   lines.push('  --codex: [mcp_servers.shards] in Codex config.toml + shards-<agent> profiles [--codex-home d] [--codex-config file] [--server path | --plugin-dir d]');
   lines.push('migrate: migrate [--export-ledger] [--root d] [--out d] [--dry-run] [--force]  (full legacy migrate; --export-ledger = ledger step only)');
   return lines.join('\n');
@@ -80,6 +80,7 @@ function runUninstallDev(argv) {
     else { console.error(`shards uninstall-dev: unknown option '${argv[i]}'\n\n${usage()}`); return 2; }
   }
   if (!['claude', 'codex', 'all'].includes(target)) { console.error(`shards uninstall-dev: --target must be claude|codex|all`); return 2; }
+  if (out && target === 'all') { console.error('shards uninstall-dev: --out names one directory; pass --target claude or --target codex with it'); return 2; }
   // --out names exactly one dir (whatever its target); never fall back to the default adapters/<target> dirs.
   const dirs = out ? [path.resolve(out)] : (target === 'all' ? ['claude', 'codex'] : [target]).map(defaultOutDir);
   const fs = require('fs');

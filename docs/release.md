@@ -57,7 +57,7 @@ Run with `npm run release:dry-run` or `bash scripts/release-dry-run.sh`. Set `KE
 2. **Contents**: `scripts/pack-check.js` (also `npm run pack:check`, run in `ci.yml` and `release.yml`) checks that every file in each tarball is in the explicit allow-list, no forbidden file (tests, `node_modules`, `.claude/`) is present, every required path is present, every `bin` target is packed, and the transitive relative-`require` closure of every bin, `runtime/server.js` and `hooks/*.js` is packed. A bin that starts requiring an unshipped file fails here.
 3. **Manifests**: each package's bins exist and are executable, `publishConfig.tag` is `next`, and the version matches `2.0.0-next.N`.
 4. **Fresh install**: both tarballs install into a clean project. If the registry install fails, it retries offline, then falls back to extracted tarballs with symlinked `node_modules` (the script prints the mode it used; in fallback mode dependencies are not verified from the registry).
-5. **CLI**: `shards --help` lists exactly `build`, `doctor`, `gates`, `install`, `migrate`, `sessions`, `uninstall-dev`.
+5. **CLI**: `shards --help` lists exactly `build`, `connect`, `doctor`, `gates`, `install`, `migrate`, `sessions`, `sync`, `uninstall-dev`.
 6. **Doctor**: `shards doctor` runs in an empty non-git directory and does not return a failure.
 7. **Build**: `shards build --target claude --dev` from the installed package produces `.mcp.json` and `hooks/hooks.json`, and the MCP and hook paths point at files that exist inside the installed package.
 8. **Deprecated bins**: `shards-gates`, `shards-sessions`, `shards-ui` and `tools/install.js` each print their v2 replacement.

@@ -13,14 +13,14 @@ A gate is a human checkpoint at the end of a phase. The agent asks for one with 
 | `runtime/reground.js` | Re-ground block builder used by `activate` and `load_phase`. |
 | `cli/commands/doctor.js` | `shards doctor`: git and gate-tool permission checks, `--fix` for `.gitignore` and stuck commits. See `docs/doctor.md`. |
 | `core/schema/gate-request.schema.json` | Input schema for `gate_request`. |
-| `runtime/gates/machine.js` | State machine: `requestGate`, `confirmGate`, `suspendGate` and `resumeGate` (internal), `getGate`, `listGates`, `pendingForFrame`. `runtime/gates/index.js` re-exports it. |
+| `runtime/gates/machine.js` | State machine: `requestGate`, `confirmGate`, `suspendGate` and `resumeGate`, `getGate`, `listGates`, `pendingForFrame`. `runtime/gates/index.js` re-exports it. |
 | `runtime/git/index.js` | Gate commits: `commitGate`, `replayPending`, `listPending`, `gitState`, `gateRef`, `makeDenyMatcher`. |
 | `runtime/git/leases.js` | `getLeasedPaths()`. Returns the paths of active lease slices (`listActive`), and `commitGate` excludes them. |
 | `runtime/lib/validation.js` | Parses the last `## Validation` section for `validates`. |
 | `cli/commands/gates.js` | Interim operator CLI: `gates status`, `gates confirm` (section 7). |
 | `runtime/state/store.js` | Locked, atomic writes of the session state. |
 
-What is wired today: `gate_request` opens gates, and `gates confirm` confirms them. The confirm path runs the git commit. Only those two write `gates.json`. The `return` tool and the status header read it (`pendingGatesFor` in `runtime/stack.js`). The PreToolUse hook blocks write/exec calls from unbound callers while a gate is pending (section 8, and `docs/delegation.md` section 3.1).
+What is wired today: `gate_request` opens gates, and `gate_confirm`, `gate_advance`, tier 1 elicitation and `gates confirm` confirm them. The confirm path runs the git commit. Suspend and resume (`gate_suspend`, `gate_resume`) and `gate_force_close` also write `gates.json`. The `return` tool and the status header read it (`pendingGatesFor` in `runtime/stack.js`). The PreToolUse hook blocks write/exec calls from unbound callers while a gate is pending (section 8, and `docs/delegation.md` section 3.1).
 
 ## 2. Gate entry schema
 
@@ -56,8 +56,8 @@ Stored at `<root>/.shards/state/sessions/<sessionKey>/gates.json` as `{gates: {<
 | `changes_requested` | `requestGate`, same id | `pending` | `result: reopened`. `requested_at` resets. `summary` and `record_ref` are replaced when given. |
 | `pending` | `confirmGate`, `confirmed` | `confirmed` | Runs the commit (section 6). |
 | `pending` | `confirmGate`, `changes_requested` | `changes_requested` | `note` stored. No commit. |
-| `pending` | `suspendGate` (internal) | `suspended` | Requires `proof`. |
-| `suspended` | `resumeGate` (internal) | `pending` | Requires `proof`. `suspended_from` is removed. |
+| `pending` | `suspendGate` (`gate_suspend`) | `suspended` | Requires `proof`. |
+| `suspended` | `resumeGate` (`gate_resume`) | `pending` | Requires `proof` (`agent-resume`, self-supplied). `suspended_from` is removed. |
 | `confirmed` | anything | (terminal) | See idempotency below. |
 
 Rules enforced in code:
@@ -66,8 +66,8 @@ Rules enforced in code:
 - **One open gate per frame.** `requestGate` throws if the frame already has another gate in `pending` or `suspended`. The error names it. A `changes_requested` gate does not count, so a second gate can open on that frame.
 - **Suspended gates block their id.** `requestGate` on a suspended id throws `gate <id> is suspended; resume it first`.
 - **Invalid transitions throw.** `confirmGate` on an unknown id, or on a gate that is not `pending` (other than the confirmed repeat above), throws.
-- **Proof is shape-checked only.** `requireProof` checks that `proof` is an object with a non-empty string `tier`. The tier is not verified. `TODO(E11.3-E11.5)`.
-- **Suspend and resume have no callers.** They are internal functions with no tool or CLI exposure. `TODO(E5.5)`.
+- **The state machine shape-checks proof only.** `requireProof` checks that `proof` is an object with a non-empty string `tier`; the machine does not verify the tier. Verification happens in the callers: tier 1 (`tier1.js`), tier 2 (`tier2.js`) and tier 3 (`tier3.js`) produce the proof for confirmation (section 8 below), and `gate_suspend` requires tier 1 or tier 3 proof. The interim operator CLI writes its own `{tier, user, ts}` proof.
+- **Suspend and resume are tools.** `gate_suspend` needs human proof (tier 1 form, else a verbatim chat reply via `user_reply`). `gate_resume` needs no human proof: its handler passes a self-supplied `proof: {tier: 'agent-resume'}` to `resumeGate`, so the agent can resume on its own once it has re-entered the owning agent (`activate` lists suspended gates for that agent and tells it to call `gate_resume`). The gate is re-homed to the current frame and returns to `pending`; confirming it afterwards needs a fresh user message (the tier 3 high-water mark is reset).
 
 ## 4. Kinds
 
@@ -116,7 +116,11 @@ Response: a text block holding the prose, followed by a JSON block. The JSON is 
 
 The prose for a pending gate says to stop and wait, and gives the interim `gates confirm` command. Calls that open, reopen or find a pending gate also run a best-effort `replayPending`, so pending commits can replay here. An `already_confirmed` reply returns before the replay runs.
 
-`copy_queue` is always `[]`. `TODO(E6.8)`.
+Gate ids repeat across agents, projects and tracks. A confirmed gate satisfies `gate_request` (`already_confirmed`) and `load_phase` only for the active frame's agent, project and track. A confirmed gate from another project is kept in `previous`, and the id starts over as a fresh pending gate.
+
+If `shards.config.yaml` fails to load, `gate_request` and `load_phase` treat the policy as `strict` (nothing auto-confirms) and report the error in the result (`config_error` plus a `WARNING` line). Edits to `shards.config.yaml` apply on the next tool call: the runtime reloads it when its mtime or size changes.
+
+`copy_queue` lists the external copies queued by failed `copy_report` calls (`docs/config.md`, "External copies"). It is `[]` when nothing is queued. A line of text and a `copy_stuck` list are added when copies have failed 5 times.
 
 ## 6. Git outcomes
 
@@ -236,7 +240,7 @@ The project root may be a subdirectory of the git toplevel. Index paths are conv
 
 ## 7. Interim confirm (Milestone A)
 
-The operator CLI is interim. It is replaced by the Stage 5 tiers (E11.3 to E11.5) and E11.13. No agent can call it.
+The operator CLI is interim and remains the operator-side fallback next to the Stage 5 tiers (section 8 below, E11.13). No agent can call it.
 
 ```
 npx @proflandrigan/shards@next gates status  [--session <key>] [--root <dir>]
@@ -258,12 +262,12 @@ Exit codes: 0 success, 1 gate or confirm error, 2 usage error.
 
 | Item | Status | Ref |
 |------|--------|-----|
-| Confirmation tiers. Proof is shape-checked only. | Not started | `TODO(E11.3-E11.5)` |
+| Confirmation tiers 1 to 3 (`tier1.js`, `tier2.js`, `tier3.js`; `gate_advance`, `gate_confirm`). The state machine itself still only shape-checks `proof`. | Done (section 8 below) | |
 | Replacement of the interim CLI | Not started | `TODO(E11.13)` |
-| Suspend and resume exposed to any caller | Internal only | `TODO(E5.5)` |
-| Suspended gates block frame `return`. Today only `pending` gates do (`runtime/stack.js` `pendingGatesFor`), so a suspended gate does not stop a pop. | Gap | `TODO(E5.5)` |
+| Suspend and resume exposed as tools (`gate_suspend`, `gate_resume`; `activate` calls out suspended gates on re-entry) | Done. `gate_resume` takes no human proof (self-supplied `agent-resume`). | |
+| Suspended gates and frame `return`. Only `pending` gates block a pop (`runtime/stack.js`); a suspended gate does not, by design (`gate_suspend` exists to allow leaving). | As designed | |
 | `load_phase` compaction and version-change re-ground | Not built. Only `activate` and `load_phase` return a re-ground block. | `TODO(E11.7)` (section 9) |
-| Copy queue. `copy_queue` is always `[]`. | Not started | `TODO(E6.8)` |
+| Copy queue (`copy_report`, `copy_queue`/`copy_stuck` in `gate_request`). The re-ground block does not include it. | Done (E6.8) | |
 | Hook enforcement (block tool calls while a gate is pending). `hooks/lib/enforce.js` denies write/exec calls from unbound callers while the top frame has a pending gate. Bound fan-out workers are exempt (`docs/delegation.md` section 3.1). | Partly done (E5.9) | `TODO(E11.6)` for the remainder |
 | Lease exclusion. `getLeasedPaths` returns active lease paths, and `commitGate` excludes them. | Done (E5.9) | |
 | Replay at session end | Not implemented. `shards doctor` exists (`docs/doctor.md`); `doctor --fix` replays stuck records. | `TODO(owner: proflandrigan)` |
@@ -306,8 +310,9 @@ Loading phase N requires the advancing gate of the phase immediately before N, i
 | Index position 0 (or not found in the index) | `<agent>-phase-0` (dual-track: also `<agent>-<track>-phase-0`), **only if a gate record with that id already exists** in `gates.json`. Otherwise none. |
 
 - **Advancing kinds** are `phase`, `final`, `execute` and `handoff`. `checkpoint` and `confirm` never count.
-- **Which gate in a file.** The first advancing gate in the phase file's source wins. Two forms are read: the `::GATE:: id=... kind=...` fence (what core phase files use today) and the `{{gate ...}}` macro (no core file uses it yet). A fence needs an `id` without `<` or `>`. A macro's id is `<agent>[-<track>]-phase-<N>` unless `id=` is given.
+- **Which gate in a file.** The first advancing gate in the phase file's source wins. Two forms are read: the `{{gate ...}}` macro (what core phase files use) and the legacy `::GATE:: id=... kind=...` fence, accepted only as a fallback for older phase text. A fence needs an `id` without `<` or `>`. A macro's id is `<agent>[-<track>]-phase-<N>` unless `id=` is given.
 - **Dual-track ids** are used verbatim from the fence, for example `data-engineer-quick-phase-1`.
+- **Scope.** A confirmed gate counts only for the active frame's agent, project and track (see section 5). If the config fails to load, the policy is `strict` and the result carries `config_error` and a `WARNING` line.
 - **Confirmed** means a record with the id (or, failing an id match, the same agent, phase, and a matching or absent track) has `status: confirmed`. Among candidates a confirmed one wins. Otherwise the first candidate's status is reported. No record gives `missing`.
 - **Refusal text** (exact form; `prev` is the preceding phase, `0` for the first-phase rule, and `status` is `missing`, `pending`, `changes_requested` or `suspended`):
 
@@ -316,9 +321,9 @@ Loading phase N requires the advancing gate of the phase immediately before N, i
   ```
 
   The agent cannot confirm the gate itself (D8). The user runs the command.
-- **Policy.** `gates.policy` in `shards.config.yaml` is read. `strict` and `phase` behave identically here. `plan` is treated as `phase`. `TODO(E11.8)`.
+- **Policy.** `gates.policy` is read but does not change `load_phase`: under every policy (`strict`, `phase`, `plan`) the previous advancing gate must be confirmed. Under `plan`, notice-recorded gates count as confirmed (section 8 below).
 
-Example: `data-engineer` quick phase 2 requires `data-engineer-quick-phase-1` to be confirmed, because `phases_quick/phase-1.md` declares that `::GATE:: kind=phase` fence.
+Example: `data-engineer` quick phase 2 requires `data-engineer-quick-phase-1` to be confirmed, because `phases_quick/phase-1.md` declares a `{{gate kind=phase}}` macro, whose derived id is that one.
 
 ### 9.3 Host-target rendering
 
@@ -355,7 +360,7 @@ Pending/suspended gates:
 ```
 
 - The `sha=` and `outcome=` parts appear only when the gate has a commit object.
-- The copy queue is not included. `TODO(E6.8)`.
+- The copy queue is not included (it is returned by `gate_request` instead).
 
 ### 9.6 Re-ground events
 
@@ -363,7 +368,7 @@ Pending/suspended gates:
 |-------|---------------|---------|
 | `activate` (switch) | `runtime/tools/activate.js`, returned in its `reground` field | Full block (9.5) |
 | `load_phase` | Appended to the phase text | Full block (9.5) |
-| `compact` | Not wired | Empty string. `TODO(E11.7)`: SessionStart compact/resume shim and trimmed block. |
+| `compact` / `resume` | `hooks/session-start.js` via `regroundHook` | Full block (9.5), or empty when the session has no frames and no gates. |
 | `version_change` | Not wired | Empty string. `TODO(E11.7)`: once-per-version re-ground. |
 
 Other tool responses carry only the state header (`docs/runtime.md` section 4).

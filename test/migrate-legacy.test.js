@@ -34,6 +34,18 @@ function tree(dir = tmp, acc = []) {
 }
 const gates = () => new StateStore(tmp, 'legacy-import').read('gates').gates;
 
+describe('stripClaudeMd fences', () => {
+  it('a heading inside a code fence does not end the skip; a following h1 survives', () => {
+    const md = ['# P', '', '## Shards — Agent Suite', 'text', '```', '## not a heading', '```', 'more v1 text', '~~~', '# also not', '~~~', '', '# Keep me', 'user content', ''].join('\n');
+    const r = stripClaudeMd(md);
+    expect(r.removed).toBe(1);
+    expect(r.text).not.toContain('not a heading');
+    expect(r.text).not.toContain('more v1 text');
+    expect(r.text).not.toContain('also not');
+    expect(r.text).toContain('# Keep me\nuser content');
+  });
+});
+
 describe('shards migrate (full)', () => {
   for (const fmt of ['single-slot', 'v2-sessions']) {
     it(`migrates a legacy fixture cleanly (${fmt} gate state) and re-run is a no-op`, async () => {

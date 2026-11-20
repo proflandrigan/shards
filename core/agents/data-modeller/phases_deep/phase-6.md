@@ -37,7 +37,7 @@ to validate" in the evidence row.
 > **Auto-verify mode**: each validation sweep is a bulk read-only verification stretch — the
 > kind that otherwise spams permission prompts. Open `{{auto_verify start tool_budget=40 ttl=900}}`
 > at the start of a post-build sweep and `{{auto_verify end}}` at the end. The runtime
-> auto-approves `dbt show`, `dbt ls`, and SELECT-only warehouse-CLI queries while
+> auto-approves `dbt show`, `dbt debug`, and SELECT-only warehouse-CLI queries while
 > the block is open; `dbt build` and any write still prompt as normal. See
 > [`protocols/auto_verify_mode.md`](../../../protocols/auto_verify_mode.md).
 

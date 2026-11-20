@@ -35,7 +35,7 @@ Out-of-range values are rejected. Only one block can be live per session. Starti
 |---|---|
 | Always-safe tools | `Read`, `Glob`, `Grep`, `WebSearch` |
 | Read-only Bash | `git status/log/diff/show/rev-parse` and read-only `git branch`/`tag`/`remote` forms, `ls`, `cat`, `head`, `tail`, `wc`, `file`, `stat`, `pip list/show/freeze`, `npm ls/list/outdated/view` |
-| Read-only dbt | `dbt show`, `ls`, `list`, `parse`, `compile`, `deps`, `debug`, `source freshness` |
+| Read-only dbt | `dbt show`, `dbt debug` (subcommands that parse the project write `target/`, so `ls`, `list`, `parse`, `compile`, `deps` and `source freshness` still prompt) |
 | Read-only BigQuery | `bq show`, `bq ls`, `bq head`, `bq query --dry_run` |
 | SELECT-only warehouse SQL | `bq query`, `psql -c`, `snowsql -q`, `clickhouse-client --query`, `duckdb -c`, `mysql -e` |
 

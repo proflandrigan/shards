@@ -358,9 +358,9 @@ describe('3. auto-verify long run', () => {
     const s = await openFrame(SA);
     await start(s, { tool_budget: 100 });
     const yes = [SELECT, 'psql -c "WITH x AS (SELECT 1) SELECT * FROM x"', "psql -c \"SELECT 'a;b' AS x\"", 'bq query --use_legacy_sql=false "SELECT 1"',
-      'dbt show --select m', 'dbt ls', "git log --grep='a&b'", 'ls -la'];
+      'dbt show --select m', 'dbt debug', "git log --grep='a&b'", 'ls -la'];
     const no = ['psql -c "INSERT INTO t VALUES (1)"', 'psql -c "DELETE FROM t"', 'psql -c "DROP TABLE t"', 'psql -c "UPDATE t SET a=1"',
-      'psql -c "SELECT 1; DROP TABLE x"', 'dbt run', 'dbt build', 'rm x', 'ls && rm x', 'git log; rm -rf x', "echo 'a' & rm x", 'curl http://x'];
+      'psql -c "SELECT 1; DROP TABLE x"', 'dbt run', 'dbt ls', 'dbt deps', 'dbt build', 'rm x', 'ls && rm x', 'git log; rm -rf x', "echo 'a' & rm x", 'curl http://x'];
     for (const c of yes) expect(allowed(await call(SA, 'Bash', { command: c })), c).toBe(true);
     for (const c of no) expect(allowed(await call(SA, 'Bash', { command: c })), c).toBe(false);
     expect(av.get(s).used).toBe(yes.length);

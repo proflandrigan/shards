@@ -76,8 +76,9 @@ module.exports = defineTool({
     const cq = copyNote(session);
     const both = (text, data) => bothBase(cq.text ? `${text}\n${cq.text}` : text, { ...data, copy_queue: cq.queue, ...(cq.stuck.length ? { copy_stuck: cq.stuck } : {}) });
 
+    // A confirmed gate only counts for the same agent/project/track (ids like `<agent>-phase-1` repeat).
     const existing = gates.getGate(session, args.id);
-    if (existing && existing.status === 'confirmed') {
+    if (existing && existing.status === 'confirmed' && gates.sameScope(existing, frame)) {
       return both(gates.formatConfirmedMessage(existing), { result: 'already_confirmed', gate_id: existing.id, kind: existing.kind, phase: existing.phase, status: 'confirmed', commit: existing.commit || null });
     }
 
@@ -108,8 +109,8 @@ module.exports = defineTool({
     if (result === 'already_confirmed') return both(gates.formatConfirmedMessage(entry), { result, gate_id: entry.id, kind: entry.kind, phase: entry.phase, status: 'confirmed', commit: entry.commit || null });
 
     // Gate policy (E11.8): evidence auto-records / plan notices; anything else falls through to a human.
-    let gcfg = {};
-    try { const c = ctx.getConfig && ctx.getConfig(); gcfg = (c && c.config && c.config.gates) || {}; } catch (_) { /* defaults */ }
+    // Fail closed: an unreadable/invalid config means `strict`, and the error is shown to the agent.
+    const { gates: gcfg, error: configError } = policyMod.resolveGatesConfig(ctx);
     const pol = await policyMod.apply(session, entry, args.evidence, gcfg, ctx.gateDeps || {});
     if (pol.handled) {
       const d = pol.entry;
@@ -134,6 +135,7 @@ module.exports = defineTool({
       const { entry: done } = await gates.confirmGate(session, entry.id, { decision: 'changes_requested', note: el.note, proof: { tier: 'elicitation', level: 1, ts: new Date().toISOString(), action: 'accept' } });
       return both(`The user requested changes to gate ${done.id}. Note: ${el.note}\nRevise the work, then call gate_request again.`, { result: 'changes_requested', gate_id: done.id, kind: done.kind, phase: done.phase, status: done.status, note: el.note, tier: 'elicitation' });
     }
+    if (configError) lines.push(`WARNING: shards.config.yaml could not be loaded, so gate policy is forced to strict (a human must confirm every gate). Fix the file: ${configError}`, '');
     const how = tier1.describeConfirmHow(entry.id, ctx.sessionKey, { outcome: el.outcome, host: ctx.host });
     lines.push(`Gate ${entry.id} is ${result === 'already_pending' ? 'already pending' : result} (kind ${entry.kind}, phase ${entry.phase}).`);
     if (result === 'reopened' && entry.note) lines.push(`Earlier change request note: ${entry.note}`);
@@ -146,6 +148,7 @@ module.exports = defineTool({
       result, gate_id: entry.id, kind: entry.kind, phase: entry.phase, status: 'pending', frame: entry.frame,
       confirm: { milestone: 'A', how },
       ...(replayed ? { note: replayed } : {}),
+      ...(configError ? { config_error: configError, policy: 'strict' } : {}),
     });
   },
 });

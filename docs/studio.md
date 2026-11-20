@@ -27,6 +27,8 @@ Studio has no relay and no runtime hooks. It reads three things:
 2. **The project's output folders.** Studio reads the files at the paths named in the events, and watches them, so a re-written file refreshes its view.
 3. **Gate state.** `.shards/state/sessions/<sessionKey>/gates.json`, written by the runtime (see [`docs/gates.md`](gates.md)). Studio polls these files and shows a banner while a gate is `pending`, with the `shards gates confirm` command to run. Studio never parses chat text for gates and never writes gate state. Server routes: `GET /gates`, `GET /gates/stream` (SSE `gate-update` events), `GET /gates/mode`.
 
+Studio's server is same-origin only. It sends no CORS headers, refuses any request whose `Host` is not a loopback name (`127.0.0.1`, `localhost`, `[::1]`) or the configured bind host on the port it arrived on (DNS rebinding), and refuses any request whose `Origin` is not its own origin. The page carries a Content-Security-Policy (`connect-src 'self'`, no external images) and rendered markdown is sanitized with DOMPurify. Events whose `path` resolves outside the project (absolute paths, `../`, symlinks) are dropped, never read or broadcast. The gate banner's confirm command includes `--root <project>` so it works from any directory.
+
 Studio writes no Claude Code hooks and shows no permission cards; Claude Code handles approvals itself (for Studio's own headless chat sessions, see Chat sessions below). Its state files are `.shards/studio.pid`, `.shards/studio.port` and `.shards/studio.log`.
 
 If Studio shows nothing, check that the agent has emitted events (`.shards/events.jsonl` exists and has lines) and that the artifact path is inside the project.

@@ -125,9 +125,9 @@ module.exports = defineTool({
     // --- gate enforcement ---
     // Policy 'plan' (E11.8) needs no special case: notices are recorded as confirmed gate entries,
     // so the previous advancing gate is already confirmed. An unconfirmed previous gate still refuses.
-    let policy = 'phase';
-    try { const c = ctx.getConfig && ctx.getConfig(); policy = (c && c.config && c.config.gates && c.config.gates.policy) || 'phase'; } catch (_) { /* default */ }
-    void policy; // all policies require the previous gate to be confirmed
+    // All policies require the previous gate to be confirmed. A config error fails closed (strict)
+    // and is surfaced in the result instead of being swallowed.
+    const { error: configError } = require('../gates/policy').resolveGatesConfig(ctx);
     const session = { root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state };
     const all = gates.listGates(session);
     const idx = order.indexOf(n);
@@ -169,6 +169,7 @@ module.exports = defineTool({
 
     let reground = '';
     try { reground = buildReground({ root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state, agent: agent.id }); } catch (_) { /* best effort */ }
-    return { text: `${body.trimEnd()}\n\n${reground}\n` };
+    const warn = configError ? `WARNING: shards.config.yaml could not be loaded, so gate policy is forced to strict (a human must confirm every gate). Fix the file: ${configError}\n\n` : '';
+    return { text: `${warn}${body.trimEnd()}\n\n${reground}\n` };
   },
 });

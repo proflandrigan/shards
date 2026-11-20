@@ -2,7 +2,7 @@
 
 Generated from `git ls-files src/agents src/templates` at commit 11760a3 (HEAD before the move; also tag `v-legacy` + 1 commit). Every legacy file is mapped to its new path. Moves were done with `git mv`, so `git log --follow` keeps history.
 
-Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are removed by E4.
+Legend: "-> deleted (orphaned v1 monolith...)" marks the per-agent `modes/phases.md` (analytics-engineer: `modes/quick_phases.md`, `modes/deep_phases.md`) files removed after the move, because the `phases*/` directories replace them and nothing referenced them. "-> deleted in E4" marks Knowledge Ledger files that move now and are removed by E4.
 
 ## Naming rules
 
@@ -39,7 +39,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 18 | `src/agents/specific_instructions/ai_engineer/bi_engineer_handoff.md` | `core/agents/ai-engineer/modes/bi_engineer_handoff.md` |  |
 | 19 | `src/agents/specific_instructions/ai_engineer/experiment.md` | `core/agents/ai-engineer/modes/experiment.md` |  |
 | 20 | `src/agents/specific_instructions/ai_engineer/experiment_ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
-| 21 | `src/agents/specific_instructions/ai_engineer/phases.md` | `core/agents/ai-engineer/modes/phases.md` |  |
+| 21 | `src/agents/specific_instructions/ai_engineer/phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 22 | `src/agents/specific_instructions/ai_engineer/phases/index.md` | `core/agents/ai-engineer/phases/index.md` |  |
 | 23 | `src/agents/specific_instructions/ai_engineer/phases/phase-1.md` | `core/agents/ai-engineer/phases/phase-1.md` |  |
 | 24 | `src/agents/specific_instructions/ai_engineer/phases/phase-2.md` | `core/agents/ai-engineer/phases/phase-2.md` |  |
@@ -57,7 +57,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 36 | `src/agents/specific_instructions/analytics_engineer/advise.md` | `core/agents/analytics-engineer/modes/advise.md` |  |
 | 37 | `src/agents/specific_instructions/analytics_engineer/bi_engineer_handoff.md` | `core/agents/analytics-engineer/modes/bi_engineer_handoff.md` |  |
 | 38 | `src/agents/specific_instructions/analytics_engineer/data_analyst_handoff.md` | `core/agents/analytics-engineer/modes/data_analyst_handoff.md` |  |
-| 39 | `src/agents/specific_instructions/analytics_engineer/deep_phases.md` | `core/agents/analytics-engineer/modes/deep_phases.md` |  |
+| 39 | `src/agents/specific_instructions/analytics_engineer/deep_phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 40 | `src/agents/specific_instructions/analytics_engineer/phases_deep/index.md` | `core/agents/analytics-engineer/phases_deep/index.md` |  |
 | 41 | `src/agents/specific_instructions/analytics_engineer/phases_deep/phase-1.md` | `core/agents/analytics-engineer/phases_deep/phase-1.md` |  |
 | 42 | `src/agents/specific_instructions/analytics_engineer/phases_deep/phase-2.md` | `core/agents/analytics-engineer/phases_deep/phase-2.md` |  |
@@ -70,14 +70,14 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 49 | `src/agents/specific_instructions/analytics_engineer/phases_quick/index.md` | `core/agents/analytics-engineer/phases_quick/index.md` |  |
 | 50 | `src/agents/specific_instructions/analytics_engineer/phases_quick/phase-1.md` | `core/agents/analytics-engineer/phases_quick/phase-1.md` |  |
 | 51 | `src/agents/specific_instructions/analytics_engineer/phases_quick/phase-2.md` | `core/agents/analytics-engineer/phases_quick/phase-2.md` |  |
-| 52 | `src/agents/specific_instructions/analytics_engineer/quick_phases.md` | `core/agents/analytics-engineer/modes/quick_phases.md` |  |
+| 52 | `src/agents/specific_instructions/analytics_engineer/quick_phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 53 | `src/agents/specific_instructions/analytics_engineer/review.md` | `core/agents/analytics-engineer/modes/review.md` |  |
 | 54 | `src/agents/specific_instructions/analytics_engineer/service_mode.md` | `core/agents/analytics-engineer/modes/service.md` |  |
 | 55 | `src/agents/specific_instructions/analytics_engineer/ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
 | 56 | `src/agents/specific_instructions/analytics_engineer/update.md` | `core/agents/analytics-engineer/modes/update.md` |  |
 | 57 | `src/agents/specific_instructions/analytics_engineer/validation_checklist.md` | `core/agents/analytics-engineer/modes/validation_checklist.md` |  |
 | 58 | `src/agents/specific_instructions/applied_ml_scientist/advise.md` | `core/agents/applied-ml-scientist/modes/advise.md` |  |
-| 59 | `src/agents/specific_instructions/applied_ml_scientist/phases.md` | `core/agents/applied-ml-scientist/modes/phases.md` |  |
+| 59 | `src/agents/specific_instructions/applied_ml_scientist/phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 60 | `src/agents/specific_instructions/applied_ml_scientist/phases/index.md` | `core/agents/applied-ml-scientist/phases/index.md` |  |
 | 61 | `src/agents/specific_instructions/applied_ml_scientist/phases/phase-1.md` | `core/agents/applied-ml-scientist/phases/phase-1.md` |  |
 | 62 | `src/agents/specific_instructions/applied_ml_scientist/phases/phase-2.md` | `core/agents/applied-ml-scientist/phases/phase-2.md` |  |
@@ -94,7 +94,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 73 | `src/agents/specific_instructions/bi_engineer/advise.md` | `core/agents/bi-engineer/modes/advise.md` |  |
 | 74 | `src/agents/specific_instructions/bi_engineer/data_analyst_handoff.md` | `core/agents/bi-engineer/modes/data_analyst_handoff.md` |  |
 | 75 | `src/agents/specific_instructions/bi_engineer/incoming_handoff.md` | `core/agents/bi-engineer/modes/incoming_handoff.md` |  |
-| 76 | `src/agents/specific_instructions/bi_engineer/phases.md` | `core/agents/bi-engineer/modes/phases.md` |  |
+| 76 | `src/agents/specific_instructions/bi_engineer/phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 77 | `src/agents/specific_instructions/bi_engineer/phases/index.md` | `core/agents/bi-engineer/phases/index.md` |  |
 | 78 | `src/agents/specific_instructions/bi_engineer/phases/phase-1.md` | `core/agents/bi-engineer/phases/phase-1.md` |  |
 | 79 | `src/agents/specific_instructions/bi_engineer/phases/phase-2.md` | `core/agents/bi-engineer/phases/phase-2.md` |  |
@@ -106,7 +106,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 85 | `src/agents/specific_instructions/data_analyst/advise.md` | `core/agents/data-analyst/modes/advise.md` |  |
 | 86 | `src/agents/specific_instructions/data_analyst/explain.md` | `core/agents/data-analyst/modes/explain.md` |  |
 | 87 | `src/agents/specific_instructions/data_analyst/incoming_handoff.md` | `core/agents/data-analyst/modes/incoming_handoff.md` |  |
-| 88 | `src/agents/specific_instructions/data_analyst/phases.md` | `core/agents/data-analyst/modes/phases.md` |  |
+| 88 | `src/agents/specific_instructions/data_analyst/phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 89 | `src/agents/specific_instructions/data_analyst/phases/index.md` | `core/agents/data-analyst/phases/index.md` |  |
 | 90 | `src/agents/specific_instructions/data_analyst/phases/phase-1.md` | `core/agents/data-analyst/phases/phase-1.md` |  |
 | 91 | `src/agents/specific_instructions/data_analyst/phases/phase-2.md` | `core/agents/data-analyst/phases/phase-2.md` |  |
@@ -117,7 +117,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 96 | `src/agents/specific_instructions/data_analyst/update.md` | `core/agents/data-analyst/modes/update.md` |  |
 | 97 | `src/agents/specific_instructions/data_analyst/validation_checklist.md` | `core/agents/data-analyst/modes/validation_checklist.md` |  |
 | 98 | `src/agents/specific_instructions/data_engineer/advise.md` | `core/agents/data-engineer/modes/advise.md` |  |
-| 99 | `src/agents/specific_instructions/data_engineer/phases.md` | `core/agents/data-engineer/modes/phases.md` |  |
+| 99 | `src/agents/specific_instructions/data_engineer/phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 100 | `src/agents/specific_instructions/data_engineer/phases_deep/index.md` | `core/agents/data-engineer/phases_deep/index.md` |  |
 | 101 | `src/agents/specific_instructions/data_engineer/phases_deep/phase-1.md` | `core/agents/data-engineer/phases_deep/phase-1.md` |  |
 | 102 | `src/agents/specific_instructions/data_engineer/phases_deep/phase-2.md` | `core/agents/data-engineer/phases_deep/phase-2.md` |  |
@@ -132,7 +132,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 111 | `src/agents/specific_instructions/data_engineer/review.md` | `core/agents/data-engineer/modes/review.md` |  |
 | 112 | `src/agents/specific_instructions/data_engineer/validation_checklist.md` | `core/agents/data-engineer/modes/validation_checklist.md` |  |
 | 113 | `src/agents/specific_instructions/data_modeller/advise.md` | `core/agents/data-modeller/modes/advise.md` |  |
-| 114 | `src/agents/specific_instructions/data_modeller/phases.md` | `core/agents/data-modeller/modes/phases.md` |  |
+| 114 | `src/agents/specific_instructions/data_modeller/phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 115 | `src/agents/specific_instructions/data_modeller/phases_deep/index.md` | `core/agents/data-modeller/phases_deep/index.md` |  |
 | 116 | `src/agents/specific_instructions/data_modeller/phases_deep/phase-1.md` | `core/agents/data-modeller/phases_deep/phase-1.md` |  |
 | 117 | `src/agents/specific_instructions/data_modeller/phases_deep/phase-2.md` | `core/agents/data-modeller/phases_deep/phase-2.md` |  |
@@ -155,7 +155,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 134 | `src/agents/specific_instructions/data_scientist/greenfield_data.md` | `core/agents/data-scientist/modes/greenfield_data.md` |  |
 | 135 | `src/agents/specific_instructions/data_scientist/ml_engineer_handoff.md` | `core/agents/data-scientist/modes/ml_engineer_handoff.md` |  |
 | 136 | `src/agents/specific_instructions/data_scientist/notebook_walkthrough.md` | `core/agents/data-scientist/modes/notebook_walkthrough.md` |  |
-| 137 | `src/agents/specific_instructions/data_scientist/phases.md` | `core/agents/data-scientist/modes/phases.md` |  |
+| 137 | `src/agents/specific_instructions/data_scientist/phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 138 | `src/agents/specific_instructions/data_scientist/phases/index.md` | `core/agents/data-scientist/phases/index.md` |  |
 | 139 | `src/agents/specific_instructions/data_scientist/phases/phase-1.md` | `core/agents/data-scientist/phases/phase-1.md` |  |
 | 140 | `src/agents/specific_instructions/data_scientist/phases/phase-2.md` | `core/agents/data-scientist/phases/phase-2.md` |  |
@@ -170,7 +170,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 149 | `src/agents/specific_instructions/data_scientist/service_mode.md` | `core/agents/data-scientist/modes/service.md` |  |
 | 150 | `src/agents/specific_instructions/data_scientist/validation_checklist.md` | `core/agents/data-scientist/modes/validation_checklist.md` |  |
 | 151 | `src/agents/specific_instructions/deep_learning_engineer/advise.md` | `core/agents/deep-learning-engineer/modes/advise.md` |  |
-| 152 | `src/agents/specific_instructions/deep_learning_engineer/phases.md` | `core/agents/deep-learning-engineer/modes/phases.md` |  |
+| 152 | `src/agents/specific_instructions/deep_learning_engineer/phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 153 | `src/agents/specific_instructions/deep_learning_engineer/phases/index.md` | `core/agents/deep-learning-engineer/phases/index.md` |  |
 | 154 | `src/agents/specific_instructions/deep_learning_engineer/phases/phase-1.md` | `core/agents/deep-learning-engineer/phases/phase-1.md` |  |
 | 155 | `src/agents/specific_instructions/deep_learning_engineer/phases/phase-2.md` | `core/agents/deep-learning-engineer/phases/phase-2.md` |  |
@@ -185,7 +185,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 164 | `src/agents/specific_instructions/ml_engineer/experiment.md` | `core/agents/ml-engineer/modes/experiment.md` |  |
 | 165 | `src/agents/specific_instructions/ml_engineer/experiment_ui_mode.md` | (dropped) | UI mode folded into `artifact_emit` (E-ui fold); UI hook removed |
 | 166 | `src/agents/specific_instructions/ml_engineer/notebook_walkthrough.md` | `core/agents/ml-engineer/modes/notebook_walkthrough.md` |  |
-| 167 | `src/agents/specific_instructions/ml_engineer/phases.md` | `core/agents/ml-engineer/modes/phases.md` |  |
+| 167 | `src/agents/specific_instructions/ml_engineer/phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 168 | `src/agents/specific_instructions/ml_engineer/phases/index.md` | `core/agents/ml-engineer/phases/index.md` |  |
 | 169 | `src/agents/specific_instructions/ml_engineer/phases/phase-1.md` | `core/agents/ml-engineer/phases/phase-1.md` |  |
 | 170 | `src/agents/specific_instructions/ml_engineer/phases/phase-2.md` | `core/agents/ml-engineer/phases/phase-2.md` |  |
@@ -201,7 +201,7 @@ Legend: "-> deleted in E4" marks Knowledge Ledger files that move now and are re
 | 180 | `src/agents/specific_instructions/ml_engineer/service_mode.md` | `core/agents/ml-engineer/modes/service.md` |  |
 | 181 | `src/agents/specific_instructions/ml_engineer/validation_checklist.md` | `core/agents/ml-engineer/modes/validation_checklist.md` |  |
 | 182 | `src/agents/specific_instructions/mlops_engineer/advise.md` | `core/agents/mlops-engineer/modes/advise.md` |  |
-| 183 | `src/agents/specific_instructions/mlops_engineer/phases.md` | `core/agents/mlops-engineer/modes/phases.md` |  |
+| 183 | `src/agents/specific_instructions/mlops_engineer/phases.md` | -> deleted (orphaned v1 monolith; phases live in `phases*/`) |  |
 | 184 | `src/agents/specific_instructions/mlops_engineer/phases/index.md` | `core/agents/mlops-engineer/phases/index.md` |  |
 | 185 | `src/agents/specific_instructions/mlops_engineer/phases/phase-1.md` | `core/agents/mlops-engineer/phases/phase-1.md` |  |
 | 186 | `src/agents/specific_instructions/mlops_engineer/phases/phase-2.md` | `core/agents/mlops-engineer/phases/phase-2.md` |  |
