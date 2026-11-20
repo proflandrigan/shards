@@ -115,10 +115,21 @@ function removeManifestFiles(root, manifest, dryRun, rep, force) {
   return keep;
 }
 
-// Uses the manifest's exact hookEntries when present; the anchored LEGACY_HOOK_RE only for manifests without them.
-function filterHooks(settings, manifest) {
+// A recorded command as it may appear in settings.json: verbatim, or with $CLAUDE_PROJECT_DIR / ${CLAUDE_PROJECT_DIR}
+// expanded to this project's absolute root (v1 installs end up with absolute paths in settings.json).
+function recordedForms(command, root) {
+  const forms = [command];
+  if (!root || typeof command !== 'string') return forms;
+  const abs = path.resolve(root);
+  for (const dir of new Set([abs, posix(abs)])) forms.push(command.replace(/\$\{CLAUDE_PROJECT_DIR\}|\$CLAUDE_PROJECT_DIR\b/g, () => dir));
+  return forms;
+}
+
+// Uses the manifest's exact hookEntries when present (verbatim or with the project dir expanded to `root`);
+// the anchored LEGACY_HOOK_RE only for manifests without them.
+function filterHooks(settings, manifest, root) {
   const hasRecorded = Array.isArray(manifest && manifest.hookEntries) && manifest.hookEntries.length > 0;
-  const recorded = hasRecorded ? manifest.hookEntries : [];
+  const recorded = (hasRecorded ? manifest.hookEntries : []).map((r) => ({ ...r, forms: recordedForms(r.command, root) }));
   const dropped = [];
   const unrecorded = []; // v1-looking hooks the manifest did not record: kept, reported
   for (const ev of Object.keys(settings.hooks || {})) {
@@ -129,7 +140,7 @@ function filterHooks(settings, manifest) {
       const keepInner = entry.hooks.filter((h) => {
         const cmd = h && h.command;
         if (typeof cmd !== 'string') return true;
-        const isRecorded = recorded.some((r) => r.event === ev && (r.matcher || '') === (entry.matcher || '') && r.command === cmd);
+        const isRecorded = recorded.some((r) => r.event === ev && (r.matcher || '') === (entry.matcher || '') && r.forms.includes(cmd));
         const legacyLike = LEGACY_HOOK_RE.test(cmd.trim());
         if (isRecorded || (!hasRecorded && legacyLike)) { dropped.push(`${ev}: ${cmd}`); return false; }
         if (legacyLike) unrecorded.push(`${ev}: ${cmd}`);
@@ -154,7 +165,7 @@ function cleanSettings(root, manifest, dryRun, rep) {
     return;
   }
   if (!settings || typeof settings !== 'object' || !settings.hooks) return;
-  const dropped = filterHooks(settings, manifest);
+  const dropped = filterHooks(settings, manifest, root);
   for (const h of dropped.unrecorded || []) rep.skipped.push({ path: '.claude/settings.json', reason: `hook not recorded in the install manifest, kept (remove it by hand if it is the v1 hook): ${h}` });
   if (!dropped.length) return;
   if (!dryRun) fs.writeFileSync(file, JSON.stringify(settings, null, 2));

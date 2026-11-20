@@ -227,6 +227,20 @@ describe('shards migrate (full)', () => {
     expect(cmds).not.toContain('.shards/hooks/gate-hook.js');
   });
 
+  it('removes recorded hooks whose $CLAUDE_PROJECT_DIR was expanded to the absolute project root', async () => {
+    buildLegacyProject(tmp, { gateState: 'none' });
+    const sf = path.join(tmp, '.claude/settings.json');
+    const abs = fs.readFileSync(sf, 'utf8').split('$CLAUDE_PROJECT_DIR').join(path.resolve(tmp).split(path.sep).join('/'));
+    fs.writeFileSync(sf, abs);
+    expect(abs).toContain(path.resolve(tmp).split(path.sep).join('/') + '/.shards/hooks/gate-hook.js');
+    const r = await migrate();
+    expect(r.code).toBe(0);
+    const hooks = JSON.stringify(JSON.parse(read('.claude/settings.json')).hooks);
+    expect(hooks).not.toContain('.shards/');
+    expect(hooks).toContain('echo user-stop-hook');
+    expect(hooks).toContain('echo user-prompt-hook');
+  });
+
   it('re-run keeps an unrecorded v1-looking hook the first run kept (rewritten manifest keeps hookEntries)', async () => {
     buildLegacyProject(tmp, { gateState: 'none' });
     // one edited file keeps the manifest alive (rewritten) after the first run
@@ -394,6 +408,21 @@ describe('filterHooks', () => {
     expect([...dropped]).toEqual(['Stop: node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js stop']);
     expect(dropped.unrecorded).toEqual(['Stop: node $CLAUDE_PROJECT_DIR/.shards/ui/relay.js stop']);
     expect(s.hooks.Stop[0].hooks.map((h) => h.command)).toEqual(['node $CLAUDE_PROJECT_DIR/.shards/ui/relay.js stop', 'node scripts/webhook-relay.js', 'node tools/gate-hook.js']);
+  });
+  it('matches recorded entries with ${CLAUDE_PROJECT_DIR} or $CLAUDE_PROJECT_DIR expanded to root, not another project', () => {
+    const root = path.resolve(os.tmpdir(), 'proj');
+    const dir = root.split(path.sep).join('/');
+    const s = { hooks: { Stop: [{ hooks: [
+      { type: 'command', command: `node ${dir}/.shards/hooks/gate-hook.js stop` },
+      { type: 'command', command: `node ${dir}/.shards/ui/relay.js stop` },
+      { type: 'command', command: 'node /elsewhere/.shards/hooks/gate-hook.js stop' },
+    ] }] } };
+    const dropped = filterHooks(s, { hookEntries: [
+      { event: 'Stop', matcher: '', command: 'node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js stop' },
+      { event: 'Stop', matcher: '', command: 'node ${CLAUDE_PROJECT_DIR}/.shards/ui/relay.js stop' },
+    ] }, root);
+    expect(dropped).toHaveLength(2);
+    expect(s.hooks.Stop[0].hooks.map((h) => h.command)).toEqual(['node /elsewhere/.shards/hooks/gate-hook.js stop']);
   });
   it('falls back to the anchored v1 paths only without hookEntries', () => {
     const s = settings();
