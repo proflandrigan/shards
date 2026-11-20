@@ -107,11 +107,12 @@ describe('lead / unbound caller', () => {
   });
   it('a write aimed at the project root or an ancestor reaches every slice and is denied', async () => {
     await openTwoSlice();
-    for (const command of ['rm -rf .', 'rm -rf ./', 'rm -rf ..', `rm -rf ${tmp}`, 'unzip big.zip', 'tar -xf a.tar']) {
+    for (const command of ['rm -rf .', 'rm -rf ./', 'rm -rf ..', `rm -rf '${tmp}'`, 'unzip big.zip', 'tar -xf a.tar']) {
       expect(denied(await call('Bash', { command })), command).toBe(true);
     }
     expect(await call('Bash', { command: 'rm -rf docs' })).toBeNull();
-    expect(await call('Bash', { command: `rm -rf ${path.join(os.tmpdir(), 'elsewhere-x')}` })).toBeNull();
+    // Paths are single-quoted: unquoted, a Windows path's backslashes are shell escapes and get stripped.
+    expect(await call('Bash', { command: `rm -rf '${path.join(os.tmpdir(), 'elsewhere-x')}'` })).toBeNull();
   });
 });
 
