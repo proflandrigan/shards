@@ -10,6 +10,8 @@ const { StateStore } = require('../runtime/state/store');
 const { pushFrame } = require('../runtime/stack');
 const gates = require('../runtime/gates');
 const { regroundHook } = require('../runtime/reground');
+// Same quoting rule as runtime/gates/confirm-command.js (Windows paths contain backslashes).
+const q = (s) => (/[\s"'$`\\]/.test(s) ? JSON.stringify(s) : s);
 
 const PROOF = { tier: 'test' };
 const DEPS = { commitGate: async () => ({ outcome: 'committed', sha: 'abcdef1234567' }), replayPending: async () => [], loadConfig: () => ({}), resolveOutputDirs: () => ['x'] };
@@ -62,7 +64,7 @@ describe('load_phase', () => {
     const r = await call({ agent: 'ml-engineer', n: '2' });
     expect(r.isError).toBe(true);
     expect(text(r)).toBe('load_phase refused: gate ml-engineer-phase-1 for phase 1 is not confirmed (status: pending). Ask the user to confirm it: npx @proflandrigan/shards@next gates confirm ml-engineer-phase-1 --session s1'
-      + ` (repo checkout: node ${path.join(__dirname, '..', 'cli', 'shards.js')} gates confirm ml-engineer-phase-1 --session s1)`);
+      + ` (repo checkout: node ${q(path.join(__dirname, '..', 'cli', 'shards.js'))} gates confirm ml-engineer-phase-1 --session s1)`);
     expect(frames()[0].phase).toBe(1);
     await gates.confirmGate(sess(), 'ml-engineer-phase-1', { decision: 'confirmed', proof: PROOF }, DEPS);
     const ok = await call({ agent: 'ml-engineer', n: '2' });

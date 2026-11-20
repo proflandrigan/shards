@@ -6,6 +6,8 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const cc = require('../runtime/gates/confirm-command.js');
 const pkg = require('../package.json');
+// Same quoting rule as runtime/gates/confirm-command.js (Windows paths contain backslashes).
+const q = (s) => (/[\s"'$`\\]/.test(s) ? JSON.stringify(s) : s);
 
 describe('operator confirm command', () => {
   it('npx spec matches package.json name and publish tag', () => {
@@ -31,7 +33,7 @@ describe('operator confirm command', () => {
     fs.mkdirSync(path.join(d, 'cli'));
     fs.writeFileSync(path.join(d, 'cli', 'shards.js'), '');
     const runtimeDir = path.join(d, 'runtime');
-    expect(cc.localConfirmCommand('g', 'k', { runtimeDir })).toBe(`node ${path.join(d, 'cli', 'shards.js')} gates confirm g --session k`);
+    expect(cc.localConfirmCommand('g', 'k', { runtimeDir })).toBe(`node ${q(path.join(d, 'cli', 'shards.js'))} gates confirm g --session k`);
     const lines = cc.operatorConfirmLines('g', 'k', { runtimeDir });
     expect(lines[0]).toContain('npx @proflandrigan/shards@next');
     expect(lines.join('\n')).toContain(`${path.join(d, 'cli', 'shards.js')} gates confirm g --session k --changes`);

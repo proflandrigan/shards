@@ -87,7 +87,8 @@ function runKernel(python, root, args, opts = {}) {
     const finish = (fn, v) => { if (done) return; done = true; clearTimeout(timer); fn(v); };
     let child;
     try {
-      child = spawnImpl(python, [KERNEL_PY, ...args], { cwd: root, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
+      // Force UTF-8 stdio: on Windows Python defaults to the ANSI code page (cp1252), which garbles non-ASCII in the JSON we parse.
+      child = spawnImpl(python, [KERNEL_PY, ...args], { cwd: root, shell: false, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } });
     } catch (e) { return reject(e); }
     const timer = setTimeout(() => {
       try { child.kill(); } catch (_) { /* ignore */ }
