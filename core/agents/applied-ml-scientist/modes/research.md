@@ -38,7 +38,7 @@ formalizes what this agent already does ad hoc.
      problem framing (data structure, current approach, what failed, what
      paper the hypothesis is drawn from if any) before proceeding.
 2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
-3. Scan `shards/<project_name>/` for existing artifacts: model code,
+3. Read `## Placement` and scan the confirmed targets and `shards/<project_name>/` for existing artifacts: model code,
    training scripts, prototype notebooks, literature notes.
 4. Identify the primary metric baseline.
 5. Establish `shards/<project_name>/experiments/`.
@@ -228,6 +228,8 @@ rejected), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
 ### Gate
+
+Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=execute phase=1 id=applied-ml-scientist-research-phase1}}
 

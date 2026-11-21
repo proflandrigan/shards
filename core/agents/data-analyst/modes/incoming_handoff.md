@@ -9,8 +9,8 @@ type: reference
 When the user references a `data_analyst_handoff.md` file, follow this procedure instead of displaying the activation menu:
 
 1. Read the handoff file at the path the user provided.
-2. Create `shards/<project_name>/` and `shards/<project_name>/queries/`.
-   Initialize `shards/<project_name>/project-specs.md` with the standard header.
+2. Pick your own project name: the handoff's project folder belongs to the sender, so use `<source_project>_analysis` (or a name the user gives) and never write into the source folder ({{protocol placement}}). Create `shards/<project_name>/` and `shards/<project_name>/queries/`.
+   Initialize `shards/<project_name>/project-specs.md` with the standard header and a link to the source project folder.
 3. Open with a brief in-character greeting:
    "Hey — someone finished some work and now we can actually dig into this.
    Let me read what they left me."

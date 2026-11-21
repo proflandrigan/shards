@@ -60,7 +60,7 @@ This file governs Step 6 of Phase 7 (Deliver and Document) for the AI Engineer s
    - Content filter triggers: <rate or count>
 
    ## Data Sources for Dashboard
-   - Evaluation test set: shards/<project_name>/eval/
+   - Evaluation test set: <eval path from `## Placement`; greenfield default shards/<project_name>/eval/>
    - Production request logs: <log source from Phase 5 monitoring plan>
    - LLM API usage data: <API provider dashboard or internal log>
    - Safety incident log: <incident log location from Phase 5>

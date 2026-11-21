@@ -19,10 +19,10 @@ In a greenfield project there is nothing to integrate into, so the default is a 
 
 ## Commit paths
 
-When a gate is confirmed, the git snapshot covers the agent's `output_dir` plus the current target list: the `targets` passed on this gate, or, if it passed none, those of the most recent confirmed gate of the same agent and project in the session. A target you drop from a later list is no longer committed.
+When a gate is confirmed, the git snapshot covers the agent's `output_dir` plus the current target list: the `targets` passed on this gate, or, if it passed none, those of the most recently decided confirmed gate of the same agent, project and track in the session. A target you drop from a later list is no longer committed.
 
 ## Legacy
 
-Projects created before this layout in `analysis/`, `studies/`, `models/`, `services/`, `data_models/`, `dashboards/`, `research/`, `brainstorm/`, `fixes/` and `projects/` are still read. Nothing new is written there. See the [Output Directory Map](../06-outputs/directory-map.md).
+Projects created before this layout in `analysis/`, `studies/`, `models/`, `services/`, `data_models/`, `dashboards/`, `research/`, `brainstorm/`, `fixes/`, `panels/` and `projects/` are still read when resuming. Nothing new is written there. See the [Output Directory Map](../06-outputs/directory-map.md).
 
 - Source: `core/protocols/placement.md`

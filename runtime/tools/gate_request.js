@@ -48,16 +48,20 @@ function resolveRecord(root, recordRef) {
 }
 
 // Deliverable paths the user confirms at this gate (placement protocol). Root-relative, inside the root,
-// never the root itself; normalised to forward slashes with no trailing slash.
-function normTargets(root, targets) {
+// never the root itself, never under .git/ or .shards/; normalised to forward slashes with no trailing
+// slash. Backslashes are treated as separators on every platform, so `src\..\..\x` cannot slip past
+// the containment check and later be read as `src/../../x` by the git collector.
+function normTargets(targets) {
   if (targets === undefined) return undefined;
-  const rootAbs = path.resolve(root);
   const mapped = targets.map((t) => {
     if (typeof t !== 'string') throw new Error('targets must be strings');
-    if (path.isAbsolute(t)) throw new Error(`targets must be project-root-relative paths: ${t}`);
-    const r = path.relative(rootAbs, path.resolve(rootAbs, t));
-    if (r === '' || r === '..' || r.startsWith(`..${path.sep}`) || path.isAbsolute(r)) throw new Error(`targets must name a path inside the project root (not the root itself): ${t}`);
-    return r.split(path.sep).join('/');
+    const s = t.replace(/\\/g, '/');
+    if (path.posix.isAbsolute(s) || path.win32.isAbsolute(s)) throw new Error(`targets must be project-root-relative paths: ${t}`);
+    const r = path.posix.normalize(s).replace(/\/+$/, '');
+    if (r === '.' || r === '' || r === '..' || r.startsWith('../')) throw new Error(`targets must name a path inside the project root (not the root itself): ${t}`);
+    const top = r.split('/')[0];
+    if (top === '.git' || top === '.shards') throw new Error(`targets must not be inside ${top}/: ${t}`);
+    return r;
   });
   return [...new Set(mapped)];
 }
@@ -88,14 +92,14 @@ module.exports = defineTool({
     const frame = frames[frames.length - 1];
     const session = { root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state };
     const phase = normPhase(args.phase);
-    const targets = normTargets(ctx.root, args.targets);
+    const targets = normTargets(args.targets);
     const cq = copyNote(session);
     const both = (text, data) => bothBase(cq.text ? `${text}\n${cq.text}` : text, { ...data, copy_queue: cq.queue, ...(cq.stuck.length ? { copy_stuck: cq.stuck } : {}) });
 
     // A confirmed gate only counts for the same agent/project/track (ids like `<agent>-phase-1` repeat).
     const existing = gates.getGate(session, args.id);
     if (existing && existing.status === 'confirmed' && gates.sameScope(existing, frame)) {
-      return both(gates.formatConfirmedMessage(existing), { result: 'already_confirmed', gate_id: existing.id, kind: existing.kind, phase: existing.phase, status: 'confirmed', commit: existing.commit || null });
+      return both(`${gates.formatConfirmedMessage(existing)}${targets !== undefined ? '\nThe targets you passed were NOT recorded: this gate is already confirmed. Pass the updated list on your next gate.' : ''}`, { result: 'already_confirmed', gate_id: existing.id, kind: existing.kind, phase: existing.phase, status: 'confirmed', commit: existing.commit || null });
     }
 
     if (args.validates) {
@@ -122,7 +126,7 @@ module.exports = defineTool({
 
     const advancing = gates.ADVANCING_KINDS.includes(entry.kind);
     const lines = [];
-    if (result === 'already_confirmed') return both(gates.formatConfirmedMessage(entry), { result, gate_id: entry.id, kind: entry.kind, phase: entry.phase, status: 'confirmed', commit: entry.commit || null });
+    if (result === 'already_confirmed') return both(`${gates.formatConfirmedMessage(entry)}${targets !== undefined ? '\nThe targets you passed were NOT recorded: this gate is already confirmed. Pass the updated list on your next gate.' : ''}`, { result, gate_id: entry.id, kind: entry.kind, phase: entry.phase, status: 'confirmed', commit: entry.commit || null });
 
     // Gate policy (E11.8): evidence auto-records / plan notices; anything else falls through to a human.
     // Fail closed: an unreadable/invalid config means `strict`, and the error is shown to the agent.

@@ -81,3 +81,26 @@ describe('target path edge cases', () => {
     expect(gates.defaultResolveOutputDirs(root, { agent: 'syn', targets: ['..notes/x.md'] }, session)).toEqual(['..notes/x.md']);
   });
 });
+
+describe('target hardening', () => {
+  it('treats backslashes as separators', async () => {
+    const bad = await call(ok({ targets: ['src\\..\\..\\x'] }));
+    expect(bad.isError).toBe(true);
+    const r = await call(ok({ targets: ['src\\churn', 'src/churn/', './src/churn'] }));
+    expect(r.isError).toBeFalsy();
+    expect(gates.getGate(session, 'data-analyst-phase-1').targets).toEqual(['src/churn']);
+  });
+  it('rejects targets under .git or .shards', async () => {
+    for (const t of ['.shards', '.shards/state', '.git/config']) {
+      const r = await call(ok({ targets: [t] }));
+      expect(r.isError).toBe(true);
+    }
+    expect((await call(ok({ targets: ['.shardsx/a'] }))).isError).toBeFalsy();
+  });
+  it('says so when targets are passed to an already confirmed gate', async () => {
+    await call(ok());
+    await state.update('gates', (cur) => { cur.gates['data-analyst-phase-1'].status = 'confirmed'; return cur; });
+    const r = await call(ok({ targets: ['src/x.py'] }));
+    expect(r.content.map((c) => c.text).join('\n')).toMatch(/NOT recorded/);
+  });
+});

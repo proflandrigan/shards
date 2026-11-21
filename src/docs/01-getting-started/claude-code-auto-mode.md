@@ -65,9 +65,9 @@ This is an Anthropic product decision, not a Shards limitation. The classifier i
   "autoMode": {
     "environment": [
       "$defaults",
-      "Shards workspaces: any project containing a `.shards/` directory uses the Shards agent framework. Reads from and writes to project subdirectories (analysis/, studies/, models/, services/, data_models/, dashboards/, research/, presentations/, panels/, fixes/, brainstorm/) and `.shards/` are routine specialist work.",
+      "Shards workspaces: any project containing a `.shards/` directory uses the Shards agent framework. Reads from and writes to `shards/` (and the legacy analysis/, studies/, models/, services/, data_models/, dashboards/, research/, presentations/, panels/, fixes/, brainstorm/ folders) and `.shards/` are routine specialist work.",
       "Warehouse access: dbt commands (run, build, test, show, ls, compile), bq read-only queries, and SELECT-only psql/snowsql/duckdb invocations against developer-configured (non-production) warehouses are routine validation operations.",
-      "Notebook execution: `jupyter nbconvert --execute` on notebooks under analysis/, studies/, models/, research/, services/ is routine validation work."
+      "Notebook execution: `jupyter nbconvert --execute` on notebooks under shards/ (and the legacy analysis/, studies/, models/, research/, services/ folders) is routine validation work."
     ]
   }
 }
@@ -122,7 +122,7 @@ On entering auto mode, Claude Code drops `Bash(*)`, `PowerShell(*)`, wildcarded 
 
 ### Subagent task descriptions are read by the classifier
 
-Consult and worker subagents are spawned with task descriptions that the classifier evaluates against the parent's transcript. Ambiguous descriptions ("clean up the data") may trigger a prompt; specific ones ("Build a churn classifier under `studies/churn_v2/` using the customers and events tables") usually don't.
+Consult and worker subagents are spawned with task descriptions that the classifier evaluates against the parent's transcript. Ambiguous descriptions ("clean up the data") may trigger a prompt; specific ones ("Build a churn classifier under `shards/churn_v2/` using the customers and events tables") usually don't.
 
 ### Production target invocations always pause
 
@@ -136,7 +136,7 @@ If the classifier blocks an action 3 times in a row or 20 times total in one ses
 
 ## Composition matrix
 
-What you see for a representative sequence (Read → `Bash(dbt show)` → `Bash(pytest)` → `Write studies/.../results.md` → `NotebookEdit studies/.../nb.ipynb`):
+What you see for a representative sequence (Read → `Bash(dbt show)` → `Bash(pytest)` → `Write shards/.../results.md` → `NotebookEdit shards/.../nb.ipynb`):
 
 | Mode | Read | `dbt show` | `pytest` | `Write` | `NotebookEdit` | Phase gates |
 |------|------|------------|----------|---------|----------------|-------------|

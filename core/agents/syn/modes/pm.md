@@ -150,7 +150,7 @@ groups, and specialist feasibility feedback. Do not proceed until the user expli
 
 For each workstream, create:
 
-1. The specialist's project directory using existing conventions:
+1. The specialist's project directory using existing conventions. Each workstream name must differ from the parent project name and from the reserved names `brainstorm`, `fixes`, `panels` and `academic_reports` ({{protocol placement}}):
    - Data Analyst: `shards/<workstream_name>/`
    - Data Scientist: `shards/<workstream_name>/`
    - Data Engineer: `shards/<workstream_name>/`

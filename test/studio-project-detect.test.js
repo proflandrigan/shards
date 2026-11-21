@@ -9,7 +9,7 @@ describe('studio detectProjectFromRelPath', () => {
     expect(detectProjectFromRelPath('analysis/churn/q.sql')).toEqual({ projectDir: 'analysis/churn', projectName: 'churn' });
   });
   it("ignores Syn's shared folders under shards/", () => {
-    for (const p of ['shards/brainstorm/brainstorm_x.md', 'shards/fixes/fix_y.md', 'shards/panels/repo/report.md']) {
+    for (const p of ['shards/brainstorm/brainstorm_x.md', 'shards/fixes/fix_y.md', 'shards/panels/repo/report.md', 'shards/academic_reports/r.md']) {
       expect(detectProjectFromRelPath(p)).toBeNull();
     }
   });

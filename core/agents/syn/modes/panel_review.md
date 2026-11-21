@@ -109,7 +109,7 @@ Glob the target directory (respecting Phase 0 scope) for each bucket:
   `requirements.txt`, `*.toml`
 - **Markdown reports:** `*-report.md`, `study-report.md`, `analysis-report.md`,
   `project-specs.md` (treat the project-specs as a report when in
-  `analysis/`/`studies/`/`research/`-tagged contexts)
+  `shards/<project>/` or legacy `analysis/`/`studies/`/`research/`-tagged contexts)
 - **Dashboard files:** Streamlit `*.py` (filename hints: `app.py`, `dashboard.py`,
   `streamlit_*.py`), Plotly Dash apps, dashboard configs (only when `dashboard`
   tag is set)

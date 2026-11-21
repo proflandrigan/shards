@@ -40,7 +40,7 @@ Each project folder `shards/<project>/` holds a `project-specs.md` (the decision
 
 ## Legacy layout
 
-Projects created before the `shards/` layout live in `analysis/`, `studies/`, `models/`, `services/`, `data_models/`, `dashboards/`, `research/`, `brainstorm/`, `fixes/` and `projects/`. They are still read (status and resume, validation's specs lookup, Studio). Nothing new is written there, and `shards migrate` does not move them.
+Projects created before the `shards/` layout live in `analysis/`, `studies/`, `models/`, `services/`, `data_models/`, `dashboards/`, `research/`, `brainstorm/`, `fixes/`, `panels/` and `projects/`. Syn's status and resume read them; validation's specs lookup and Studio read most of them. Nothing new is written there, and `shards migrate` does not move them.
 
 ## `.shards/` runtime state
 

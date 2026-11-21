@@ -119,8 +119,8 @@ const PROJECT_OUTPUT_DIRS = [
   'shards', 'analysis', 'studies', 'models', 'services', 'data_models', 'research',
   'dashboards', 'brainstorm', 'experiments', 'fixes', 'presentations', 'projects',
 ];
-// shards/brainstorm/, shards/fixes/ and shards/panels/ are Syn's shared folders, not projects.
-const SHARDS_RESERVED = ['brainstorm', 'fixes', 'panels'];
+// shards/brainstorm/, shards/fixes/, shards/panels/ and shards/academic_reports/ are shared folders, not projects.
+const SHARDS_RESERVED = ['brainstorm', 'fixes', 'panels', 'academic_reports'];
 const PROJECT_PATH_RE = new RegExp(`^(${PROJECT_OUTPUT_DIRS.join('|')})/(?!(?:${SHARDS_RESERVED.join('|')})/)([^/]+)/`);
 
 const AGENT_META = {

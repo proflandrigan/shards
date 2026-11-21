@@ -97,12 +97,13 @@ Input (from `core/schema/gate-request.schema.json`, `additionalProperties: false
 | `summary` | yes | string, 1 to 2000 characters |
 | `record_ref` | yes | string |
 | `validates` | no | string checklist name |
-| `targets` | no | array of 1 to 100 unique strings, root-relative paths inside the project |
+| `targets` | no | array of 0 to 100 unique strings (1 to 512 characters each), root-relative paths inside the project; `[]` clears the list |
 
 Refusals (tool errors, gate not opened):
 
 - No resolved session.
 - No frame on the stack: `gate_request refused: no active frame ... Activate an agent with mode=switch first.` Consult workers never hold gates.
+- `targets` containing an absolute path, a path escaping the root, the root itself, or a path inside `.git/` or `.shards/`.
 - `validates` set and the record is missing, outside the project root, or fails validation. The record must be inside the project root, and the error names the checklist as `<validates>/validation_checklist.md`.
 
 Only the last `## Validation` section of the record is checked. `checkValidation` returns a list of coded errors, and each is printed with its description from `ERROR_DESCRIPTIONS`. The positive path (a valid record) has not been exercised in a smoke test. Read by code only.
@@ -143,7 +144,7 @@ If `shards.config.yaml` fails to load, `gate_request` and `load_phase` treat the
 - Commit paths: the output directory plus gate `targets`, see step 1. Before this layout only `output_dir` was snapshotted.
 - The commit covers the full diff of each commit path against HEAD, not only the files written during this gate.
 - Denylist and size limits apply to tracked and untracked files. A tracked file excluded by these rules is left alone, not deleted.
-- `.shards/` is excluded only through the output directory. No collector rule excludes it by name. Current output directories (`analysis/`, `studies/`, `models/`, `data_models/`, `services/`, `research/`, `dashboards/`) never cover the root.
+- `.shards/` is excluded only through the output directory. No collector rule excludes it by name. Output directories (`shards/<project>/`, `shards/<project>/mlops/`) never cover the root, and `gate_request` rejects targets that are the root or inside `.shards/`.
 - Leases: `leases.getLeasedPaths(session)` returns the paths of active lease slices (`listActive`). `commitGate` accepts a `getLeasedPaths` override. `machine.js` does not pass one, so the module function is used. Tests stub the module function.
 
 ### 6.3 Commit paths

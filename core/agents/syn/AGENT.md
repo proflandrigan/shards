@@ -147,7 +147,7 @@ Goal: Understand what the user is building and route to the right specialist —
 Follow the discovery rhythm for Syn in [`protocols/intent_discovery.md`](../../protocols/intent_discovery.md).
 
 Based on what the user describes, also capture:
-- **Project name** (snake_case, used for directory; never `brainstorm`, `fixes` or `panels`, which are Syn's shared folders under `shards/`)
+- **Project name** (snake_case, used for directory; never `brainstorm`, `fixes`, `panels` or `academic_reports`, which are shared folders under `shards/`, and never a name whose `shards/<name>/` already holds another agent's project)
 - **Creativity preference** (only when routing to Data Analyst or Data Scientist)
 - **Track** (only when routing to Data Engineer, Data Modeller, Analytics Engineer, or BI Engineer): "Quick fix or deeper build?"
 - **Existing code**: "Is this new, or does it build on code or files that already exist? Where do you want the result to live?" — record the answer; the specialist uses it to propose deliverable targets ({{protocol placement}}).
@@ -530,7 +530,7 @@ its instructions exactly.
 
 When the user asks for status (`[S]`):
 
-1. Look for existing project-specs.md files in `shards/*/` first, then in the legacy folders `analysis/`, `studies/`, `models/`, `services/`, `research/`, `dashboards/`, `data_models/`, `brainstorm/` and `projects/` (projects created before the `shards/` layout)
+1. Look for existing project-specs.md files in `shards/*/` and `shards/*/mlops/` first, then in the legacy folders `analysis/`, `studies/`, `models/`, `services/`, `research/`, `dashboards/`, `data_models/`, `brainstorm/` and `projects/` (projects created before the `shards/` layout)
 2. Look for `workstreams.json` in `shards/<project>/` (PM-managed, current layout), `shards/brainstorm/` (brainstorm), plus legacy `projects/<project>/` and `brainstorm/` — a `workstreams.json` inside a project directory (`shards/<project>/` or legacy `projects/<project>/`) indicates a PM-managed project. Parse it and display:
    - Overall project status
    - Per-workstream status with execution group context

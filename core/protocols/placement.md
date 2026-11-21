@@ -15,7 +15,9 @@ This protocol decides where every file you write goes. Shards adds one folder to
 | Bookkeeping | `project-specs.md`, `tasks.yaml`, reports, handoff files, intake notes, scratch notebooks and queries | `shards/<project>/` (your `output_dir`) |
 | Deliverables | model code, services, pipelines, dbt models, dashboards, SQL that belongs to the codebase, tests | The confirmed targets |
 
-`brainstorm`, `fixes` and `panels` under `shards/` are Syn's shared folders; never use them as a project name.
+`brainstorm`, `fixes`, `panels` and `academic_reports` under `shards/` are shared folders; never use them as a project name.
+
+One project folder belongs to one agent. If `shards/<name>/project-specs.md` already exists for another agent (for example when you receive a handoff or productionize another agent's study), pick a new name such as `<name>_dashboard` or `<name>_service`, and link the source folder in your specs. Never overwrite another agent's specs or report.
 
 ## Inferring targets
 
@@ -34,6 +36,7 @@ Pass the proposed paths as `targets` on the `gate_request` that closes the plann
 - Targets are root-relative paths inside the project.
 - Name specific files or the narrowest directory. Never use `.`, and never a broad directory like `src/` when the work touches one module. Every file under a confirmed target is included in the gate's git snapshot, so a broad target sweeps up unrelated uncommitted work.
 - Gates that pass no `targets` keep the last confirmed list. If a target changes later, re-pass the full updated list on the next gate (it replaces the old one; a dropped target is no longer committed) and update `## Placement`. Treat a change of target as a plan change (`plan_drift` protocol when executing a task manifest).
+- Inherited targets only last for the current session. A gate that approves edits to deliverables in a new session (an update mode's scope gate, a research or experiment plan gate, a resumed project) must pass the targets it will touch, taken from `## Placement`.
 
 ## Integrating into an existing codebase
 
@@ -56,4 +59,4 @@ Paths written elsewhere in this suite as `shards/<project_name>/...` for code (f
 
 ## Legacy layout
 
-Projects started before this layout live in `analysis/`, `studies/`, `models/`, `services/`, `data_models/`, `dashboards/`, `research/`, `brainstorm/`, `fixes/` and `projects/`. Read them when resuming, and keep updating an existing legacy project's specs in place. The gate snapshot only covers `shards/<project>/` and the confirmed targets, so when you resume a legacy project add its folder (for example `analysis/<project>`) to `targets` on your next gate; otherwise its updates are never committed. Never create new project folders there.
+Projects started before this layout live in `analysis/`, `studies/`, `models/`, `services/`, `data_models/`, `dashboards/`, `research/`, `brainstorm/`, `fixes/`, `panels/` and `projects/`. Read them when resuming, and keep updating an existing legacy project's specs in place. The gate snapshot only covers `shards/<project>/` and the confirmed targets, so when you resume a legacy project add its folder (for example `analysis/<project>`) to `targets` on your next gate; otherwise its updates are never committed. Never create new project folders there.

@@ -100,6 +100,8 @@ If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
 rejected), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
+Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
+
 {{gate kind=execute phase=1 id=data-scientist-experiment-phase1}}
 Wait for confirmation. If the user modifies the plan, update it before proceeding.
 

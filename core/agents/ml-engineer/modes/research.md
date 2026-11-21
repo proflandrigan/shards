@@ -34,8 +34,8 @@ Same as `[EX]` Phase 0 but with expanded parameter confirmation.
 ### Context loading
 
 1. Locate `project-specs.md` in the project directory (typically
-   `shards/<project_name>/project-specs.md`
-   ; legacy projects: their existing `project-specs.md`).
+   `shards/<project_name>/project-specs.md`;
+   legacy projects: their existing `project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project
      context (problem statement, model type, current metrics, code location)
      before proceeding.
@@ -235,6 +235,8 @@ confirm it yourself. Activation is optional:
 
 ### Gate
 
+Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
+
 {{gate kind=execute phase=1 id=ml-engineer-research-phase1}}
 
 ### If fan-out confirmed
@@ -270,7 +272,7 @@ iteration N:
 6. Evaluate (Section E proxy vs full rules)
 7. Auto-keep/revert decision (Section C)
 8. Record results (experiment file + results.json + research log)
-9. Git checkpoint (Section B.9 with `shards/<project>/<N>-<name>` tag)
+9. Git checkpoint (Section B.9 with `research/<project>/<N>-<name>` tag)
 10. Reviewer consultation if cadence hit (Data Scientist — Section D)
 11. Convergence check (Section E)
 12. Cost accounting (Section B.12 — micro-gate is opt-in and disabled by default; see Section B.12 for the current status of auto-close support)

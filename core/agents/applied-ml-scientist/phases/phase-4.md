@@ -34,6 +34,8 @@ of tasks):
 - `full-train` — full training completes; loss curve plotted; convergence direction matches prediction.
 - `eval` — evaluation vs baselines runs; metric table coherent; ablation (if feasible) logged.
 
+Paths below are the greenfield default; when the plan confirmed targets, use the `## Placement` paths instead ({{protocol placement}}).
+
 **Notebook `shards/<project_name>/notebooks/framework_prototype.ipynb`**,
 assembled section by section (one task per section group, chained by
 `depends_on` since they share the notebook file):

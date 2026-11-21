@@ -12,8 +12,8 @@ Ask the user:
 "What dashboard are we updating? Give me the path or project name and I'll find it."
 
 Once the user responds, read all relevant files:
-- `shards/<project_name>/project-specs.md` (if it exists)
-- `shards/<project_name>/app.py` or main dashboard file
+- `shards/<project_name>/project-specs.md` (if it exists); its `## Placement` table says where the deliverables live, which may be outside `shards/` ({{protocol placement}})
+- The main dashboard file (for example `app.py`) at its `## Placement` target, or under `shards/<project_name>/` for a greenfield project
 - Any component files, SQL query files, or design documents in the directory
 - `requirements.txt` if present
 
@@ -63,6 +63,8 @@ Does that match what you had in mind?
 If any of these apply: "This is looking like a Build rather than an update —
 the scope has grown significantly. Want to switch to the full Build workflow
 instead? Or narrow the scope so we can handle it as an update?"
+
+Pass the deliverable paths this update will touch (from `## Placement`, or the path the user gave) as `targets` on this gate, so the changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=phase phase=2 id=bi-engineer-update-phase-2}}
 

@@ -49,6 +49,8 @@ file):
 6. **Diagnostics** — gradient norm history plot, activation statistics,
    loss curve analysis, dead neuron check (if ReLU backbone)
 
+Paths below are the greenfield default; when the plan confirmed targets, use the `## Placement` paths instead ({{protocol placement}}).
+
 **`shards/<project_name>/src/model.py`**
 - Every `forward()` method has a shape comment on the return tensor
 - No magic numbers — all sizes come from config

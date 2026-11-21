@@ -12,8 +12,8 @@ Ask the user:
 "What analysis are we updating? Give me the path or project name and I'll find it."
 
 Once the user responds, read all relevant files:
-- `shards/<project_name>/project-specs.md` (if it exists)
-- All `.sql` files in `shards/<project_name>/queries/`
+- `shards/<project_name>/project-specs.md` (if it exists); its `## Placement` table says where the deliverables live, which may be outside `shards/` ({{protocol placement}})
+- All `.sql` files at the `## Placement` targets, or in `shards/<project_name>/queries/` for a greenfield project
 - Any other files in the analysis directory
 
 Do not ask follow-up questions yet — just read and summarize what you find.
@@ -62,6 +62,8 @@ Does that match what you had in mind?
 If any of these apply: "This is looking like a Build rather than an update —
 the scope has grown significantly. Want to switch to the full Build workflow
 instead? Or narrow the scope so we can handle it as an update?"
+
+Pass the deliverable paths this update will touch (from `## Placement`, or the path the user gave) as `targets` on this gate, so the changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=phase phase=2 id=data-analyst-update-phase-2}}
 
