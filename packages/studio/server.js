@@ -121,7 +121,7 @@ const PROJECT_OUTPUT_DIRS = [
 ];
 // shards/brainstorm/, shards/fixes/, shards/panels/ and shards/academic_reports/ are shared folders, not projects.
 const SHARDS_RESERVED = ['brainstorm', 'fixes', 'panels', 'academic_reports'];
-const PROJECT_PATH_RE = new RegExp(`^(${PROJECT_OUTPUT_DIRS.join('|')})/(?!(?:${SHARDS_RESERVED.join('|')})/)([^/]+)/`);
+const PROJECT_PATH_RE = new RegExp(`^(${PROJECT_OUTPUT_DIRS.join('|')})/([^/]+)/`);
 
 const AGENT_META = {
   'syn':                    { color: '#FFD700', label: 'Syn (Orchestrator)',           category: 'route', keywords: [] },
@@ -145,7 +145,7 @@ function detectProjectFromRelPath(relPath) {
   if (!relPath || relPath.startsWith('..')) return null;
   const norm = relPath.replace(/\\/g, '/');
   const m = norm.match(PROJECT_PATH_RE);
-  if (!m) return null;
+  if (!m || (m[1] === 'shards' && SHARDS_RESERVED.includes(m[2]))) return null;
   return { projectDir: `${m[1]}/${m[2]}`, projectName: m[2] };
 }
 

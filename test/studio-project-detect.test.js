@@ -13,4 +13,7 @@ describe('studio detectProjectFromRelPath', () => {
       expect(detectProjectFromRelPath(p)).toBeNull();
     }
   });
+  it('only reserves those names under shards/', () => {
+    expect(detectProjectFromRelPath('analysis/fixes/q.sql')).toEqual({ projectDir: 'analysis/fixes', projectName: 'fixes' });
+  });
 });

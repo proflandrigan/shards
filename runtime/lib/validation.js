@@ -35,15 +35,19 @@ function findLatestSpecs(root) {
     }
     for (const e of entries) {
       if (!e.isDirectory()) continue;
-      const candidate = path.join(base, e.name, 'project-specs.md');
-      try {
-        const st = fs.statSync(candidate);
-        if (st.mtimeMs > bestMtime) {
-          bestMtime = st.mtimeMs;
-          best = candidate;
+      // MLOps keeps its specs one level down, in shards/<project>/mlops/.
+      const candidates = [path.join(base, e.name, 'project-specs.md')];
+      if (d === 'shards') candidates.push(path.join(base, e.name, 'mlops', 'project-specs.md'));
+      for (const candidate of candidates) {
+        try {
+          const st = fs.statSync(candidate);
+          if (st.mtimeMs > bestMtime) {
+            bestMtime = st.mtimeMs;
+            best = candidate;
+          }
+        } catch {
+          // no specs file here — skip
         }
-      } catch {
-        // no specs file here — skip
       }
     }
   }

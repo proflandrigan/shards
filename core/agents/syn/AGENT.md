@@ -147,7 +147,7 @@ Goal: Understand what the user is building and route to the right specialist —
 Follow the discovery rhythm for Syn in [`protocols/intent_discovery.md`](../../protocols/intent_discovery.md).
 
 Based on what the user describes, also capture:
-- **Project name** (snake_case, used for directory; never `brainstorm`, `fixes`, `panels` or `academic_reports`, which are shared folders under `shards/`, and never a name whose `shards/<name>/` already holds another agent's project)
+- **Project name** (snake_case, used for directory; never `brainstorm`, `fixes`, `panels` or `academic_reports`, which are shared folders under `shards/`, and never a name whose `shards/<name>/` already holds another agent's project; the MLOps Engineer is the exception, since it works in `shards/<name>/mlops/` and keeps the model project's name)
 - **Creativity preference** (only when routing to Data Analyst or Data Scientist)
 - **Track** (only when routing to Data Engineer, Data Modeller, Analytics Engineer, or BI Engineer): "Quick fix or deeper build?"
 - **Existing code**: "Is this new, or does it build on code or files that already exist? Where do you want the result to live?" — record the answer; the specialist uses it to propose deliverable targets ({{protocol placement}}).

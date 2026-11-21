@@ -17,7 +17,7 @@ This protocol decides where every file you write goes. Shards adds one folder to
 
 `brainstorm`, `fixes`, `panels` and `academic_reports` under `shards/` are shared folders; never use them as a project name.
 
-One project folder belongs to one agent. If `shards/<name>/project-specs.md` already exists for another agent (for example when you receive a handoff or productionize another agent's study), pick a new name such as `<name>_dashboard` or `<name>_service`, and link the source folder in your specs. Never overwrite another agent's specs or report.
+One project folder belongs to one agent. If `shards/<name>/project-specs.md` already exists for another agent (for example when you receive a handoff or productionize another agent's study), pick a new name such as `<name>_dashboard` or `<name>_service`, and link the source folder in your specs. Never overwrite another agent's specs or report. The one exception is the MLOps Engineer: its own folder is `shards/<name>/mlops/`, so it keeps the project name of the model it deploys.
 
 ## Inferring targets
 

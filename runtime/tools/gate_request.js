@@ -59,8 +59,9 @@ function normTargets(targets) {
     if (path.posix.isAbsolute(s) || path.win32.isAbsolute(s)) throw new Error(`targets must be project-root-relative paths: ${t}`);
     const r = path.posix.normalize(s).replace(/\/+$/, '');
     if (r === '.' || r === '' || r === '..' || r.startsWith('../')) throw new Error(`targets must name a path inside the project root (not the root itself): ${t}`);
+    // Case-insensitive: on macOS and Windows `.SHARDS/state` is the same directory as `.shards/state`.
     const top = r.split('/')[0];
-    if (top === '.git' || top === '.shards') throw new Error(`targets must not be inside ${top}/: ${t}`);
+    if (/^\.(git|shards)$/i.test(top)) throw new Error(`targets must not be inside ${top}/: ${t}`);
     return r;
   });
   return [...new Set(mapped)];

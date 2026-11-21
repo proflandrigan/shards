@@ -91,7 +91,7 @@ describe('target hardening', () => {
     expect(gates.getGate(session, 'data-analyst-phase-1').targets).toEqual(['src/churn']);
   });
   it('rejects targets under .git or .shards', async () => {
-    for (const t of ['.shards', '.shards/state', '.git/config']) {
+    for (const t of ['.shards', '.shards/state', '.git/config', '.SHARDS/state', '.Git']) {
       const r = await call(ok({ targets: [t] }));
       expect(r.isError).toBe(true);
     }

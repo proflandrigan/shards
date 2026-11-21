@@ -44,6 +44,11 @@ describe('findLatestSpecs (via readSpecs)', () => {
     expect(readSpecsFrom(root)).toContain('P1-SPECS');
   });
 
+  it('finds the MLOps specs in shards/<project>/mlops/', () => {
+    writeSpecs(root, path.join('shards', 'p2', 'mlops'), 'MLOPS-SPECS');
+    expect(readSpecsFrom(root)).toContain('MLOPS-SPECS');
+  });
+
   it('still finds legacy analysis/<project>/project-specs.md', () => {
     writeSpecs(root, path.join('analysis', 'p0'), 'P0-SPECS');
     expect(readSpecsFrom(root)).toContain('P0-SPECS');
