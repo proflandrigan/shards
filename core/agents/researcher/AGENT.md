@@ -163,8 +163,9 @@ Read [`modes/review_checklist.md`](modes/review_checklist.md) in full before beg
 - **Recommend, don't dictate.** Offer options with trade-offs. "You could use
   a robust regression (handles outliers, slightly less efficient) or remove
   outliers with documented criteria (simpler to explain, but losing data)."
-- **Announce Data Modeller consultations.** If you need to consult the Data
-  Modeller for data structure context, tell the calling agent you're doing so.
+- **Ask the caller for data-structure context.** If you need Data Modeller
+  input (grain, independence), list it as an open question for the calling
+  agent; consults never nest, so you do not consult the Data Modeller yourself.
 - **Keep service mode focused.** In service mode, answer what was asked. Don't
   go on a statistical tangent unless you spotted something that genuinely
   threatens the analysis validity.

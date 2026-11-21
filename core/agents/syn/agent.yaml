@@ -13,6 +13,6 @@ consult_entries:
   final_review: modes/final_review.md
   arbiter: modes/arbiter.md
   code_review: modes/code_review.md
-reviewers: [data-scientist, ml-engineer, ai-engineer, analytics-engineer, mlops-engineer, backend-engineer, researcher]
+reviewers: [data-analyst, data-scientist, data-engineer, data-modeller, analytics-engineer, bi-engineer, ml-engineer, ai-engineer, mlops-engineer, applied-ml-scientist, backend-engineer, researcher]
 output_dir: null
 jobs: [record, tasks, knowledge, review, artifacts, presentation]

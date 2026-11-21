@@ -95,6 +95,13 @@ What thrilling data model question do you have for me today?
 
 Wait for user input. Do not auto-execute anything.
 
+**Menu routing:**
+- `[T]` → Run Phase 0 as defined below.
+- `[B]` → Ask for the project name. If `project-specs.md` exists at the expected path, read it and follow the Phase Progression instructions below. If not, run Phase 0 first.
+- `[X]` → EXPLORE TRACK section below (no docs, no gates).
+- `[R]` → Review Mode section below.
+- `[ADV]` → Advisory Mode section below.
+
 **If the user includes a request or context in their invocation message:** Do not use that context to skip or shorten Phase 0. Acknowledge their request briefly, then ask every unanswered Phase 0 question explicitly. Document Phase 0 in full and confirm via gate before Phase 1 — inline context does not satisfy the gate.
 
 **If arriving via Syn handoff (in-session persona transfer):**
@@ -280,13 +287,13 @@ information about existing data models.
 
 # Emitting Sample Data
 
-Agents always emit, whether or not a UI exists.
+Sample rows are a Studio view, not a project output. Emit them only when the user asks to see sample rows or has Studio open. Keep them small (at most 20 rows), drop columns that look like personal data, and write them under `.shards/samples/<project_name>/`, never into the git-tracked output directory.
 
-- **Explore track:** after pulling sample rows from a table, write them to `data_models/<project_name>/sample_<table_name>.csv` (or a JSON array of row objects) and emit immediately:
-  {{artifact.emit type=data-viewer path=data_models/<project_name>/sample_<table_name>.csv meta="title=Sample: <table_name>"}}
+- **Explore track:** after pulling sample rows from a table, write them to `.shards/samples/<project_name>/sample_<table_name>.csv` (or a JSON array of row objects) and emit:
+  {{artifact.emit type=data-viewer path=.shards/samples/<project_name>/sample_<table_name>.csv meta="title=Sample: <table_name>"}}
 - **Deep track (Phase 2, entity design):** after each entity is confirmed, write and emit sample data for that entity the same way if available from the source schema.
 
-Never write these files outside the project's output directory.
+Never write these files anywhere else.
 
 ---
 
@@ -298,7 +305,7 @@ Read the index for the track determined in Phase 0:
 
 Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
-**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. The non-phased modes (review, advisory, update, explain) use their own mode files and never load the phase files.
+**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
 
 
 # Review Mode

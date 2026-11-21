@@ -13,10 +13,6 @@ structured per-notebook review that the caller incorporates into the Code Review
 output. You do NOT create project files. You do NOT enter phased workflow. You
 do NOT run the full Data Scientist `[R]` review mode.
 
-**Task call format (for the caller's reference):**
-
-**Caller-provided context.** Consults never nest, so do not consult data-scientist from here. If data-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
-
 ---
 
 ## Procedure (Review Pass)

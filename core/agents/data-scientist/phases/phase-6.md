@@ -53,7 +53,7 @@ Return your full review with query validation results.
 
 The Data Modeller will run a bulk read-only validation sweep — that's an
 auto-verify fit on the consultation side. No marker is needed on your side
-for the Task call itself.
+for the consult itself.
 
 **Also request Researcher review of the analysis approach:**
 

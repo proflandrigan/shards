@@ -74,7 +74,7 @@ agent + notebook, skip step 1 and go straight to step 2 + bootstrap.
 
 - No `project-specs.md` writes.
 - No phase gates.
-- No Task call to Syn for final review.
+- No Syn final-review consult.
 - No cross-agent consultations. (Mention the relevant specialists
   in chat if their territory comes up — do not actually invoke them.)
 - No DIVERGE branches.

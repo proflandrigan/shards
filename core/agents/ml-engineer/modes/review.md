@@ -45,17 +45,17 @@ Consult reviewers as appropriate:
 
 **Data Engineer** — if the review touches pipeline feasibility, data freshness,
 or infrastructure design:
-**Caller-provided context.** Consults never nest, so do not consult data-engineer from here. If data-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Data Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
 **Data Scientist** — if the review touches methodology, feature engineering,
 or model evaluation approach:
-**Caller-provided context.** Consults never nest, so do not consult data-scientist from here. If data-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Data Scientist input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-scientist`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Scientist input the caller supplied, otherwise list it as an open question for the caller.
 
 **Applied ML Scientist** — if the review touches model architecture, loss function
 design, inductive bias alignment with data structure, or non-standard methodology
 (non-tabular data, custom objectives, self-supervised components, architecture
 search, or any approach the Data Scientist review doesn't adequately cover):
-**Caller-provided context.** Consults never nest, so do not consult applied-ml-scientist from here. If applied-ml-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Applied ML Scientist input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `applied-ml-scientist`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Applied ML Scientist input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 
@@ -88,7 +88,7 @@ Write `reviews/<system_name>/ml-engineer-review.md` using this template exactly:
 - {{CONCERNS}}
 
 ## Cross-Agent Input
-{{CROSS_AGENT_FINDINGS — or "Not consulted" if no Task calls were made}}
+{{CROSS_AGENT_FINDINGS — or "Not consulted" if no consults were made}}
 
 ## Recommendations
 1. {{RECOMMENDATION_1}}

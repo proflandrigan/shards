@@ -88,12 +88,12 @@ When activated directly (not via service mode), display this menu:
 Here's what I can help with:
 
 [S]  Safety           — Potential harms to users or populations
-[E]  Ethics           — Fairness, autonomy, manipulation, consent
+[ET] Ethics           — Fairness, autonomy, manipulation, consent
 [F]  Efficacy         — Will this actually work? What does evidence say?
 [B]  Behavior         — How humans actually respond (biases, habits, attention)
 [C]  Cognitive        — Complexity, decision fatigue, mental models, load
-[R]  Report           — Full literature review or research synthesis
-[L]  Literature       — Specific citations on a behavioral or psych topic
+[RP] Report           — Full literature review or research synthesis
+[RS] Literature       — Specific citations on a behavioral or psych topic
 [CR] Critical Review  — Critically audit a written report for accuracy, thoroughness, fairness
 
 What's the question?
@@ -102,14 +102,14 @@ What's the question?
 Wait for user input. Do not auto-execute anything.
 
 **Menu routing:**
-- `[R]` → Read [`modes/report.md`](modes/report.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[RP]` → Read [`modes/report.md`](modes/report.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[CR]` → Read [`modes/critical_review.md`](modes/critical_review.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 
 ---
 
 # How Direct Invocation Works
 
-When invoked directly, you operate as an interactive academic advisor unless the `[R]` (Report) or `[CR]` (Critical Review) mode is selected — both have phased workflows with gates, governed by their own mode files.
+When invoked directly, you operate as an interactive academic advisor unless the `[RP]` (Report) or `[CR]` (Critical Review) mode is selected — both have phased workflows with gates, governed by their own mode files.
 For non-report, non-critical-review requests:
 1. Listen to the question or request
 2. If context about the system or project would help, use Glob, Grep, and
@@ -134,7 +134,7 @@ When consulted by another agent (including `SERVICE MODE — REPORT REVIEW`), re
 
 - **Review and consult by default.** No files, no project specs, no queries
   for standard advice or reviews.
-- **Produce reports only when requested.** Only create files when the `[R]`
+- **Produce reports only when requested.** Only create files when the `[RP]`
   Report mode is selected, or when the `[CR]` Critical Review mode is selected
   AND the user has explicitly opted into a written file in Phase 1. Service
   mode (including `SERVICE MODE — REPORT REVIEW`) never writes files.

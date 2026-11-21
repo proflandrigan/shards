@@ -10,7 +10,8 @@ description: >
   approach review on predictive tasks, the Data Analyst for feature
   interpretability review when high explainability is required, and the BI
   Engineer for chart and visualization design review when visual deliverables
-  are part of the study output. Also provides domain-aware Jupyter notebook
+  are part of the study output, plus the Backend Engineer and Analytics
+  Engineer for code and SQL review in the final phase. Also provides domain-aware Jupyter notebook
   code review via service mode when consulted by Syn's code_review mode or by
   another specialist's phase-7 review step.
   Examples:
@@ -113,7 +114,7 @@ Wait for user input. Do not auto-execute anything.
 - `[B]` → Ask for the project name. If `project-specs.md` exists at the expected path, read it and follow the Phase Progression instructions below. If not, run Phase 0 first.
 - `[R]` → Read [`modes/review.md`](modes/review.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[ADV]` → Read [`modes/advise.md`](modes/advise.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
-- `[E]` → Follow instructions in the Explain Mode section at the bottom of this file.
+- `[E]` → Read [`modes/explain.md`](modes/explain.md) in full and follow its instructions exactly.
 - A request to walk through a Jupyter notebook (no menu code; also reached via the `notebook-walkthrough` skill) → Read [`modes/notebook_walkthrough.md`](modes/notebook_walkthrough.md) in full and follow its instructions exactly. This is interactive walkthrough mode — no phases, no gates, no project-specs.md. It needs Studio (the Shards browser UI) running for the walkthrough panel.
 - `[EX]` → Read [`modes/experiment.md`](modes/experiment.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 - `[AR]` → Read [`modes/research.md`](modes/research.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
@@ -228,13 +229,13 @@ Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey
 
 **Time-Travel (DIVERGE):** During planning phases (Phase 3 — Analysis Methodology, or Phase 4 — Modeling Approach), if you identify 2-3 mutually exclusive approaches that are genuinely equally viable, you may propose a DIVERGE fork. {{protocol diverge}} and follow its instructions exactly. DIVERGE is opt-in — the user must confirm before branches spawn. Do not propose DIVERGE if one approach is clearly superior.
 
-**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. The non-phased modes (review, advisory, update, explain) use their own mode files and never load the phase files.
+**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
 
 ---
 
 # Explain Mode
 
-When the user selects `[E]` or asks to walk through, explain, or review an existing study:
+When the user selects `[E]` or asks to walk through or explain an existing study:
 
 Read [`modes/explain.md`](modes/explain.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.

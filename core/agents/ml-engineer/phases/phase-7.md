@@ -42,7 +42,7 @@ Files to review: [list of .ipynb files found]
 Your job here is review only — do not apply any fixes.
 ```
 
-If both buckets are non-empty, fire both Task calls in parallel. If neither
+If both buckets are non-empty, fire both consults in parallel. If neither
 bucket has files, report "No Python code artifacts — skipping code review."
 
 Append both reviews to project-specs.md under a combined `Code Review` heading.

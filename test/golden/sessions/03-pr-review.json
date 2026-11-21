@@ -46,17 +46,17 @@
   ],
   "expected_gates": [
     {
-      "id": "specific-instructions-syn-pr-review-phase0",
+      "id": "syn-pr-review-phase0",
       "kind": "phase",
       "min": 1
     },
     {
-      "id": "specific-instructions-syn-pr-review-phase0-2",
+      "id": "syn-pr-review-phase0-2",
       "kind": "phase",
       "min": 1
     },
     {
-      "id": "specific-instructions-syn-pr-review-phase0-3",
+      "id": "syn-pr-review-phase0-3",
       "kind": "final",
       "min": 1
     }
@@ -72,7 +72,7 @@
       "type": "gate_reask",
       "description": "Agent re-emits a gate the user already confirmed (e.g. after compaction); only gates listed in allowed_reemits may repeat",
       "allowed_reemits": {
-        "specific-instructions-syn-pr-review-phase0-2": 1
+        "syn-pr-review-phase0-2": 1
       }
     },
     {

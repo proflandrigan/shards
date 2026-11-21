@@ -45,7 +45,7 @@ paths and context warrants it, but file reading is not required.
 If the question touches data model design, grain, or entity structure, consult the
 Data Modeller:
 
-**Caller-provided context.** Consults never nest, so do not consult data-modeller from here. If data-modeller input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Data Modeller input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-modeller`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Modeller input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 

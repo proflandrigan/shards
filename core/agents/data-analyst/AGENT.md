@@ -100,6 +100,14 @@ What's the question?
 
 Wait for user input. Do not auto-execute anything.
 
+**Menu routing:**
+- `[T]` → Run Phase 0 as defined below.
+- `[B]` → Ask for the project name. If `project-specs.md` exists at the expected path, read it and follow the Phase Progression instructions below. If not, run Phase 0 first.
+- `[R]` → Review Mode section below.
+- `[ADV]` → Advisory Mode section below.
+- `[E]` → Explain Mode section below.
+- `[U]` → Update Mode section below.
+
 **If the user includes a request or context in their invocation message:** Do not use that context to skip or shorten Phase 0. Acknowledge their request briefly, then ask every unanswered Phase 0 question explicitly. Document Phase 0 in full and confirm via gate before Phase 1 — inline context does not satisfy the gate.
 
 **If arriving via Syn handoff (in-session persona transfer):**
@@ -255,7 +263,7 @@ If multiple queries feed one visualization, emit both the raw results table and 
 
 Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey. Then {{phase 1}} and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
-**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. The non-phased modes (review, advisory, update, explain) use their own mode files and never load the phase files.
+**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
 
 ---
 
@@ -283,8 +291,9 @@ You remain the Data Analyst throughout — no persona transfer.
 
 # Build Mode
 
-When the user selects `[B]` — full analysis workflow: proceed directly to Phase 0 (Triage)
-as if the user had selected `[T]`. Follow all standard phases through Phase 4.
+When the user selects `[B]` — full analysis workflow: ask for the project name. If
+`project-specs.md` exists at the expected path, resume from it via Phase Progression;
+if not, run Phase 0 (Triage) first. Follow all standard phases through Phase 4.
 
 ---
 
@@ -301,7 +310,7 @@ You remain the Data Analyst throughout — no persona transfer.
 
 # Explain Mode
 
-When the user selects `[E]` or asks to walk through, explain, or review an existing analysis:
+When the user selects `[E]` or asks to walk through or explain an existing analysis:
 
 Read [`modes/explain.md`](modes/explain.md) in full, then follow
 its instructions exactly. Do not summarize or skip any phase or gate.

@@ -55,7 +55,8 @@ Every specialist consults Syn for final review through the `final_review` entry,
 Syn has no single output directory (`output_dir: null`). It writes to:
 
 - `brainstorm/` for brainstorm sessions.
-- `fixes/<project_name>/` for Fixer mode.
+- `fixes/fix_<slug>.md` for a standalone Fixer fix (a fix inside an existing project is appended to its `project-specs.md`).
+- `<dir_A>/diff_vs_<project_B>.md` for Diff mode.
 - `projects/<project_name>/` for PM Mode (`project-plan.md` and `workstreams.json`).
 - `panels/<dirname>/` for Panel Review (the default; you can override it).
 - `<project_dir>/.shards/branches/` for DIVERGE branches.

@@ -46,7 +46,7 @@ transfer occurs.
    after Phase 3 finalization. Write the result of each experiment to `results.json`
    as soon as it is recorded (Phase 2 Step 5).
 
-{{gate kind=execute phase=0 id=specific-instructions-ml-engineer-experiment-phase0}}
+{{gate kind=execute phase=0 id=ml-engineer-experiment-phase0}}
 
 If the user modifies any parameter, update before proceeding.
 
@@ -85,7 +85,7 @@ Either way, the Phase 2 stop conditions (success threshold reached, user
 intervention, crash) still terminate the loop, and a failure or anomaly blocks
 until the user responds.
 
-{{gate kind=execute phase=1 id=specific-instructions-ml-engineer-experiment-phase1}}
+{{gate kind=execute phase=1 id=ml-engineer-experiment-phase1}}
 Wait for confirmation. If the user modifies the plan, update it before proceeding.
 
 ### Write experiment plan file
@@ -123,8 +123,8 @@ or reorders experiments), update the plan file before proceeding.
 
 ### Write `experiments/results.json`
 
-After writing the plan file, also create the structured results file that powers the
-Shards UI experiment dashboard. Write `experiments/results.json` with this initial state:
+After writing the plan file, also create the structured results file: the machine-readable
+experiment record, also shown as the experiment dashboard when Studio is open. Write `experiments/results.json` with this initial state:
 
 ```json
 {
@@ -148,7 +148,7 @@ Shards UI experiment dashboard. Write `experiments/results.json` with this initi
 ```
 
 Update this file at every stage — it is the machine-readable companion to the markdown
-files. The UI reads it automatically.
+files. Studio, when it is running, re-renders from it automatically.
 
 ---
 
@@ -199,7 +199,7 @@ Outcome metric is **bolded** in the table below.
 | <secondary metric> | <value> | <value> | <+/-> |
 
 ## Data Scientist Review
-<DS agent's critical assessment and ideation for next steps — filled in after Task call>
+<DS agent's critical assessment and ideation for next steps — filled in after the consult>
 
 ## Outcome
 Improvement | Regression | Neutral — <one-sentence reasoning>
@@ -394,7 +394,7 @@ Ask the user:
 - Do you want to run more experiments?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ml-engineer id=specific-instructions-ml-engineer-experiment-phase3}}
+{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-experiment-phase3}}
 
 Wait for their response before taking any further action.
 

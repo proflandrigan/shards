@@ -153,7 +153,7 @@
       "max_human_approvals": 0
     },
     {
-      "id": "specific-instructions-data-scientist-experiment-phase*",
+      "id": "data-scientist-experiment-phase*",
       "kind": "execute",
       "min": 2,
       "max_human_approvals": 2

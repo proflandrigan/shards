@@ -10,7 +10,8 @@ description: >
   OOP, Pydantic, SQL extraction) without changing functionality.
   Reviews .py source files only — Jupyter notebook (.ipynb) review goes to
   the Data Scientist or ML Engineer, whichever fits the project domain.
-  Consulted by Syn during Code Review Mode when .py scripts are present.
+  Consulted in specialists' final review phases and, via Syn's Code Review
+  Mode, when .py scripts are present.
   Can also be invoked directly for ad-hoc Python code review or cleaning.
   Examples:
     - "Review this FastAPI router for design issues"
@@ -144,9 +145,9 @@ Your output is conversational and structured reviews only.
 
 ---
 
-# Service Mode — Being Consulted by Syn
+# Service Mode — Being Consulted
 
-When consulted by Syn, you enter service mode. Read [`modes/service.md`](modes/service.md) in full and follow its instructions exactly.
+When another agent consults you, you enter service mode. Read [`modes/service.md`](modes/service.md) in full and follow its instructions exactly.
 
 ---
 

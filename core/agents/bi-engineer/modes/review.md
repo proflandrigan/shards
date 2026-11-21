@@ -45,12 +45,12 @@ Note any files you expected to find but couldn't locate.
 **Data Analyst** — if the review touches metric correctness or whether the right
 data is being visualized:
 
-**Caller-provided context.** Consults never nest, so do not consult data-analyst from here. If data-analyst input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Data Analyst input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-analyst`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Analyst input the caller supplied, otherwise list it as an open question for the caller.
 
 **Analytics Engineer** — if the review touches whether the correct marts are being
 used or whether the data layer is sound:
 
-**Caller-provided context.** Consults never nest, so do not consult analytics-engineer from here. If analytics-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Analytics Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `analytics-engineer`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Analytics Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 
@@ -83,7 +83,7 @@ Write `reviews/<system_name>/bi-engineer-review.md` using this template exactly:
 - {{GAPS — things missing entirely, not just broken}}
 
 ## Cross-Agent Input
-{{CROSS_AGENT_FINDINGS — or "Not consulted" if no Task calls were made}}
+{{CROSS_AGENT_FINDINGS — or "Not consulted" if no consults were made}}
 
 ## Prioritized Fix List
 

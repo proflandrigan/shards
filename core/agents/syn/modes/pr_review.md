@@ -53,7 +53,7 @@ Wait for the user to choose. Once chosen, `cd` into that subdirectory (or prefix
 all subsequent shell commands with `cd <chosen-repo> &&`) so every `gh` and `git`
 command runs from the correct repo root.
 
-{{gate kind=phase phase=0 id=specific-instructions-syn-pr-review-phase0}}
+{{gate kind=phase phase=0 id=syn-pr-review-phase0}}
 
 ---
 
@@ -115,7 +115,7 @@ Display a summary:
 >
 > I'll walk through each thread. Ready to start?"
 
-{{gate kind=phase phase=0 id=specific-instructions-syn-pr-review-phase0-2}}
+{{gate kind=phase phase=0 id=syn-pr-review-phase0-2}}
 
 ---
 
@@ -167,7 +167,7 @@ Analyze the comment and the code. Determine whether this is:
 
 ### 3d. Gate — wait before applying
 
-{{gate kind=final phase=0 id=specific-instructions-syn-pr-review-phase0-3}}
+{{gate kind=final phase=0 id=syn-pr-review-phase0-3}}
 > "Apply this fix? Type **y** to apply, **n** to skip, **edit** to describe your
 > own fix instead, or **done** to stop walking through comments."
 

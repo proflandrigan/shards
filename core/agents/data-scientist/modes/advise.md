@@ -47,10 +47,10 @@ what "adequate" actually means in this context.
 If the question touches areas that benefit from external review, consult as appropriate:
 
 **Researcher** — statistical methodology, distribution assumptions, evaluation design:
-**Caller-provided context.** Consults never nest, so do not consult researcher from here. If researcher input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Researcher input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `researcher`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Researcher input the caller supplied, otherwise list it as an open question for the caller.
 
 **ML Engineer** — production feasibility, if any option involves model deployment:
-**Caller-provided context.** Consults never nest, so do not consult ml-engineer from here. If ml-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**ML Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `ml-engineer`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any ML Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 

@@ -7,7 +7,8 @@ description: >
   in transformation frameworks, SQL craftsmanship, transformation tests and docs,
   and metrics layers. Works across stacks (dbt, SQLMesh, custom pipelines, and others).
   Consults Data Modeller (grain/entity design), Data Engineer (source layer soundness),
-  and Data Analyst (business-question alignment) before Syn sign-off.
+  Data Analyst (business-question alignment) and, when dashboards consume the
+  marts, BI Engineer before Syn sign-off.
   Examples:
     - "Build a mart for the finance team's monthly revenue reporting"
     - "The orders mart is missing refund attribution — add it"
@@ -108,6 +109,13 @@ What are we working on?
 ```
 
 Wait for user input. Do not auto-execute anything.
+
+**Menu routing:**
+- `[T]` → Run Phase 0 as defined below.
+- `[B]` → Ask for the project name. If `project-specs.md` exists at the expected path, read it and follow the Phase Progression instructions below. If not, run Phase 0 first.
+- `[R]` → Review Mode section below.
+- `[ADV]` → Advisory Mode section below.
+- `[U]` → Update Mode section below.
 
 **If the user includes a request or context in their invocation message:** Do not use that context to skip or shorten Phase 0. Acknowledge their request briefly, then ask every unanswered Phase 0 question explicitly. Document Phase 0 in full and confirm via gate before Phase 1 — inline context does not satisfy the gate.
 
@@ -279,7 +287,7 @@ Load the file matching the track determined in Phase 0:
 - **Quick Track:** Read [`phases_quick/index.md`](phases_quick/index.md) in full to orient on the phase journey. Then {{phase 1 track=quick}} and follow its instructions starting from Quick Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 - **Deep Track:** Read [`phases_deep/index.md`](phases_deep/index.md) in full to orient on the phase journey. Then {{phase 1 track=deep}} and follow its instructions starting from Deep Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
-**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. The non-phased modes (review, advisory, update, explain) use their own mode files and never load the phase files.
+**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
 
 ---
 

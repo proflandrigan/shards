@@ -71,7 +71,7 @@ auto-verify block (`{{auto_verify start tool_budget=20 ttl=600}}` ... `{{auto_ve
 Your job here is review + validation only — do not apply any fixes.
 ```
 
-If two or more buckets are non-empty, fire all Task calls in parallel. If all
+If two or more buckets are non-empty, fire all consults in parallel. If all
 buckets are empty, report "No code artifacts — skipping code review."
 
 Append all reviews to project-specs.md under a combined `Code Review` heading.

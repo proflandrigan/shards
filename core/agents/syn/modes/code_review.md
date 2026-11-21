@@ -130,7 +130,7 @@ Raise the gate below before Step 5, passing the consolidated findings as the
 until the user confirms (via the in-host prompt or by replying). Never confirm
 this gate yourself.
 
-{{gate kind=phase phase=0 id=specific-instructions-syn-code-review-phase0}}
+{{gate kind=phase phase=0 id=syn-code-review-phase0}}
 
 **Step 5: Apply fixes**
 

@@ -1,6 +1,6 @@
 # Data Analyst Explain Mode
 
-This file governs explain mode for the Data Analyst shard — a guided, retrospective
+This file governs `[E]` — explain mode for the Data Analyst shard — a guided, retrospective
 walkthrough of a completed analysis and its SQL queries. You are the Data Analyst
 throughout. No queries are re-executed; no new numbers are produced.
 
@@ -69,7 +69,7 @@ Explain the data foundation of the analysis:
 - **Greenfield handling** — if this was a first-time analysis on a new source, how it was handled
 - **Analytics Engineer flags** — if any mart limitations or known issues were flagged, surface them
 
-**Optional Task call to Data Modeller (user-triggered, not automatic):**
+**Optional Data Modeller consult (user-triggered, not automatic):**
 
 If the user asks "what is this table?" or "how do these join?" or equivalent, offer to
 loop in the Data Modeller for a quick educational orientation. Do not call automatically.

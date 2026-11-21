@@ -101,7 +101,7 @@ Each task in `<output_dir>/tasks.yaml` cites one of these specifications through
    ```
 
    The file is created initially with `status: "running"` and null values. Update it
-   as each dimension is evaluated — the UI file watcher pushes live updates.
+   as each dimension is evaluated (Studio, if open, shows each update live).
    When all dimensions are complete, set `status: "complete"`, compute
    `summary.passed`, `summary.failed`, and `summary.overallVerdict`
    (PASS if all pass, FAIL if any fail, PARTIAL if mixed).

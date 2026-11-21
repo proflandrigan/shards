@@ -46,11 +46,11 @@ Note any files you expected to find but couldn't locate.
 **Data Modeller** — if the review touches grain, entity definitions, or schema
 correctness:
 
-**Caller-provided context.** Consults never nest, so do not consult data-modeller from here. If data-modeller input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Data Modeller input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-modeller`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Modeller input the caller supplied, otherwise list it as an open question for the caller.
 
 **Data Analyst** — if the review touches business logic or metric correctness:
 
-**Caller-provided context.** Consults never nest, so do not consult data-analyst from here. If data-analyst input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Data Analyst input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-analyst`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Analyst input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 
@@ -83,7 +83,7 @@ Write `reviews/<system_name>/analytics-engineer-review.md` using this template e
 - {{GAPS — things missing entirely, not just broken}}
 
 ## Cross-Agent Input
-{{CROSS_AGENT_FINDINGS — or "Not consulted" if no Task calls were made}}
+{{CROSS_AGENT_FINDINGS — or "Not consulted" if no consults were made}}
 
 ## Prioritized Fix List
 

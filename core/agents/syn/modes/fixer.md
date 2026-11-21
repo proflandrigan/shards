@@ -163,7 +163,7 @@ Gate readback (pass this as the `summary`):
 
 "Apply the fix? (y/n)"
 
-{{gate kind=phase phase=0 id=specific-instructions-syn-fixer-phase0}}
+{{gate kind=phase phase=0 id=syn-fixer-phase0}}
 
 If the specialist returned BLOCKED and the user hasn't already decided:
 > "[Specialist] thinks this is bigger than a quick fix: [reason]. Want me to

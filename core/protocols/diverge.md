@@ -34,9 +34,9 @@ DIVERGE is appropriate when ALL of the following are true:
 - The project is in an execution phase **other than** the allowed AR-session start — DIVERGE is never mid-loop
 
 **Gate ID namespace for AR-initiated DIVERGE:**
-Use the ID prefix `specific-instructions-shared-diverge-protocol-ar-<project>`
+Use the ID prefix `diverge-ar-<project>`
 to avoid collision with planning-phase DIVERGE gates (which use
-`specific-instructions-shared-diverge-protocol-phase0`). See Section B.
+`diverge-phase0`). See Section B.
 
 ---
 
@@ -70,9 +70,9 @@ so you can pick the winner.
 **Gate to emit:**
 
 - **Planning-phase DIVERGE:** emit with ID
-  `specific-instructions-shared-diverge-protocol-phase0`.
+  `diverge-phase0`.
 - **AR-session-start DIVERGE:** emit with ID
-  `specific-instructions-shared-diverge-protocol-ar-<project>` (substitute
+  `diverge-ar-<project>` (substitute
   the project slug). This is required to avoid collision with planning-phase
   IDs when both DIVERGE forms occur in the same project's state file.
 
@@ -293,9 +293,9 @@ instructions to produce a leaderboard and comparison.
 **Gate to emit (convergence/arbitration):**
 
 - **Planning-phase DIVERGE:** emit with ID
-  `specific-instructions-shared-diverge-protocol-phase0-2`.
+  `diverge-phase0-2`.
 - **AR-session-start DIVERGE:** emit with ID
-  `specific-instructions-shared-diverge-protocol-ar-<project>-converge` to
+  `diverge-ar-<project>-converge` to
   avoid collision with the planning-phase convergence ID.
 
 Example (planning-phase form), as prose:
@@ -379,5 +379,5 @@ When the user selects a winning branch:
    using the promoted artifacts.
 
    For AR fan-out specifically, the parent specialist continues at AR Phase 3
-   (see `autonomous_research.md` Section I) and runs knowledge harvest at that
+   (see `autonomous_research.md` Section I) and proposes knowledge write-backs ({{protocol sources}} §4) at that
    point (not during the branch loops — see Section H.10 of that protocol).

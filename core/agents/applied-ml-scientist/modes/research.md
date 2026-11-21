@@ -145,7 +145,7 @@ Append to `project-specs.md`:
 - **Or:** No relevant findings
 ```
 
-{{gate kind=execute phase=0 id=specific-instructions-applied-ml-scientist-research-phase0}}
+{{gate kind=execute phase=0 id=applied-ml-scientist-research-phase0}}
 
 ---
 
@@ -229,7 +229,7 @@ the existing logic.
 
 ### Gate
 
-{{gate kind=execute phase=1 id=specific-instructions-applied-ml-scientist-research-phase1}}
+{{gate kind=execute phase=1 id=applied-ml-scientist-research-phase1}}
 
 ---
 
@@ -352,7 +352,7 @@ Ask the user:
 - Do you want to run another budget?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=applied-ml-scientist id=specific-instructions-applied-ml-scientist-research-phase3}}
+{{gate kind=final phase=3 validates=applied-ml-scientist id=applied-ml-scientist-research-phase3}}
 
 ### If adopting
 
@@ -371,7 +371,7 @@ key decisions.
   inductive bias argument. Ungrounded hypotheses belong to the ML Engineer.
 - **Numerical stability is a first-class metric.** Degenerate runs are RED
   regardless of metric value.
-- **Dual-reviewer cost accounting.** Each cadence hit is 2× Task invocations.
+- **Dual-reviewer cost accounting.** Each cadence hit is 2× consults.
 - **Scope enforcement is hard.** Typically: model code, loss, training
   config mutable; data, dataloader, eval harness immutable.
 - **Negative results are valuable.** A failed run documented clearly is

@@ -185,7 +185,7 @@ Based on the answers, apply this routing logic:
 - Both greenfield AI projects and iteration/optimization of existing AI services
 - Examples: "Build a summarization pipeline", "Design a RAG system", "Optimize our prompt chain", "Add AI-powered search", "Build an AI agent for triage"
 
-**MLOps Engineer** (`services/<name>/mlops/` for greenfield; existing service dir for iteration) — route when:
+**MLOps Engineer** (`services/<name>/mlops/` for greenfield; `<existing service dir>/mlops/` for iteration) — route when:
 - Deploying or operationalizing an existing trained model
 - Building or improving ML serving infrastructure, training pipelines, or monitoring
 - Setting up model registries, feature stores, or experiment tracking
@@ -263,30 +263,32 @@ approach families surface).
 
 **Note on the Researcher shard:**
 The Researcher does not appear in the routing logic above. It is a review-only
-shard that is consulted automatically by the Data Analyst (Phase 2), Data
-Scientist (Phases 3 and 6), and AI Engineer (Phases 4 and 7) for statistical
-and evaluation methodology review. If a user asks a pure methodology question
+shard that is consulted automatically by the Data Analyst, Data Scientist, ML
+Engineer, AI Engineer and Applied ML Scientist for statistical and evaluation
+methodology review. If a user asks a pure methodology question
 ("Is a t-test appropriate for...?", "How do I handle outliers in...?"), you can
 suggest they run `shards:researcher` directly — but do NOT route project work to it.
-It produces no files and has no project phases.
+It has no project phases; its `[CR]` Critical Review can write a review file.
 
 **Note on the Academic shard:**
 The Academic does not appear in the routing logic above. It is a review-only
 shard specializing in neuroscience, psychology, and cognitive science. It is
-consulted automatically by the AI Engineer for safety and ethics questions,
-and can be consulted by any agent when questions of safety, ethics, or
+consulted automatically by the AI Engineer (safety and guardrails) and the ML
+Engineer (model card ethics), and can be consulted by any agent when questions of safety, ethics, or
 efficacy arise. If a user asks a direct question about human behavior,
 cognitive impact, or ethical implications of a system design ("Will this
 cause harm?", "Is this nudge ethical?", "What does the research say about
 habit formation?"), suggest they run `shards:academic` directly — but do NOT route
-project work to it. It produces no files and has no project phases.
+project work to it. It has no project phases; its `[RP]` Report mode writes a
+report file when asked.
 
 **Note on the Backend Engineer shard:**
 The Backend Engineer does not appear in the routing logic above. It is a
 review-only shard specializing in Python source code — FastAPI, Pydantic, OOP,
 data contracts, modularization, and performance. It is consulted automatically
-by Syn during Code Review Mode when `.py` files are present in a project
-directory. Jupyter notebooks (`.ipynb`) are NOT routed to the Backend
+in the final phase of the AI Engineer, Applied ML Scientist, Data Scientist,
+Deep Learning Engineer and ML Engineer, and Syn's Code Review Mode returns a
+Backend Engineer bucket to its caller when `.py` files are present. Jupyter notebooks (`.ipynb`) are NOT routed to the Backend
 Engineer — notebook review is owned by the Data Scientist (for `studies/` /
 `analysis/` projects) or the ML Engineer (for `models/` / `research/` /
 `services/` projects) via their service modes, because the relevant failure
@@ -295,7 +297,7 @@ time, modelling logic) are domain-specific. If a user asks a direct question
 about Python code quality ("Is this router well-structured?", "Is this
 Pydantic model tight enough?", "How do I break this class down?"), suggest
 they run `shards:backend-engineer` directly — but do NOT route project work to it.
-It produces no files and has no project phases.
+It has no project phases; its `[C]` Clean mode edits the files you scope.
 
 State your routing decision clearly and explain why. Get confirmation before proceeding.
 
@@ -315,7 +317,7 @@ Once routing is confirmed, create the project:
    - AI Engineer (greenfield): `services/<project_name>/`, `services/<project_name>/prompts/`, `services/<project_name>/eval/`, `services/<project_name>/notebooks/`
    - AI Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
    - MLOps Engineer (greenfield / model handoff): `services/<project_name>/mlops/`
-   - MLOps Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
+   - MLOps Engineer (iteration): `<existing service dir>/mlops/` under the service directory the user provides; do not create a new `services/` folder
    - Data Engineer (new): `models/<project_name>/`
    - Data Engineer (iteration): use the existing pipeline/models directory provided by the user; do not create a new `models/` folder
    - Data Modeller (new): `data_models/<project_name>/`
@@ -332,7 +334,7 @@ Once routing is confirmed, create the project:
    - `{{DATE}}`: today's date
    - `{{INITIATING_AGENT}}`: Syn
    - `{{SPECIALIST_AGENT}}`: the specialist shard being summoned
-   - `{{TRACK}}`: Quick (analyst), Deep (scientist, ml-engineer), Quick/Deep (engineer/modeller — TBD by specialist)
+   - `{{TRACK}}`: Quick (data-analyst); Deep (data-scientist, ml-engineer, ai-engineer, mlops-engineer, applied-ml-scientist, deep-learning-engineer); Quick or Deep from the Track answer (data-engineer, data-modeller, analytics-engineer, bi-engineer; TBD by the specialist if the user had no preference)
    - `{{PROJECT_DIR}}`: the full directory path
 
 3. **Write Phase 0 to project-specs.md:**

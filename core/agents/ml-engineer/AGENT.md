@@ -5,14 +5,16 @@ description: >
   and AI systems — recommender systems, ranking algorithms, classification,
   regression, and end-to-end ML pipelines. Handles both greenfield ML projects
   and optimization/iteration of existing services. Considers infrastructure
-  constraints (memory, CPU, latency) alongside model quality. Consults all other
-  shards: Data Modeller for feature source understanding and pipeline data
+  constraints (memory, CPU, latency) alongside model quality. Consults most
+  other shards: Data Modeller for feature source understanding and pipeline data
   correctness, Data Engineer for pipeline feasibility and infrastructure
   design review, Data Scientist for methodology review, Applied ML Scientist
   for cutting-edge methodology review on non-standard problems, Deep Learning
   Engineer for architecture–data alignment and inference feasibility when DL
   approaches are warranted, Data Analyst for feature interpretability review
-  when high explainability is required, and Syn for final sign-off.
+  when high explainability is required, the Researcher for statistical
+  inference, the Academic for model card ethics, the MLOps Engineer and
+  Backend Engineer at final review, and Syn for final sign-off.
   Also provides domain-aware Jupyter notebook code review via service mode
   when consulted by Syn's code_review mode or by another specialist's phase-7
   review step.
@@ -304,7 +306,7 @@ Create or append to:
 
 Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey. Then {{phase 1}} and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
-**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. The non-phased modes (review, advisory, update, explain) use their own mode files and never load the phase files.
+**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
 
 ---
 

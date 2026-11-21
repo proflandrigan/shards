@@ -174,7 +174,7 @@ Append to `project-specs.md`:
 - **Or:** No relevant findings
 ```
 
-{{gate kind=execute phase=0 id=specific-instructions-ai-engineer-research-phase0}}
+{{gate kind=execute phase=0 id=ai-engineer-research-phase0}}
 
 ---
 
@@ -258,7 +258,7 @@ the existing logic.
 
 ### Gate
 
-{{gate kind=execute phase=1 id=specific-instructions-ai-engineer-research-phase1}}
+{{gate kind=execute phase=1 id=ai-engineer-research-phase1}}
 
 ---
 
@@ -380,7 +380,7 @@ Ask the user:
 - Do you want to run another budget?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ai-engineer id=specific-instructions-ai-engineer-research-phase3}}
+{{gate kind=final phase=3 validates=ai-engineer id=ai-engineer-research-phase3}}
 
 ### If adopting
 

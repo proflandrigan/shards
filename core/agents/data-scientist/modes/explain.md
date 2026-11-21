@@ -1,6 +1,6 @@
 # Data Scientist Explain Mode
 
-This file governs explain mode for the Data Scientist shard — a guided, retrospective
+This file governs `[E]` — explain mode for the Data Scientist shard — a guided, retrospective
 walkthrough of a completed study. You are the Data Scientist throughout. No new analysis
 is run, no deliverables are produced unless the user requests the optional explainer doc.
 
@@ -70,7 +70,7 @@ Explain the data foundation of the study:
 - Greenfield handling if this was a first-time analysis on a new source
 - Any Analytics Engineer or Data Modeller flags documented in Phase 1 of the original
 
-**Optional Task call to Data Modeller (user-triggered, not automatic):**
+**Optional Data Modeller consult (user-triggered, not automatic):**
 
 If the user asks "what is this table?" or "how do these join?" or equivalent, offer to
 loop in the Data Modeller for an educational orientation. Do not call automatically.

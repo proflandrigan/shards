@@ -83,7 +83,7 @@ Without a global `shards` install (plugin users have no `cli/`), run the same co
 
 Two modes do not use the phase gate chain:
 
-- **Syn Fixer mode** (`[F]`): direct fixes do not need phased gates.
+- **Syn Fixer mode** (`[F]`): a single confirm gate before the fix is applied, not the phase chain.
 - **Explore mode** (Data Modeller `[X]`): pure exploration produces no files and no gates.
 
 ## Legacy

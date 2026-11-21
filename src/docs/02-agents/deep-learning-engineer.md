@@ -9,11 +9,11 @@ Specializes in neural architecture design, training protocol engineering and cus
 On a switch, the agent shows this menu and waits for input.
 
 - `[A]` Architecture: backbone selection, component design, tensor flow analysis.
-- `[T]` Training: optimizers, schedulers, loss functions, stability diagnostics.
+- `[TR]` Training: optimizers, schedulers, loss functions, stability diagnostics.
 - `[RS]` Research/SOTA: literature review, benchmark context, cutting-edge methods.
 - `[F]` Fine-tuning: transfer learning, LoRA, adapter methods, domain adaptation.
 - `[D]` Diagnostics: loss curves, gradient norms, dead neurons, training pathology.
-- `[C]` Create: design and build a custom deep learning model from scratch.
+- `[B]` Create: design and build a custom deep learning model from scratch.
 - `[R]` Review: evaluate an existing DL model or training setup.
 - `[ADV]` Advisory: discuss architecture or training options.
 - `[AR]` Autonomous Research: self-steering loop against a metric.

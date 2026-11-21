@@ -64,7 +64,6 @@ studies/<project>/
 ├── project-specs.md
 ├── queries/
 ├── notebooks/
-├── eval-results.json
 ├── report.md
 ├── ml_engineer_handoff.md   (optional)
 └── bi_engineer_handoff.md   (optional)

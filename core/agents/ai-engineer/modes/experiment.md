@@ -49,7 +49,7 @@ an existing AI system. You are the AI Engineer throughout. No persona transfer o
    Laboratory (`[PL]`) offers an interactive editor for this. Do not switch — just
    inform. If the user wants to switch, tell them to re-invoke with `[PL]`.
 
-{{gate kind=execute phase=0 id=specific-instructions-ai-engineer-experiment-phase0}}
+{{gate kind=execute phase=0 id=ai-engineer-experiment-phase0}}
 
 If the user modifies any parameter, update before proceeding.
 
@@ -103,7 +103,7 @@ If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
 rejected), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
-{{gate kind=execute phase=1 id=specific-instructions-ai-engineer-experiment-phase1}}
+{{gate kind=execute phase=1 id=ai-engineer-experiment-phase1}}
 Wait for confirmation. If the user modifies the plan, update it before proceeding.
 
 ### Write experiment plan file
@@ -141,8 +141,8 @@ or reorders experiments), update the plan file before proceeding.
 
 ### Write `experiments/results.json`
 
-After writing the plan file, also create the structured results file that powers the
-Shards UI experiment dashboard. Write `experiments/results.json` with this initial state:
+After writing the plan file, also create the structured results file: the machine-readable
+experiment record, also shown as the experiment dashboard when Studio is open. Write `experiments/results.json` with this initial state:
 
 ```json
 {
@@ -166,7 +166,7 @@ Shards UI experiment dashboard. Write `experiments/results.json` with this initi
 ```
 
 Update this file at every stage — it is the machine-readable companion to the markdown
-files. The UI reads it automatically.
+files. Studio, when it is running, re-renders from it automatically.
 
 ---
 
@@ -216,7 +216,7 @@ Outcome metric is **bolded** in the table below.
 | <secondary metric> | <value> | <value> | <+/-> |
 
 ## Data Scientist Review
-<DS agent's critical assessment and ideation for next steps — filled in after Task call>
+<DS agent's critical assessment and ideation for next steps — filled in after the consult>
 
 ## Outcome
 Improvement | Regression | Neutral — <one-sentence reasoning>
@@ -409,7 +409,7 @@ Ask the user:
 - Do you want to run more experiments?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ai-engineer id=specific-instructions-ai-engineer-experiment-phase3}}
+{{gate kind=final phase=3 validates=ai-engineer id=ai-engineer-experiment-phase3}}
 
 Wait for their response before taking any further action.
 

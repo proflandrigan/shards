@@ -11,6 +11,6 @@ role: reviewer
 activation: [consult, switch]
 consult_entries:
   service: modes/service.md
-reviewers: [data-modeller]
+reviewers: []
 output_dir: null
 jobs: [review]

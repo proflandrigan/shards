@@ -48,7 +48,7 @@ Note any files you expected to find but couldn't locate.
 **Applied ML Scientist** — if the review touches theoretical validity, inductive
 bias alignment, or whether the architecture is well-matched to the problem:
 
-**Caller-provided context.** Consults never nest, so do not consult applied-ml-scientist from here. If applied-ml-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Applied ML Scientist input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `applied-ml-scientist`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Applied ML Scientist input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 
@@ -94,7 +94,7 @@ Write `reviews/<system_name>/deep-learning-engineer-review.md` using this templa
 - {{CONCERNS}}
 
 ## Cross-Agent Input
-{{CROSS_AGENT_FINDINGS — or "Not consulted" if no Task calls were made}}
+{{CROSS_AGENT_FINDINGS — or "Not consulted" if no consults were made}}
 
 ## Recommendations
 1. {{RECOMMENDATION_1}}

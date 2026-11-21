@@ -81,7 +81,7 @@ using the `templates/panel-report.md` template, filling Phase 0 metadata:
 
 Read this section back to the user.
 
-{{gate kind=phase phase=0 id=specific-instructions-syn-panel-review-phase0}}
+{{gate kind=phase phase=0 id=syn-panel-review-phase0}}
 
 ---
 
@@ -205,7 +205,7 @@ Read this section back to the user. If any bucket is `(needs second lens?)`,
 explicitly ask: *"This bucket only has one reviewer. Add a secondary, or proceed
 with one?"*
 
-{{gate kind=phase phase=1 id=specific-instructions-syn-panel-review-phase1}}
+{{gate kind=phase phase=1 id=syn-panel-review-phase1}}
 
 ---
 
@@ -214,9 +214,9 @@ with one?"*
 Announce: *"Dispatching the panel — [N specialists] reviewing [M buckets] in
 parallel. Findings will appear as each returns."*
 
-### Task call format
+### Consult format
 
-Dispatch **one Task per unique specialist** in the confirmed panel — not one
+Dispatch **one consult per unique specialist** in the confirmed panel — not one
 per (specialist, bucket) pair. If a specialist appears in multiple buckets
 (e.g., `backend-engineer` in `.py` and config; `researcher` in `.ipynb`,
 `.sql`, and reports), bundle all of their assigned files into a single Task
@@ -287,7 +287,7 @@ joins, dbt structure, performance, or Python style — those are other reviewers
 lanes. Review only — do not apply any fixes.
 ```
 
-### Append findings as each Task returns
+### Append findings as each consult returns
 
 As each Task completes, immediately write the reviewer's response verbatim to:
 
@@ -459,7 +459,7 @@ user to assign a specialist (or skip them). Then ask:
 "Apply fixes in this order? (y to execute, n to stop, or list specific fix IDs
 to apply only those)"
 
-{{gate kind=phase phase=4 id=specific-instructions-syn-panel-review-phase4}}
+{{gate kind=phase phase=4 id=syn-panel-review-phase4}}
 
 ---
 
@@ -484,8 +484,8 @@ group. Initialize `<output_dir>/fix-log.md`:
 
 Announce: *"Executing Group N — M fixes in parallel."*
 
-Dispatch all fixes in the group via parallel Task calls (single message,
-multiple Task blocks).
+Dispatch all fixes in the group via parallel worker subagents (single message,
+one call per fix).
 
 #### Standard fix dispatch (domain reviewer applies the fix)
 
@@ -614,15 +614,15 @@ output files.
   and content tags, not directory prefix.
 - **Two reviewers per bucket is the goal.** If the matrix produces only one,
   flag it and ask the user — don't silently accept a single-reviewer bucket.
-- **Parallel dispatch in Phase 2 and Phase 5.** Always single message, multiple
-  Task blocks. Never sequential when parallel is correct.
+- **Parallel dispatch in Phase 2 and Phase 5.** Always a single message with
+  one consult per reviewer. Never sequential when parallel is correct.
 - **Sequential dispatch between Phase 5 groups.** Wait for group N to fully
   return before dispatching group N+1. This is the race-prevention invariant.
 - **Researcher does not apply fixes.** Its recommendations route to the domain
   reviewer of the same bucket via Syn's apply-fix dispatch.
 - **Syn never edits the target directory's files.** Reviewers apply fixes via
   service-mode Tasks. Syn writes only to `<output_dir>/`.
-- **Append findings as each Task returns.** Don't batch-write at the end —
+- **Append findings as each consult returns.** Don't batch-write at the end —
   the findings files are the live memory of the panel.
 - **Honor user-listed fix IDs.** If the user approves only a subset (e.g., "F1,
   F4, F7"), execute only those. Treat the rest as Skipped in the fix log.

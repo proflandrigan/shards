@@ -48,10 +48,10 @@ Consult reviewers as appropriate:
 
 **ML Engineer** — if the review touches production feasibility, infrastructure,
 or model serving:
-**Caller-provided context.** Consults never nest, so do not consult ml-engineer from here. If ml-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**ML Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `ml-engineer`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any ML Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
 **Academic** — if the review touches safety, ethics, or user impact concerns:
-**Caller-provided context.** Consults never nest, so do not consult academic from here. If academic input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Academic input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `academic`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Academic input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 
@@ -84,7 +84,7 @@ Write `reviews/<system_name>/ai-engineer-review.md` using this template exactly:
 - {{CONCERNS}}
 
 ## Cross-Agent Input
-{{CROSS_AGENT_FINDINGS — or "Not consulted" if no Task calls were made}}
+{{CROSS_AGENT_FINDINGS — or "Not consulted" if no consults were made}}
 
 ## Recommendations
 1. {{RECOMMENDATION_1}}

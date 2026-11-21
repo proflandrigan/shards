@@ -47,7 +47,7 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 - **Calls out to:** Data Modeller (Deep phase 2), Syn (Deep phase 7).
 - **Declared reviewers** (`agent.yaml`): Data Modeller, Syn.
-- **Consulted by (reverse of declared reviewers):** [Analytics Engineer](analytics-engineer.md), [Data Modeller](data-modeller.md), [ML Engineer](ml-engineer.md).
+- **Consulted by (reverse of declared reviewers):** [Analytics Engineer](analytics-engineer.md), [Data Modeller](data-modeller.md), [ML Engineer](ml-engineer.md), [Syn](syn.md).
 
 ## Output directory
 

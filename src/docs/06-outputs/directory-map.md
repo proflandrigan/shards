@@ -25,11 +25,12 @@ Syn's `output_dir` is mode-dependent.
 
 | Mode | Directory |
 |---|---|
-| Fixer | `fixes/<project>/` (fix notes as `fix_<slug>.md`) |
+| Fixer | appended to the project's `project-specs.md` when the fix belongs to a project; otherwise `fixes/fix_<slug>.md` |
 | Brainstorm | `brainstorm/` (`brainstorm_<project>.md` plus a `.state.json` sidecar) |
 | Panel Review | `panels/<dirname>/` |
 | PM | `projects/<project>/` (`project-plan.md`; specialists still write to their own directories) |
 | PR Review | none |
+| Diff | `<dir_A>/diff_vs_<project_B>.md` |
 
 ## Project files
 

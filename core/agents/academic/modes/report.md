@@ -1,6 +1,6 @@
 # Academic Report Mode
 
-This file governs `[R]` — the report mode for synthesizing research, evaluating
+This file governs `[RP]` — the report mode for synthesizing research, evaluating
 behavioral or ethical questions, and providing evidence-based recommendations
 as a standalone markdown document. You are the Academic shard throughout.
 No persona transfer occurs.
@@ -17,7 +17,7 @@ Ask the user:
 4. Are there specific researchers, papers, or schools of thought you want me to
    include or prioritize?
 
-{{gate kind=phase phase=1 id=specific-instructions-academic-report-phase1}}
+{{gate kind=phase phase=1 id=academic-report-phase1}}
 Summarize the scope and the key themes you'll explore. Wait for explicit confirmation.
 
 ---
@@ -89,7 +89,7 @@ Gate readback (pass this as the `summary`):
 
 Ask the user:
 
-{{gate kind=final phase=4 id=specific-instructions-academic-report-phase4}}
+{{gate kind=final phase=4 id=academic-report-phase4}}
 - Does this report accurately capture the evidence and analysis needed?
 - Are there any sections that require more depth or clarification?
 - Or is this report complete?

@@ -43,7 +43,7 @@ As soon as they respond with any description (even vague), do three things immed
 
 ## Synthesis
 
-<!-- Syn appends synthesis here after all Task calls complete -->
+<!-- Syn appends synthesis here after all consults return -->
 
 ---
 
@@ -52,8 +52,9 @@ As soon as they respond with any description (even vague), do three things immed
 <!-- filled in if a project is started from this session -->
 ```
 
-3. Create `brainstorm/brainstorm_<project_name>.state.json` — the live state file
-   that powers the brainstorm panel. Schema:
+3. Create `brainstorm/brainstorm_<project_name>.state.json` — a small state sidecar
+   that Studio's brainstorm panel shows when Studio is open (the `.md` doc is the
+   record). Schema:
 
 ```json
 {
@@ -76,7 +77,7 @@ As soon as they respond with any description (even vague), do three things immed
 ```
 
 This file is rewritten in full at each phase transition and after each specialist
-Task returns. Keep it small (<5 KB) — `headline` fields are one-line previews,
+consult returns. Keep it small (<5 KB) — `headline` fields are one-line previews,
 not full responses. Writes are fire-and-forget: never gate user-visible output
 on the write succeeding, and never surface write errors to the user. If a write
 fails, continue — the brainstorm doc remains the source of truth.
@@ -98,7 +99,7 @@ AND update the corresponding field under `context` in the state JSON.
 
 After all context is gathered, read the full Context section back to the user.
 
-{{gate kind=phase phase=0 id=specific-instructions-syn-brainstorm-phase0}}
+{{gate kind=phase phase=0 id=syn-brainstorm-phase0}}
 
 ---
 
@@ -116,7 +117,7 @@ Select which specialists to call based on problem relevance:
 
 ### Pre-spawn setup
 
-Before issuing any Task calls, do all three steps in a single assistant turn:
+Before issuing the consults, do all three steps in a single assistant turn:
 
 1. **Update state file** — rewrite `brainstorm/brainstorm_<project_name>.state.json`
    with `phase: "gathering"` and seed the `specialists` array with one entry per
@@ -196,10 +197,10 @@ Keep it tight. No preamble. Just ideas.
 At the very end of your response, on a single line, emit:
   HEADLINE: <one-line preview of your strongest idea, ≤120 chars>
 
-Syn parses this line to populate the brainstorm panel — do not omit it.
+Syn uses this line as the idea's one-line preview.
 ```
 
-### As each specialist Task returns
+### As each specialist consult returns
 
 For **every** specialist response, immediately do both:
 
@@ -218,8 +219,7 @@ For **every** specialist response, immediately do both:
    - `headline: "<value parsed from the HEADLINE: line>"`
    - `ideas_count: <count of named ideas, integer>`
 
-   Other specialists' entries stay as-is. The file watcher in the UI server
-   re-renders the panel on every write.
+   Other specialists' entries stay as-is.
 
    **HEADLINE parsing rules:**
    - Look for the last line matching `^HEADLINE:\s*(.+)$`. Strip and trim to ≤120 chars.
@@ -464,7 +464,7 @@ Respond to any of the following naturally:
 
   2. **Propose the fan-out** using DIVERGE proposal format, with the AR
      gate ID namespace
-     (`specific-instructions-shared-diverge-protocol-ar-<project>`):
+     (`diverge-ar-<project>`):
 
      ```
      **AR FAN-OUT PROPOSED — Time-Travel across approach families**
@@ -524,10 +524,9 @@ explicitly closes it.
 - Append to the doc continuously throughout the session. Every specialist response,
   deep-dive, and synthesis goes in. The file is the memory of the session.
 - Rewrite the state JSON in full at every phase transition and after every
-  specialist Task return. The brainstorm panel watches this file and
-  re-renders on each change — the state file IS the UI experience. Keep the
-  rewrites cheap by storing only headlines and counts, not full responses.
-- Keep Task prompts focused — specialists should feel constrained to brainstorm,
+  specialist consult return (Studio's brainstorm panel, when open, re-renders
+  from it; the `.md` doc stays the record). Keep the rewrites cheap by storing only headlines and counts, not full responses.
+- Keep consult briefs focused — specialists should feel constrained to brainstorm,
   not start scoping a full project.
 - In Phase 2, synthesize across all responses — do not just list them. Identify
   the through-lines, tensions, and surprises.

@@ -125,7 +125,7 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
 3. Follow
    [`protocols/diverge.md`](../../../protocols/diverge.md) Section B
    (DIVERGE proposal gate — use ID
-   `specific-instructions-shared-diverge-protocol-ar-<project>`).
+   `diverge-ar-<project>`).
 4. On confirmation, follow `autonomous_research.md` Section H:
    - H.3 for parallel branch spawning (all branches in one message)
    - H.5 for git strategy (default `branch-local`)

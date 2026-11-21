@@ -49,7 +49,7 @@ Run grain validation where feasible:
 **Analytics Engineer** — if the review touches downstream transformation impact
 or implementation correctness:
 
-**Caller-provided context.** Consults never nest, so do not consult analytics-engineer from here. If analytics-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Analytics Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `analytics-engineer`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Analytics Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 
@@ -82,7 +82,7 @@ Write `reviews/<system_name>/data-modeller-review.md` using this template exactl
 - {{CONCERNS}}
 
 ## Cross-Agent Input
-{{CROSS_AGENT_FINDINGS — or "Not consulted" if no Task calls were made}}
+{{CROSS_AGENT_FINDINGS — or "Not consulted" if no consults were made}}
 
 ## Recommendations
 1. {{RECOMMENDATION_1}}

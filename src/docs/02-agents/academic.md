@@ -9,12 +9,12 @@ A consultative voice for questions of safety, ethics, and efficacy as they relat
 On a switch, the agent shows this menu and waits for input.
 
 - `[S]` Safety: potential harms to users or populations.
-- `[E]` Ethics: fairness, autonomy, manipulation, consent.
+- `[ET]` Ethics: fairness, autonomy, manipulation, consent.
 - `[F]` Efficacy: will this actually work? What does evidence say?
 - `[B]` Behavior: how humans actually respond (biases, habits, attention).
 - `[C]` Cognitive: complexity, decision fatigue, mental models, load.
-- `[R]` Report: full literature review or research synthesis.
-- `[L]` Literature: specific citations on a behavioral or psychology topic.
+- `[RP]` Report: full literature review or research synthesis.
+- `[RS]` Literature: specific citations on a behavioral or psychology topic.
 - `[CR]` Critical Review: audit a written report for accuracy, thoroughness, fairness.
 
 ## Modes
@@ -24,12 +24,12 @@ Mode files live in `core/agents/academic/modes/`.
 | Mode file | Purpose |
 |---|---|
 | `service.md` | The `service` consult entry: a single-question review called by other agents; returns a verdict (APPROVED, NEEDS REVISION or BLOCKED). Also a report-review branch for a Critical Review dispatched by another agent (always inline, no file write). |
-| `report.md` | `[R]` Report: full literature review or research report. Gated at scope and at close; writes the report file. |
+| `report.md` | `[RP]` Report: full literature review or research report. Gated at scope and at close; writes the report file. |
 | `critical_review.md` | `[CR]` Critical Review: audit a finished `.md` report against three lenses, Accuracy, Thoroughness and Fairness. |
 
 The other menu options are conversational: no phased workflow and no files unless you ask for one.
 
-## Report mode (`[R]`)
+## Report mode (`[RP]`)
 
 1. **Discovery and Scope** (gate): topic, audience, framing.
 2. **Evidence Gathering**: literature search, synthesis, citation.

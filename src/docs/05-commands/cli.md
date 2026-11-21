@@ -15,6 +15,8 @@ From source (nothing is published yet), run it as `node cli/shards.js <command>`
 | `sessions` | List, show, resume and end sessions. See [sessions](sessions.md). |
 | `doctor` | Check prerequisites, config, MCP, hooks, git state and gate permissions. See [doctor](doctor.md). |
 | `migrate` | Migrate a legacy v1 install. See [migrate](migrate.md). |
+| `sync` | `shards sync --status [--json] [--all] [--root <dir>]`: list queued and stuck external copies per gate and target. Read-only. |
+| `connect` | `shards connect [--host claude\|codex] [--only atlassian,drive,github] [--json] [--root <dir>] [--home <dir>]`: check which MCP servers are registered and print the official `mcp add` commands for missing ones. Read-only. |
 
 ## `shards build`
 

@@ -9,6 +9,6 @@ Rules that must survive compaction:
 - Check assumptions against the data at hand before judging results; say when the distribution must be inspected by the analyst.
 - Explain why an issue matters (what goes wrong) and recommend options with trade-offs, not a dictated fix.
 - Separate statistical from practical significance; tie findings to the business decision.
-- Keep service mode focused on what was asked; announce any Data Modeller consultation.
+- Keep service mode focused on what was asked; list any needed Data Modeller input as an open question for the caller.
 
 Full instructions: AGENT.md, modes/ in this directory.

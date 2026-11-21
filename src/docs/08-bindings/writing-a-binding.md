@@ -5,7 +5,7 @@ A binding is a single file, `bindings/<name>.md`. The git binding (`bindings/git
 ## Principles
 
 1. The agent calls the host's MCP tools itself. The runtime holds no third-party credentials and never writes externally.
-2. After each external write, the agent calls `copy_report(gate_id, target, ok, error?)` so the runtime can record the outcome and queue retries. (Planned for Milestone C; no integration uses it yet.)
+2. After each external write, the agent calls `copy_report(gate_id, target, ok, error?)` so the runtime can record the outcome and queue retries. (The runtime tool exists; no built integration calls it yet.)
 3. Git is the source of truth. Write local files and commit first; external copies are one-way.
 4. External writes need a confirmed gate or explicit user confirmation, never mid-phase.
 5. Send summaries and decisions, not raw query results or data samples.
@@ -69,6 +69,7 @@ The runtime loads bindings through `runtime/config/bindings.js`. `parseBinding` 
 
 ## See also
 
+- `core/protocols/external_writes.md`: the agent-side rules for external writes (gate marker, summaries only, `copy_report`, replay)
 - [Jobs and bindings](overview.md)
 - [Configuration](config.md)
 - [Integrations status](integrations-status.md)

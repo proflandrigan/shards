@@ -47,3 +47,15 @@ File-content shapes are those the renderers read today (`packages/studio/js/pane
 - `diagram` and `diff` are Studio-only panels (opened by Studio itself); they are not part of the agent-facing contract.
 - `knowledge-map` is removed in E4.
 - `guide` becomes plain docs (no panel).
+
+## Experiment dashboard and autonomous research runs
+
+Moved from `core/protocols/autonomous_research.md` (F.4/F.5), since it is renderer guidance, not agent instruction.
+
+`experiments/results.json` carries `mode: "experiment"` (or no `mode` in older runs) for `[EX]` runs and `mode: "autonomous-research"` for `[AR]` runs. Studio's experiment-dashboard renderer must detect `mode` and either render an AR view or fall back to the experiment view. An AR view should show:
+
+- the iteration budget (`iterationBudget`; fall back to it where `plannedCount` is absent);
+- per-iteration auto-decision colours (green, red, yellow) in the outcome column;
+- `lastGreenCommit` and the revert history;
+- running cost totals;
+- the convergence reason when the run ends.

@@ -775,26 +775,8 @@ Populated only in branches spawned by the Section H fan-out protocol:
 ### F.4 Backward compatibility
 
 - An `[EX]` `results.json` has `mode: "experiment"` (or no `mode` field in
-  pre-AR installations — treat absence as `"experiment"`).
+  older runs; treat absence as `"experiment"`).
 - An AR `results.json` has `mode: "autonomous-research"`.
-- The UI dashboard must detect `mode` and render accordingly (AR-specific
-  panel) OR gracefully degrade to the experiment view if no AR renderer is
-  available.
-
-### F.5 UI compatibility
-
-The Shards UI dashboard reads `results.json` for live updates. Before shipping
-AR, verify that the dashboard renderers tolerate `mode: "autonomous-research"`.
-The dashboard should:
-- Show iteration budget (not just plannedCount).
-- Show per-iteration color coding (green/red/yellow).
-- Show `lastGreenCommit` and revert history.
-- Show cost accounting running totals.
-- Surface convergence reason when the run ends.
-
-If no AR-specific renderer is available, the experiment dashboard must render
-AR runs by falling back to `iterationBudget` where `plannedCount` is absent,
-and displaying auto-decision colors in the outcome column.
 
 ---
 
@@ -913,7 +895,7 @@ Follow `protocols/diverge.md` Section B (proposal format + gate), with these
 AR-specific adjustments:
 
 - **Gate ID namespace:** use
-  `specific-instructions-shared-diverge-protocol-ar-<project>` for the AR
+  `diverge-ar-<project>` for the AR
   proposal gate. This avoids collision with planning-phase DIVERGE gate IDs.
 - **Branch slugs:** reflect approach families, not specialists. Example slugs
   for an ML Engineer fan-out: `ml-xgboost`, `ml-neural-net`, `ml-linear-baseline`.
@@ -928,7 +910,7 @@ The user confirms one of:
 
 ### H.3 Branch spawning
 
-If fan-out confirmed, spawn K parallel Task calls in a single message (not
+If fan-out confirmed, start K parallel branch subagents in a single message (not
 sequentially). Each Task is:
 
 Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
@@ -1263,8 +1245,8 @@ Read both the summary and recommendations back to the user.
 
 **The Phase 3 gate is owned by the per-agent `research.md` file**, not by this
 shared protocol. Each agent requests its own Phase 3 gate with its
-agent-specific ID (e.g., `specific-instructions-ml-engineer-research-phase3`
-for ML Engineer, `specific-instructions-ai-engineer-research-phase3` for AI
+agent-specific ID (e.g., `ml-engineer-research-phase3`
+for ML Engineer, `ai-engineer-research-phase3` for AI
 Engineer, etc.). Do **not** request a shared-protocol Phase 3 gate here — doing
 so would duplicate the gate or orphan the ID namespace.
 

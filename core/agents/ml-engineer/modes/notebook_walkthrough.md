@@ -73,7 +73,7 @@ agent + notebook, skip step 1 and go straight to step 2 + bootstrap.
 
 - No `project-specs.md` writes.
 - No phase gates.
-- No Task call to Syn for final review.
+- No Syn final-review consult.
 - No cross-agent consultations.
 - No DIVERGE branches.
 - No experiment harness, AR loop, or model-card generation.

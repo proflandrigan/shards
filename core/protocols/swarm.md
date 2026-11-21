@@ -80,7 +80,7 @@ to know.
 
 ## Review and merge
 
-- **Review each slice** as its Task returns, against the slice's definition of
+- **Review each slice** as its worker returns, against the slice's definition of
   done: APPROVED / NEEDS REVISION / BLOCKED. Send a slice back for revision
   with specific feedback when needed (same cap as PM Mode revisions).
 - **Merge** after (some or all) slices pass: read each slice's artifacts from

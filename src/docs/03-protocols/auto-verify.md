@@ -2,7 +2,7 @@
 
 A scope-bounded auto-approval for the bulk read-only verification work that specialists do at predictable points in their phases. A specialist brackets a stretch of safe, repetitive tool calls in an auto-verify block. While the block is open, the runtime auto-approves calls that match a hardcoded read-only allowlist. Gates, deny rules and your ability to halt are unchanged.
 
-Used by the Data Modeller, Analytics Engineer, Data Engineer and Data Analyst in their bulk-validation phases, and by the join-path protocol.
+Used by the Data Modeller, Analytics Engineer, Data Engineer, Data Analyst and Data Scientist in their bulk-validation phases, and by the join-path protocol.
 
 ## The problem it solves
 

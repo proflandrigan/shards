@@ -17,11 +17,11 @@ The following are planned in Stage 6 of the suite plan and are **not built**:
 - Confluence and Jira bindings (records, tasks, publishing knowledge to Confluence, build tasks as Jira sub-tasks).
 - Google Drive and Google Slides bindings.
 - GitHub and Bitbucket review bindings.
-- Copy reporting with automatic replay of failed external copies.
+- The `/shards:sync` skill that replays queued external copies through MCP. (The runtime half exists: `copy_report` records outcomes and queues failures, and `shards sync --status` lists the queue.)
 - Utility skills `connect`, `sync`, `doctor` and `publish-knowledge`. The build deliberately skips them (they are marked deferred in `build/skills.js`). Use the `shards doctor` CLI command instead of a doctor skill.
-- `shards connect` onboarding with backfill.
+- Backfill during onboarding. (`shards connect` itself exists: it checks which MCP servers are registered and prints the `mcp add` commands for missing ones.)
 
-The guardrail for external writes (no write without a confirmed gate or user confirmation) is a binding-author rule today, stated in [Writing a binding](writing-a-binding.md); it is not yet enforced by built integrations.
+The external-write guardrails are enforced already, even with no integration built: the PreToolUse hook (`hooks/lib/enforce.js`) and `runtime/guardrails/` require a `[shards-gate:<id>]` marker for a confirmed gate on external writes and refuse raw data. The rules are in `core/protocols/external_writes.md` and [Writing a binding](writing-a-binding.md).
 
 ## What to use meanwhile
 

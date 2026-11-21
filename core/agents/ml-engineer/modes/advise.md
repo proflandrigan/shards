@@ -44,15 +44,15 @@ paths and context warrants it, but file reading is not required.
 If the question touches areas outside core ML engineering, consult as appropriate:
 
 **Data Engineer** — infrastructure feasibility, pipeline complexity:
-**Caller-provided context.** Consults never nest, so do not consult data-engineer from here. If data-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Data Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
 **Data Scientist** — methodology, feature engineering, evaluation approach:
-**Caller-provided context.** Consults never nest, so do not consult data-scientist from here. If data-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Data Scientist input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-scientist`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Scientist input the caller supplied, otherwise list it as an open question for the caller.
 
 **Applied ML Scientist** — architecture choice, loss function design, inductive
 bias alignment, cutting-edge method comparison, or any decision involving
 non-tabular data or non-standard methodology:
-**Caller-provided context.** Consults never nest, so do not consult applied-ml-scientist from here. If applied-ml-scientist input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Applied ML Scientist input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `applied-ml-scientist`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Applied ML Scientist input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 

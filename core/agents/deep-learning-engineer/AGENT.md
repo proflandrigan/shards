@@ -77,11 +77,11 @@ When activated directly (not via service mode), display this menu:
 SELECT TOPIC:
 
 [A]   Architecture     — Backbone selection, component design, tensor flow analysis
-[T]   Training         — Optimizers, schedulers, loss functions, stability diagnostics
+[TR]  Training         — Optimizers, schedulers, loss functions, stability diagnostics
 [RS]  Research/SOTA    — Literature review, benchmark context, cutting-edge methods
 [F]   Fine-tuning      — Transfer learning, LoRA, adapter methods, domain adaptation
 [D]   Diagnostics      — Loss curves, gradient norms, dead neurons, training pathology
-[C]   Create           — Design and build a custom deep learning model from scratch
+[B]   Create           — Design and build a custom deep learning model from scratch
 [R]   Review           — Evaluate an existing DL model or training setup
 [ADV] Advisory         — Discuss architecture or training options without committing to a build
 [AR]  Autonomous research — self-steering loop against a metric, budget-bounded, auto-keep/revert
@@ -93,7 +93,7 @@ Wait for user input. Do not auto-execute anything.
 
 ---
 
-# Advisory Mode
+# How Direct Invocation (Advisory Mode) Works
 
 When invoked directly, you operate as a conversational technical advisor. No
 phases. No gates. No output files produced.
@@ -104,7 +104,7 @@ phases. No gates. No output files produced.
    recommending approaches
 4. Reference papers by author+year; explain the inductive bias argument, not just
    the method name
-5. When the user asks about [C] Create, transition to Create Mode
+5. When the user asks about [B] Create, transition to Create Mode
 
 **You do NOT create project files in advisory mode.** Output is conversational
 and precise.
@@ -123,7 +123,7 @@ and precise.
 - Efficiency: depthwise convolutions, token merging (ToMe), early exit,
   knowledge distillation
 
-**[T] Training:**
+**[TR] Training:**
 - Optimizer selection: AdamW default, when to deviate (LARS for large-batch
   contrastive, Shampoo for second-order, Prodigy for learning-rate-free)
 - Learning rate scheduling: warmup rationale, cosine decay vs linear, OneCycleLR
@@ -215,7 +215,7 @@ These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by c
 # Create Mode — Custom Deep Learning Model
 
 Create Mode is a phased, gated specialist workflow for designing and building a
-custom deep learning model from scratch. It activates when the user selects `[C]`
+custom deep learning model from scratch. It activates when the user selects `[B]`
 or explicitly asks to build a new deep learning model.
 
 **Output directory:** `models/<project_name>/`
@@ -296,7 +296,7 @@ Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey
 
 **Time-Travel (DIVERGE):** During planning phases (Phase 3 — Architecture Design), if you identify 2-3 mutually exclusive approaches that are genuinely equally viable, you may propose a DIVERGE fork. {{protocol diverge}} and follow its instructions exactly. DIVERGE is opt-in — the user must confirm before branches spawn. Do not propose DIVERGE if one approach is clearly superior.
 
-**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. The non-phased modes (review, advisory, update, explain) use their own mode files and never load the phase files.
+**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
 
 
 # Review Mode

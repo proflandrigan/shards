@@ -4,11 +4,11 @@ The chat tab runs Claude Code sessions from inside Studio. It is optional: sessi
 
 ## How it works
 
-Starting a chat spawns the `claude` CLI in the project directory (stream-json input and output, with `--agent <name>` when you pick a shard, `--permission-mode`, and `--resume` for resumed sessions). Studio streams the output into the pane: user and agent messages, collapsible tool calls, usage, and notices. The transcript is saved under `.shards/sessions/`. Claude Code must be installed and on `PATH`.
+Starting a chat spawns the `claude` CLI in the project directory (stream-json input and output, `--permission-mode`, and `--resume` for resumed sessions). Picking a v2 shard starts a plain session whose first prompt asks the model to call `activate` with `mode="switch"`; only a legacy v1 agent is passed as `--agent <name>`. Studio streams the output into the pane: user and agent messages, collapsible tool calls, usage, and notices. The transcript is saved under `.shards/sessions/`. Claude Code must be installed and on `PATH`.
 
 ## Starting and ending
 
-- `+ New Chat` starts a session; the agent picker lists the agents found in the project's `.claude/agents/`, and picking none starts a plain session.
+- `+ New Chat` starts a session; the agent picker lists the v2 agents that support switch activation (read from `core/agents/*/agent.yaml` when Studio can reach the runtime). Only for a legacy v1 project does it fall back to `.claude/agents/*.md`. Picking none starts a plain session.
 - `End Chat` ends the active session, flushes the transcript and marks it `ended` in the session index. Gate state belongs to the project, not the chat, so it is untouched. See [Sessions](sessions.md).
 - Typing `/` shows slash suggestions built from the project's agents and the skills in `.claude/skills/` and `~/.claude/skills/`.
 

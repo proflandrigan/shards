@@ -49,7 +49,7 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 - **Calls out to:** Data Analyst and Data Engineer (Deep phase 2), Analytics Engineer (Deep phase 7), Syn (Deep phase 7). Consults never nest, so the `service` entry calls no one.
 - **Declared reviewers** (`agent.yaml`): Analytics Engineer, Data Engineer, Data Analyst, Syn.
-- **Consulted by (reverse of declared reviewers):** [Analytics Engineer](analytics-engineer.md), [BI Engineer](bi-engineer.md), [Data Analyst](data-analyst.md), [Data Engineer](data-engineer.md), [Data Scientist](data-scientist.md), [ML Engineer](ml-engineer.md), [Researcher](researcher.md).
+- **Consulted by (reverse of declared reviewers):** [AI Engineer](ai-engineer.md), [Analytics Engineer](analytics-engineer.md), [Applied ML Scientist](applied-ml-scientist.md), [BI Engineer](bi-engineer.md), [Data Analyst](data-analyst.md), [Data Engineer](data-engineer.md), [Data Scientist](data-scientist.md), [ML Engineer](ml-engineer.md), [Syn](syn.md).
 
 ## Output directory
 

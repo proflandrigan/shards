@@ -47,11 +47,11 @@ Note any files you expected to find but couldn't locate.
 **ML Engineer** — if the review touches model serving constraints, feature serving
 strategy, or whether the infrastructure matches the model's actual requirements:
 
-**Caller-provided context.** Consults never nest, so do not consult ml-engineer from here. If ml-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**ML Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `ml-engineer`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any ML Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
 **AI Engineer** — if the system involves LLM serving or prompt pipelines:
 
-**Caller-provided context.** Consults never nest, so do not consult ai-engineer from here. If ai-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**AI Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `ai-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any AI Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 
@@ -84,7 +84,7 @@ Write `reviews/<system_name>/mlops-engineer-review.md` using this template exact
 - {{CONCERNS}}
 
 ## Cross-Agent Input
-{{CROSS_AGENT_FINDINGS — or "Not consulted" if no Task calls were made}}
+{{CROSS_AGENT_FINDINGS — or "Not consulted" if no consults were made}}
 
 ## Recommendations
 1. {{RECOMMENDATION_1}}

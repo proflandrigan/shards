@@ -16,10 +16,6 @@ file list, return a one-line note — "Notebook review is owned by
 data-scientist / ml-engineer — skipping `<path>`" — and review only the `.py`
 files.
 
-**Task call format (for Syn's reference):**
-
-**Caller-provided context.** Consults never nest, so do not consult backend-engineer from here. If backend-engineer input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
-
 **In service mode:**
 
 1. Read `project-specs.md` first to understand the business context, what was

@@ -45,7 +45,7 @@ Note any files you expected to find but couldn't locate.
 
 Call the Researcher to validate statistical methodology and experimental design:
 
-**Caller-provided context.** Consults never nest, so do not consult researcher from here. If researcher input is needed, the caller supplies it in the task; if it is missing, list it as an open question in your verdict.
+**Researcher input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `researcher`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Researcher input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 

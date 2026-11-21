@@ -108,7 +108,7 @@ single branch would have flagged. Examples:
 - "Two of three branches hit the same data leakage path — the feature
   `post_event_timestamp` should be removed globally, not per-branch."
 
-These patterns are harvest candidates at the parent's Phase 3. Flag them here
+These patterns are write-back candidates (sources protocol §4) at the parent's Phase 3. Flag them here
 even if they don't change the leaderboard ranking.>
 
 _None observed._ <!-- delete if observed, fill in above -->

@@ -140,7 +140,7 @@ Append to `project-specs.md`:
 - **Or:** No relevant findings
 ```
 
-{{gate kind=execute phase=0 id=specific-instructions-data-scientist-research-phase0}}
+{{gate kind=execute phase=0 id=data-scientist-research-phase0}}
 
 ---
 
@@ -216,7 +216,7 @@ the existing logic.
 
 ### Gate
 
-{{gate kind=execute phase=1 id=specific-instructions-data-scientist-research-phase1}}
+{{gate kind=execute phase=1 id=data-scientist-research-phase1}}
 
 ---
 
@@ -333,7 +333,7 @@ Ask the user:
 - Do you want to run another budget?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=data-scientist id=specific-instructions-data-scientist-research-phase3}}
+{{gate kind=final phase=3 validates=data-scientist id=data-scientist-research-phase3}}
 
 ### If adopting
 

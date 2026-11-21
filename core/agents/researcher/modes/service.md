@@ -207,9 +207,9 @@ of the `[CR]` Critical Review menu mode.
    in your frontmatter only for direct-invocation `[CR]` mode and must not
    be used here.
 5. Severity-tag every finding (High / Medium / Low).
-6. If a Data Modeller consultation is genuinely needed for an
-   independence / grain question that the report and its referenced
-   artifacts can't answer, announce it before issuing the Task.
+6. If an independence / grain question needs Data Modeller input that the
+   report and its referenced artifacts can't answer, do not consult (consults
+   never nest). List it as an open question for the caller.
 
 ### Hard rules in Report Review mode
 

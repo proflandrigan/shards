@@ -11,9 +11,9 @@ On a switch, the agent shows this menu and waits for input.
 - `[A]` Architecture: design or review model architectures.
 - `[F]` Frameworks: PyTorch vs. JAX vs. others, library selection.
 - `[L]` Loss Functions: design or debug objectives and regularizers.
-- `[T]` Training: debug dynamics, optimize training loops, curriculum design.
+- `[TR]` Training: debug dynamics, optimize training loops, curriculum design.
 - `[RS]` Research: paper recommendations, literature review, SOTA methods.
-- `[C]` Create: design and build a novel ML framework from scratch.
+- `[B]` Create: design and build a novel ML framework from scratch.
 - `[R]` Review: evaluate an existing ML framework or architecture.
 - `[ADV]` Advisory: discuss approach options.
 - `[AR]` Autonomous Research: self-steering loop against a metric.
@@ -45,8 +45,8 @@ Phase bodies are served one at a time by the `load_phase` tool, which refuses un
 Consults are isolated subagents that answer one question and return a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)). They never nest.
 
 - **Calls out to:** Researcher and Data Modeller (phase 3), Deep Learning Engineer and Backend Engineer (phase 5), Syn (phase 5).
-- **Declared reviewers** (`agent.yaml`): Researcher, Deep Learning Engineer, Backend Engineer, Syn.
-- **Consulted by (reverse of declared reviewers):** [Deep Learning Engineer](deep-learning-engineer.md), [ML Engineer](ml-engineer.md).
+- **Declared reviewers** (`agent.yaml`): Researcher, Deep Learning Engineer, Backend Engineer, Data Modeller, Syn.
+- **Consulted by (reverse of declared reviewers):** [Deep Learning Engineer](deep-learning-engineer.md), [ML Engineer](ml-engineer.md), [Syn](syn.md).
 
 ## Output directory
 

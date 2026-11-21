@@ -164,7 +164,7 @@ Append to `project-specs.md`:
 - **Or:** No relevant findings
 ```
 
-{{gate kind=execute phase=0 id=specific-instructions-ml-engineer-research-phase0}}
+{{gate kind=execute phase=0 id=ml-engineer-research-phase0}}
 
 ---
 
@@ -203,7 +203,7 @@ approach families warrant parallel exploration. Fan-out preconditions (per
 
 If fan-out is warranted, propose DIVERGE per `protocols/diverge.md` Section B,
 using the AR gate ID namespace
-(`specific-instructions-shared-diverge-protocol-ar-<project>`). The user
+(`diverge-ar-<project>`). The user
 confirms either solo AR (current brief) or fan-out.
 
 ### Behavioral exception announcement
@@ -235,7 +235,7 @@ confirm it yourself. Activation is optional:
 
 ### Gate
 
-{{gate kind=execute phase=1 id=specific-instructions-ml-engineer-research-phase1}}
+{{gate kind=execute phase=1 id=ml-engineer-research-phase1}}
 
 ### If fan-out confirmed
 
@@ -397,7 +397,7 @@ Ask the user:
 - Do you want to run another budget (fresh AR session)?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ml-engineer id=specific-instructions-ml-engineer-research-phase3}}
+{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-research-phase3}}
 
 Wait for their decision before taking further action.
 

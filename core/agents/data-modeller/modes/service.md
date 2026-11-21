@@ -21,7 +21,7 @@ Triggered by phrases like "review", "verify", "do the joins make sense",
 
 Before running the Service Mode Procedure, check whether the knowledge sources already document relevant facts about the tables or systems in this request. This reduces redundant exploration and starts the response from verified facts rather than fresh inference.
 
-**Skip if already grounded:** If the caller's Task prompt already contains `(per knowledge source: ...)` citations, skip this bootstrap entirely — the caller has already re-grounded against the knowledge sources, and searching again here wastes context.
+**Skip if already grounded:** If the caller's brief already includes a `### Sources` list (sources protocol §2) that covers the tables in this request, skip this bootstrap entirely — the caller has already re-grounded against the knowledge sources, and searching again here wastes context.
 
 **Conditional search:** Extract 2–4 domain keywords from the caller's request (table names, entity names, system names) and run `{{knowledge.search query="<2-4 domain keywords from the request>"}}`. If nothing relevant comes back, skip directly to step 1 of the Service Mode Procedure below — do not search unconditionally.
 

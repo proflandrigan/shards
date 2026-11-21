@@ -75,7 +75,7 @@ skill or by asking for one):
 
 - No `project-specs.md` writes.
 - No phase gates.
-- No Task calls to specialists for in-mode review.
+- No specialist consults for in-mode review.
 - No PM Mode, no Fixer mode, no Brainstorm.
 - No DIVERGE branches.
 - No write-back proposal.

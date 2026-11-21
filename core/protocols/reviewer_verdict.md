@@ -37,13 +37,13 @@ If a reviewer returns a word outside APPROVED / NEEDS REVISION / BLOCKED, record
 Document the resolution in specs:
 `**Reviewer resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped`
 
-**Resubmission cap:** Never resubmit to the same reviewer more than once per phase. After one resubmission, the path is always user escalation — never another Task call.
+**Resubmission cap:** Never resubmit to the same reviewer more than once per phase. After one resubmission, the path is always user escalation — never another consult.
 
 **Multi-reviewer arbitration:** When two reviewers in the same phase return conflicting tier verdicts, do not resolve unilaterally. Present both verdicts verbatim to the user with a one-sentence summary of the conflict. Ask which direction to take before making any changes. Document the user's decision in specs.
 
 ## Final Review (Syn Sign-Off) — Validation Section Check
 
-When a specialist consults Syn (`entry=final_review`) for final sign-off on a validation-eligible phase, Syn's review must explicitly inspect the `## Validation` section in `project-specs.md` per `protocols/validation.md`. This is distinct from the `gate_request` tool's structural check — Syn performs the *semantic* check the hook cannot.
+When a specialist consults Syn (`entry=final_review`) for final sign-off on a validation-eligible phase, Syn's review must explicitly inspect the `## Validation` section in `project-specs.md` per `protocols/validation.md`. This is distinct from the `gate_request` tool's structural check — Syn performs the *semantic* check the runtime cannot.
 
 Syn's validation review looks for:
 

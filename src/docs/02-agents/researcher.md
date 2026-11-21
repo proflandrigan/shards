@@ -51,7 +51,7 @@ Declared as a reviewer by the [AI Engineer](ai-engineer.md), [Applied ML Scienti
 - **AI Engineer:** phases 4 and 7 evaluation review.
 - **Applied ML Scientist:** phase 3.
 
-The Researcher's declared reviewer is the Data Modeller, but consults never nest: the caller collects data-modeller context (grain, entities, relationships) first and passes it in the task.
+The Researcher declares no reviewers, because consults never nest: when data-structure context matters, the caller collects data-modeller context (grain, entities, relationships) first and passes it in the task.
 
 ## Output directory
 

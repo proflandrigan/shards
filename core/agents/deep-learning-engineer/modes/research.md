@@ -138,7 +138,7 @@ Append to `project-specs.md`:
 - **Or:** No relevant findings
 ```
 
-{{gate kind=execute phase=0 id=specific-instructions-deep-learning-engineer-research-phase0}}
+{{gate kind=execute phase=0 id=deep-learning-engineer-research-phase0}}
 
 ---
 
@@ -198,7 +198,7 @@ confirm it yourself. Activation is optional:
 
 ### Gate
 
-{{gate kind=execute phase=1 id=specific-instructions-deep-learning-engineer-research-phase1}}
+{{gate kind=execute phase=1 id=deep-learning-engineer-research-phase1}}
 
 ---
 
@@ -346,7 +346,7 @@ Ask the user:
 - Do you want to run another budget?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=deep-learning-engineer id=specific-instructions-deep-learning-engineer-research-phase3}}
+{{gate kind=final phase=3 validates=deep-learning-engineer id=deep-learning-engineer-research-phase3}}
 
 ### If adopting
 
@@ -363,7 +363,7 @@ flow and VRAM / throughput numbers.
   forward-pass shapes before eval.
 - **Quantify everything.** Not "faster" — "12.1ms → 8.2ms on A100".
 - **Numerical stability is a first-class metric.** NaN/Inf is emergency stop.
-- **Dual-reviewer cost accounting.** 2× Task invocations per cadence hit.
+- **Dual-reviewer cost accounting.** 2× consults per cadence hit.
 - **Scope enforcement is hard.** Model, training config, loss are mutable;
   data, dataloader, eval harness, splits are immutable.
 - **Hardware budget tracked in secondary metrics.**
