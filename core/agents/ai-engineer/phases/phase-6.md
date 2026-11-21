@@ -15,7 +15,7 @@ Wait for any signal from the user before dispatching any task.
 
 **Knowledge re-check:** {{protocol sources}} (mid-phase re-check) before building.
 
-Goal: Build the prompts, evaluation harness, integration code, and safety layer as tested components, one task each, under a lead loop.
+Goal: Build the prompts, evaluation harness, integration code, and safety layer as tested components, one task each, under a lead loop. With a Harness experiment plan (Phase 3), every approach in the plan is built behind the experiment harness (Spec H) and scored by the same evaluation.
 
 ### Component specifications
 
@@ -31,14 +31,14 @@ Each task in `<output_dir>/tasks.yaml` cites one of these specifications through
    # Evaluation score: <metric: value on test set>
    # Cost per call: ~$<X>
    ```
-   Acceptance: the prompt executes against a 3-5 example smoke subset; outputs parse correctly; no runaway token usage.
+   Acceptance: the prompt executes against a 3-5 example smoke subset; outputs parse correctly; no runaway token usage. With a Harness plan, each approach that needs its own prompt gets its own versioned prompt file (name it `<approach_id>__<prompt_name>`), so approaches never share a mutable prompt.
 
 **Spec B. Evaluation test set** in `<output_dir>/eval/`. Include: input-output pairs with ground truth, edge cases, adversarial examples, safety test cases (prompt injection attempts, boundary cases).
 
 **Spec C. Evaluation notebook** in `<output_dir>/notebooks/`, built with NotebookEdit. It is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group (execution and scoring; cost; safety; results). Structure:
    - **Overview** (markdown): business problem, AI approach, key decisions
    - **Setup**: imports, config, API keys, test set loading
-   - **Prompt Execution**: run prompts against test set, collect outputs
+   - **Prompt Execution**: run prompts against test set, collect outputs. With a Harness plan this section drives the harness instead: import the runner from `experiments/`, run every enabled approach on the same test set, display the leaderboard (quality, cost per request, latency p95 per approach) and name the Phase 4 decision-rule winner. Quality, cost and safety analysis then cover the winner, plus a per-approach summary row.
    - **Automated Scoring**: compute metrics, compare to thresholds
    - **Quality Analysis**: error categorization, failure mode analysis
    - **Cost Analysis**: per-request cost, projected monthly cost at scale
@@ -105,11 +105,15 @@ Each task in `<output_dir>/tasks.yaml` cites one of these specifications through
    When all dimensions are complete, set `status: "complete"`, compute
    `summary.passed`, `summary.failed`, and `summary.overallVerdict`
    (PASS if all pass, FAIL if any fail, PARTIAL if mixed).
+   With a Harness plan, write one `prompts[]` entry per approach (`name` = the approach_id, `version` = its prompt version, `model` = its model tier from `experiments.yaml`), and compute the top-level `dimensions` and `cost` for the decision-rule winner. The leaderboard remains the full record of every approach.
 
    The lead always emits the eval dashboard panel (emit once; the file is updated as
    dimensions complete):
 
    {{artifact.emit type=eval-dashboard path=<path_to>/eval-results.json meta="title=Eval: <project_name> panel_id=eval-<project_name>"}}
+
+**Spec H. Experiment harness** (Harness experiment plan only; skip for a Single approach plan). Location `<output_dir>/experiments/`, laid out per Sections B-C of the experiment framework, using the AI variant interface (`run(example) -> {output, input_tokens, output_tokens, latency_ms}`). {{protocol experiment_framework}} Tasks follow Section E of the framework: one harness-core task (`__init__.py`, `approaches/__init__.py`, `base.py`, `registry.py`, `run_experiments.py`, `experiments.yaml`), with `experiments.yaml` pre-registering every approach in the Phase 3 experiment plan, then one task per approach (`approaches/<approach_id>.py` only, `depends_on` the core task and that approach's prompt-file task; approach tasks can run in parallel), then the evaluation notebook's execution group (`depends_on` every approach task). The runner scores every approach with the Phase 4 scoring pipeline (same test set, same metrics, same judge if any), records cost per request and latency p95, applies the Phase 4 cost and latency budgets as constraints, and writes `leaderboard.csv` and `leaderboard.md`. Model tier, temperature and similar settings live in each approach's `params`, never hard-coded.
+   Acceptance: core: `python -m py_compile` passes and the runner scores a stub approach on 3 examples end-to-end, writing `leaderboard.csv`; approach: the class subclasses `Approach`, loads its prompt from `prompts/`, and runs on a 3-5 example smoke subset with outputs that parse and no runaway token usage.
 
 ### Lead loop
 
@@ -118,7 +122,7 @@ Each task in `<output_dir>/tasks.yaml` cites one of these specifications through
 {{delegate tasks=services/<name>/tasks.yaml max_parallel=3}}
 
 1. **Load the task list** approved at the plan gate (`<output_dir>/tasks.yaml`) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
-2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3. Prompt and test-set tasks can run in parallel; notebook and integration tasks follow their `depends_on` order.
+2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3. Prompt and test-set tasks can run in parallel; notebook and integration tasks follow their `depends_on` order. Harness approach tasks run in parallel once the harness-core task and their prompt files are verified done.
 3. **Receive** each worker's result via `task_report`.
 4. **Verify before it counts.** Re-run (or independently check) the acceptance command, compare with the `plan_ref` specification, then write an evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail), with measured facts (for example `df.shape = (48211, 47)`, `pass rate = 0.96`). Never mark a task done on the worker's word alone.
 5. **On failure**, re-dispatch the task with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary.
@@ -142,6 +146,7 @@ When all tasks are verified done, finalize `eval-results.json` (status `complete
   - Edge cases: <N>
   - Adversarial cases: <N>
 - **Evaluation notebook:** <file path>
+- **Experiment harness:** <<output_dir>/experiments/ — approaches: <approach_id list>; leaderboard winner: <approach_id>> | N/A — Single approach plan
 - **Requirements file:** <file path>
 - **Config file:** <file path or "N/A">
 - **Evaluation results:**
@@ -169,6 +174,7 @@ When all tasks are verified done, finalize `eval-results.json` (status `complete
 | Check | Expected | Observed | Pass/Fail |
 |---|---|---|---|
 | <task id> <component> | <acceptance expected> | <measured facts> | PASS \| FAIL |
+| <task id> harness: <core or approach_id> | interface per protocol Section C; smoke subset runs and parses; leaderboard row written | <file path>; <smoke result>; <primary metric, cost/request, p95> | PASS \| FAIL |
 ```
 
 {{gate kind=phase validates=ai-engineer}}

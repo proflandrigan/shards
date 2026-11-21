@@ -15,6 +15,7 @@ This phase is **optional**. Skipping it leaves `bestCandidate` as whatever Phase
 ### State inspection
 
 Before presenting options, inspect:
+- `<project_dir>/experiments/leaderboard.csv` (Harness plans) — the latest row per approach is the primary source of candidate metrics and constraint results; `eval-results.json` mirrors only the baseline and winner
 - `<project_dir>/eval-results.json` — `status`, `dimensions[*].actual`, `bestCandidate`
 - Candidate count documented in Phase 4
 - Infrastructure dimensions (model size, inference time, memory) — pass/fail
@@ -28,6 +29,8 @@ Classify Phase 6 state into one of:
 | **Clear winner** | 2+ candidates evaluated, one dominates primary metric within budgets |
 | **Mixed trade-offs** | 2+ candidates evaluated, no single dominant (e.g., one wins accuracy, another wins latency) |
 
+With a Harness plan, count candidates from the leaderboard (latest row per approach_id); an approach with no row is "not executed".
+
 ### Present applicable options
 
 Open with a state summary, then offer only the paths that apply to this state.
@@ -35,15 +38,17 @@ Do not present options the state does not support.
 
 **Path availability matrix:**
 
-| State | [D] Deterministic | [A] Solo AR | [F] AR fan-out | [M] Run manually | [S] Skip |
-|-------|:-:|:-:|:-:|:-:|:-:|
-| Not executed | — | ✓ | ✓ | ✓ | ✓ (with warning) |
-| Single evaluated | ✓ | ✓ | — | — | ✓ |
-| Clear winner | ✓ | ✓ | ✓ | — | ✓ |
-| Mixed trade-offs | ✓ (user-prioritized metric) | ✓ | ✓ | — | ✓ |
+| State | [D] Deterministic | [A] Solo AR | [F] AR fan-out | [M] Run manually | [S] Skip | [N] New approach |
+|-------|:-:|:-:|:-:|:-:|:-:|:-:|
+| Not executed | — | ✓ | ✓ | ✓ | ✓ (with warning) | — |
+| Single evaluated | ✓ | ✓ | — | — | ✓ | ✓ |
+| Clear winner | ✓ | ✓ | ✓ | — | ✓ | ✓ |
+| Mixed trade-offs | ✓ (user-prioritized metric) | ✓ | ✓ | — | ✓ | ✓ |
 
 Note: `[F]` AR fan-out requires 2+ mutually exclusive candidate families from
 Phase 4. If only one family exists, fan-out is unavailable.
+
+Note: `[N]` requires a Harness experiment plan.
 
 **Presentation format:**
 
@@ -64,6 +69,8 @@ Available paths:
     Cost: none to agent. Re-enters 6.5 after you return.
 [S] Skip winner selection — lock whatever is in eval-results.json and move on.
     If bestCandidate is null, you'll need to name the winner explicitly.
+[N] Add a new approach to the harness — one module + config entry, then re-run.
+    Cost: one approach fit. Harness plans only.
 
 Which path?
 ```
@@ -90,14 +97,14 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
 8. You write no training or evaluation code yourself unless a task is marked `delegate: inline`. Only the lead updates `eval-results.json` `bestCandidate`, and only from verified evidence.
 
 **[D] Deterministic pick:** (lead-side, one `delegate: inline` task or no task)
-1. Read `eval-results.json`.
+1. Read `experiments/leaderboard.csv` (Harness plan) or `eval-results.json` (Single approach plan).
 2. Select the candidate with best value on the primary metric (max or min per
-   Phase 4 direction).
+   Phase 4 direction). With a Harness plan, apply the Phase 4 decision rule (constraints first, then primary metric, ties within the stated tolerance go to the simpler approach).
 3. Verify infrastructure dimensions (model size, inference time, memory) PASS
    for this candidate.
 4. If infrastructure FAILs, surface: "The metric winner fails <dimension>.
    Options: (a) accept and document the trade-off, (b) pick next-best candidate
-   that passes, (c) stop and revisit Phase 5 budgets." Wait for decision.
+   that passes, (c) stop and revisit Phase 2 budgets." Wait for decision.
 5. Update `eval-results.json`: set `bestCandidate.model`, `bestCandidate.metrics`,
    `bestCandidate.deltas` (vs. baseline). Recompute `summary.overallVerdict`.
 
@@ -111,16 +118,16 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
    execute Sections A-G with abbreviated setup:
    - Primary metric, direction, target: inherit from Phase 4
    - Baseline value: the leading candidate's current metric (from Phase 6)
-   - Mutable scope: inherit from Phase 5 training pipeline
+   - Mutable scope: inherit from Phase 5 training pipeline; with a Harness plan, only the leading approach's module (`experiments/approaches/<approach_id>.py`) and its `params` in `experiments.yaml`. The runner, `base.py` and the split stay immutable so every iteration is scored the same way as the original comparison.
    - Immutable scope: `data/`, `eval/`, `deploy/` by default
    - Preset: ask user (interactive | overnight)
 4. Announce the AR behavioral exception and run the loop.
 5. On convergence: write converged metrics into `eval-results.json`
-   `bestCandidate`. Record iterations consumed and budget spent in Phase 6.5 doc.
+   `bestCandidate`. Record iterations consumed and budget spent in Phase 6.5 doc. With a Harness plan, each kept iteration also appends a leaderboard row.
 
 **[F] AR fan-out across approach families:** (one task per branch; branches have disjoint owned paths and the lead verifies each branch's converged metrics before the arbiter runs)
 1. Pre-flight: verify git/DVC available and cost ceiling confirmed.
-2. Identify 2-3 approach families from Phase 4 candidates. Confirm mutual
+2. Identify 2-3 approach families from the Phase 4 experiment plan (with a Harness plan: approach modules in `experiments/approaches/`, one family per branch). Confirm mutual
    exclusivity and genuine viability with the user.
 3. Follow
    [`protocols/diverge.md`](../../../protocols/diverge.md) Section B
@@ -149,6 +156,10 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
    write as the winner before Phase 7?" Wait for the user to name one, then
    populate `bestCandidate` from the corresponding Phase 6 entry.
 
+### Adding approaches later
+
+With a Harness plan, the user can add an approach at any point (now, or after handoff) per Section F of the experiment framework: one new module under `experiments/approaches/`, one `experiments.yaml` entry, re-run the runner, and re-enter this phase's state inspection. Offer this as path `[N] New approach` whenever the user names an approach that is not in the leaderboard; it is one worker task (owned paths: the new module and its `experiments.yaml` entry; run it alone, never in parallel with another task touching the yaml), verified like any candidate re-run. {{protocol experiment_framework}}
+
 ### Document Phase 6.5
 
 Append to `project-specs.md`:
@@ -158,7 +169,7 @@ Append to `project-specs.md`:
 
 ## Phase 6.5: Winner Selection (ML Engineer)
 - **Phase 6 state at entry:** Not executed | Single evaluated | Clear winner | Mixed trade-offs
-- **Path selected:** Deterministic | Solo AR | AR fan-out | Manual | Skip
+- **Path selected:** Deterministic | Solo AR | AR fan-out | Manual | Skip | New approach
 - **Rationale:** <one-line reason — e.g., "clear metric winner, no need to push further">
 - **Winner:**
   - Model type: <type>
@@ -172,8 +183,9 @@ Append to `project-specs.md`:
   - Convergence: converged | budget exhausted | user interrupted
   - Branches (fan-out only):
     - `<branch-slug>`: <converged metric value> — <winner | runner-up>
-- **Infrastructure trade-off (if applicable):** <metric winner fails <dim> — user accepted | chose next-best | revisited Phase 5>
+- **Infrastructure trade-off (if applicable):** <metric winner fails <dim> — user accepted | chose next-best | revisited Phase 2 budgets>
 - **eval-results.json bestCandidate:** Locked | Skipped — bestCandidate left as-is
+- **Leaderboard:** <experiments/leaderboard.md — approaches compared: <N>> | N/A — Single approach plan
 
 ### Validation
 

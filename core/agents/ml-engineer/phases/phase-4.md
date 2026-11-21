@@ -10,7 +10,7 @@ Goal: Choose the model architecture, baselines, and candidate approaches.
 **If productionization from study:** The Data Scientist has already validated the
 model design from a statistical perspective. Start by reading the study's Phase 4
 (Modeling Approach) and Phase 6 (Build Log) from the study's `project-specs.md`.
-The study's candidate model is the starting point, not a blank slate. Focus this phase on:
+The study's candidate model is the starting point, not a blank slate. If the study built an experiment harness (studies/<name>/experiments/), start from its leaderboard and approach modules: carry forward the approaches that remain viable under serving constraints, and add production-friendly alternatives as new approaches rather than replacing the comparison. Focus this phase on:
 - Can the study's best model meet serving constraints (latency, memory, size)?
 - If not, what production-friendly alternatives achieve acceptable performance?
 - What's the production baseline? (the study's baseline may differ from a production baseline)
@@ -52,13 +52,15 @@ Here is the model design:
 - Target: [definition]
 - Features: [summary of feature groups]
 - Baseline: [proposed baseline]
-- Candidates: [proposed candidate models]
+- Candidate approaches: [approach_id: description and hypothesis, one per line]
+- Shared evaluation and decision rule: [split, primary metric, infrastructure constraints, tie-break]
+- Experiment mode: [Harness | Single approach (user opted out)]
 - Evaluation: [proposed metrics]
 Please review from a statistical and methodological perspective:
 1. Is the target definition sound? Any leakage risk?
 2. Are the evaluation metrics appropriate for the business problem?
 3. Are there methodological concerns (confounding, bias, train/test contamination)?
-4. Would you suggest a different approach or additional baselines?
+4. Is any candidate redundant, or is a stronger approach missing from the comparison? Any additional baselines?
 Keep the review focused — I'll handle the systems/infrastructure side.
 ```
 
@@ -95,7 +97,7 @@ Brief for the consultant (fill the bracketed fields):
 I am the ML Engineer shard designing a <system>. The proposed approach is:
 - Task type: <classification | regression | ranking | etc.>
 - Data: <modality, scale, key characteristics>
-- Proposed model: <architecture or approach>
+- Candidate approaches: <approach_id: architecture or approach, one per line; recommended lead marked>
 - Objective: <loss function / evaluation metric>
 - Constraints: <latency, memory, compute budget, interpretability>
 - Business goal: <what the model output drives>
@@ -219,7 +221,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 Define:
 - **Baseline model:** Simple, fast, interpretable. The floor to beat.
   (logistic regression, decision tree, popularity-based, rule-based)
-- **Candidate model(s):** What to try if baseline isn't sufficient.
+- **Experiment plan:** Do not settle on one model. Apply Section A of the experiment framework. {{protocol experiment_framework}} Propose the baseline above plus 2-4 candidate approaches with a hypothesis each (vary a real axis: model family, feature strategy, ensemble vs single, online vs batch), one shared evaluation using the validation approach and metrics below, a decision rule that includes the Phase 2 infrastructure budgets as constraints, and a recommended lead. Then ask the user the single-approach opt-out question (Section A.2); never take the opt-out on their behalf.
 - **Evaluation strategy:**
   - Offline metrics: the model metrics (AUC, RMSE, NDCG, MAP, precision@k, etc.)
   - Online metrics: the business metrics (conversion, engagement, revenue)
@@ -258,9 +260,15 @@ Define:
   - Type: <model type>
   - Rationale: <why this baseline>
   - Expected performance: <rough estimate>
-- **Candidate model(s):**
-  - <model 1>: <type, rationale, trade-offs>
-  - <model 2>: <type, rationale, trade-offs>
+- **Experiment plan:**
+  - Mode: Harness | Single approach (opted out — <user's reason>)
+  - Baseline: <approach> — <why it is the floor>
+  - Candidates:
+    - <approach_id>: <description> — hypothesis: <why it might win, at what cost>
+    - <approach_id>: <description> — hypothesis: <...>
+  - Recommended lead: <approach_id> — <why>
+  - Shared evaluation: <split or test set>; primary metric <metric> (<higher|lower> is better); secondary: <metrics>; constraints: <latency/memory/cost/interpretability budgets>
+  - Decision rule: <best primary metric among constraint-passing approaches; ties within <tolerance> go to the simpler approach>
 - **Evaluation strategy:**
   - Offline metrics: <list with business interpretation>
   - Online metrics: <list — what to measure post-deploy>

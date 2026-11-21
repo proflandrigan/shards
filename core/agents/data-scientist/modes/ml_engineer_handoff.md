@@ -28,11 +28,12 @@ Write the file `studies/<project_name>/ml_engineer_handoff.md`:
 - Prediction window: <from Phase 4>
 - Feature candidates: <summary from Phase 4>
 - Baseline model: <from Phase 4>
-- Candidate model(s): <from Phase 4>
+- Experiment plan: <mode (Harness | Single approach), approaches (baseline and candidates), recommended lead, decision rule — from Phase 4>
 - Interpretability requirement: <from Phase 4>
 
 ## Results (from Phase 6)
 - Best metric: <metric: value>
+- Experiment harness: <studies/<project_name>/experiments/ and its leaderboard.md, or "None (single approach)"; study was write-only, so the harness has not been run>
 - Notebook: <path from Phase 6>
 - Query files: <paths from Phase 6>
 

@@ -21,7 +21,7 @@ Ask about (and provide examples):
 - One-off analysis or deployed, retrainable model?
 - How important is model explainability?
 
-Suggest a model family with justification. Propose a baseline model before anything complex.
+**Experiment plan.** Do not settle on a single model. Apply Section A of the experiment framework. {{protocol experiment_framework}} Propose a baseline plus 2-4 candidate approaches, each with a one-line hypothesis. Define one shared evaluation (the same split, and the primary metric and minimum threshold above), a decision rule, and a recommended lead. Then ask the user the single-approach opt-out question from Section A.2, and do not take the opt-out on their behalf.
 
 **Feature search.** Run `{{knowledge.search query="reusable features for <domain>"}}` (domain from Phase 2) and look for
 features whose domain tags overlap with this project's data. For each relevant feature, present to the user with its
@@ -51,13 +51,16 @@ Here is the proposed modeling approach:
 - Known data challenges: [imbalance, censoring, drift, etc.]
 - Primary metric: [metric and business interpretation]
 - Baseline model: [model type and rationale]
-- Candidate model(s): [model types and rationale]
+- Candidate approaches: [approach_id: description and hypothesis, one per line]
+- Shared evaluation and decision rule: [split, primary metric, constraints, tie-break]
+- Experiment mode: [Harness | Single approach (user opted out)]
 - Interpretability requirement: [High | Medium | Low]
 - Deployment intent: [One-off | Productionized]
 Please review: Is the model family appropriate for this task and data profile?
 Are there feature engineering approaches I should prioritize or avoid?
 Is the evaluation strategy sound? Any known pitfalls or gotchas for this
-model type on this kind of data? If deployment intent is Productionized,
+model type on this kind of data? Is any candidate redundant, or is an obviously
+stronger approach missing from the comparison? If deployment intent is Productionized,
 flag any design choices now that would create problems later.
 ```
 
@@ -106,8 +109,15 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `data-analyst` row)
 - **Minimum threshold:** <concrete number, e.g., "AUC > 0.75">
 - **Interpretability requirement:** High | Medium | Low — <rationale>
 - **Deployment intent:** One-off | Productionized
-- **Baseline model:** <model type and why>
-- **Candidate model(s):** <model type(s) and why>
+- **Experiment plan:**
+  - Mode: Harness | Single approach (opted out — <user's reason>)
+  - Baseline: <approach> — <why it is the floor>
+  - Candidates:
+    - <approach_id>: <description> — hypothesis: <why it might win, at what cost>
+    - <approach_id>: <description> — hypothesis: <...>
+  - Recommended lead: <approach_id> — <why>
+  - Shared evaluation: <split or test set>; primary metric <metric> (<higher|lower> is better); secondary: <metrics>; constraints: <latency/memory/cost/interpretability budgets>
+  - Decision rule: <best primary metric among constraint-passing approaches; ties within <tolerance> go to the simpler approach>
 - **Explainability approach:** <SHAP | LIME | PDP | N/A>
 - **ML Engineer review:**
   - Verdict: APPROVED | NEEDS REVISION | BLOCKED
@@ -132,7 +142,7 @@ this study wraps."
 
 This is informational only — do not pause or redirect. Continue to Phase 5.
 
-**DIVERGE check:** If you identified 2-3 mutually exclusive modeling approaches (e.g., different model families, fundamentally different feature engineering strategies) that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
+**DIVERGE check:** Approaches that share the same data, evaluation and deliverable belong in the experiment harness, not a fork (protocol Section A.4). Only if you identified 2-3 mutually exclusive modeling approaches that would change the project's shape (different data sources, deliverables or downstream phases) and are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 5. If declined or not applicable, continue normally.
 
 {{gate kind=phase}}
 

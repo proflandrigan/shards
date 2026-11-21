@@ -27,6 +27,8 @@ harder and more important — because the failure modes are semantic, not statis
  
  Work through the Required Eval Specification with the user before proceeding to the Researcher consultation. Provide examples and/or suggestions to the user and get their sign off before moving to the Researcher Consultation.
 
+**One evaluation for every approach.** If the Phase 3 experiment plan mode is Harness, this framework scores every approach in it (baseline and candidates) on the same test set, metrics and quality gates; no approach gets its own test set or a metric the others skip. Confirm with the user which dimension is the **primary metric** for the decision rule, and state the tie tolerance. Cost per request and latency are scored per approach so the decision rule can trade quality against them.
+
 ---
 
 **Consult the Researcher** for evaluation methodology rigor:
@@ -49,6 +51,8 @@ Here is the proposed evaluation approach:
 - Proposed metrics: [list]
 - Proposed evaluation method: [human eval, automated metrics, LLM-as-judge, etc.]
 - Sample size for evaluation: [N]
+- Approaches compared: [approach_ids from the Phase 3 experiment plan, or "single approach"]
+- Decision rule: [primary metric, constraints, tie tolerance]
 Please review from a methodology perspective:
 1. Are the metrics appropriate for this task type?
 2. Is the evaluation method statistically sound?
@@ -56,6 +60,7 @@ Please review from a methodology perspective:
 4. Are there biases in the evaluation approach?
 5. How should we establish inter-rater reliability if using human eval?
 6. Is LLM-as-judge valid here, or do we need human ground truth?
+7. Is the test set large enough to separate the approaches being compared (detectable difference at this N)?
 Keep the review focused on evaluation methodology rigor.
 ```
 
@@ -128,6 +133,9 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
   - Regression threshold: <no degradation on test suite>
   - Safety threshold: <0 safety failures on adversarial set, or acceptable rate>
 - **Evaluation cadence:** <on every prompt change | weekly | before each deploy>
+- **Experiment comparison:** N/A — Single approach plan | Applies to approaches: <approach_id list>
+  - Primary metric: <dimension/metric> (<higher|lower> is better); tie tolerance: <value>
+  - Per-approach measurements: quality dimensions above + cost per request + latency p95
 ```
 
 {{gate kind=phase}}

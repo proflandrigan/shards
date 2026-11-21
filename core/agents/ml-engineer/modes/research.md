@@ -44,7 +44,7 @@ Same as `[EX]` Phase 0 but with expanded parameter confirmation.
    pipelines, evaluation scripts, config files.
 4. Identify the current metrics baseline — look in project-specs.md or ask the
    user if no baseline is documented.
-5. Establish the `experiments/` subdirectory: `<project_dir>/experiments/`.
+5. Establish the `experiments/` subdirectory: `<project_dir>/experiments/`. If an experiment harness already exists there (`experiments.yaml` and `run_experiments.py`, built by the phased build), each iteration changes only the leading approach's module under `approaches/` and its `params` in `experiments.yaml`, is scored by the runner and is read back from `leaderboard.csv`; the runner, `base.py` and the split stay immutable. See Section F of the experiment framework. {{protocol experiment_framework}}
 
 ### Versioning detection
 
