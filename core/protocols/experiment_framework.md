@@ -128,6 +128,9 @@ Built only when the experiment plan mode is **Harness**. Location:
 primary_metric: <metric>
 direction: maximize | minimize
 tie_tolerance: <number>
+secondary_metrics: [<metric>, ...]
+constraints:            # each measured per approach; constraints_pass is true only if all hold
+  <name>: { max: <value> }   # e.g. inference_latency_p95_ms, model_size_mb, cost_per_request
 approaches:
   - id: <approach_id>
     module: approaches.<approach_id>
@@ -141,20 +144,23 @@ Rules:
 - **One approach per module.** Each module defines one class implementing the
   Section C interface. Approaches never import each other.
 - **Shared evaluation lives in the runner, not in approaches.** Approaches only
-  fit and predict (or run). Splitting, scoring, constraint checks and the
-  leaderboard belong to `run_experiments.py`, so every approach is judged
-  identically.
+  fit and predict (or run). Scoring, constraint checks and the leaderboard
+  belong to `run_experiments.py`, so every approach is judged identically.
 - **Adding an approach later** = one new file under `approaches/` + one entry in
   `experiments.yaml`. Nothing else should need to change; if it does, the
   harness is wrong.
-- **Seeds and splits are fixed** in the runner (or loaded from the project's
-  existing split) and reused for every approach.
+- **Seeds and splits are fixed once and reused for every approach.** The split
+  is made once, upstream of the runner (the notebook's data section, or the
+  project's existing split), and passed to `run_all` (Section D); the runner
+  never re-splits per approach.
 - **Leaderboard columns:** `approach_id, role, primary_metric, <secondary metrics...>, <constraint measurements...>, constraints_pass, run_timestamp, params_hash`.
   The runner appends a row per run; `leaderboard.md` shows the latest row per
   approach, sorted by the primary metric, with the decision-rule winner marked.
-- **Filenames do not collide with experiment mode.** Experiment mode
-  (`modes/experiment.md`) writes `experiments/results.json`, `experiment_plan.md`
-  and `experiment_<N>_<name>.md`; the harness never writes those names.
+- **Filenames do not collide with experiment mode or AR.** Experiment mode
+  (`modes/experiment.md`) and autonomous research (`modes/research.md`) write
+  `experiments/results.json`, `experiment_plan.md`, `experiment_<N>_<name>.md`,
+  `research_brief.md` and `history_summary.md`; the harness never writes those
+  names.
 
 ## Section C — Interfaces
 
@@ -239,7 +245,7 @@ entry; see Section F.)
 
 | Task | Owned paths | Acceptance |
 |------|-------------|------------|
-| Harness core | `experiments/__init__.py`, `base.py`, `registry.py`, `run_experiments.py`, `experiments.yaml` (all entries for the planned approaches, written up front) | Interface matches Section C; the registry imports only `enabled: true` entries; the runner applies one split/test set and one scoring path to every approach and writes both leaderboard files. Test the runner against a stub approach and a temporary registry, since approach modules do not exist yet. |
+| Harness core | `experiments/__init__.py`, `approaches/__init__.py`, `base.py`, `registry.py`, `run_experiments.py`, `experiments.yaml` (all entries for the planned approaches, written up front) | Interface matches Section C; the registry imports only `enabled: true` entries; the runner applies one split/test set and one scoring path to every approach and writes both leaderboard files. Test the runner against a stub approach and a temporary registry, since approach modules do not exist yet. |
 | One task per approach | `experiments/approaches/<approach_id>.py` only (never `experiments.yaml`; the entry already exists from the core task) | The class subclasses `Approach`, sets `id`/`role`, implements the interface, reads hyperparameters from `params`. |
 | Notebook driver | notebook section group (chained by `depends_on` like other notebook tasks) | The section imports the runner, displays the leaderboard and names the winner; no approach logic is duplicated in the notebook. |
 
@@ -253,7 +259,9 @@ py_compile` on the harness files is allowed; nothing is run against data).
 
 - **ML Engineer Phase 6.5** reads `experiments/leaderboard.csv` for state
   inspection; `[A]` Solo AR mutates only the leading approach's module and its
-  `experiments.yaml` params; `[F]` fan-out uses one approach family per branch.
+  `experiments.yaml` params; `[F]` fan-out uses one approach family per branch;
+  `[N]` adds a new approach (one module plus its `experiments.yaml` entry, in a
+  single task that runs alone) and re-runs the runner.
 - **Experiment mode and AR** (`modes/experiment.md`, `modes/research.md`): when
   an `experiments/` harness exists, each experiment is a new or modified
   approach module plus a runner call, and the result is read from the leaderboard.
