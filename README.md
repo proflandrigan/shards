@@ -1,5 +1,5 @@
 <img 
-  src="shards_logo.png" 
+  src="shards_icon.png" 
   alt="Shards" 
   style="display: block; margin-left: auto; margin-right: auto; width: 400px;" 
 />
