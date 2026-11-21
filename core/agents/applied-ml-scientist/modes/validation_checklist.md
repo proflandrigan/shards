@@ -65,7 +65,7 @@ A collaborator (or future-you in three months) can reproduce the headline number
 - Data: exact split definition on disk (manifest of IDs or deterministic split rule).
 - A single `README.md` command reproduces the headline number.
 
-**Observed format:** `seeds=[42,43,44,45,46] | env: research/<project>/env/requirements.txt (pinned) | hardware: 4×A100 80GB, CUDA 12.1 | data manifest: data/splits/manifest_v3.json | repro command: make repro in README; re-run produced 78.3% vs reported 78.4% (within seed variance) ✓`
+**Observed format:** `seeds=[42,43,44,45,46] | env: shards/<project>/env/requirements.txt (pinned) | hardware: 4×A100 80GB, CUDA 12.1 | data manifest: data/splits/manifest_v3.json | repro command: make repro in README; re-run produced 78.3% vs reported 78.4% (within seed variance) ✓`
 
 ## AMS-07 — Training Dynamics Documented
 
@@ -85,7 +85,7 @@ The research code is written as testable modules, not notebook-only, and key com
 - Unit tests for: loss functions, custom modules, data augmentation, eval scorers.
 - "It ran once in my notebook" is not enough — research that cannot be re-run in a clean environment is not validated.
 
-**Observed format:** `research/<project>/src/ on disk (not notebook-only) | tests/: 17 tests, 17 passed | covered: contrastive_loss (forward + gradient), projection_head (output shape + init), aug_pipeline (determinism with seed), eval_scorer (parity with reference impl)`
+**Observed format:** `shards/<project>/src/ on disk (not notebook-only) | tests/: 17 tests, 17 passed | covered: contrastive_loss (forward + gradient), projection_head (output shape + init), aug_pipeline (determinism with seed), eval_scorer (parity with reference impl)`
 
 ## AMS-09 — Scope and Negative Claims
 
@@ -114,7 +114,7 @@ Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/
 
 ## Artifacts Expected
 
-- Research code directory under `research/<project>/` — AMS-08
+- Research code directory under `shards/<project>/` — AMS-08
 - `tests/` directory — AMS-08
 - `results/ablations.json`, `results/seed_variance.json` — AMS-03, AMS-04
 - `results/training_curves.png` + W&B/MLflow run manifest — AMS-07

@@ -10,8 +10,8 @@ throughout. No queries are re-executed; no new numbers are produced.
 
 Read in this order:
 
-1. `analysis/<project_name>/project-specs.md`
-2. `analysis/<project_name>/queries/*.sql` (all files, in filename order)
+1. `shards/<project_name>/project-specs.md`
+2. `shards/<project_name>/queries/*.sql` (all files, in filename order)
 
 If no project directory is specified, ask the user for it — one question, nothing more.
 Wait for their answer before reading anything.
@@ -156,14 +156,14 @@ share with stakeholders or onboard someone new. Want me to write one?"
 
 ---
 
-## Output Document (optional): `analysis/<project_name>/explainer.md`
+## Output Document (optional): `shards/<project_name>/explainer.md`
 
 Written only if the user explicitly requests it. Use this template exactly:
 
 ```markdown
 # Explainer: <project_name>
 
-- Analysis: analysis/<project_name>/
+- Analysis: shards/<project_name>/
 - Original question: <from specs or reconstructed>
 - Explained by: Data Analyst Shard (Explain Mode)
 - Date: <date>

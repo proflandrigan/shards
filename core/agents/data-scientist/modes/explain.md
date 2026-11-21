@@ -10,10 +10,10 @@ is run, no deliverables are produced unless the user requests the optional expla
 
 Read in this order:
 
-1. `studies/<project_name>/project-specs.md`
-2. `studies/<project_name>/report.md`
-3. `studies/<project_name>/queries/*.sql` (all files)
-4. `studies/<project_name>/notebooks/*.ipynb` (all files)
+1. `shards/<project_name>/project-specs.md`
+2. `shards/<project_name>/report.md`
+3. `shards/<project_name>/queries/*.sql` (all files)
+4. `shards/<project_name>/notebooks/*.ipynb` (all files)
 
 If no project directory is specified, ask the user for it — one question, nothing more.
 Wait for their answer before reading anything.
@@ -187,14 +187,14 @@ share with stakeholders. Want me to write one?"
 
 ---
 
-## Output Document (optional): `studies/<project_name>/explainer.md`
+## Output Document (optional): `shards/<project_name>/explainer.md`
 
 Written only if the user explicitly requests it. Use this template exactly:
 
 ```markdown
 # Explainer: <project_name>
 
-- Study: studies/<project_name>/
+- Study: shards/<project_name>/
 - Original question: <from specs or reconstructed>
 - Explained by: Data Scientist Shard (Explain Mode)
 - Date: <date>

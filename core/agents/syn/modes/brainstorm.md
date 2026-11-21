@@ -14,7 +14,7 @@ Ask for the user's initial idea or problem statement first — one question, not
 As soon as they respond with any description (even vague), do three things immediately:
 
 1. Derive a short `<project_name>` slug from their response (lowercase, hyphens, no spaces).
-2. Create `brainstorm/brainstorm_<project_name>.md` with this header:
+2. Create `shards/brainstorm/brainstorm_<project_name>.md` with this header:
 
 ```markdown
 # Brainstorm: {{PROJECT_NAME}}
@@ -52,7 +52,7 @@ As soon as they respond with any description (even vague), do three things immed
 <!-- filled in if a project is started from this session -->
 ```
 
-3. Create `brainstorm/brainstorm_<project_name>.state.json` — a small state sidecar
+3. Create `shards/brainstorm/brainstorm_<project_name>.state.json` — a small state sidecar
    that Studio's brainstorm panel shows when Studio is open (the `.md` doc is the
    record). Schema:
 
@@ -119,7 +119,7 @@ Select which specialists to call based on problem relevance:
 
 Before issuing the consults, do all three steps in a single assistant turn:
 
-1. **Update state file** — rewrite `brainstorm/brainstorm_<project_name>.state.json`
+1. **Update state file** — rewrite `shards/brainstorm/brainstorm_<project_name>.state.json`
    with `phase: "gathering"` and seed the `specialists` array with one entry per
    selected specialist:
    ```json
@@ -141,7 +141,7 @@ Before issuing the consults, do all three steps in a single assistant turn:
    Phase 3 for the schema.
 
 2. **Emit the brainstorm panel** (once; afterwards just rewrite the state file, the panel is watched):
-   {{artifact.emit type=brainstorm path=brainstorm/brainstorm_<project_name>.state.json meta="title=Brainstorm: <project_name> panel_id=brainstorm-<project_name> project=<project_name>"}}
+   {{artifact.emit type=brainstorm path=shards/brainstorm/brainstorm_<project_name>.state.json meta="title=Brainstorm: <project_name> panel_id=brainstorm-<project_name> project=<project_name>"}}
 
 3. **Announce to the user** (use this verbatim, or a paraphrase):
    > "Polling every relevant shard in parallel. They'll land in the brainstorm
@@ -204,7 +204,7 @@ Syn uses this line as the idea's one-line preview.
 
 For **every** specialist response, immediately do both:
 
-1. Append the full response to `brainstorm/brainstorm_<project_name>.md` under
+1. Append the full response to `shards/brainstorm/brainstorm_<project_name>.md` under
    `## Domain Input`:
    ```markdown
    ### <Specialist Name>
@@ -212,7 +212,7 @@ For **every** specialist response, immediately do both:
    <specialist response verbatim>
    ```
 
-2. Rewrite `brainstorm/brainstorm_<project_name>.state.json` with that
+2. Rewrite `shards/brainstorm/brainstorm_<project_name>.state.json` with that
    specialist's entry (matched by `id`) updated:
    - `status: "responded"`
    - `responded_at: "<ISO 8601>"`
@@ -245,9 +245,9 @@ Read all domain inputs and synthesize across them. Structure your synthesis as:
 - **Wild cards** — novel directions that reframe the problem entirely
 - **Emerging themes** — patterns that appeared across multiple specialists
 
-Append the synthesis to `brainstorm/brainstorm_<project_name>.md` under `## Synthesis`.
+Append the synthesis to `shards/brainstorm/brainstorm_<project_name>.md` under `## Synthesis`.
 
-Then rewrite `brainstorm/brainstorm_<project_name>.state.json` with
+Then rewrite `shards/brainstorm/brainstorm_<project_name>.state.json` with
 `phase: "synthesis"` and the `synthesis` field populated:
 
 ```json
@@ -331,8 +331,8 @@ Respond to any of the following naturally:
        "decided_at": "<ISO 8601>"
      }
      ```
-  3. Move `brainstorm/brainstorm_<project_name>.md` AND the
-     `brainstorm/brainstorm_<project_name>.state.json` sidecar into the project
+  3. Move `shards/brainstorm/brainstorm_<project_name>.md` AND the
+     `shards/brainstorm/brainstorm_<project_name>.state.json` sidecar into the project
      directory once it is created during Project Initialization. If the project
      directory does not exist yet, leave both files in place and note the move
      as a TODO in the Outcome section — move them after Syn creates the directory.
@@ -392,7 +392,7 @@ Respond to any of the following naturally:
   ```
 
   **Step 3 — create `workstreams.json`.** After writing the Outcome section, also
-  write a machine-readable `workstreams.json` file to `brainstorm/` (alongside the
+  write a machine-readable `workstreams.json` file to `shards/brainstorm/` (alongside the
   brainstorm doc). This is the structured companion used by Syn's Status Check Mode.
 
   Schema:
@@ -416,14 +416,14 @@ Respond to any of the following naturally:
   Use an empty array `[]` for `depends_on` when a workstream has no dependencies.
   Initial `status` for all workstreams is `"initialized"`.
 
-  **Step 4 — brainstorm doc and state file stay in `brainstorm/`.** For
+  **Step 4 — brainstorm doc and state file stay in `shards/brainstorm/`.** For
   multi-workstream projects, the brainstorm doc and its `.state.json` sidecar
   are shared origin artifacts across multiple project directories. Do NOT move
   either of them. Instead, when initializing each workstream's `project-specs.md`,
   populate the `Dependencies` and `Brainstorm origin` fields in the template header:
   ```
   - **Dependencies:** <workstream name(s) this depends on, or "none">
-  - **Brainstorm origin:** brainstorm/brainstorm_<project_name>.md
+  - **Brainstorm origin:** shards/brainstorm/brainstorm_<project_name>.md
   ```
 
   **Step 5 — route to workstreams sequentially in dependency order.** For each workstream:
@@ -536,5 +536,5 @@ explicitly closes it.
 - When a **single** project is kicked off, the brainstorm doc travels with it —
   move it into the project directory so the team has full context on how the idea
   originated. For **multi-workstream** escalations, the brainstorm doc stays in
-  `brainstorm/` as a shared origin artifact; each workstream's `project-specs.md`
+  `shards/brainstorm/` as a shared origin artifact; each workstream's `project-specs.md`
   carries a `Brainstorm origin:` field pointing back to it.

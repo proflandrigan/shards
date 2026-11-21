@@ -20,7 +20,7 @@ function resolveOutputDir(ctx, args) {
   const frame = frames[frames.length - 1];
   const agent = frame ? loadAgents().get(frame.agent) : null;
   if (frame && agent && agent.output_dir && frame.project) return agent.output_dir.replace('{project}', frame.project);
-  throw new Error('tasks_set cannot resolve output_dir: no active specialist frame with a project. Pass output_dir (project-root-relative, e.g. "analysis/<project>") or use `path` to an existing tasks.yaml.');
+  throw new Error('tasks_set cannot resolve output_dir: no active specialist frame with a project. Pass output_dir (project-root-relative, e.g. "shards/<project>") or use `path` to an existing tasks.yaml.');
 }
 
 module.exports = defineTool({

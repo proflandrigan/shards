@@ -38,8 +38,8 @@ first, or drop to `[EX]` where human review sits between iterations.
 ### Context loading
 
 1. Locate `project-specs.md` in the project directory (typically
-   `services/<project_name>/project-specs.md` or
-   `<existing_service_dir>/project-specs.md`).
+   `shards/<project_name>/project-specs.md`;
+   legacy projects: their existing `project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project
      context (AI system type, current prompts/chain, eval harness, baseline
      metrics) before proceeding.
@@ -257,6 +257,8 @@ rejected), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
 ### Gate
+
+Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=execute phase=1 id=ai-engineer-research-phase1}}
 

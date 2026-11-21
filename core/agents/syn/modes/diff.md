@@ -22,8 +22,8 @@ advocating. Save opinions for the final analysis section.
 
 Ask the user for:
 
-1. **Directory A** — path to the first project directory (e.g., `studies/churn_v1/`)
-2. **Directory B** — path to the second project directory (e.g., `studies/churn_v2/`)
+1. **Directory A** — path to the first project directory (e.g., `shards/churn_v1/`)
+2. **Directory B** — path to the second project directory (e.g., `shards/churn_v2/`)
 3. **Focus** (optional) — "Any dimension you want me to focus on? Options:
    methodology, metrics, implementation, or all. Default is all."
 
@@ -210,7 +210,7 @@ If the user says yes, copy the report to `<dir_B>/diff_vs_<project_A_name>.md`.
 
 ## Edge Cases
 
-**Different project types:** Comparing a `studies/` project with a `services/`
+**Different project types:** Comparing a study project with a service
 project is valid. Some comparison dimensions (e.g., prompts/) will only exist
 for one. Note asymmetries in the Artifact Inventory and skip inapplicable
 sections gracefully.

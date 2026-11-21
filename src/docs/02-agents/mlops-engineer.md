@@ -47,7 +47,7 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 ## Output directory
 
-`services/<project_name>/mlops/` (terraform, helm charts, pipeline configs, serving configs)
+`shards/<project_name>/mlops/` for bookkeeping. Terraform, helm charts, pipeline configs and serving configs integrate into the existing infrastructure code at the targets confirmed on the plan gate (greenfield default under `shards/<project_name>/mlops/`). See [Placement](../03-protocols/placement.md).
 
 Gate-confirmed phases are committed to git as the record. Where each agent writes is listed in [Output Directory Map](../06-outputs/directory-map.md).
 

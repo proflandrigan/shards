@@ -18,7 +18,7 @@ Start with `/shards:ai-engineer` (or `/shards:syn` to triage). Phase 0 triage as
   └─ Phase 7: backend review, Syn sign-off, service card, handoff
 ```
 
-Output: `services/<project>/` with the eval dataset, prompts, evaluation runs and deployment notes.
+Output: `shards/<project>/` with the eval dataset, prompts, evaluation runs and deployment notes; service code integrates into the existing codebase at the confirmed targets.
 
 The evaluation is designed in Phase 4, before any build, and the Phase 6 gate is validated: it carries `validates=ai-engineer` and expects executed eval results as evidence. Build work can be split into a task manifest and run by workers (see [Delegated build](../03-protocols/delegated-build.md)), with `checkpoint` gates between components per [incremental testing](../03-protocols/incremental-testing.md).
 

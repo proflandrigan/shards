@@ -15,16 +15,16 @@ performance monitoring on top of this model?"
 
 {{gate kind=phase phase=7 id=ml-engineer-bi-engineer-handoff-phase-7}}
 
-If yes, write `models/<project_name>/bi_engineer_handoff.md`:
+If yes, write `shards/<project_name>/bi_engineer_handoff.md`:
 
 ```
 # BI Engineer Handoff: <project_name>
 
 ## Source Project
 - Originating agent: ML Engineer
-- Project directory: models/<project_name>/
-- Project specs: models/<project_name>/project-specs.md
-- Project report: models/<project_name>/report.md
+- Project directory: shards/<project_name>/
+- Project specs: shards/<project_name>/project-specs.md
+- Project report: shards/<project_name>/report.md
 
 ## What Was Built
 - Model type: <final model type from Phase 4>
@@ -61,9 +61,9 @@ If yes, write `models/<project_name>/bi_engineer_handoff.md`:
 
 ## Next Step
 Run `shards:bi-engineer` or `shards:syn`. In Phase 0, reference this file:
-models/<project_name>/bi_engineer_handoff.md
+shards/<project_name>/bi_engineer_handoff.md
 ```
 
 Tell the user: "Handoff file written. Run `shards:bi-engineer` or `shards:syn` and
-reference `models/<project_name>/bi_engineer_handoff.md` in Phase 0."
+reference `shards/<project_name>/bi_engineer_handoff.md` in Phase 0."
 Do NOT attempt to morph into or invoke the BI Engineer.

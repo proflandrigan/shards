@@ -1,22 +1,24 @@
 # Output Directory Map
 
-Where each agent writes. Output directories live at the project root and are created on demand. The mapping comes from `output_dir` in each agent's `core/agents/<id>/agent.yaml` (`{project}` is the project name).
+Where each agent writes. Shards adds one folder to your project, `shards/`. It is created on demand. The mapping comes from `output_dir` in each agent's `core/agents/<id>/agent.yaml` (`{project}` is the project name).
+
+The `shards/` folder holds bookkeeping: `project-specs.md`, `tasks.yaml` and `TASKS.md`, reports, handoff files and experiment records. Deliverables (code, dbt models, services, dashboards, tests) go where you want them. During planning the specialist scans the repo, proposes target paths that follow its conventions, records them in a `## Placement` table in `project-specs.md` and passes them as `targets` on the plan gate. In a greenfield project the default is a subfolder of `shards/<project>/`. See [Placement](../03-protocols/placement.md). Projects created before this layout are described under [Legacy layout](#legacy-layout).
 
 ## Specialist outputs
 
 | Agent | Directory |
 |---|---|
-| Data Analyst | `analysis/<project>/` |
-| Data Scientist | `studies/<project>/` |
-| Data Engineer | `models/<project>/` |
-| Data Modeller | `data_models/<project>/` |
-| Analytics Engineer | `data_models/<project>/` |
-| ML Engineer | `models/<project>/` (greenfield); the existing service directory when iterating |
-| AI Engineer | `services/<project>/` (greenfield); the existing service directory when iterating |
-| Applied ML Scientist | `research/<project>/` |
-| Deep Learning Engineer | `models/<project>/` |
-| MLOps Engineer | `services/<project>/mlops/` (greenfield); the existing service directory when iterating |
-| BI Engineer | `dashboards/<project>/` |
+| Data Analyst | `shards/<project>/` |
+| Data Scientist | `shards/<project>/` |
+| Data Engineer | `shards/<project>/` |
+| Data Modeller | `shards/<project>/` |
+| Analytics Engineer | `shards/<project>/` |
+| ML Engineer | `shards/<project>/` |
+| AI Engineer | `shards/<project>/` |
+| Applied ML Scientist | `shards/<project>/` |
+| Deep Learning Engineer | `shards/<project>/` |
+| MLOps Engineer | `shards/<project>/mlops/` |
+| BI Engineer | `shards/<project>/` |
 | Researcher, Academic, Backend Engineer | none (review only) |
 
 ## Syn
@@ -25,16 +27,20 @@ Syn's `output_dir` is mode-dependent.
 
 | Mode | Directory |
 |---|---|
-| Fixer | appended to the project's `project-specs.md` when the fix belongs to a project; otherwise `fixes/fix_<slug>.md` |
-| Brainstorm | `brainstorm/` (`brainstorm_<project>.md` plus a `.state.json` sidecar) |
-| Panel Review | `panels/<dirname>/` |
-| PM | `projects/<project>/` (`project-plan.md`; specialists still write to their own directories) |
+| Fixer | appended to the project's `project-specs.md` when the fix belongs to a project; otherwise `shards/fixes/fix_<slug>.md` |
+| Brainstorm | `shards/brainstorm/` (`brainstorm_<project>.md` plus a `.state.json` sidecar) |
+| Panel Review | `shards/panels/<dirname>/` |
+| PM | `shards/<project>/` (`project-plan.md` and `workstreams.json`; specialists write to their own project folders) |
 | PR Review | none |
 | Diff | `<dir_A>/diff_vs_<project_B>.md` |
 
 ## Project files
 
-Each specialist project directory holds a `project-specs.md` (the decisions record, written at each gate) and the agent's deliverables. Templates live in `core/templates/`.
+Each project folder `shards/<project>/` holds a `project-specs.md` (the decisions record, written at each gate, including the `## Placement` table) and the agent's bookkeeping files. Deliverables live at the confirmed targets, which can be inside or outside this folder. Templates live in `core/templates/`.
+
+## Legacy layout
+
+Projects created before the `shards/` layout live in `analysis/`, `studies/`, `models/`, `services/`, `data_models/`, `dashboards/`, `research/`, `brainstorm/`, `fixes/`, `panels/` and `projects/`. Syn's status and resume read them; validation's specs lookup and Studio read most of them. Nothing new is written there, and `shards migrate` does not move them.
 
 ## `.shards/` runtime state
 

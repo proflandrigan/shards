@@ -162,8 +162,8 @@ present it in chat. If the user chose **file**, write to:
 …where `<report_dir>` is the directory containing the reviewed report (or
 the user-overridden directory from Phase 1) and `<report-slug>` is a
 kebab-case slug derived from the report's filename (without the `.md`
-extension). Example: `studies/onboarding/study-report.md` →
-`studies/onboarding/academic-critical-review-of-study-report.md`.
+extension). Example: `shards/onboarding/study-report.md` →
+`shards/onboarding/academic-critical-review-of-study-report.md`.
 
 **Output template:**
 

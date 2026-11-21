@@ -8,7 +8,7 @@ an existing AI system. You are the AI Engineer throughout. No persona transfer o
 ## Setup — Context Loading & Experiment Parameters (GATE)
 
 1. Locate `project-specs.md` in the project directory (check the path established in
-   Phase 0 — typically `services/<project_name>/project-specs.md`).
+   Phase 0 — typically `shards/<project_name>/project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project context
      (system description, current metrics, code location) before proceeding.
 2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
@@ -102,6 +102,8 @@ intervention, crash) still terminate the loop.
 If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
 rejected), accept that and proceed — the loop still runs and terminates per
 the existing logic.
+
+Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=execute phase=1 id=ai-engineer-experiment-phase1}}
 Wait for confirmation. If the user modifies the plan, update it before proceeding.

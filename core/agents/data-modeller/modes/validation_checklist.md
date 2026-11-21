@@ -12,7 +12,7 @@ Every entity in the model has a single, documented grain.
 - For each dimension: "one row per <entity>, current value" or "one row per <entity>-version" for SCD-2.
 - Bridge/link tables: "one row per <association>".
 
-**Observed format:** `8 entities | all have declared grain (see data_models/<project>/entities.md) | fct_order: one row per order_id | dim_customer: SCD-2, one row per customer_id × valid_from ✓`
+**Observed format:** `8 entities | all have declared grain (see shards/<project>/entities.md) | fct_order: one row per order_id | dim_customer: SCD-2, one row per customer_id × valid_from ✓`
 
 ## DM-02 — Cardinality Explicit on Every Relationship
 
@@ -22,7 +22,7 @@ Every relationship between entities declares its cardinality (1:1, 1:M, M:1, M:M
 - Optional relationships (0..1, 0..M) distinguished from mandatory (1..1, 1..M) where it affects join logic.
 - For each relationship, the FK side and PK side are named.
 
-**Observed format:** `14 relationships documented | 2 M:M resolved via bridge (order_items, user_roles) | 0 implicit M:M remain | diagram: data_models/<project>/erd.png`
+**Observed format:** `14 relationships documented | 2 M:M resolved via bridge (order_items, user_roles) | 0 implicit M:M remain | diagram: shards/<project>/erd.png`
 
 ## DM-03 — Key Design Coherent
 
@@ -73,7 +73,7 @@ Entity, column, and relationship names follow a documented convention.
 - Case convention (snake_case) consistent across all names.
 - Abbreviations explained (e.g., `clv` = customer lifetime value) in a glossary if used.
 
-**Observed format:** `convention: snake_case, dim_/fct_/bridge_ prefixes, _id for natural key, _sk for surrogate, _at for timestamps | 87 columns across 8 entities audited | 0 violations | glossary: data_models/<project>/glossary.md`
+**Observed format:** `convention: snake_case, dim_/fct_/bridge_ prefixes, _id for natural key, _sk for surrogate, _at for timestamps | 87 columns across 8 entities audited | 0 violations | glossary: shards/<project>/glossary.md`
 
 ## DM-08 — Stakeholder Walkthrough
 
@@ -84,7 +84,7 @@ The model has been walked through with the teams that will consume it.
 - For greenfield models feeding downstream specialists, this walkthrough is the handoff.
 - Walk through the **Acceptance criteria** recorded in Phase 1 — confirm each invariant holds (or is surfaced to Open Issues). Flag any criterion that can't be confirmed structurally.
 
-**Observed format:** `walkthroughs: AE team (2026-04-18, signed off), DS team (2026-04-19, 2 revisions applied), BI team (2026-04-20, pending re: dashboard grain question) | feedback log: data_models/<project>/feedback.md`
+**Observed format:** `walkthroughs: AE team (2026-04-18, signed off), DS team (2026-04-19, 2 revisions applied), BI team (2026-04-20, pending re: dashboard grain question) | feedback log: shards/<project>/feedback.md`
 
 ---
 
@@ -106,10 +106,10 @@ Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/
 
 ## Artifacts Expected
 
-- `data_models/<project>/entities.md` — grain declarations per entity (DM-01)
-- `data_models/<project>/erd.png` or equivalent ERD diagram — DM-02
-- `data_models/<project>/glossary.md` — naming and abbreviations (DM-07)
-- `data_models/<project>/feedback.md` — stakeholder walkthrough log (DM-08)
+- `shards/<project>/entities.md` — grain declarations per entity (DM-01)
+- `shards/<project>/erd.png` or equivalent ERD diagram — DM-02
+- `shards/<project>/glossary.md` — naming and abbreviations (DM-07)
+- `shards/<project>/feedback.md` — stakeholder walkthrough log (DM-08)
 - For physical model: `schema.yml` entries with grain and key documentation — propagate to DE's DE-01
 
 ## Downstream Impact — What to Cover

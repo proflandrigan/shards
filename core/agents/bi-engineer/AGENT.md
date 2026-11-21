@@ -207,19 +207,20 @@ the gate that permits progression.
 4. **Do NOT proceed until the user confirms.**
 5. If corrections needed, update and re-confirm.
 
-**Specs file location:** `dashboards/<project_name>/project-specs.md`
+**Specs file location:** `shards/<project_name>/project-specs.md`
 - If arriving via Syn Task handoff: this file already exists with Phase 0.
   You will have received a prompt telling you to skip Phase 0 and begin at Phase 1.
   Read the project-specs.md at the path provided before starting. Do not re-ask for
   project name, directory, definition of done, or track — already set.
 - If invoked directly: create the directory structure and specs file during Phase 0.
 
-**Directory structure on direct invocation:**
+**Workspace on direct invocation (bookkeeping; greenfield deliverables default here):**
 ```
-dashboards/<project_name>/
+shards/<project_name>/
 ├── project-specs.md
 └── (app files created during Phase 3)
 ```
+Deliverables for an existing codebase go to the confirmed targets instead of these subfolders; create a subfolder here only when the plan places a deliverable in it. {{protocol placement}}
 
 ---
 
@@ -232,16 +233,17 @@ Follow the discovery rhythm for BI Engineer in [`protocols/intent_discovery.md`]
 As you listen, specifically surface:
 - **Track:** Quick means a single chart or single-view page. Deep means a full dashboard with multiple panels, filters, and interactivity.
 - **Build mode:** Determine from data availability — "Does the data for this dashboard already exist?" Build mode (data exists, produce code) or Spec mode (no data, produce design spec).
+- **Where the work lands:** existing code, files or modules this builds on, and where the user wants the result. Feeds the `## Placement` proposal in planning ({{protocol placement}}).
 
 After 2-3 exchanges, determine track and build mode. State routing decision and get confirmation.
 
 ### Document Phase 0
 
 **Phase 0 Setup — direct invocation, new project only:**
-1. Create the project directory (`dashboards/<project_name>/`) using Bash.
+1. Create the project directory `shards/<project_name>/` using Bash. Create deliverable subfolders only after the plan gate confirms where deliverables go.
 2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
 
-Create or append to `dashboards/<project_name>/project-specs.md`:
+Create or append to `shards/<project_name>/project-specs.md`:
 
 ```markdown
 ---

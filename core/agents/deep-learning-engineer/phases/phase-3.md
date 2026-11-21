@@ -31,7 +31,7 @@ Define:
 
 ### Decompose the plan into tasks
 
-Turn the plan just agreed into `models/<project_name>/tasks.yaml`, the single task list for
+Turn the plan just agreed into `shards/<project_name>/tasks.yaml`, the single task list for
 the build (every task is `phase: 4`). One task per tested component,
 each with id, goal, plan_ref (section of project-specs.md), inputs, owned_paths
 (no overlap between tasks that can run in parallel), acceptance command +
@@ -51,6 +51,8 @@ with the `tasks_set` tool ({{protocol delegated_build}} has the rules). Add the
 `### Task list` table to the Phase 3 section below so you approve plan and
 tasks together at this gate; the gate summary must name the task count and
 the `tasks.yaml` path.
+
+**Placement:** propose where each deliverable lands in a `## Placement` section of `project-specs.md`, and pass those paths as `targets` on this phase's `gate_request` so the user confirms them with the plan ({{protocol placement}}).
 
 ### Document Phase 3
 
@@ -92,12 +94,12 @@ Append to `project-specs.md`:
 |----|------|-------------|------------|------------|
 | <task id> | <goal> | <owned paths> | <acceptance command and expected evidence> | <ids or none> |
 
-- **Task count:** <N> — `models/<project_name>/tasks.yaml`
+- **Task count:** <N> — `shards/<project_name>/tasks.yaml`
 ```
 
 **DIVERGE check:** If you identified 2-3 mutually exclusive neural architectures (e.g., different backbone families, fundamentally different training paradigms) that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
 
-Before the gate, summarize the plan and state the task count and the path `models/<project_name>/tasks.yaml`, so the user confirms plan and task list together.
+Before the gate, summarize the plan and state the task count and the path `shards/<project_name>/tasks.yaml`, so the user confirms plan and task list together.
 
 {{gate kind=phase}}
 

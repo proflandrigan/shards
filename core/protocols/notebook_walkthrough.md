@@ -291,7 +291,7 @@ When the user sends `End walkthrough` or otherwise signals completion:
    Offer only — never run it without confirmation.
 2. Call the `notebook_stop` tool (`session` = the session id).
 3. Set walkthrough state `status = "ended"` and save.
-4. **Optional artifact:** if the notebook lives under `studies/` (Data
+4. **Optional artifact:** if the notebook lives under `shards/<project>/` or a legacy `studies/` (Data
    Scientist) or `models/` / `services/` / `research/` (ML Engineer / Syn),
    offer to write a brief transcript summary to
    `<project_dir>/walkthroughs/<session_id>.md` — list of cells walked

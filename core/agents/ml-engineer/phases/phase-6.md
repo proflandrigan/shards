@@ -32,7 +32,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 I am the ML Engineer shard. I've written feature extraction queries for
-project [name]. The project specs are at: [services|<existing_dir>]/[name]/project-specs.md
+project [name]. The project specs are at: shards/[name]/project-specs.md
 
 Here are the queries:
 [include query outlines or key SQL]
@@ -62,7 +62,7 @@ the bulk queries.
 
 ### Component specifications
 
-Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: greenfield `models/<name>/`, iteration `<existing_service_dir>/`.
+Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: greenfield `shards/<name>/`, iteration: the confirmed Placement targets in the existing service.
 
 **Spec A. Feature SQL queries** (one task per query file)
    - Location: `<output_dir>/queries/`
@@ -112,8 +112,8 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
 
 **Spec E. Eval results JSON.** After training and evaluating models, the evaluation tasks record structured
    results in the project's `eval-results.json`:
-   - Greenfield: `models/<name>/eval-results.json`
-   - Iteration: `<existing_service_dir>/eval-results.json`
+   - Greenfield: `shards/<name>/eval-results.json`
+   - Iteration: `shards/<name>/eval-results.json` (same; the existing service holds only confirmed Placement targets)
 
    `eval-results.json` is owned by a single sequential chain of tasks (never parallel tasks). The JSON must follow this schema:
    ```json
@@ -174,7 +174,7 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
 
 {{protocol delegated_build}} governs this phase. Task evidence guidance: {{protocol incremental_testing}} (test each component in isolation as its task completes; do not leave run-all until the end).
 
-{{delegate tasks=models/<name>/tasks.yaml max_parallel=3}}
+{{delegate tasks=shards/<name>/tasks.yaml max_parallel=3}}
 
 1. **Load the task list** approved at the plan gate (`<output_dir>/tasks.yaml`; for iteration, in the existing service directory) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
 2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3. Query tasks can run in parallel; notebook, baseline and candidate tasks follow their `depends_on` order. Harness approach tasks run in parallel once the harness-core task is verified done.

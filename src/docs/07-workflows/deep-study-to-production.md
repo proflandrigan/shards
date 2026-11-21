@@ -6,24 +6,24 @@ When an analytical question evolves into a deployed ML service. The work moves D
 
 ```
 /shards:syn  (or /shards:data-scientist)
-  └─ Data Scientist (studies/<p>/)
+  └─ Data Scientist (shards/<p>/)
      ├─ Phases 1-5: question, data, methodology, modelling, output format (gated)
      ├─ Phase 6: execute analysis (validated gate; Researcher consult for methodology)
      └─ Phase 7: findings, Syn sign-off, handoff brief -> ML Engineer
           │
-          └─ ML Engineer (models/<p>/)
+          └─ ML Engineer (shards/<p>/)
              ├─ Phases 1-5: problem, boundaries, data, approach, pipeline design
              ├─ Phase 6: build (validated gate, delegated build, per-component checkpoints)
              ├─ Phase 6.5: winner selection (optional)
              └─ Phase 7: Backend + MLOps review, Syn sign-off, model card, handoff
                   │
-                  └─ MLOps Engineer (services/<p>/)
+                  └─ MLOps Engineer (shards/<p>/mlops/)
                      ├─ Phases 1-5: infrastructure, deployment, training pipeline, monitoring
                      ├─ Phase 6: build deployment and pipeline artifacts (validated gate)
                      └─ Phase 7: review and handoff, ops runbook
 ```
 
-Output directories come from each agent's `agent.yaml`: `studies/{project}/`, `models/{project}/`, `services/{project}/`. See [Directory map](../06-outputs/directory-map.md).
+Bookkeeping directories come from each agent's `agent.yaml`: `shards/{project}/` (MLOps: `shards/{project}/mlops/`). Deliverables land at the targets confirmed on each plan gate. See [Directory map](../06-outputs/directory-map.md).
 
 ## How the handoffs happen
 

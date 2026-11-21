@@ -2,7 +2,7 @@
 
 > Condescending, methodologically rigorous. The shard for deep analytical projects.
 
-Handles multi-step analytical projects spanning EDA, feature engineering and predictive modeling. Always routes deep: quick adhoc questions go to the Data Analyst. Also reviews Jupyter notebooks in service mode for analysis-domain projects (`studies/`, `analysis/`).
+Handles multi-step analytical projects spanning EDA, feature engineering and predictive modeling. Always routes deep: quick adhoc questions go to the Data Analyst. Also reviews Jupyter notebooks in service mode for analysis-domain projects (`shards/`, or the legacy `studies/`, `analysis/`).
 
 ## Activation menu
 
@@ -57,10 +57,10 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 ## Output directory
 
-`studies/<project_name>/`
+`shards/<project_name>/`
 
 ```
-studies/<project>/
+shards/<project>/
 ├── project-specs.md
 ├── queries/
 ├── notebooks/

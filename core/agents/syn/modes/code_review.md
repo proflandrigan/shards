@@ -29,12 +29,13 @@ Pick the reviewer from the project directory prefix:
 
 | Project directory prefix | Notebook reviewer |
 |--------------------------|-------------------|
+| `shards/<project>/` | By the `agent` field in its `project-specs.md` header: Data Scientist or Data Analyst -> Data Scientist; any other -> ML Engineer |
 | `studies/` | Data Scientist |
 | `analysis/` | Data Scientist |
 | `models/` | ML Engineer |
 | `research/` | ML Engineer |
 | `services/` | ML Engineer |
-| anything else | ML Engineer (default) |
+| anything else | If the path is a target in some `shards/*/project-specs.md` `## Placement` table, use that project's row above; otherwise ML Engineer (default) |
 
 Record the chosen notebook reviewer — you will use it in Step 3c and Step 5c.
 

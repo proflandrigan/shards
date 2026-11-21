@@ -11,15 +11,17 @@ const VALID_PASS_FAIL = new Set(['✓', '✗', 'n/a']);
 
 // ─── Specs file resolution ───────────────────────────────────────────────────
 
-// Shards projects live under convention directories — see CLAUDE.md output
-// directory map. We search these for the most recently modified project-specs.md.
+// Shards projects live under `shards/<project>/` (current layout) and, for projects created before
+// the single-folder layout, under the legacy convention directories. We search all of them for the
+// most recently modified project-specs.md.
 const PROJECT_DIRS = [
+  'shards',
   'analysis', 'studies', 'models', 'data_models', 'services',
   'research', 'dashboards', 'brainstorm', 'fixes',
 ];
 
 // Find the most recently modified project-specs.md in any immediate subdirectory
-// of the conventional project dirs (e.g. analysis/*/project-specs.md).
+// of the conventional project dirs (e.g. shards/*/project-specs.md).
 function findLatestSpecs(root) {
   let best = null;
   let bestMtime = 0;
@@ -33,15 +35,19 @@ function findLatestSpecs(root) {
     }
     for (const e of entries) {
       if (!e.isDirectory()) continue;
-      const candidate = path.join(base, e.name, 'project-specs.md');
-      try {
-        const st = fs.statSync(candidate);
-        if (st.mtimeMs > bestMtime) {
-          bestMtime = st.mtimeMs;
-          best = candidate;
+      // MLOps keeps its specs one level down, in shards/<project>/mlops/.
+      const candidates = [path.join(base, e.name, 'project-specs.md')];
+      if (d === 'shards') candidates.push(path.join(base, e.name, 'mlops', 'project-specs.md'));
+      for (const candidate of candidates) {
+        try {
+          const st = fs.statSync(candidate);
+          if (st.mtimeMs > bestMtime) {
+            bestMtime = st.mtimeMs;
+            best = candidate;
+          }
+        } catch {
+          // no specs file here — skip
         }
-      } catch {
-        // no specs file here — skip
       }
     }
   }

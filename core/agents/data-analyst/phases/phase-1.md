@@ -86,7 +86,7 @@ Analytics Engineer.
 Tell the user: "Writing an ae-intake.md with everything the Analytics Engineer
 needs. One sec..."
 
-Write `analysis/<project_name>/ae-intake.md`:
+Write `shards/<project_name>/ae-intake.md`:
 
 ---
 
@@ -94,7 +94,7 @@ Write `analysis/<project_name>/ae-intake.md`:
 
 ## Requesting Agent
 - Originating agent: Data Analyst
-- Analysis project: analysis/<project_name>/project-specs.md (Phase 0 and Phase 1 already complete)
+- Analysis project: shards/<project_name>/project-specs.md (Phase 0 and Phase 1 already complete)
 
 ## Analysis Context
 - Core question: <from Phase 0>
@@ -119,17 +119,17 @@ Write `analysis/<project_name>/ae-intake.md`:
 
 ## Next Step
 Run `shards:analytics-engineer` or `shards:syn`. In Phase 1, reference this file:
-analysis/<project_name>/ae-intake.md
+shards/<project_name>/ae-intake.md
 
 ---
 
-Tell the user: "I've written `analysis/<project_name>/ae-intake.md` with the mart
+Tell the user: "I've written `shards/<project_name>/ae-intake.md` with the mart
 requirements for the Analytics Engineer. Run `shards:analytics-engineer` or `shards:syn`
 and reference that file in Phase 1."
 
 Document in Phase 1 specs:
 **Analytics Engineer needed:** Yes — <mart/grain gap description>
-**AE intake file written:** Yes — analysis/<project_name>/ae-intake.md
+**AE intake file written:** Yes — shards/<project_name>/ae-intake.md
 
 ### Document Phase 1
 
@@ -145,7 +145,7 @@ Document in Phase 1 specs:
 - **Assumptions:** <any assumptions about the data or filters>
 - **Data environment:** <not greenfield | Data exists but inaccessible — queries untested, validate before use | GREENFIELD — No data assets detected. All queries theoretical>
 - **Analytics Engineer needed:** No | Yes — <mart/grain gap>
-- **AE intake file written:** Not applicable | Yes — analysis/<project_name>/ae-intake.md
+- **AE intake file written:** Not applicable | Yes — shards/<project_name>/ae-intake.md
 ```
 
 {{gate kind=phase}}

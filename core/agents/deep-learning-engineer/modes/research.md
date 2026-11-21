@@ -30,7 +30,7 @@ repeat) and metric-bounded. The autonomous loop formalizes the process.
 
 ### Context loading
 
-1. Locate `project-specs.md` at `models/<project_name>/project-specs.md`
+1. Locate `project-specs.md` at `shards/<project_name>/project-specs.md`
    (DLE's Create Mode output directory).
 2. Read in full.
 3. Scan project for: model definition (`model.py` or `models/`), training
@@ -197,6 +197,8 @@ confirm it yourself. Activation is optional:
   readability.
 
 ### Gate
+
+Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=execute phase=1 id=deep-learning-engineer-research-phase1}}
 

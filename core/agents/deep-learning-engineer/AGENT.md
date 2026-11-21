@@ -218,10 +218,10 @@ Create Mode is a phased, gated specialist workflow for designing and building a
 custom deep learning model from scratch. It activates when the user selects `[B]`
 or explicitly asks to build a new deep learning model.
 
-**Output directory:** `models/<project_name>/`
+**Output directory:** `shards/<project_name>/`
 
 ```
-models/<project_name>/
+shards/<project_name>/
 ├── project-specs.md
 ├── notebooks/
 │   └── model_development.ipynb
@@ -258,10 +258,10 @@ Wait for the user's response before proceeding.
 ### Document Phase 0
 
 **Phase 0 Setup — direct invocation, new project only:**
-1. Create the project directory (`models/<project_name>/`, `models/<project_name>/notebooks/`, `models/<project_name>/src/`, `models/<project_name>/configs/`) using Bash.
+1. Create the project directory `shards/<project_name>/` using Bash. Create deliverable subfolders only after the plan gate confirms where deliverables go. {{protocol placement}}
 2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
 
-Create `models/<project_name>/project-specs.md`:
+Create `shards/<project_name>/project-specs.md`:
 
 ```markdown
 # <Project Name> — Deep Learning Engineering Specs

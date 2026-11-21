@@ -10,7 +10,7 @@ Nothing is published yet. Today you get these commands from a dev build (`claude
 |---|---|
 | `/shards:syn` | Syn, the orchestrator. Triages your request, creates the project directory and specs, and hands off to a specialist. Also reaches Syn's modes (PM, panel review, fixer, and so on). |
 | `/shards:agents` | Lists the available agents: id, role, modes, description, switch command and consult subagent names. Calls the runtime `list_agents` tool; starts no agent. |
-| `/shards:brainstorm` | Syn gathers context, polls the relevant specialists and synthesizes ideas. Writes to `brainstorm/`. |
+| `/shards:brainstorm` | Syn gathers context, polls the relevant specialists and synthesizes ideas. Writes to `shards/brainstorm/`. |
 | `/shards:review-pr` | Syn walks through GitHub PR review comments, proposes a change per comment and applies it on approval. |
 | `/shards:notebook-walkthrough` | Interactive cell-by-cell walkthrough of a Jupyter notebook with a Shards agent. |
 | `/shards:resume` | Lists ended sessions and shows how to resume one. See [sessions](sessions.md). |
@@ -25,17 +25,17 @@ Each switchable agent gets a skill that switches the current session to that age
 
 | Command | Agent | Typical output |
 |---|---|---|
-| `/shards:data-analyst` | Data Analyst | `analysis/<project>/` |
-| `/shards:data-scientist` | Data Scientist | `studies/<project>/` |
-| `/shards:data-engineer` | Data Engineer | `models/<project>/` |
-| `/shards:data-modeller` | Data Modeller | `data_models/<project>/` |
-| `/shards:analytics-engineer` | Analytics Engineer | `data_models/<project>/` |
-| `/shards:ml-engineer` | ML Engineer | `models/<project>/` or existing service dir |
-| `/shards:ai-engineer` | AI Engineer | `services/<project>/` |
-| `/shards:applied-ml-scientist` | Applied ML Scientist | `research/<project>/` |
-| `/shards:deep-learning-engineer` | Deep Learning Engineer | `models/<project>/` |
-| `/shards:mlops-engineer` | MLOps Engineer | `services/<project>/` |
-| `/shards:bi-engineer` | BI Engineer | `dashboards/<project>/` |
+| `/shards:data-analyst` | Data Analyst | `shards/<project>/` |
+| `/shards:data-scientist` | Data Scientist | `shards/<project>/` |
+| `/shards:data-engineer` | Data Engineer | `shards/<project>/` |
+| `/shards:data-modeller` | Data Modeller | `shards/<project>/` |
+| `/shards:analytics-engineer` | Analytics Engineer | `shards/<project>/` |
+| `/shards:ml-engineer` | ML Engineer | `shards/<project>/` |
+| `/shards:ai-engineer` | AI Engineer | `shards/<project>/` |
+| `/shards:applied-ml-scientist` | Applied ML Scientist | `shards/<project>/` |
+| `/shards:deep-learning-engineer` | Deep Learning Engineer | `shards/<project>/` |
+| `/shards:mlops-engineer` | MLOps Engineer | `shards/<project>/mlops/` |
+| `/shards:bi-engineer` | BI Engineer | `shards/<project>/` |
 | `/shards:backend-engineer` | Backend Engineer | review only, no files |
 | `/shards:researcher` | Researcher | review only, no files |
 | `/shards:academic` | Academic | review only, no files |

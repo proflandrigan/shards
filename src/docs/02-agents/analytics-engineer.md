@@ -57,7 +57,7 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 ## Output directory
 
-`data_models/<project_name>/` for design artifacts; the mart SQL itself lands in the consumer project (for example `<dbt_project>/models/marts/`)
+`shards/<project_name>/` for design artifacts; the mart SQL itself integrates into the consumer project (for example `<dbt_project>/models/marts/`) at the targets confirmed on the plan gate. See [Placement](../03-protocols/placement.md).
 
 Gate-confirmed phases are committed to git as the record. Where each agent writes is listed in [Output Directory Map](../06-outputs/directory-map.md).
 
