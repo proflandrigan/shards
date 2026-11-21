@@ -104,7 +104,7 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
      - baseline: baseline fits and evaluates on held-out data; metrics recorded.
      - candidate: candidate smoke-fits on <=1% of data first (loss decreasing), then full fit; eval metrics beat the baseline floor.
      - experiments (Harness plan): each approach smoke-fits on <=1% of data (loss decreasing or metric computed) before the full run; the leaderboard has one row per enabled approach; the winner matches the Phase 4 decision rule.
-     - infra: model size, inference latency and memory measured against the Phase 5 budget.
+     - infra: model size, inference latency and memory measured against the Phase 2 budget.
 
 **Spec C. Requirements file.** `requirements.txt` with all ML dependencies.
 
@@ -167,7 +167,7 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
 
    {{artifact.emit type=eval-dashboard path=<path_to>/eval-results.json meta="title=Eval: <project_name> panel_id=eval-<project_name>"}}
 
-**Spec F. Experiment harness** (Harness experiment plan only; skip for a Single approach plan). Location `<output_dir>/experiments/`, laid out per Sections B-C of the experiment framework (model variant interface). {{protocol experiment_framework}} Tasks follow Section E of the framework: one harness-core task (`__init__.py`, `base.py`, `registry.py`, `run_experiments.py`, `experiments.yaml`), then one task per approach from the Phase 4 experiment plan (`approaches/<approach_id>.py`, `depends_on` the core task; these can run in parallel), then the notebook experiments group (`depends_on` every approach task). `experiments.yaml` constraints include the Phase 5 infrastructure budgets (model size, inference time, memory), and the runner measures them for every approach so the leaderboard's `constraints_pass` column is real.
+**Spec F. Experiment harness** (Harness experiment plan only; skip for a Single approach plan). Location `<output_dir>/experiments/`, laid out per Sections B-C of the experiment framework (model variant interface). {{protocol experiment_framework}} Tasks follow Section E of the framework: one harness-core task (`__init__.py`, `base.py`, `registry.py`, `run_experiments.py`, `experiments.yaml`), with `experiments.yaml` pre-registering every approach in the Phase 4 plan, then one task per approach (`approaches/<approach_id>.py` only, `depends_on` the core task; these can run in parallel), then the notebook experiments group (`depends_on` every approach task). `experiments.yaml` constraints include the Phase 2 infrastructure budgets (model size, inference latency, memory), and the runner measures them for every approach so the leaderboard's `constraints_pass` column is real.
    Acceptance: core: `python -m py_compile` passes and the runner, given a toy dataset, scores a trivial approach end-to-end and writes `leaderboard.csv`; approach: the class subclasses `Approach`, reads hyperparameters from `params`, and smoke-fits on <=1% of data via the runner.
 
 ### Lead loop

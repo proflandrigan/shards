@@ -231,12 +231,16 @@ The notebook **drives** the harness; it does not re-implement it.
 ## Section E — Build tasks and acceptance
 
 The build phase's task list gets these components, each citing this section
-through `plan_ref`:
+through `plan_ref`. Ownership rule: the harness-core task is the only task that
+writes `experiments.yaml` at build time; approach tasks own just their module and
+depend on the core task, so parallel approach tasks never share a path. (After the
+build, adding an approach is a single task that owns the new module and its yaml
+entry; see Section F.)
 
 | Task | Owned paths | Acceptance |
 |------|-------------|------------|
-| Harness core | `experiments/__init__.py`, `base.py`, `registry.py`, `run_experiments.py`, `experiments.yaml` | Interface matches Section C; the registry imports only `enabled: true` entries; the runner applies one split/test set and one scoring path to every approach and writes both leaderboard files. |
-| One task per approach | `experiments/approaches/<approach_id>.py` (+ its `experiments.yaml` entry, coordinated through `depends_on` on the harness-core task) | The class subclasses `Approach`, sets `id`/`role`, implements the interface, reads hyperparameters from `params`. |
+| Harness core | `experiments/__init__.py`, `base.py`, `registry.py`, `run_experiments.py`, `experiments.yaml` (all entries for the planned approaches, written up front) | Interface matches Section C; the registry imports only `enabled: true` entries; the runner applies one split/test set and one scoring path to every approach and writes both leaderboard files. Test the runner against a stub approach and a temporary registry, since approach modules do not exist yet. |
+| One task per approach | `experiments/approaches/<approach_id>.py` only (never `experiments.yaml`; the entry already exists from the core task) | The class subclasses `Approach`, sets `id`/`role`, implements the interface, reads hyperparameters from `params`. |
 | Notebook driver | notebook section group (chained by `depends_on` like other notebook tasks) | The section imports the runner, displays the leaderboard and names the winner; no approach logic is duplicated in the notebook. |
 
 Execution-capable builds (ML Engineer, AI Engineer) additionally verify: each

@@ -104,7 +104,7 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
    for this candidate.
 4. If infrastructure FAILs, surface: "The metric winner fails <dimension>.
    Options: (a) accept and document the trade-off, (b) pick next-best candidate
-   that passes, (c) stop and revisit Phase 5 budgets." Wait for decision.
+   that passes, (c) stop and revisit Phase 2 budgets." Wait for decision.
 5. Update `eval-results.json`: set `bestCandidate.model`, `bestCandidate.metrics`,
    `bestCandidate.deltas` (vs. baseline). Recompute `summary.overallVerdict`.
 
@@ -158,7 +158,7 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
 
 ### Adding approaches later
 
-With a Harness plan, the user can add an approach at any point (now, or after handoff) per Section F of the experiment framework: one new module under `experiments/approaches/`, one `experiments.yaml` entry, re-run the runner, and re-enter this phase's state inspection. Offer this as path `[N] New approach` whenever the user names an approach that is not in the leaderboard; it is one worker task (owned paths: the new module and the yaml entry), verified like any candidate re-run. {{protocol experiment_framework}}
+With a Harness plan, the user can add an approach at any point (now, or after handoff) per Section F of the experiment framework: one new module under `experiments/approaches/`, one `experiments.yaml` entry, re-run the runner, and re-enter this phase's state inspection. Offer this as path `[N] New approach` whenever the user names an approach that is not in the leaderboard; it is one worker task (owned paths: the new module and its `experiments.yaml` entry; run it alone, never in parallel with another task touching the yaml), verified like any candidate re-run. {{protocol experiment_framework}}
 
 ### Document Phase 6.5
 
@@ -183,7 +183,7 @@ Append to `project-specs.md`:
   - Convergence: converged | budget exhausted | user interrupted
   - Branches (fan-out only):
     - `<branch-slug>`: <converged metric value> — <winner | runner-up>
-- **Infrastructure trade-off (if applicable):** <metric winner fails <dim> — user accepted | chose next-best | revisited Phase 5>
+- **Infrastructure trade-off (if applicable):** <metric winner fails <dim> — user accepted | chose next-best | revisited Phase 2 budgets>
 - **eval-results.json bestCandidate:** Locked | Skipped — bestCandidate left as-is
 - **Leaderboard:** <experiments/leaderboard.md — approaches compared: <N>> | N/A — Single approach plan
 
