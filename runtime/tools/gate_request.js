@@ -56,7 +56,7 @@ function normTargets(root, targets) {
     if (typeof t !== 'string') throw new Error('targets must be strings');
     if (path.isAbsolute(t)) throw new Error(`targets must be project-root-relative paths: ${t}`);
     const r = path.relative(rootAbs, path.resolve(rootAbs, t));
-    if (r === '' || r.startsWith('..') || path.isAbsolute(r)) throw new Error(`targets must name a path inside the project root (not the root itself): ${t}`);
+    if (r === '' || r === '..' || r.startsWith(`..${path.sep}`) || path.isAbsolute(r)) throw new Error(`targets must name a path inside the project root (not the root itself): ${t}`);
     return r.split(path.sep).join('/');
   });
   return [...new Set(mapped)];

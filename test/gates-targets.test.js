@@ -57,3 +57,12 @@ describe('defaultResolveOutputDirs', () => {
     expect(gates.defaultResolveOutputDirs(root, { agent: 'syn', targets: ['a/b.py'] }, session)).toEqual(['a/b.py']);
   });
 });
+
+describe('target path edge cases', () => {
+  it('accepts a name that merely starts with two dots', async () => {
+    const r = await call(ok({ targets: ['..notes/x.md'] }));
+    expect(r.isError).toBeFalsy();
+    expect(gates.getGate(session, 'data-analyst-phase-1').targets).toEqual(['..notes/x.md']);
+    expect(gates.defaultResolveOutputDirs(root, { agent: 'syn', targets: ['..notes/x.md'] }, session)).toEqual(['..notes/x.md']);
+  });
+});

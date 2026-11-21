@@ -117,7 +117,7 @@ function defaultResolveOutputDirs(root, entry, session) {
   const inRoot = (t) => {
     if (typeof t !== 'string' || !t) return false;
     const r = path.relative(path.resolve(root), path.resolve(root, t));
-    return !!r && !r.startsWith('..') && !path.isAbsolute(r);
+    return !!r && r !== '..' && !r.startsWith(`..${path.sep}`) && !path.isAbsolute(r);
   };
   const a = loadAgents().get(entry.agent);
   if (a && !a.error && a.output_dir) {

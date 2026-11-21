@@ -15,6 +15,8 @@ This protocol decides where every file you write goes. Shards adds one folder to
 | Bookkeeping | `project-specs.md`, `tasks.yaml`, reports, handoff files, intake notes, scratch notebooks and queries | `shards/<project>/` (your `output_dir`) |
 | Deliverables | model code, services, pipelines, dbt models, dashboards, SQL that belongs to the codebase, tests | The confirmed targets |
 
+`brainstorm`, `fixes` and `panels` under `shards/` are Syn's shared folders; never use them as a project name.
+
 ## Inferring targets
 
 Do this in Phase 0/1 (or the planning phase).
@@ -54,4 +56,4 @@ Paths written elsewhere in this suite as `shards/<project_name>/...` for code (f
 
 ## Legacy layout
 
-Projects started before this layout live in `analysis/`, `studies/`, `models/`, `services/`, `data_models/`, `dashboards/`, `research/`, `brainstorm/`, `fixes/` and `projects/`. Read them when resuming, and keep updating an existing legacy project's specs in place. Never create new project folders there.
+Projects started before this layout live in `analysis/`, `studies/`, `models/`, `services/`, `data_models/`, `dashboards/`, `research/`, `brainstorm/`, `fixes/` and `projects/`. Read them when resuming, and keep updating an existing legacy project's specs in place. The gate snapshot only covers `shards/<project>/` and the confirmed targets, so when you resume a legacy project add its folder (for example `analysis/<project>`) to `targets` on your next gate; otherwise its updates are never committed. Never create new project folders there.

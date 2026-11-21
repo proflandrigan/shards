@@ -119,7 +119,9 @@ const PROJECT_OUTPUT_DIRS = [
   'shards', 'analysis', 'studies', 'models', 'services', 'data_models', 'research',
   'dashboards', 'brainstorm', 'experiments', 'fixes', 'presentations', 'projects',
 ];
-const PROJECT_PATH_RE = new RegExp(`^(${PROJECT_OUTPUT_DIRS.join('|')})/([^/]+)/`);
+// shards/brainstorm/, shards/fixes/ and shards/panels/ are Syn's shared folders, not projects.
+const SHARDS_RESERVED = ['brainstorm', 'fixes', 'panels'];
+const PROJECT_PATH_RE = new RegExp(`^(${PROJECT_OUTPUT_DIRS.join('|')})/(?!(?:${SHARDS_RESERVED.join('|')})/)([^/]+)/`);
 
 const AGENT_META = {
   'syn':                    { color: '#FFD700', label: 'Syn (Orchestrator)',           category: 'route', keywords: [] },
@@ -2779,6 +2781,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  detectProjectFromRelPath,
   createServer, listAgents, buildActivationPrompt, docRoots,
   // Exported for tests.
   buildHostPolicy, requestOriginAllowed, insideProject,

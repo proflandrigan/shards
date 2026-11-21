@@ -183,12 +183,12 @@ If your project uses a tool not in the default allowlist (a specific warehouse C
 
 | Operation | Default mode | `acceptEdits` + Shards rules | Auto mode + Shards rules |
 |-----------|--------------|------------------------------|---------------------------|
-| `Read studies/proj/notebook.ipynb` | none | none | none |
+| `Read shards/proj/notebook.ipynb` | none | none | none |
 | `Bash(dbt show -m model_x)` | none (pre-approved) | none | none |
 | `Bash(pytest tests/)` | **prompt** | none (pre-approved) | none |
 | `Bash(dbt build -m model_x)` | **prompt** | none (pre-approved) | none |
-| `Write studies/proj/results.md` | **prompt** | none | none |
-| `NotebookEdit studies/proj/nb.ipynb` | **prompt** | none | none |
+| `Write shards/proj/results.md` | **prompt** | none | none |
+| `NotebookEdit shards/proj/nb.ipynb` | **prompt** | none | none |
 | `Bash(unknown novel command)` | **prompt** | **prompt** | classifier evaluates |
 | Phase gate | **pause for confirm** | **pause for confirm** | **pause for confirm** |
 
