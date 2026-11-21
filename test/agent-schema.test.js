@@ -14,8 +14,8 @@ function check(doc, others = agents) {
 }
 
 describe('agent.yaml schema', () => {
-  it('loads and validates all 15 agents', () => {
-    expect(agents).toHaveLength(15);
+  it('loads and validates all 16 agents', () => {
+    expect(agents).toHaveLength(16);
     expect(validateAgents(agents, validate)).toEqual([]);
   });
 

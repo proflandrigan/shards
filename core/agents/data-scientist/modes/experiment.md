@@ -296,6 +296,8 @@ Please provide:
 Keep your response concise and actionable.
 ```
 
+If this experiment's result will be reported as a win, a loss or a ranking (any claim on the outcome metric), also consult the Statistician on that claim, routed per {{protocol stats_review_routing}}: {{consult statistician entry=service task="Claim review for experiment N"}} Pass the metrics table above and the claim you intend to make. Record its verdict next to the Researcher's in the result file's `## Researcher Review` section under a `Statistician:` line.
+
 After receiving the Researcher response, fill in the `## Researcher Review` section of
 the result file with the Researcher's assessment. Also update the `researcherVerdict`
 field in `experiments/results.json` for this experiment entry.

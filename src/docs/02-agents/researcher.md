@@ -53,6 +53,8 @@ Declared as a reviewer by the [AI Engineer](ai-engineer.md), [Applied ML Scienti
 
 The Researcher declares no reviewers, because consults never nest: when data-structure context matters, the caller collects data-modeller context (grain, entities, relationships) first and passes it in the task.
 
+Claims (whether a conclusion follows from the evidence) belong to the [Statistician](statistician.md); the Researcher flags them under "Claims for the Statistician" for the caller to route. See `core/protocols/stats_review_routing.md`.
+
 ## Output directory
 
 - **All modes except `[CR]`:** none; conversational findings.

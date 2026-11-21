@@ -116,7 +116,7 @@ describe('real core', () => {
       const r = compile({ bundleDeps: false, target, outDir: out, dev: true });
       expect(r.errors).toEqual([]);
       const rep = JSON.parse(read(out, 'size-report.json'));
-      expect(Object.keys(rep.agents)).toHaveLength(15);
+      expect(Object.keys(rep.agents)).toHaveLength(16);
       expect(fs.existsSync(path.join(out, 'skills/syn/SKILL.md'))).toBe(true);
     });
   }

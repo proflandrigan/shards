@@ -121,6 +121,27 @@ Focus on evaluation methodology rigor, not the AI system design.
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 
+**Review 3b — Statistician (claims on evaluation results):**
+
+The Researcher checked the evaluation method; the Statistician checks whether the claims made from the eval results hold ("quality is X%", "passes the threshold", "approach A beats B", "the change improved Y"). Follow {{protocol stats_review_routing}}.
+
+Tell the user: "The Statistician is now going to ask how many examples that 92% is based on. I'd have an answer ready."
+
+{{consult statistician entry=service task="Claim review of evaluation results for AI system"}}
+
+Brief for the consultant (fill the bracketed fields):
+
+```
+I am the AI Engineer shard. Evaluation results for project [project_name]
+are at [file_path]. Claims I intend to make in the service card and
+handoff: [list each claim, one sentence]. Eval details: test-set size,
+number of runs per example (non-determinism), judge type (human / LLM /
+programmatic) and its agreement rate, number of metrics and approaches
+compared. Please review whether each claim follows from the evidence.
+```
+
+Apply {{protocol reviewer_verdict}}. Reword or drop claims the Statistician blocks before Syn's review, resubmit once on BLOCKED, and append the review to specs. Show OFFENDS notes as non-blocking style notes.
+
 **Review 4 — Syn (final sign-off):**
 
 Tell the user: "And finally, I'm asking Syn — the original — for final sign-off.
@@ -243,6 +264,9 @@ Then:
 - **Researcher Review:**
   - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary>
+- **Statistician Review:**
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
+  - Notes: <INVALIDATES / WEAKENS findings and resolution>
 - **Syn Review:**
   - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary>

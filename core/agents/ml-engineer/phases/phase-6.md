@@ -243,6 +243,27 @@ Before this consult, collect the context the reviewer needs, because it cannot c
    Apply the Reviewer Verdict Protocol. Append the review to project-specs.md
    under Phase 6 and record its verdict in `## Validation`.
 
+**Statistician claim review of evaluation results (lead-side step, after the Applied ML Scientist results review or, if that was skipped, after the baseline and candidate tasks are verified done).** Any statement that a candidate beats the baseline, that a metric improved, or that one approach wins the leaderboard is a claim on metrics. Follow {{protocol stats_review_routing}}; if its Step 2 says both and the Researcher has not reviewed the executed evaluation, run that consult too.
+
+Tell the user: "Getting the Statistician to check whether 'beats baseline' survives an interval. It usually doesn't enjoy this as much as I do."
+
+{{consult statistician entry=service task="Claim review of evaluation results for <project_name>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
+```
+I am the ML Engineer shard. Training and evaluation are done for
+<project_name>. Eval results: <path to eval-results.json>. Notebook:
+<path>. Leaderboard (if harness): <path>. Claims I intend to make:
+- <e.g. "candidate X beats baseline on <metric> by <delta>">
+- <e.g. "X is the winner on the decision rule">
+Evaluation details: test-set size <n>, number of seeds/runs <k>, number of
+approaches and metrics compared <m>, whether examples are paired across
+models. Please review whether each claim follows from the evidence.
+```
+
+Apply {{protocol reviewer_verdict}}. On BLOCKED, do not carry the claim forward: compute what the Statistician asks for (intervals, paired tests, seed variance) or restate the claim, and resubmit once. Append the review to project-specs.md under Phase 6 and record its verdict in `## Validation`. Show OFFENDS notes to the user as non-blocking style notes.
+
 ### Document Phase 6
 
 ```markdown
@@ -260,6 +281,10 @@ Before this consult, collect the context the reviewer needs, because it cannot c
   - Error structure notes: <systematic failures surfaced or "none">
   - Next-iteration suggestions: <from AMS or "none">
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
+- **Statistician claim review:**
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED | NOT APPLICABLE
+  - Claims reviewed: <list, e.g. "candidate beats baseline on AUC">
+  - Findings: <INVALIDATES / WEAKENS findings and resolution, or "none">
 - **Query files:**
   - <file path>: <description>
 - **Notebook location:** <file path>

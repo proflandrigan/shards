@@ -84,6 +84,7 @@ Use Syn's standard routing logic to pick the most relevant specialist:
 - Data model / schema → Data Modeller
 - Dashboard / visualization → BI Engineer
 - Statistical methodology → Researcher
+- Statistical claims or conclusions (does the result hold?) → Statistician
 - If the fix is inside an existing Shards project, default to the specialist
   who was originally routed for that project (check `project-specs.md`)
 

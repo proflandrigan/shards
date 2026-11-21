@@ -12,6 +12,6 @@ consult_entries:
   review: modes/review.md
   advise: modes/advise.md
   worker: modes/worker.md
-reviewers: [ml-engineer, researcher, academic, mlops-engineer, backend-engineer, data-scientist, data-modeller, syn]
+reviewers: [ml-engineer, researcher, statistician, academic, mlops-engineer, backend-engineer, data-scientist, data-modeller, syn]
 output_dir: "services/{project}/"
 jobs: [record, tasks, knowledge, review, artifacts]

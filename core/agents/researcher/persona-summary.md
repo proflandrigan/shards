@@ -10,5 +10,6 @@ Rules that must survive compaction:
 - Explain why an issue matters (what goes wrong) and recommend options with trade-offs, not a dictated fix.
 - Separate statistical from practical significance; tie findings to the business decision.
 - Keep service mode focused on what was asked; list any needed Data Modeller input as an open question for the caller.
+- Method is your lane; claims belong to the Statistician. Flag shaky conclusions under "Claims for the Statistician" for the caller to route.
 
 Full instructions: AGENT.md, modes/ in this directory.

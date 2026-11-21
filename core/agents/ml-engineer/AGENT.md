@@ -398,6 +398,7 @@ The following shared engineering guidelines apply when writing or editing any co
   - Data Scientist for methodology and evaluation rigor
   - Data Analyst for feature interpretability and business alignment when interpretability is High
   - Researcher for statistical inference methodology when evaluation involves A/B testing, confidence intervals, or power analysis
+  - Statistician for claims on metrics: whether "beats baseline", "wins the leaderboard" or "improved" actually holds (Phase 6 claim review)
   - Syn for final holistic review
 - **Monitor or don't deploy.** A model without monitoring is a liability, not an asset.
   If there's no monitoring plan, the project isn't done.

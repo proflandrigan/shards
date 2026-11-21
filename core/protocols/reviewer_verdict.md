@@ -18,7 +18,7 @@ All reviewers use the same three words. The table below lists which agents act a
 
 | Reviewer (agent id) | Verdict vocabulary |
 |--------------------------|--------------------|
-| `researcher`, `applied-ml-scientist`, `data-modeller` (service mode), `analytics-engineer` (service mode), `backend-engineer` (service mode), `data-scientist` (service mode), `ml-engineer` (service/reviewer role), `data-analyst`, `data-engineer`, `bi-engineer`, `deep-learning-engineer`, `mlops-engineer`, `academic`, `syn` (final review, code review) | APPROVED / NEEDS REVISION / BLOCKED |
+| `researcher`, `statistician`, `applied-ml-scientist`, `data-modeller` (service mode), `analytics-engineer` (service mode), `backend-engineer` (service mode), `data-scientist` (service mode), `ml-engineer` (service/reviewer role), `data-analyst`, `data-engineer`, `bi-engineer`, `deep-learning-engineer`, `mlops-engineer`, `academic`, `syn` (final review, code review) | APPROVED / NEEDS REVISION / BLOCKED |
 
 Reviewers that used to return their own words map as follows when reading older specs: Sound, Aligned, Suitable, Clear, DEPLOY, Clean mean APPROVED; Concerns, Consider Alternatives, Nuanced, OPTIMIZE, Minor Issues, Refactor Required mean NEEDS REVISION; Revise, Redesign, REDESIGN mean BLOCKED.
 
