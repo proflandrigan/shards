@@ -11,7 +11,7 @@ Tell the user: "Before Syn reviews this, we're running code review. Python
 scripts → Backend Engineer; notebooks → ML Engineer; SQL queries → Analytics
 Engineer (review + LIMIT 100 validation). Peer review is good science."
 
-Glob the project directory (`studies/<study_name>/`) for `.py` files,
+Glob the project directory (`shards/<study_name>/`) for `.py` files,
 `.ipynb` files, and `.sql` files — three separate buckets.
 
 **Python scripts → Backend Engineer** (only if any `.py` files were found):
@@ -22,7 +22,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 You are in SERVICE MODE. Review the Python scripts in the project at
-studies/[study_name]/. Read project-specs.md first for context.
+shards/[study_name]/. Read project-specs.md first for context.
 Files to review: [list of .py files found]
 ```
 
@@ -37,7 +37,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 SERVICE MODE — NOTEBOOK CODE REVIEW. Review the Jupyter notebooks in
-the project at studies/[study_name]/. Read project-specs.md first for
+the project at shards/[study_name]/. Read project-specs.md first for
 context.
 Files to review: [list of .ipynb files found]
 Your job here is review only — do not apply any fixes.
@@ -54,7 +54,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 SERVICE MODE — CODE REVIEW. Review the following SQL files in
-studies/[study_name]/. Read project-specs.md first for context.
+shards/[study_name]/. Read project-specs.md first for context.
 Files to review: [list of .sql files found]
 
 Beyond the standard code review pass (correctness, quality, security,
@@ -129,7 +129,7 @@ Append Syn's code review summary to the specs. Present findings to user.
 
 Then:
 
-1. **Write the report** to `studies/<name>/report.md` using the report template.
+1. **Write the report** to `shards/<name>/report.md` using the report template.
    Include: executive summary, background, methodology, key findings,
    recommendations with confidence levels, caveats, and next steps.
 
@@ -169,8 +169,8 @@ Then:
   - <question or follow-up>
 - **Original question answered:** Yes | Partially | No — <explanation>
 - **Productionization handoff:** Yes — ML Engineer | No — one-off study
-- **If handoff — ML Engineer handoff file:** studies/<project_name>/ml_engineer_handoff.md | N/A
-- **BI dashboard handoff:** Yes — studies/<project_name>/bi_engineer_handoff.md | No
+- **If handoff — ML Engineer handoff file:** shards/<project_name>/ml_engineer_handoff.md | N/A
+- **BI dashboard handoff:** Yes — shards/<project_name>/bi_engineer_handoff.md | No
 - **Write-backs proposed:**
   - <title> → <knowledge job destination> (confirmed | declined | pending)
   - Or: None — project did not produce reusable knowledge

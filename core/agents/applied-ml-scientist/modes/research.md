@@ -33,15 +33,15 @@ formalizes what this agent already does ad hoc.
 
 ### Context loading
 
-1. Locate `project-specs.md` at `research/<project_name>/project-specs.md`.
+1. Locate `project-specs.md` at `shards/<project_name>/project-specs.md`.
    - If no `project-specs.md` exists: stop and ask the user to provide
      problem framing (data structure, current approach, what failed, what
      paper the hypothesis is drawn from if any) before proceeding.
 2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
-3. Scan `research/<project_name>/` for existing artifacts: model code,
+3. Scan `shards/<project_name>/` for existing artifacts: model code,
    training scripts, prototype notebooks, literature notes.
 4. Identify the primary metric baseline.
-5. Establish `research/<project_name>/experiments/`.
+5. Establish `shards/<project_name>/experiments/`.
 
 ### Versioning detection
 
@@ -154,7 +154,7 @@ Append to `project-specs.md`:
 ### Draft the research brief
 
 Follow Section A of `autonomous_research.md`. Use `templates/research-brief.md`,
-write to `research/<project>/experiments/research_brief.md`. Write
+write to `shards/<project>/experiments/research_brief.md`. Write
 `results.json` with `mode: "autonomous-research"`.
 
 The **Objective** section of the brief for Applied ML Scientist should include:

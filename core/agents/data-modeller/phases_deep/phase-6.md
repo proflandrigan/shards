@@ -17,7 +17,7 @@ Wait for any signal from the user before beginning build steps.
 
 ### Component specifications
 
-Each task in `data_models/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`. Components, in dependency order:
+Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`. Components, in dependency order:
 
 1. Source definitions
 2. Staging models
@@ -75,11 +75,11 @@ Task acceptance commands name the exact test command and the measured facts expe
 
 ### Lead loop
 
-{{delegate tasks=data_models/<project_name>/tasks.yaml max_parallel=3}}
+{{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
 Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and record; you do not write build code yourself except for `delegate: inline` tasks.
 
-1. **Load the task list.** Load `data_models/<project_name>/tasks.yaml` (approved at the plan gate) with `tasks_set`. Fix any rejection (cycle, overlapping owned paths, missing acceptance) with the user before building.
+1. **Load the task list.** Load `shards/<project_name>/tasks.yaml` (approved at the plan gate) with `tasks_set`. Fix any rejection (cycle, overlapping owned paths, missing acceptance) with the user before building.
 2. **Dispatch.** `task_dispatch` the ready tasks (all `depends_on` done), in parallel up to `max_parallel=3`. Each task card cites its `plan_ref`, so workers see only the Component specifications they need.
 3. **Collect.** Each worker returns a result through `task_report`.
 4. **Lead verifies every report before it counts.** Re-run (or independently check) the task's acceptance command and compare the outcome with the cited `plan_ref`. Then write a per-task evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone. {{protocol incremental_testing}} is task evidence guidance.

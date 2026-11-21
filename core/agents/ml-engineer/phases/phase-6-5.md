@@ -79,13 +79,13 @@ Wait for the user's selection.
 
 ### Execute the selected path
 
-Winner selection is also a lead loop. After the user picks a path, the lead appends the tasks for that path to `models/<name>/tasks.yaml` (entries with `phase: "6.5"`; for iteration, the existing service directory) and validates the list with `tasks_set`; each task cites the path's specification below through `plan_ref`. A task is one candidate re-run, evaluation or branch. Paths `[D]`, `[M]` and `[S]` need no worker and use `delegate: inline` or no tasks at all. Skip logic is unchanged: `[S]` and the "Skip this phase" case create no tasks.
+Winner selection is also a lead loop. After the user picks a path, the lead appends the tasks for that path to `shards/<name>/tasks.yaml` (entries with `phase: "6.5"`; for iteration, the existing service directory) and validates the list with `tasks_set`; each task cites the path's specification below through `plan_ref`. A task is one candidate re-run, evaluation or branch. Paths `[D]`, `[M]` and `[S]` need no worker and use `delegate: inline` or no tasks at all. Skip logic is unchanged: `[S]` and the "Skip this phase" case create no tasks.
 
 ### Lead loop
 
 {{protocol delegated_build}} governs this phase. Task evidence guidance: {{protocol incremental_testing}}.
 
-{{delegate tasks=models/<name>/tasks.yaml max_parallel=3}}
+{{delegate tasks=shards/<name>/tasks.yaml max_parallel=3}}
 
 1. **Load and validate** the 6.5 tasks with `tasks_set` once the path is chosen and the user has agreed to the cost described for it.
 2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3 (candidate re-runs or branches with disjoint `owned_paths`).

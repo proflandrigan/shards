@@ -30,7 +30,7 @@ full before executing this file.
 
 ### Context loading
 
-1. Locate `project-specs.md` at `studies/<project_name>/project-specs.md` or
+1. Locate `project-specs.md` at `shards/<project_name>/project-specs.md` or
    the existing study directory.
 2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
 3. Scan for relevant artifacts: queries, notebooks, feature engineering code,

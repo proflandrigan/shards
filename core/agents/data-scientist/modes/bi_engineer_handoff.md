@@ -14,16 +14,16 @@ A handoff is offered when the user wants a live dashboard built from the study's
 
    {{gate kind=phase phase=7 id=data-scientist-bi-engineer-handoff-phase-7}}
 
-   If yes, write `studies/<project_name>/bi_engineer_handoff.md`:
+   If yes, write `shards/<project_name>/bi_engineer_handoff.md`:
 
    ```
    # BI Engineer Handoff: <project_name>
 
    ## Source Study
    - Originating agent: Data Scientist
-   - Study directory: studies/<project_name>/
-   - Study specs: studies/<project_name>/project-specs.md
-   - Study report: studies/<project_name>/report.md
+   - Study directory: shards/<project_name>/
+   - Study specs: shards/<project_name>/project-specs.md
+   - Study report: shards/<project_name>/report.md
 
    ## What Was Built
    - Study objective: <business question from Phase 1>
@@ -53,9 +53,9 @@ A handoff is offered when the user wants a live dashboard built from the study's
 
    ## Next Step
    Run `shards:bi-engineer` or `shards:syn`. In Phase 0, reference this file:
-   studies/<project_name>/bi_engineer_handoff.md
+   shards/<project_name>/bi_engineer_handoff.md
    ```
 
    Tell the user: "Handoff file written. Run `shards:bi-engineer` or `shards:syn` and
-   reference `studies/<project_name>/bi_engineer_handoff.md` in Phase 0."
+   reference `shards/<project_name>/bi_engineer_handoff.md` in Phase 0."
    Do NOT attempt to morph into or invoke the BI Engineer.

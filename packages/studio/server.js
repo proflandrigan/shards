@@ -79,7 +79,7 @@ function log(msg) {
 let PORTS = process.env.SHARDS_STUDIO_PORT !== undefined
   ? [parseInt(process.env.SHARDS_STUDIO_PORT, 10)]
   : [7842, 7843, 7844, 7845];
-const OUTPUT_DIRS = ['analysis', 'studies', 'models', 'services', 'research', 'dashboards', 'brainstorm', 'data_models', 'experiments'];
+const OUTPUT_DIRS = ['shards', 'analysis', 'studies', 'models', 'services', 'research', 'dashboards', 'brainstorm', 'data_models', 'experiments'];
 
 // ─── P1: Auth token ──────────────────────────────────────────────────────────
 
@@ -113,9 +113,10 @@ const pollSkipWarned = new Set();
 // ─── P3: Session Store ──────────────────────────────────────────────────────
 
 // Output dirs Shards specialists write under — used to derive a project slug
-// from a touched file path (e.g. analysis/churn-q4/queries.sql → "churn-q4").
+// from a touched file path (e.g. shards/churn-q4/queries.sql → "churn-q4"; legacy
+// analysis/churn-q4/... also works).
 const PROJECT_OUTPUT_DIRS = [
-  'analysis', 'studies', 'models', 'services', 'data_models', 'research',
+  'shards', 'analysis', 'studies', 'models', 'services', 'data_models', 'research',
   'dashboards', 'brainstorm', 'experiments', 'fixes', 'presentations', 'projects',
 ];
 const PROJECT_PATH_RE = new RegExp(`^(${PROJECT_OUTPUT_DIRS.join('|')})/([^/]+)/`);

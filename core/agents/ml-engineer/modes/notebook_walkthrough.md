@@ -58,7 +58,7 @@ When the walkthrough starts (via the `notebook-walkthrough` skill or a
 request to walk through a notebook):
 
 1. Ask for the notebook path. If the user mentioned a service or model by
-   name, look under `models/<name>/` and `services/<name>/` for `.ipynb`
+   name, look under `shards/<name>/` and `shards/<name>/` for `.ipynb`
    files and offer the options. The training notebook is usually
    `<name>/training-notebook.ipynb` or under `<name>/notebooks/`.
 2. If `project-specs.md` exists for the project, read it briefly so the

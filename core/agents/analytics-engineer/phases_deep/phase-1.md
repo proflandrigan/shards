@@ -46,7 +46,7 @@ the missing field — not the whole set.
 ## Deep Phase 1: Business Requirements (Analytics Engineer)
 - **Consumer(s):** <who uses this and how>
 - **Downstream consumer:** Dashboard (BI Engineer) | ML feature store | Finance report | Direct analyst queries (Data Analyst) | Other: <describe>
-- **Intake file source:** Not applicable | BI Engineer — dashboards/<project_name>/ae-intake.md | Data Analyst — analysis/<project_name>/ae-intake.md
+- **Intake file source:** Not applicable | BI Engineer — shards/<project_name>/ae-intake.md | Data Analyst — shards/<project_name>/ae-intake.md
 - **Analysis context (DA intake only):** <core question from DA intake, or "N/A">
 - **Business questions this mart answers:**
   - <question 1>

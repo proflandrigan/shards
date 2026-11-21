@@ -15,7 +15,7 @@ const build = () => {
   execFileSync('node', [path.join(dir, 'dry-run.js'), p], { stdio: 'pipe' });
   return p;
 };
-const specsOf = (p) => path.join(p, 'analysis/dbuild/project-specs.md');
+const specsOf = (p) => path.join(p, 'shards/dbuild/project-specs.md');
 const tasksFile = (p) => path.join(p, '.shards/state/sessions/synthetic/tasks.json');
 
 beforeAll(() => { proj = build(); });

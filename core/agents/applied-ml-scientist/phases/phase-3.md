@@ -60,7 +60,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 
 ### Decompose the plan into tasks
 
-Turn the plan just agreed into `research/<project_name>/tasks.yaml`, the single task list for
+Turn the plan just agreed into `shards/<project_name>/tasks.yaml`, the single task list for
 the build (every task is `phase: 4`). One task per tested component,
 each with id, goal, plan_ref (section of project-specs.md), inputs, owned_paths
 (no overlap between tasks that can run in parallel), acceptance command +
@@ -132,12 +132,12 @@ capture the essential properties needed to test the hypothesis?>
 |----|------|-------------|------------|------------|
 | <task id> | <goal> | <owned paths> | <acceptance command and expected evidence> | <ids or none> |
 
-- **Task count:** <N> — `research/<project_name>/tasks.yaml`
+- **Task count:** <N> — `shards/<project_name>/tasks.yaml`
 ```
 
 **DIVERGE check:** If you identified 2-3 mutually exclusive framework architectures or methodological approaches that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
 
-Before the gate, summarize the plan and state the task count and the path `research/<project_name>/tasks.yaml`, so the user confirms plan and task list together.
+Before the gate, summarize the plan and state the task count and the path `shards/<project_name>/tasks.yaml`, so the user confirms plan and task list together.
 
 {{gate kind=phase}}
 

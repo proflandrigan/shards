@@ -26,8 +26,8 @@ framework with deep learning components and need an implementation review
 before final sign-off.
 
 Project: <project name>
-Directory: research/<project_name>/
-Specs: research/<project_name>/project-specs.md
+Directory: shards/<project_name>/
+Specs: shards/<project_name>/project-specs.md
 
 Framework summary:
 - Novel contribution: <core hypothesis from Phase 1>
@@ -57,7 +57,7 @@ Address any blocking implementation concerns raised before proceeding to Syn.
 
 **Backend Engineer code review (Python artifacts):**
 
-Glob the project directory (`research/<project_name>/`) for `.py` and `.ipynb` files.
+Glob the project directory (`shards/<project_name>/`) for `.py` and `.ipynb` files.
 If any are found:
 
 Tell the user: "Before Syn signs off, the Backend Engineer is reviewing the
@@ -69,7 +69,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 You are in SERVICE MODE. Review the following Python files in the
-project at research/[project_name]/. Read project-specs.md first for context.
+project at shards/[project_name]/. Read project-specs.md first for context.
 Files to review: [list of .py and .ipynb files found]
 ```
 
@@ -91,8 +91,8 @@ framework research project. Please review and provide APPROVED / NEEDS
 REVISION / BLOCKED.
 
 Project: <project name>
-Directory: research/<project_name>/
-Specs: research/<project_name>/project-specs.md
+Directory: shards/<project_name>/
+Specs: shards/<project_name>/project-specs.md
 
 Summary:
 - Problem: <one sentence from Phase 0>
@@ -104,7 +104,7 @@ Summary:
 Please read project-specs.md for full context.
 ```
 
-**Create `research/<project_name>/report.md`:**
+**Create `shards/<project_name>/report.md`:**
 
 ```markdown
 # <Project Name> — Research Report

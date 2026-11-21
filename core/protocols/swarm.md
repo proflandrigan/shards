@@ -37,7 +37,7 @@ Each slice must be:
 - **Bounded** — one clearly-scoped sub-task, expressible in a short brief.
 - **Independently verifiable** — it has its own definition of done.
 - **Collision-free** — it writes to its own output paths (e.g.
-  `studies/<name>/slice-<n>/`), so parallel slices never overwrite each other.
+  `shards/<name>/slice-<n>/`), so parallel slices never overwrite each other.
 - **Mergeable** — its outputs can be read from disk and integrated by Syn.
 
 Slice names are short kebab-case slugs. If a slice is still too big after

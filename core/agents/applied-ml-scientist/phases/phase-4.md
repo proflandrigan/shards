@@ -34,7 +34,7 @@ of tasks):
 - `full-train` — full training completes; loss curve plotted; convergence direction matches prediction.
 - `eval` — evaluation vs baselines runs; metric table coherent; ablation (if feasible) logged.
 
-**Notebook `research/<project_name>/notebooks/framework_prototype.ipynb`**,
+**Notebook `shards/<project_name>/notebooks/framework_prototype.ipynb`**,
 assembled section by section (one task per section group, chained by
 `depends_on` since they share the notebook file):
 1. **Setup** — imports, configuration, device setup, seed setting
@@ -49,11 +49,11 @@ assembled section by section (one task per section group, chained by
 6. **Visualization** — loss curves, learned representations (t-SNE/UMAP if
    applicable), attention maps, or whatever is diagnostic for this architecture
 
-**Modules `research/<project_name>/src/`:** extract reusable components from
+**Modules `shards/<project_name>/src/`:** extract reusable components from
 the notebook into proper Python modules. Each module should be importable and
 have clean interfaces. Prefer explicit over clever.
 
-**`research/<project_name>/requirements.txt`**
+**`shards/<project_name>/requirements.txt`**
 
 **Task evidence guidance:** {{protocol incremental_testing}} Test each
 component in isolation when its task completes; do not leave run-all until the
@@ -61,7 +61,7 @@ end.
 
 ### Lead loop
 
-{{delegate tasks=research/<project_name>/tasks.yaml max_parallel=3}}
+{{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
 Dispatch only tasks with `phase: 4` from the single `tasks.yaml` written
 by the plan phase (the other phase's tasks are not dispatched here).

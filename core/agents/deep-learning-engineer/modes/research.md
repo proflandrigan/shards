@@ -30,7 +30,7 @@ repeat) and metric-bounded. The autonomous loop formalizes the process.
 
 ### Context loading
 
-1. Locate `project-specs.md` at `models/<project_name>/project-specs.md`
+1. Locate `project-specs.md` at `shards/<project_name>/project-specs.md`
    (DLE's Create Mode output directory).
 2. Read in full.
 3. Scan project for: model definition (`model.py` or `models/`), training

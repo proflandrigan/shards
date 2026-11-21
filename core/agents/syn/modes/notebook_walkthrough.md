@@ -60,7 +60,7 @@ If the user started a walkthrough with Syn (via the `notebook-walkthrough`
 skill or by asking for one):
 
 1. Ask for the notebook path. The user may have mentioned a project, study,
-   or service — search relevant directories (`studies/`, `models/`,
+   or service — search relevant directories (`shards/`, `studies/`, `models/`,
    `services/`, `analysis/`, `research/`, `dashboards/`) for `.ipynb`
    files and offer the options.
 2. Look at the first 1–2 cells to gauge what the notebook is doing. If it

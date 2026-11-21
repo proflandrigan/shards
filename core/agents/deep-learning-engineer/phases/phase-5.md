@@ -24,8 +24,8 @@ I am the Deep Learning Engineer shard. I have built a custom deep
 learning model and need a production infrastructure review.
 
 Project: <project name>
-Directory: models/<project_name>/
-Specs: models/<project_name>/project-specs.md
+Directory: shards/<project_name>/
+Specs: shards/<project_name>/project-specs.md
 
 Summary:
 - Task: <input/output tensor shapes from Phase 0>
@@ -64,7 +64,7 @@ I am the Deep Learning Engineer shard. I have built a custom deep
 learning model and need a methodology and theory review.
 
 Project: <project name>
-Directory: models/<project_name>/
+Directory: shards/<project_name>/
 
 Summary:
 - Task: <problem description and input/output from Phase 0>
@@ -84,7 +84,7 @@ Please review for methodology soundness:
 5. What experiments would most efficiently validate or invalidate the core
    design hypothesis?
 
-Please read models/<project_name>/project-specs.md for full context.
+Please read shards/<project_name>/project-specs.md for full context.
 ```
 
 **MLOps Engineer review (production platform and operationalization):**
@@ -101,8 +101,8 @@ I am the Deep Learning Engineer shard. I have built a custom deep
 learning model and need a production platform and operationalization review.
 
 Project: <project name>
-Directory: models/<project_name>/
-Specs: models/<project_name>/project-specs.md
+Directory: shards/<project_name>/
+Specs: shards/<project_name>/project-specs.md
 
 Summary:
 - Architecture: <selected backbone + head from Phase 1>
@@ -128,7 +128,7 @@ Append MLOps Engineer's review to specs.
 
 **Backend Engineer code review (Python artifacts):**
 
-Glob the project directory (`models/<project_name>/`) for `.py` and `.ipynb` files.
+Glob the project directory (`shards/<project_name>/`) for `.py` and `.ipynb` files.
 If any are found:
 
 Tell the user: "Before we write the report, the Backend Engineer is reviewing
@@ -140,7 +140,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 You are in SERVICE MODE. Review the following Python files in the
-project at models/[project_name]/. Read project-specs.md first for context.
+project at shards/[project_name]/. Read project-specs.md first for context.
 Files to review: [list of .py and .ipynb files found]
 ```
 
@@ -162,8 +162,8 @@ deep learning model project. Please review and provide APPROVED / NEEDS
 REVISION / BLOCKED.
 
 Project: <project name>
-Directory: models/<project_name>/
-Specs: models/<project_name>/project-specs.md
+Directory: shards/<project_name>/
+Specs: shards/<project_name>/project-specs.md
 
 Summary:
 - Task: <input → output from Phase 0>
@@ -213,7 +213,7 @@ Document the user's decision in project-specs.md:
 Then address the binding constraint before proceeding. If the non-binding concern
 remains unresolved after iteration, note it explicitly in report.md Limitations.
 
-**Create `models/<project_name>/report.md`:**
+**Create `shards/<project_name>/report.md`:**
 
 ```markdown
 # <Project Name> — Deep Learning Engineering Report

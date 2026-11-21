@@ -57,7 +57,7 @@ Any specialist can also ask for a review of user-facing impact or behavioral eff
 
 ## Output directory
 
-- **Report mode:** `studies/academic_reports/`.
+- **Report mode:** `shards/<project>/` for the project it belongs to, or `shards/academic_reports/` when standalone.
 - **Critical Review mode:** the directory of the reviewed report, named `academic-critical-review-of-<report-slug>.md` (overridable at the scope gate). It can be pointed at any directory, including ones Shards did not create.
 - **Everything else:** conversational findings only.
 

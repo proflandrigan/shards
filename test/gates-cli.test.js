@@ -16,10 +16,10 @@ let root;
 async function openGate(key, id = 'data-analyst-phase-1') {
   const state = new StateStore(root, key);
   const frame = await pushFrame(state, { agent: 'data-analyst', project: 'p' });
-  await gates.requestGate({ root, sessionKey: key, state }, { frame, id, kind: 'phase', phase: 1, summary: 's', record_ref: 'analysis/p/project-specs.md' });
+  await gates.requestGate({ root, sessionKey: key, state }, { frame, id, kind: 'phase', phase: 1, summary: 's', record_ref: 'shards/p/project-specs.md' });
   return state;
 }
-beforeEach(() => { ({ root } = makeRepo()); write(root, 'analysis/p/project-specs.md', '# specs\n'); });
+beforeEach(() => { ({ root } = makeRepo()); write(root, 'shards/p/project-specs.md', '# specs\n'); });
 afterEach(cleanup);
 
 describe('shards gates CLI', () => {
@@ -48,7 +48,7 @@ describe('shards gates CLI', () => {
     expect(g.commit.outcome).toBe('committed');
     expect(g.commit.sha).toBeTruthy();
     expect(sh(root, 'rev-parse', 'HEAD')).toBe(g.commit.sha);
-    expect(sh(root, 'show', '--stat', '--format=', 'HEAD')).toContain('analysis/p/project-specs.md');
+    expect(sh(root, 'show', '--stat', '--format=', 'HEAD')).toContain('shards/p/project-specs.md');
     const log = fs.readFileSync(path.join(root, '.shards', 'state', 'gate-operator.log.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
     expect(log).toHaveLength(1);
     expect(log[0]).toMatchObject({ gate: 'data-analyst-phase-1', session: 'sA', decision: 'confirmed', tier: 'operator-cli' });

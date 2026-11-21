@@ -32,7 +32,7 @@ grain, invoke the Data Modeller for validation before dispatching the query-writ
 this section (and the Phase 2 plan) via `plan_ref`; workers see only the
 sections a card references.
 
-- Each query lives in its own `.sql` file in `analysis/<project_name>/queries/`
+- Each query lives in its own `.sql` file in `shards/<project_name>/queries/`
 - Name files descriptively: `01_conversion_by_cohort.sql`, `02_revenue_trend.sql`
 - Include a header comment in each file:
   ```sql
@@ -58,7 +58,7 @@ strings, and the stated output grain matches the plan.
 
 ### Lead loop
 
-{{delegate tasks=analysis/<project_name>/tasks.yaml max_parallel=3}}
+{{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
 This is a small adhoc build (usually 1-2 query tasks). Tasks with
 `delegate: inline` are written by you directly; any others go to workers.
@@ -111,7 +111,7 @@ shard. I've written Phase 3 queries for project [project_name] but have
 NOT executed them yet — your review gates execution.
 
 - project-specs.md: [file_path]
-- Queries directory: analysis/[project_name]/queries/
+- Queries directory: shards/[project_name]/queries/
 - Data environment: [not greenfield | inaccessible | GREENFIELD]
 
 Please:
@@ -214,7 +214,7 @@ After delivering query results, provide visualization guidance:
      Tell the user: "Writing a bi-intake.md with everything the BI Engineer
      needs to pick this up. One sec..."
 
-     Write `analysis/<project_name>/bi-intake.md`:
+     Write `shards/<project_name>/bi-intake.md`:
 
      ---
 
@@ -222,7 +222,7 @@ After delivering query results, provide visualization guidance:
 
      ## Requesting Agent
      - Originating agent: Data Analyst
-     - Analysis project: analysis/<project_name>/project-specs.md (Phases 0–3 complete)
+     - Analysis project: shards/<project_name>/project-specs.md (Phases 0–3 complete)
 
      ## Dashboard Objective
      - Core question: <from Phase 0>
@@ -230,7 +230,7 @@ After delivering query results, provide visualization guidance:
      - Intended audience: <ask if not known — "Who will use this dashboard?">
 
      ## Analysis Already Done
-     - Queries location: analysis/<project_name>/queries/
+     - Queries location: shards/<project_name>/queries/
      - Key metrics computed: <from Phase 3 results>
      - Recommended chart type: <from Phase 3 visualization recommendation>
      - Chart sketch: <reproduce the Phase 3 chart sketch inline>
@@ -246,17 +246,17 @@ After delivering query results, provide visualization guidance:
 
      ## Next Step
      Run `shards:bi-engineer` or `shards:syn`. In Phase 0, reference this file:
-     analysis/<project_name>/bi-intake.md
+     shards/<project_name>/bi-intake.md
 
      ---
 
-     Tell the user: "I've written `analysis/<project_name>/bi-intake.md` with the
+     Tell the user: "I've written `shards/<project_name>/bi-intake.md` with the
      dashboard requirements for the BI Engineer. Run `shards:bi-engineer` or `shards:syn`
      and reference that file in Phase 0."
 
      Document in Phase 3 specs:
      **BI Engineer handoff requested:** Yes
-     **BI intake file written:** Yes — analysis/<project_name>/bi-intake.md
+     **BI intake file written:** Yes — shards/<project_name>/bi-intake.md
 
 ### Document Phase 3
 
@@ -286,7 +286,7 @@ After delivering query results, provide visualization guidance:
   - Chart type recommended: <type and reasoning, or "N/A">
   - Chart sketch: <markdown table + axis description, or "N/A">
   - BI Engineer handoff requested: Yes | No | N/A
-  - BI intake file written: Not applicable | Yes — analysis/<project_name>/bi-intake.md
+  - BI intake file written: Not applicable | Yes — shards/<project_name>/bi-intake.md
 - **Creative suggestions (if applicable):**
   - <additional angle suggested>
 - **Surprising findings:** <anything unexpected or "none">

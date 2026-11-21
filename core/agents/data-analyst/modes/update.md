@@ -12,8 +12,8 @@ Ask the user:
 "What analysis are we updating? Give me the path or project name and I'll find it."
 
 Once the user responds, read all relevant files:
-- `analysis/<project_name>/project-specs.md` (if it exists)
-- All `.sql` files in `analysis/<project_name>/queries/`
+- `shards/<project_name>/project-specs.md` (if it exists)
+- All `.sql` files in `shards/<project_name>/queries/`
 - Any other files in the analysis directory
 
 Do not ask follow-up questions yet — just read and summarize what you find.

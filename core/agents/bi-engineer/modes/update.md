@@ -12,8 +12,8 @@ Ask the user:
 "What dashboard are we updating? Give me the path or project name and I'll find it."
 
 Once the user responds, read all relevant files:
-- `dashboards/<project_name>/project-specs.md` (if it exists)
-- `dashboards/<project_name>/app.py` or main dashboard file
+- `shards/<project_name>/project-specs.md` (if it exists)
+- `shards/<project_name>/app.py` or main dashboard file
 - Any component files, SQL query files, or design documents in the directory
 - `requirements.txt` if present
 

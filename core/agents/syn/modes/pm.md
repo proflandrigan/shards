@@ -46,7 +46,7 @@ the conversation. Draw from them naturally as follow-ups, not as a batch:
   to deliver X — is that fair?"
 
 Once you have enough to proceed (typically 2–4 exchanges), create
-`projects/<project_name>/` and write `project-plan.md`
+`shards/<project_name>/` and write `project-plan.md`
 from the template at `templates/project-plan.md`. Fill in:
 - `{{PROJECT_NAME}}`: the project name
 - `{{DATE}}`: today's date
@@ -135,7 +135,7 @@ Run advisory checks in parallel where possible.
 Incorporate specialist feedback, adjust the plan if needed, then:
 
 1. Write the full workstream details and dependency graph to `project-plan.md`
-2. Create `projects/<project_name>/workstreams.json` with the schema below
+2. Create `shards/<project_name>/workstreams.json` with the schema below
 
 Gate readback (pass this as the `summary`):
 
@@ -151,17 +151,17 @@ groups, and specialist feasibility feedback. Do not proceed until the user expli
 For each workstream, create:
 
 1. The specialist's project directory using existing conventions:
-   - Data Analyst: `analysis/<workstream_name>/`
-   - Data Scientist: `studies/<workstream_name>/`
-   - Data Engineer: `models/<workstream_name>/`
-   - Data Modeller: `data_models/<workstream_name>/`
-   - Analytics Engineer: `data_models/<workstream_name>/`
-   - ML Engineer: `models/<workstream_name>/`
-   - AI Engineer: `services/<workstream_name>/`
-   - MLOps Engineer: `services/<workstream_name>/mlops/`
-   - BI Engineer: `dashboards/<workstream_name>/`
-   - Applied ML Scientist: `research/<workstream_name>/`
-   - Deep Learning Engineer: `models/<workstream_name>/`
+   - Data Analyst: `shards/<workstream_name>/`
+   - Data Scientist: `shards/<workstream_name>/`
+   - Data Engineer: `shards/<workstream_name>/`
+   - Data Modeller: `shards/<workstream_name>/`
+   - Analytics Engineer: `shards/<workstream_name>/`
+   - ML Engineer: `shards/<workstream_name>/`
+   - AI Engineer: `shards/<workstream_name>/`
+   - MLOps Engineer: `shards/<workstream_name>/mlops/`
+   - BI Engineer: `shards/<workstream_name>/`
+   - Applied ML Scientist: `shards/<workstream_name>/`
+   - Deep Learning Engineer: `shards/<workstream_name>/`
    - Backend Engineer: no directory (review only)
 
 2. A `project-specs.md` in each directory with Phase 0 pre-filled by Syn:
@@ -248,7 +248,7 @@ you judge it genuinely large during execution):
 - {{protocol swarm}}.
 - Decompose the workstream into bounded slices. Each slice: one specialist
   type, one clearly-scoped sub-task, its own output directory (e.g.
-  `studies/<name>/slice-<n>/`), and a definition of done.
+  `shards/<name>/slice-<n>/`), and a definition of done.
 - Spawn all slices in parallel via a single fan-out, same
   specialist repeated across slices. Give each slice its own brief
   (scope, inputs, outputs, paths, definition of done) using the PM MODE prompt
@@ -406,7 +406,7 @@ After all execution groups complete:
     {
       "name": "workstream_a",
       "specialist": "data-engineer",
-      "directory": "models/workstream_a/",
+      "directory": "shards/workstream_a/",
       "status": "initialized | active | review | revision | completed | blocked",
       "depends_on": [],
       "inputs": "description of inputs",

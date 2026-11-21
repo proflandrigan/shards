@@ -186,20 +186,21 @@ the gate that permits progression.
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:**
-- **New project:** `analysis/<project_name>/project-specs.md`
-- **Iteration:** `<existing_analysis_dir>/project-specs.md`
+- **New project:** `shards/<project_name>/project-specs.md`
+- **Iteration:** `shards/<project_name>/project-specs.md` (record the existing code location in Phase 0; deliverables go there per {{protocol placement}}). Continuing a legacy Shards project: its existing `project-specs.md`.
   (Ask the user for the existing analysis directory path during Phase 0.)
 - If arriving via Syn handoff: this file already exists with Phase 0.
   Begin at Phase 1. Read the project-specs.md at the path provided before starting.
   Do not re-ask for project name, directory, definition of done, or creativity preference — already set.
 - If invoked directly: create the directory structure and specs file during Phase 0.
 
-**Directory structure on direct invocation:**
+**Workspace on direct invocation (bookkeeping; greenfield deliverables default here):**
 ```
-analysis/<project_name>/
+shards/<project_name>/
 ├── project-specs.md
 └── queries/
 ```
+Deliverables for an existing codebase go to the confirmed targets instead of these subfolders; create a subfolder here only when the plan places a deliverable in it. {{protocol placement}}
 
 ---
 
@@ -218,10 +219,10 @@ Wait for the user's response before proceeding.
 ### Document Phase 0
 
 **Phase 0 Setup — direct invocation, new project only:**
-1. Create the project directory (`analysis/<project_name>/`, `analysis/<project_name>/queries/`) using Bash.
+1. Create the project directory `shards/<project_name>/` using Bash. Create deliverable subfolders only after the plan gate confirms where deliverables go.
 2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
 
-Create or append to `analysis/<project_name>/project-specs.md`:
+Create or append to `shards/<project_name>/project-specs.md`:
 
 ```markdown
 ---
@@ -250,10 +251,10 @@ If escalation is recommended and user agrees, stop here and suggest running
 
 During Phase 3 (Execute), emit each query's results as a separate panel so the user can compare them side by side. Agents always emit, whether or not a UI exists.
 
-- **Table or metrics results:** write the rows to `analysis/<project_name>/<query_slug>.csv` (or a JSON array of row objects), then emit:
-  {{artifact.emit type=data-viewer path=analysis/<project_name>/<query_slug>.csv meta="title=<descriptive_title>"}}
-- **Chart output** (when the definition of done includes a chart): build a Plotly JSON object with `data` and `layout` keys from the query results, write it to `analysis/<project_name>/<chart_slug>.json`, then emit:
-  {{artifact.emit type=chart path=analysis/<project_name>/<chart_slug>.json meta="title=<chart_title> chart_type=<bar|line|scatter|pie>"}}
+- **Table or metrics results:** write the rows to `shards/<project_name>/<query_slug>.csv` (or a JSON array of row objects), then emit:
+  {{artifact.emit type=data-viewer path=shards/<project_name>/<query_slug>.csv meta="title=<descriptive_title>"}}
+- **Chart output** (when the definition of done includes a chart): build a Plotly JSON object with `data` and `layout` keys from the query results, write it to `shards/<project_name>/<chart_slug>.json`, then emit:
+  {{artifact.emit type=chart path=shards/<project_name>/<chart_slug>.json meta="title=<chart_title> chart_type=<bar|line|scatter|pie>"}}
 
 If multiple queries feed one visualization, emit both the raw results table and the chart. Never write these files outside the project's output directory.
 

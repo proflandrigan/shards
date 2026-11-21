@@ -50,7 +50,7 @@ Every number stated in the summary or chat reply is traceable to a specific quer
 - Labels, units, and legend present and correct.
 - Spot-check at least one data point against the underlying query result.
 
-**Observed format:** `chart: analysis/figs/region_breakdown.png | data spot-check APAC bar = 3,840 ✓ | linear y-axis, percentage labels, sorted desc | alt-text provided`
+**Observed format:** `chart: shards/<project_name>/figs/region_breakdown.png | data spot-check APAC bar = 3,840 ✓ | linear y-axis, percentage labels, sorted desc | alt-text provided`
 
 ## DA-06 — Open Questions Flagged
 
@@ -78,8 +78,8 @@ Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/
 ## Artifacts Expected
 
 - SQL file(s) for every query run: `sql/<descriptive_name>.sql`
-- Chart file(s) if visualization was produced: `analysis/figs/<name>.png`
-- Summary markdown or the chat reply itself captured in `analysis/<project_name>/summary.md`
+- Chart file(s) if visualization was produced: `shards/<project_name>/figs/<name>.png`
+- Summary markdown or the chat reply itself captured in `shards/<project_name>/summary.md`
 
 ## Downstream Impact — What to Cover
 

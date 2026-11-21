@@ -47,6 +47,19 @@ function resolveRecord(root, recordRef) {
   return abs;
 }
 
+// Deliverable paths the user confirms at this gate (placement protocol). Root-relative, inside the root,
+// never the root itself; normalised to forward slashes with no trailing slash.
+function normTargets(root, targets) {
+  if (targets === undefined) return undefined;
+  const rootAbs = path.resolve(root);
+  return targets.map((t) => {
+    if (path.isAbsolute(t)) throw new Error(`targets must be project-root-relative paths: ${t}`);
+    const r = path.relative(rootAbs, path.resolve(rootAbs, t));
+    if (r === '' || r.startsWith('..') || path.isAbsolute(r)) throw new Error(`targets must name a path inside the project root (not the root itself): ${t}`);
+    return r.split(path.sep).join('/');
+  });
+}
+
 // The registry emits either text or data; emit prose followed by the JSON data block.
 function bothBase(text, data) { return { text: `${text}\n\n${JSON.stringify(data, null, 2)}` }; }
 
@@ -64,7 +77,7 @@ function normPhase(p) { return typeof p === 'string' && /^\d+$/.test(p) ? Number
 
 module.exports = defineTool({
   name: 'gate_request',
-  description: 'Request a human gate at the end of a phase. Opens (or re-opens) a pending gate owned by your switch frame; you cannot confirm it. After calling, stop and wait for the user to confirm. With `validates`, the record must contain a complete `## Validation` section. A confirmed gate returns "already confirmed" and is never reopened.',
+  description: 'Request a human gate at the end of a phase. Opens (or re-opens) a pending gate owned by your switch frame; you cannot confirm it. After calling, stop and wait for the user to confirm. With `validates`, the record must contain a complete `## Validation` section. A confirmed gate returns "already confirmed" and is never reopened. Pass `targets` (project-root-relative paths) to record the deliverable locations the user is confirming at this gate; confirmed targets are included in the gate\'s git snapshot.',
   inputSchema: schema,
   async handler(args, ctx) {
     if (!ctx.sessionKey || !ctx.state) throw new Error('gate_request requires a resolved session');
@@ -73,6 +86,7 @@ module.exports = defineTool({
     const frame = frames[frames.length - 1];
     const session = { root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state };
     const phase = normPhase(args.phase);
+    const targets = normTargets(ctx.root, args.targets);
     const cq = copyNote(session);
     const both = (text, data) => bothBase(cq.text ? `${text}\n${cq.text}` : text, { ...data, copy_queue: cq.queue, ...(cq.stuck.length ? { copy_stuck: cq.stuck } : {}) });
 
@@ -91,7 +105,7 @@ module.exports = defineTool({
 
     const { result, entry } = await gates.requestGate(session, {
       frame, id: args.id, kind: args.kind, phase, summary: args.summary, record_ref: args.record_ref,
-      validates: args.validates || null,
+      validates: args.validates || null, targets,
     });
 
     let replayed = null;

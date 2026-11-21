@@ -177,8 +177,8 @@ the gate that permits progression.
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:**
-- **Greenfield:** `services/<project_name>/project-specs.md`
-- **Iteration:** `<existing_service_dir>/project-specs.md`
+- **Greenfield:** `shards/<project_name>/project-specs.md`
+- **Iteration:** `shards/<project_name>/project-specs.md` (record the existing code location in Phase 0; deliverables go there per {{protocol placement}}). Continuing a legacy Shards project: its existing `project-specs.md`.
   (Ask the user to identify the existing service directory path during Phase 0.)
 
 - If arriving via Syn handoff: this file already exists with Phase 0.
@@ -187,17 +187,17 @@ the gate that permits progression.
   greenfield vs. iteration classification, or AI justification — already set.
 - If invoked directly: create the directory structure and specs file during Phase 0.
 
-**Directory structure (greenfield only):**
+**Workspace on direct invocation (bookkeeping; greenfield deliverables default here):**
 ```
-services/<project_name>/
+shards/<project_name>/
 ├── project-specs.md
 ├── prompts/
 ├── eval/
 └── notebooks/
 ```
+Deliverables for an existing codebase go to the confirmed targets instead of these subfolders; create a subfolder here only when the plan places a deliverable in it. {{protocol placement}}
 
-For iteration projects: write `project-specs.md` into the existing service repo root or a
-subdirectory the user specifies. Do not create a new top-level `services/` folder.
+For iteration: `project-specs.md` still goes in `shards/<project_name>/`; the existing service directory is recorded in Phase 0 and the changes land there as confirmed targets. Never create parallel top-level folders (`models/`, `services/`) in the user's repo.
 
 ---
 
@@ -211,17 +211,18 @@ As you listen, specifically surface:
 
 - **THE CRITICAL QUESTION: Has a non-AI solution been considered?** If the user describes an AI system, ask: "Could this be solved with rules, regex, traditional ML, a lookup, or a human process?" If they cannot articulate why simpler solutions fail, push back. Document the justification for AI/LLM explicitly. This is not optional.
 - **Project classification:** Greenfield or iteration? If iteration: what exists, what needs improving, where does the service live?
+- **Where the work lands:** existing code, files or modules this builds on, and where the user wants the result. Feeds the `## Placement` proposal in planning ({{protocol placement}}).
 
 Determine project classification (Greenfield / Iteration) and get confirmation.
 
 ### Document Phase 0
 
-**Phase 0 Setup — direct invocation, greenfield new project only:**
-1. Create the project directory (`services/<project_name>/`, `services/<project_name>/prompts/`, `services/<project_name>/eval/`, `services/<project_name>/notebooks/`) using Bash.
+**Phase 0 Setup — direct invocation:**
+1. Create the project directory `shards/<project_name>/` using Bash. Create deliverable subfolders only after the plan gate confirms where deliverables go.
 2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
 
 Create or append to:
-- Greenfield: `services/<project_name>/project-specs.md`
+- Greenfield: `shards/<project_name>/project-specs.md`
 - Iteration: `<existing_service_dir>/project-specs.md`
 
 ```markdown
@@ -231,7 +232,7 @@ Create or append to:
 - **AI system type:** <document processing | search | chatbot | summarization | classification | extraction | generation | agent | other>
 - **Project classification:** Greenfield | Iteration / Optimization
 - **Project directory:**
-  - Greenfield: `services/<project_name>/`
+  - Greenfield: `shards/<project_name>/`
   - Iteration: `<existing_service_dir>/` (user-specified)
 - **If iteration — current state:**
   - Service directory: <path to existing service>

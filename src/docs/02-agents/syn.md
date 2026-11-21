@@ -26,7 +26,7 @@ Syn's mode files live in `core/agents/syn/modes/`. Three of them are also consul
 
 | Mode | File | Purpose |
 |---|---|---|
-| Brainstorm | `brainstorm.md` | `[B]` Multi-agent ideation with parallel specialist fan-out. Writes `brainstorm/brainstorm_<project>.state.json` and emits it as a `brainstorm` artifact (`artifact_emit`) for Studio. Also reached through the `brainstorm` skill. |
+| Brainstorm | `brainstorm.md` | `[B]` Multi-agent ideation with parallel specialist fan-out. Writes `shards/brainstorm/brainstorm_<project>.state.json` and emits it as a `brainstorm` artifact (`artifact_emit`) for Studio. Also reached through the `brainstorm` skill. |
 | Fixer | `fixer.md` | `[F]` Direct fix mode. Syn implements minor fixes without a specialist handoff. |
 | PM | `pm.md` | `[P]` Project Manager. Orchestrates a multi-specialist project from a `project-plan.md`; each workstream runs under its specialist. |
 | Free Form | `free_form.md` | `[FF]` General assistant mode: no phases or gates, direct work plus spawning shards or any installed agents or skills as subagents. |
@@ -54,14 +54,14 @@ Every specialist consults Syn for final review through the `final_review` entry,
 
 Syn has no single output directory (`output_dir: null`). It writes to:
 
-- `brainstorm/` for brainstorm sessions.
-- `fixes/fix_<slug>.md` for a standalone Fixer fix (a fix inside an existing project is appended to its `project-specs.md`).
+- `shards/brainstorm/` for brainstorm sessions.
+- `shards/fixes/fix_<slug>.md` for a standalone Fixer fix (a fix inside an existing project is appended to its `project-specs.md`).
 - `<dir_A>/diff_vs_<project_B>.md` for Diff mode.
-- `projects/<project_name>/` for PM Mode (`project-plan.md` and `workstreams.json`).
-- `panels/<dirname>/` for Panel Review (the default; you can override it).
+- `shards/<project_name>/` for PM Mode (`project-plan.md` and `workstreams.json`).
+- `shards/panels/<dirname>/` for Panel Review (the default; you can override it).
 - `<project_dir>/.shards/branches/` for DIVERGE branches.
 - The target project directory when acting as final reviewer.
-- Free Form writes where you ask (there is no default). Swarmed workstreams nest slices under the specialist's own convention (for example `studies/<name>/slice-<n>/`).
+- Free Form writes where you ask (there is no default). Swarmed workstreams nest slices under the specialist's own convention (for example `shards/<name>/slice-<n>/`).
 
 Syn's jobs are `record`, `tasks`, `knowledge`, `review`, `artifacts` and `presentation`. Gate-confirmed work is committed to git as the record; see [Output Directory Map](../06-outputs/directory-map.md).
 

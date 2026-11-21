@@ -15,7 +15,7 @@ const text = (r) => r.content[1].text;
 const task = (id, o = {}) => ({ id, goal: `goal ${id}`, plan_ref: 'project-specs.md#p', inputs: ['in.csv'], owned_paths: [`out/${id}/`], acceptance: { command: 'true', expected: 'exit 0' }, worker: 'bi-engineer', size: 10, ...o });
 const result = (o = {}) => ({ status: 'done', files_changed: [], check: { command: 'true', exit_code: 0, output_excerpt: 'ok' }, deviations: [], open_questions: [], ...o });
 const st = () => state.read('tasks').tasks;
-const specs = () => fs.readFileSync(path.join(root, 'analysis/p/project-specs.md'), 'utf8');
+const specs = () => fs.readFileSync(path.join(root, 'shards/p/project-specs.md'), 'utf8');
 const verify = (id, pass, extra = {}) => call('task_verify', { id, pass, expected: 'exit 0', observed: pass ? 'exit 0' : 'exit 1: boom', ...extra });
 const runOnce = async (id, status = 'done') => { await call('task_dispatch', { ids: [id] }); await call('task_report', { id, result: result({ status }) }); };
 
@@ -39,7 +39,7 @@ describe('task_verify', () => {
     expect((await call('task_dispatch', { ids: ['b'] })).isError).toBeFalsy();
   });
   it('appends to the last existing Validation evidence table', async () => {
-    fs.writeFileSync(path.join(root, 'analysis/p/project-specs.md'), '# S\n\n## Validation\n\n### Evidence\n\n| Check | Expected | Observed | Pass/Fail | Notes |\n|---|---|---|---|---|\n| old | x | y | ✓ | |\n\n## Other\n\ntext\n');
+    fs.writeFileSync(path.join(root, 'shards/p/project-specs.md'), '# S\n\n## Validation\n\n### Evidence\n\n| Check | Expected | Observed | Pass/Fail | Notes |\n|---|---|---|---|---|\n| old | x | y | ✓ | |\n\n## Other\n\ntext\n');
     await runOnce('a'); await verify('a', true);
     const s = specs();
     expect(s.indexOf('| old')).toBeLessThan(s.indexOf('| a: goal a'));

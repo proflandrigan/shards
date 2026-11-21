@@ -174,12 +174,12 @@ it throughout.
 
 **Productionization from Study** — research model from a Data Scientist study:
 - A Data Scientist has completed a study with "Productionized" deployment intent
-- Research model, features, and evaluation already exist in a `studies/` directory
+- Research model, features, and evaluation already exist in a `shards/` (or legacy `studies/`) directory
 - The study's `project-specs.md` contains model design, feature candidates, and results
 - This is NOT greenfield (research is done) and NOT iteration (no production system exists)
 - Focus: translating research artifacts into production infrastructure
 - Lighter data discovery and model design (inherit from study), heavier infrastructure
-- Create a new `models/` project that cross-references the study
+- Create a new `shards/` project that cross-references the study
 - Higher confidence on model viability, but production constraints may require changes
   (different model for latency, feature availability at serving time, etc.)
 
@@ -220,8 +220,8 @@ the gate that permits progression.
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:**
-- **Greenfield:** `models/<project_name>/project-specs.md`
-- **Iteration:** `<existing_service_dir>/project-specs.md`
+- **Greenfield:** `shards/<project_name>/project-specs.md`
+- **Iteration:** `shards/<project_name>/project-specs.md` (record the existing code location in Phase 0; deliverables go there per {{protocol placement}}). Continuing a legacy Shards project: its existing `project-specs.md`.
   (Ask the user to identify the existing service directory path during Phase 0.)
 
 - If arriving via Syn handoff: this file already exists with Phase 0.
@@ -230,16 +230,16 @@ the gate that permits progression.
   or greenfield vs. iteration classification — already set.
 - If invoked directly: create the directory structure and specs file during Phase 0.
 
-**Directory structure (greenfield only):**
+**Workspace on direct invocation (bookkeeping; greenfield deliverables default here):**
 ```
-models/<project_name>/
+shards/<project_name>/
 ├── project-specs.md
 ├── queries/
 └── notebooks/
 ```
+Deliverables for an existing codebase go to the confirmed targets instead of these subfolders; create a subfolder here only when the plan places a deliverable in it. {{protocol placement}}
 
-For iteration projects: write `project-specs.md` into the existing service repo root or a
-subdirectory the user specifies. Do not create a new top-level `models/` folder.
+For iteration: `project-specs.md` still goes in `shards/<project_name>/`; the existing service directory is recorded in Phase 0 and the changes land there as confirmed targets. Never create parallel top-level folders (`models/`, `services/`) in the user's repo.
 
 ---
 
@@ -252,17 +252,18 @@ Follow the discovery rhythm for ML Engineer in [`protocols/intent_discovery.md`]
 As you listen, specifically surface:
 - **Project classification:** Is this greenfield, iteration, or productionization from a study? If iteration: what exists today, what needs improving, where does the service live? If productionization from a study: ask for the study directory path. Look for `ml_engineer_handoff.md` in that directory and read it if present. Also read `project-specs.md` for full research context.
 - **ML system type:** Let the user describe it — classify from their description.
+- **Where the work lands:** existing code, files or modules this builds on, and where the user wants the result. Feeds the `## Placement` proposal in planning ({{protocol placement}}).
 
 Determine project classification (Greenfield / Iteration / Productionization) and get confirmation.
 
 ### Document Phase 0
 
-**Phase 0 Setup — direct invocation, greenfield new project only:**
-1. Create the project directory (`models/<project_name>/`, `models/<project_name>/queries/`, `models/<project_name>/notebooks/`) using Bash.
+**Phase 0 Setup — direct invocation:**
+1. Create the project directory `shards/<project_name>/` using Bash. Create deliverable subfolders only after the plan gate confirms where deliverables go.
 2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
 
 Create or append to:
-- Greenfield: `models/<project_name>/project-specs.md`
+- Greenfield: `shards/<project_name>/project-specs.md`
 - Iteration: `<existing_service_dir>/project-specs.md`
 
 ```markdown
@@ -272,7 +273,7 @@ Create or append to:
 - **ML system type:** <recommender | ranker | classifier | regression | clustering | anomaly detection | other>
 - **Project classification:** Greenfield | Iteration / Optimization
 - **Project directory:**
-  - Greenfield: `models/<project_name>/`
+  - Greenfield: `shards/<project_name>/`
   - Iteration: `<existing_service_dir>/` (user-specified)
 - **If iteration — current state:**
   - Service directory: <path to existing service>
@@ -280,7 +281,7 @@ Create or append to:
   - Current performance: <key metrics and values>
   - What needs improving: <latency | accuracy | coverage | freshness | cost | other>
 - **If productionization from study:**
-  - Source study: <path to studies/<name>/>
+  - Source study: <path to shards/<name>/>
   - Study specs: <path to project-specs.md>
   - Model type from study: <from study Phase 4>
   - Best performance from study: <metric: value from study Phase 6>

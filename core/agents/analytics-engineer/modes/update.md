@@ -12,7 +12,7 @@ Ask the user:
 "What mart or pipeline are we updating? Give me the path or project name and I'll find it."
 
 Once the user responds, read all relevant files:
-- `data_models/<project_name>/project-specs.md` (if it exists)
+- `shards/<project_name>/project-specs.md` (if it exists)
 - Transformation model SQL files in the relevant directory
 - Schema files (column descriptions, tests)
 - Source definitions if relevant

@@ -56,7 +56,7 @@ function liveCodex(env) {
   fs.cpSync(FIXTURE, proj, { recursive: true });
   const inst = spawnSync(process.execPath, [path.join(REPO, 'cli', 'shards.js'), 'install', '--project', '--root', proj], { env, encoding: 'utf8' });
   if (inst.status !== 0) return { exit: 1, output: tail(`${inst.stdout}${inst.stderr}`) };
-  const prompt = 'Use the shards skills. Run the delegated build described by analysis/dbuild/project-specs.md and analysis/dbuild/tasks.yaml: register the manifest, dispatch each task, verify each acceptance command. Finish when t1..t4 are verified.';
+  const prompt = 'Use the shards skills. Run the delegated build described by shards/dbuild/project-specs.md and shards/dbuild/tasks.yaml: register the manifest, dispatch each task, verify each acceptance command. Finish when t1..t4 are verified.';
   const ex = spawnSync('codex', ['exec', prompt], { cwd: proj, env, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, shell: process.platform === 'win32' });
   const sc = spawnSync(process.execPath, [SCORE_JS, proj], { env, encoding: 'utf8' });
   return { exit: sc.status === null ? 1 : sc.status, output: tail(`codex exit ${ex.status}\n${sc.stdout}${sc.stderr}`) };

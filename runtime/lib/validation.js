@@ -11,9 +11,11 @@ const VALID_PASS_FAIL = new Set(['✓', '✗', 'n/a']);
 
 // ─── Specs file resolution ───────────────────────────────────────────────────
 
-// Shards projects live under convention directories — see CLAUDE.md output
-// directory map. We search these for the most recently modified project-specs.md.
+// Shards projects live under `shards/<project>/` (current layout) and, for projects created before
+// the single-folder layout, under the legacy convention directories. We search all of them for the
+// most recently modified project-specs.md.
 const PROJECT_DIRS = [
+  'shards',
   'analysis', 'studies', 'models', 'data_models', 'services',
   'research', 'dashboards', 'brainstorm', 'fixes',
 ];

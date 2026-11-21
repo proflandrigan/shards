@@ -45,7 +45,7 @@ The hook resolves `project-specs.md` in the following priority order:
 
 1. `SHARDS_PROJECT_SPECS_PATH` env var if set (absolute path, overrides everything)
 2. `project-specs.md` at CWD if it exists
-3. The most recently modified `project-specs.md` under any conventional project directory — `analysis/<name>/`, `studies/<name>/`, `models/<name>/`, `data_models/<name>/`, `services/<name>/`, `research/<name>/`, `dashboards/<name>/`, `brainstorm/<name>/`, or `fixes/<name>/`. Only immediate subdirectories of these roots are searched (one level deep).
+3. The most recently modified `project-specs.md` under any conventional project directory — `shards/<name>/` first, then the legacy roots `analysis/<name>/`, `studies/<name>/`, `models/<name>/`, `data_models/<name>/`, `services/<name>/`, `research/<name>/`, `dashboards/<name>/`, `brainstorm/<name>/`, or `fixes/<name>/`. Only immediate subdirectories of these roots are searched (one level deep).
 
 The hook then looks for the most recent `## Validation` section within that file — defined as the final `## Validation` heading before EOF or before the next non-validation top-level heading.
 

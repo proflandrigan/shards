@@ -72,6 +72,7 @@ async function requestGate(session, req) {
       rehome(existing);
       if (req.summary !== undefined) existing.summary = req.summary;
       if (req.record_ref !== undefined) existing.record_ref = req.record_ref;
+      if (req.targets !== undefined) existing.targets = req.targets;
       existing.updated_at = ts;
       result = 'already_pending'; entry = existing; return cur;
     }
@@ -82,6 +83,7 @@ async function requestGate(session, req) {
       Object.assign(existing, {
         summary: req.summary !== undefined ? req.summary : existing.summary,
         record_ref: req.record_ref !== undefined ? req.record_ref : existing.record_ref,
+        targets: req.targets !== undefined ? req.targets : (existing.targets || []),
         requested_at: ts,
       });
       result = 'reopened'; entry = existing; return cur;
@@ -92,6 +94,7 @@ async function requestGate(session, req) {
       track, project,
       agent: frame.agent, frame: frame.id,
       summary: req.summary || '', record_ref: req.record_ref || null, validates: req.validates || null,
+      targets: req.targets || [],
       requested_at: ts, updated_at: ts,
       history: [{ ts, from: null, to: 'pending' }],
       ...(previous ? { previous } : {}),
@@ -108,17 +111,32 @@ function pendingForFrame(session, frameId) {
   return listGates(session).find((g) => g && g.frame === frameId && g.status === 'pending') || null;
 }
 
-function defaultResolveOutputDirs(root, entry) {
+function defaultResolveOutputDirs(root, entry, session) {
   const { loadAgents } = require('../agents');
+  const out = [];
+  const inRoot = (t) => {
+    if (typeof t !== 'string' || !t) return false;
+    const r = path.relative(path.resolve(root), path.resolve(root, t));
+    return !!r && !r.startsWith('..') && !path.isAbsolute(r);
+  };
   const a = loadAgents().get(entry.agent);
-  if (!a || a.error || !a.output_dir) return [];
-  const proj = entry.project;
-  if (String(a.output_dir).includes('{project}') && !proj) return [];
-  const rel = String(a.output_dir).replace(/\{project\}/g, proj || '');
-  const abs = path.resolve(root, rel);
-  const r = path.relative(path.resolve(root), abs);
-  if (r.startsWith('..') || path.isAbsolute(r)) return [];
-  return [rel];
+  if (a && !a.error && a.output_dir) {
+    const proj = entry.project;
+    if (!(String(a.output_dir).includes('{project}') && !proj)) {
+      const rel = String(a.output_dir).replace(/\{project\}/g, proj || '');
+      if (inRoot(rel)) out.push(rel);
+    }
+  }
+  const scope = { agent: entry.agent, project: entry.project || null, track: entry.track || null };
+  const lists = [entry.targets];
+  for (const g of (session ? listGates(session) : [])) {
+    if (g && g.status === 'confirmed' && sameScope(g, scope)) lists.push(g.targets);
+  }
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue;
+    for (const t of list) if (inRoot(t) && !out.includes(t)) out.push(t);
+  }
+  return out;
 }
 function defaultLoadConfig(root) { return require('../config').loadOrCreateConfig(root).config; }
 
@@ -153,7 +171,7 @@ async function confirmGate(session, id, opts = {}, deps = {}) {
     const replayPending = deps.replayPending || (require('../git').replayPending);
     const config = (deps.loadConfig || defaultLoadConfig)(session.root);
     const gitCfg = config && config.git !== undefined ? config.git : config;
-    const outputDirs = (deps.resolveOutputDirs || defaultResolveOutputDirs)(session.root, entry);
+    const outputDirs = (deps.resolveOutputDirs || defaultResolveOutputDirs)(session.root, entry, session);
     if (typeof replayPending === 'function') {
       try { await replayPending(session.root, { config: gitCfg }); } catch (_) { /* ordering is also guarded by commitGate */ }
     }
@@ -245,6 +263,6 @@ function confirmedGates(session) {
 }
 
 module.exports = {
-  KINDS, ADVANCING_KINDS, sameScope, requestGate, getGate, listGates, pendingForFrame, confirmGate,
+  KINDS, ADVANCING_KINDS, sameScope, defaultResolveOutputDirs, requestGate, getGate, listGates, pendingForFrame, confirmGate,
   suspendGate, resumeGate, forceCloseGate, FORCE_CLOSABLE, formatConfirmedMessage, describeInterimConfirm, confirmedGates,
 };
