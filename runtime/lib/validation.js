@@ -21,7 +21,7 @@ const PROJECT_DIRS = [
 ];
 
 // Find the most recently modified project-specs.md in any immediate subdirectory
-// of the conventional project dirs (e.g. analysis/*/project-specs.md).
+// of the conventional project dirs (e.g. shards/*/project-specs.md).
 function findLatestSpecs(root) {
   let best = null;
   let bestMtime = 0;
