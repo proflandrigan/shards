@@ -72,7 +72,7 @@ Append Syn's code review summary to the specs.
 
 **Then write the final report:**
 
-Write to: `shards/<project_name>/mlops/report.md` (or `<existing_service_dir>/mlops/report.md`)
+Write to: `shards/<project_name>/mlops/report.md` (bookkeeping stays here, also for iteration)
 
 Report contents:
 - Executive summary: what ML system was operationalized and what was built

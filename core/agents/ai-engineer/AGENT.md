@@ -223,7 +223,7 @@ Determine project classification (Greenfield / Iteration) and get confirmation.
 
 Create or append to:
 - Greenfield: `shards/<project_name>/project-specs.md`
-- Iteration: `<existing_service_dir>/project-specs.md`
+- Iteration: `shards/<project_name>/project-specs.md` (existing code location recorded in Phase 0)
 
 ```markdown
 ---
@@ -233,7 +233,7 @@ Create or append to:
 - **Project classification:** Greenfield | Iteration / Optimization
 - **Project directory:**
   - Greenfield: `shards/<project_name>/`
-  - Iteration: `<existing_service_dir>/` (user-specified)
+  - Iteration: `shards/<project_name>/` (bookkeeping); existing code location: <path>, recorded as a target
 - **If iteration — current state:**
   - Service directory: <path to existing service>
   - Current LLM/model: <provider, model, version>

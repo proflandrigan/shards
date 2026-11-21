@@ -19,7 +19,7 @@ Goal: Build all IaC, configs, pipeline definitions, and monitoring setup as vali
 
 ### Component specifications
 
-Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. For iteration, files go into `<existing_service_dir>/mlops/` or the user-specified path. Validate each component as appropriate (plan, lint, dry-run, or container-build); never stack unvalidated IaC, serving or pipeline configs to apply at the end.
+Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. For iteration, deliverables go to the confirmed Placement targets (the existing service's deploy/infra location). Validate each component as appropriate (plan, lint, dry-run, or container-build); never stack unvalidated IaC, serving or pipeline configs to apply at the end.
 
 **Spec A. IaC files.** Terraform modules or CloudFormation templates for:
    - Compute resources (endpoint instances, training compute)

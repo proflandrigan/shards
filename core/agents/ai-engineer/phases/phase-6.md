@@ -19,7 +19,7 @@ Goal: Build the prompts, evaluation harness, integration code, and safety layer 
 
 ### Component specifications
 
-Each task in `<output_dir>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: greenfield `shards/<name>/`, iteration `<existing_service_dir>/`.
+Each task in `<output_dir>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: greenfield `shards/<name>/`, iteration: the confirmed Placement targets in the existing service.
 
 **Spec A. Prompt files** (one task per prompt) in `<output_dir>/prompts/`. Each prompt file includes a metadata header:
    ```
@@ -59,7 +59,7 @@ Each task in `<output_dir>/tasks.yaml` cites one of these specifications through
 **Spec G. Eval results JSON.** After the evaluation notebook runs, the evaluation tasks record structured
    results in the project's `eval-results.json` (owned by a single sequential chain of tasks, never parallel ones):
    - Greenfield: `shards/<name>/eval-results.json`
-   - Iteration: `<existing_service_dir>/eval-results.json`
+   - Iteration: `shards/<name>/eval-results.json` (same; the existing service holds only confirmed Placement targets)
 
    The JSON must follow this schema:
    ```json

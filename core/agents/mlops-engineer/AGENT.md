@@ -235,7 +235,7 @@ Follow the discovery rhythm for MLOps Engineer in [`protocols/intent_discovery.m
 
 Create or append to:
 - Greenfield / Handoff: `shards/<project_name>/mlops/project-specs.md`
-- Iteration: `<existing_service_dir>/mlops/project-specs.md`
+- Iteration: `shards/<project_name>/mlops/project-specs.md` (existing code location recorded in Phase 0)
 
 ```markdown
 ---
@@ -246,7 +246,7 @@ Create or append to:
 - **Engagement type:** Greenfield | Iteration | Model Handoff
 - **Project directory:**
   - Greenfield / Handoff: `shards/<project_name>/mlops/`
-  - Iteration: `<existing_service_dir>/mlops/` (user-specified)
+  - Iteration: `shards/<project_name>/mlops/` (bookkeeping); existing code location: <path>, recorded as a target
 - **If iteration — current state:**
   - Serving: <current serving layer>
   - Monitoring: <what's monitored, what's not>

@@ -52,6 +52,8 @@ with the `tasks_set` tool ({{protocol delegated_build}} has the rules). Add the
 tasks together at this gate; the gate summary must name the task count and
 the `tasks.yaml` path.
 
+**Placement:** propose where each deliverable lands in a `## Placement` section of `project-specs.md`, and pass those paths as `targets` on this phase's `gate_request` so the user confirms them with the plan ({{protocol placement}}).
+
 ### Document Phase 3
 
 Append to `project-specs.md`:

@@ -59,6 +59,8 @@ Address any concerns raised before finalizing the design.
 Turn the plan just agreed into `shards/<project_name>/tasks.yaml`: one task per data query, panel or page, and shared component. Each task needs an id, goal, `plan_ref` (the section of `project-specs.md` it implements), inputs, `owned_paths` (no overlap between tasks that can run in parallel), an acceptance command with the expected evidence, `depends_on`, `worker` (this agent), `phase` (3), and size (60 or less).
 Validate the list with the tasks_set tool; the rules are in {{protocol delegated_build}}. Add the `### Task list` table to the Phase 2 section of `project-specs.md` (see the template below) so the user approves plan and tasks together. The tasks are executed in Phase 3.
 
+**Placement:** propose where each deliverable lands in a `## Placement` section of `project-specs.md`, and pass those paths as `targets` on this phase's `gate_request` so the user confirms them with the plan ({{protocol placement}}).
+
 ### Document Phase 2
 
 ```markdown

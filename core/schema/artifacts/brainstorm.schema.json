@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://shards.dev/schema/artifacts/brainstorm.schema.json",
   "title": "artifact_emit meta: brainstorm",
-  "description": "meta for artifact type 'brainstorm'. path: project-relative brainstorm/brainstorm_<project>.state.json: {project, phase, problem, context, specialists[], synthesis, facilitation_log[], outcome}. Watched.",
+  "description": "meta for artifact type 'brainstorm'. path: project-relative shards/brainstorm/brainstorm_<project>.state.json (legacy: brainstorm/...): {project, phase, problem, context, specialists[], synthesis, facilitation_log[], outcome}. Watched.",
   "type": "object",
   "required": [
     "title"

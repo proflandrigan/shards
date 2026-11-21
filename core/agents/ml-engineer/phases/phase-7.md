@@ -214,7 +214,7 @@ Then:
 
    Write `model-card.json` to:
    - Greenfield: `shards/<name>/model-card.json`
-   - Iteration: `<existing_service_dir>/model-card.json`
+   - Iteration: `shards/<name>/model-card.json` (same; the existing service holds only confirmed Placement targets)
 
    The JSON must conform to the schema defined in
    `templates/model-card-schema.json` (JSON Schema, draft 2020-12).
@@ -233,7 +233,7 @@ Then:
 
 2. **Write a report** to:
    - Greenfield: `shards/<name>/report.md`
-   - Iteration: `<existing_service_dir>/report.md`
+   - Iteration: `shards/<name>/report.md` (same; the existing service holds only confirmed Placement targets)
    - Executive summary: business problem, solution, key results
    - Model performance: baseline vs. final, with business interpretation
    - Infrastructure plan: serving, monitoring, rollback

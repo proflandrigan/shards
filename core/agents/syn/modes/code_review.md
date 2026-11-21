@@ -29,6 +29,7 @@ Pick the reviewer from the project directory prefix:
 
 | Project directory prefix | Notebook reviewer |
 |--------------------------|-------------------|
+| `shards/<project>/` | By the `agent` field in its `project-specs.md` header: Data Scientist or Data Analyst -> Data Scientist; any other -> ML Engineer |
 | `studies/` | Data Scientist |
 | `analysis/` | Data Scientist |
 | `models/` | ML Engineer |

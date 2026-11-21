@@ -38,8 +38,8 @@ first, or drop to `[EX]` where human review sits between iterations.
 ### Context loading
 
 1. Locate `project-specs.md` in the project directory (typically
-   `shards/<project_name>/project-specs.md` or
-   `<existing_service_dir>/project-specs.md`).
+   `shards/<project_name>/project-specs.md`
+   ; legacy projects: their existing `project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project
      context (AI system type, current prompts/chain, eval harness, baseline
      metrics) before proceeding.

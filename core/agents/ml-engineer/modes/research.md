@@ -34,8 +34,8 @@ Same as `[EX]` Phase 0 but with expanded parameter confirmation.
 ### Context loading
 
 1. Locate `project-specs.md` in the project directory (typically
-   `shards/<project_name>/project-specs.md` or
-   `<existing_service_dir>/project-specs.md`).
+   `shards/<project_name>/project-specs.md`
+   ; legacy projects: their existing `project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project
      context (problem statement, model type, current metrics, code location)
      before proceeding.
