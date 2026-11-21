@@ -1,8 +1,6 @@
-<img 
-  src="shards_icon.png" 
-  alt="Shards" 
-  style="display: block; margin-left: auto; margin-right: auto; width: 400px;" 
-/>
+<p align="center">
+  <img src="shards_icon.png" alt="Shards" width="250">
+</p>
 
 **Shards of Syn's brain** — a suite of data-focused agents for Claude Code, Codex and other Agent Skills hosts.
 
