@@ -45,6 +45,16 @@ Design decisions to make:
 - **Error handling:** What happens on malformed LLM output? Retry with same prompt?
   Retry with modified prompt? Fallback to deterministic logic?
 
+### Experiment plan
+
+The ladder picks the simplest design that could work; it does not prove it is the best. Apply Section A of the experiment framework. {{protocol experiment_framework}} Propose:
+
+- **Baseline:** the lowest viable rung — usually a single prompt on the cheapest model tier that could work (or a deterministic rule, if one is credible).
+- **Candidates (2-4):** genuinely different designs, each with a hypothesis. Vary a real axis: the next ladder rung (chain vs single prompt, RAG vs no RAG), prompt strategy (zero-shot vs few-shot vs structured decomposition), model tier (cheaper vs stronger tier, expressed as tiers, never as model names), retrieval method (semantic vs hybrid vs keyword, with or without reranking).
+- **Recommended lead:** the design the ladder reasoning above lands on.
+
+The shared evaluation (test set, metrics, quality gates) is designed in Phase 4 and applies to every candidate; the decision rule must weigh cost per request and latency, not just quality. Then ask the user the single-approach opt-out question (Section A.2); never take the opt-out on their behalf.
+
 ### Document Phase 3
 
 ```markdown
@@ -81,9 +91,18 @@ Design decisions to make:
   - Evaluation holdout: <% or method>
 - **Caching strategy:** <what's cached, TTL, key design>
 - **Error handling:** <retry strategy, fallback logic>
+- **Experiment plan:**
+  - Mode: Harness | Single approach (opted out — <user's reason>)
+  - Baseline: <approach> — <why it is the floor>
+  - Candidates:
+    - <approach_id>: <description> — hypothesis: <why it might win, at what cost>
+    - <approach_id>: <description> — hypothesis: <...>
+  - Recommended lead: <approach_id> — <why>
+  - Shared evaluation: defined in Phase 4 (same test set and metrics for every approach)
+  - Decision rule: <best primary quality metric among approaches within the cost and latency budgets; ties within <tolerance> go to the lower rung / cheaper tier>
 ```
 
-**DIVERGE check:** If you identified 2-3 mutually exclusive architectural approaches (e.g., different positions on the Simplicity Ladder, fundamentally different system designs) that are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
+**DIVERGE check:** Designs that share the same test set, metrics and deliverable belong in the experiment harness, not a fork (Section A.4 of the experiment framework). Only if you identified 2-3 mutually exclusive architectural approaches that would change the project's shape (different data sources, deliverables or downstream phases) and are genuinely equally viable, you MAY propose a DIVERGE fork. {{protocol diverge}} and follow its DIVERGE Proposal Gate. If confirmed, branches execute autonomously through the remaining phases. After convergence and promotion, resume at Phase 4. If declined or not applicable, continue normally.
 
 {{gate kind=phase}}
 

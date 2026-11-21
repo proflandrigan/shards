@@ -79,7 +79,7 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
      ```
    - Acceptance: each query runs under `LIMIT 100` and returns the expected shape; row counts before/after joins match the Phase 3 prediction.
 
-**Spec B. Training notebook** at `<output_dir>/notebooks/`, built with NotebookEdit. It is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group: data (Overview, Setup, Feature Engineering, EDA), baseline, candidate(s), analysis and infrastructure.
+**Spec B. Training notebook** at `<output_dir>/notebooks/`, built with NotebookEdit. It is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group: data (Overview, Setup, Feature Engineering, EDA), baseline, candidate(s), analysis and infrastructure. With a Harness experiment plan (Phase 4), the baseline and candidate(s) groups become one "experiments" group that drives the harness (Spec F); approach code lives in the harness, not the notebook.
    - **SQL loading rule.** **Do NOT re-embed SQL as Python strings.** Read `.sql`
      files directly using `Path.read_text()`. Reference files by relative path from
      the notebook location:
@@ -92,8 +92,9 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
    - **Setup**: imports, config, random seeds, data loading
    - **Feature Engineering**: feature computation, transformations, encoding
    - **EDA**: target distribution, feature distributions, correlations, class balance
-   - **Baseline Model**: train, evaluate, establish floor
-   - **Candidate Model(s)**: train, tune, evaluate, compare to baseline
+   - **Baseline Model**: train, evaluate, establish floor (Single approach plan only)
+   - **Candidate Model(s)**: train, tune, evaluate, compare to baseline (Single approach plan only)
+   - **Experiments** (Harness plan): import the runner from `experiments/`, run every enabled approach on the shared split, display the leaderboard and a primary-metric chart, name the decision-rule winner. Model Analysis and Infrastructure Readiness then run on the winner, loaded from the registry by approach_id.
    - **Model Analysis**: feature importance, SHAP values, error analysis
    - **Infrastructure Readiness**: model size, inference time benchmarks,
      serving requirements check
@@ -102,6 +103,7 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
      - data: data-load and EDA cells execute and produce the expected shape; target distribution matches prior knowledge.
      - baseline: baseline fits and evaluates on held-out data; metrics recorded.
      - candidate: candidate smoke-fits on <=1% of data first (loss decreasing), then full fit; eval metrics beat the baseline floor.
+     - experiments (Harness plan): each approach smoke-fits on <=1% of data (loss decreasing or metric computed) before the full run; the leaderboard has one row per enabled approach; the winner matches the Phase 4 decision rule.
      - infra: model size, inference latency and memory measured against the Phase 5 budget.
 
 **Spec C. Requirements file.** `requirements.txt` with all ML dependencies.
@@ -158,10 +160,15 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
    `status: "complete"`, populate all metrics, compute `summary.overallVerdict`
    (PASS if all dimensions pass, FAIL if any fail, PARTIAL if mixed).
 
+   With a Harness plan, fill `baseline` from the leaderboard's baseline row and `bestCandidate` from the decision-rule winner (with `deltas` against the baseline); the leaderboard remains the full record of every approach. Phase 6.5 may still change the winner.
+
    The lead emits the eval dashboard (always emit, whether or not a UI exists). Emit
    once; afterwards keep updating `eval-results.json` and the panel updates in place:
 
    {{artifact.emit type=eval-dashboard path=<path_to>/eval-results.json meta="title=Eval: <project_name> panel_id=eval-<project_name>"}}
+
+**Spec F. Experiment harness** (Harness experiment plan only; skip for a Single approach plan). Location `<output_dir>/experiments/`, laid out per Sections B-C of the experiment framework (model variant interface). {{protocol experiment_framework}} Tasks follow Section E of the framework: one harness-core task (`__init__.py`, `base.py`, `registry.py`, `run_experiments.py`, `experiments.yaml`), then one task per approach from the Phase 4 experiment plan (`approaches/<approach_id>.py`, `depends_on` the core task; these can run in parallel), then the notebook experiments group (`depends_on` every approach task). `experiments.yaml` constraints include the Phase 5 infrastructure budgets (model size, inference time, memory), and the runner measures them for every approach so the leaderboard's `constraints_pass` column is real.
+   Acceptance: core: `python -m py_compile` passes and the runner, given a toy dataset, scores a trivial approach end-to-end and writes `leaderboard.csv`; approach: the class subclasses `Approach`, reads hyperparameters from `params`, and smoke-fits on <=1% of data via the runner.
 
 ### Lead loop
 
@@ -170,7 +177,7 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
 {{delegate tasks=models/<name>/tasks.yaml max_parallel=3}}
 
 1. **Load the task list** approved at the plan gate (`<output_dir>/tasks.yaml`; for iteration, in the existing service directory) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
-2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3. Query tasks can run in parallel; notebook, baseline and candidate tasks follow their `depends_on` order.
+2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3. Query tasks can run in parallel; notebook, baseline and candidate tasks follow their `depends_on` order. Harness approach tasks run in parallel once the harness-core task is verified done.
 3. **Receive** each worker's result via `task_report`.
 4. **Verify before it counts.** Re-run (or independently check) the acceptance command, compare with the `plan_ref` specification, then write an evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail), with measured facts (for example `df.shape = (48211, 47)`, `null rate on join key = 0.00%`). Never mark a task done on the worker's word alone.
 5. **On failure**, re-dispatch the task with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary.
@@ -256,6 +263,7 @@ Before this consult, collect the context the reviewer needs, because it cannot c
 - **Query files:**
   - <file path>: <description>
 - **Notebook location:** <file path>
+- **Experiment harness:** <<output_dir>/experiments/ — approaches: <approach_id list>; leaderboard winner: <approach_id>> | N/A — Single approach plan
 - **Requirements file:** <file path>
 - **Config file:** <file path or "N/A">
 - **Baseline results:**
@@ -275,6 +283,7 @@ Before this consult, collect the context the reviewer needs, because it cannot c
 | Check | Expected | Observed | Pass/Fail |
 |---|---|---|---|
 | <task id> <component> | <acceptance expected> | <measured facts> | PASS \| FAIL |
+| <task id> harness: <core or approach_id> | interface per protocol Section C; smoke-fit passes; leaderboard row written | <file path>; <smoke-fit result>; <primary metric> | PASS \| FAIL |
 ```
 
 {{gate kind=phase validates=ml-engineer}}
