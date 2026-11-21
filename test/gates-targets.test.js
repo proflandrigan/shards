@@ -36,22 +36,37 @@ describe('gate_request targets', () => {
       expect(gates.getGate(session, 'data-analyst-phase-1')).toBeNull();
     }
   });
-  it('defaults to []', async () => {
+  it('leaves targets unset when none are passed', async () => {
     await call(ok());
-    expect(gates.getGate(session, 'data-analyst-phase-1').targets).toEqual([]);
+    expect(gates.getGate(session, 'data-analyst-phase-1').targets).toBeUndefined();
   });
 });
 
 describe('defaultResolveOutputDirs', () => {
   const seed = (gs) => state.update('gates', (cur) => { cur.gates = cur.gates || {}; Object.assign(cur.gates, gs); return cur; });
-  it('returns output dir, entry targets and earlier confirmed targets in scope', async () => {
-    const od = require('../runtime/agents').loadAgents().get('ml-engineer').output_dir.replace('{project}', 'p1');
+  const od = () => require('../runtime/agents').loadAgents().get('ml-engineer').output_dir.replace('{project}', 'p1');
+  it("uses the gate's own targets and drops earlier ones it no longer lists", async () => {
     await seed({
-      g0: { id: 'g0', status: 'confirmed', agent: 'ml-engineer', project: 'p1', targets: ['dbt/models/marts/fct_x.sql'] },
-      g1: { id: 'g1', status: 'confirmed', agent: 'ml-engineer', project: 'p2', targets: ['other/y.py'] },
+      g0: { id: 'g0', status: 'confirmed', agent: 'ml-engineer', project: 'p1', decided_at: '2026-01-01T00:00:00.000Z', targets: ['dbt/models/marts/fct_x.sql'] },
     });
-    const entry = { agent: 'ml-engineer', project: 'p1', targets: ['src/churn', '../x'] };
-    expect(gates.defaultResolveOutputDirs(root, entry, session)).toEqual([od, 'src/churn', 'dbt/models/marts/fct_x.sql']);
+    const entry = { id: 'g2', agent: 'ml-engineer', project: 'p1', targets: ['src/churn', '../x'] };
+    expect(gates.defaultResolveOutputDirs(root, entry, session)).toEqual([od(), 'src/churn']);
+  });
+  it('inherits the latest confirmed list in scope when the gate passes none', async () => {
+    await seed({
+      g0: { id: 'g0', status: 'confirmed', agent: 'ml-engineer', project: 'p1', decided_at: '2026-01-01T00:00:00.000Z', targets: ['old/a.py', 'old/b.py'] },
+      g1: { id: 'g1', status: 'confirmed', agent: 'ml-engineer', project: 'p1', decided_at: '2026-01-02T00:00:00.000Z', targets: ['old/a.py'] },
+      g2: { id: 'g2', status: 'confirmed', agent: 'ml-engineer', project: 'p1', decided_at: '2026-01-03T00:00:00.000Z' },
+      g3: { id: 'g3', status: 'confirmed', agent: 'ml-engineer', project: 'p2', decided_at: '2026-01-04T00:00:00.000Z', targets: ['other/y.py'] },
+      g4: { id: 'g4', status: 'changes_requested', agent: 'ml-engineer', project: 'p1', decided_at: '2026-01-05T00:00:00.000Z', targets: ['rejected/z.py'] },
+    });
+    expect(gates.defaultResolveOutputDirs(root, { id: 'g5', agent: 'ml-engineer', project: 'p1' }, session)).toEqual([od(), 'old/a.py']);
+  });
+  it('an explicit empty list clears the targets', async () => {
+    await seed({
+      g0: { id: 'g0', status: 'confirmed', agent: 'ml-engineer', project: 'p1', decided_at: '2026-01-01T00:00:00.000Z', targets: ['old/a.py'] },
+    });
+    expect(gates.defaultResolveOutputDirs(root, { id: 'g1', agent: 'ml-engineer', project: 'p1', targets: [] }, session)).toEqual([od()]);
   });
   it('works with no output_dir', () => {
     expect(gates.defaultResolveOutputDirs(root, { agent: 'syn', targets: ['a/b.py'] }, session)).toEqual(['a/b.py']);

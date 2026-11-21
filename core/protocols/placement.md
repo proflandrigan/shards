@@ -33,7 +33,7 @@ Pass the proposed paths as `targets` on the `gate_request` that closes the plann
 
 - Targets are root-relative paths inside the project.
 - Name specific files or the narrowest directory. Never use `.`, and never a broad directory like `src/` when the work touches one module. Every file under a confirmed target is included in the gate's git snapshot, so a broad target sweeps up unrelated uncommitted work.
-- If a target changes later, re-pass the full updated list on the next gate and update `## Placement`. Treat a change of target as a plan change (`plan_drift` protocol when executing a task manifest).
+- Gates that pass no `targets` keep the last confirmed list. If a target changes later, re-pass the full updated list on the next gate (it replaces the old one; a dropped target is no longer committed) and update `## Placement`. Treat a change of target as a plan change (`plan_drift` protocol when executing a task manifest).
 
 ## Integrating into an existing codebase
 

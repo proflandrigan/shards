@@ -83,9 +83,9 @@ async function requestGate(session, req) {
       Object.assign(existing, {
         summary: req.summary !== undefined ? req.summary : existing.summary,
         record_ref: req.record_ref !== undefined ? req.record_ref : existing.record_ref,
-        targets: req.targets !== undefined ? req.targets : (existing.targets || []),
         requested_at: ts,
       });
+      if (req.targets !== undefined) existing.targets = req.targets;
       result = 'reopened'; entry = existing; return cur;
     }
     entry = gates[id] = {
@@ -94,7 +94,8 @@ async function requestGate(session, req) {
       track, project,
       agent: frame.agent, frame: frame.id,
       summary: req.summary || '', record_ref: req.record_ref || null, validates: req.validates || null,
-      targets: req.targets || [],
+      // Absent (not []) when the agent passed no targets: the gate then inherits the latest confirmed list.
+      ...(req.targets !== undefined ? { targets: req.targets } : {}),
       requested_at: ts, updated_at: ts,
       history: [{ ts, from: null, to: 'pending' }],
       ...(previous ? { previous } : {}),
@@ -127,15 +128,19 @@ function defaultResolveOutputDirs(root, entry, session) {
       if (inRoot(rel)) out.push(rel);
     }
   }
-  const scope = { agent: entry.agent, project: entry.project || null, track: entry.track || null };
-  const lists = [entry.targets];
-  for (const g of (session ? listGates(session) : [])) {
-    if (g && g.status === 'confirmed' && sameScope(g, scope)) lists.push(g.targets);
+  // A gate that passes `targets` replaces the list; dropped targets stop being committed. A gate that
+  // passes none inherits the list from the most recently decided confirmed gate in the same scope.
+  let list = entry.targets;
+  if (!Array.isArray(list)) {
+    const scope = { agent: entry.agent, project: entry.project || null, track: entry.track || null };
+    let best = null;
+    for (const g of (session ? listGates(session) : [])) {
+      if (!g || g.id === entry.id || g.status !== 'confirmed' || !Array.isArray(g.targets) || !sameScope(g, scope)) continue;
+      if (!best || String(g.decided_at || '') >= String(best.decided_at || '')) best = g;
+    }
+    list = best ? best.targets : [];
   }
-  for (const list of lists) {
-    if (!Array.isArray(list)) continue;
-    for (const t of list) if (inRoot(t) && !out.includes(t)) out.push(t);
-  }
+  for (const t of list) if (inRoot(t) && !out.includes(t)) out.push(t);
   return out;
 }
 function defaultLoadConfig(root) { return require('../config').loadOrCreateConfig(root).config; }

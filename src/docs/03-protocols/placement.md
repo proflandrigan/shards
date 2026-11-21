@@ -19,7 +19,7 @@ In a greenfield project there is nothing to integrate into, so the default is a 
 
 ## Commit paths
 
-When a gate is confirmed, the git snapshot covers the agent's `output_dir` plus the `targets` of this gate and of every earlier confirmed gate of the same agent and project in the session.
+When a gate is confirmed, the git snapshot covers the agent's `output_dir` plus the current target list: the `targets` passed on this gate, or, if it passed none, those of the most recent confirmed gate of the same agent and project in the session. A target you drop from a later list is no longer committed.
 
 ## Legacy
 

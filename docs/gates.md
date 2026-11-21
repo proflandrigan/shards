@@ -39,7 +39,7 @@ Stored at `<root>/.shards/state/sessions/<sessionKey>/gates.json` as `{gates: {<
 | `summary` | `gate_request` | Required by the tool, max 2000 characters. |
 | `record_ref` | `gate_request` | Project-relative path, `#anchor` allowed. The file is only checked when `validates` is set. |
 | `validates` | `gate_request` | String checklist name matching the schema pattern. Stored as given. The machine does not validate it. |
-| `targets` | `gate_request` | Optional. Array of up to 100 unique root-relative paths (1 to 512 characters each) where the agent's deliverables land. Absolute, `..`-escaping and root (`.`) paths are rejected. Default `[]`. Added to the commit paths (section 6). |
+| `targets` | `gate_request` | Optional. Array of up to 100 unique root-relative paths (1 to 512 characters each) where the agent's deliverables land. Absolute, `..`-escaping and root (`.`) paths are rejected. Unset when omitted. Passing it replaces the confirmed list; `[]` clears it. Added to the commit paths (section 6). |
 | `requested_at`, `updated_at` | machine | ISO timestamps. |
 | `decided_at`, `decision` | `confirmGate` | `decision` is `confirmed` or `changes_requested`. |
 | `note` | `confirmGate` | Set only when a note is given (`--changes`). |
@@ -130,7 +130,7 @@ If `shards.config.yaml` fails to load, `gate_request` and `load_phase` treat the
 
 `commitGate` (`runtime/git/index.js`) runs under the pending lock:
 
-1. **Collect.** `git ls-files -co --exclude-standard -z -- <outputDirs>` inside a repo, or a filesystem walk outside one. Commit paths are the agent's `output_dir` (`{project}` substituted, normally `shards/<project>/`) plus the `targets` of this gate and of every earlier confirmed gate of the same agent, project and track in the session. Paths outside the root are dropped. Name narrow targets: everything under a target (tracked, or untracked and not ignored) is included. With no commit paths (`output_dir: null` and no targets) the result is `skipped: no_output_dirs`.
+1. **Collect.** `git ls-files -co --exclude-standard -z -- <outputDirs>` inside a repo, or a filesystem walk outside one. Commit paths are the agent's `output_dir` (`{project}` substituted, normally `shards/<project>/`) plus the current target list: this gate's `targets` when it passed them, otherwise the `targets` of the most recently decided confirmed gate of the same agent, project and track in the session. A target dropped from a later list is no longer committed. Paths outside the root are dropped. Name narrow targets: everything under a target (tracked, or untracked and not ignored) is included. With no commit paths (`output_dir: null` and no targets) the result is `skipped: no_output_dirs`.
 2. **Filter.** Drops `.git`, leased paths, denylisted paths, directories, and files over `max_file_size_bytes`. Keeps tracked files missing from disk as deletions.
 3. **Diff.** Hashes the files and diffs them against HEAD. Keeps only changed entries. None changed means `skipped: nothing_to_commit`.
 4. **Snapshot.** Writes a commit object (parent = HEAD) to `refs/shards/pending/<gate>-<seq>` (one ref per pending record) through a temporary index.
