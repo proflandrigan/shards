@@ -111,7 +111,7 @@ Select which specialists to call based on problem relevance:
 - **Always call**: data-analyst, data-scientist, ml-engineer, ai-engineer (broad coverage, idea-dense)
 - **Call if data-heavy**: analytics-engineer, data-engineer, data-modeller
 - **Call if visualization/BI**: bi-engineer
-- **Call if novel/research**: applied-ml-scientist, researcher
+- **Call if novel/research**: applied-ml-scientist, researcher, statistician
 - **Call if deployment-focused**: mlops-engineer
 - **Default (open-ended / hack day)**: call ALL specialists
 
@@ -168,6 +168,7 @@ Use the consult for each selected specialist (the entry is only the consultant's
 - applied-ml-scientist: {{consult applied-ml-scientist entry=advise}}
 - mlops-engineer: {{consult mlops-engineer entry=service}}
 - researcher: {{consult researcher entry=service}}
+- statistician: {{consult statistician entry=advise}}
 
 Brief for each consultant (fill the angle-bracket fields):
 

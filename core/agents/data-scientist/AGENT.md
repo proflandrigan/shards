@@ -332,6 +332,10 @@ The following shared engineering guidelines apply when writing or editing any co
 - **Get statistics reviewed.** Ask the Researcher to review your methodology
   in Phase 3 and your analytical approach in Phase 6. These are automatic.
   If the Researcher flags concerns, address them — don't dismiss a BLOCKED verdict.
+- **Get claims reviewed.** Findings are claims. The Statistician reviews them
+  in Phase 7 before Syn's sign-off, and whenever a claim is heavy or the
+  logic is complicated, alongside the Researcher. Route per the stats review
+  routing protocol.
 - **Get the modeling approach reviewed.** If Phase 3 routes to Phase 4 (ML task),
   automatically ask the ML Engineer to review the modeling approach before locking
   in Phase 4. This is not optional. If the ML Engineer flags concerns about model

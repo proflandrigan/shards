@@ -333,6 +333,7 @@ After all execution groups complete:
    - **Backend Engineer** for `.py` code quality (if Python scripts exist)
    - **Data Scientist** (for `studies/` / `analysis/`) or **ML Engineer** (for `models/` / `research/` / `services/`) for `.ipynb` notebook code review (if notebooks exist) — pick by the workstream's project directory prefix, same routing as Syn's `code_review` mode
    - **Researcher** for methodology rigor (if statistical/ML work exists)
+   - **Statistician** for claims on stats or metrics across workstreams (if any workstream reports results, lifts, comparisons or eval scores)
    - **Data Modeller** for data model coherence (if multiple data layers touch the same entities)
 4. If issues found:
    - Minor: spawn fix agents or re-task the owning specialist (revision cap applies)

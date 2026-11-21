@@ -135,6 +135,7 @@ const AGENT_META = {
   'bi-engineer':            { color: '#E91E63', label: 'BI Engineer',                 category: 'analytics', keywords: ['dashboard', 'visualization', 'streamlit'] },
   'backend-engineer':       { color: '#9E9E9E', label: 'Backend Engineer',            category: 'review', keywords: ['python', 'fastapi', 'code review'] },
   'researcher':             { color: '#795548', label: 'Researcher',                  category: 'review', keywords: ['statistics', 'methodology'] },
+  'statistician':           { color: '#8D6E63', label: 'Statistician',                category: 'review', keywords: ['bayesian', 'frequentist', 'claims'] },
   'academic':               { color: '#607D8B', label: 'Academic',                    category: 'review', keywords: ['safety', 'ethics', 'bias'] },
 };
 

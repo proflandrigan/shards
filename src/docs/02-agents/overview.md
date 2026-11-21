@@ -1,6 +1,6 @@
 # Agent Taxonomy
 
-Shards ships 15 agents, defined once in `core/agents/<id>/` (`AGENT.md`, `agent.yaml`, `modes/`, phase files). The `role` in each `agent.yaml` gives three types: one orchestrator (Syn), 11 specialists with phased workflows, and 3 reviewers (Researcher, Academic, Backend Engineer) that have no phased build of their own.
+Shards ships 16 agents, defined once in `core/agents/<id>/` (`AGENT.md`, `agent.yaml`, `modes/`, phase files). The `role` in each `agent.yaml` gives three types: one orchestrator (Syn), 11 specialists with phased workflows, and 4 reviewers (Researcher, Statistician, Academic, Backend Engineer) that have no phased build of their own.
 
 Run `/shards:agents` to print the live list (role, modes, switch command, consult subagents) from the same files.
 
@@ -13,7 +13,7 @@ Run `/shards:agents` to print the live list (role, modes, switch command, consul
 | **Specialist: data** | [Data Engineer](data-engineer.md), [Data Modeller](data-modeller.md), [Analytics Engineer](analytics-engineer.md) | Build pipelines, model entities, design transformation layers. Quick and Deep tracks. |
 | **Specialist: ML/AI** | [ML Engineer](ml-engineer.md), [AI Engineer](ai-engineer.md), [Applied ML Scientist](applied-ml-scientist.md), [Deep Learning Engineer](deep-learning-engineer.md), [MLOps Engineer](mlops-engineer.md) | Design, build and deploy ML and AI systems. |
 | **Specialist: visualization** | [BI Engineer](bi-engineer.md) | Dashboards and data visualization. |
-| **Reviewer** | [Researcher](researcher.md), [Academic](academic.md), [Backend Engineer](backend-engineer.md) | Review and advise. No project directory. Files are written only on request (Academic reports, Researcher and Academic critical reviews) or by Backend Engineer Clean mode, which edits in place. |
+| **Reviewer** | [Researcher](researcher.md), [Statistician](statistician.md), [Academic](academic.md), [Backend Engineer](backend-engineer.md) | Review and advise. No project directory. Files are written only on request (Academic reports, Researcher and Academic critical reviews) or by Backend Engineer Clean mode, which edits in place. |
 
 The 11 specialists are the 12 of earlier versions minus the Backend Engineer, which is now a reviewer: `agent.yaml` gives it `role: reviewer` and `output_dir: null`.
 
@@ -59,6 +59,7 @@ The Data Analyst is a single 4-phase track by design; it escalates to the Data S
 | Build a dashboard | [BI Engineer](bi-engineer.md) |
 | Review Python (`.py`) code for quality | [Backend Engineer](backend-engineer.md) |
 | Validate statistical methodology | [Researcher](researcher.md) |
+| Check whether a statistical or metric claim holds | [Statistician](statistician.md) |
 | Assess safety, ethics, or behavioral efficacy | [Academic](academic.md) |
 | Not sure? | [Syn](syn.md): run `/shards:syn` and it will triage |
 
@@ -67,6 +68,7 @@ The Data Analyst is a single 4-phase track by design; it escalates to the Data S
 Specialists consult each other at defined points in their phases, with the `{{consult <agent> entry=<entry>}}` macro, which resolves to a native subagent call on the host. Common patterns:
 
 - The Data Scientist consults the **Researcher** for statistical methodology review.
+- Specialists making claims on stats or metrics consult the **Statistician**, which checks whether the conclusion follows (method questions stay with the Researcher).
 - The ML Engineer consults the **Data Modeller** for feature source understanding.
 - The AI Engineer consults the **Academic** for safety and ethics assessment.
 - Every specialist's final phase asks **Syn** for final review (`syn-final_review`), and most also for code review (`syn-code_review`).

@@ -12,6 +12,6 @@ consult_entries:
   review: modes/review.md
   advise: modes/advise.md
   worker: modes/worker.md
-reviewers: [data-modeller, data-scientist, researcher, analytics-engineer, bi-engineer, syn]
+reviewers: [data-modeller, data-scientist, researcher, statistician, analytics-engineer, bi-engineer, syn]
 output_dir: "analysis/{project}/"
 jobs: [record, tasks, knowledge, review, artifacts]

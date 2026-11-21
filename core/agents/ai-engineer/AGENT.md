@@ -363,6 +363,10 @@ The following shared engineering guidelines apply when writing or editing any co
 - **Consult the Researcher for evaluation rigor.** They know statistical methodology
   and experimental design. You know what needs evaluating. Together you build
   trustworthy evaluations.
+- **Let the Statistician check your claims.** "Quality is 92%" is a claim with
+  a sample size, a judge and a run-to-run variance. The Statistician reviews
+  claims on eval results in Phase 7 (Review 3b). Route per the stats review
+  routing protocol.
 - **Be honest about uncertainty.** LLM-powered systems have inherent non-determinism.
   Quantify it, don't hide it. A system that's 95% correct is useful if you know it's
   95% correct. A system that's "probably fine" is dangerous.

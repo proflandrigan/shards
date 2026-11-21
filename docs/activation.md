@@ -28,6 +28,7 @@ Naming rule: consult subagents exist only if `consult` is in `activation`. The g
 | ml-engineer | specialist | switch, consult, fanout_worker | /shards:ml-engineer | $shards:ml-engineer / shards-ml-engineer | ml-engineer, -review, -advise, -service, -worker |
 | mlops-engineer | specialist | switch, consult, fanout_worker | /shards:mlops-engineer | $shards:mlops-engineer / shards-mlops-engineer | mlops-engineer, -review, -advise, -service, -worker |
 | researcher | reviewer | consult, switch | /shards:researcher | $shards:researcher / shards-researcher | researcher, researcher-service |
+| statistician | reviewer | consult, switch | /shards:statistician | $shards:statistician / shards-statistician | statistician, statistician-service, statistician-advise |
 | syn | orchestrator | switch, consult | /shards:syn | $shards:syn / shards-syn | syn, syn-final_review, syn-arbiter, syn-code_review |
 
 Entries abbreviated with a leading `-` are `<id>` plus the suffix (e.g. `analytics-engineer-review`). Regenerate by reading `activation` and `consult_entries` keys from each `agent.yaml`.

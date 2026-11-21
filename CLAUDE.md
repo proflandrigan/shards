@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-The **shards** source repository: a suite of data-focused agents (Syn plus 14 shards) for Claude Code, Codex and generic Agent Skills hosts. This is the v2 layout. v1 (the `tools/install.js` installer that copied `src/agents` into a project's `.claude/`, `::GATE::` text fences, the gate hook and the web UI hooks) is legacy; only the pieces listed under "Legacy" below remain.
+The **shards** source repository: a suite of data-focused agents (Syn plus 15 shards) for Claude Code, Codex and generic Agent Skills hosts. This is the v2 layout. v1 (the `tools/install.js` installer that copied `src/agents` into a project's `.claude/`, `::GATE::` text fences, the gate hook and the web UI hooks) is legacy; only the pieces listed under "Legacy" below remain.
 
 Three layers (ADR 0001): `core/` (content) -> `build/` (generated host packages) -> `runtime/` (the `shards-mcp` server that enforces gates and keeps session state). Git is the source of truth for everything agents write (ADR 0005); Shards owns no storage (ADR 0003).
 
@@ -53,7 +53,7 @@ node cli/shards.js migrate --dry-run
 
 ## Architecture notes
 
-**Agent taxonomy** (from `agent.yaml` `role`): orchestrator (`syn`), specialists (`data-analyst`, `data-scientist`, `ml-engineer`, `ai-engineer`, `data-engineer`, `data-modeller`, `analytics-engineer`, `applied-ml-scientist`, `deep-learning-engineer`, `bi-engineer`, `mlops-engineer`), reviewers (`researcher`, `academic`, `backend-engineer`).
+**Agent taxonomy** (from `agent.yaml` `role`): orchestrator (`syn`), specialists (`data-analyst`, `data-scientist`, `ml-engineer`, `ai-engineer`, `data-engineer`, `data-modeller`, `analytics-engineer`, `applied-ml-scientist`, `deep-learning-engineer`, `bi-engineer`, `mlops-engineer`), reviewers (`researcher`, `statistician`, `academic`, `backend-engineer`).
 
 **Activation modes** (ADR 0002, 0009; `docs/activation.md`, `docs/delegation.md`): `switch` (the main thread becomes the agent via the `activate` tool; `return` pops back), `consult` (a one-shot read-only subagent returning a verdict), `fan-out` (parallel workers over leased slices), and delegated build (worker subagents execute a task list under a gate). The set an agent supports is in its `agent.yaml`.
 

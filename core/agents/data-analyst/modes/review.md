@@ -45,6 +45,10 @@ Call the Researcher to validate statistical methodology and assumptions:
 
 **Researcher input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `researcher`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Researcher input the caller supplied, otherwise list it as an open question for the caller.
 
+If the work under review states claims on stats or metrics, also get the Statistician's view, routed per the stats review routing protocol (`protocols/stats_review_routing.md`):
+
+**Statistician input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `statistician`, entry `service`, with the claims, the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Statistician input the caller supplied, otherwise list it as an open question for the caller.
+
 ---
 
 ## Phase 4 — Write Review File
@@ -77,6 +81,9 @@ Write `reviews/<system_name>/data-analyst-review.md` using this template exactly
 
 ## Cross-Agent Input
 {{RESEARCHER_FINDINGS}}
+
+## Statistician Input
+{{STATISTICIAN_FINDINGS}}
 
 ## Prioritized Fix List
 
@@ -116,6 +123,7 @@ Wait for their response before taking any further action.
 - **Scope discipline.** Review only what was confirmed in Phase 1. Do not expand scope silently.
 - **Evidence-based.** Every finding must be grounded in something you read or the Researcher flagged. No speculation presented as fact.
 - **Researcher consultation is mandatory.** Do not skip it even if the methodology seems simple.
+- **Statistician consultation when there are claims.** If the work states claims on stats or metrics, consult the Statistician as well; route per the stats review routing protocol.
 - **No build work.** Review mode does not produce new queries, notebooks, or analyses. It produces a review document only.
 - **Write before presenting.** Always write the review file before reading it back to the user.
 - **Metric honesty.** If you find a metric that answers the wrong question, call it out clearly.

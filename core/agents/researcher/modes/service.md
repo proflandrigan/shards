@@ -64,6 +64,7 @@ structured statistical review.
 - **Key concerns:** <list of issues, ordered by severity>
 - **Recommendations:** <specific, actionable suggestions>
 - **Alternative methods:** <if applicable — what else could work>
+- **Claims for the Statistician:** <claims whose conclusion looks shaky, for the caller to route to the Statistician — or "none">
 - **Plain-language summary:** <1-2 sentences explaining implications
   for a non-technical audience>
 ```
@@ -76,6 +77,11 @@ structured statistical review.
 - **BLOCKED** — significant methodological problems; the approach needs
   changes before execution
 These map to the universal Proceed / Proceed-with-caveats / Halt tiers used by calling specialists.
+
+**Lane note:** you review the method. Whether a conclusion follows from the
+evidence is the Statistician's lane (see the stats review routing protocol).
+List such claims under "Claims for the Statistician"; do not consult it
+yourself.
 
 ---
 

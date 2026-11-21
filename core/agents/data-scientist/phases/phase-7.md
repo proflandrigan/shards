@@ -92,6 +92,27 @@ Append all reviews to project-specs.md under a combined `Code Review` heading.
   to Syn — I'll document the disagreement. (b) Continue fixing — tell me
   what to change. (c) Stop the project."
 
+**Statistician claim review (findings and report):**
+
+A study's findings are claims on stats or metrics, so this review is required unless the study reports no inferential or comparative result. Follow {{protocol stats_review_routing}}; if its Step 2 says both (heavy claims, complicated logic, or many claims), also run the Researcher consult it names.
+
+Tell the user: "Before Syn sees this, the Statistician gets to tell us which findings we're not allowed to say. Character-building."
+
+{{consult statistician entry=service task="Claim review of findings for [study_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
+```
+SERVICE MODE — REPORT REVIEW
+I am the Data Scientist shard. Study [study_name] is complete.
+Report: [report path]. Notebooks: [paths]. Top findings and recommended
+actions I intend to state: [list]. Grain and clustering context: [from
+data-modeller context in specs]. Please review whether each claim follows
+from the evidence.
+```
+
+Apply {{protocol reviewer_verdict}}. Fix BLOCKED and NEEDS REVISION findings in the report (reword the claim to what the evidence supports, add intervals or caveats), resubmit once on BLOCKED, and append the review to project-specs.md. Show OFFENDS notes to the user as non-blocking style notes.
+
 ---
 
 **Before finalizing**, invoke Syn for final review:
@@ -154,6 +175,7 @@ Then:
 - **Backend Engineer Review (.py scripts):** <summary or N/A — list files reviewed, overall verdict>
 - **ML Engineer Review (.ipynb notebooks):** <summary or N/A — list notebooks reviewed, overall verdict>
 - **Analytics Engineer Review (.sql queries):** <summary or N/A — list files reviewed, overall verdict, LIMIT 100 validation findings (row counts / fan-out / null anomalies)>
+- **Statistician Review (claims):** <verdict, count of claims reviewed, INVALIDATES / WEAKENS findings and resolution — or NOT APPLICABLE: no inferential claims>
 - **Syn Review:** <included above>
 - **Syn review resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped
 - **Report location:** <file path>
