@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "matcher": "startup|resume|compact|clear", "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.js\"" } ] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/user-prompt-submit.js\"" } ] }
+    ],
+    "SubagentStop": [
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/subagent-stop.js\"" } ] }
+    ],
+    "PreToolUse": [
+      { "matcher": ".*", "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use.js\"" } ] }
+    ]
+  }
+}

@@ -1,0 +1,128 @@
+'use strict';
+// Renders a resolved macro model to text for a target (claude | codex | skills). See MACROS.md section 5.
+
+const { formatMeta } = require('./meta');
+
+const TARGETS = ['claude', 'codex', 'skills'];
+// Real tool name inside a Claude Code plugin: mcp__plugin_<plugin>_<server>__<tool> (verified live: plugin 'shards', server 'shards').
+const CLAUDE_TOOL_PREFIX = 'mcp__plugin_shards_shards__';
+const CODEX_TOOL_PREFIX = 'mcp__shards__'; // verified on Codex 0.169.0 (docs/compat.md)
+
+function tool(target, t) {
+  if (target === 'claude') return `${CLAUDE_TOOL_PREFIX}${t}`;
+  if (target === 'codex') return `${CODEX_TOOL_PREFIX}${t}`;
+  return t;
+}
+function contentPath(target, rel) {
+  const p = `content/${rel}`;
+  return target === 'claude' ? `\${CLAUDE_PLUGIN_ROOT}/${p}` : p;
+}
+const q = (s) => JSON.stringify(String(s));
+
+// The argument object a macro's rendered instruction passes to its runtime tool (auto_verify start,
+// artifact.emit). Placeholders the agent fills in stay as '<...>' strings; meta integer placeholders
+// are { placeholder }. Exported so tests can validate it against the tools' inputSchema.
+function toolArgs(m) {
+  if (m.macro === 'auto_verify' && m.action === 'start') {
+    return { agent: m.agent || '<current agent>', phase: m.phase || '<current phase>', tool_budget: Number(m.tool_budget), ttl_s: Number(m.ttl) };
+  }
+  if (m.macro === 'artifact.emit') return m.meta ? { type: m.type, path: m.path, meta: m.meta } : { type: m.type, path: m.path };
+  return null;
+}
+
+function render(m, target) {
+  const T = (t) => `\`${tool(target, t)}\``;
+  switch (m.macro) {
+    case 'switch':
+      return `Switch to \`${m.agent}\`: call ${T('activate')}(agent=${q(m.agent)}, mode="switch") and adopt the persona it returns. You stay that agent until you call ${T('return')}.`;
+    case 'consult': {
+      const file = contentPath(target, `agents/${m.agent}/${m.file}`);
+      const task = m.task ? ` Task: ${m.task}.` : '';
+      const tail = 'Give it only the task and the record sections it needs. It answers with a verdict (see the reviewer-verdict protocol), holds no gates and consults no one further. Continue with its result.';
+      if (target === 'claude') return `Consult \`${m.agent}\` (entry \`${m.entry}\`): run the \`${m.agent}-${m.entry}\` subagent by name. Start its prompt with "Entry ${m.entry}: read ${file} first".${task} ${tail}`;
+      if (target === 'codex') return `Consult \`${m.agent}\` (entry \`${m.entry}\`): spawn the \`${m.agent}-${m.entry}\` agent with spawn_agent. Start its message with "Entry ${m.entry}: read ${file} first".${task} ${tail}`;
+      return `Consult \`${m.agent}\` (entry \`${m.entry}\`): invoke the \`${m.agent}\` skill in an isolated context if the host supports it; otherwise call ${T('activate')}(agent=${q(m.agent)}, mode="consult") and follow ${file}, then call ${T('return')}.${task} ${tail}`;
+    }
+    case 'fanout': {
+      const file = contentPath(target, `agents/${m.agent}/${m.file}`);
+      const how = target === 'claude' ? `launch one \`${m.agent}-${m.entry}\` subagent per slice in a single message`
+        : target === 'codex' ? `spawn one \`${m.agent}-${m.entry}\` agent per slice in parallel with spawn_agent`
+          : `invoke the \`${m.agent}\` skill once per slice in isolated contexts`;
+      return `Fan out to \`${m.agent}\` workers (slices: ${m.slices}): call ${T('fanout_start')}(agent=${q(m.agent)}, slices=${q(m.slices)}), then ${how}. Each worker starts with "Entry ${m.entry}: read ${file} first" plus its slice. Workers hold no gates, do not change the plan and do not delegate. Collect and verify every result before continuing.`;
+    }
+    case 'delegate': {
+      const wf = contentPath(target, 'agents/<worker>/modes/worker.md');
+      const pd = contentPath(target, 'protocols/plan_drift.md');
+      const mode = m.mode || (target === 'skills' ? 'sequential' : 'parallel');
+      const hostCap = target === 'claude' ? 'the host background-subagent thread cap'
+        : target === 'codex' ? 'the Codex max_threads setting' : 'the host thread cap';
+      const cap = m.max_parallel ? `${hostCap} or ${m.max_parallel}, whichever is lower` : hostCap;
+      const card = 'followed by the card JSON';
+      const par = target === 'claude' ? `launch the specialist's own worker subagent (the worker agent id on the card) for every dispatched card as a background subagent in a single message, starting each prompt with "Entry worker: read ${wf} first" ${card}`
+        : target === 'codex' ? `spawn the worker agent named on the card with spawn_agent for every dispatched card (bounded by max_threads), starting each message with "Entry worker: read ${wf} first" ${card}`
+          : `invoke the worker skill named on the card in an isolated context for each dispatched card if the host supports concurrent skill invocations`;
+      const seq = target === 'claude' ? `run the specialist's own worker subagent (the worker agent id on the card) by name, starting its prompt with "Entry worker: read ${wf} first" ${card}, and wait for its result before handing over the next card`
+        : target === 'codex' ? `spawn the worker agent named on the card with spawn_agent, starting its message with "Entry worker: read ${wf} first" ${card}, and wait for its result before spawning the next`
+          : `invoke the worker skill named on the card in an isolated context if the host supports it (one card at a time, waiting for each result), otherwise do the card inline in this session under the same owned-path rule`;
+      const inl = 'do not hand the card to a worker: do each card yourself inline in this session, writing only inside the card\'s owned paths';
+      const fbSeq = 'If the host cannot run subagents in parallel, run the ready cards one at a time through the same dispatch/report/verify steps.';
+      const fbInl = 'If there are no subagents at all, do each card yourself inline under the same owned-path rule; same cards, acceptance checks and evidence rows; only isolation is lost.';
+      let dispatch, hand, fb;
+      if (mode === 'parallel') {
+        dispatch = `Call ${T('task_dispatch')}(ids=<ready tasks>) for ready tasks only, at most ${cap} at once; it returns task cards`;
+        hand = `Hand each card to a worker in parallel: ${par}`;
+        fb = `${fbSeq} ${fbInl}`;
+      } else if (mode === 'sequential') {
+        dispatch = `Call ${T('task_dispatch')}(ids=<ONE ready task>) for a single ready task at a time (never more than one in flight); it returns its task card`;
+        hand = `Hand the card to a worker: ${seq}`;
+        fb = fbInl;
+      } else {
+        dispatch = `Call ${T('task_dispatch')}(ids=<ONE ready task>) for a single ready task at a time; it returns its task card`;
+        hand = `Inline mode, no worker handoff: ${inl}, then produce the result JSON as a worker would (same card, same acceptance check, same evidence)`;
+        fb = 'Inline mode forces this: same cards, acceptance checks and evidence rows as with workers; only isolation is lost.';
+      }
+      const dflt = m.mode ? '' : (target === 'skills' ? ' This host gives no parallel guarantee, so run cards sequentially by default.' : '');
+      return `Run the delegated build loop (mode: ${mode}).${dflt} (1) Call ${T('tasks_set')}(path=${q(m.tasks || '<output_dir>/tasks.yaml')}) with the approved tasks.yaml; it rejects cycles, overlapping owned paths and missing acceptance checks. (2) ${dispatch}. (3) ${hand}. (4) Pass each result JSON to ${T('task_report')}; use ${T('task_status')} to see what is ready. (5) Verify the acceptance check yourself (never accept on the worker's word), then call ${T('task_verify')}(id=<task id>, pass=<true|false>, expected=<what the check requires>, observed=<what you saw>, notes=<optional>) to record the evidence row. A task is done only through ${T('task_verify')}; on a failed check re-dispatch with the failure notes, at most 2 retries, then escalate to the user. Then dispatch the tasks it unblocks. (6) Workers hold no gates, never change the plan and never delegate; if a result has deviations, stop dependent tasks and follow the plan_drift protocol (read ${pd}). (7) Raise the phase gate only when every task is done. Fallbacks: ${fb}`;
+    }
+    case 'return':
+      return m.to ? `Return to \`${m.to}\`: call ${T('return')}(to=${q(m.to)}). Resolve any pending gate first.` : `Return to the previous agent: call ${T('return')}(). Resolve any pending gate first.`;
+    case 'phase': {
+      const tr = m.track ? `, track=${q(m.track)}` : '';
+      return `Load phase ${m.n}${m.track ? ` (${m.track} track)` : ''}: call ${T('load_phase')}(agent=${q(m.agent)}, n=${q(m.n)}${tr}) and follow the phase text it returns. The tool is refused until the preceding phase's gate is confirmed; do not read phase files directly.`;
+    }
+    case 'protocol':
+      return `Read the \`${m.name}\` protocol now and follow it: ${contentPath(target, `protocols/${m.file}`)}`;
+    case 'template':
+      return `Copy and fill in the template ${contentPath(target, `templates/${m.file}`)}`;
+    case 'gate': {
+      const v = m.validates ? `, validates=${q(m.validates)}` : '';
+      const adv = m.advancing ? 'Write the decisions to the project record first.' : 'This is a checkpoint: it does not advance the phase.';
+      return `**Gate \`${m.id}\`** (kind \`${m.kind}\`). ${adv} Then call ${T('gate_request')}(id=${q(m.id)}, kind=${q(m.kind)}, phase=${q(m.phase)}, summary=<one short paragraph>, record_ref=<the record section you wrote>${v}) and stop. Do not continue until the tool reports the gate confirmed; "already confirmed" means continue. Never approve or confirm the gate yourself, and do not write gate fences in text.`;
+    }
+    case 'auto_verify': {
+      if (m.action !== 'start') return `End auto-verify: call ${T('auto_verify_end')}().`;
+      const a = toolArgs(m);
+      return `Start auto-verify: call ${T('auto_verify_start')}(agent=${q(a.agent)}, phase=${q(a.phase)}, tool_budget=${a.tool_budget}, ttl_s=${a.ttl_s}). Only read-only operations on the allowlist are auto-approved.`;
+    }
+    case 'record.write':
+      return `Write ${q(m.section)} to the project record (\`${m.file}\`) through the \`record\` job configured in shards.config.yaml, and keep the returned reference as \`record_ref\`.`;
+    case 'tasks.create':
+      return `Create a task through the \`tasks\` job configured in shards.config.yaml: title ${q(m.title)}${m.owns ? `, owned paths ${q(m.owns)}` : ''}${m.accept ? `, acceptance check ${q(m.accept)}` : ''}.`;
+    case 'tasks.update':
+      return `Through the \`tasks\` job, set task ${q(m.id)} to \`${m.status}\`.`;
+    case 'tasks.list':
+      return `List tasks through the \`tasks\` job${m.status ? ` with status \`${m.status}\`` : ''}.`;
+    case 'tasks.get':
+      return `Read task ${q(m.id)} through the \`tasks\` job.`;
+    case 'knowledge.search':
+      return `Search the knowledge source bound to the \`knowledge\` job for ${q(m.query)}${m.scope ? ` (scope ${q(m.scope)})` : ''}. Treat results as hints to verify.`;
+    case 'artifact.emit': {
+      const a = toolArgs(m);
+      return `Announce the output: call ${T('artifact_emit')}(type=${q(a.type)}, path=${q(a.path)}${a.meta ? `, meta=${formatMeta(a.meta)}` : ''}).${a.meta ? ' Pass meta as an object, not a string.' : ''}`;
+    }
+    default:
+      throw new Error(`no renderer for ${m.macro}`);
+  }
+}
+
+module.exports = { render, toolArgs, tool, CLAUDE_TOOL_PREFIX, CODEX_TOOL_PREFIX, contentPath, TARGETS };

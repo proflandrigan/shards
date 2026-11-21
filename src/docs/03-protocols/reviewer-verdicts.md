@@ -1,39 +1,32 @@
 # Reviewer Verdicts
 
-Every reviewer — Syn, Researcher, Data Modeller, Backend Engineer, MLOps Engineer, Applied ML Scientist — returns a verdict in one of three tiers. This is the universal vocabulary.
+Every reviewer (Syn, Researcher, Data Modeller, Backend Engineer, MLOps Engineer, Applied ML Scientist and the rest) returns exactly one of three verdict words. No reviewer defines its own vocabulary. Nuance goes in the body of the review, not the verdict word.
 
 ## The three tiers
 
-| Tier | Meaning | Caller action |
+| Verdict | Tier | Caller action |
 |---|---|---|
-| **APPROVED** / SOUND / CLEAN | No issues. | Proceed as planned. |
-| **NEEDS REVISION** / CONSIDER ALTERNATIVES / MINOR ISSUES | Valid but improvable. Reviewer provides specific suggestions. | Caller decides: address suggestions or proceed with justification. |
-| **BLOCKED** / REVISE / REFACTOR REQUIRED | Critical issues that must be fixed. | Caller must address before advancing. |
+| **APPROVED** | Proceed | Record the verdict in the specs and continue. |
+| **NEEDS REVISION** | Proceed with caveats | Record the concern verbatim, tell you what was flagged, and continue once you confirm or the fix is made. |
+| **BLOCKED** | Halt and fix | Halt, document, fix, and resubmit to the same reviewer once. |
 
-Different reviewers use different labels (the Researcher says SOUND / CONSIDER ALTERNATIVES / REVISE; Syn says APPROVED / NEEDS REVISION / BLOCKED; the Backend Engineer says CLEAN / MINOR ISSUES / REFACTOR REQUIRED / BLOCKED) but the semantics are the same.
-
-## How verdicts are used
-
-Specialists write the reviewer verdict into the relevant phase section of `project-specs.md`:
-
-```
-## Phase 3: Analysis Methodology
-
-::GATE::
-**Method:** Propensity score matching.
-**Reviewer verdict (Researcher):** SOUND.
-**Reviewer notes:** Propensity overlap looks good; recommend sensitivity analysis.
-::ENDGATE::
-```
-
-The specialist then acts on the verdict per the table above.
+Older specs may use earlier words. Sound, Aligned, Suitable, Clear, DEPLOY and Clean map to APPROVED. Concerns, Consider Alternatives, Nuanced, OPTIMIZE, Minor Issues and Refactor Required map to NEEDS REVISION. Revise, Redesign and REDESIGN map to BLOCKED. If a reviewer returns an unknown word, the specialist records it verbatim, treats it as the closest tier (asking you if ambiguous) and notes the deviation.
 
 ## Escalation
 
-When multiple reviewers are consulted in a phase (e.g., ML Engineer Phase 7 has Backend + MLOps + Syn), the specialist aggregates verdicts. Any `BLOCKED` blocks the phase. Any `NEEDS REVISION` is documented and addressed or justified.
+- **Resubmission cap.** A specialist never resubmits to the same reviewer more than once per phase. A second BLOCKED verdict goes to you with the reviewer's concern verbatim, a one-line summary of the current plan, and three options: revise further, override and proceed (the disagreement is documented), or stop the project.
+- **Resolution is recorded** in the specs as `Approved`, `Approved on resubmit`, `User override`, or `Project stopped`.
+- **Conflicting reviewers.** When two reviewers in one phase return conflicting tiers, the specialist presents both verbatim and asks you which way to go. It does not resolve the conflict unilaterally.
+
+## Syn's final review
+
+Specialists consult Syn (`final_review`) before closing a build. Syn must read the `## Validation` section for the semantic check that the runtime cannot do: evidence not assertion, coverage matching the declared Track and Mode, honest downstream impact, open issues not hiding failures, and a summary that matches the evidence. A structurally complete but semantically empty section returns NEEDS REVISION. Syn's final review is stricter than the table above: NEEDS REVISION from Syn means fix and resubmit, not proceed with caveats. After the verdict, the specialist follows the shared resolution steps in `core/protocols/syn_review_resolution.md`: address the flagged issues, re-gate with you, resubmit once, and on a second NEEDS REVISION or BLOCKED offer you the override, revise or stop choice. If Syn's review lists code artifacts, the specialist offers you a code-review pass.
+
+`final_review` is refused while any gate is pending or suspended (see [Gate Pattern](gate-pattern.md)).
 
 ## See also
 
 - [The Gate Pattern](gate-pattern.md)
+- [Validation](validation.md)
 - [Behavioral Rules](behavioral-rules.md)
-- Source: `src/agents/specific_instructions/shared/reviewer_verdict_protocol.md`
+- Source: `core/protocols/reviewer_verdict.md`, `core/protocols/syn_review_resolution.md`

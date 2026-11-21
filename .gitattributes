@@ -1,0 +1,12 @@
+# Keep generated/committed text byte-identical across platforms (drift checks compare bytes).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tgz binary

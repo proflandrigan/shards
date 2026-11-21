@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/proflandrigan/shards/core/schema/binding.schema.json",
+  "title": "Shards binding file frontmatter",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "jobs", "required_settings", "expected_tools", "verbs"],
+  "properties": {
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+    "description": { "type": "string" },
+    "jobs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["record", "tasks", "knowledge", "review", "artifacts", "presentation"] }
+    },
+    "required_settings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "description": "Keys the user must set under bindings.<name> in shards.config.yaml"
+    },
+    "expected_tools": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Host MCP tool names the agent will call; checked by /shards:doctor. Empty for tool-free bindings (git)."
+    },
+    "write_tools": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Subset of expected_tools that write to the external system (create/update/comment). The PreToolUse hook only lets these run for content tied to a confirmed gate (E6.11). Optional; empty or absent means the binding declares no external writes."
+    },
+    "verbs": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "enum": ["record", "tasks", "knowledge", "review", "artifacts", "presentation"] },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": { "type": "string", "pattern": "^(record|tasks|knowledge|review|artifact|presentation)\\.[a-z][a-z_]*$" }
+      }
+    }
+  }
+}

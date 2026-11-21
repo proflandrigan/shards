@@ -1,57 +1,73 @@
 # Data Engineer
 
-> Grumpy. Cares about data quality, freshness, grain, and join correctness.
+> Grumpy. Cares about data quality, freshness, grain and join correctness.
 
-Specializes in building and fixing data pipelines, dbt models, and warehouse infrastructure. Handles the full range from quick bug fixes (Quick Track) to full pipeline design (Deep Track).
+Builds and fixes data pipelines, dbt models and warehouse infrastructure. Handles the full range from quick bug fixes (Quick Track) to full pipeline design (Deep Track).
 
 ## Activation menu
 
-- `[T]` Triage — What broke / what needs building?
-- `[B]` Build — Full pipeline workflow (Quick or Deep track).
-- `[REV]` Review — Evaluate an existing pipeline or model layer.
-- `[ADV]` Advisory — Discuss design options without committing to a build.
+On a switch, the agent shows this menu and waits for input.
+
+- `[T]` Triage: what broke, or what needs building?
+- `[B]` Build: full pipeline workflow (Quick or Deep track).
+- `[R]` Review: evaluate an existing pipeline or model layer.
+- `[ADV]` Advisory: discuss design options without committing to a build.
 
 ## Modes
 
-| Mode | File | Purpose |
-|---|---|---|
-| Phases (Build) | `specific_instructions/data_engineer/phases_quick/` and `phases_deep/` | Quick + Deep track workflows — one file per phase in each track, progressively loaded. |
-| Review | `specific_instructions/data_engineer/review.md` | Review-only. |
-| Advisory | `specific_instructions/data_engineer/advise.md` | Advisor mode. |
+Mode files live in `core/agents/data-engineer/modes/` and are loaded on demand.
+
+| Mode file | Purpose |
+|---|---|
+| `advise.md` | Conversational advisor: options and trade-offs without committing to a build. Also the `advise` consult entry. |
+| `review.md` | `[R]` review of an existing artifact, and the `review` consult entry used when other agents ask this agent for a review. |
+| `validation_checklist.md` | Checklist read during the build phase to satisfy the [validation protocol](../03-protocols/validation.md). |
+| `worker.md` | The `worker` entry used by [delegated build](../03-protocols/delegated-build.md) and fan-out: one task card, one acceptance check, one JSON result. |
 
 ## Tracks
 
+The track is chosen in Phase 0. Phase bodies are served one at a time by the `load_phase` tool, which refuses until the previous phase's gate is confirmed. Every phase ends with a `gate_request` call; only a human confirms it. See [The Gate Pattern](../03-protocols/gate-pattern.md).
+
 ### Quick Track (2 phases)
-1. **Diagnosis** — identify affected model, root cause, proposed fix.
-2. **Implement and Validate** — fix model, test, validate with `dbt build`.
+1. **Diagnose** the issue and identify the affected pipeline.
+2. **Implement and validate**: fix, test, validate with `dbt build`; build work can be delegated.
 
 ### Deep Track (7 phases)
-1. **Requirements** — consumer, key questions, grain, refresh cadence.
-2. **Source Discovery** — source system, ingestion status, raw shape; Data Modeller consult.
-3. **Model Design** — DAG, model layer architecture, join logic, incremental strategy.
-4. **Testing Strategy** — schema tests, custom data tests, freshness, anomaly monitoring.
-5. **Documentation Plan** — docs level, model descriptions, column docs.
-6. **Build** — write SQL, run dbt, validate; post-build join verification.
-7. **Review and Handoff** — Syn final review, end-to-end validation, knowledge harvest.
+1. **Requirements**: what the pipeline must produce, grain, refresh cadence.
+2. **Source discovery**: upstream data, schemas, freshness; Data Modeller consult.
+3. **Model design**: staging, intermediate and mart layers, join logic, incremental strategy.
+4. **Testing strategy**: schema tests, custom data tests, freshness, anomaly monitoring.
+5. **Documentation plan**: docs level, model and column descriptions.
+6. **Build** (validated): implement models, tests, docs; build work can be delegated; post-build join verification.
+7. **Review and handoff**: code review, Syn sign-off, end-to-end validation.
 
-## Consultants
+## Consults and reviewers
 
-- **Data Modeller** — Deep Phase 2 (source discovery via Task).
-- **Syn** — Deep Phase 7 final review.
+Consults are isolated subagents that answer one question and return a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)). They never nest.
+
+- **Calls out to:** Data Modeller (Deep phase 2), Syn (Deep phase 7).
+- **Declared reviewers** (`agent.yaml`): Data Modeller, Syn.
+- **Consulted by (reverse of declared reviewers):** [Analytics Engineer](analytics-engineer.md), [Data Modeller](data-modeller.md), [ML Engineer](ml-engineer.md), [Syn](syn.md).
 
 ## Output directory
 
-`<dbt_project>/models/` (the consumer project's dbt structure), plus `tests/` and schema `.yml` files.
+`models/<project_name>/` for project artifacts; the pipeline code itself lands in the consumer project's dbt structure (`models/`, `tests/`, schema `.yml`)
 
-## Entry points
+Gate-confirmed phases are committed to git as the record. Where each agent writes is listed in [Output Directory Map](../06-outputs/directory-map.md).
 
-- Slash command: `/data-engineer`
-- Skill: `data-engineer`
-- Through Syn triage (`/shards`)
+## How to start
+
+- **Claude Code:** `/shards:data-engineer` (switch skill; calls `activate`).
+- **Codex:** `$shards:data-engineer`, or `codex -p shards-data-engineer`.
+- **Through Syn:** `/shards:syn` triages and calls `activate(agent="data-engineer", mode="switch")`.
+- **Consult subagents:** `data-engineer`, `data-engineer-review`, `data-engineer-advise`, `data-engineer-worker`.
+- **Fan-out and delegated build:** the `data-engineer-worker` entry; see [Activation Modes](../03-protocols/activation-modes.md) and [Delegated Build](../03-protocols/delegated-build.md).
+
+Reference material is reached through the `knowledge` job; see [Knowledge](../03-protocols/knowledge.md). Nothing is published yet, so install from source: [Install](../01-getting-started/install.md).
 
 ## See also
 
-- [Analytics Engineer](analytics-engineer.md) — for transformation marts
-- [Data Modeller](data-modeller.md) — for grain and entity design
+- [Analytics Engineer](analytics-engineer.md): for transformation marts
+- [Data Modeller](data-modeller.md): for grain and entity design
 - [Join-Path Protocol](../03-protocols/join-path.md)
-- Source: `src/agents/data-engineer.md`
+- Source: `core/agents/data-engineer/AGENT.md`, `core/agents/data-engineer/agent.yaml`

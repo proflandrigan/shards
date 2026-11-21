@@ -1,0 +1,158 @@
+name: release
+
+# E10.4: build every release target, check the tarballs, attach them to a GitHub Release, and publish the Claude plugin
+# to the `marketplace` branch (see docs/release.md and docs/adr/0012-release-distribution.md).
+# Nothing is published to npm unless the repo variable SHARDS_NPM_PUBLISH is exactly 'true' AND a v* tag triggered the run.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      push_marketplace:
+        description: 'Also push the built plugin to the marketplace branch (needs contents: write; tag runs always do)'
+        type: boolean
+        default: false
+
+# Least privilege by default; the two jobs that write opt in below.
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: node -e "const v=require('./package.json').version; const t=process.env.GITHUB_REF_NAME; if (t !== 'v'+v) { console.error('tag '+t+' != v'+v); process.exit(1); }"
+      - name: Tests and lints
+        run: |
+          npm test
+          npm run validate:agents
+          npm run lint:models
+          npm run lint:verdicts
+          npm run coupling:ratchet
+      - name: Pack check (allow-list, required paths, bin require closure)
+        run: npm run pack:check
+      - name: Release dry run (pack, install, CLI, MCP smoke; never publishes)
+        run: npm run release:dry-run
+
+  build:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Build the claude release plugin (via --marketplace), codex and skills
+        run: |
+          mkdir -p dist/pkg
+          node cli/shards.js build --target claude --marketplace --out dist/marketplace
+          node cli/shards.js build --target codex --out dist/codex
+          node cli/shards.js build --target skills --out dist/skills
+      - name: Pack npm tarballs and check them
+        run: |
+          npm pack --ignore-scripts --pack-destination dist/pkg
+          STAGED="$(node scripts/stage-runtime-package.js --out dist/stage/shards-mcp)"
+          (cd "$STAGED" && npm pack --ignore-scripts --pack-destination "$GITHUB_WORKSPACE/dist/pkg")
+          node scripts/pack-check.js --kind cli --tarball dist/pkg/proflandrigan-shards-[0-9]*.tgz
+          node scripts/pack-check.js --kind mcp --dir "$STAGED" --tarball dist/pkg/proflandrigan-shards-mcp-*.tgz
+      - name: Archive plugin, codex and skills packages
+        run: |
+          V="$(node -p "require('./package.json').version")"
+          tar -czf "dist/pkg/shards-claude-plugin-$V.tar.gz" -C dist/marketplace/plugins/shards .
+          tar -czf "dist/pkg/shards-codex-$V.tar.gz" -C dist/codex .
+          tar -czf "dist/pkg/shards-skills-$V.tar.gz" -C dist/skills .
+          ls -l dist/pkg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-packages
+          path: dist/pkg/*
+          if-no-files-found: error
+      # The plugin tree is uploaded unpacked so the marketplace job can commit it verbatim.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-tree
+          path: dist/marketplace/plugins/shards
+          include-hidden-files: true
+          if-no-files-found: error
+
+  github-release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-packages
+          path: dist
+      - name: Create the GitHub Release (pre-release for -next/-rc tags)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          PRE=""
+          case "$TAG" in *-*) PRE="--prerelease";; esac
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes $PRE
+
+  marketplace-branch:
+    # Publishes the plugin as the ROOT of the `marketplace` branch, which .claude-plugin/marketplace.json points at.
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.push_marketplace == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: plugin-tree
+          path: plugin
+      - name: Commit the plugin tree to the marketplace branch
+        env:
+          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test -f plugin/.claude-plugin/plugin.json
+          git init -q -b marketplace repo
+          cp -a plugin/. repo/
+          cd repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "plugin build from ${TAG} (${GITHUB_SHA})"
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" marketplace:marketplace
+
+  npm-publish:
+    # Opt-in only: set repo variable SHARDS_NPM_PUBLISH=true and secret NPM_TOKEN. Otherwise this job is skipped.
+    needs: build
+    if: vars.SHARDS_NPM_PUBLISH == 'true' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-packages
+          path: dist
+      - name: Publish both packages to the next dist-tag
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then echo "SHARDS_NPM_PUBLISH is true but the NPM_TOKEN secret is empty" >&2; exit 1; fi
+          for f in dist/proflandrigan-shards-[0-9]*.tgz dist/proflandrigan-shards-mcp-*.tgz; do
+            npm publish "$f" --tag next --access public
+          done

@@ -1,15 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
-import { execFileSync } from 'child_process';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
 
 const require = createRequire(import.meta.url);
-const sessionIndex = require('../src/ui/session-index.js');
-
-const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
-const SHARDS_SESSIONS_BIN = path.join(REPO_ROOT, 'tools', 'shards-sessions.js');
+const sessionIndex = require('../runtime/sessions/index.js');
 
 let tmpDir;
 let sessionsDir;
@@ -30,14 +26,6 @@ afterEach(() => {
 function writeGateState(state) {
   fs.mkdirSync(gatesDir, { recursive: true });
   fs.writeFileSync(path.join(gatesDir, 'state.json'), JSON.stringify(state, null, 2));
-}
-
-function runSessionsCli(args) {
-  // Run the CLI with cwd=tmpDir so it picks up the per-test .shards directory.
-  return execFileSync(process.execPath, [SHARDS_SESSIONS_BIN, ...args], {
-    cwd: tmpDir,
-    encoding: 'utf8',
-  });
 }
 
 describe('readIndex', () => {
@@ -314,9 +302,9 @@ describe('markEnded idempotency contract', () => {
   });
 });
 
-describe('readGateOpenId', () => {
-  // Pure unit coverage for the snapshot helper used by sweepAbandoned and
-  // mirrored by the CLI/UI end-of-session paths.
+describe('readGateOpenId — legacy v1 fallback (no v2 session state)', () => {
+  // Un-migrated v1 projects only: .shards/gates/state.json is read when
+  // .shards/state/sessions does not exist.
   it('returns the gate id when a gate is open', () => {
     writeGateState({ open: true, id: 'data-analyst-phase-3', phase: 3, kind: 'phase' });
     expect(sessionIndex.readGateOpenId(shardsDir)).toBe('data-analyst-phase-3');
@@ -395,43 +383,117 @@ describe('sweepAbandoned — gate snapshot (Bug L4)', () => {
   });
 });
 
-describe('shards-sessions end — gate snapshot (Bug M6)', () => {
-  // Bug M6: CLI `end` used to call markEnded without snapshotting gate state,
-  // diverging from the UI's POST /chat/end path. Now both paths populate
-  // gateOpenAtEnd identically by reading .shards/gates/state.json.
-  it('populates gateOpenAtEnd when a gate is open at CLI end-time', () => {
-    sessionIndex.appendSession(sessionsDir, { sessionId: 'cli-active', agent: 'data-analyst' });
-    writeGateState({ open: true, id: 'data-analyst-phase-3', phase: 3, kind: 'phase' });
+function writeV2Gates(sessionKey, gates) {
+  const dir = path.join(shardsDir, 'state', 'sessions', sessionKey);
+  fs.mkdirSync(dir, { recursive: true });
+  const map = {};
+  for (const g of gates) map[g.id] = g;
+  fs.writeFileSync(path.join(dir, 'gates.json'), JSON.stringify({ gates: map }, null, 2));
+}
+const gate = (id, status, requestedAt, extra = {}) => ({ id, status, kind: 'phase', agent: 'data-analyst', project: null, frame: 'f1', requested_at: requestedAt, updated_at: requestedAt, ...extra });
 
-    runSessionsCli(['end', 'cli-active']);
-
-    const e = sessionIndex.getEntry(sessionsDir, 'cli-active');
-    expect(e.status).toBe('ended');
-    expect(e.endReason).toBe('cli_end');
-    expect(e.gateOpenAtEnd).toBe('data-analyst-phase-3');
-    expect(e.phase).toBe(3);
+describe('readGateOpenId — v2 runtime state', () => {
+  it('returns the open (pending) gate of the given session', () => {
+    writeV2Gates('sess-a', [gate('data-analyst-phase-1', 'confirmed', '2026-01-01T00:00:00Z'), gate('data-analyst-phase-2', 'pending', '2026-01-02T00:00:00Z')]);
+    expect(sessionIndex.readGateOpenId(shardsDir, 'sess-a')).toBe('data-analyst-phase-2');
   });
 
-  it('sets gateOpenAtEnd to null when no gate is open at CLI end-time', () => {
-    sessionIndex.appendSession(sessionsDir, { sessionId: 'cli-active', agent: 'data-analyst' });
-    writeGateState({ open: false, history: [] });
-
-    runSessionsCli(['end', 'cli-active']);
-
-    const e = sessionIndex.getEntry(sessionsDir, 'cli-active');
-    expect(e.status).toBe('ended');
-    expect(e.endReason).toBe('cli_end');
-    expect(e.gateOpenAtEnd).toBeNull();
+  it('treats suspended as open and picks the most recently requested', () => {
+    writeV2Gates('sess-a', [gate('g-old', 'suspended', '2026-01-01T00:00:00Z'), gate('g-new', 'pending', '2026-01-03T00:00:00Z')]);
+    expect(sessionIndex.readGateOpenId(shardsDir, 'sess-a')).toBe('g-new');
+    writeV2Gates('sess-b', [gate('g-susp', 'suspended', '2026-01-01T00:00:00Z')]);
+    expect(sessionIndex.readGateOpenId(shardsDir, 'sess-b')).toBe('g-susp');
   });
 
-  it('tolerates a missing gate state file (sets gateOpenAtEnd to null)', () => {
-    sessionIndex.appendSession(sessionsDir, { sessionId: 'cli-active', agent: 'a' });
-    // No .shards/gates/state.json exists.
+  it('returns null when the session has only closed gates', () => {
+    writeV2Gates('sess-a', [
+      gate('a', 'confirmed', '2026-01-01T00:00:00Z'), gate('b', 'changes_requested', '2026-01-02T00:00:00Z'),
+      gate('c', 'force_closed', '2026-01-03T00:00:00Z'),
+    ]);
+    expect(sessionIndex.readGateOpenId(shardsDir, 'sess-a')).toBeNull();
+  });
 
-    runSessionsCli(['end', 'cli-active']);
+  it("never attributes another session's open gate to a session", () => {
+    writeV2Gates('sess-a', [gate('a-gate', 'confirmed', '2026-01-01T00:00:00Z')]);
+    writeV2Gates('sess-b', [gate('b-gate', 'pending', '2026-01-01T00:00:00Z')]);
+    expect(sessionIndex.readGateOpenId(shardsDir, 'sess-a')).toBeNull();
+    expect(sessionIndex.readGateOpenId(shardsDir, 'unknown-session')).toBeNull();
+  });
 
-    const e = sessionIndex.getEntry(sessionsDir, 'cli-active');
-    expect(e.status).toBe('ended');
+  it('without a session id returns the most recently requested open gate across sessions', () => {
+    writeV2Gates('sess-a', [gate('a-gate', 'pending', '2026-01-01T00:00:00Z')]);
+    writeV2Gates('sess-b', [gate('b-gate', 'suspended', '2026-01-05T00:00:00Z')]);
+    writeV2Gates('sess-c', [gate('c-gate', 'confirmed', '2026-01-09T00:00:00Z')]);
+    expect(sessionIndex.readGateOpenId(shardsDir)).toBe('b-gate');
+  });
+
+  it('ignores the v1 file once v2 state exists', () => {
+    writeGateState({ open: true, id: 'stale-v1-gate', phase: 3 });
+    writeV2Gates('sess-a', [gate('a', 'confirmed', '2026-01-01T00:00:00Z')]);
+    expect(sessionIndex.readGateOpenId(shardsDir, 'sess-a')).toBeNull();
+    expect(sessionIndex.readGateOpenId(shardsDir)).toBeNull();
+  });
+
+  it('never throws: corrupt gates.json, invalid session id, bad shardsDir', () => {
+    const dir = path.join(shardsDir, 'state', 'sessions', 'sess-a');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'gates.json'), '{ not json');
+    writeV2Gates('sess-b', [gate('b-gate', 'pending', '2026-01-01T00:00:00Z')]);
+    expect(sessionIndex.readGateOpenId(shardsDir, 'sess-a')).toBeNull();
+    expect(sessionIndex.readGateOpenId(shardsDir)).toBe('b-gate');
+    expect(sessionIndex.readGateOpenId(shardsDir, '../escape')).toBeNull();
+    expect(sessionIndex.readGateOpenId(null)).toBeNull();
+    expect(sessionIndex.readGateOpenId(path.join(tmpDir, 'nope', '.shards'))).toBeNull();
+  });
+
+  it('reads state written by the gate machine', async () => {
+    const { StateStore } = require('../runtime/state/store');
+    const G = require('../runtime/gates');
+    const state = new StateStore(tmpDir, 'sess-m');
+    const sess = { root: tmpDir, sessionKey: 'sess-m', state };
+    await G.requestGate(sess, { frame: { id: 'f1', agent: 'data-analyst', project: 'churn' }, id: 'data-analyst-phase-1', kind: 'phase' });
+    expect(sessionIndex.readGateOpenId(shardsDir, 'sess-m')).toBe('data-analyst-phase-1');
+    await G.confirmGate(sess, 'data-analyst-phase-1', { decision: 'confirmed', proof: { tier: 'test' } },
+      { commitGate: async () => ({ outcome: 'skipped' }), replayPending: async () => [], loadConfig: () => ({}), resolveOutputDirs: () => [] });
+    expect(sessionIndex.readGateOpenId(shardsDir, 'sess-m')).toBeNull();
+  });
+});
+
+describe('sweepAbandoned — v2 gate snapshot per session', () => {
+  it("snapshots each abandoned session's own open gate", () => {
+    writeV2Gates('stale-a', [gate('a-phase-2', 'pending', '2026-01-01T00:00:00Z')]);
+    writeV2Gates('stale-b', [gate('b-phase-1', 'confirmed', '2026-01-02T00:00:00Z')]);
+    sessionIndex.appendSession(sessionsDir, { sessionId: 'stale-a', agent: 'a' });
+    sessionIndex.appendSession(sessionsDir, { sessionId: 'stale-b', agent: 'b' });
+    const data = sessionIndex.readIndex(sessionsDir);
+    for (const e of data.sessions) e.lastActivityAt = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    sessionIndex.writeIndex(sessionsDir, data);
+
+    expect(sessionIndex.sweepAbandoned(sessionsDir, { shardsDir })).toBe(2);
+    expect(sessionIndex.getEntry(sessionsDir, 'stale-a').gateOpenAtEnd).toBe('a-phase-2');
+    expect(sessionIndex.getEntry(sessionsDir, 'stale-b').gateOpenAtEnd).toBeNull();
+  });
+});
+
+describe('touchLiveSession', () => {
+  it('reactivates an abandoned row, clears gateOpenAtEnd, and leaves ended rows ended', () => {
+    sessionIndex.appendSession(sessionsDir, { sessionId: 'live' });
+    sessionIndex.appendSession(sessionsDir, { sessionId: 'done' });
+    sessionIndex.markEnded(sessionsDir, 'done', { gateOpenAtEnd: 'g1' });
+    writeGateState({ open: true, id: 'g-open', phase: 2, kind: 'phase' });
+    const last = Date.parse(sessionIndex.getEntry(sessionsDir, 'live').lastActivityAt);
+    sessionIndex.sweepAbandoned(sessionsDir, { nowMs: last + 25 * 3600e3, shardsDir });
+    expect(sessionIndex.getEntry(sessionsDir, 'live').status).toBe('abandoned');
+    expect(sessionIndex.getEntry(sessionsDir, 'live').gateOpenAtEnd).toBe('g-open');
+
+    const e = sessionIndex.touchLiveSession(sessionsDir, 'live');
+    expect(e.status).toBe('active');
     expect(e.gateOpenAtEnd).toBeNull();
+    expect(sessionIndex.getEntry(sessionsDir, 'live').status).toBe('active');
+
+    sessionIndex.touchLiveSession(sessionsDir, 'done');
+    const done = sessionIndex.getEntry(sessionsDir, 'done');
+    expect(done.status).toBe('ended');
+    expect(done.gateOpenAtEnd).toBe('g1');
   });
 });

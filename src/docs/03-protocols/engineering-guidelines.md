@@ -1,8 +1,8 @@
 # Engineering Guidelines
 
-Code-craft rules every specialist applies whenever it writes or edits a durable artifact — code, SQL, notebooks, dbt models, configuration, pipelines, dashboard code. Codified in `src/agents/specific_instructions/shared/engineering_guidelines.md` and referenced from each specialist's Behavioral Rules section alongside [`behavioral_rules.md`](behavioral-rules.md).
+Code-craft rules every specialist applies whenever it writes or edits a durable artifact — code, SQL, notebooks, dbt models, configuration, pipelines, dashboard code. Codified in `core/protocols/engineering_guidelines.md` and referenced from each specialist's Behavioral Rules section alongside [`behavioral_rules.md`](behavioral-rules.md).
 
-Where `behavioral_rules.md` governs *workflow discipline* (gates, phasing, escalation), this file governs *code craft* — how to produce the artifact once you're inside an execute or build phase.
+Where `behavioral_rules.md` governs *workflow discipline* (gates, phasing, escalation, facilitation), this file governs *code craft* — how to produce the artifact once you're inside an execute or build phase.
 
 ## 1. Think Before Coding
 
@@ -53,4 +53,4 @@ Workflow rules dominate. A specialist never violates a gate, skips facilitation,
 - [Behavioral Rules](behavioral-rules.md)
 - [Validation Protocol](validation.md)
 - [Incremental Testing](incremental-testing.md)
-- Source: `src/agents/specific_instructions/shared/engineering_guidelines.md`
+- Source: `core/protocols/engineering_guidelines.md`

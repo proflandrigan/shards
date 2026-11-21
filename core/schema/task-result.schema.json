@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://shards.dev/schema/task-result.schema.json",
+  "title": "Worker task result",
+  "type": "object",
+  "required": ["status", "files_changed", "check", "deviations", "open_questions"],
+  "additionalProperties": false,
+  "properties": {
+    "status": { "enum": ["done", "failed", "blocked"] },
+    "files_changed": { "type": "array", "items": { "type": "string" } },
+    "check": {
+      "type": "object",
+      "required": ["command", "exit_code", "output_excerpt"],
+      "additionalProperties": false,
+      "properties": {
+        "command": { "type": "string" },
+        "exit_code": { "type": "integer" },
+        "output_excerpt": { "type": "string" }
+      }
+    },
+    "deviations": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  }
+}

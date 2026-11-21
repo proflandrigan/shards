@@ -12,20 +12,22 @@ const SRC_DIR = path.join(PACKAGE_ROOT, "src");
 const PROJECT_DIR = process.cwd();
 const CLAUDE_DIR = path.join(PROJECT_DIR, ".claude");
 
-const AGENTS_SRC = path.join(SRC_DIR, "agents");
+const CORE_DIR = path.join(PACKAGE_ROOT, "core");
+// v1 layout is rebuilt from core/ (see tools/legacy-layout.js) into a temp dir.
+const { stageLegacyAgents } = require("./legacy-layout");
+const AGENTS_SRC = stageLegacyAgents(CORE_DIR);
+process.on("exit", () => {
+  try { fs.rmSync(AGENTS_SRC, { recursive: true, force: true }); } catch (e) { /* best effort */ }
+});
 const COMMANDS_SRC = path.join(SRC_DIR, "commands");
-const TEMPLATES_SRC = path.join(SRC_DIR, "templates");
-const UI_SRC = path.join(SRC_DIR, "ui");
+const TEMPLATES_SRC = path.join(CORE_DIR, "templates");
 const DOCS_SRC = path.join(SRC_DIR, "docs");
 
 const AGENTS_DEST = path.join(CLAUDE_DIR, "agents");
 const COMMANDS_DEST = path.join(CLAUDE_DIR, "commands");
 const TEMPLATES_DEST = path.join(PROJECT_DIR, "templates");
 const SHARDS_DIR = path.join(PROJECT_DIR, ".shards");
-const UI_DEST = path.join(SHARDS_DIR, "ui");
-const UI_DOCS_DEST = path.join(UI_DEST, "docs");
 const DOCS_DEST = path.join(PROJECT_DIR, "docs", "shards-guide");
-const HOOKS_DEST = path.join(SHARDS_DIR, "hooks");
 
 const MANIFEST_NAME = ".shards-manifest.json";
 
@@ -123,6 +125,7 @@ function uninstall() {
           if (!Array.isArray(settings.hooks[eventName])) return;
           settings.hooks[eventName] = settings.hooks[eventName].filter((entry) => {
             if (!entry.hooks) return true;
+            if (entry.hooks.some((h) => h.command && /relay\.js|ui-push/.test(h.command))) return false;
             if (recordedEntries) {
               // Exact-match path: drop the entry only if all of its inner
               // hooks match a recorded (event, matcher, command) triple.
@@ -136,7 +139,7 @@ function uninstall() {
               );
               return !allMatchRecorded;
             }
-            // Legacy substring fallback.
+            // Legacy substring fallback (also strips relay entries from older installs).
             return !entry.hooks.some(
               (h) =>
                 h.command &&
@@ -163,14 +166,34 @@ function uninstall() {
     console.log("  ✓ Removed .shards/hooks/");
   }
 
+  // Remove .shards/runtime/ (hook support libs); other files were removed via the manifest.
+  const runtimeDir = path.join(PROJECT_DIR, ".shards", "runtime");
+  if (fs.existsSync(runtimeDir)) {
+    fs.rmSync(runtimeDir, { recursive: true });
+    console.log("  ✓ Removed .shards/runtime/");
+  }
+
   fs.unlinkSync(manifestPath);
   console.log(`\n✅ Uninstalled ${removed} files.`);
-  console.log(`  ℹ  .shards/knowledge/ preserved (persistent workspace memory)\n`);
+  console.log("");
 }
 
 // ─── Install ─────────────────────────────────────────────────────────────────
 
+function printLegacyDeprecation() {
+  console.warn(`
+  ⚠  DEPRECATED: this is the legacy v1 installer.
+     Agent content in core/ now uses Shards v2 template macros ({{consult}}, {{switch}},
+     {{phase}}, {{protocol}}, ...) that this installer does NOT expand. A v1 install made
+     from this branch will contain unexpanded macros and will not work as expected.
+       - For a working v1 install:   git checkout v-legacy   (then run the installer there)
+       - For v2:                     shards build --dev   (coming in E1.10; today:
+                                     node cli/shards.js build --target claude)
+`);
+}
+
 function install() {
+  printLegacyDeprecation();
   console.log(`
 ╔══════════════════════════════════════════╗
 ║       shards — installer                 ║
@@ -208,38 +231,13 @@ function install() {
     console.log(`  ✓ templates/${f}`);
   }
 
-  // 5. Copy UI files
-  console.log("\n📦 Installing UI...");
-  const uiCount = copyDir(UI_SRC, UI_DEST);
-  const uiFiles = listFiles(UI_SRC);
-  for (const f of uiFiles) {
-    console.log(`  ✓ .shards/ui/${f}`);
-  }
-
-  // 5a. Copy developer guide docs into two places:
-  //     1) .shards/ui/docs/ — served by the UI guide panel
-  //     2) docs/shards-guide/ — readable as plain markdown outside the UI
+  // 5. Copy developer guide docs (plain markdown; the UI now lives in Studio).
   console.log("\n📦 Installing Developer Guide...");
-  const uiDocsCount = copyDir(DOCS_SRC, UI_DOCS_DEST);
   const docsCount = copyDir(DOCS_SRC, DOCS_DEST);
   const docFiles = listFiles(DOCS_SRC);
-  for (const f of docFiles) {
-    console.log(`  ✓ .shards/ui/docs/${f}`);
-  }
   if (docFiles.length > 0) {
     console.log(`  ✓ docs/shards-guide/ (${docFiles.length} files, plain-markdown copy)`);
   }
-
-  // 5b. Copy gate-hook.js + gate-hook/ into .shards/hooks/
-  console.log("\n📦 Installing gate hooks...");
-  fs.mkdirSync(HOOKS_DEST, { recursive: true });
-  const gateHookSrc = path.join(PACKAGE_ROOT, "tools", "gate-hook.js");
-  const gateHookDirSrc = path.join(PACKAGE_ROOT, "tools", "gate-hook");
-  const gateHookDest = path.join(HOOKS_DEST, "gate-hook.js");
-  const gateHookDirDest = path.join(HOOKS_DEST, "gate-hook");
-  fs.copyFileSync(gateHookSrc, gateHookDest);
-  copyDir(gateHookDirSrc, gateHookDirDest);
-  console.log(`  ✓ .shards/hooks/gate-hook.js`);
 
   // 6. Seed .claude/settings.json with readonly preset and PreToolUse hook.
   //
@@ -248,57 +246,9 @@ function install() {
   // settings.json is portable across developers and machines. See:
   // https://code.claude.com/docs/en/hooks
   const settingsPath = path.join(CLAUDE_DIR, "settings.json");
-  const relayCmd = (subcmd) =>
-    `node $CLAUDE_PROJECT_DIR/.shards/ui/relay.js ${subcmd}`;
-  const gateCmd = (subcmd) =>
-    `node $CLAUDE_PROJECT_DIR/.shards/hooks/gate-hook.js ${subcmd}`;
-
-  // Relay hooks — feed live events to the Shards UI for all four hook points
-  // the UI cares about. Reference: see .claude/settings.json events feeding
-  // src/ui/relay.js (chat-session.js consumes pre-tool-use, post-tool-use,
-  // user-prompt, and stop).
-  const preToolUseHook = {
-    matcher: "Bash",
-    hooks: [{ type: "command", command: relayCmd("pre-tool-use") }],
-  };
-  const relayStopHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: relayCmd("stop") }],
-  };
-  const relayUserPromptHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: relayCmd("user-prompt") }],
-  };
-  const relayPostToolUseHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: relayCmd("post-tool-use") }],
-  };
-
-  // Gate hooks — enforce the ::GATE:: workflow pattern.
-  const gateStopHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: gateCmd("stop") }],
-  };
-  const gatePreToolUseHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: gateCmd("pre-tool-use") }],
-  };
-  const gateUserPromptSubmitHook = {
-    matcher: "",
-    hooks: [{ type: "command", command: gateCmd("user-prompt-submit") }],
-  };
-
-  // Flat list of (event, matcher, command) triples recorded in the manifest
-  // so uninstall can surgically remove ONLY the entries the installer wrote.
-  const installedHookEntries = [
-    { event: "PreToolUse", matcher: "Bash", command: relayCmd("pre-tool-use") },
-    { event: "PreToolUse", matcher: "", command: gateCmd("pre-tool-use") },
-    { event: "Stop", matcher: "", command: gateCmd("stop") },
-    { event: "Stop", matcher: "", command: relayCmd("stop") },
-    { event: "UserPromptSubmit", matcher: "", command: gateCmd("user-prompt-submit") },
-    { event: "UserPromptSubmit", matcher: "", command: relayCmd("user-prompt") },
-    { event: "PostToolUse", matcher: "", command: relayCmd("post-tool-use") },
-  ];
+  // The v1 gate hooks (Stop/PreToolUse/UserPromptSubmit) are no longer installed.
+  // The manifest keeps an empty hookEntries list so its shape is stable.
+  const installedHookEntries = [];
 
   // Permission rules for shards specialists.
   //
@@ -379,9 +329,6 @@ function install() {
     "Edit(research/**)", "Edit(fixes/**)", "Edit(presentations/**)",
     "Edit(panels/**)", "Edit(brainstorm/**)", "Edit(.shards/**)",
 
-    // ── Shards UI bridge ──
-    "Bash(node .shards/ui/ui-push.js:*)",
-    "Bash(node .shards/ui/relay.js pre-tool-use:*)",
   ];
 
   // BASE_DENY: hard floor — blocks even when an allow rule, a hook, or the
@@ -424,12 +371,6 @@ function install() {
 
   if (!fs.existsSync(settingsPath)) {
     const defaultSettings = {
-      hooks: {
-        Stop: [gateStopHook, relayStopHook],
-        PreToolUse: [preToolUseHook, gatePreToolUseHook],
-        UserPromptSubmit: [gateUserPromptSubmitHook, relayUserPromptHook],
-        PostToolUse: [relayPostToolUseHook],
-      },
       permissions: {
         allow: BASE_ALLOW,
         deny: BASE_DENY,
@@ -445,49 +386,27 @@ function install() {
     if (!settings.hooks) settings.hooks = {};
     let changed = false;
 
-    // Generic dedup: add `entry` under settings.hooks[eventName] unless an
-    // entry with the same matcher + same `command` (exact match OR substring
-    // match against `dedupSubstring` so legacy absolute-path entries are
-    // recognized as already-present) is already there. Matcher comparison
-    // normalizes case+whitespace so a user-edited "Bash " or "bash" still
-    // recognises the installer-shipped "Bash" — without this, re-install would
-    // happily append a duplicate hook for the same logical (event, matcher,
-    // command) triple, multiplying the per-tool-call hook firing.
-    const normMatcher = (m) => String(m || "").trim().toLowerCase();
-    const ensureHookEntry = (eventName, entry, dedupSubstring) => {
-      if (!Array.isArray(settings.hooks[eventName])) settings.hooks[eventName] = [];
-      const targetCmd = entry.hooks[0].command;
-      const targetMatcher = normMatcher(entry.matcher);
-      const exists = settings.hooks[eventName].some((existing) => {
-        if (normMatcher(existing.matcher) !== targetMatcher) return false;
-        if (!Array.isArray(existing.hooks)) return false;
-        return existing.hooks.some((h) => {
-          if (!h.command) return false;
-          if (h.command === targetCmd) return true;
-          // Recognize legacy variants (absolute paths, alternate quoting) so
-          // we don't double-register on re-install.
-          return dedupSubstring && h.command.includes(dedupSubstring);
-        });
-      });
-      if (!exists) {
-        settings.hooks[eventName].push(entry);
-        changed = true;
+    // Strip legacy relay hooks (UI bridge from older installs; the UI moved to Studio).
+    const isLegacyUi = (c) => typeof c === "string" && /relay\.js|ui-push|\.shards\/ui/.test(c);
+    // Strip gate-hook wiring left by pre-E11.9 installs (the hook is no longer shipped).
+    const isLegacyGate = (c) => typeof c === "string" && /gate-hook\.js/.test(c);
+    for (const ev of Object.keys(settings.hooks)) {
+      if (!Array.isArray(settings.hooks[ev])) continue;
+      const before = settings.hooks[ev].length;
+      settings.hooks[ev] = settings.hooks[ev].filter(
+        (e) => !(Array.isArray(e && e.hooks) && e.hooks.some((h) => isLegacyUi(h && h.command) || isLegacyGate(h && h.command)))
+      );
+      if (settings.hooks[ev].length !== before) changed = true;
+      if (settings.hooks[ev].length === 0) { delete settings.hooks[ev]; changed = true; }
+    }
+    if (settings.permissions) {
+      for (const k of ["allow", "deny", "ask"]) {
+        if (!Array.isArray(settings.permissions[k])) continue;
+        const before = settings.permissions[k].length;
+        settings.permissions[k] = settings.permissions[k].filter((p) => !isLegacyUi(p));
+        if (settings.permissions[k].length !== before) changed = true;
       }
-    };
-
-    // Relay hooks — all four hook points the UI feeds on. Dedup substrings
-    // identify each by the relay subcommand so legacy absolute-path entries
-    // (e.g. `node /Users/.../relay.js pre-tool-use`) are treated as
-    // already-present.
-    ensureHookEntry("PreToolUse", preToolUseHook, "relay.js pre-tool-use");
-    ensureHookEntry("Stop", relayStopHook, "relay.js stop");
-    ensureHookEntry("UserPromptSubmit", relayUserPromptHook, "relay.js user-prompt");
-    ensureHookEntry("PostToolUse", relayPostToolUseHook, "relay.js post-tool-use");
-
-    // Gate hooks.
-    ensureHookEntry("Stop", gateStopHook, "gate-hook.js stop");
-    ensureHookEntry("PreToolUse", gatePreToolUseHook, "gate-hook.js pre-tool-use");
-    ensureHookEntry("UserPromptSubmit", gateUserPromptSubmitHook, "gate-hook.js user-prompt-submit");
+    }
 
     // Merge missing permission patterns (non-destructive — only adds, never removes).
     // Existing user-added entries and legacy entries are preserved as-is; only the
@@ -568,7 +487,7 @@ function install() {
 
     if (changed) {
       fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-      console.log("\n🔐 Updated .claude/settings.json with gate enforcement hooks");
+      console.log("\n🔐 Updated .claude/settings.json");
     } else {
       console.log("\n🔐 .claude/settings.json already exists (preserved)");
     }
@@ -586,29 +505,6 @@ function install() {
   if (!fs.existsSync(notebooksDir)) {
     fs.mkdirSync(notebooksDir, { recursive: true });
     console.log("\n📓 Created .shards/notebooks/ (notebook walkthrough kernel sessions)");
-  }
-
-  // 7. Create Knowledge Ledger directory
-  const knowledgeDir = path.join(SHARDS_DIR, "knowledge");
-  const knowledgeSubdirs = ["entities", "infrastructure", "patterns", "features"];
-  if (!fs.existsSync(knowledgeDir)) {
-    fs.mkdirSync(knowledgeDir, { recursive: true });
-    for (const sub of knowledgeSubdirs) {
-      fs.mkdirSync(path.join(knowledgeDir, sub), { recursive: true });
-    }
-    // Copy INDEX.md template
-    const indexSrc = path.join(TEMPLATES_SRC, "knowledge-index.md");
-    const indexDest = path.join(knowledgeDir, "INDEX.md");
-    if (fs.existsSync(indexSrc)) {
-      fs.copyFileSync(indexSrc, indexDest);
-    }
-    console.log("\n📂 Created .shards/knowledge/ (persistent workspace memory)");
-  } else {
-    console.log("\n📂 .shards/knowledge/ already exists (preserved)");
-    // Ensure subdirs exist even on re-install
-    for (const sub of knowledgeSubdirs) {
-      fs.mkdirSync(path.join(knowledgeDir, sub), { recursive: true });
-    }
   }
 
   // 8. Create output directories
@@ -640,8 +536,6 @@ function install() {
     ...agentFiles.map((f) => `.claude/agents/${f}`),
     ...cmdFiles.map((f) => `.claude/commands/${f}`),
     ...tplFiles.map((f) => `templates/${f}`),
-    ...uiFiles.map((f) => `.shards/ui/${f}`),
-    ...docFiles.map((f) => `.shards/ui/docs/${f}`),
     ...docFiles.map((f) => `docs/shards-guide/${f}`),
   ];
   const manifest = {
@@ -651,7 +545,7 @@ function install() {
     // Flat record of hook entries (event + matcher + command) the installer
     // wrote into .claude/settings.json. Uninstall uses these for exact-match
     // surgical removal — see uninstall(). Legacy manifests without this field
-    // fall back to substring matching against gate-hook.js / .shards/ui/relay.js.
+    // fall back to substring matching against gate-hook.js / relay.js (legacy).
     hookEntries: installedHookEntries,
   };
   fs.writeFileSync(
@@ -674,7 +568,6 @@ phased workflow.
 |---------|-------|-------------|------------|
 | \`/shards\` | Syn (Orchestrator) | Friendly, structured | Triage, delegation, final review |
 | \`/brainstorm\` | Syn (Brainstorm) | Friendly, structured | Multi-agent ideation, hack day exploration |
-| \`/knowledge\` | Syn (Knowledge) | Friendly, structured | Seed, browse, and manage the Knowledge Ledger |
 | \`/data-analyst\` | Data Analyst | Helpful | Adhoc queries, quick analyses |
 | \`/data-scientist\` | Data Scientist | Condescending | EDA, modeling, deep studies |
 | \`/ml-engineer\` | ML Engineer | Intense | Recommenders, ranking, production ML |
@@ -723,24 +616,6 @@ Every project produces a \`project-specs.md\` file documenting all decisions.
 Agents cannot advance to the next phase until each phase is written and confirmed.
 This is the gate pattern — documentation IS the gate.
 
-### Knowledge Ledger
-
-Shards maintains a persistent workspace-wide Knowledge Ledger at \`.shards/knowledge/\`.
-Agents automatically check it before starting work and contribute to it when projects complete.
-
-- \`.shards/knowledge/INDEX.md\` — one-line-per-entry index scanned for keyword matches
-- \`.shards/knowledge/entities/\` — data table quirks, column semantics, grain surprises
-- \`.shards/knowledge/infrastructure/\` — warehouse/API/system behaviors
-- \`.shards/knowledge/patterns/\` — reusable SQL/Python snippets
-- \`.shards/knowledge/features/\` — verified ML features (Data Scientist + ML Engineer)
-
-**Auto-retrieval:** Before Phase 1, agents scan INDEX.md for entries relevant to the
-current project and document findings in project-specs.md.
-
-**Auto-harvest:** After Syn final review, agents extract reusable knowledge and present
-candidates for user confirmation before writing to the ledger.
-
-The knowledge directory is preserved across installs and uninstalls.
 `;
 
   // Tool-call conventions primer. Read by the user and — when active — by
@@ -787,7 +662,7 @@ The following commands are part of routine validation and execution flow:
 ### Workflow gates vs. safety boundaries
 
 Phase transitions in a Shards session are paced by \`::GATE:: ... ::ENDGATE::\`
-fences enforced by a local hook at \`.shards/hooks/gate-hook.js\`. These gates
+fences tracked by the Shards runtime (\`shards gates status\`). These gates
 are **workflow checkpoints** — they pause the agent so the user can review the
 phase before advancing. They are not safety boundaries. Safety is enforced by
 the permission allow/deny rules in \`.claude/settings.json\` and, when active,
@@ -825,7 +700,7 @@ explicit user approval regardless of permission mode.
     // code samples and silently skips the install. Only the actual marker
     // section header (or source-repo detection) is load-bearing.
     const isSourceRepo  = fs.existsSync(path.join(PROJECT_DIR, "tools", "install.js")) &&
-                          fs.existsSync(path.join(PROJECT_DIR, "src", "agents")) &&
+                          fs.existsSync(path.join(PROJECT_DIR, "core", "agents")) &&
                           fs.existsSync(path.join(PROJECT_DIR, "package.json")) &&
                           path.resolve(PROJECT_DIR) === path.resolve(PACKAGE_ROOT);
     const hasAgentSuite  = content.includes("## Shards — Agent Suite");
@@ -857,7 +732,7 @@ explicit user approval regardless of permission mode.
   }
 
   // Done
-  const total = agentCount + cmdCount + tplCount + uiCount + uiDocsCount + docsCount;
+  const total = agentCount + cmdCount + tplCount + docsCount;
   console.log(`
 ╔══════════════════════════════════════════╗
 ║  ✅ Installed ${String(total).padEnd(3)} files successfully      ║
@@ -881,8 +756,8 @@ explicit user approval regardless of permission mode.
 ║    /deep-learning-engineer               ║
 ║    /brainstorm                           ║
 ║                                          ║
-║  Launch the web UI:                      ║
-║    shards-ui                             ║
+║  Web UI moved to Studio:                 ║
+║    npx @proflandrigan/shards-studio      ║
 ║                                          ║
 ║  Notebook walkthrough mode:              ║
 ║    /notebook-walkthrough                 ║
@@ -890,7 +765,7 @@ explicit user approval regardless of permission mode.
 ║               ipykernel)                 ║
 ║                                          ║
 ║  To uninstall:                           ║
-║    npx shards uninstall                  ║
+║    npx shards migrate                    ║
 ║                                          ║
 ╚══════════════════════════════════════════╝
 `);
@@ -898,10 +773,30 @@ explicit user approval regardless of permission mode.
 
 // ─── CLI Entry ───────────────────────────────────────────────────────────────
 
-const command = process.argv[2] || "install";
+// E10.5: the v1 installer is deprecated. `install` prints the v2 replacement and exits 1 (nothing is written)
+// unless explicitly opted in with --legacy or SHARDS_LEGACY_INSTALL=1. `uninstall` always works so v1 installs can be removed.
+const legacyOptIn = process.argv.includes("--legacy") || process.env.SHARDS_LEGACY_INSTALL === "1";
+const args = process.argv.slice(2).filter((a) => a !== "--legacy");
+const command = args[0] || "install";
+
+function refuseInstall() {
+  console.error(`
+  DEPRECATED: the v1 installer (tools/install.js) no longer installs Shards. Nothing was written.
+  Use the v2 equivalents:
+    shards build --target claude --dev     local plugin for development (claude --plugin-dir adapters/claude-code)
+    /plugin marketplace add proflandrigan/shards    then   /plugin install shards@shards    (release plugin)
+    shards install --project               copy skills into this project's .claude/skills and .agents/skills
+    shards install --agents-md             Codex AGENTS.md section;  shards install --claude-md  for CLAUDE.md
+  Remove an old v1 install:  node tools/install.js uninstall   (or: shards migrate)
+  Forced legacy install (unsupported; macros stay unexpanded):  node tools/install.js --legacy
+  Last v1 release: git checkout v-legacy
+`);
+  process.exit(1);
+}
 
 switch (command) {
   case "install":
+    if (!legacyOptIn) refuseInstall();
     install();
     break;
   case "uninstall":
@@ -909,6 +804,6 @@ switch (command) {
     break;
   default:
     console.log(`Unknown command: ${command}`);
-    console.log("Usage: npx shards [install|uninstall]");
+    console.log("Usage: npx shards [install|uninstall]   (install is deprecated; see `shards install --help`)");
     process.exit(1);
 }

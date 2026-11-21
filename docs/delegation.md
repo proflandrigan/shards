@@ -1,0 +1,268 @@
+# Delegation (shards v2 runtime)
+
+Developer notes for lead/worker delegation: the task manifest (`tasks.yaml`), the `task_*` tools, the path lease store, and the `{{delegate}}` macro. Describes what the code does today. Planned items are marked `TODO(E<n>)`.
+
+## 1. Overview
+
+A lead (the specialist agent running the phase) splits a phase's build work into tasks. Each non-inline task is handed to a worker subagent that owns a set of paths, runs one acceptance command, and returns one JSON result. Workers never hold gates, never change the plan, and never delegate (`core/protocols/worker_contract.md`).
+
+The lead owns the plan. A worker's `deviations` do not change anything by themselves; the lead follows `core/protocols/plan_drift.md`.
+
+| File | Role |
+|------|------|
+| `core/schema/tasks.schema.json` | Manifest schema (`<output_dir>/tasks.yaml`). |
+| `core/schema/task-result.schema.json` | Worker result schema. |
+| `core/protocols/worker_contract.md` | Worker rules and result format. |
+| `core/protocols/plan_drift.md` | Lead-side amendment procedure. |
+| `runtime/tasks/index.js` | Manifest validation, per-session task state, `TASKS.md` mirror. |
+| `runtime/tools/tasks_set.js` | Tool `tasks_set`. |
+| `runtime/tools/task_dispatch.js` | Tool `task_dispatch`. |
+| `runtime/tools/task_report.js` | Tool `task_report`. |
+| `runtime/tools/task_status.js` | Tool `task_status`. |
+| `runtime/leases/index.js` | Path lease store. |
+| `runtime/git/leases.js` | `getLeasedPaths`, used to exclude leased paths from gate commits. |
+| `runtime/fanout/index.js` | Fan-out: `startFanout`, `claimSlice`, `mergeVerdicts`, `collectFanout`. |
+| `runtime/tools/fanout_start.js`, `fanout_claim.js`, `fanout_collect.js` | Tools `fanout_start`, `fanout_claim`, `fanout_collect` (section 3.1). |
+| `hooks/pre-tool-use.js`, `hooks/lib/enforce.js`, `hooks/lib/writes.js` | PreToolUse hook: `fanout_claim` binding and write rules (section 3.1). |
+| `runtime/server.js` | `startLeaseSweep`, the scheduled expiry sweep (`SHARDS_LEASE_SWEEP_MS`). |
+
+## 2. tasks.yaml
+
+Top level: `version: 1` and `tasks` (one or more). No other keys are allowed. Each task:
+
+| Field | Required | Rules |
+|-------|----------|-------|
+| `id` | yes | `^[a-z][a-z0-9_-]*$`, unique. |
+| `goal` | yes | Non-empty. |
+| `plan_ref` | yes | Non-empty pointer into `project-specs.md`. |
+| `inputs` | yes | String array (read-only context). |
+| `owned_paths` | yes | Non-empty. Project-root-relative. No absolute paths, no `..`. |
+| `acceptance` | yes | `{command, expected}`, both non-empty. |
+| `depends_on` | no | Task ids. Default `[]`. |
+| `worker` | yes | Agent id. Must declare `fanout_worker` activation or a `consult_entries.worker` entry (unless `delegate: inline`). |
+| `size` | yes | Integer 1 to 60 (minutes). |
+| `phase` | no | String or integer. Groups tasks for the inline rule. |
+| `delegate` | no | `inline` or `worker`. Default `worker`. |
+
+```yaml
+version: 1
+tasks:
+  - id: features
+    goal: Build the feature query for churn
+    plan_ref: project-specs.md#phase-2-features
+    inputs: [models/churn/schema.sql]
+    owned_paths: [models/churn/features.py]
+    acceptance:
+      command: python -m pytest tests/test_features.py -q
+      expected: exit 0
+    worker: ml-engineer
+    size: 20
+    phase: 2
+  - id: features-tests
+    goal: Add feature null-handling tests
+    plan_ref: project-specs.md#phase-2-features
+    inputs: [models/churn/features.py]
+    owned_paths: [tests/test_features.py]
+    depends_on: [features]
+    acceptance:
+      command: python -m pytest tests/test_features.py -q
+      expected: exit 0
+    worker: ml-engineer
+    size: 10
+    phase: 2
+```
+
+## 3. Tools
+
+| Tool | Input | Behaviour |
+|------|-------|-----------|
+| `tasks_set` | exactly one of `manifest` (object) or `path` (existing YAML file); optional `output_dir` | Validates and stores the manifest. Writes `<output_dir>/tasks.yaml` when given `manifest`. `output_dir` defaults to the active specialist frame's output directory. All tasks start `pending`. Mirrors `TASKS.md`. |
+| `task_dispatch` | `ids` (unique, min 1) | Atomic. Every id must be `pending` or `failed`, not paused, with all `depends_on` in `reported` or `done`. Otherwise nothing is dispatched. Opens one lease per non-inline task. Returns one card per id (`entry_file` points the worker at `agents/<worker>/modes/worker.md`). Inline cards hold no lease. |
+| `task_report` | `id`, `result` (task-result object) | Task must be `dispatched`. Result is validated against the schema. Closes the task's lease. `done` is stored as `reported`; `failed` and `blocked` are stored as given. Runs the deviation hook (section 6). |
+| `task_status` | none | Returns each task's status, worker, `depends_on`, `lease_id`, `attempts`, `paused_reason`, the `ready` list and status counts. |
+| `task_verify` | `id`, `pass`, `expected`, `observed`, `notes?`, `check?` | The lead's independent check (E12.5). Only a `reported` task can be verified. Section 4 gives the state rules. Appends an evidence row to `## Validation` in `<output_dir>/project-specs.md`. |
+
+`tasks_set` refusal rules (all problems are listed in one error, nothing is stored):
+
+- Schema violations, duplicate ids, self or unknown `depends_on`.
+- Dependency cycles.
+- Missing or empty `acceptance.command` or `acceptance.expected`.
+- Unsafe `owned_paths`.
+- Overlapping `owned_paths` between two tasks that are not ordered by `depends_on` (directly or transitively). Overlap means equal, or one path is a directory prefix of the other.
+- `delegate: inline` in a phase that has more than 2 tasks.
+- Unknown worker agent, or a worker without the worker entry.
+
+`task_dispatch` refusal rules: unknown id, status other than `pending` or `failed` (so `blocked`, `dispatched`, `reported`, `done` and `paused` are refused), paused task, unmet dependency.
+
+### 3.1 Fan-out tools (E5.9)
+
+A fan-out is one `fanout`-owned lease over N worker slices, opened by the lead. It does not use `tasks.yaml`. Code: `runtime/fanout/index.js`.
+
+| Tool | Input | Behaviour |
+|------|-------|-----------|
+| `fanout_start` | `agent`, `slices` (non-empty; each `{id, paths, acceptance}`), `ttl_ms?` | Opens one lease and returns `{lease_id, cards}`, one card per slice. |
+| `fanout_claim` | `lease_id`, `slice_id` | A worker's first call. Returns that slice's card. The tool does not bind the worker; binding is done by the PreToolUse hook (below). |
+| `fanout_collect` | `lease_id`, `results` (one `{slice_id, verdict, summary?, findings?}` per slice) | Merges the verdicts, closes the lease, returns the merged result. |
+
+`fanout_start` refusals. Each is a thrown error and no lease is opened:
+
+- The top frame of the session has a pending gate: `fanout_start refused: the active frame has a pending gate (<id>)`. The check uses `pendingForFrame`, which matches a gate of any kind.
+- A gate owned by any frame on the stack is suspended: `fanout_start refused: a gate is suspended (<ids>)`. Resume and resolve it, or force-close it, first (S5F).
+- Unknown agent, or the agent's `activation` does not include `fanout_worker`.
+- `slices` is empty; a slice has no string `id`, a duplicate `id`, empty `acceptance`, or no `paths`.
+- Two slices in the same call overlap (equal, or one is a directory prefix of the other). Paths are normalised by `normalizeRel`: project-root-relative, no absolute paths, no `..`. The overlap check covers only the slices of this call. A new fan-out is not checked against other active leases.
+
+Slice card: `{lease_id, slice_id, owned_paths, acceptance, rules}`. `acceptance` is the slice's text as given. `rules` is the fixed string `no gates, no plan changes, no delegation, write only inside owned_paths, return verdict JSON`. The lease TTL is 900000 ms unless `ttl_ms` is given.
+
+`fanout_claim` is refused when there is no active, unexpired `fanout` lease with that id, or the lease has no slice with that id. `fanout_collect` uses the same lookup, so an expired lease cannot be collected.
+
+Binding (PreToolUse, `hooks/lib/enforce.js`). When a `fanout_claim` call carries an `agent_id` (Claude Code subagents), the hook binds that `agent_id` to `{lease_id, slice_id}` before the MCP tool runs. The binding is refused when the lease is not live, the slice does not exist, `agent_type` does not match the lease `worker_type` (compared on the last `:` segment, case-insensitive), the agent is already bound to a different slice, the slice is already bound to a different agent, or the lease already has one bound worker per slice. Re-claiming the same slice with the same agent is accepted. A refused binding denies the call with `shards fanout_claim refused: <reason>`, unless `SHARDS_GATE_ENFORCE=0`, in which case the call proceeds unbound. A `fanout_claim` call with no `agent_id` is allowed and binds nothing.
+
+Gap (TODO): the hook does not check the lease owner. `bindWorker` accepts `task` leases as well as `fanout` leases. The binding is recorded before the MCP tool runs, so a `fanout_claim` against a `task` lease binds in the hook, and the tool then refuses with "no active fanout lease".
+
+`fanout_collect` requires exactly one result per slice. An unknown, duplicate or missing `slice_id`, or an invalid verdict, throws and nothing is closed. Merge rule (`mergeVerdicts`, worst wins): any `BLOCKED` gives `BLOCKED`; otherwise any `NEEDS REVISION` gives `NEEDS REVISION`; otherwise `APPROVED`. The result is `{verdict, per_slice: {<slice_id>: {verdict, summary?, findings?}}}`. The lease is closed whatever the merged verdict is. Collect does not check which agent sent each result.
+
+Heartbeat and expiry:
+
+- A bound worker's heartbeat is `touchWorker`. It runs on every PreToolUse call from the bound `agent_id`, not only on writes. It sets `heartbeat_at` and `expires_at = now + ttl_ms`, at most once per `min(5 s, ttl/4)`. It does not bump the session version.
+- `heartbeat(session, id)` in `runtime/leases` has no callers.
+- Expiry has two triggers. The hook runs `expireStale` inline on a PreToolUse call when any active lease is past `expires_at`. The MCP server runs `startLeaseSweep` (`runtime/server.js`) every `SHARDS_LEASE_SWEEP_MS` ms, default 30000. Zero, a negative value or a non-number disables the timer. The sweep covers every session directory under `.shards/state/sessions/` that has a `leases.json`. The timer is `unref()`'d, and it runs only while the MCP server process is alive.
+- `listActive` already excludes expired leases. A worker whose lease has expired loses its binding at once, and its later calls fall under rule 3.
+- SubagentStop (`hooks/subagent-stop.js`, S5F) calls `releaseWorker`: the exiting worker's binding is removed at once (its slice can be re-claimed for a retry) and recorded under `released`. A task-owned lease (one slice, one worker) is closed outright. A fan-out lease stays open until `fanout_collect` or TTL expiry, because collect needs the active lease and the lead must not edit slice paths meanwhile. Idempotent; no output.
+
+PreToolUse write rules (`hooks/lib/enforce.js`). They apply to non-gate tools. Write detection (`hooks/lib/writes.js`) covers `Write`, `Edit`, `MultiEdit`, `NotebookEdit`, `apply_patch`, the notebook-exec MCP tools, and Bash commands with redirects, `tee`, `sed -i`, `cp`, `mv`, `rm` and similar commands, `git` write subcommands, `dd of=`, `find -delete/-exec/-fprint`, `tar`/`unzip` extraction, `curl`/`wget` output, `rsync`/`scp`, and inline script writes. Targets are resolved against the payload `cwd`; a leading `~` or `~/` expands to the home directory, and `~user`, variables, globs, `eval`, `sh -c` and substitutions count as a write with an unknown target. `cd`/`pushd`/`popd` are not tracked, so a write after one is treated as unknown. Detection is best effort and nothing is executed. Enforcement runs only when the session has a `leases.json` or a `gates.json`.
+
+1. Bound caller (`agent_id` bound to a slice of an active lease). Writes must resolve inside one of that slice's paths. Other writes are denied, and the reason lists the allowed paths. A write whose target cannot be determined is denied. Bound callers are exempt from the pending-gate check in rule 3 (policy: ADR 0011).
+2. `fanout_claim` binds (above). This runs even when a gate is pending.
+3. Unbound caller (no `agent_id` bound to a lease: the lead or an unleased subagent). (a) If the top frame has a pending gate, every write or exec call is denied. (b) Otherwise a write whose target is inside, or contains, an active fan-out slice path is denied (`do not edit it from the lead`).
+
+`SHARDS_GATE_ENFORCE=0` turns off every deny in rules 1 and 3 and the claim refusal. Binding still records when it succeeds.
+
+Fail-open. An exception in the enforcement step is logged to `<root>/.shards/state/hook-errors.log`, and the call goes ahead. The hook exits 0 in all cases. One exception: an error while binding a `fanout_claim` (including a state I/O error) is turned into a deny, unless `SHARDS_GATE_ENFORCE=0`.
+
+Codex. Codex 0.169.0 sends `agent_id` and `agent_type` on PreToolUse inside a subagent (live-verified payload, compat CX-6), and the hook fires (CX-7), so Codex workers bind through `fanout_claim` like Claude workers. The Codex binding path itself is unit-tested only; a live Codex fan-out run is still open.
+
+## 4. Task statuses
+
+| Status | Meaning |
+|--------|---------|
+| `pending` | Not yet dispatched. Ready when its dependencies are satisfied and it is not paused. |
+| `dispatched` | Lease open, worker running. |
+| `reported` | Worker returned `done`. Satisfies dependencies. Not yet verified. |
+| `done` | Satisfies dependencies. Set only by `task_verify` with `pass=true`. |
+| `failed` | Worker returned `failed`, or `task_verify` failed the check (observed output kept as `feedback`). Can be re-dispatched. |
+| `blocked` | Worker returned `blocked`, or `task_verify` failed the check after 2 retries (`escalated`). Cannot be dispatched by `task_dispatch` as written; the lead stops and asks the user. |
+| `paused` | Set when a dependency deviated (section 6). Not dispatchable. Set by runtime only when the hook is wired (see section 9). |
+
+`reported` means the lead must still verify. The lead re-runs the acceptance command itself and never accepts a result on the worker's word, then calls `task_verify` (E12.5). Verification semantics:
+
+- `reported` + `pass=true` gives `done`. Feedback is cleared and dependents become ready.
+- `reported` + `pass=false` gives `failed`, with the observed output stored as `feedback`. `task_dispatch` re-sends it to the worker. Up to 2 retries.
+- A `pass=false` after 2 retries gives `blocked` with `escalated=true`. The lead stops and asks the user with a summary of the evidence rows.
+- Every call, pass or fail, appends one row to the Evidence table in `## Validation` of `<output_dir>/project-specs.md`.
+
+`TASKS.md` mirror: written by `mirrorTasksMd` through the `tasks` job in `shards.config.yaml` (default `{binding: git, options: {path: TASKS.md}}`). It is a checklist generated from `tasks.yaml` (a header says so). Done tasks are `[x]`; others are `[ ]` with their status in parentheses. Any other binding skips the mirror and returns a note.
+
+## 5. Lease store
+
+Leases are stored in state name `leases` as `{leases: {<id>: lease}}`. Every write goes through `StateStore.update`, so it is locked and atomic.
+
+Lease: `{id, session, owner, worker_type, slices: [{id, paths}], meta, status, opened_at, heartbeat_at, expires_at, ttl_ms}`. Owners: `task`, `fanout`. Status: `active`, `closed`, `expired`. Default TTL is 900000 ms (15 minutes).
+
+| Function | Behaviour |
+|----------|-----------|
+| `openLease(session, {owner, worker_type, slices, ttl_ms?, meta?})` | Validates and normalizes paths, stores an active lease, returns it. |
+| `heartbeat(session, id)` | Extends `expires_at` by `ttl_ms`. Throws if unknown, not active, or expired. |
+| `closeLease(session, id)` | Sets status `closed`. |
+| `listActive(session, now?)` | Active leases with `expires_at` in the future. |
+| `expireStale(session, now?)` | Marks active leases past `expires_at` as `expired`; returns their ids. |
+| `bindWorker(session, {agentId, agentType, leaseId, sliceId})` | Binds an agent to one slice of an active lease. The hook calls it for `fanout_claim` (section 3.1). Does not bump the session version. |
+| `findWorkerLease(session, agentId, now?)` | The active lease and slice bound to the agent, or `null`. |
+| `touchWorker(session, agentId, now?)` | Refreshes a bound worker's lease, throttled (section 3.1). Returns `true` when it refreshed. |
+| `findSliceOwning(session, filePath, now?)` | The active fan-out slice that contains, or is contained by, the path, or `null`. Used for unbound callers. |
+| `isPathAllowed(session, agentId, filePath, now?)` | For a bound agent, checks the path against that worker's slice. Otherwise checks active leases whose `worker_type === agentId`. Returns `allowed: true` when neither applies. The hook calls it only for bound callers. |
+| `pathsOverlap(a, b)`, `normalizeRel(p)` | Helpers. |
+
+Callers in the runtime today:
+
+- `task_dispatch` opens leases; `task_report` closes them.
+- `fanout_start` opens `fanout` leases; `fanout_collect` closes them (section 3.1).
+- `getLeasedPaths(session)` (`runtime/git/leases.js`) returns the paths of `listActive` leases. `commitGateLocked` in `runtime/git/index.js` excludes those paths from a gate commit.
+- `expireStale` runs from the hook (inline) and from the MCP server sweep (section 3.1). `bindWorker`, `touchWorker`, `findWorkerLease`, `findSliceOwning` and `isPathAllowed` are called from `hooks/lib/enforce.js`. `heartbeat` has no callers. Worker heartbeats go through `touchWorker`.
+
+Expired leases stop excluding paths because `listActive` filters on `expires_at`, even before `expireStale` runs.
+
+## 6. Task result and deviations
+
+Schema (`core/schema/task-result.schema.json`): all five fields are required; no other keys.
+
+| Field | Type |
+|-------|------|
+| `status` | `done` \| `failed` \| `blocked` |
+| `files_changed` | string[] |
+| `check` | `{command: string, exit_code: integer, output_excerpt: string}` |
+| `deviations` | string[] (each non-empty) |
+| `open_questions` | string[] |
+
+```json
+{
+  "status": "done",
+  "files_changed": ["models/churn/features.py"],
+  "check": {"command": "python -m pytest tests/test_features.py -q", "exit_code": 0, "output_excerpt": "12 passed in 0.8s"},
+  "deviations": [],
+  "open_questions": []
+}
+```
+
+`task_report` returns the deviations and open questions in its text. It calls `onDeviations(session, id, result)` in `runtime/tasks/index.js`.
+
+## 7. Plan drift
+
+The rule (`core/protocols/plan_drift.md`): the plan (`project-specs.md`) and the manifest change only after a confirmed amendment gate. Deviations alone change nothing.
+
+Procedure as documented:
+
+1. Dependents of a deviating task are auto-paused (transitively).
+2. The lead drafts the amendment and raises `gate_request` with `kind=phase`, `id=<agent>-amend-<n>`, `phase=<current>`.
+3. After the user confirms, the lead updates `project-specs.md` and calls `tasks_set` with the revised manifest and `amendment_gate=<gate id>`.
+4. `tasks_set` refuses a replacement while an amendment gate is pending, or after a deviation without a confirmed amendment gate. The lead then resumes or redispatches the paused tasks.
+
+Current implementation: `runtime/tasks/drift.js` is installed as the default hooks. `task_report` with non-empty `deviations` pauses pending/dispatched transitive dependents and records `drift.open`; it opens no gate. `tasks_set` accepts `amendment_gate` and refuses replacement while an `-amend-<n>` gate is pending, or, after drift or once any task has left `pending`, unless the named gate is confirmed and not yet consumed.
+
+## 8. `{{delegate}}` macro
+
+Syntax: `{{delegate [tasks=<path>] [max_parallel=<n>] [mode=parallel|sequential|inline]}}`. All arguments are optional. `tasks` is a non-empty path hint (default `<output_dir>/tasks.yaml`). `max_parallel` is a positive integer cap on concurrent workers. `mode` selects the rendering: `parallel` (one worker per ready card, up to the cap), `sequential` (one ready card in flight at a time), `inline` (no worker handoff; the agent does each card itself under the same owned-path rule). Default per host: `parallel` for `claude` and `codex`, `sequential` for `skills` (no parallel guarantee on that host). Any other `mode` value is a build error. Example: `{{delegate tasks=data_models/foo/tasks.yaml max_parallel=3 mode=sequential}}`.
+
+The macro validates arguments only (`build/resolve.js`). It renders the build loop (`build/render.js`): `tasks_set`, then `task_dispatch` for ready tasks (up to the cap, or one at a time in `sequential`/`inline`), hand each card to a worker, `task_report` each result, verify each acceptance check with `task_verify`, dispatch what is unblocked. A task is done only through `task_verify`. Deviations stop dependent tasks and follow plan_drift. The phase gate is raised only when every task is done. Host fallbacks (parallel, then sequential, then inline) are stated in the rendered text; see `docs/compat.md` (Delegate host fallbacks, E12.8).
+
+Tool names are prefixed per target (see `build/MACROS.md` section 5).
+
+## 8.1 Codex limits: `max_depth` and `max_threads` (E8.6)
+
+Both keys are docs-only and UNVERIFIED (`docs/compat.md` CX-4): one source says `agents.max_depth` defaults to 1 and `agents.max_threads` to 6; the fetched page names the thread limit `agents.max_concurrent_threads_per_session` (`max_threads` as legacy alias) and does not mention `max_depth`.
+
+| Use | Recommendation | Why |
+|-----|----------------|-----|
+| Consult (specialist asks Syn or a reviewer) | `agents.max_depth = 2` | main thread (0) spawns the specialist's consult at depth 1 only if the specialist runs in the main thread; a specialist that runs as a subagent and consults needs depth 2. With depth 1 the consult is blocked: flatten it (ask the reviewer from the main thread). |
+| Fan-out (`fanout_start`, `{{fanout}}`, `{{delegate}}`) | `agents.max_threads = 4` (or the plan's `max_parallel` if lower) | workers are leaf subagents; width, not depth, is the limit. Excess slices queue or run sequentially. |
+
+The Codex build emits these as commented lines in `.codex/config.toml` (`# [agents]`, `# max_depth = 2`, `# max_threads = 4`); uncomment the keys your Codex version accepts. The generated `AGENTS.md` fragment (`shards install --agents-md`) repeats the requirement. Workers never delegate, so depth beyond 2 is never needed.
+
+## 9. Not done yet
+
+| Item | Status |
+|------|--------|
+| Write enforcement of owned paths for fan-out slices | Done (section 3.1, rules 1 and 3). |
+| Write enforcement of owned paths for task-owned leases | Not done. The hook binds only through `fanout_claim`, and `task_dispatch` workers have no claim tool. `TODO`. |
+| `fanout_claim` binding does not check the lease owner | Gap (section 3.1). `TODO`. |
+| SubagentStop and leases | Wired (S5F). `hooks/subagent-stop.js` releases the exiting worker's binding. Codex 0.169.0 sends `agent_id` on SubagentStop and on PreToolUse inside a subagent (CX-6, live-verified payloads), so release works there too; a live Codex fan-out run is not done. |
+| PM 2-workstream live run | OPEN. The live-run budget is not spent. Harness: `scripts/pm-fanout-live-run.sh` (one sample, never a pass rate; `--dry-run` and `--check-only` modes). |
+| Lead verification of `reported` tasks | Done (E12.5): `task_verify` tool (section 3). Only `done` satisfies dependencies; each verification appends an evidence row to `## Validation` in `<output_dir>/project-specs.md`; max 2 retries, then `blocked` and escalated. |
+| Host fallbacks (E12.8) | Done: see `docs/compat.md` (Delegate host fallbacks). |
+| Delegated-build golden harness (E12.9) | Built: `test/golden/delegated-build/` (`run.sh`, `score.js`, `dry-run.js`, `fixture/`); only the dry-run (synthetic state through the real tools) was run, no live `claude -p` sample. |
+| 3/3 runs per host | OPEN. The live-run budget is not spent. |
+| Codex and other hosts | OPEN (external). `TODO(owner: proflandrigan)`. |
+| Auto-pause on deviation and amendment refusal in `tasks_set` | Done (E12.6): `runtime/tasks/drift.js`, covered by `test/tasks-drift.test.js`. |
+| Phase rewrites for delegated build | Done (E12.3/E12.4): build phases are lead loops over `<output_dir>/tasks.yaml` (`core/protocols/delegated_build.md`); planning phases decompose the plan into tasks. `core/protocols/incremental_testing.md` is folded in as the task evidence guide (checkpoint gates removed). Guarded by `test/delegated-build.test.js` and the `write_whole_build` coupling metric. |
+| Subagent generation for workers | The `worker` entry is validated but no subagent is generated. `TODO(E5.3)`. |
+| Lease heartbeats and stale sweeps for fan-out | Done (section 3.1): `touchWorker` on bound-worker PreToolUse calls, inline expiry in the hook, and the server sweep (`SHARDS_LEASE_SWEEP_MS`). `heartbeat()` has no caller. Task leases get no heartbeat but are still expired by the sweep. |

@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/proflandrigan/shards/core/schema/shards-config.schema.json",
+  "title": "shards.config.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1, "default": 1 },
+    "jobs": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Maps each job to a binding (bindings/<name>.md). Value is a binding name or { binding, options }.",
+      "properties": {
+        "record": { "$ref": "#/$defs/jobBinding" },
+        "tasks": { "$ref": "#/$defs/jobBinding" },
+        "knowledge": { "$ref": "#/$defs/jobBinding" },
+        "review": { "$ref": "#/$defs/jobBinding" },
+        "artifacts": { "$ref": "#/$defs/jobBinding" },
+        "presentation": { "$ref": "#/$defs/jobBinding" }
+      }
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy": { "enum": ["strict", "phase", "plan"], "default": "phase" },
+        "budget": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Plan-policy budget, approved once with the plan. Omitted = unbounded, except max_gates (default 100).",
+          "properties": {
+            "max_gates": { "type": "integer", "minimum": 1 },
+            "max_tool_calls": { "type": "integer", "minimum": 1 },
+            "max_minutes": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "git": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "commit": { "type": "boolean", "default": true },
+        "push": { "type": "boolean", "default": false },
+        "denylist": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "globs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "max_file_size_bytes": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "guardrails": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "External-write guardrails (E6.11), enforced by the PreToolUse hook.",
+      "properties": {
+        "write_tools": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Extra MCP tool names (full mcp__server__tool, or bare tool name, `*` wildcard) treated as external writes, in addition to each configured binding's write_tools." },
+        "allow_raw_data": { "type": "boolean", "default": false, "description": "Let external writes carry raw query results (tabular dumps). Default false: summaries only." }
+      }
+    },
+    "tiers": {
+      "type": "object",
+      "description": "Optional user-written map from tier hint to a model string. The only place a model name may appear.",
+      "additionalProperties": false,
+      "properties": {
+        "small": { "type": "string", "minLength": 1 },
+        "standard": { "type": "string", "minLength": 1 },
+        "large": { "type": "string", "minLength": 1 }
+      }
+    },
+    "bindings": {
+      "type": "object",
+      "description": "Per-binding settings, keyed by binding name (see each binding's required_settings).",
+      "additionalProperties": { "type": "object" }
+    }
+  },
+  "$defs": {
+    "bindingName": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+    "jobBinding": {
+      "oneOf": [
+        { "$ref": "#/$defs/bindingName" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["binding"],
+          "properties": {
+            "binding": { "$ref": "#/$defs/bindingName" },
+            "options": { "type": "object" }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shards.dev/schema/artifacts/model-card.schema.json",
+  "title": "artifact_emit meta: model-card",
+  "description": "meta for artifact type 'model-card'. path: project-relative model-card.json (Mitchell et al. layout: modelDetails, intendedUse, factors, metrics, evaluationData, trainingData, quantitativeAnalyses, ethicalConsiderations, caveatsAndRecommendations, evalSummary).",
+  "type": "object",
+  "required": [
+    "title"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Panel tab title."
+    },
+    "panel_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable panel id; re-emitting with the same panel_id updates the panel in place and `close` with it removes it. Defaults to a hash of (type, path)."
+    },
+    "project": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

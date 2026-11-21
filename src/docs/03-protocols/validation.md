@@ -1,6 +1,6 @@
 # Validation Protocol
 
-Every specialist that produces a durable artifact — a mart, a model, a notebook, a dashboard, a service, a data model, a pipeline — is required to validate that artifact before the gate closes on its build phase. The validation contract is the DNA; per-agent checklists are the flesh; a gate-hook extension is the enforcement.
+Every specialist that produces a durable artifact — a mart, a model, a notebook, a dashboard, a service, a data model, a pipeline — is required to validate that artifact before the gate closes on its build phase. The validation contract is the DNA; per-agent checklists are the flesh; the `gate_request` tool is the enforcement.
 
 ## Why
 
@@ -10,21 +10,21 @@ Agents are good at producing work that *looks* correct. Validation forces eviden
 - Not "tested the model" — `tests/test_model.py — 14 tests, 14 passed`.
 - Not "shouldn't affect downstream" — `fct_revenue rebuilt OK, 0 schema diff`.
 
-Numbers and file paths are harder to hallucinate than prose. The protocol's job is to keep agents honest, and the gate hook's job is to make sure the protocol actually runs.
+Numbers and file paths are harder to hallucinate than prose. The protocol's job is to keep agents honest, and the runtime's job is to make sure the protocol actually runs.
 
 ## The three-layer contract
 
 | Layer | Where it lives | What it does |
 |------|----------------|--------------|
-| **Shared protocol** | `shared/validation_protocol.md` | Defines what validation means, the specs-section schema, the evidence-vs-assertion rule, how validation composes with other protocols. Loaded by every specialist via Behavioral Rules. |
-| **Domain checklist** | `<agent>/validation_checklist.md` | Defines *which* checks apply for this agent's work. Stable check IDs (AE-01, ML-03, DS-12, etc.). Track Calibration table picks the required subset per `(Track, Mode)`. |
-| **Gate hook enforcement** | `tools/gate-hook/validation.js` | Parses the `## Validation` section, checks the schema is complete, blocks the gate if evidence is missing. Opt-in via `SHARDS_VALIDATION_ENFORCE=1`. |
+| **Shared protocol** | `core/protocols/validation.md` | Defines what validation means, the specs-section schema, the evidence-vs-assertion rule, how validation composes with other protocols. Loaded by every specialist via Behavioral Rules. |
+| **Domain checklist** | `core/agents/<agent>/modes/validation_checklist.md` | Defines *which* checks apply for this agent's work. Stable check IDs (AE-01, ML-03, DS-12, etc.). Track Calibration table picks the required subset per `(Track, Mode)`. |
+| **Runtime enforcement** | `runtime/lib/validation.js`, called by `gate_request` | Parses the last `## Validation` section, checks the schema is complete, and refuses to open the gate if evidence is missing. |
 
 Soft protocol defines the intent. Hard enforcement makes it stick.
 
 ## The specs section schema
 
-Every validation-eligible phase writes this into `project-specs.md` before emitting its gate fence:
+Every validation-eligible phase writes this into `project-specs.md` before calling `gate_request`:
 
 ```markdown
 ## Validation
@@ -55,8 +55,8 @@ Every validation-eligible phase writes this into `project-specs.md` before emitt
 
 ### Track vs Mode
 
-- **Track** (universal, strict vocabulary: `quick | deep | fixer`) controls depth. The hook validates this.
-- **Mode** (agent-specific, free-form, optional) describes the flavor of work — `greenfield`, `iteration`, `experiment`, `adhoc`, `build`. The hook does not validate Mode values; it's an auditing aid. Omit the line entirely if not meaningful.
+- **Track** (universal, strict vocabulary: `quick | deep | fixer`) controls depth. The runtime validates this.
+- **Mode** (agent-specific, free-form, optional) describes the flavor of work — `greenfield`, `iteration`, `experiment`, `adhoc`, `build`. The runtime does not validate Mode values; it's an auditing aid. Omit the line entirely if not meaningful.
 
 Examples:
 - ML Engineer, new recommender → `Track: deep`, `Mode: greenfield`
@@ -67,7 +67,7 @@ Examples:
 
 - **✓** — check ran, result met expectation.
 - **✗** — check ran, result failed. Document the fix in Notes or surface in Open Issues before closing the gate.
-- **n/a** — genuinely inapplicable to this work (e.g., calibration on a regression model). Requires a non-empty Notes cell; `n/a` without justification is a gate-block.
+- **n/a** — genuinely inapplicable to this work (e.g., calibration on a regression model). Requires a non-empty Notes cell; `n/a` without justification is rejected.
 
 Unresolved checks are not a valid state. Mark them `✗` and move the uncertainty to Open Issues.
 
@@ -85,39 +85,15 @@ Checks that measure many things (feature distributions across 47 features, per-s
 
 Each agent's checklist defines exactly which checks belong to which Track.
 
-## How to enable enforcement
+## How enforcement works
 
-The hook ships with enforcement **off** by default — validation sections are parsed and logged, but gates are not blocked on missing validation. This soft-launch mode lets agents and users adjust to producing the section without friction.
+A gate that carries `validates=<agent>` is the trigger. When the agent calls `gate_request` with `validates` and a `record_ref` pointing at the specs file, the runtime parses the last `## Validation` section of that file. If the section is missing, incomplete or malformed, the gate is not opened and the error lists each problem with the checklist name (`<agent>/validation_checklist.md`). The record must be inside the project root. Gates on build and execute phases of validation-eligible agents set `validates` in their phase files. A phase that should not require validation simply does not set it.
 
-To turn enforcement on:
+`SHARDS_GATE_ENFORCE=0` only turns off the PreToolUse hook's write blocks. It does not skip this check.
 
-```bash
-export SHARDS_VALIDATION_ENFORCE=1
-```
+## What the runtime checks
 
-With enforcement on, a gate fence carrying `validates=<checklist>` will be blocked if the specs file's `## Validation` section is missing, incomplete, or malformed. The error message names the specific problems and points to the protocol.
-
-To disable all gate enforcement (including validation) for debugging:
-
-```bash
-export SHARDS_GATE_ENFORCE=0
-```
-
-There is no validation-only escape hatch. If a particular phase should not require validation, remove the `validates=...` attribute from its gate fence (or set `validates=none`), rather than turning off enforcement globally.
-
-## How the hook finds your specs file
-
-The hook resolves `project-specs.md` in priority order:
-
-1. `SHARDS_PROJECT_SPECS_PATH` env var if set — absolute path, overrides everything.
-2. `project-specs.md` at the CWD if it exists.
-3. The most recently modified `project-specs.md` under any conventional project directory: `analysis/<name>/`, `studies/<name>/`, `models/<name>/`, `data_models/<name>/`, `services/<name>/`, `research/<name>/`, `dashboards/<name>/`, `brainstorm/<name>/`, `fixes/<name>/`. Only immediate subdirectories are searched (one level deep).
-
-If you work on multiple projects in the same session, the "most recently modified" rule keeps validation pointed at the active project. To pin the hook to a specific file (e.g. for testing), set `SHARDS_PROJECT_SPECS_PATH` explicitly.
-
-## What the hook checks
-
-Structural only — the hook does not (and cannot) judge whether your evidence is *real*. That's Syn's job during final review.
+Structural only. The runtime does not (and cannot) judge whether your evidence is *real*. That's Syn's job during final review.
 
 | Check | Error code |
 |-------|------------|
@@ -135,7 +111,7 @@ Structural only — the hook does not (and cannot) judge whether your evidence i
 
 ## How validation composes with final review
 
-When a specialist invokes Syn for sign-off via `Task(subagent_type="syn", ...)`, Syn reads the `## Validation` section and checks the *semantic* quality the hook can't:
+When a specialist consults Syn for final sign-off (`final_review`), Syn reads the `## Validation` section and checks the *semantic* quality the runtime can't:
 
 - Is the Observed value measurable, or prose that could be true of a broken implementation?
 - Did the specialist run the checks its declared Track requires, or skip them with vague `n/a` justifications?
@@ -156,19 +132,20 @@ A structurally-complete but semantically-empty validation section returns `NEEDS
 
 To add a validation checklist for a new agent:
 
-1. Create `src/agents/specific_instructions/<agent>/validation_checklist.md`.
+1. Create `core/agents/<agent>/modes/validation_checklist.md`.
 2. Pick a stable prefix for check IDs (e.g., `XX-01`).
 3. Define the checks, each with: name, purpose, `Observed format:` line.
 4. Write a Track Calibration table indexed by `(Track, Mode)`.
 5. List expected artifacts and downstream-impact concerns.
 6. List escalation triggers.
-7. Add `validates=<agent_name>` to the agent's final build-phase gate fence in the appropriate `phases/phase-<N>.md` file (or `phases_deep/phase-<N>.md` for dual-track agents).
+7. Add `validates=<agent_name>` to the gate in the agent's final build-phase file under `core/agents/<agent>/phases/` (or `phases_deep/` for dual-track agents).
 
-Use `analytics_engineer/validation_checklist.md` or `ml_engineer/validation_checklist.md` as a reference shape.
+Use `core/agents/analytics-engineer/modes/validation_checklist.md` or `core/agents/ml-engineer/modes/validation_checklist.md` as a reference shape.
 
 ## Related
 
 - [Gate Pattern](gate-pattern.md) — the enforcement substrate validation builds on
 - [Behavioral Rules](behavioral-rules.md) — where the validation reference lands in each agent
 - [Reviewer Verdicts](reviewer-verdicts.md) — Syn's semantic check on the validation section
-- [Knowledge Ledger](knowledge-ledger.md) — validation findings are a primary harvest source
+- [Knowledge](knowledge.md) — validation findings are a primary write-back source
+- [Delegated Build](delegated-build.md) — per-task evidence rows land in the Evidence table

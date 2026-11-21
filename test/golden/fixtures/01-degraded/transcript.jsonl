@@ -1,0 +1,13 @@
+{"type":"system","subtype":"init","session_id":"fixture-session"}
+{"type":"user","message":{"role":"user","content":"/shards"}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Syn here."}]}}
+{"type":"user","message":{"role":"user","content":"What is the weekly active teacher count by region for last quarter? Quick question."}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_kzjrod","name":"Read","input":{"file_path":"/proj/.claude/agents/syn.md"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"x","content":"ok"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_ih5j9y","name":"Task","input":{"subagent_type":"data-scientist","description":"analyze","prompt":"go deep"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"x","content":"ok"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Clarifying.\n\n::GATE:: id=data-scientist-phase-1 phase=1 kind=phase\nSummary written to project-specs.md. Stop here — await explicit confirmation.\n::ENDGATE::"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Question restated.\n\n::GATE:: id=data-analyst-phase-1 phase=1 kind=phase\nSummary written to project-specs.md. Stop here — await explicit confirmation.\n::ENDGATE::"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Question restated again.\n\n::GATE:: id=data-analyst-phase-1 phase=1 kind=phase\nSummary written to project-specs.md. Stop here — await explicit confirmation.\n::ENDGATE::"}]}}
+{"type":"user","message":{"role":"user","content":"ok"}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Done?"}]}}

@@ -1,0 +1,207 @@
+[
+  {
+    "id": "data-analyst",
+    "prompt": "Bring in the data analyst for a quick look at weekly signups.",
+    "expect": {
+      "tool": "activate",
+      "agent": "data-analyst",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name"
+  },
+  {
+    "id": "data-scientist",
+    "prompt": "Switch me to the data scientist.",
+    "expect": {
+      "tool": "activate",
+      "agent": "data-scientist",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name"
+  },
+  {
+    "id": "ml-engineer",
+    "prompt": "Switch to the ML engineer please.",
+    "expect": {
+      "tool": "activate",
+      "agent": "ml-engineer",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name"
+  },
+  {
+    "id": "ai-engineer",
+    "prompt": "Let me talk to the AI engineer about a RAG pipeline.",
+    "expect": {
+      "tool": "activate",
+      "agent": "ai-engineer",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name"
+  },
+  {
+    "id": "data-engineer",
+    "prompt": "Hand this to the data engineer.",
+    "expect": {
+      "tool": "activate",
+      "agent": "data-engineer",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name"
+  },
+  {
+    "id": "data-modeller",
+    "prompt": "Bring in the data modeller.",
+    "expect": {
+      "tool": "activate",
+      "agent": "data-modeller",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name, US spelling"
+  },
+  {
+    "id": "analytics-engineer",
+    "prompt": "Get the analytics engineer on this, I want to build a mart.",
+    "expect": {
+      "tool": "activate",
+      "agent": "analytics-engineer",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name"
+  },
+  {
+    "id": "applied-ml-scientist",
+    "prompt": "I want the applied ML scientist to take over.",
+    "expect": {
+      "tool": "activate",
+      "agent": "applied-ml-scientist",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name"
+  },
+  {
+    "id": "deep-learning-engineer",
+    "prompt": "Put the deep learning engineer in charge.",
+    "expect": {
+      "tool": "activate",
+      "agent": "deep-learning-engineer",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name"
+  },
+  {
+    "id": "bi-engineer",
+    "prompt": "Switch to the BI engineer, we need a dashboard.",
+    "expect": {
+      "tool": "activate",
+      "agent": "bi-engineer",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name"
+  },
+  {
+    "id": "mlops-engineer",
+    "prompt": "Bring in MLOps.",
+    "expect": {
+      "tool": "activate",
+      "agent": "mlops-engineer",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "short name"
+  },
+  {
+    "id": "backend-engineer",
+    "prompt": "Switch to the backend engineer.",
+    "expect": {
+      "tool": "activate",
+      "agent": "backend-engineer",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name"
+  },
+  {
+    "id": "researcher",
+    "prompt": "Switch to the researcher.",
+    "expect": {
+      "tool": "activate",
+      "agent": "researcher",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name; takeover"
+  },
+  {
+    "id": "ml-engineer",
+    "prompt": "Switch to MLE.",
+    "expect": {
+      "tool": "activate",
+      "agent": "ml-engineer",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "alias: MLE"
+  },
+  {
+    "id": "syn",
+    "prompt": "Go back to Syn.",
+    "expect": {
+      "tool": "return",
+      "to": "syn"
+    },
+    "note": "return to named agent"
+  },
+  {
+    "id": "syn",
+    "prompt": "Back.",
+    "expect": {
+      "tool": "return"
+    },
+    "note": "bare back -> return() with no to"
+  },
+  {
+    "id": "syn",
+    "prompt": "Who's active right now?",
+    "expect": {
+      "tool": "active"
+    },
+    "note": "who is active"
+  },
+  {
+    "id": "syn",
+    "prompt": "List the agents you can bring in.",
+    "expect": {
+      "tool": "list_agents"
+    },
+    "note": "list agents"
+  },
+  {
+    "id": "syn",
+    "prompt": "Switch to the engineer.",
+    "expect": {
+      "tool": "none",
+      "kind": "clarify"
+    },
+    "note": "ambiguous: several engineers; ask one clarifying question"
+  },
+  {
+    "id": "researcher",
+    "prompt": "Just ask the researcher whether a t-test works for this data.",
+    "expect": {
+      "tool": "none",
+      "kind": "consult"
+    },
+    "note": "consult-only: must NOT switch"
+  }
+]

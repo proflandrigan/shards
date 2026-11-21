@@ -1,0 +1,59 @@
+name: runtime
+
+# E2.1 exit criterion: `shards-mcp` starts on Linux, macOS and Windows.
+# Observed green on ubuntu, macOS and Windows (Node 18/20/22) on 2026-11-17 (wip/ci-portability runs).
+on:
+  workflow_dispatch:
+  push:
+    branches: [next, main]
+  pull_request:
+
+jobs:
+  runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [18, 20, 22]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      # Node 18 proof without vitest (vitest 4 needs node:util styleText, Node 20+): plain stdio handshake + tools/list.
+      - name: Runtime smoke (stdio MCP handshake + tools/list, no test framework)
+        run: node scripts/runtime-smoke.js
+      - name: Runtime tests (real stdio MCP handshake, locked state, events)
+        if: matrix.node != 18
+        run: npx vitest run test/runtime-
+
+  # The real-kernel notebook test (test/notebook-tools.test.js) is skipped unless
+  # `python3 -c "import jupyter_client, ipykernel"` succeeds; run it on one platform
+  # with those installed and fail if it was skipped anyway.
+  notebook-kernel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install jupyter_client ipykernel
+      - run: npm ci
+      - name: Notebook tools against a real kernel
+        run: npx vitest run test/notebook-tools.test.js --reporter=verbose --reporter=json --outputFile.json=notebook-results.json
+      - name: Fail if the real-kernel test was skipped
+        run: |
+          node -e '
+          const r = require(process.argv[1]);
+          const t = r.testResults.flatMap((f) => f.assertionResults)
+            .find((a) => a.fullName === "notebook real kernel start, exec, run_all, stop");
+          if (!t || t.status !== "passed") {
+            console.error("real-kernel notebook test did not run: " + (t ? t.status : "not found"));
+            process.exit(1);
+          }
+          console.log("real-kernel notebook test: passed");' "$PWD/notebook-results.json"

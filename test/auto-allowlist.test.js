@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { isAutoApprovable } = require('../tools/gate-hook/auto-allowlist.js');
+const { isAutoApprovable } = require('../runtime/lib/auto-allowlist.js');
 
 describe('isAutoApprovable', () => {
   describe('read-only operations still auto-approve', () => {
@@ -142,5 +142,70 @@ describe('isAutoApprovable', () => {
     it('still allows the uppercase -O orderfile flag', () => {
       expect(isAutoApprovable('Bash', { command: 'git diff -O /tmp/orderfile HEAD' })).toBe(true);
     });
+  });
+
+  describe('warehouse CLI: extra SQL flags, dangerous flags, extra positionals, side-effect functions', () => {
+    const no = [
+      'psql -c "SELECT 1" -c "DROP TABLE users"',
+      'psql -c "SELECT 1" -f evil.sql',
+      'psql -c "SELECT 1" --file=evil.sql',
+      'psql -c "SELECT 1" -o /Users/x/.zshrc',
+      'psql -c "SELECT 1" --output /tmp/x',
+      'duckdb db.duckdb -c "SELECT 1" -c "DROP TABLE t"',
+      'duckdb -cmd "DROP TABLE t" db.duckdb -c "SELECT 1"',
+      'duckdb db.duckdb "DROP TABLE t" -c "SELECT 1"',
+      'mysql -e "SELECT 1" --init-command="DROP TABLE t"',
+      'mysql -e "SELECT 1" --tee=/tmp/x',
+      'snowsql -q "SELECT 1" -o output_file=/tmp/x',
+      'clickhouse-client -q "SELECT 1" --queries-file x.sql',
+      'bq query --nouse_legacy_sql "DELETE FROM d.t WHERE true;" \'SELECT 1\'',
+      'bq query --schedule="every 1 hours" "SELECT 1"',
+      'psql -c "SELECT dblink_exec(\'dbname=x\',\'DROP TABLE t\')"',
+      'psql -c \'SELECT "dblink_exec"(1)\'',
+      'psql -c "SELECT lo_export(1, \'/tmp/x\')"',
+      'psql -c "SELECT pg_terminate_backend(123)"',
+      'psql -c "SELECT set_config(\'a.b\', \'c\', false)"',
+      'psql -c \'SELECT $$\'\'$$, dblink_exec(1)\'',
+      'psql -c "SELECT 1" *.sql',
+      'cat <(touch /tmp/pwned)',
+      'ls <(python3 -c "print(1)")',
+    ];
+    for (const c of no) it(`vetoes ${c}`, () => { expect(isAutoApprovable('Bash', { command: c })).toBe(false); });
+    const yes = [
+      'psql -h localhost -U me mydb -c "SELECT count(*) FROM t"',
+      'psql --command="SELECT 1"',
+      'psql -X -A -t -c "SELECT 1"',
+      'duckdb db.duckdb -c "SELECT 1"',
+      'mysql -u root -e "SELECT 1" mydb',
+      'bq query --nouse_legacy_sql --format=json "SELECT 1"',
+      'snowsql -c prod -q "SELECT 1"',
+      'clickhouse-client --host h -q "SELECT 1"',
+      'psql -c "SELECT \'dblink_exec(x)\' AS s"',
+    ];
+    for (const c of yes) it(`approves ${c}`, () => { expect(isAutoApprovable('Bash', { command: c })).toBe(true); });
+  });
+
+  describe('per-command argument rules (no prefix-match side effects)', () => {
+    const no = [
+      'git branch -v -D x', 'git branch -r -m a b', 'git branch --show-current newbr', 'git branch newbr',
+      'git branch -a -d x', 'git branch -u origin/x', 'git branch --set-upstream-to=o/x', 'git branch -c a b',
+      'git branch --edit-description', 'git branch -f a HEAD', 'git branch --list -D x', 'git branch --merged main newbr',
+      'git tag -l -d v1', 'git tag v1', 'git tag -l -f v1', 'git tag --delete v1', 'git tag -a v1 -m x',
+      'git remote -v add e http://x', 'git remote add e http://x', 'git remote rm o', 'git remote remove o',
+      'git remote rename a b', 'git remote set-url o http://x', 'git remote set-head o -a', 'git remote prune o',
+      'git remote update', 'git remote show -x o', 'git remote set-branches o x',
+      'file -C -m /tmp/mg', 'file -C', 'file -m /tmp/mg a', 'file --compile', 'file --magic-file=/tmp/mg a', 'file -bC',
+      'dbt deps', 'dbt compile', 'dbt parse', 'dbt ls', 'dbt list', 'dbt source freshness',
+    ];
+    for (const c of no) it(`vetoes ${c}`, () => { expect(isAutoApprovable('Bash', { command: c })).toBe(false); });
+    const yes = [
+      'git branch', 'git branch --list', 'git branch -a', 'git branch -r', 'git branch -v', 'git branch -vv',
+      'git branch --remotes', 'git branch --merged main', 'git branch --no-merged main', 'git branch --show-current',
+      'git branch --contains abc123', 'git branch --list "fe*"', 'git branch -vv --merged main',
+      'git tag', 'git tag -l', 'git tag --list', 'git tag -l "v*"', 'git tag -n5', 'git tag --contains abc',
+      'git remote', 'git remote -v', 'git remote show origin', 'git remote get-url origin',
+      'file a.txt', 'file -b a.txt', 'file --mime-type a.bin', 'dbt show --select m', 'dbt debug',
+    ];
+    for (const c of yes) it(`approves ${c}`, () => { expect(isAutoApprovable('Bash', { command: c })).toBe(true); });
   });
 });

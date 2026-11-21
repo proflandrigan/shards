@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shards.dev/schema/artifacts/brainstorm.schema.json",
+  "title": "artifact_emit meta: brainstorm",
+  "description": "meta for artifact type 'brainstorm'. path: project-relative brainstorm/brainstorm_<project>.state.json: {project, phase, problem, context, specialists[], synthesis, facilitation_log[], outcome}. Watched.",
+  "type": "object",
+  "required": [
+    "title"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Panel tab title."
+    },
+    "panel_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable panel id; re-emitting with the same panel_id updates the panel in place and `close` with it removes it. Defaults to a hash of (type, path)."
+    },
+    "project": {
+      "type": "string",
+      "description": "Brainstorm project name."
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,109 +1,50 @@
 # Core Concepts
 
-A handful of ideas show up everywhere in Shards. Understanding them makes everything else fall into place.
+## Shards and agents
 
-## Shards
+A **shard** is a specialist agent with a persona, a phased workflow and an area of expertise: 14 agents plus Syn, the orchestrator. See [Agent Taxonomy](../02-agents/overview.md).
 
-A **shard** is a specialist agent — a fragment of Syn's brain with a distinct persona, a phased workflow, and an area of expertise. There are 14 specialist shards plus Syn, the orchestrator.
+## core/ is the single source
 
-Every shard:
+Everything an agent says lives once under `core/`: `core/agents/<id>/` (`AGENT.md`, `agent.yaml`, modes, phase files), `core/protocols/` (shared rules), `core/templates/` and `core/schema/`. `shards build --target claude|codex|skills` compiles it into a host package (skills, subagents, hooks, MCP config). Hosts differ; the content does not.
 
-- Has a **persona** that flavors how it communicates (grumpy, intense, condescending, nerdy, etc.).
-- Has an **activation menu** of mode codes like `[R]` Review, `[ADV]` Advise, `[EX]` Explain, `[AR]` Autonomous Research.
-- Writes to a dedicated **output directory** (analyses, studies, models, services, etc.).
-- Consults other shards via the Claude Code **Task tool** at specific points.
+## The runtime
 
-See [Agent Taxonomy](../02-agents/overview.md) for the full roster.
+`shards-mcp` is an MCP server that holds the state a prompt cannot: the agent stack, gates, phase progress, sessions, task manifests and leases. Agents call its tools (`activate`, `return`, `load_phase`, `gate_request`, `sessions_*`, `task_*`, `fanout_*`, `artifact_emit`, and others). A small set of hooks enforces rules the model must not be trusted with, such as blocking writes while a gate is pending.
+
+## Jobs and bindings
+
+Agents do not hardcode where things go. `shards.config.yaml` maps six **jobs** (`record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`) to **bindings** (`bindings/<name>.md`). Only the `git` binding exists today, and it is the default. Integrations with Confluence, Jira, Google Slides and similar tools are planned and not built; see [integrations status](../08-bindings/integrations-status.md). Shards owns no storage. There is no Knowledge Ledger in v2; reference material lives in your repo or wiki, reached through the `knowledge` job ([Knowledge](../03-protocols/knowledge.md)).
+
+## Activation modes
+
+- **switch**: the agent becomes the active persona (a stack frame). `activate` pushes, `return` pops.
+- **consult**: an isolated subagent answers one question and returns a verdict. It never nests.
+- **fan-out**: several workers handle slices in parallel and their verdicts are merged.
+- **delegated build**: a lead splits build work into tasks owned by workers with path leases and acceptance commands.
+
+See [Activation modes](../03-protocols/activation-modes.md) and [Delegated build](../03-protocols/delegated-build.md).
 
 ## Phases
 
-Every specialist runs a numbered phased workflow — typically 4-8 phases. Phase names are specific to each agent, but the pattern is consistent:
+Each specialist runs a numbered workflow, loaded one phase at a time through `load_phase`, which refuses to skip ahead of an unconfirmed gate. Dual-track agents (analytics engineer, data modeller, data engineer) have quick and deep tracks.
 
-1. **Phase 0 — Triage** (orchestrator only). Scope + specialist selection.
-2. **Phase 1-N — Planning phases.** Decide scope, method, architecture, evaluation, safety, etc.
-3. **Final phase — Execute + review.** Run the work, invoke reviewers, invoke Syn for sign-off, write the final report.
+## Gates and tiers
 
-Phases are progressively loaded from `.claude/agents/specific_instructions/<agent>/phases/` — the agent reads `index.md` to orient on the full journey, then reads `phase-1.md` to start work. Each phase file ends with a pointer to the next phase file that only fires once the current gate is confirmed. This keeps the core agent file small and only one phase's content in context at a time. Dual-track agents (analytics_engineer, data_modeller, data_engineer) have `phases_quick/` and `phases_deep/` siblings.
-
-## Gates
-
-A **gate** is a point where the specialist must write its decision to `project-specs.md` and get your confirmation before advancing. Gates are machine-enforced via `::GATE:: ... ::ENDGATE::` fences parsed by three Claude Code hooks (`Stop`, `PreToolUse`, `UserPromptSubmit`). State is tracked in `.shards/gates/state.json`.
-
-The rule is simple: **documentation is the gate**. If the decision isn't in `project-specs.md`, the specialist can't advance.
-
-See [The Gate Pattern](../03-protocols/gate-pattern.md).
+A gate is a human checkpoint requested with the `gate_request` tool (not a text fence, ADR 0008). Kinds: `phase`, `final`, `execute`, `handoff` (advancing, committed) and `checkpoint`, `confirm` (non-advancing). The **policy** (`strict`, `phase`, `plan`) sets how many gates need a human. The **confirmation tier** is how the human answers: 1 elicitation prompt, 2 host permission prompt, 3 exact chat reply. Only a human can confirm. See [The Gate Pattern](../03-protocols/gate-pattern.md).
 
 ## project-specs.md
 
-Every project produces one of these. It's a living document with:
+Each project's living record: metadata, one section per phase with the decisions made at its gate, reviewer verdicts, and pointers to artifacts. It is the audit trail.
 
-- Project metadata (name, agent, date).
-- One section per phase, containing the decisions made at that gate.
-- Reviewer verdicts from Syn and any consulted specialists.
-- Pointers to output artifacts (queries, notebooks, reports).
+## Sessions
 
-`project-specs.md` is the audit trail. Any reader — human or agent — can reconstruct the project's reasoning from this single file.
+Every chat is recorded in `.shards/sessions/INDEX.json` as active, ended or abandoned (stale after 24 hours). Resume with `/shards:resume` or `shards sessions`. See [sessions](../05-commands/sessions.md).
 
-## Task tool consultations
+## Git as the source of truth
 
-Specialists call each other via Claude Code's Task tool. Two main shapes:
+Confirming an advancing gate commits only the project's output paths, on your current branch, with `Shards-Gate:` trailers (ADR 0005). Shards never switches branches or rewrites history, and never pushes unless `git.push: true`. A failed commit leaves the gate confirmed and is retried. Without git, records go to `.shards/state`.
 
-- **In-phase consultations** — e.g., the Data Scientist calling the Researcher to review methodology in Phase 3. These are scoped — the reviewer reads the relevant context, returns a verdict, and exits.
-- **Final review** — every specialist's last phase invokes Syn for sign-off. Syn returns `APPROVED` / `NEEDS REVISION` / `BLOCKED`.
+## Studio
 
-A full `/shards` session is a depth-2 nested Task call: Syn spawns a specialist; that specialist spawns Syn again for review.
-
-## The Knowledge Ledger
-
-`.shards/knowledge/` is persistent workspace memory — separate from any single project. It has four categories:
-
-- `entities/` — data table quirks, column semantics, grain surprises.
-- `infrastructure/` — warehouse/API/system behaviors.
-- `patterns/` — reusable SQL/Python snippets.
-- `features/` — verified ML features.
-
-Before starting work, agents scan `INDEX.md` for entries relevant to the current project and flag them in `project-specs.md`. After Syn's final review, agents propose new knowledge entries for your confirmation before writing to the ledger.
-
-See [Knowledge Ledger](../03-protocols/knowledge-ledger.md).
-
-## Modes
-
-Many shards support multiple **modes** beyond their default phased workflow. Common modes:
-
-- `[R]` Review — critique an existing artifact without rebuilding it.
-- `[ADV]` Advise — conversational advisor, no phases or files.
-- `[EX]` Explain — walk through existing code or data for context.
-- `[U]` Update — tweak an existing project.
-- `[C]` Clean — structural cleanup without behavior change (Backend Engineer).
-- `[AR]` Autonomous Research — budget-bounded self-steering research loop.
-- `[EX]` Experiment — fixed-N experimentation with versioned checkpoints.
-- `[PL]` Prompt Lab — interactive prompt engineering (AI Engineer).
-- `[UI]` UI Mode — push structured output to the Shards web UI.
-
-Each mode has its own instruction file under `.claude/agents/specific_instructions/<agent>/`.
-
-## DIVERGE (Time-Travel branches)
-
-When 2-3 viable approaches exist in a planning phase, specialists can propose **DIVERGE** — parallel branch execution. Each branch runs autonomously in `.shards/branches/<slug>/`, produces a `branch-report.md`, and Syn's arbiter builds a leaderboard and recommends a winner for promotion.
-
-See [DIVERGE](../03-protocols/diverge.md).
-
-## The UI
-
-Optional but recommended. Launches with `/shards-ui` or `shards-ui` from the terminal. Provides:
-
-- Live chat with any shard.
-- A file explorer, Monaco code editor, notebook viewer, table grid, markdown renderer.
-- Agent-pushed **panels** (experiment dashboards, prompt lab, knowledge map, PR review).
-- Git status and diff viewing.
-- A pinboard for adding file/snippet context to your prompts.
-- Code intelligence (symbol search, go-to-definition).
-- The Guide you are reading.
-
-See [UI Overview](../04-ui/overview.md).
-
-## See also
-
-- [The Gate Pattern](../03-protocols/gate-pattern.md)
-- [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)
-- [Agent Taxonomy](../02-agents/overview.md)
+Studio is an optional browser viewer, files-only: it reads `.shards/events.jsonl` (written by `artifact_emit`) and your output folders. Nothing in the runtime depends on it. See [Studio](../04-studio/overview.md).

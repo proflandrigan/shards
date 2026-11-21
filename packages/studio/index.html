@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shards UI</title>
+<link rel="icon" type="image/png" href="shards_icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator_midnight.min.css">
+<script src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/sidebar.css">
+<link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/editor.css">
+<link rel="stylesheet" href="css/theme-light.css">
+<link rel="stylesheet" href="css/experiment.css">
+<link rel="stylesheet" href="css/prompt-lab.css">
+<link rel="stylesheet" href="css/eval-dashboard.css">
+<link rel="stylesheet" href="css/model-card.css">
+<link rel="stylesheet" href="css/guide.css">
+<link rel="stylesheet" href="css/pr-review.css">
+<link rel="stylesheet" href="css/notebook-walkthrough.css">
+<link rel="stylesheet" href="css/brainstorm.css">
+<link rel="stylesheet" href="css/terminal.css">
+<link rel="stylesheet" href="css/sessions.css">
+</head>
+<body>
+
+<header id="header">
+  <div id="header-center">
+    <div id="header-session-bar">
+      <button id="new-session-btn" title="New chat">+ New Chat</button>
+      <button id="end-session-btn" title="End current chat (resumeable later)" onclick="endActiveSession()" disabled>End Chat</button>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">&#9790;</button>
+    <div id="conn-status-area">
+      <span class="conn-indicator" id="conn-indicator"></span>
+      <span id="conn-text">Connecting</span>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <!-- Explorer sidebar -->
+  <aside id="explorer-sidebar">
+    <div id="activity-bar">
+      <button class="activity-btn active" id="activity-explorer" onclick="onActivityClick('explorer')" title="File Explorer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </button>
+      <button class="activity-btn" id="activity-session" onclick="onActivityClick('session')" title="Session Files">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </button>
+      <button class="activity-btn" id="activity-timeline" onclick="onActivityClick('timeline')" title="Session Activity">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="4" x2="6" y2="20"/><circle cx="6" cy="7" r="1.6"/><circle cx="6" cy="12" r="1.6"/><circle cx="6" cy="17" r="1.6"/><line x1="10" y1="7" x2="20" y2="7"/><line x1="10" y1="12" x2="18" y2="12"/><line x1="10" y1="17" x2="16" y2="17"/></svg>
+        <span class="badge" id="activity-timeline-badge" style="display:none"></span>
+      </button>
+      <button class="activity-btn" id="activity-sessions" onclick="onActivityClick('sessions')" title="Sessions (resume past chats)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 9 8 9"/></svg>
+      </button>
+      <button class="activity-btn" id="activity-bookmarks" onclick="onActivityClick('bookmarks')" title="Bookmarks">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      </button>
+      <button class="activity-btn" id="activity-git" onclick="onActivityClick('git')" title="Source Control">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/>
+          <path d="M18 9v2a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9"/><line x1="12" y1="12" x2="12" y2="15"/>
+        </svg>
+        <span class="badge" id="activity-git-badge" style="display:none"></span>
+      </button>
+      <button class="activity-btn" id="activity-guide" onclick="openGuidePanel()" title="Developer Guide">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      </button>
+    </div>
+    <div id="sidebar-content">
+      <!-- Explorer view -->
+      <div id="sidebar-view-explorer" class="sidebar-view active">
+        <div id="explorer-header">
+          <span id="explorer-toggle" onclick="toggleExplorer()"><span class="chevron">&#9660;</span> <span class="label-text">Explorer</span></span>
+          <button id="explorer-view-toggle" onclick="switchExplorerView(explorerViewMode === 'tree' ? 'list' : 'tree')" title="Switch to list view">List</button>
+          <button id="explorer-collapse-btn" onclick="toggleExplorer()" title="Collapse explorer">&#8249;&#8249;</button>
+        </div>
+        <div id="explorer-search-wrap">
+          <input type="text" id="explorer-search-input" placeholder="Search files...">
+        </div>
+        <div id="explorer-breadcrumb"></div>
+        <div id="explorer-listing"></div>
+      </div>
+      <!-- Git / Source Control view -->
+      <div id="sidebar-view-git" class="sidebar-view">
+        <div id="git-view-header">
+          <span class="git-view-title">Source Control</span>
+          <span id="git-branch-label"></span>
+        </div>
+        <div id="git-repo-picker" style="display:none">
+          <select id="git-repo-select" onchange="setActiveGitRepo(this.value)"></select>
+        </div>
+        <div id="git-view-empty" class="sidebar-empty-state" style="display:none">Working tree is clean</div>
+        <div id="git-changes-list"></div>
+      </div>
+      <!-- Session files view -->
+      <div id="sidebar-view-session" class="sidebar-view">
+        <div id="session-view-header">
+          <span>Session Files</span>
+          <span id="session-file-count"></span>
+        </div>
+        <div id="session-files-list"></div>
+      </div>
+      <!-- Session Activity timeline view (R3) -->
+      <div id="sidebar-view-timeline" class="sidebar-view">
+        <div id="timeline-view-header">
+          <span>Session Activity</span>
+          <span id="timeline-session-count"></span>
+        </div>
+        <div id="timeline-list"></div>
+        <div id="timeline-empty" class="sidebar-empty-state">No active sessions yet</div>
+      </div>
+      <!-- Sessions view (durable history from .shards/sessions/INDEX.json) -->
+      <div id="sidebar-view-sessions" class="sidebar-view">
+        <div id="sessions-view-header">
+          <span>Sessions</span>
+          <div class="sessions-actions">
+            <button class="sessions-refresh-btn" onclick="refreshSessions()" title="Refresh">↻</button>
+          </div>
+        </div>
+        <div id="sessions-filter-row">
+          <button class="sessions-filter-btn" data-status="active" onclick="setSessionsFilter('active')">Live</button>
+          <button class="sessions-filter-btn" data-status="ended" onclick="setSessionsFilter('ended')">Ended</button>
+          <button class="sessions-filter-btn" data-status="abandoned" onclick="setSessionsFilter('abandoned')">Abandoned</button>
+        </div>
+        <div id="sessions-list"></div>
+        <div id="sessions-empty" style="display:none">No sessions recorded yet.</div>
+      </div>
+      <!-- Bookmarks view -->
+      <div id="sidebar-view-bookmarks" class="sidebar-view">
+        <div id="bookmarks-view-header">
+          <span>Bookmarks</span>
+          <span id="bookmarks-count"></span>
+        </div>
+        <div id="bookmarks-list"></div>
+        <div id="bookmarks-empty" class="sidebar-empty-state">No bookmarks yet</div>
+      </div>
+    </div>
+  </aside>
+  <div class="resize-handle" id="explorer-resize"></div>
+
+  <!-- Workspace -->
+  <div id="workspace">
+    <div id="ws-tab-bar">
+      <!-- tabs rendered dynamically -->
+      <div id="ws-tab-actions">
+        <button id="close-all-btn" onclick="closeAllTabs()" title="Close all tabs">Close All</button>
+        <button id="split-btn" onclick="toggleSplit()" title="Toggle split view">Split</button>
+      </div>
+    </div>
+    <div id="ws-content">
+      <!-- Chat pane -->
+      <div id="chat-pane">
+        <div id="conv-header">
+          <span>Chat</span>
+          <button id="chat-collapse-btn" onclick="toggleChatCollapse()" title="Collapse chat">&#8249;&#8249;</button>
+        </div>
+        <div id="chat-search-bar">
+          <input type="text" id="chat-search-input" placeholder="Search messages...">
+          <span id="chat-search-count"></span>
+          <button class="chat-search-nav-btn" onclick="chatSearchNav(-1)" title="Previous">&#9650;</button>
+          <button class="chat-search-nav-btn" onclick="chatSearchNav(1)" title="Next">&#9660;</button>
+        </div>
+        <div id="agent-picker"></div>
+        <div id="messages">
+          <div class="empty-state">Select an agent to start chatting</div>
+        </div>
+        <div id="chat-input-area">
+          <div id="pinboard"></div>
+          <div id="selection-context-indicator"></div>
+          <div id="slash-suggestions"></div>
+          <div id="mode-indicator-row">
+            <button id="mode-indicator" onclick="cyclePermissionMode(1)" title="Shift+Tab to cycle modes"></button>
+          </div>
+          <div id="chat-attachments" class="chat-attachments" style="display:none"></div>
+          <textarea id="chat-input" placeholder="Message the agent... (type / for commands, paste images to attach)" rows="1"></textarea>
+          <button id="chat-send-btn" onclick="sendChatMessage()">Send</button>
+          <button id="chat-stop-btn" onclick="stopChat()">End</button>
+        </div>
+      </div>
+
+      <!-- Split resize handle -->
+      <div class="resize-handle" id="split-resize" style="display:none"></div>
+
+      <!-- File pane -->
+      <div id="file-pane">
+        <div id="file-toolbar">
+          <span id="file-path-display"></span>
+          <button class="toolbar-btn copy-path-btn" id="copy-path-btn" onclick="copyCurrentFilePath()" title="Copy relative path">&#x2398;</button>
+          <button class="toolbar-btn" id="edit-btn" onclick="toggleEditMode()">Edit</button>
+          <button class="toolbar-btn" id="diff-btn" onclick="toggleDiffMode()" style="display:none" title="Toggle git diff view">Diff</button>
+          <button class="toolbar-btn save" id="save-btn" onclick="saveCurrentFile()" style="display:none">Save</button>
+        </div>
+        <!-- Rendered view (markdown/notebook) -->
+        <div id="file-rendered-view"></div>
+        <!-- Table view (CSV/TSV/JSON/JSONL) -->
+        <div id="table-view">
+          <div id="table-toolbar">
+            <input type="text" id="table-search" placeholder="Search all columns…">
+            <button class="toolbar-btn" id="table-download-csv" onclick="downloadTableCSV()" title="Download as CSV">CSV</button>
+            <div id="table-edit-btns">
+              <button class="toolbar-btn" onclick="tableAddRow()">+Row</button>
+              <button class="toolbar-btn" onclick="tableDeleteSelectedRows()">-Row</button>
+              <button class="toolbar-btn" onclick="tableAddColumn()">+Col</button>
+              <button class="toolbar-btn" onclick="tableDeleteColumn()">-Col</button>
+            </div>
+            <span id="table-row-count"></span>
+          </div>
+          <div id="table-container"></div>
+        </div>
+        <!-- Code editor view -->
+        <div id="file-editor">
+          <div id="line-gutter"></div>
+          <div id="file-view-area">
+            <pre id="code-view"><code id="code-view-code"></code></pre>
+            <textarea id="code-edit" spellcheck="false"></textarea>
+            <div id="monaco-file-container" style="display:none;width:100%;height:100%"></div>
+          </div>
+        </div>
+        <!-- Git diff view (Monaco diff editor) -->
+        <div id="git-diff-container"></div>
+      </div>
+    </div>
+    <!-- Terminal panel (Electron only — hidden in web UI) -->
+    <div id="terminal-panel">
+      <div id="terminal-resize-handle"></div>
+      <div id="terminal-tab-bar"></div>
+      <div id="terminal-container"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Environment HUD -->
+<footer id="status-bar">
+  <div class="hud-left">
+    <span class="hud-item hud-git" title="Git branch">
+      <span class="hud-icon">&#9095;</span>
+      <span id="hud-git-branch" class="hud-branch-name">&mdash;</span>
+      <span id="hud-git-dirty" class="hud-dirty">&mdash;</span>
+    </span>
+    <span class="hud-separator" id="hud-git-sep"></span>
+    <span class="hud-item" title="Pinned context items">
+      <span class="hud-icon">&#128204;</span>
+      <span id="hud-pins">0 pinned</span>
+    </span>
+    <span class="hud-separator" id="hud-pr-sep" style="display:none"></span>
+    <span class="hud-item hud-pr" id="hud-pr-item" style="display:none;cursor:pointer" onclick="openPRReviewPanel()">
+      <span class="hud-icon">&#9679;</span>
+      <span id="hud-pr-text">0 PR comments</span>
+    </span>
+  </div>
+  <div class="hud-right">
+    <span class="hud-item hud-context" title="Estimated context usage">
+      <span class="hud-label">Context</span>
+      <span id="hud-context" class="hud-context-value">&mdash;</span>
+    </span>
+  </div>
+</footer>
+
+<!-- Resume confirmation modal -->
+<div id="resume-modal" onclick="if(event.target===this)closeResumeModal()">
+  <div class="resume-panel">
+    <h3>Resume this chat?</h3>
+    <div class="resume-detail">
+      <div><strong>Agent:</strong> <span id="resume-modal-agent"></span></div>
+      <div><strong>Project:</strong> <span id="resume-modal-project"></span></div>
+      <div><strong>Status:</strong> <span id="resume-modal-status"></span> · <span id="resume-modal-phase"></span></div>
+    </div>
+    <div class="resume-prompt-preview" id="resume-modal-prompt"></div>
+    <div class="resume-actions">
+      <button class="btn-cancel" onclick="closeResumeModal()">Cancel</button>
+      <button class="btn-confirm" onclick="confirmResume()">Resume</button>
+    </div>
+  </div>
+</div>
+
+<!-- Context menu (shared) -->
+<div id="ctx-menu" class="ctx-menu">
+  <div class="ctx-item" id="ctx-copy-path">Copy Path</div>
+  <div class="ctx-item" id="ctx-pin-file">Pin to Context</div>
+</div>
+
+<!-- Quick open overlay (Cmd+P) -->
+<div id="quick-open-overlay" class="overlay-backdrop" onclick="if(event.target===this)this.classList.remove('visible')">
+  <div class="overlay-panel">
+    <input type="text" id="quick-open-input" class="overlay-input" placeholder="Open file...">
+    <div id="quick-open-results" class="overlay-results"></div>
+  </div>
+</div>
+
+<!-- Command palette overlay (Cmd+K) -->
+<div id="command-palette-overlay" class="overlay-backdrop" onclick="if(event.target===this)this.classList.remove('visible')">
+  <div class="overlay-panel">
+    <input type="text" id="command-palette-input" class="overlay-input" placeholder="Type a command...">
+    <div id="command-palette-results" class="overlay-results"></div>
+  </div>
+</div>
+
+<!-- Settings overlay (Cmd+,) -->
+<div id="settings-overlay" class="overlay-backdrop" onclick="if(event.target===this)this.classList.remove('visible')">
+  <div class="overlay-panel settings-panel">
+    <div style="padding:12px 16px;border-bottom:1px solid #1e1e32;font-size:13px;font-weight:600;color:#b0b0c8">Settings</div>
+    <div class="settings-section">
+      <span class="settings-label">Theme</span>
+      <select class="settings-select" id="settings-theme" onchange="applySettingsTheme(this.value)">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+    </div>
+    <div class="settings-section">
+      <span class="settings-label">UI Font Size</span>
+      <input type="number" class="settings-input" id="settings-font-size" min="10" max="20" value="13" onchange="applySettingsFontSize(this.value)">
+    </div>
+    <div class="settings-section">
+      <span class="settings-label">Editor Font Size</span>
+      <input type="number" class="settings-input" id="settings-editor-font-size" min="10" max="24" value="13" onchange="applySettingsEditorFontSize(this.value)">
+    </div>
+    <div class="settings-section">
+      <span class="settings-label">Reset Layout</span>
+      <button class="settings-btn" onclick="resetLayout()">Reset</button>
+    </div>
+
+    <div style="padding:12px 16px;border-bottom:1px solid #1e1e32;font-size:13px;font-weight:600;color:#b0b0c8;margin-top:4px">Permissions</div>
+    <div class="settings-section" style="flex-direction:column;align-items:stretch;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="settings-label">Preset</span>
+        <div style="display:flex;gap:6px">
+          <button class="settings-btn" onclick="applyPermissionPreset('readonly')">Read-only</button>
+          <button class="settings-btn" onclick="applyPermissionPreset('permissive')">Permissive</button>
+        </div>
+      </div>
+    </div>
+    <div id="permissions-list" class="settings-section" style="flex-direction:column;align-items:stretch;gap:4px;max-height:220px;overflow-y:auto;padding:8px 16px">
+      <span class="settings-label" style="font-size:11px;opacity:0.6">Loading...</span>
+    </div>
+    <div class="settings-section" style="gap:6px">
+      <input type="text" class="settings-input" id="permissions-custom-input" placeholder="e.g. find, grep, Bash(pytest:*)" style="width:100%;flex:1">
+      <button class="settings-btn" onclick="addCustomPermission()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/marked@4.3.0/marked.min.js"></script>
+<script src="https://unpkg.com/dompurify@3.2.6/dist/purify.min.js" integrity="sha384-JEyTNhjM6R1ElGoJns4U2Ln4ofPcqzSsynQkmEc/KGy6336qAZl70tDLufbkla+3" crossorigin="anonymous"></script>
+<script src="js/state.js"></script>
+<script src="js/agents.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/bookmarks.js"></script>
+<script src="js/monaco.js"></script>
+<script src="js/code-intel.js"></script>
+<script src="js/markdown.js"></script>
+<script src="js/explorer.js"></script>
+<script src="js/tabular.js"></script>
+<script src="js/table.js"></script>
+<script src="js/notebook.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/notebook-walkthrough.js"></script>
+<script src="js/guide.js"></script>
+<script src="js/tabs.js"></script>
+<script src="js/file-view.js"></script>
+<script src="js/split-view.js"></script>
+<script src="js/selection-context.js"></script>
+<script src="js/pinboard.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/sessions.js"></script>
+<script src="js/quick-open.js"></script>
+<script src="js/command-palette.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/git.js"></script>
+<script src="js/hud.js"></script>
+<script src="js/terminal.js"></script>
+<script src="js/events.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>

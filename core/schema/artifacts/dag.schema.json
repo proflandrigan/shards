@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shards.dev/schema/artifacts/dag.schema.json",
+  "title": "artifact_emit meta: dag",
+  "description": "meta for artifact type 'dag'. path: project-relative text file containing Mermaid graph syntax (e.g. \"graph LR ...\").",
+  "type": "object",
+  "required": [
+    "title"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Panel tab title."
+    },
+    "panel_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable panel id; re-emitting with the same panel_id updates the panel in place and `close` with it removes it. Defaults to a hash of (type, path)."
+    },
+    "format": {
+      "type": "string",
+      "enum": [
+        "mermaid"
+      ],
+      "default": "mermaid"
+    }
+  },
+  "additionalProperties": true
+}

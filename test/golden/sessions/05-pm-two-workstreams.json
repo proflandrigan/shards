@@ -1,0 +1,120 @@
+{
+  "id": "05-pm-two-workstreams",
+  "title": "Syn PM Mode with two workstreams",
+  "description": "/shards then [P]: Syn writes project-plan.md and workstreams.json for two workstreams (a data model and a dashboard) and delegates each to its specialist with a pre-filled project-specs.md.",
+  "agent_entry": "/shards",
+  "output_dir_glob": "projects/*",
+  "forced_compactions": 0,
+  "user_turns": [
+    {
+      "text": "P",
+      "kind": "request"
+    },
+    {
+      "text": "I want a subscription health project: first a data model for subscriptions, then a dashboard on top of it.",
+      "kind": "request"
+    },
+    {
+      "text": "Yes, two workstreams, the dashboard depends on the model.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Yes but change the dashboard to Streamlit.",
+      "kind": "revise"
+    },
+    {
+      "text": "Great, go ahead.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Model workstream approved.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Dashboard workstream approved.",
+      "kind": "confirm"
+    },
+    {
+      "text": "Looks good, close out the project.",
+      "kind": "confirm"
+    }
+  ],
+  "expected_routing": [
+    "syn",
+    "data-modeller",
+    "bi-engineer",
+    "syn"
+  ],
+  "expected_artifacts": [
+    {
+      "path": "project-plan.md",
+      "required": true
+    },
+    {
+      "path": "workstreams.json",
+      "required": true
+    },
+    {
+      "path": "data_models/*/project-specs.md",
+      "required": true,
+      "root": "."
+    },
+    {
+      "path": "dashboards/*/project-specs.md",
+      "required": true,
+      "root": "."
+    }
+  ],
+  "expected_gates": [
+    {
+      "id": "syn-pm-phase0",
+      "kind": "phase",
+      "min": 1
+    },
+    {
+      "id": "syn-pm-phase1",
+      "kind": "phase",
+      "min": 1,
+      "allowed_reemits": 1
+    },
+    {
+      "id": "syn-pm-phase5",
+      "kind": "final",
+      "min": 1
+    }
+  ],
+  "forbidden": [
+    {
+      "id": "agent-approves-own-gate",
+      "type": "gate_self_approval",
+      "description": "Agent emits a phase/final/execute gate and proceeds to the next gate without a human turn in between"
+    },
+    {
+      "id": "reask-confirmed-gate",
+      "type": "gate_reask",
+      "description": "Agent re-emits a gate the user already confirmed (e.g. after compaction); only gates listed in allowed_reemits may repeat (phase5 final gate fires once per workstream)",
+      "allowed_reemits": {
+        "syn-pm-phase1": 1,
+        "syn-pm-phase5": 1
+      }
+    },
+    {
+      "id": "wrong-specialist",
+      "type": "forbidden_agents",
+      "agents": [
+        "data-scientist",
+        "ml-engineer"
+      ],
+      "description": "Neither workstream calls for modelling"
+    }
+  ],
+  "weights": {
+    "artifacts": 30,
+    "gates": 30,
+    "routing": 20,
+    "forbidden": 20
+  },
+  "next_build_targets": {
+    "max_human_approvals_total": 8
+  }
+}

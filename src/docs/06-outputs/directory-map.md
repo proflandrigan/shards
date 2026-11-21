@@ -1,116 +1,57 @@
 # Output Directory Map
 
-Where each shard writes. The installer creates these at install time; each project lands under its own named subdirectory.
+Where each agent writes. Output directories live at the project root and are created on demand. The mapping comes from `output_dir` in each agent's `core/agents/<id>/agent.yaml` (`{project}` is the project name).
 
-## Tree
+## Specialist outputs
 
-```
-<project root>/
-├── analysis/                 # Data Analyst — adhoc work
-│   └── <project>/
-│       ├── project-specs.md
-│       ├── query.sql
-│       └── findings.md
-│
-├── studies/                  # Data Scientist — deep studies
-│   └── <project>/
-│       ├── project-specs.md
-│       ├── notebooks/
-│       ├── sql/
-│       └── report.md
-│
-├── models/                   # Data Engineer + ML Engineer (greenfield)
-│   └── <project>/
-│       ├── project-specs.md
-│       ├── dbt/              # DE
-│       ├── training/         # MLE
-│       └── eval/             # MLE
-│
-├── data_models/              # Data Modeller + Analytics Engineer
-│   └── <project>/
-│       ├── project-specs.md
-│       ├── staging/
-│       ├── intermediate/
-│       └── marts/
-│
-├── services/                 # AI Engineer + DL Engineer + MLOps Engineer
-│   └── <project>/
-│       ├── project-specs.md
-│       ├── src/
-│       ├── eval/
-│       └── deploy/
-│
-├── research/                 # Applied ML Scientist
-│   └── <project>/
-│       ├── project-specs.md
-│       ├── framework/
-│       ├── experiments/
-│       └── report.md
-│
-├── dashboards/               # BI Engineer
-│   └── <project>/
-│       ├── project-specs.md
-│       └── app.py
-│
-├── brainstorm/               # Syn brainstorm sessions
-│   ├── brainstorm_<session>.md         # living doc — context, specialist input, synthesis, outcome
-│   ├── brainstorm_<session>.state.json # live state for the UI brainstorm panel
-│   └── workstreams.json                # optional — multi-workstream escalation
-│
-├── fixes/                    # Syn Fixer mode
-│   └── <project>/
-│       └── fix-notes.md
-│
-├── presentations/            # Syn Slides Mode decks
-│   └── <deck>/
-│       ├── presentation-spec.md
-│       ├── slides-url.txt
-│       └── iterations.md     # optional, after revisions
-│
-└── .shards/                  # runtime state, knowledge, UI, hooks
-    ├── knowledge/            # Knowledge Ledger — preserved across uninstalls
-    │   ├── INDEX.md
-    │   ├── entities/
-    │   ├── infrastructure/
-    │   ├── patterns/
-    │   └── features/
-    ├── sessions/             # per-session chat + panel state
-    ├── gates/                # gate-hook state
-    ├── hooks/                # installed hook scripts
-    ├── ui/                   # UI server assets
-    │   └── docs/             # this guide, served at runtime
-    └── event-queue.jsonl     # hook → UI relay buffer
-```
+| Agent | Directory |
+|---|---|
+| Data Analyst | `analysis/<project>/` |
+| Data Scientist | `studies/<project>/` |
+| Data Engineer | `models/<project>/` |
+| Data Modeller | `data_models/<project>/` |
+| Analytics Engineer | `data_models/<project>/` |
+| ML Engineer | `models/<project>/` (greenfield); the existing service directory when iterating |
+| AI Engineer | `services/<project>/` (greenfield); the existing service directory when iterating |
+| Applied ML Scientist | `research/<project>/` |
+| Deep Learning Engineer | `models/<project>/` |
+| MLOps Engineer | `services/<project>/mlops/` (greenfield); the existing service directory when iterating |
+| BI Engineer | `dashboards/<project>/` |
+| Researcher, Academic, Backend Engineer | none (review only) |
 
-## Per-specialist quick reference
+## Syn
 
-| Specialist | Dir | Central file |
-|---|---|---|
-| Data Analyst | `analysis/<p>/` | `project-specs.md` + `findings.md` |
-| Data Scientist | `studies/<p>/` | `project-specs.md` + `report.md` |
-| Data Engineer | `models/<p>/` | `project-specs.md` + dbt models |
-| Data Modeller | `data_models/<p>/` | `project-specs.md` + ERD |
-| Analytics Engineer | `data_models/<p>/` | `project-specs.md` + marts |
-| ML Engineer | `models/<p>/` or service | `project-specs.md` + `model-card.md` |
-| AI Engineer | `services/<p>/` | `project-specs.md` + evals |
-| Applied ML Scientist | `research/<p>/` | `project-specs.md` + `report.md` |
-| Deep Learning Engineer | `services/<p>/` | `project-specs.md` + `model-card.md` |
-| MLOps Engineer | `services/<p>/` | `project-specs.md` + deploy config |
-| BI Engineer | `dashboards/<p>/` | `project-specs.md` + app code |
-| Backend Engineer | — | review only |
-| Researcher / Academic | — | review only (Academic has report mode) |
-| Syn Fixer | `fixes/<p>/` | `fix-notes.md` |
-| Syn Slides Mode | `presentations/<deck>/` | `presentation-spec.md` + `slides-url.txt` |
+Syn's `output_dir` is mode-dependent.
 
-## Plain-markdown guide location
+| Mode | Directory |
+|---|---|
+| Fixer | appended to the project's `project-specs.md` when the fix belongs to a project; otherwise `fixes/fix_<slug>.md` |
+| Brainstorm | `brainstorm/` (`brainstorm_<project>.md` plus a `.state.json` sidecar) |
+| Panel Review | `panels/<dirname>/` |
+| PM | `projects/<project>/` (`project-plan.md`; specialists still write to their own directories) |
+| PR Review | none |
+| Diff | `<dir_A>/diff_vs_<project_B>.md` |
 
-The installer also copies the guide to `docs/shards-guide/` at the project root — readable in any editor or on GitHub without the UI.
+## Project files
 
-## Preservation on uninstall
+Each specialist project directory holds a `project-specs.md` (the decisions record, written at each gate) and the agent's deliverables. Templates live in `core/templates/`.
 
-`.shards/knowledge/` is explicitly preserved on uninstall. Everything else under `.shards/` is removed, along with the `.claude/agents/`, `.claude/commands/`, and `templates/` that the installer added.
+## `.shards/` runtime state
 
-## See also
+Shards keeps its own state under `<root>/.shards/`. It is runtime state, not deliverables, and should be gitignored (`shards doctor` checks this; `shards doctor --fix` adds it).
 
-- [Install & Setup](../01-getting-started/install.md)
-- [Knowledge Ledger](../03-protocols/knowledge-ledger.md)
+| Path | Contents |
+|---|---|
+| `.shards/state/global.json` | State schema version. |
+| `.shards/state/sessions/<sessionKey>/` | Per-session `frames.json` (agent stack), `gates.json`, `session.json`, `leases.json`, plus `prompts.jsonl` and `hooks.json` from the hooks. |
+| `.shards/state/handshake/` | SessionStart handshake files (pruned after 24 hours). |
+| `.shards/state/git-pending.json` | Gate commits waiting to replay. |
+| `.shards/state/gate-operator.log.jsonl` | Operator gate confirms and force-closes. |
+| `.shards/state/hook-errors.log` | Hook errors (hooks fail open). |
+| `.shards/sessions/INDEX.json` | The durable session index; see [sessions](../05-commands/sessions.md). |
+| `.shards/events.jsonl` | Artifact events appended by `artifact_emit`, read by Studio. |
+| `.shards/content/` | Skill content from `shards install --project`. |
+| `.shards/project-install.json` | Record of a project skills install. |
+| `.shards/archive/legacy-gates/` | Archived v1 gate files after `shards migrate`. |
+
+Configuration is separate: `shards.config.yaml` and `bindings/` at the project root (see [config](../08-bindings/config.md)). Reference knowledge is not stored by Shards; see [knowledge](../03-protocols/knowledge.md). Exported v1 ledger entries land in `docs/knowledge/`.

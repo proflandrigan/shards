@@ -1,0 +1,10 @@
+## Shards (Codex)
+
+This project uses the Shards agent suite (Syn the orchestrator plus data and ML specialists) through the `shards` MCP server and skills.
+
+- Start an agent with its skill. The plugin's skills are namespaced `shards:<agent>` (Codex lists them that way), so mention them as `$shards:syn`, `$shards:data-analyst`, `$shards:ml-engineer`, and so on; `$shards:agents` lists them. After `activate`, follow the returned persona summary and the agent file it names; every Shards tool response carries an `agent=<id>` header that re-asserts the active persona.
+- To start a whole session as one agent, run `codex -p shards-<agent>` (for example `codex -p shards-syn`). The profiles are the files `$CODEX_HOME/shards-<agent>.config.toml` that `shards install --codex` copies.
+- Gates are workflow checkpoints driven by the `gate_request` and `gate_confirm` tools. While a gate is pending the Shards hooks deny file writes and commands. Ask the user to confirm in chat, then call `gate_confirm`; Codex asks the user to approve the gate tools (`gate_advance`, `gate_confirm`, `gate_suspend`, `gate_force_close`). Never call `gate_force_close`; the operator runs `shards gates force-close` in a shell.
+- Consult subagents are named `<agent>` or `<agent>-<entry>` (for example `researcher-review`). Name the subagent explicitly when delegating.
+- Delegation needs `agents.max_depth` of at least 2 (a specialist consulting Syn or a reviewer) and fan-out is bounded by `agents.max_threads`; see the plugin's `.codex/config.toml` for the recommended values.
+- Specialists write artifacts into `analysis/`, `studies/`, `models/`, `services/`, `data_models/`, `dashboards/`, `research/`, `presentations/`, `panels/`, `fixes/`, `brainstorm/`, `projects/` and the `.shards/` state directory. Writes elsewhere are unusual.

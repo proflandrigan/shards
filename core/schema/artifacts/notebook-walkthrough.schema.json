@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shards.dev/schema/artifacts/notebook-walkthrough.schema.json",
+  "title": "artifact_emit meta: notebook-walkthrough",
+  "description": "meta for artifact type 'notebook-walkthrough'. path: project-relative .shards/notebook-walkthrough.json state file: {session_id, notebook, cells[], notebookCells[], transcript[]}. Watched.",
+  "type": "object",
+  "required": [
+    "title",
+    "panel_id"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Panel tab title."
+    },
+    "panel_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable panel id; re-emitting with the same panel_id updates the panel in place and `close` with it removes it. Defaults to a hash of (type, path)."
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "notebook": {
+      "type": "string",
+      "description": "Notebook path or basename."
+    }
+  },
+  "additionalProperties": true
+}

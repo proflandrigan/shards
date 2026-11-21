@@ -1,68 +1,51 @@
 # Incremental Testing
 
-A mid-build contract for specialists that produce notebooks, pipelines, or long scripts. Instead of writing the full artifact and hitting *Run All*, the agent tests each component as it is written and emits a machine-enforced checkpoint gate before starting the next one.
+The build-time evidence contract for specialists that produce notebooks, pipelines or long scripts. Each task in the task list is one tested component. Its acceptance command is run, the result is recorded as an evidence row, and the lead verifies it before the next dependent component is built.
 
-Referenced by ML Engineer, Data Scientist, AI Engineer, Applied ML Scientist, Deep Learning Engineer, Data Engineer, Analytics Engineer, and MLOps Engineer during their build phases.
+Used by the ML Engineer, Data Scientist, AI Engineer, Applied ML Scientist, Deep Learning Engineer, Data Engineer, Analytics Engineer and MLOps Engineer during their build phases.
 
 ## The problem it solves
 
-Agents that build Jupyter notebooks and multi-step pipelines used to write the whole artifact in one pass, then run it end-to-end. When cell 2 failed silently or a bad join stalled for minutes, the failure surfaced only at the end — often disguised as a "hang." There was no record of which components had passed before the failure point, and no way to narrow the blast radius.
+Agents used to write a whole notebook or pipeline in one pass and then run it end to end. A silent failure in cell 2 surfaced at the end, often disguised as a hang, with no record of which parts had passed. The protocol enforces a tighter loop: component written, executed in isolation, evidence recorded, lead verification, next component.
 
-The incremental testing protocol enforces a tighter loop: **component written → component executed in isolation → evidence recorded → checkpoint gate → user confirms → next component**.
+## The contract
 
-## The check
+1. **One tested component per task.** Do not start a task that depends on a component whose evidence is not verified.
+2. **A visible acceptance command.** It appears in the task card and the evidence row.
+3. **Evidence, not assertion.** Shape, row count, loss value, status code: a measured fact.
+4. **Lead verification.** The lead re-runs or independently checks the command and writes the evidence row (Check, Expected, Observed, Pass/Fail) into the `## Validation` evidence table of `project-specs.md`. A task is not done on the worker's word.
 
-Between each component, the specialist emits a `kind=checkpoint` gate fence:
-
-```
-::GATE:: id=<agent-name>-phase-<N>-checkpoint-<component> phase=<N> kind=checkpoint
-Component: <human-readable name>
-Test command: <exact command that was run>
-Evidence:
-  - <measured fact 1>
-  - <measured fact 2>
-Status: PASS | FAIL — <one-line summary>
-Next: <what will be built after confirmation>
-Stop here — await explicit confirmation before writing the next component.
-::ENDGATE::
-```
-
-The `kind=checkpoint` attribute distinguishes these from phase-transition gates: a checkpoint closes without advancing the phase, and never carries `validates=<agent>` — validation evidence is a phase-gate concern that still runs at the end of the build.
-
-While a checkpoint is open, the gate hook blocks all non-read tools (Read/Glob/Grep only). The user confirms with any affirmative ("ok", "yes", "proceed") or explicitly via `::GATE-CONFIRM:: <id>`.
+The mechanics (task list, dispatch, `task_verify`) are in [Delegated Build](delegated-build.md). Components can also punctuate a build with `kind=checkpoint` gates (see [Gate Pattern](gate-pattern.md)). Under the default `phase` policy a checkpoint is recorded automatically when it carries `evidence.status: "pass"`, and a failure or missing evidence leaves it pending for you. Checkpoints never advance the phase and never carry `validates`.
 
 ## What counts as a component
 
-One notebook cell or a tight group of cells with a shared purpose, one dbt model, one pipeline step, one endpoint handler — whatever is the smallest unit you could debug in isolation. Usually 2–5 checkpoints per build phase. Fewer and you rediscover run-all; more and you're checkpointing individual lines.
+The smallest unit you could debug in isolation: a data load plus sanity print, one dbt model with its tests, one pipeline step, one endpoint handler. A tight group of 2 to 5 notebook cells is one component, one line is not. Too fine defeats the point, too coarse recreates run-all.
 
 ## Techniques per artifact type
 
-- **Notebooks** — execute cells via `jupyter execute … --inplace` with a per-cell timeout; print shapes and heads after every load/transform; never add a cell that depends on an untested predecessor. Keep outputs clean: never print secrets/tokens, prefer `.head()`/`.shape`/summaries over full DataFrame dumps (they bloat the `.ipynb` and, in walkthrough mode, burn agent context), install with `%pip`/`%conda` not `!pip` so it targets the live kernel, and never overwrite raw data in place — write derived artifacts to a separate path.
-- **SQL** — develop with `LIMIT 100`; run `EXPLAIN` on any 3+ table join; check count-before vs count-after at every join; time out dev queries at 60s.
-- **ML training** — smoke-fit on ≤1% of data for 1–2 epochs before touching the full set; forward-pass a single batch before starting the training loop; overfit a tiny batch on purpose as a sanity check.
-- **Transforms** — `assert` shape/dtype/non-null invariants after every transform.
-- **Pipeline / service code** — dry-run each step in isolation before chaining; `curl` each new endpoint before wiring it up.
+- **Notebooks:** execute cells programmatically with a per-cell timeout, print shapes and heads after every load or transform, and never add a cell that depends on an unverified predecessor. An output that is empty without raising is a failure, so assert row count. Keep outputs clean (no secrets, summaries over full dumps), install with `%pip` or `%conda`, and never overwrite raw data in place.
+- **SQL:** develop with `LIMIT 100`, run `EXPLAIN` on any join of 3 or more tables, check count before and after every join ([Join-Path](join-path.md)), and interrupt dev queries after 60 seconds.
+- **ML training:** smoke-fit on 1% of data or less for 1 to 2 epochs, forward-pass one batch first, and overfit a tiny batch on purpose as a sanity check.
+- **Transforms:** assert shape, dtype and non-null invariants after every transform.
+- **Pipelines and services:** dry-run each step in isolation and hit each new endpoint once before wiring it up.
 
-## Restart & Run All — the final reproducibility check
+## Restart and Run All: the final check
 
-Incremental testing proves each component in isolation; it does not prove the notebook runs clean top-to-bottom on a fresh kernel. The closing check — run **once, after every component has passed** — is a fresh-kernel full run. In Notebook Walkthrough mode this is `notebook-kernel.py run-all <session_id>` (restarts the kernel, runs every cell in order, stops at the first failure, returns a per-cell roll-up with the first error); standalone it's `jupyter nbconvert --execute --to notebook --inplace`. Set seeds so the run is deterministic. This is the evidence the Data Scientist's DS-11 check records. Run-all is never a *development* technique — only the final step.
+Per-task evidence proves each component in isolation, not that the notebook runs clean on a fresh kernel. The lead runs a fresh-kernel full run once, after every task is verified. In Notebook Walkthrough mode that is the `notebook_run_all` tool (restarts the kernel, runs every code cell in order, stops at the first failure and reports it). Standalone, use `jupyter nbconvert --execute --to notebook --inplace <notebook>` and confirm a zero exit code. Set seeds so results reproduce. For the Data Scientist this is check DS-11. Run-all is never a development technique.
 
 ## Composition
 
-- Still runs **with** the validation protocol — checkpoint evidence feeds the final phase-gate evidence table but does not replace it.
-- Still runs **with** the join-path protocol — the checkpoint fires after a join has been executed and verified.
-- Separate from **experiment versioning** — DVC/git checkpoints snapshot *results*; this protocol checkpoints *build steps*. In `[X]` and `[AR]` modes both apply.
+- With [Validation](validation.md): per-task evidence rows are the phase gate's Evidence table. The validation section is still required at the gate.
+- With [Join-Path](join-path.md): the acceptance check runs after the join has been traced and verified.
+- With [Experiment Versioning](experiment-versioning.md): task evidence logs the build, experiment checkpoints log results. In experiment and `[AR]` modes both apply.
+- With [Knowledge](knowledge.md): cite a pattern found mid-phase in the evidence block.
 
-## Escape hatches
+## Failure modes
 
-- `SHARDS_CHECKPOINT_ENFORCE=0` — downgrades checkpoint gates to advisory. They're still logged; they don't block tools.
-- `SHARDS_GATE_ENFORCE=0` — disables all gate enforcement (phase and checkpoint).
-
-Neither should be a default. They exist for harness issues, not time pressure — skipping incremental testing is exactly how you end up debugging at 2am.
+Whole-notebook-then-run-all, unbounded SELECT in development, full-data training before a smoke fit, bare `try/except` that hides failures, skipping a check because it is "obviously fine" (merge trivial components into a neighbour instead), and recording evidence without actually running the check.
 
 ## See also
 
-- [The Gate Pattern](gate-pattern.md)
-- [Validation Protocol](validation.md)
-- [Join-Path Protocol](join-path.md)
-- Source: `src/agents/specific_instructions/shared/incremental_testing.md`
+- [Delegated Build](delegated-build.md)
+- [Gate Pattern](gate-pattern.md)
+- Source: `core/protocols/incremental_testing.md`

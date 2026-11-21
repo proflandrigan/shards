@@ -1,107 +1,272 @@
 {
-  "version": 1,
-  "title": "Shards Developer Guide",
+  "version": 2,
   "sections": [
     {
-      "id": "getting-started",
       "title": "Getting Started",
+      "dir": "01-getting-started",
       "pages": [
-        { "id": "intro", "title": "What Is Shards?", "file": "README.md" },
-        { "id": "install", "title": "Install & Setup", "file": "01-getting-started/install.md" },
-        { "id": "first-session", "title": "Your First Session", "file": "01-getting-started/first-session.md" },
-        { "id": "concepts", "title": "Core Concepts", "file": "01-getting-started/concepts.md" }
+        {
+          "title": "Installation",
+          "path": "01-getting-started/install.md"
+        },
+        {
+          "title": "Claude Code Auto Mode",
+          "path": "01-getting-started/claude-code-auto-mode.md"
+        },
+        {
+          "title": "Your First Session",
+          "path": "01-getting-started/first-session.md"
+        },
+        {
+          "title": "Core Concepts",
+          "path": "01-getting-started/concepts.md"
+        }
       ]
     },
     {
-      "id": "agents",
       "title": "Agents",
+      "dir": "02-agents",
       "pages": [
-        { "id": "overview", "title": "Agent Taxonomy", "file": "02-agents/overview.md" },
-        { "id": "syn", "title": "Syn — Orchestrator", "file": "02-agents/syn.md" },
-        { "id": "data-analyst", "title": "Data Analyst", "file": "02-agents/data-analyst.md" },
-        { "id": "data-scientist", "title": "Data Scientist", "file": "02-agents/data-scientist.md" },
-        { "id": "ml-engineer", "title": "ML Engineer", "file": "02-agents/ml-engineer.md" },
-        { "id": "ai-engineer", "title": "AI Engineer", "file": "02-agents/ai-engineer.md" },
-        { "id": "data-engineer", "title": "Data Engineer", "file": "02-agents/data-engineer.md" },
-        { "id": "data-modeller", "title": "Data Modeller", "file": "02-agents/data-modeller.md" },
-        { "id": "analytics-engineer", "title": "Analytics Engineer", "file": "02-agents/analytics-engineer.md" },
-        { "id": "bi-engineer", "title": "BI Engineer", "file": "02-agents/bi-engineer.md" },
-        { "id": "applied-ml-scientist", "title": "Applied ML Scientist", "file": "02-agents/applied-ml-scientist.md" },
-        { "id": "deep-learning-engineer", "title": "Deep Learning Engineer", "file": "02-agents/deep-learning-engineer.md" },
-        { "id": "mlops-engineer", "title": "MLOps Engineer", "file": "02-agents/mlops-engineer.md" },
-        { "id": "backend-engineer", "title": "Backend Engineer", "file": "02-agents/backend-engineer.md" },
-        { "id": "researcher", "title": "Researcher", "file": "02-agents/researcher.md" },
-        { "id": "academic", "title": "Academic", "file": "02-agents/academic.md" }
+        {
+          "title": "Agent Taxonomy",
+          "path": "02-agents/overview.md"
+        },
+        {
+          "title": "Syn \u2014 Orchestrator",
+          "path": "02-agents/syn.md"
+        },
+        {
+          "title": "Academic",
+          "path": "02-agents/academic.md"
+        },
+        {
+          "title": "AI Engineer",
+          "path": "02-agents/ai-engineer.md"
+        },
+        {
+          "title": "Analytics Engineer",
+          "path": "02-agents/analytics-engineer.md"
+        },
+        {
+          "title": "Applied ML Scientist",
+          "path": "02-agents/applied-ml-scientist.md"
+        },
+        {
+          "title": "Backend Engineer",
+          "path": "02-agents/backend-engineer.md"
+        },
+        {
+          "title": "BI Engineer",
+          "path": "02-agents/bi-engineer.md"
+        },
+        {
+          "title": "Data Analyst",
+          "path": "02-agents/data-analyst.md"
+        },
+        {
+          "title": "Data Engineer",
+          "path": "02-agents/data-engineer.md"
+        },
+        {
+          "title": "Data Modeller",
+          "path": "02-agents/data-modeller.md"
+        },
+        {
+          "title": "Data Scientist",
+          "path": "02-agents/data-scientist.md"
+        },
+        {
+          "title": "Deep Learning Engineer",
+          "path": "02-agents/deep-learning-engineer.md"
+        },
+        {
+          "title": "ML Engineer",
+          "path": "02-agents/ml-engineer.md"
+        },
+        {
+          "title": "MLOps Engineer",
+          "path": "02-agents/mlops-engineer.md"
+        },
+        {
+          "title": "Researcher",
+          "path": "02-agents/researcher.md"
+        }
       ]
     },
     {
-      "id": "protocols",
-      "title": "Shared Protocols",
+      "title": "Protocols",
+      "dir": "03-protocols",
       "pages": [
-        { "id": "gate-pattern", "title": "The Gate Pattern", "file": "03-protocols/gate-pattern.md" },
-        { "id": "behavioral-rules", "title": "Behavioral Rules", "file": "03-protocols/behavioral-rules.md" },
-        { "id": "engineering-guidelines", "title": "Engineering Guidelines", "file": "03-protocols/engineering-guidelines.md" },
-        { "id": "reviewer-verdicts", "title": "Reviewer Verdicts", "file": "03-protocols/reviewer-verdicts.md" },
-        { "id": "validation", "title": "Validation Protocol", "file": "03-protocols/validation.md" },
-        { "id": "diverge", "title": "DIVERGE (Time-Travel Branches)", "file": "03-protocols/diverge.md" },
-        { "id": "swarm", "title": "Decompose & Swarm", "file": "03-protocols/swarm.md" },
-        { "id": "autonomous-research", "title": "Autonomous Research", "file": "03-protocols/autonomous-research.md" },
-        { "id": "experiment-versioning", "title": "Experiment Versioning", "file": "03-protocols/experiment-versioning.md" },
-        { "id": "knowledge-ledger", "title": "Knowledge Ledger", "file": "03-protocols/knowledge-ledger.md" },
-        { "id": "join-path", "title": "Join-Path Protocol", "file": "03-protocols/join-path.md" },
-        { "id": "incremental-testing", "title": "Incremental Testing", "file": "03-protocols/incremental-testing.md" },
-        { "id": "auto-verify", "title": "Auto-Verify Mode", "file": "03-protocols/auto-verify.md" }
+        {
+          "title": "The Gate Pattern",
+          "path": "03-protocols/gate-pattern.md"
+        },
+        {
+          "title": "Activation Modes",
+          "path": "03-protocols/activation-modes.md"
+        },
+        {
+          "title": "Delegated Build",
+          "path": "03-protocols/delegated-build.md"
+        },
+        {
+          "title": "Knowledge",
+          "path": "03-protocols/knowledge.md"
+        },
+        {
+          "title": "Auto-Verify Mode",
+          "path": "03-protocols/auto-verify.md"
+        },
+        {
+          "title": "Autonomous Research (AR)",
+          "path": "03-protocols/autonomous-research.md"
+        },
+        {
+          "title": "Behavioral Rules",
+          "path": "03-protocols/behavioral-rules.md"
+        },
+        {
+          "title": "DIVERGE: Time-Travel Branches",
+          "path": "03-protocols/diverge.md"
+        },
+        {
+          "title": "Engineering Guidelines",
+          "path": "03-protocols/engineering-guidelines.md"
+        },
+        {
+          "title": "Experiment Versioning",
+          "path": "03-protocols/experiment-versioning.md"
+        },
+        {
+          "title": "Incremental Testing",
+          "path": "03-protocols/incremental-testing.md"
+        },
+        {
+          "title": "Join-Path Protocol",
+          "path": "03-protocols/join-path.md"
+        },
+        {
+          "title": "Reviewer Verdicts",
+          "path": "03-protocols/reviewer-verdicts.md"
+        },
+        {
+          "title": "Decompose & Swarm: Parallel Slices for Large Work",
+          "path": "03-protocols/swarm.md"
+        },
+        {
+          "title": "Validation Protocol",
+          "path": "03-protocols/validation.md"
+        }
       ]
     },
     {
-      "id": "ui",
-      "title": "Shards UI",
+      "title": "Studio",
+      "dir": "04-studio",
       "pages": [
-        { "id": "overview", "title": "UI Overview", "file": "04-ui/overview.md" },
-        { "id": "activity-bar", "title": "Activity Bar", "file": "04-ui/activity-bar.md" },
-        { "id": "chat-pane", "title": "Chat Pane", "file": "04-ui/chat-pane.md" },
-        { "id": "file-editing", "title": "File Editing", "file": "04-ui/file-editing.md" },
-        { "id": "panels", "title": "Agent-Pushed Panels", "file": "04-ui/panels.md" },
-        { "id": "pinboard-selection", "title": "Pinboard & Selection", "file": "04-ui/pinboard-selection.md" },
-        { "id": "git", "title": "Git & PR Review", "file": "04-ui/git.md" },
-        { "id": "code-intel", "title": "Code Intelligence", "file": "04-ui/code-intel.md" },
-        { "id": "quick-open-palette", "title": "Quick Open & Command Palette", "file": "04-ui/quick-open-palette.md" },
-        { "id": "knowledge-map", "title": "Knowledge Map", "file": "04-ui/knowledge-map.md" },
-        { "id": "sessions", "title": "Sessions Panel", "file": "04-ui/sessions.md" },
-        { "id": "settings-permissions", "title": "Settings & Permissions", "file": "04-ui/settings-permissions.md" },
-        { "id": "keybindings", "title": "Keybindings Reference", "file": "04-ui/keybindings.md" }
+        {
+          "title": "Studio",
+          "path": "04-studio/overview.md"
+        },
+        {
+          "title": "Chat",
+          "path": "04-studio/chat.md"
+        },
+        {
+          "title": "Artifact Panels",
+          "path": "04-studio/panels.md"
+        },
+        {
+          "title": "Sessions",
+          "path": "04-studio/sessions.md"
+        },
+        {
+          "title": "Workspace",
+          "path": "04-studio/workspace.md"
+        }
       ]
     },
     {
-      "id": "commands",
-      "title": "Commands",
+      "title": "Commands and CLI",
+      "dir": "05-commands",
       "pages": [
-        { "id": "reference", "title": "Slash Command Reference", "file": "05-commands/reference.md" }
+        {
+          "title": "Slash Command Reference",
+          "path": "05-commands/reference.md"
+        },
+        {
+          "title": "The `shards` CLI",
+          "path": "05-commands/cli.md"
+        },
+        {
+          "title": "`shards doctor`",
+          "path": "05-commands/doctor.md"
+        },
+        {
+          "title": "Sessions",
+          "path": "05-commands/sessions.md"
+        },
+        {
+          "title": "`shards migrate`",
+          "path": "05-commands/migrate.md"
+        }
       ]
     },
     {
-      "id": "outputs",
       "title": "Outputs",
+      "dir": "06-outputs",
       "pages": [
-        { "id": "directory-map", "title": "Output Directory Map", "file": "06-outputs/directory-map.md" }
+        {
+          "title": "Output Directory Map",
+          "path": "06-outputs/directory-map.md"
+        }
       ]
     },
     {
-      "id": "workflows",
-      "title": "Example Workflows",
+      "title": "Workflows",
+      "dir": "07-workflows",
       "pages": [
-        { "id": "quick-analysis", "title": "Quick Analysis", "file": "07-workflows/quick-analysis.md" },
-        { "id": "deep-study-to-production", "title": "Study → Production ML", "file": "07-workflows/deep-study-to-production.md" },
-        { "id": "ai-eval-first", "title": "AI Eval-First", "file": "07-workflows/ai-eval-first.md" },
-        { "id": "diverge-exploration", "title": "Parallel Exploration (DIVERGE)", "file": "07-workflows/diverge-exploration.md" }
+        {
+          "title": "Workflow: AI Engineering, Eval-First",
+          "path": "07-workflows/ai-eval-first.md"
+        },
+        {
+          "title": "Workflow: Deep Study to Production Model",
+          "path": "07-workflows/deep-study-to-production.md"
+        },
+        {
+          "title": "Workflow: DIVERGE Exploration",
+          "path": "07-workflows/diverge-exploration.md"
+        },
+        {
+          "title": "Workflow: Quick Adhoc Analysis",
+          "path": "07-workflows/quick-analysis.md"
+        }
       ]
     },
     {
-      "id": "integrations",
-      "title": "Integrations",
+      "title": "Jobs and Bindings",
+      "dir": "08-bindings",
       "pages": [
-        { "id": "google-slides", "title": "Google Slides (Syn Slides Mode)", "file": "08-integrations/google-slides.md" },
-        { "id": "claude-code-auto-mode", "title": "Claude Code Auto Mode", "file": "08-integrations/claude-code-auto-mode.md" }
+        {
+          "title": "Jobs and bindings",
+          "path": "08-bindings/overview.md"
+        },
+        {
+          "title": "Configuration: shards.config.yaml",
+          "path": "08-bindings/config.md"
+        },
+        {
+          "title": "Git binding",
+          "path": "08-bindings/git-binding.md"
+        },
+        {
+          "title": "Writing a binding",
+          "path": "08-bindings/writing-a-binding.md"
+        },
+        {
+          "title": "Integrations status",
+          "path": "08-bindings/integrations-status.md"
+        }
       ]
     }
   ]

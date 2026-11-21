@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shards.dev/schema/artifacts/close.schema.json",
+  "title": "artifact_emit meta: close",
+  "description": "meta for 'close'. path is null/omitted. Identify the panel with meta.panel_id (preferred); free-form otherwise.",
+  "type": "object",
+  "properties": {
+    "panel_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable panel id; re-emitting with the same panel_id updates the panel in place and `close` with it removes it. Defaults to a hash of (type, path)."
+    }
+  },
+  "additionalProperties": true
+}

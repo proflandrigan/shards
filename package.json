@@ -1,6 +1,6 @@
 {
   "name": "@proflandrigan/shards",
-  "version": "1.1.0",
+  "version": "2.0.0-next.0",
   "description": "Shards of Syn's brain — a data-focused agent suite for Claude Code",
   "keywords": [
     "claude-code",
@@ -14,24 +14,59 @@
   "license": "MIT",
   "author": "JFL",
   "bin": {
-    "shards": "tools/install.js",
+    "shards": "cli/shards.js",
     "shards-ui": "tools/shards-ui.js",
     "shards-gates": "tools/shards-gates.js",
     "shards-sessions": "tools/shards-sessions.js"
   },
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "mcp": "node runtime/server.js",
+    "validate:agents": "node scripts/validate-agents.js",
+    "coupling": "node scripts/coupling-report.js",
+    "coupling:ratchet": "node scripts/coupling-ratchet.js",
+    "lint:models": "node scripts/lint-models.js",
+    "lint:verdicts": "node scripts/lint-verdicts.js",
+    "build:claude": "node cli/shards.js build --target claude",
+    "build:codex": "node cli/shards.js build --target codex",
+    "build:skills": "node cli/shards.js build --target skills",
+    "build:all": "npm run build:claude && npm run build:codex && npm run build:skills",
+    "release:dry-run": "bash scripts/release-dry-run.sh",
+    "stage:mcp": "node scripts/stage-runtime-package.js",
+    "pack:check": "node scripts/pack-check.js"
   },
   "files": [
-    "src/",
+    "cli/",
+    "build/",
+    "core/",
+    "hooks/",
+    "runtime/",
+    "bindings/",
+    "scripts/validate-agents.js",
+    "src/commands/",
+    "src/docs/",
     "tools/install.js",
-    "tools/gate-hook.js",
-    "tools/gate-hook/",
+    "tools/legacy-layout.js",
+    "tools/shards-ui.js",
     "tools/shards-gates.js",
     "tools/shards-sessions.js",
     "README.md"
   ],
   "devDependencies": {
     "vitest": "^4.1.4"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "proper-lockfile": "^4.1.2",
+    "yaml": "^2.9.1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
   }
 }

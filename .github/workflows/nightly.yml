@@ -1,0 +1,91 @@
+name: nightly-golden
+
+# E9.4(b): nightly headless golden-session run. Secrets (ANTHROPIC_API_KEY for Claude Code `-p`; OPENAI_API_KEY or
+# CODEX_API_KEY for `codex exec`) come from repo secrets. When a secret is absent the live step is skipped cleanly and
+# only the offline dry-run is scored. Scores are uploaded as artifacts and summarised on the run page.
+# The Codex job is gated: set the repo variable SHARDS_NIGHTLY_CODEX=true to enable it (UNVERIFIED; docs/compat.md).
+# TODO(owner: proflandrigan): never run; secrets, runners and API budget are OPEN (external), see docs/test-infra.md.
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  golden-claude:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Build the dev plugin used by the live run
+        run: node cli/shards.js build --target claude --dev
+      - name: Install Claude Code CLI (only when the secret is present)
+        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Golden session (offline always; live only with the secret)
+        shell: bash
+        run: node scripts/nightly-golden.js --host claude --out nightly-scores
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: golden-scores-claude-${{ matrix.os }}
+          path: nightly-scores/
+          if-no-files-found: ignore
+
+  golden-codex:
+    if: ${{ vars.SHARDS_NIGHTLY_CODEX == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      CODEX_API_KEY: ${{ secrets.CODEX_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Install Codex CLI (only when a secret is present)
+        if: ${{ env.OPENAI_API_KEY != '' || env.CODEX_API_KEY != '' }}
+        run: npm install -g @openai/codex
+      - name: Golden session (offline always; live only with a secret)
+        run: node scripts/nightly-golden.js --host codex --out nightly-scores
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: golden-scores-codex-${{ matrix.os }}
+          path: nightly-scores/
+          if-no-files-found: ignore
+
+  publish-scores:
+    if: ${{ always() }}
+    needs: [golden-claude, golden-codex]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: golden-scores-*
+          path: all-scores
+          merge-multiple: true
+      - name: Summarise scores
+        run: node scripts/nightly-golden.js --summarize all-scores >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: golden-scores-all
+          path: all-scores/
+          if-no-files-found: ignore

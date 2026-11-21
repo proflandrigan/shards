@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "sessions": {
+    "sess-a": { "open": true, "id": "ml-engineer-phase-2", "phase": "2", "kind": "phase", "agent": "ml-engineer", "opened_at": "2026-05-04T12:00:00.000Z", "opened_in_turn": 3, "transcript_ref": null }
+  },
+  "history": [
+    { "id": "ml-engineer-phase-1", "phase": "1", "kind": "phase", "opened_at": "2026-05-04T10:00:00.000Z", "closed_at": "2026-05-04T10:30:00.000Z", "confirmed_by": "user-prompt" },
+    { "id": "ml-engineer-phase-1", "phase": "1", "kind": "phase", "opened_at": "2026-05-04T11:00:00.000Z", "closed_at": "2026-05-04T11:30:00.000Z", "confirmed_by": "user-prompt" },
+    { "id": "syn-phase-0", "phase": "0", "kind": "weird-kind", "opened_at": "2026-05-04T09:00:00.000Z", "closed_at": "2026-05-04T09:10:00.000Z", "confirmed_by": "force-close" }
+  ]
+}

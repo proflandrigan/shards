@@ -9,9 +9,20 @@ node_modules/
 # Dev/scratch directories
 archive/
 feedback_and_ideas/
-templates/
+/templates/
 
 # macOS
 .DS_Store
 **/.DS_Store
 __MACOSX/
+test/golden/runs/
+
+# Generated build output (shards build)
+adapters/
+
+# Generated release plugin output (shards build --marketplace; E10.4 publishes it)
+plugins/
+
+# Local tool state and the legacy installer's generated guide copy
+.serena/
+/docs/shards-guide/
