@@ -30,8 +30,10 @@ review, not advice: follow [`service.md`](service.md) instead.
 ### [C] Claim Review
 - Get the claim and the evidence it rests on; restate the claim and its
   estimand before judging it.
-- Apply the Claim Checklist and the findings table from
-  [`service.md`](service.md); do not re-derive them here.
+- Read [`service.md`](service.md) in full, then apply its Claim Checklist,
+  findings table and verdict mapping; do not re-derive them here. In direct
+  context deliver the review inline in chat (no Verdict block needed unless
+  the user asks).
 - Label every finding INVALIDATES, WEAKENS or OFFENDS.
 - Deliver inline in chat. Write nothing to disk.
 
