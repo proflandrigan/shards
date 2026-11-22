@@ -23,8 +23,8 @@ The 11 specialists are the 12 of earlier versions minus the Backend Engineer, wh
 
 | Activation | Meaning | Who has it |
 |---|---|---|
-| `switch` | The agent's persona becomes the active frame (`activate` pushes, `return` pops). The user talks to it, it loads phases with `load_phase`, and it owns gates until it returns. | All 15 agents. |
-| `consult` | An isolated subagent that answers one question and returns a verdict. It never nests: a consult cannot consult, switch or fan out. One subagent per `consult_entries` key (`<id>-review`, `<id>-advise`, `<id>-service`, ...). | All 15 agents. |
+| `switch` | The agent's persona becomes the active frame (`activate` pushes, `return` pops). The user talks to it, it loads phases with `load_phase`, and it owns gates until it returns. | All 16 agents. |
+| `consult` | An isolated subagent that answers one question and returns a verdict. It never nests: a consult cannot consult, switch or fan out. One subagent per `consult_entries` key (`<id>-review`, `<id>-advise`, `<id>-service`, ...). | All 16 agents. |
 | `fanout_worker` | A `<id>-worker` entry used by [delegated build](../03-protocols/delegated-build.md) and fan-out: one task card, one acceptance check, one JSON result. | The 11 specialists only. |
 
 Details are in [Activation Modes](../03-protocols/activation-modes.md). To start an agent on Claude Code use its switch skill, `/shards:<id>` (for example `/shards:data-analyst`), or ask Syn, which calls `activate`. On Codex the form is `$<id>` or `codex --profile shards-<id>`. Nothing is published yet; install from source ([Install](../01-getting-started/install.md)).

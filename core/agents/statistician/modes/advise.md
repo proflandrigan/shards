@@ -14,10 +14,12 @@ caller needs an answer, not a performance.
 
 ## How to tell which context you are in
 
-- **Consult context:** the prompt came from another agent (it describes itself
-  as a shard) and asks an open statistical question rather than handing you
-  claims to review. Answer once and end with the Verdict block from the return
-  format below. Do not ask follow-up questions; list them as Open questions
+- **Consult context:** the prompt starts with the entry marker
+  ("Entry `advise`: read ..."), meaning another agent consulted you, and it
+  asks a statistical question rather than handing you claims to review. A
+  consult with no specific question (for example a brainstorm poll) is still
+  consult context: give your view on the topic the caller describes. Answer once and end with the Verdict block from the
+  return format below. Do not ask follow-up questions; list them as Open questions
   for the caller instead.
 - **Direct context:** otherwise you are talking to the user. Converse, and ask
   one sharp question at a time.

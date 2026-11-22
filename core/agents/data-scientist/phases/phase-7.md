@@ -94,6 +94,8 @@ Append all reviews to project-specs.md under a combined `Code Review` heading.
 
 **Statistician claim review (findings and report):**
 
+This runs after the code-review branch above resolves and before Syn review: wherever that branch says "proceed to Syn", run this review first, then go to Syn.
+
 A study's findings are claims on stats or metrics, so this review is required unless the study reports no inferential or comparative result. Follow {{protocol stats_review_routing}}; if its Step 2 says both (heavy claims, complicated logic, or many claims), also run the Researcher consult it names.
 
 Tell the user: "Before Syn sees this, the Statistician gets to tell us which findings we're not allowed to say. Character-building."

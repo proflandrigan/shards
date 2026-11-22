@@ -48,8 +48,8 @@ Phase bodies are served one at a time by the `load_phase` tool, which refuses un
 
 Consults are isolated subagents that answer one question and return a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)). They never nest.
 
-- **Calls out to:** Data Engineer (phases 2, 5), Data Modeller (phases 3-7), the model-design reviewers listed under phase 4, Backend Engineer, MLOps Engineer, Academic and Syn (phase 7).
-- **Declared reviewers** (`agent.yaml`): Data Modeller, Data Engineer, Data Scientist, Applied ML Scientist, Deep Learning Engineer, Data Analyst, Researcher, Academic, MLOps Engineer, Backend Engineer, Syn.
+- **Calls out to:** Data Engineer (phases 2, 5), Data Modeller (phases 3-7), the model-design reviewers listed under phase 4, Statistician (phase 6; optionally phase 4), Backend Engineer, MLOps Engineer, Academic and Syn (phase 7).
+- **Declared reviewers** (`agent.yaml`): Data Modeller, Data Engineer, Data Scientist, Applied ML Scientist, Deep Learning Engineer, Data Analyst, Researcher, Statistician, Academic, MLOps Engineer, Backend Engineer, Syn.
 - **Consulted by (reverse of declared reviewers):** [AI Engineer](ai-engineer.md), [Data Scientist](data-scientist.md), [Deep Learning Engineer](deep-learning-engineer.md), [MLOps Engineer](mlops-engineer.md), [Syn](syn.md).
 
 ## Output directory

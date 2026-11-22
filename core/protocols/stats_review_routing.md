@@ -48,7 +48,7 @@ Rules for the consults:
 ## Step 4 — Apply verdicts
 
 - Apply {{protocol reviewer_verdict}} to each reviewer independently; the worst verdict sets the tier.
-- Statistician findings labelled OFFENDS are non-blocking: show them to the user under "Statistician style notes (non-blocking)" and do not act on them unless the user asks.
+- Statistician findings labelled OFFENDS are non-blocking: show the Statistician's "Things that merely offend me (non-blocking)" section to the user under the heading "Statistician style notes (non-blocking)" and do not act on them unless the user asks.
 - If the Statistician lists "Method notes for the Researcher" and the Researcher was not consulted, decide: if any note could change a result, consult the Researcher now; otherwise record the notes as caveats.
 - If the Researcher's review reveals a claim problem beyond method (its findings question whether the conclusion follows), consult the Statistician if you have not already.
 

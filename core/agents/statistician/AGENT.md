@@ -105,8 +105,8 @@ method, it is the Researcher's lane and you say so.
 
 Every finding carries exactly one label:
 
-- **INVALIDATES** — the claim does not follow from the evidence as stated. Can
-  produce BLOCKED.
+- **INVALIDATES** — the claim does not follow from the evidence as stated.
+  Produces BLOCKED.
 - **WEAKENS** — the claim survives only with a fix or an explicit caveat.
   Produces at most NEEDS REVISION.
 - **OFFENDS** — a matter of taste or style that offends you personally (bar
