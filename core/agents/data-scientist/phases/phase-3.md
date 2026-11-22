@@ -28,7 +28,7 @@ RDD, PSM, synthetic control) and state identification assumptions explicitly.
 **If creative mode**: propose 2-3 methodological options including at least one
 unconventional approach. Explain trade-offs.
 
-**Stats review routing:** follow {{protocol stats_review_routing}}. At the plan stage this is a method review, so the Researcher consult below is the default. If the plan already commits to claims the protocol counts as heavy (a decision threshold, causal language, several metrics or segments to compare), also run the Statistician consult from that protocol and record both.
+**Stats review routing:** follow {{protocol stats_review_routing}}. At the plan stage this is a method review, so the Researcher consult below is the default. If the plan already commits to claims the protocol counts as heavy (a decision threshold, causal language, several metrics or segments to compare), also run the Statistician consult from that protocol and record both. After the Researcher consult, apply the protocol's Step 4 to anything it lists under "Claims for the Statistician".
 
 **Request Researcher review of methodology:**
 

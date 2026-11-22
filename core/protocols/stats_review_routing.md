@@ -42,6 +42,8 @@ one sentence to the user, and record it in the specs entry for the review.
 
 Rules for the consults:
 
+- If your phase or mode file already shows one of these consults with its own brief, that is the same consult: run it once, with that brief.
+
 - When calling both, they are independent: consults never nest, so neither reviewer calls the other. Run the Researcher first when the method is still open (its fixes may change the claims), otherwise order does not matter.
 - Pass each consultant: the claims verbatim (for the Statistician), the method/plan (for the Researcher), paths to the results, notebooks or reports, and any data-modeller context (grain, clustering, independence) you already collected.
 
@@ -50,9 +52,9 @@ Rules for the consults:
 - Apply {{protocol reviewer_verdict}} to each reviewer independently; the worst verdict sets the tier.
 - Statistician findings labelled OFFENDS are non-blocking: show the Statistician's "Things that merely offend me (non-blocking)" section to the user under the heading "Statistician style notes (non-blocking)" and do not act on them unless the user asks.
 - If the Statistician lists "Method notes for the Researcher" and the Researcher was not consulted, decide: if any note could change a result, consult the Researcher now; otherwise record the notes as caveats.
-- If the Researcher lists anything under "Claims for the Statistician" (or its findings otherwise question whether the conclusion follows) and the Statistician was not consulted, consult it now.
+- If the Researcher lists anything under "Claims for the Statistician" (or its findings otherwise question whether the conclusion follows) and the Statistician was not consulted, consult it now. At the plan stage, before there are results, use the `advise` entry on the planned claims or decision rule, or record them for the later claim review; a `service` review needs evidence.
 - Use the Statistician's "What the evidence actually supports" wording as the replacement for any claim it labels INVALIDATES or WEAKENS.
-- Answer the Statistician's "Open questions for the caller" from context you already hold (data-modeller grain, clustering, independence). If an answer could change a finding, you (the caller, never the Statistician) re-consult with the answers; this counts as the one resubmit allowed by {{protocol reviewer_verdict}}, not an extra one. Otherwise record the questions as caveats.
+- Answer the Statistician's "Open questions for the caller" from context you already hold (data-modeller grain, clustering, independence). If only the user can answer one (was the change randomized, was there a holdout, what decision rides on it), ask the user once. If an answer could change a finding, you (the caller, never the Statistician) re-consult with the answers; this counts as the one resubmit the reviewer verdict protocol allows, not an extra one. Otherwise record the questions as caveats.
 
 ## Recording
 

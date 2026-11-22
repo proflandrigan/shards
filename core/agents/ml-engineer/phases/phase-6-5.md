@@ -162,7 +162,7 @@ With a Harness plan, the user can add an approach at any point (now, or after ha
 
 ### Re-review the claim if the winner changed
 
-If this phase changed `bestCandidate` from what Phase 6 reported, or the claim you will carry into Phase 7 differs from the one the Statistician reviewed in Phase 6, repeat the Phase 6 Statistician claim review on the new claim (same brief, routed per {{protocol stats_review_routing}}) before documenting this phase. Apply {{protocol reviewer_verdict}} and record the verdict below. If the winner and claim are unchanged, note "Phase 6 claim review stands".
+If this phase changed `bestCandidate` from what Phase 6 reported, or the claim you will carry into Phase 7 differs from the one the Statistician reviewed in Phase 6, repeat the Phase 6 Statistician claim review on the new claim (same brief, routed per {{protocol stats_review_routing}}) before documenting this phase. Apply {{protocol reviewer_verdict}}, record the verdict below, and update the `Statistician claim review` row in the Phase 6 `## Validation` table to the new verdict (note "re-reviewed in Phase 6.5"). If the winner and claim are unchanged, note "Phase 6 claim review stands".
 
 ### Document Phase 6.5
 

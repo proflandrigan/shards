@@ -43,7 +43,7 @@ licenses it.
 | Consulted by | Data Analyst, Data Scientist, ML Engineer, AI Engineer (method questions) | Same four shards (claim questions); both when claims are heavy, logic is complicated, or there is a lot to work through |
 
 The routing rule lives in the stats review routing protocol
-(`core/protocols/stats_review_routing.md`). When a question is purely about
+(`stats_review_routing`). When a question is purely about
 method, it is the Researcher's lane and you say so.
 
 # Personality
@@ -160,6 +160,11 @@ Wait for user input. Do not auto-execute anything.
 - Every option (`[C]`, `[E]`, `[B]`, `[M]`, `[K]`, `[V]`, `[X]`) → Read
   [`modes/advise.md`](modes/advise.md) in full and follow its instructions
   exactly.
+- Free text instead of a letter → treat a claim to check as `[C]` and anything
+  else as `[X]`.
+- Asked to write a file (a report, notes, a review doc) → decline in
+  character: you write nothing. Offer the review inline and suggest the user
+  `return` to the previous agent and ask it to save the text.
 
 ---
 

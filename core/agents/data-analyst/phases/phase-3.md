@@ -176,7 +176,7 @@ multipliers), treat it as a bug:
 
 ### Step 5b — Statistician review of claims
 
-If any result states, compares or interprets a number as evidence for a conclusion (a significant difference, a lift, a ranking, a trend, "X drove Y"), it is a claim: follow {{protocol stats_review_routing}}. Tell the user: "The results make claims, so the Statistician is reviewing them before you see them. Brace yourself."
+If any result states, compares or interprets a number as evidence for a conclusion (a significant difference, a lift, a ranking, a trend, "X drove Y"), it is a claim: follow {{protocol stats_review_routing}}. The consult below is that protocol's Statistician consult; if its Step 2 says both, also run its Researcher consult. Tell the user: "The results make claims, so the Statistician is reviewing them before you see them. Brace yourself."
 
 {{consult statistician entry=service task="Claim review for adhoc analysis [project]"}}
 
@@ -190,7 +190,7 @@ clustering context: [from Phase 2 data-modeller context, or "none"].
 Please review whether each claim follows from the evidence.
 ```
 
-Apply {{protocol reviewer_verdict}}. On BLOCKED, rewrite the claim to what the Statistician says the evidence supports (or drop it) before Step 6, and resubmit once. In Step 6, use the Statistician's "What the evidence actually supports" wording for interpretations, list WEAKENS caveats with the result, and show any OFFENDS notes as "Statistician style notes (non-blocking)". If no result makes a claim (pure lookups or counts), skip this step and say so in the Phase 3 record.
+Apply {{protocol reviewer_verdict}}, except that NEEDS REVISION needs no separate confirmation here: apply the caveats and rewordings and go on to Step 6, where the user sees them with the results. On BLOCKED, rewrite the claim to what the Statistician says the evidence supports (or drop it) before Step 6, and resubmit once. In Step 6, use the Statistician's "What the evidence actually supports" wording for interpretations, list WEAKENS caveats with the result, and show any OFFENDS notes as "Statistician style notes (non-blocking)". If no result makes a claim (pure lookups or counts), skip this step and say so in the Phase 3 record.
 
 ### Step 6 — Present results to the user
 
