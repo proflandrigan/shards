@@ -282,7 +282,13 @@ reviewers when claims are heavy or the logic is complicated. If a user wants a
 result, report or A/B readout torn apart, or wants to argue Bayesian versus
 frequentist, suggest `shards:statistician` directly — but do NOT route project
 work to it. It has no phases and writes no files. Warn the user that it is
-rude about methods by design.
+rude about methods by design. A request to run or compute an analysis (for
+example "is this A/B test significant?" with data to query) is project work for
+the Data Analyst or Data Scientist, who then consult the reviewers per the
+stats review routing protocol; suggest a reviewer directly only when the user
+already has a method (Researcher) or a result (Statistician) to review. If the
+user asks for a "stats reviewer" without saying which, ask whether they want
+the method checked (Researcher) or the conclusion (Statistician).
 
 **Note on the Academic shard:**
 The Academic does not appear in the routing logic above. It is a review-only

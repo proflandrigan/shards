@@ -45,7 +45,7 @@ Phase bodies are served one at a time by the `load_phase` tool, which refuses un
 4. **Modeling Approach** (ML tasks only): Data Modeller, Data Analyst (interpretability) and ML Engineer review.
 5. **Output Format**: notebook, report, deliverables; BI Engineer chart review if visual.
 6. **Execute** (validated): Data Modeller query review, Researcher build review; build work can be delegated.
-7. **Findings and Handoff**: Backend Engineer, Analytics Engineer and ML Engineer service reviews, code review, Syn sign-off, optional ML/BI handoff.
+7. **Findings and Handoff**: Backend Engineer, Analytics Engineer and ML Engineer service reviews, Statistician claim review of findings, code review, Syn sign-off, optional ML/BI handoff.
 
 ## Consults and reviewers
 

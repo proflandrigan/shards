@@ -20,7 +20,7 @@ Output: `shards/<project>/` with `project-specs.md` and the queries under `shard
 - **Via Syn.** `/shards:syn` triages the request. Syn switches into the Data Analyst (activation mode `switch`), so the specialist runs in your session and you can talk to it directly.
 - **Directly.** `/shards:data-analyst` skips triage when you already know the agent. Run `/shards:agents` to list every agent and its command.
 
-Consults (Data Modeller for schema, Researcher for statistical assumptions, BI Engineer for a chart) run as subagents in `consult` mode and return findings to the analyst. They do not take over your session.
+Consults (Data Modeller for schema, Researcher for statistical assumptions, Statistician for claims in the results, BI Engineer for a chart) run as subagents in `consult` mode and return findings to the analyst. They do not take over your session.
 
 ## How gates work
 

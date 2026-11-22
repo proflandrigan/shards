@@ -38,10 +38,10 @@ Phase bodies are served one at a time by the `load_phase` tool, which refuses un
 1. **Business Requirements**: problem, decision, users, cost of error.
 2. **Scope and Constraints**: serving mode, latency, throughput, fallback; Data Engineer review.
 3. **Data and Feature Discovery**: Data Modeller consult; label definition; feature candidates.
-4. **Model Design**: baselines and candidates; optional Applied ML Scientist, Deep Learning Engineer, Data Scientist, Data Analyst and Researcher reviews.
+4. **Model Design**: baselines and candidates; optional Applied ML Scientist, Deep Learning Engineer, Data Scientist, Data Analyst, Researcher and Statistician reviews.
 5. **Infrastructure Design**: training pipeline, serving, monitoring, rollback; Data Engineer and Data Modeller review.
-6. **Execute** (validated): feature queries, training notebook, `eval-results.json`; build work can be delegated.
-7. **Winner Selection** (phase 6.5, optional): picks among candidate runs; the phase file says when to skip.
+6. **Execute** (validated): feature queries, training notebook, `eval-results.json`; Statistician claim review of evaluation results; build work can be delegated.
+7. **Winner Selection** (phase 6.5, optional): picks among candidate runs; the phase file says when to skip; repeats the Statistician claim review if the winner changes.
 8. **Review and Handoff**: Backend Engineer, MLOps Engineer, Academic (model card ethics) and other reviews, code review, Syn sign-off, model card, report.
 
 ## Consults and reviewers

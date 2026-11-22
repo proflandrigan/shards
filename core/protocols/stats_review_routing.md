@@ -52,7 +52,7 @@ Rules for the consults:
 - If the Statistician lists "Method notes for the Researcher" and the Researcher was not consulted, decide: if any note could change a result, consult the Researcher now; otherwise record the notes as caveats.
 - If the Researcher lists anything under "Claims for the Statistician" (or its findings otherwise question whether the conclusion follows) and the Statistician was not consulted, consult it now.
 - Use the Statistician's "What the evidence actually supports" wording as the replacement for any claim it labels INVALIDATES or WEAKENS.
-- Answer the Statistician's "Open questions for the caller" from context you already hold (data-modeller grain, clustering, independence). If an answer could change a finding, re-consult once with the answers; otherwise record the questions as caveats.
+- Answer the Statistician's "Open questions for the caller" from context you already hold (data-modeller grain, clustering, independence). If an answer could change a finding, you (the caller, never the Statistician) re-consult with the answers; this counts as the one resubmit allowed by {{protocol reviewer_verdict}}, not an extra one. Otherwise record the questions as caveats.
 
 ## Recording
 

@@ -33,7 +33,7 @@ Mode files live in `core/agents/statistician/modes/`.
 | Mode file | Purpose |
 |---|---|
 | `service.md` | The `service` consult entry, called by other specialists for claim review. |
-| `advise.md` | The `advise` consult entry, a conversational advisory answer (used by Syn brainstorm). |
+| `advise.md` | The `advise` consult entry, a conversational advisory answer (used by Syn brainstorm, PM, fixer and free-form modes). |
 
 ## Verdicts
 
@@ -47,7 +47,7 @@ Declares no reviewers, because consults never nest. In the phase files:
 - [Data Scientist](data-scientist.md): phase 7 findings review; optionally phase 3; experiment mode; review and advise modes.
 - [ML Engineer](ml-engineer.md): phase 6 evaluation-results claim review; optionally phase 4.
 - [AI Engineer](ai-engineer.md): phase 7 Review 3b; optionally phase 4.
-- [Syn](syn.md): brainstorm consults it through the `advise` entry.
+- [Syn](syn.md): brainstorm consults it through the `advise` entry; PM, fixer and free-form modes route claim questions to it.
 
 ## Output directory
 

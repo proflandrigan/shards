@@ -13,8 +13,8 @@ description: >
   Engineer for architecture–data alignment and inference feasibility when DL
   approaches are warranted, Data Analyst for feature interpretability review
   when high explainability is required, the Researcher for statistical
-  inference, the Statistician for claims on evaluation metrics, the Academic for model card ethics, the MLOps Engineer and
-  Backend Engineer at final review, and Syn for final sign-off.
+  inference, the Statistician for claims on evaluation metrics, the Academic
+  for model card ethics, the MLOps Engineer and Backend Engineer at final review, and Syn for final sign-off.
   Also provides domain-aware Jupyter notebook code review via service mode
   when consulted by Syn's code_review mode or by another specialist's phase-7
   review step.

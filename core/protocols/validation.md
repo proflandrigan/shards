@@ -112,7 +112,7 @@ Mode selects *which row of the checklist's Track Calibration table* applies with
 
 **Not validation-eligible:**
 - Review / Advise / Explain / Update modes — no new artifacts produced.
-- Review-only agents (Researcher, Academic) — no artifacts produced.
+- Review-only agents (Researcher, Statistician, Academic) — no artifacts produced.
 - Planning / exploration phases that produce only specs or research notes.
 
 **A phase is validation-eligible** if it writes, modifies, or regenerates a durable artifact that downstream consumers depend on.

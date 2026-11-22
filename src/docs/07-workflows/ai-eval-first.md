@@ -15,7 +15,7 @@ Start with `/shards:ai-engineer` (or `/shards:syn` to triage). Phase 0 triage as
   ├─ Phase 4: evaluation framework (metrics, test sets)   <- Researcher consult
   ├─ Phase 5: safety and guardrails
   ├─ Phase 6: build prompts, eval harness, integration, eval results (validated gate)
-  └─ Phase 7: backend review, Syn sign-off, service card, handoff
+  └─ Phase 7: backend review, Statistician claim review, Syn sign-off, service card, handoff
 ```
 
 Output: `shards/<project>/` with the eval dataset, prompts, evaluation runs and deployment notes; service code integrates into the existing codebase at the confirmed targets.
@@ -28,7 +28,7 @@ Phase 0 explicitly asks whether the problem needs an LLM. Many apparent AI tasks
 
 ## Consults
 
-Consults run as subagents in `consult` mode: the Researcher reviews metric rigor, the ML Engineer reviews production infrastructure feasibility, the MLOps Engineer reviews deployment and monitoring needs, and Syn signs off at Phase 7. Backend review applies to `.py` code.
+Consults run as subagents in `consult` mode: the Researcher reviews metric rigor, the Statistician checks the claims made on eval results, the ML Engineer reviews production infrastructure feasibility, the MLOps Engineer reviews deployment and monitoring needs, and Syn signs off at Phase 7. Backend review applies to `.py` code.
 
 ## Prompt Lab mode (`[PL]`)
 

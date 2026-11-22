@@ -38,10 +38,10 @@ Phase bodies are served one at a time by the `load_phase` tool, which refuses un
 1. **Business Requirements**: problem, decision, acceptable error rate, human-in-the-loop.
 2. **Scope and Constraints**: model providers, data sensitivity, cost, latency, fallback; ML Engineer review.
 3. **AI Architecture Design**: simplicity ladder from single prompt through chain, RAG, agent, multi-agent to fine-tune.
-4. **Evaluation Framework Design**: Researcher and Data Modeller review; dimensions, metrics, test set, golden eval.
+4. **Evaluation Framework Design**: Researcher and Data Modeller review (Statistician optional); dimensions, metrics, test set, golden eval.
 5. **Safety and Guardrails Design**: Academic and ML Engineer review; input/output validation, human-in-the-loop, fallback, monitoring.
 6. **Execute** (validated): prompts, eval harness, integration code, eval results; build work can be delegated; emits an eval dashboard panel.
-7. **Review and Handoff**: Backend Engineer, ML Engineer, MLOps Engineer, Researcher and Academic reviews, code review, Syn sign-off, service card, optional BI monitoring handoff.
+7. **Review and Handoff**: Backend Engineer, ML Engineer, MLOps Engineer, Researcher and Academic reviews, Statistician claim review, code review, Syn sign-off, service card, optional BI monitoring handoff.
 
 ## Consults and reviewers
 

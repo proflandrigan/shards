@@ -35,7 +35,7 @@ Phase bodies are served one at a time by the `load_phase` tool, which refuses un
 
 1. **Data Clarification**: consults the Data Modeller for entity and grain understanding.
 2. **Analysis Plan**: Data Scientist plan review, Researcher assumptions review (with Data Modeller context passed in), BI Engineer chart review when there is a visualization; flags an Analytics Engineer handoff if a mart is missing.
-3. **Execute** (validated): write SQL, produce results, document findings; the Analytics Engineer reviews the final queries (source trace, SQL review, sanity counts); build work can be delegated.
+3. **Execute** (validated): write SQL, produce results, document findings; the Analytics Engineer reviews the final queries (source trace, SQL review, sanity counts); the Statistician reviews any claims before results are shown (Step 5b); build work can be delegated.
 4. **Final Review**: code review and Syn sign-off.
 
 ## Consults and reviewers

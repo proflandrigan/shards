@@ -9,7 +9,7 @@ When an analytical question evolves into a deployed ML service. The work moves D
   └─ Data Scientist (shards/<p>/)
      ├─ Phases 1-5: question, data, methodology, modelling, output format (gated)
      ├─ Phase 6: execute analysis (validated gate; Researcher consult for methodology)
-     └─ Phase 7: findings, Syn sign-off, handoff brief -> ML Engineer
+     └─ Phase 7: findings, Statistician claim review, Syn sign-off, handoff brief -> ML Engineer
           │
           └─ ML Engineer (shards/<p>/)
              ├─ Phases 1-5: problem, boundaries, data, approach, pipeline design
@@ -61,6 +61,7 @@ Build phases can split into a task manifest (`<output_dir>/tasks.yaml`) that wor
 Consults run as subagents (activation mode `consult`) and return findings:
 
 - Researcher: statistical methodology at the modelling phase
+- Statistician: claims in the study findings and in the ML evaluation results
 - Data Modeller: feature source grain before pipeline build
 - Data Analyst: feature interpretability if high explainability is required
 - Applied ML Scientist: methodology review if non-standard
