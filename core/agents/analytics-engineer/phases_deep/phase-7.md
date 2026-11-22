@@ -17,7 +17,7 @@ Wait for any signal from the user before beginning build steps.
 
 ### Component specifications
 
-Each task in `data_models/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`. Components, in dependency order:
+Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`. Components, in dependency order:
 
 1. Source definitions (sources.yml updates); source freshness passes.
 2. Staging models (one task per model or small related group), each with its schema file.
@@ -84,11 +84,11 @@ Task acceptance commands must name the exact test command and the measured facts
 
 ### Lead loop
 
-{{delegate tasks=data_models/<project_name>/tasks.yaml max_parallel=3}}
+{{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
 Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and record; you do not write build code yourself except for `delegate: inline` tasks.
 
-1. **Load the task list.** Load `data_models/<project_name>/tasks.yaml` (approved at the plan gate) with `tasks_set`. Fix any rejection (cycle, overlapping owned paths, missing acceptance) with the user before building.
+1. **Load the task list.** Load `shards/<project_name>/tasks.yaml` (approved at the plan gate) with `tasks_set`. Fix any rejection (cycle, overlapping owned paths, missing acceptance) with the user before building.
 2. **Dispatch.** `task_dispatch` the ready tasks (all `depends_on` done), in parallel up to `max_parallel=3`. Each task card cites its `plan_ref`, so workers see only the Component specifications they need.
 3. **Collect.** Each worker returns a result through `task_report`.
 4. **Lead verifies every report before it counts.** Re-run (or independently check) the task's acceptance command and compare the outcome with the cited `plan_ref`. Then write a per-task evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone. {{protocol incremental_testing}} is task evidence guidance.
@@ -96,7 +96,7 @@ Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and 
 6. **Deviations.** If a worker reports a deviation, or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend the plan only through a confirmed gate.
 7. **Unblock.** After each verified task, dispatch the tasks it unblocks.
 8. **DAG updates.** After the lead verifies a model task, update the DAG file with the completed model highlighted (e.g. `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`) and re-emit with the same `panel_id` from Phase 4 so it updates in place:
-   {{artifact.emit type=dag path=data_models/<project_name>/dag.mmd meta="title=DAG: <project_name> panel_id=dag-<project_name>"}}
+   {{artifact.emit type=dag path=shards/<project_name>/dag.mmd meta="title=DAG: <project_name> panel_id=dag-<project_name>"}}
 9. **Final integration check.** When all tasks are done, the lead runs the full stack build/test (e.g. `dbt build`) and records the result as an evidence row before the gate.
 
 **SQL template for staging model** (adapt reference syntax to your stack):

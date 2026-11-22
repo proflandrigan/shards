@@ -75,7 +75,7 @@ All `shards install` modes accept `--root <dir>`, `--dry-run` and `--remove` (ex
 
 | Flag | Effect |
 |------|--------|
-| `--permissions` | Merges a narrow preset into `.claude/settings.json`: read-only git and tooling allowances, edits to the output directories, force-push denials. Gate tools are never allowed, so they always prompt. Added rules are recorded in `.claude/.shards-permissions.json` so `--remove` can undo them. |
+| `--permissions` | Merges a narrow preset into `.claude/settings.json`: read-only git and tooling allowances, edits to `shards/` and the legacy output directories, force-push denials. Gate tools are never allowed, so they always prompt. Added rules are recorded in `.claude/.shards-permissions.json` so `--remove` can undo them. |
 | `--claude-md` | Inserts a marker-delimited block of Shards tool-call conventions into `CLAUDE.md`. |
 | `--agents-md` | Same, for `AGENTS.md` (Codex). |
 | `--project` | Copies skills into the project (above). |

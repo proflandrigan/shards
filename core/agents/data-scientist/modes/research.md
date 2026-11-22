@@ -30,7 +30,7 @@ full before executing this file.
 
 ### Context loading
 
-1. Locate `project-specs.md` at `studies/<project_name>/project-specs.md` or
+1. Locate `project-specs.md` at `shards/<project_name>/project-specs.md` or
    the existing study directory.
 2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
 3. Scan for relevant artifacts: queries, notebooks, feature engineering code,
@@ -106,9 +106,9 @@ during Phase 3 summary writing; `"complete"` after Phase 3 finalization.
 `panel_id` (each branch's `results.json.branchContext` identifies it). After
 arbitration and promotion, emit a final converged panel for the main project file:
 
-{{artifact.emit type=experiment-dashboard path=.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
 
-{{artifact.emit type=experiment-dashboard path=<project_dir>/experiments/results.json meta="title=AR: <project_name> (converged) panel_id=ar-<project_name>-converged"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/experiments/results.json meta="title=AR: <project_name> (converged) panel_id=ar-<project_name>-converged"}}
 
 ### Document Phase 0
 
@@ -215,6 +215,8 @@ rejected), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
 ### Gate
+
+Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=execute phase=1 id=data-scientist-research-phase1}}
 

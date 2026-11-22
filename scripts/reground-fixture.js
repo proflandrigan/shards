@@ -32,7 +32,7 @@ async function buildFixture() {
     });
     return { ...cur, gates: g };
   });
-  await gates.requestGate(session, { frame, id: 'data-scientist-phase-4', kind: 'phase', phase: 4, summary: 'fixture pending', record_ref: 'studies/churn-study/project-specs.md' });
+  await gates.requestGate(session, { frame, id: 'data-scientist-phase-4', kind: 'phase', phase: 4, summary: 'fixture pending', record_ref: 'shards/churn-study/project-specs.md' });
   return { root, sessionKey, state, session };
 }
 

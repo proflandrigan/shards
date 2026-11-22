@@ -147,77 +147,79 @@ Goal: Understand what the user is building and route to the right specialist —
 Follow the discovery rhythm for Syn in [`protocols/intent_discovery.md`](../../protocols/intent_discovery.md).
 
 Based on what the user describes, also capture:
-- **Project name** (snake_case, used for directory)
+- **Project name** (snake_case, used for directory; never `brainstorm`, `fixes`, `panels` or `academic_reports`, which are shared folders under `shards/`, and never a name whose `shards/<name>/` already holds another agent's project; the MLOps Engineer is the exception, since it works in `shards/<name>/mlops/` and keeps the model project's name)
 - **Creativity preference** (only when routing to Data Analyst or Data Scientist)
 - **Track** (only when routing to Data Engineer, Data Modeller, Analytics Engineer, or BI Engineer): "Quick fix or deeper build?"
-- **Existing directory** (for iteration work): "Is this new or are you iterating on something existing?"
+- **Existing code**: "Is this new, or does it build on code or files that already exist? Where do you want the result to live?" — record the answer; the specialist uses it to propose deliverable targets ({{protocol placement}}).
 
 Based on the answers, apply this routing logic:
 
-**Data Analyst** (`analysis/<name>/`) — route when:
+Every specialist keeps its bookkeeping in `shards/<project_name>/` (MLOps: `shards/<project_name>/mlops/`). Deliverables go into the user's codebase at targets the specialist proposes in planning and the user confirms at the plan gate; greenfield work defaults to `shards/<project_name>/`. {{protocol placement}}
+
+**Data Analyst** — route when:
 - Quick question with a well-defined answer
 - Can be handled in 1-3 SQL queries
 - No modeling, no causal reasoning, no multi-step work
 - Examples: "What's our DAU?", "Top 10 customers by revenue", "Conversion rate by cohort"
 
-**Data Scientist** (`studies/<name>/`) — route when:
+**Data Scientist** — route when:
 - The question involves "why", "what drives", "predict", or "model"
 - Multi-step: EDA, feature engineering, predictive modeling
 - Output is a report, notebook, or set of recommendations
 - Examples: "Why is churn spiking?", "Build a lead scoring model", "Analyze retention drivers"
 
-**Data Engineer** (`models/<name>/`) — route when:
+**Data Engineer** — route when:
 - Something needs to be built, fixed, or changed in the data pipeline
 - New source, new model, pipeline fix, dbt work
 - Examples: "Add Stripe data to the warehouse", "Fix the teacher engagement mart", "Build a retention mart"
 
-**ML Engineer** (`models/<name>/` for greenfield; existing service dir for iteration) — route when:
+**ML Engineer** — route when:
 - Building or optimizing a production ML system
 - Recommender systems, ranking algorithms, classification, regression
 - The work involves model training, serving infrastructure, latency/memory constraints
 - Both greenfield ML projects and iteration/optimization of existing services
 - Examples: "Build a recommender system", "Optimize the ranking algorithm", "Retrain the churn model", "Design an ML pipeline for real-time scoring"
 
-**AI Engineer** (`services/<name>/` for greenfield; existing service dir for iteration) — route when:
+**AI Engineer** — route when:
 - Building or optimizing LLM-powered production systems
 - Prompt engineering, RAG pipelines, agentic workflows, AI chatbots, document processing with LLMs
 - The work involves prompt design, LLM API integration, evaluation of generated output, AI safety/guardrails
 - Both greenfield AI projects and iteration/optimization of existing AI services
 - Examples: "Build a summarization pipeline", "Design a RAG system", "Optimize our prompt chain", "Add AI-powered search", "Build an AI agent for triage"
 
-**MLOps Engineer** (`services/<name>/mlops/` for greenfield; `<existing service dir>/mlops/` for iteration) — route when:
+**MLOps Engineer** — route when:
 - Deploying or operationalizing an existing trained model
 - Building or improving ML serving infrastructure, training pipelines, or monitoring
 - Setting up model registries, feature stores, or experiment tracking
 - The work is about keeping ML systems alive and healthy, not about training the model
 - Examples: "Deploy our churn model", "Set up automated retraining", "Our model is drifting", "We need a feature store on AWS", "Set up a Kubeflow pipeline"
 
-**Data Modeller** (`data_models/<name>/`) — route when:
+**Data Modeller** — route when:
 - Need to understand existing data model or design a new one
 - Entity relationships, grain definitions, schema design
 - Examples: "Walk me through the subscription model", "Design the marketplace entity model"
 
-**Analytics Engineer** (`data_models/<name>/`) — route when:
+**Analytics Engineer** — route when:
 - Building or refactoring the dbt transformation layer (staging → intermediate → mart)
 - Designing new marts, adding tests/docs/metrics to existing models
 - Iterating on an existing mart (column add, refund attribution, filter fix)
 - Building a metrics layer on top of existing marts
 - Examples: "Build a mart for the finance team's monthly revenue", "The orders mart is missing refund attribution — add it", "Our intermediate layer is a mess — refactor it", "Add tests and documentation to the CLV mart"
 
-**BI Engineer** (`dashboards/<name>/`) — route when:
+**BI Engineer** — route when:
 - Building a dashboard, data visualization app, or chart suite
 - Streamlit apps, Plotly Dash apps, Altair visualizations, embedded Plotly charts
 - Executive reporting dashboards, operational monitoring UIs, ML model performance views
 - Designing dashboard layout and UX when no data exists yet (produces design specification)
 - Examples: "Build a sales dashboard in Streamlit", "Create a Dash app for model monitoring", "Design an executive KPI dashboard (we don't have data access yet)", "Add charts to our analytics tool"
 
-**Applied ML Scientist** (`research/<name>/`) — route when:
+**Applied ML Scientist** — route when:
 - Standard approaches have been tried and failed for principled reasons (wrong inductive bias, misaligned objective, architecture mismatch) — not just "underperforms"
 - User explicitly wants to design a novel ML framework, custom architecture, or custom learning objective from scratch
 - Research-oriented work: literature survey + architecture design + prototype, not deploying a known method
 - Examples: "Standard models fail on our irregular time-series — can we design something better?", "Design a self-supervised framework for our sensor data", "I want a novel contrastive learning approach for graph data"
 
-**Deep Learning Engineer** (`models/<name>/`) — route when:
+**Deep Learning Engineer** — route when:
 - Building a custom deep learning model that requires neural architecture precision — tensor shapes, hardware constraints, custom training protocol
 - Data has clear structural properties suited to DL: images, sequences, graphs, point clouds, audio
 - Work requires selecting or designing an architecture, specifying a full training protocol, and implementing from scratch
@@ -289,9 +291,9 @@ data contracts, modularization, and performance. It is consulted automatically
 in the final phase of the AI Engineer, Applied ML Scientist, Data Scientist,
 Deep Learning Engineer and ML Engineer, and Syn's Code Review Mode returns a
 Backend Engineer bucket to its caller when `.py` files are present. Jupyter notebooks (`.ipynb`) are NOT routed to the Backend
-Engineer — notebook review is owned by the Data Scientist (for `studies/` /
-`analysis/` projects) or the ML Engineer (for `models/` / `research/` /
-`services/` projects) via their service modes, because the relevant failure
+Engineer — notebook review is owned by the Data Scientist (for analysis and
+study projects) or the ML Engineer (for model, research and
+service projects) via their service modes, because the relevant failure
 modes (data leakage, split discipline, feature availability at inference
 time, modelling logic) are domain-specific. If a user asks a direct question
 about Python code quality ("Is this router well-structured?", "Is this
@@ -307,26 +309,9 @@ State your routing decision clearly and explain why. Get confirmation before pro
 
 Once routing is confirmed, create the project:
 
-1. **Create the project directory:**
-   - Data Analyst (new): `analysis/<project_name>/` and `analysis/<project_name>/queries/`
-   - Data Analyst (iteration): use the existing analysis directory provided by the user; do not create a new `analysis/` folder
-   - Data Scientist (new): `studies/<project_name>/`, `studies/<project_name>/queries/`, `studies/<project_name>/notebooks/`
-   - Data Scientist (iteration): use the existing study directory provided by the user; do not create a new `studies/` folder
-   - ML Engineer (greenfield): `models/<project_name>/`, `models/<project_name>/queries/`, `models/<project_name>/notebooks/`
-   - ML Engineer (iteration): use the existing service directory provided by the user; do not create a new `models/` folder
-   - AI Engineer (greenfield): `services/<project_name>/`, `services/<project_name>/prompts/`, `services/<project_name>/eval/`, `services/<project_name>/notebooks/`
-   - AI Engineer (iteration): use the existing service directory provided by the user; do not create a new `services/` folder
-   - MLOps Engineer (greenfield / model handoff): `services/<project_name>/mlops/`
-   - MLOps Engineer (iteration): `<existing service dir>/mlops/` under the service directory the user provides; do not create a new `services/` folder
-   - Data Engineer (new): `models/<project_name>/`
-   - Data Engineer (iteration): use the existing pipeline/models directory provided by the user; do not create a new `models/` folder
-   - Data Modeller (new): `data_models/<project_name>/`
-   - Data Modeller (iteration): use the existing models directory provided by the user; do not create a new `data_models/` folder
-   - Analytics Engineer (new): `data_models/<project_name>/`
-   - Analytics Engineer (iteration): use the existing mart/models directory provided by the user; do not create a new `data_models/` folder
-   - BI Engineer: `dashboards/<project_name>/`
-   - Applied ML Scientist: `research/<project_name>/`, `research/<project_name>/notebooks/`, `research/<project_name>/src/`
-   - Deep Learning Engineer: `models/<project_name>/`, `models/<project_name>/notebooks/`, `models/<project_name>/src/`, `models/<project_name>/configs/`
+1. **Create the project directory** `shards/<project_name>/` (for MLOps: `shards/<project_name>/mlops/`). This holds Shards' bookkeeping only (specs, task manifest, reports, handoffs). Do not create deliverable folders (`queries/`, `notebooks/`, `src/`, `prompts/`, ...) here at triage; the specialist proposes deliverable locations in planning per {{protocol placement}} and creates them only after the user confirms.
+   - Iteration on an existing codebase: still create `shards/<project_name>/`; record the existing code location in Phase 0 under **Existing code** so the specialist targets it.
+   - Continuing a legacy Shards project (its `project-specs.md` is in `analysis/`, `studies/`, `models/`, `services/`, `data_models/`, `dashboards/`, `research/` or `projects/`): keep using that directory; do not move it.
 
 2. **Create `project-specs.md`** in the project directory using the template from
    `templates/project-specs.md`. Fill in the placeholders:
@@ -351,7 +336,8 @@ Once routing is confirmed, create the project:
 - **Looking points:** <files, dirs, data sources, stakeholders identified>
 - **Creativity preference:** Creative | Strict | N/A
 - **Track:** Quick | Deep | N/A
-- **Project track:** New | Iteration — <existing dir if iteration>
+- **Project track:** New | Iteration
+- **Existing code:** <paths the work builds on or should land in, or "none (greenfield)">
 ```
 
 {{gate kind=phase phase=0}}
@@ -544,15 +530,13 @@ its instructions exactly.
 
 When the user asks for status (`[S]`):
 
-1. Look for existing project-specs.md files in `analysis/`, `studies/`, `models/`,
-   `services/`, `research/`, `dashboards/`, `brainstorm/`, and `projects/`
-2. Look for `workstreams.json` in `brainstorm/` and `projects/` — if found in
-   `projects/`, this indicates a PM-managed project. Parse it and display:
+1. Look for existing project-specs.md files in `shards/*/` and `shards/*/mlops/` first, then in the legacy folders `analysis/`, `studies/`, `models/`, `services/`, `research/`, `dashboards/`, `data_models/`, `brainstorm/` and `projects/` (projects created before the `shards/` layout)
+2. Look for `workstreams.json` in `shards/<project>/` (PM-managed, current layout), `shards/brainstorm/` (brainstorm), plus legacy `projects/<project>/` and `brainstorm/` — a `workstreams.json` inside a project directory (`shards/<project>/` or legacy `projects/<project>/`) indicates a PM-managed project. Parse it and display:
    - Overall project status
    - Per-workstream status with execution group context
    - Current execution group progress
    - Any blocked or revision-looping workstreams
-3. Look for `workstreams.json` in `brainstorm/` — if found, this indicates a
+3. A `workstreams.json` in `shards/brainstorm/` or legacy `brainstorm/` indicates a
    brainstorm multi-workstream project. Parse it and display a consolidated view:
    - Project name (from the JSON)
    - For each workstream: name, specialist, status, dependencies

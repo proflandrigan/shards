@@ -9,8 +9,8 @@ transfer occurs.
 ## Setup — Context Loading & Experiment Parameters (GATE)
 
 1. Locate `project-specs.md` in the project directory (check the path established in
-   Phase 0 — typically `models/<project_name>/project-specs.md` or
-   `<existing_service_dir>/project-specs.md`).
+   Phase 0 — typically `shards/<project_name>/project-specs.md`;
+   legacy projects: their existing `project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project context
      (problem statement, model type, current metrics, code location) before proceeding.
 2. Use `project-specs.md` as loaded at session start (re-read it only if it may have changed out of band, per the shared behavioral rules).
@@ -18,7 +18,7 @@ transfer occurs.
    pipelines, evaluation scripts, config files, hyperparameter logs.
 4. Identify the current metrics baseline — look in project-specs.md or ask the user
    if no baseline is documented.
-5. Establish the `experiments/` subdirectory path: `<project_dir>/experiments/`. If an experiment harness already exists there (`experiments.yaml` and `run_experiments.py`, built by the phased build), run each experiment through it: an experiment is a new or modified approach module plus its `experiments.yaml` entry, scored by the runner and read back from `leaderboard.csv`; keep this mode's own files (`results.json`, `experiment_plan.md`, `experiment_<N>_<name>.md`) alongside it. See Section F of the experiment framework. {{protocol experiment_framework}}
+5. Establish the `experiments/` subdirectory path: `shards/<project_name>/experiments/`. If an experiment harness already exists there (`experiments.yaml` and `run_experiments.py`, built by the phased build), run each experiment through it: an experiment is a new or modified approach module plus its `experiments.yaml` entry, scored by the runner and read back from `leaderboard.csv`; keep this mode's own files (`results.json`, `experiment_plan.md`, `experiment_<N>_<name>.md`) alongside it. See Section F of the experiment framework. {{protocol experiment_framework}}
 6. **Versioning detection:** Read
    [`protocols/experiment_versioning.md`](../../../protocols/experiment_versioning.md) in full
    and follow **Section A (Detection)** to determine whether DVC, git, or no
@@ -84,6 +84,8 @@ summary** continues each iteration. Without it, each gate waits for the user.
 Either way, the Phase 2 stop conditions (success threshold reached, user
 intervention, crash) still terminate the loop, and a failure or anomaly blocks
 until the user responds.
+
+Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=execute phase=1 id=ml-engineer-experiment-phase1}}
 Wait for confirmation. If the user modifies the plan, update it before proceeding.

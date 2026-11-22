@@ -17,15 +17,15 @@ This file governs the DA handoff step in Phase 4 (Final Review) for the BI Engin
 
   {{gate kind=phase phase=0 id=bi-engineer-data-analyst-handoff-phase-0}}
 
-If writing the file (either automatically or after user confirmation), write `dashboards/<project_name>/data_analyst_handoff.md`:
+If writing the file (either automatically or after user confirmation), write `shards/<project_name>/data_analyst_handoff.md`:
 
 ```markdown
 # Data Analyst Handoff: <project_name>
 
 ## Source Project
 - Originating agent: BI Engineer
-- Project directory: dashboards/<project_name>/
-- Project specs: dashboards/<project_name>/project-specs.md
+- Project directory: shards/<project_name>/
+- Project specs: shards/<project_name>/project-specs.md
 
 ## Original Analysis Request
 - Requesting agent: Data Analyst
@@ -46,7 +46,7 @@ If writing the file (either automatically or after user confirmation), write `da
   - Dimensions: <for GROUP BY and WHERE>
   - Measures: <already available, match dashboard metrics>
   - Date column: <for date filters>
-- Queries from original DA analysis: <analysis/<project_name>/queries/ — if available>
+- Queries from original DA analysis: <shards/<project_name>/queries/ — if available>
 
 ## Data Source Details
 - Primary data source: <mart/table name>
@@ -68,9 +68,9 @@ If writing the file (either automatically or after user confirmation), write `da
 
 ## Next Step
 Run `shards:data-analyst` or `shards:syn`. In Phase 0, reference this file:
-dashboards/<project_name>/data_analyst_handoff.md
+shards/<project_name>/data_analyst_handoff.md
 ```
 
 Tell the user: "Handoff file written. Run `shards:data-analyst` or `shards:syn` and
-reference `dashboards/<project_name>/data_analyst_handoff.md` in Phase 0."
+reference `shards/<project_name>/data_analyst_handoff.md` in Phase 0."
 Do NOT attempt to morph into or invoke the Data Analyst.

@@ -128,7 +128,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 CODE REVIEW MODE. I am the Analytics Engineer shard. Project: [project_name].
-Directory: [project_dir]. Please review and fix the code artifacts produced in
+Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced in
 this project. The project-specs.md is at [file_path] for context.
 ```
 
@@ -197,8 +197,8 @@ Then:
 - **Follow-up actions:**
   - <consumer walkthrough, downstream consumer notification, metrics layer, etc.>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
-- **BI dashboard handoff:** Yes (auto — BI downstream consumer) — data_models/<project_name>/bi_engineer_handoff.md | Yes (user requested) — data_models/<project_name>/bi_engineer_handoff.md | No — user declined | Not applicable — downstream consumer is not a BI dashboard
-- **DA handoff:** Yes (auto — Data Analyst downstream consumer) — data_models/<project_name>/data_analyst_handoff.md | Yes (user requested) — data_models/<project_name>/data_analyst_handoff.md | No — user declined | Not applicable — downstream consumer is not a Data Analyst
+- **BI dashboard handoff:** Yes (auto — BI downstream consumer) — shards/<project_name>/bi_engineer_handoff.md | Yes (user requested) — shards/<project_name>/bi_engineer_handoff.md | No — user declined | Not applicable — downstream consumer is not a BI dashboard
+- **DA handoff:** Yes (auto — Data Analyst downstream consumer) — shards/<project_name>/data_analyst_handoff.md | Yes (user requested) — shards/<project_name>/data_analyst_handoff.md | No — user declined | Not applicable — downstream consumer is not a Data Analyst
 - **Write-backs proposed:**
   - <title> → <knowledge job destination> (confirmed | declined | pending)
   - Or: None — project did not produce reusable knowledge

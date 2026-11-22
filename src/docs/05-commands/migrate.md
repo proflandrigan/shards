@@ -24,7 +24,7 @@ Always run `--dry-run` first. The command is idempotent and never commits.
 4. **Hook cleanup.** Removes the legacy gate and relay hook entries from `.claude/settings.json` (the exact entries recorded in the manifest; only when the manifest has none, commands matching the v1 gate-hook, relay and push script paths under `.shards/`) and the legacy gate hook files in `.shards/hooks/`.
 5. **CLAUDE.md cleanup.** Removes the v1 `## Shards — Agent Suite` and `## Shards — Tool-call conventions` blocks. v2 blocks between `<!-- shards:begin … -->` / `<!-- shards:end … -->` markers are left in place.
 
-Output directories (`analysis/`, `studies/`, `models/`, and the rest) are never touched.
+Legacy output directories (`analysis/`, `studies/`, `models/`, and the rest) are never touched or moved; new work uses `shards/`.
 
 ## After migrating
 

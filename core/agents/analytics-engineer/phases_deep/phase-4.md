@@ -15,9 +15,9 @@ Present as a text DAG in chat:
 [source: system_b] → [stg_b_events]  → [int_ab_joined] → [fct_target_mart]
 ```
 
-Also write the DAG as Mermaid graph syntax (e.g. `graph LR ...`) to `data_models/<project_name>/dag.mmd`. Use Mermaid subgraphs to group models by layer (Sources, Staging, Intermediate, Marts) with materialization annotations (e.g. `stg_orders[stg_orders\nview]`). Then emit it (stable `panel_id` so Phase 7 updates it in place):
+Also write the DAG as Mermaid graph syntax (e.g. `graph LR ...`) to `shards/<project_name>/dag.mmd`. Use Mermaid subgraphs to group models by layer (Sources, Staging, Intermediate, Marts) with materialization annotations (e.g. `stg_orders[stg_orders\nview]`). Then emit it (stable `panel_id` so Phase 7 updates it in place):
 
-{{artifact.emit type=dag path=data_models/<project_name>/dag.mmd meta="title=DAG: <project_name> panel_id=dag-<project_name>"}}
+{{artifact.emit type=dag path=shards/<project_name>/dag.mmd meta="title=DAG: <project_name> panel_id=dag-<project_name>"}}
 
 For each model: model name, layer, grain (confirmed in Phase 3), materialization
 strategy, incremental config if applicable, key columns, key joins.

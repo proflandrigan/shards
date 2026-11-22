@@ -8,7 +8,7 @@ Schema: [`core/schema/event.schema.json`](../core/schema/event.schema.json).
 
 ```json
 {"v":1,"ts":"2026-11-14T18:00:00.000Z","session":"s1","agent":"data-analyst",
- "type":"chart","path":"analysis/x/chart.json","meta":{"title":"Revenue","panel_id":"rev"}}
+ "type":"chart","path":"shards/x/chart.json","meta":{"title":"Revenue","panel_id":"rev"}}
 ```
 
 - `v`: always `1`. A breaking change to the envelope or to a type's required meta bumps `v`; consumers must ignore events with an unknown `v`.
@@ -31,7 +31,7 @@ All non-`close` types require `meta.title` (string, tab title) and accept option
 | [`eval-dashboard`](../core/schema/artifacts/eval-dashboard.schema.json) | `eval-results.json` | title | panel_id, variant | ml-engineer, ai-engineer |
 | [`model-card`](../core/schema/artifacts/model-card.schema.json) | `model-card.json` | title | panel_id, project | ml-engineer, ai-engineer |
 | [`prompt-lab`](../core/schema/artifacts/prompt-lab.schema.json) | `prompt-lab.json` | title | panel_id, project | ai-engineer |
-| [`brainstorm`](../core/schema/artifacts/brainstorm.schema.json) | `brainstorm/brainstorm_<project>.state.json` | title | panel_id, project | syn |
+| [`brainstorm`](../core/schema/artifacts/brainstorm.schema.json) | `shards/brainstorm/brainstorm_<project>.state.json` (legacy `brainstorm/...`) | title | panel_id, project | syn |
 | [`pr-review`](../core/schema/artifacts/pr-review.schema.json) | JSON `{pr,threads,generalComments,reviews}` | title, pr (integer) | panel_id, url | syn |
 | [`notebook-walkthrough`](../core/schema/artifacts/notebook-walkthrough.schema.json) | `.shards/notebook-walkthrough.json` | title, panel_id | session_id, notebook | data-scientist, ml-engineer, syn |
 | [`close`](../core/schema/artifacts/close.schema.json) | none (null/omitted) | none | panel_id | any |

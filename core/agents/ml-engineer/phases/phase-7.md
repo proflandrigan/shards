@@ -11,7 +11,7 @@ Tell the user: "Before Syn signs off, we're running code review on the Python
 artifacts. Scripts go to the Backend Engineer; notebooks go to the Data
 Scientist for a domain-aware read. Code quality is not optional."
 
-Glob the project directory (`models/<project_name>/`) for `.py` files and,
+Glob the `## Placement` targets in `project-specs.md` (and the project folder `shards/<project_name>/`, for new-project defaults) for `.py` files and,
 separately, for `.ipynb` files.
 
 **Python scripts → Backend Engineer** (only if any `.py` files were found):
@@ -22,7 +22,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 You are in SERVICE MODE. Review the Python scripts in the project at
-models/[project_name]/. Read project-specs.md first for context.
+shards/[project_name]/. Read project-specs.md first for context.
 Files to review: [list of .py files found]
 ```
 
@@ -36,7 +36,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 SERVICE MODE — NOTEBOOK CODE REVIEW. Review the Jupyter notebooks in
-the project at models/[project_name]/. Read project-specs.md first for
+the project at shards/[project_name]/. Read project-specs.md first for
 context.
 Files to review: [list of .ipynb files found]
 Your job here is review only — do not apply any fixes.
@@ -127,8 +127,8 @@ Brief for the consultant (fill the bracketed fields):
 I am the ML Engineer shard. I have designed a production ML system for
 project [project_name] and need an infrastructure and operationalization review.
 
-Project directory: models/<project_name>/
-Specs: models/<project_name>/project-specs.md
+Project directory: shards/<project_name>/
+Specs: shards/<project_name>/project-specs.md
 
 Summary:
 - Model type: <final model type from Phase 4>
@@ -178,7 +178,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 CODE REVIEW MODE. I am the ML Engineer shard. Project: [project_name].
-Directory: [project_dir]. Please review and fix the code artifacts produced
+Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
 in this project. The project-specs.md is at [file_path] for context.
 ```
 
@@ -213,8 +213,8 @@ Then:
    that a formal ethics review was not completed.
 
    Write `model-card.json` to:
-   - Greenfield: `models/<name>/model-card.json`
-   - Iteration: `<existing_service_dir>/model-card.json`
+   - Greenfield: `shards/<project_name>/model-card.json`
+   - Iteration: `shards/<project_name>/model-card.json` (same; the existing service holds only confirmed Placement targets)
 
    The JSON must conform to the schema defined in
    `templates/model-card-schema.json` (JSON Schema, draft 2020-12).
@@ -232,8 +232,8 @@ Then:
    {{artifact.emit type=model-card path=<path_to>/model-card.json meta="title=Model Card: <project_name> panel_id=mc-<project_name>"}}
 
 2. **Write a report** to:
-   - Greenfield: `models/<name>/report.md`
-   - Iteration: `<existing_service_dir>/report.md`
+   - Greenfield: `shards/<project_name>/report.md`
+   - Iteration: `shards/<project_name>/report.md` (same; the existing service holds only confirmed Placement targets)
    - Executive summary: business problem, solution, key results
    - Model performance: baseline vs. final, with business interpretation
    - Infrastructure plan: serving, monitoring, rollback
@@ -247,7 +247,7 @@ Then:
 
 **MLOps handoff:** If the user wants to proceed to deployment, tell them:
 "To deploy and operate this model, run `shards:mlops-engineer` and reference
-`models/<project_name>/` as the model handoff directory."
+`shards/<project_name>/` as the model handoff directory."
 
 **BI monitoring dashboard handoff:** See [`modes/bi_engineer_handoff.md`](../modes/bi_engineer_handoff.md) for the full handoff instructions (Phase 7 section).
 
@@ -296,7 +296,7 @@ Then:
 - **Open questions:**
   - <question>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
-- **BI dashboard handoff:** Yes — models/<project_name>/bi_engineer_handoff.md | No
+- **BI dashboard handoff:** Yes — shards/<project_name>/bi_engineer_handoff.md | No
 - **Write-backs proposed:**
   - <title> → <knowledge job destination> (confirmed | declined | pending)
   - Or: None — project did not produce reusable knowledge

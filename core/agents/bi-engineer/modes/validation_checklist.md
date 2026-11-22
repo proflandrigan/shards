@@ -54,7 +54,7 @@ The dashboard loads and responds to interaction within the spec's budget.
 - Interaction latency: filter change → chart update.
 - Query performance: each underlying query's execution time; caching strategy if relevant.
 
-**Observed format:** `initial load: 2.1s (budget <5s) ✓ | filter change median: 340ms (budget <1s) ✓ | slowest query: retention_cohort.sql = 1.8s, cached in-app for 5min | profile: dashboards/<project>/profile.md`
+**Observed format:** `initial load: 2.1s (budget <5s) ✓ | filter change median: 340ms (budget <1s) ✓ | slowest query: retention_cohort.sql = 1.8s, cached in-app for 5min | profile: shards/<project>/profile.md`
 
 ## BI-06 — Accessibility Basics
 
@@ -65,7 +65,7 @@ Minimum accessibility standards met for common use.
 - Alt-text or screen-reader descriptions provided for static-export charts (reports, PDFs).
 - Font size and contrast adequate for the deployment context (boardroom screen vs phone).
 
-**Observed format:** `palette: viridis (8-class) | all 8 charts have titles, axis labels, units | static exports include alt-text | contrast: WCAG AA on text/background | reviewed against: dashboards/<project>/a11y_checklist.md`
+**Observed format:** `palette: viridis (8-class) | all 8 charts have titles, axis labels, units | static exports include alt-text | contrast: WCAG AA on text/background | reviewed against: shards/<project>/a11y_checklist.md`
 
 ## BI-07 — Browser / Platform Compatibility
 
@@ -85,7 +85,7 @@ The target user has actually used the dashboard to answer the question it was bu
 - Each question listed in the spec was answerable using the dashboard.
 - Feedback captured (bugs, missing features, confusions) and either addressed or escalated to Open Issues.
 
-**Observed format:** `walkthrough: Finance team lead (2026-04-21, 45min) | 5/5 spec questions answered using dashboard | 2 feedback items: (1) add quarter-over-quarter toggle — added, (2) confusion on "net vs gross revenue" label — clarified via tooltip + subtitle | feedback log: dashboards/<project>/walkthrough.md`
+**Observed format:** `walkthrough: Finance team lead (2026-04-21, 45min) | 5/5 spec questions answered using dashboard | 2 feedback items: (1) add quarter-over-quarter toggle — added, (2) confusion on "net vs gross revenue" label — clarified via tooltip + subtitle | feedback log: shards/<project>/walkthrough.md`
 
 ---
 
@@ -104,10 +104,10 @@ Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/
 
 ## Artifacts Expected
 
-- Dashboard code (Streamlit `app.py`, Dash `app.py`, Altair spec, etc.) under `dashboards/<project>/`
-- `dashboards/<project>/walkthrough.md` — BI-08
-- `dashboards/<project>/profile.md` (load/interaction benchmarks) — BI-05
-- `dashboards/<project>/a11y_checklist.md` — BI-06
+- Dashboard code (Streamlit `app.py`, Dash `app.py`, Altair spec, etc.) at the confirmed `## Placement` target (greenfield default `shards/<project>/`)
+- `shards/<project>/walkthrough.md` — BI-08
+- `shards/<project>/profile.md` (load/interaction benchmarks) — BI-05
+- `shards/<project>/a11y_checklist.md` — BI-06
 - Underlying SQL or data sources referenced explicitly
 
 ## Downstream Impact — What to Cover

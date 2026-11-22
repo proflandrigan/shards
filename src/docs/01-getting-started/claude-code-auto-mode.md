@@ -4,7 +4,7 @@ Claude Code's auto mode auto-approves tool calls via a server-side classifier in
 
 **Gate tools are never auto-allowed.** The Shards MCP tools that advance or override a gate (`gate_advance`, `gate_force_close`, `gate_confirm`, `gate_suspend`) always prompt: the plugin's PreToolUse shim asks (tier 2), the permission preset lists them under `ask`, and `shards doctor` fails if any allow rule covers them.
 
-**You do not need auto mode to get a smooth Shards experience.** The opt-in permission preset (`shards install --permissions`) adds narrow `permissions.allow` rules that pre-approve common specialist operations (`dbt build`, `pytest`, `jupyter nbconvert --execute`, file writes scoped to output directories, etc.) — these work in every permission mode and cover most of the friction auto mode would remove. Nothing is added to your settings unless you run it. If you're on a plan that supports auto mode it's a useful additional polish; if you're not, skip to [Without auto mode](#without-auto-mode) below and you'll have nearly the same experience.
+**You do not need auto mode to get a smooth Shards experience.** The opt-in permission preset (`shards install --permissions`) adds narrow `permissions.allow` rules that pre-approve common specialist operations (`dbt build`, `pytest`, `jupyter nbconvert --execute`, file writes scoped to `shards/` and the legacy output directories, etc.) — these work in every permission mode and cover most of the friction auto mode would remove. Nothing is added to your settings unless you run it. If you're on a plan that supports auto mode it's a useful additional polish; if you're not, skip to [Without auto mode](#without-auto-mode) below and you'll have nearly the same experience.
 
 This page documents the recommended configuration, the composition with Shards gates, and the limitations.
 
@@ -65,9 +65,9 @@ This is an Anthropic product decision, not a Shards limitation. The classifier i
   "autoMode": {
     "environment": [
       "$defaults",
-      "Shards workspaces: any project containing a `.shards/` directory uses the Shards agent framework. Reads from and writes to project subdirectories (analysis/, studies/, models/, services/, data_models/, dashboards/, research/, presentations/, panels/, fixes/, brainstorm/) and `.shards/` are routine specialist work.",
+      "Shards workspaces: any project containing a `.shards/` directory uses the Shards agent framework. Reads from and writes to `shards/` (and the legacy analysis/, studies/, models/, services/, data_models/, dashboards/, research/, presentations/, panels/, fixes/, brainstorm/ folders) and `.shards/` are routine specialist work.",
       "Warehouse access: dbt commands (run, build, test, show, ls, compile), bq read-only queries, and SELECT-only psql/snowsql/duckdb invocations against developer-configured (non-production) warehouses are routine validation operations.",
-      "Notebook execution: `jupyter nbconvert --execute` on notebooks under analysis/, studies/, models/, research/, services/ is routine validation work."
+      "Notebook execution: `jupyter nbconvert --execute` on notebooks under shards/ (and the legacy analysis/, studies/, models/, research/, services/ folders) is routine validation work."
     ]
   }
 }
@@ -122,7 +122,7 @@ On entering auto mode, Claude Code drops `Bash(*)`, `PowerShell(*)`, wildcarded 
 
 ### Subagent task descriptions are read by the classifier
 
-Consult and worker subagents are spawned with task descriptions that the classifier evaluates against the parent's transcript. Ambiguous descriptions ("clean up the data") may trigger a prompt; specific ones ("Build a churn classifier under `studies/churn_v2/` using the customers and events tables") usually don't.
+Consult and worker subagents are spawned with task descriptions that the classifier evaluates against the parent's transcript. Ambiguous descriptions ("clean up the data") may trigger a prompt; specific ones ("Build a churn classifier under `shards/churn_v2/` using the customers and events tables") usually don't.
 
 ### Production target invocations always pause
 
@@ -136,7 +136,7 @@ If the classifier blocks an action 3 times in a row or 20 times total in one ses
 
 ## Composition matrix
 
-What you see for a representative sequence (Read → `Bash(dbt show)` → `Bash(pytest)` → `Write studies/.../results.md` → `NotebookEdit studies/.../nb.ipynb`):
+What you see for a representative sequence (Read → `Bash(dbt show)` → `Bash(pytest)` → `Write shards/.../results.md` → `NotebookEdit shards/.../nb.ipynb`):
 
 | Mode | Read | `dbt show` | `pytest` | `Write` | `NotebookEdit` | Phase gates |
 |------|------|------------|----------|---------|----------------|-------------|
@@ -183,12 +183,12 @@ If your project uses a tool not in the default allowlist (a specific warehouse C
 
 | Operation | Default mode | `acceptEdits` + Shards rules | Auto mode + Shards rules |
 |-----------|--------------|------------------------------|---------------------------|
-| `Read studies/proj/notebook.ipynb` | none | none | none |
+| `Read shards/proj/notebook.ipynb` | none | none | none |
 | `Bash(dbt show -m model_x)` | none (pre-approved) | none | none |
 | `Bash(pytest tests/)` | **prompt** | none (pre-approved) | none |
 | `Bash(dbt build -m model_x)` | **prompt** | none (pre-approved) | none |
-| `Write studies/proj/results.md` | **prompt** | none | none |
-| `NotebookEdit studies/proj/nb.ipynb` | **prompt** | none | none |
+| `Write shards/proj/results.md` | **prompt** | none | none |
+| `NotebookEdit shards/proj/nb.ipynb` | **prompt** | none | none |
 | `Bash(unknown novel command)` | **prompt** | **prompt** | classifier evaluates |
 | Phase gate | **pause for confirm** | **pause for confirm** | **pause for confirm** |
 

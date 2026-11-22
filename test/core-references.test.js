@@ -67,21 +67,20 @@ describe('core references', () => {
 
   // Syn creates the specialist's project directory before switching; it must be the
   // specialist's own output_dir or the record lands outside what gates commit.
-  it("Syn's project directories match each specialist's output_dir", async () => {
+  it("Syn's project directories match the specialists' shards/ output_dir", async () => {
     const YAML = (await import('yaml')).default;
-    const byName = new Map(AGENTS.map((a) => YAML.parse(fs.readFileSync(path.join(CORE, 'agents', a, 'agent.yaml'), 'utf8')))
-      .map((d) => [d.display_name, d.output_dir]));
-    const bad = []; let seen = 0;
-    const check = (rel, re) => {
-      for (const [, name, top] of fs.readFileSync(path.join(CORE, rel), 'utf8').matchAll(re)) {
-        if (!byName.has(name) || !byName.get(name)) continue;
-        seen++;
-        if (byName.get(name).split('/')[0] !== top) bad.push(`${rel}: ${name} -> ${top}/ but output_dir is ${byName.get(name)}`);
-      }
-    };
-    check('agents/syn/AGENT.md', /^ {3}- ([A-Z][A-Za-z ]+?)(?: \((?:new|greenfield)[^)]*\))?: `([a-z_]+)\/<project_name>\//gm);
-    check('agents/syn/modes/pm.md', /^ {3}- ([A-Z][A-Za-z ]+?): `([a-z_]+)\/<workstream_name>\//gm);
-    expect(seen).toBeGreaterThan(15);
+    const bad = [];
+    for (const a of AGENTS) {
+      const d = YAML.parse(fs.readFileSync(path.join(CORE, 'agents', a, 'agent.yaml'), 'utf8'));
+      if (d.role === 'specialist' && !String(d.output_dir || '').startsWith('shards/{project}/')) bad.push(`${a}: output_dir ${d.output_dir}`);
+    }
+    expect(fs.readFileSync(path.join(CORE, 'agents/syn/AGENT.md'), 'utf8')).toContain('shards/<project_name>/');
+    let seen = 0;
+    for (const [, top] of fs.readFileSync(path.join(CORE, 'agents/syn/modes/pm.md'), 'utf8').matchAll(/^ {3}- [A-Z][A-Za-z ]+?: `([a-z_]+)\/<workstream_name>\//gm)) {
+      seen++;
+      if (top !== 'shards') bad.push(`pm.md: ${top}/`);
+    }
+    expect(seen).toBeGreaterThan(0);
     expect(bad).toEqual([]);
   });
 

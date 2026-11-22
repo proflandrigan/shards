@@ -10,7 +10,7 @@
 Tell the user: "Before the review chain, the Backend Engineer is going through the
 Python artifacts. I wrote that eval notebook and I don't fully trust it."
 
-Glob the project directory (`services/<project_name>/`) for `.py` and `.ipynb` files.
+Glob the `## Placement` targets in `project-specs.md` (and the project folder `shards/<project_name>/`, for new-project defaults) for `.py` and `.ipynb` files.
 
 {{consult backend-engineer entry=service task="Python code review for [project_name]"}}
 
@@ -18,7 +18,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 You are in SERVICE MODE. Review the Python files in the project at
-services/[project_name]/. Read project-specs.md first for context.
+shards/[project_name]/. Read project-specs.md first for context.
 Files to review: [list of .py files found, or 'none found — report N/A']
 ```
 
@@ -71,8 +71,8 @@ Brief for the consultant (fill the bracketed fields):
 I am the AI Engineer shard. I have designed an LLM-powered system for
 project [project_name] and need an operational review.
 
-Project directory: services/<project_name>/
-Specs: services/<project_name>/project-specs.md
+Project directory: shards/<project_name>/
+Specs: shards/<project_name>/project-specs.md
 
 Summary:
 - System type: <prompt chain | RAG | agentic | transformation from Phase 0>
@@ -151,7 +151,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 CODE REVIEW MODE. I am the AI Engineer shard. Project: [project_name].
-Directory: [project_dir]. Please review and fix the code artifacts produced
+Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
 in this project. The project-specs.md is at [file_path] for context.
 ```
 
@@ -185,8 +185,8 @@ Then:
    was not completed.
 
    Write `model-card.json` to:
-   - Greenfield: `services/<name>/model-card.json`
-   - Iteration: `<existing_service_dir>/model-card.json`
+   - Greenfield: `shards/<project_name>/model-card.json`
+   - Iteration: `shards/<project_name>/model-card.json` (same; the existing service holds only confirmed Placement targets)
 
    The JSON must conform to the schema defined in
    `templates/model-card-schema.json` (JSON Schema, draft 2020-12).
@@ -208,8 +208,8 @@ Then:
    {{artifact.emit type=model-card path=<path_to>/model-card.json meta="title=Model Card: <project_name> panel_id=mc-<project_name>"}}
 
 2. **Write a report** to:
-   - Greenfield: `services/<name>/report.md`
-   - Iteration: `<existing_service_dir>/report.md`
+   - Greenfield: `shards/<project_name>/report.md`
+   - Iteration: `shards/<project_name>/report.md` (same; the existing service holds only confirmed Placement targets)
    - Executive summary: business problem, AI approach, key results
    - Evaluation results: metrics vs. thresholds, failure mode analysis
    - Cost profile: per-request, projected monthly, break-even analysis
@@ -273,7 +273,7 @@ Then:
 - **Open questions:**
   - <question>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
-- **BI dashboard handoff:** Yes — services/<project_name>/bi_engineer_handoff.md | No — user declined | N/A — iteration, existing dashboard unchanged
+- **BI dashboard handoff:** Yes — shards/<project_name>/bi_engineer_handoff.md | No — user declined | N/A — iteration, existing dashboard unchanged
 - **Write-backs proposed:**
   - <title> → <knowledge job destination> (confirmed | declined | pending)
   - Or: None — project did not produce reusable knowledge

@@ -47,7 +47,7 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 ## Output directory
 
-`dashboards/<project_name>/`
+`shards/<project_name>/` for bookkeeping. Deliverables (code, models, services, dashboards, tests) integrate into the existing codebase at the targets confirmed on the plan gate; in a greenfield project they default to subfolders of `shards/<project>/`. See [Placement](../03-protocols/placement.md).
 
 Gate-confirmed phases are committed to git as the record. Where each agent writes is listed in [Output Directory Map](../06-outputs/directory-map.md).
 

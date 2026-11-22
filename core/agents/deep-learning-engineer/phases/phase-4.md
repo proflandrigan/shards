@@ -34,7 +34,7 @@ of tasks):
 - `full-train` — full training completes on target hardware; peak memory within budget; best validation metric logged.
 - `eval` — evaluation + diagnostics (gradient history, activation stats, dead-neuron check) produced and reviewed.
 
-**`models/<project_name>/notebooks/model_development.ipynb`** — sections (one
+**`shards/<project_name>/notebooks/model_development.ipynb`** — sections (one
 task per section group, chained by `depends_on` since they share the notebook
 file):
 1. **Setup** — imports, config load, device setup, seed setting
@@ -49,31 +49,33 @@ file):
 6. **Diagnostics** — gradient norm history plot, activation statistics,
    loss curve analysis, dead neuron check (if ReLU backbone)
 
-**`models/<project_name>/src/model.py`**
+Paths below are the greenfield default; when the plan confirmed targets, use the `## Placement` paths instead ({{protocol placement}}).
+
+**`shards/<project_name>/src/model.py`**
 - Every `forward()` method has a shape comment on the return tensor
 - No magic numbers — all sizes come from config
 - Normalization and dropout layers instantiated in `__init__`, applied in `forward()`
 
-**`models/<project_name>/src/dataset.py`**
+**`shards/<project_name>/src/dataset.py`**
 - `Dataset` class with `__len__` and `__getitem__`
 - Transform pipeline built from Phase 2 augmentation table
 - `get_dataloaders(config)` convenience function
 
-**`models/<project_name>/src/train.py`**
+**`shards/<project_name>/src/train.py`**
 - `train_epoch(model, loader, optimizer, scheduler, device)` function
 - Optimizer and scheduler construction
 - Checkpoint logic: save best validation metric, load from checkpoint
 
-**`models/<project_name>/src/evaluate.py`**
+**`shards/<project_name>/src/evaluate.py`**
 - `evaluate(model, loader, device)` evaluation loop
 - Primary and secondary metric computation
 - `predict(model, sample, device)` single-sample inference function
 
-**`models/<project_name>/configs/config.yaml`**
+**`shards/<project_name>/configs/config.yaml`**
 - All hyperparameters from Phases 1, 2, and 3
 - No hardcoded values in src/ — everything references config
 
-**`models/<project_name>/requirements.txt`**
+**`shards/<project_name>/requirements.txt`**
 - Pinned major dependencies (torch==X.Y, torchvision==X.Y, etc.)
 
 **Task evidence guidance:** {{protocol incremental_testing}} Per-task evidence
@@ -83,7 +85,7 @@ expected schema). Test each component in isolation when its task completes.
 
 ### Lead loop
 
-{{delegate tasks=models/<project_name>/tasks.yaml max_parallel=3}}
+{{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
 Dispatch only tasks with `phase: 4` from the single `tasks.yaml` written
 by the plan phase (the other phase's tasks are not dispatched here).

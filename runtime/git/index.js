@@ -238,7 +238,8 @@ function walkFs(root, dir, out) {
 }
 
 async function collectFiles(root, outputDirs, st, cfg, leased) {
-  const dirs = [...new Set((outputDirs || []).map((d) => normRel(root, d) || '.').filter((d) => d !== '..' && !d.startsWith('../')))];
+  // Drop any path with a `..` segment: one escaping pathspec makes `git ls-files` fail for all of them.
+  const dirs = [...new Set((outputDirs || []).map((d) => normRel(root, d) || '.').filter((d) => !d.split('/').includes('..')))];
   let listed = [];
   if (st.inRepo) {
     const r = await git(root, ['ls-files', '-co', '--exclude-standard', '-z', '--', ...dirs]);

@@ -14,5 +14,5 @@ consult_entries:
   service: modes/service.md
   worker: modes/worker.md
 reviewers: [analytics-engineer, data-engineer, data-analyst, syn]
-output_dir: "data_models/{project}/"
+output_dir: "shards/{project}/"
 jobs: [record, tasks, knowledge, review, artifacts]

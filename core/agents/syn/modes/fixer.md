@@ -208,7 +208,7 @@ If the user says yes, write a lightweight fix log entry:
 ```
 
 **If the fix is standalone (no existing project)**, write to
-`fixes/fix_<slug>.md`:
+`shards/fixes/fix_<slug>.md`:
 
 ```markdown
 # Fix Log: <short title>

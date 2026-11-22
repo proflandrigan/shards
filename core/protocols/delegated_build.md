@@ -18,8 +18,8 @@ tasks:
   - id: stg-orders
     goal: Staging model for orders with its tests
     plan_ref: project-specs.md#phase-6-component-specifications
-    inputs: [data_models/shop/specs.md]
-    owned_paths: [data_models/shop/models/staging/stg_orders.sql]
+    inputs: [shards/shop/project-specs.md]
+    owned_paths: [models/staging/stg_orders.sql]   # a confirmed Placement target
     acceptance:
       command: dbt build --select stg_orders
       expected: all tests pass, row count equals source

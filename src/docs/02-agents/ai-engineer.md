@@ -53,10 +53,10 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 ## Output directory
 
-`services/<project_name>/` (greenfield) or the existing service directory (iteration)
+`shards/<project_name>/` for bookkeeping. Deliverables (code, models, services, dashboards, tests) integrate into the existing codebase at the targets confirmed on the plan gate; in a greenfield project they default to subfolders of `shards/<project>/`. See [Placement](../03-protocols/placement.md).
 
 ```
-services/<project>/
+shards/<project>/
 ├── project-specs.md
 ├── prompts/
 ├── eval/

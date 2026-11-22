@@ -53,7 +53,7 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 ## Output directory
 
-`data_models/<project_name>/` for new model designs. Explore mode produces no files; the `service` entry returns findings to the caller.
+`shards/<project_name>/` for new model designs. Model code that belongs to the codebase lands at the confirmed targets ([Placement](../03-protocols/placement.md)). Explore mode produces no files; the `service` entry returns findings to the caller.
 
 Gate-confirmed phases are committed to git as the record. Where each agent writes is listed in [Output Directory Map](../06-outputs/directory-map.md).
 

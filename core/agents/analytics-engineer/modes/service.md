@@ -222,7 +222,7 @@ Review (run validation queries).
 
 The caller will provide:
 - Path to `project-specs.md` for business context
-- Path to the queries directory (typically `analysis/<project_name>/queries/`)
+- Path to the queries directory (typically `shards/<project_name>/queries/`)
 - Data environment classification (`not greenfield`, `inaccessible`, or `GREENFIELD`)
 - Result row counts per query
 
