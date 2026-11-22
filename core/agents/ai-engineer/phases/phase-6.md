@@ -19,7 +19,7 @@ Goal: Build the prompts, evaluation harness, integration code, and safety layer 
 
 ### Component specifications
 
-Each task in `<output_dir>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: greenfield `services/<name>/`, iteration `<existing_service_dir>/`.
+Each task in `<output_dir>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: the confirmed `## Placement` targets; paths below under `<output_dir>` are the new-project default only.
 
 **Spec A. Prompt files** (one task per prompt) in `<output_dir>/prompts/`. Each prompt file includes a metadata header:
    ```
@@ -58,8 +58,8 @@ Each task in `<output_dir>/tasks.yaml` cites one of these specifications through
 
 **Spec G. Eval results JSON.** After the evaluation notebook runs, the evaluation tasks record structured
    results in the project's `eval-results.json` (owned by a single sequential chain of tasks, never parallel ones):
-   - Greenfield: `services/<name>/eval-results.json`
-   - Iteration: `<existing_service_dir>/eval-results.json`
+   - Greenfield: `shards/<project_name>/eval-results.json`
+   - Iteration: `shards/<project_name>/eval-results.json` (same; the existing service holds only confirmed Placement targets)
 
    The JSON must follow this schema:
    ```json
@@ -119,7 +119,7 @@ Each task in `<output_dir>/tasks.yaml` cites one of these specifications through
 
 {{protocol delegated_build}} governs this phase. Task evidence guidance: {{protocol incremental_testing}} (test each component in isolation as its task completes; do not leave run-all until the end).
 
-{{delegate tasks=services/<name>/tasks.yaml max_parallel=3}}
+{{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
 1. **Load the task list** approved at the plan gate (`<output_dir>/tasks.yaml`) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
 2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3. Prompt and test-set tasks can run in parallel; notebook and integration tasks follow their `depends_on` order. Harness approach tasks run in parallel once the harness-core task and their prompt files are verified done.

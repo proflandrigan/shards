@@ -12,15 +12,15 @@ you flagged this for productionization, the next step is handing off to the ML E
 shard. They handle the production side — serving infrastructure, retraining pipelines,
 monitoring, and deployment. I'm writing a handoff file they can read directly."
 
-Write the file `studies/<project_name>/ml_engineer_handoff.md`:
+Write the file `shards/<project_name>/ml_engineer_handoff.md`:
 
 ```
 # ML Engineer Handoff: <project_name>
 
 ## Source Study
-- Study directory: studies/<project_name>/
-- Study specs: studies/<project_name>/project-specs.md
-- Study report: studies/<project_name>/report.md
+- Study directory: shards/<project_name>/
+- Study specs: shards/<project_name>/project-specs.md
+- Study report: shards/<project_name>/report.md
 
 ## Model Design (from Phase 4)
 - Task type: <from Phase 4>
@@ -33,7 +33,7 @@ Write the file `studies/<project_name>/ml_engineer_handoff.md`:
 
 ## Results (from Phase 6)
 - Best metric: <metric: value>
-- Experiment harness: <studies/<project_name>/experiments/ and its leaderboard.md, or "None (single approach)"; study was write-only, so the harness has not been run>
+- Experiment harness: <shards/<project_name>/experiments/ and its leaderboard.md, or "None (single approach)"; study was write-only, so the harness has not been run>
 - Notebook: <path from Phase 6>
 - Query files: <paths from Phase 6>
 

@@ -80,14 +80,14 @@ Which would you prefer?"
 
 If user chooses (b): write a structured `ae-intake.md` file before stopping, then tell the user where to find it.
 
-Write `dashboards/<project_name>/ae-intake.md`:
+Write `shards/<project_name>/ae-intake.md`:
 
 ```markdown
 ## AE Intake: <dashboard_project_name>
 
 ## Requesting Agent
 - Originating agent: BI Engineer
-- Dashboard project: dashboards/<project_name>/project-specs.md (Phase 0 already complete)
+- Dashboard project: shards/<project_name>/project-specs.md (Phase 0 already complete)
 
 ## What the Dashboard Needs
 - Dashboard objective: <from BI Phase 0 — what to visualize>
@@ -110,17 +110,17 @@ Write `dashboards/<project_name>/ae-intake.md`:
 
 ## Next Step
 Run `shards:analytics-engineer` or `shards:syn`. In Phase 1, reference this file:
-dashboards/<project_name>/ae-intake.md
+shards/<project_name>/ae-intake.md
 ```
 
-Tell the user: "I've written `dashboards/<project_name>/ae-intake.md` with the mart requirements for the Analytics Engineer. Run `shards:analytics-engineer` or `shards:syn` and reference that file in Phase 1."
+Tell the user: "I've written `shards/<project_name>/ae-intake.md` with the mart requirements for the Analytics Engineer. Run `shards:analytics-engineer` or `shards:syn` and reference that file in Phase 1."
 
 Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain gap>`
 
 **If the user references a `bi-intake.md` file** (written by the Data Analyst when escalating):
 Read that file. Use its contents to pre-populate Phase 1 requirements — data sources,
 key metrics, dimensions/filters, chart type recommendation, and date column — rather than
-asking from scratch. Set `Originating request: Data Analyst — analysis/<project_name>/`.
+asking from scratch. Set `Originating request: Data Analyst — shards/<source_project>/`.
 
 Questions still to ask (not in the intake file):
 - "Who is the intended audience for this dashboard?"
@@ -148,8 +148,8 @@ Do not re-ask about data sources, metrics, or chart type — already captured.
 - **Branding / color constraints:** <constraints or "none">
 - **Data environment:** <not greenfield | Data exists but inaccessible — design only, validate before connecting | GREENFIELD — No data assets detected. Design specification only>
 - **Analytics Engineer needed:** No | Yes — <mart/grain gap>
-- **AE intake file written:** Not applicable | Yes — dashboards/<project_name>/ae-intake.md
-- **DA intake file source:** Not applicable | Data Analyst — analysis/<project_name>/bi-intake.md
+- **AE intake file written:** Not applicable | Yes — shards/<project_name>/ae-intake.md
+- **DA intake file source:** Not applicable | Data Analyst — shards/<source_project>/bi-intake.md
 - **Analysis context (DA intake only):** <core question and chart sketch from DA intake, or "N/A">
 ```
 

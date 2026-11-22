@@ -32,7 +32,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 I am the Data Scientist shard. I've drafted queries for study [name].
-The project specs are at: studies/[name]/project-specs.md
+The project specs are at: shards/[name]/project-specs.md
 
 Here are the queries:
 [include query outlines or key SQL]
@@ -88,18 +88,18 @@ After both reviewers return and you have applied the Reviewer Verdict Protocol t
 
 ### Build scope
 
-The deliverables are SQL files under `studies/<name>/queries/` and a notebook under `studies/<name>/notebooks/`, plus, when the Phase 4 experiment plan mode is Harness, an experiment harness under `studies/<name>/experiments/`. **Write only: do not execute the SQL or run notebook cells in this phase.** Do not introduce standalone Python loader, helper, or "data prep" scripts: data loading and transformation live in notebook cells per the SQL-loading rule below. If something genuinely belongs in a `.py` module (a long shared utility used across notebooks), surface it to the user and confirm before adding it. The experiment harness is the planned exception: its `.py` files are specified by Sections B-C of the experiment framework and need no extra confirmation; any other `.py` file still does. {{protocol experiment_framework}} A freestanding `load_data.py` is almost always a sign the build is going outside the plan.
+The deliverables are SQL files under `shards/<project_name>/queries/` and a notebook under `shards/<project_name>/notebooks/`, plus, when the Phase 4 experiment plan mode is Harness, an experiment harness under `shards/<project_name>/experiments/`. The SQL and notebook paths are the greenfield defaults; when the plan confirmed other targets in `## Placement`, use those ({{protocol placement}}). The harness always stays in `shards/<project_name>/experiments/`. **Write only: do not execute the SQL or run notebook cells in this phase.** Do not introduce standalone Python loader, helper, or "data prep" scripts: data loading and transformation live in notebook cells per the SQL-loading rule below. If something genuinely belongs in a `.py` module (a long shared utility used across notebooks), surface it to the user and confirm before adding it. The experiment harness is the planned exception: its `.py` files are specified by Sections B-C of the experiment framework and need no extra confirmation; any other `.py` file still does. {{protocol experiment_framework}} A freestanding `load_data.py` is almost always a sign the build is going outside the plan.
 
 ### Component specifications
 
-Each task in `studies/<name>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each one self-contained.
+Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each one self-contained.
 
 **Spec A. SQL query file** (one task per query file)
-   - Location: `studies/<name>/queries/`
+   - Location: `shards/<project_name>/queries/`
    - Name files descriptively: `01_feature_extraction.sql`, `02_cohort_definition.sql`
    - Include header comments:
      ```sql
-     -- Study: <study_name>
+     -- Study: <project_name>
      -- Query: <description>
      -- Date: <date>
      -- Dependencies: <upstream tables>
@@ -107,7 +107,7 @@ Each task in `studies/<name>/tasks.yaml` cites one of these specifications throu
      ```
    - Structural acceptance: the file has the header block; its join path matches the trace you presented under the join-path self-check; every required table from the Phase 2 data sources it is responsible for is referenced. Acceptance is structural (read-back, grep), never execution.
 
-**Spec B. Notebook** at `studies/<name>/notebooks/<study>.ipynb`, built with NotebookEdit. The notebook is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group:
+**Spec B. Notebook** at `shards/<project_name>/notebooks/<project_name>.ipynb`, built with NotebookEdit. The notebook is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group:
 
    - **Overview** (markdown): business question, hypothesis, data sources, date, author
    - **Setup**: imports, config, reproducibility notes
@@ -129,16 +129,16 @@ Each task in `studies/<name>/tasks.yaml` cites one of these specifications throu
 
 **Spec C. Requirements file** (optional). If analysis needs non-standard packages, a task creates `requirements.txt`.
 
-**Spec D. Experiment harness** (modelling studies with a Harness experiment plan only; skip otherwise). Location `studies/<name>/experiments/`, laid out per Sections B-C of the experiment framework (model variant interface). {{protocol experiment_framework}} Tasks, per Section E of the framework: one harness-core task (`base.py`, `registry.py`, `run_experiments.py`, `experiments.yaml`, `__init__.py`, `approaches/__init__.py`), with `experiments.yaml` pre-registering every approach in the Phase 4 plan, then one task per approach (`approaches/<approach_id>.py` only, `depends_on` the core task), then the notebook Modelling section group (`depends_on` every approach task). Approaches load data only through what the notebook passes in; no SQL or file loading inside approach modules.
+**Spec D. Experiment harness** (modelling studies with a Harness experiment plan only; skip otherwise). Location `shards/<project_name>/experiments/`, laid out per Sections B-C of the experiment framework (model variant interface). {{protocol experiment_framework}} Tasks, per Section E of the framework: one harness-core task (`base.py`, `registry.py`, `run_experiments.py`, `experiments.yaml`, `__init__.py`, `approaches/__init__.py`), with `experiments.yaml` pre-registering every approach in the Phase 4 plan, then one task per approach (`approaches/<approach_id>.py` only, `depends_on` the core task), then the notebook Modelling section group (`depends_on` every approach task). Approaches load data only through what the notebook passes in; no SQL or file loading inside approach modules.
    Structural acceptance: every approach in the Phase 4 plan has a module and an `experiments.yaml` entry; each class subclasses `Approach` and defines `fit` and `predict`; `python -m py_compile` passes on every harness file (compiling is allowed; nothing is run against data); the runner uses one split and one scoring path for all approaches and writes `leaderboard.csv` and `leaderboard.md`.
 
 ### Lead loop
 
 {{protocol delegated_build}} governs this phase. Task evidence guidance: {{protocol incremental_testing}} (here the acceptance check is structural, because Phase 6 is write-only).
 
-{{delegate tasks=studies/<name>/tasks.yaml max_parallel=3}}
+{{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
-1. **Load the task list** approved at the plan gate (`studies/<name>/tasks.yaml`) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
+1. **Load the task list** approved at the plan gate (`shards/<project_name>/tasks.yaml`) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
 2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3. Query-file tasks can run in parallel; notebook section-group tasks run in their `depends_on` order. Harness approach tasks can run in parallel once the harness-core task is done.
 3. **Receive** each worker's result via `task_report`.
 4. **Verify before it counts.** Re-run (or independently check) the task's acceptance command, compare the artifact with its `plan_ref` specification and the Phase 3 plan, then write an evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone. Do not execute SQL or notebook cells to gather evidence.
@@ -169,7 +169,7 @@ When all tasks are verified done, run the final integration read-back as the lea
   - <file path>: <description>
 - **Notebook location:** <file path>
 - **Notebook cell count:** <total> (<markdown>/<code>)
-- **Experiment harness:** <studies/<name>/experiments/ — approaches: <approach_id list>> | N/A — Single approach plan | N/A — analysis-only study
+- **Experiment harness:** <shards/<project_name>/experiments/ — approaches: <approach_id list>> | N/A — Single approach plan | N/A — analysis-only study
 - **Requirements file:** <file path or "N/A — base Python only">
 - **Deviations from plan:** <changes from Phases 3–5 and why, or "none">
 - **Phase 6 produced no execution evidence by design** — SQL validation runs in Phase 7 (Analytics Engineer); notebook execution is user-managed or via `shards:notebook-walkthrough`.

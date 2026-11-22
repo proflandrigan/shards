@@ -28,7 +28,7 @@ Maps each of the six jobs to a binding (`bindings/<name>.md`). Each value is eit
 | `tasks` | Task list the agent creates and updates. |
 | `knowledge` | Reference material the agent searches and writes to. |
 | `review` | Where review material is fetched from and comments are posted. |
-| `artifacts` | Generated files (models, reports, data products). |
+| `artifacts` | Generated files (models, reports, data products). Bookkeeping goes to `shards/<project>/`; deliverables go to the confirmed targets. |
 | `presentation` | Decks and presentation source. |
 
 ### `gates.policy`
@@ -138,10 +138,10 @@ Every job defaults to the `git` binding. These are the values used when a job is
 | `tasks` | `git`, `path: TASKS.md` | `TASKS.md` at the project root, mirroring the task manifest (`<output_dir>/tasks.yaml`). |
 | `knowledge` | `git`, `paths: [docs/]`, `git_log: true` | Searches `docs/` and the git log. |
 | `review` | `git`, no options | Local diff and `gh` if present. |
-| `artifacts` | `git`, `path: {output_dir}` | The agent's output directory. |
+| `artifacts` | `git`, `path: {output_dir}` | The agent's output directory (`shards/<project>/`). |
 | `presentation` | `git`, no options | Local files under `presentations/<slug>/`. |
 
-`{output_dir}` is substituted by the runtime with the active agent's output directory.
+`{output_dir}` is substituted by the runtime with the active agent's output directory, `shards/<project>/` (MLOps: `shards/<project>/mlops/`). Deliverables such as code, models and dashboards land at the targets confirmed on the plan gate, not in `output_dir`; the confirm-time commit covers both (see `docs/gates.md`).
 
 The `tasks` job mirrors the task manifest to `TASKS.md`, so the checklist is readable in the repo without tooling.
 

@@ -58,6 +58,7 @@ This guide is the reference for agents, protocols, Studio, the CLI, outputs, wor
 - [Reviewer Verdicts](03-protocols/reviewer-verdicts.md)
 - [Decompose & Swarm: Parallel Slices for Large Work](03-protocols/swarm.md)
 - [Validation Protocol](03-protocols/validation.md)
+- [Placement Protocol](03-protocols/placement.md)
 
 ### Studio
 

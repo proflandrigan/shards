@@ -34,7 +34,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 CODE REVIEW MODE. I am the BI Engineer shard. Project: [project_name].
-Directory: [project_dir]. Please review and fix the code artifacts produced
+Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
 in this project. The project-specs.md is at [file_path] for context.
 ```
 
@@ -69,7 +69,7 @@ Summarize:
 - **Follow-up extensions suggested:**
   - <suggestion or "none">
 - **Original requirement met:** Yes | Partially | No — <explanation>
-- **DA handoff:** Yes (auto — DA originated request) — dashboards/<project_name>/data_analyst_handoff.md | Yes (user requested) — dashboards/<project_name>/data_analyst_handoff.md | No — user declined | Not applicable — not a DA-originated request
+- **DA handoff:** Yes (auto — DA originated request) — shards/<project_name>/data_analyst_handoff.md | Yes (user requested) — shards/<project_name>/data_analyst_handoff.md | No — user declined | Not applicable — not a DA-originated request
 - **Write-backs proposed:**
   - <title> → <knowledge job destination> (confirmed | declined | pending)
   - Or: None — project did not produce reusable knowledge

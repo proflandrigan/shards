@@ -51,7 +51,7 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 ## Output directory
 
-`models/<project_name>/` for project artifacts; the pipeline code itself lands in the consumer project's dbt structure (`models/`, `tests/`, schema `.yml`)
+`shards/<project_name>/` for bookkeeping; the pipeline code itself integrates into the consumer project's dbt structure (`models/`, `tests/`, schema `.yml`) at the targets confirmed on the plan gate. See [Placement](../03-protocols/placement.md).
 
 Gate-confirmed phases are committed to git as the record. Where each agent writes is listed in [Output Directory Map](../06-outputs/directory-map.md).
 

@@ -10,6 +10,8 @@ type: reference
 
 # DIVERGE Protocol — Time-Travel Branching
 
+`<project_dir>` below is the agent's `output_dir` (`shards/<project>/`, `shards/<project>/mlops/`, or the legacy project folder when resuming).
+
 This protocol governs parallel experimentation in Shards. It is referenced by
 DIVERGE-capable specialists during planning phases when multiple viable approaches
 are identified.
@@ -225,7 +227,7 @@ the chosen strategy in each branch's Task prompt.
   requires explicit user confirmation.
 
 - **`lockfile`:** branches share the same working ref but serialize all git
-  operations via a file lock at `.shards/branches/.git-lock` (file-creation
+  operations via a file lock at `<project_dir>/.shards/branches/.git-lock` (file-creation
   with `O_EXCL`; retry-with-backoff on contention — default 5 retries,
   100ms-1s exponential backoff). Acceptable for small K (≤2); degrades under
   contention. Tag namespace includes the branch slug to prevent collisions
@@ -336,9 +338,9 @@ When the user selects a winning branch:
      `project-specs.md` that no VCS artifacts were produced.)
 
 2. **Copy artifacts** from `<project_dir>/.shards/branches/<winning-branch>/` to the
-   appropriate locations in the main project directory. Place files where they would
-   have been produced in a normal phased run (e.g., queries in `queries/`, notebooks
-   in `notebooks/`, code files at project root). For AR fan-out, copy the
+   appropriate locations. Deliverable files go to the confirmed
+   `## Placement` targets (re-pass them as `targets` on the convergence gate); bookkeeping
+   and `experiments/` records stay in the project folder. For AR fan-out, copy the
    `experiments/` contents (brief, results.json, iteration files,
    history_summary.md) to `<project_dir>/experiments/`.
 
@@ -346,7 +348,7 @@ When the user selects a winning branch:
    directory as historical record.
 
 4. **Preserve all branch directories** — do not delete losing branches. They remain
-   in `.shards/branches/` for future reference.
+   in `<project_dir>/.shards/branches/` for future reference.
 
 5. **Document CONVERGE** in `project-specs.md`:
 
@@ -363,7 +365,7 @@ When the user selects a winning branch:
   | <primary metric> | <value> |
 - **Runners-up:**
   - `<branch-slug>`: <approach> — <primary metric value> — <one-line why not chosen>
-- **Arbiter leaderboard:** `.shards/branches/leaderboard.md`
+- **Arbiter leaderboard:** `<project_dir>/.shards/branches/leaderboard.md`
 - **Artifacts promoted to:** <main project directory paths>
 - **Date:** <date>
 ```

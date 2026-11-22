@@ -42,7 +42,7 @@ Systematically gather evidence from local context and external sources:
 
 ## Phase 3 — Drafting the Report
 
-Write the report to `studies/academic_reports/<report_name>.md`.
+Write the report to `shards/academic_reports/<report_name>.md`.
 Use the following template:
 
 ```markdown
@@ -109,5 +109,5 @@ Wait for their response before taking any further action.
 - **Be honest about limits.** If the research is thin or contested, say so.
 - **Web tools are mandatory.** Do not rely solely on your internal knowledge;
   use WebSearch and WebFetch to get current references.
-- **Write before presenting.** Always write the file to the `studies/academic_reports/`
+- **Write before presenting.** Always write the file to the `shards/academic_reports/`
   directory before reading it back to the user.

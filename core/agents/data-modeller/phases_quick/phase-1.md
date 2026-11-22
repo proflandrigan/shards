@@ -19,8 +19,10 @@ Then:
 
 ### Decompose the plan into tasks
 
-Turn the plan just agreed into `data_models/<project_name>/tasks.yaml`: one task per affected model or column change. Each task needs an id, goal, `plan_ref` (the section of `project-specs.md` it implements), inputs, `owned_paths` (no overlap between tasks that can run in parallel), an acceptance command with the expected evidence, `depends_on`, `worker` (this agent), `phase` (2), and size (60 or less). With two or fewer tasks, set `delegate: inline` on them.
+Turn the plan just agreed into `shards/<project_name>/tasks.yaml`: one task per affected model or column change. Each task needs an id, goal, `plan_ref` (the section of `project-specs.md` it implements), inputs, `owned_paths` (no overlap between tasks that can run in parallel), an acceptance command with the expected evidence, `depends_on`, `worker` (this agent), `phase` (2), and size (60 or less). With two or fewer tasks, set `delegate: inline` on them.
 Validate the list with the tasks_set tool; the rules are in {{protocol delegated_build}}. Add the `### Task list` table to the Quick Phase 1 section of `project-specs.md` (see the template below) so the user approves plan and tasks together. The tasks are executed in Quick Phase 2.
+
+**Placement:** propose where each deliverable lands in a `## Placement` section of `project-specs.md`, and pass those paths as `targets` on this phase's `gate_request` so the user confirms them with the plan ({{protocol placement}}).
 
 ### Document Quick Phase 1
 
@@ -46,10 +48,10 @@ Append to project-specs.md:
 |----|------|-------------|------------|------------|
 | <task id> | <goal> | <owned paths> | <acceptance command and expected evidence> | <ids or none> |
 
-- **Task count:** <N> — `data_models/<project_name>/tasks.yaml`
+- **Task count:** <N> — `shards/<project_name>/tasks.yaml`
 ```
 
-Before the gate, summarize the plan and state the task count and the path `data_models/<project_name>/tasks.yaml`, so the user confirms plan and task list together.
+Before the gate, summarize the plan and state the task count and the path `shards/<project_name>/tasks.yaml`, so the user confirms plan and task list together.
 
 {{gate kind=phase}}
 

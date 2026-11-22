@@ -31,7 +31,7 @@ Full migrate (no --export-ledger): moves a legacy v1 Shards install to the v2 la
   5. Removes the v1 "## Shards — Agent Suite" and "## Shards — Tool-call conventions" blocks
      from CLAUDE.md. Blocks added by \`shards install --claude-md\` (between
      <!-- shards:begin --> / <!-- shards:end --> markers) are kept.
-Output folders (analysis/, studies/, models/, ...) are never touched.
+Legacy output folders (analysis/, studies/, models/, ...) are never touched or moved; new work uses shards/.
 
 --export-ledger runs only step 1 (see below).
 

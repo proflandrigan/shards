@@ -38,8 +38,8 @@ first, or drop to `[EX]` where human review sits between iterations.
 ### Context loading
 
 1. Locate `project-specs.md` in the project directory (typically
-   `services/<project_name>/project-specs.md` or
-   `<existing_service_dir>/project-specs.md`).
+   `shards/<project_name>/project-specs.md`;
+   legacy projects: their existing `project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project
      context (AI system type, current prompts/chain, eval harness, baseline
      metrics) before proceeding.
@@ -50,7 +50,7 @@ first, or drop to `[EX]` where human review sits between iterations.
    ask the user to fix it. AR without a functioning eval is a liability, not
    a feature.
 5. Identify the current metrics baseline.
-6. Establish the `experiments/` subdirectory: `<project_dir>/experiments/`. If an experiment harness already exists there (`experiments.yaml` and `run_experiments.py`, built by the phased build), each iteration changes only the leading approach's module under `approaches/` and its `params` in `experiments.yaml`, is scored by the runner and is read back from `leaderboard.csv`; the runner, `base.py` and the split stay immutable. See Section F of the experiment framework. {{protocol experiment_framework}}
+6. Establish the `experiments/` subdirectory: `shards/<project_name>/experiments/`. If an experiment harness already exists there (`experiments.yaml` and `run_experiments.py`, built by the phased build), each iteration changes only the leading approach's module under `approaches/` and its `params` in `experiments.yaml`, is scored by the runner and is read back from `leaderboard.csv`; the runner, `base.py` and the split stay immutable. See Section F of the experiment framework. {{protocol experiment_framework}}
 
 ### Versioning detection
 
@@ -137,7 +137,7 @@ warning shows.
 
 **Fan-out sessions.** Emit one panel per branch, using the branch slug:
 
-{{artifact.emit type=experiment-dashboard path=.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
 
 After arbitration/promotion, re-emit the main `panel_id` with the converged
 `results.json`.
@@ -184,8 +184,8 @@ Append to `project-specs.md`:
 
 Follow Section A of `autonomous_research.md`. Use
 `templates/research-brief.md`, write to
-`<project_dir>/experiments/research_brief.md`. Write
-`<project_dir>/experiments/results.json` with `mode: "autonomous-research"`.
+`shards/<project_name>/experiments/research_brief.md`. Write
+`shards/<project_name>/experiments/results.json` with `mode: "autonomous-research"`.
 
 Update `project-specs.md` with a new `## Autonomous Research` section.
 
@@ -257,6 +257,8 @@ rejected), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
 ### Gate
+
+Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=execute phase=1 id=ai-engineer-research-phase1}}
 

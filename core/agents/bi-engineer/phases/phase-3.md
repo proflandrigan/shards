@@ -21,7 +21,7 @@ specification.
 
 ### Build Mode (data exists)
 
-The dashboard application goes in `dashboards/<project_name>/`. It is built as
+The dashboard application goes in the targets confirmed in `## Placement` ({{protocol placement}}); `shards/<project_name>/` is the new-project default, and the paths below assume it. It is built as
 a set of delegated tasks, one tested component each (for example one SQL query
 file, the data-access layer, one chart or page, filters/defaults, the
 requirements file). You are the lead: you dispatch, verify and record; you do
@@ -45,7 +45,7 @@ card references.
 - Standalone: `<descriptive_name>.py`
 
 **SQL files** — each query is its own file in
-`dashboards/<project_name>/queries/`, and queries are completed before the
+`shards/<project_name>/queries/`, and queries are completed before the
 Python that uses them. Name files descriptively: `01_revenue_by_region.sql`.
 Include a header comment in each file:
 ```sql
@@ -86,7 +86,7 @@ app starts headless without error; `requirements.txt` installs.
 
 #### Lead loop
 
-{{delegate tasks=dashboards/<project_name>/tasks.yaml max_parallel=3}}
+{{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
 1. **Load** the task list approved at the Phase 2 gate (call `tasks_set`; fix
    and re-validate if it is rejected).
@@ -117,11 +117,11 @@ worth adding?"
 
 ### Spec Mode (no data)
 
-The design document is `dashboards/<project_name>/dashboard-design.md`. Spec
+The design document is `shards/<project_name>/dashboard-design.md`. Spec
 mode is small: the panel template below is the component specification, and
 panel tasks are normally `delegate: inline` (you write them yourself) with the
 same loop, macro and evidence rows as Build Mode, using the same
-`dashboards/<project_name>/tasks.yaml`.
+`shards/<project_name>/tasks.yaml`.
 
 For each chart or panel, document:
 

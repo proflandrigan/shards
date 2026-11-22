@@ -36,7 +36,7 @@ const { StateStore } = require(path.join(repo, 'runtime/state/store'));
     }
     await call('task_verify', { id, pass: true, expected: 'exit 0', observed: 'exit 0' });
   };
-  await call('tasks_set', { path: 'analysis/dbuild/tasks.yaml' });
+  await call('tasks_set', { path: 'shards/dbuild/tasks.yaml' });
   await run('t1'); await run('t2', { failFirst: true }); await run('t3'); await run('t4');
   console.log('synthetic state built in ' + root);
 })().catch((e) => { console.error(e.message); process.exit(1); });

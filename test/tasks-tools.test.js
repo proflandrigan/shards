@@ -31,9 +31,9 @@ describe('tasks_set', () => {
   it('writes tasks.yaml under the frame output_dir and mirrors TASKS.md', async () => {
     const r = await call('tasks_set', { manifest: manifest(task('a'), task('b', { depends_on: ['a'] })) });
     expect(r.isError).toBeFalsy();
-    expect(fs.existsSync(path.join(root, 'analysis/p/tasks.yaml'))).toBe(true);
+    expect(fs.existsSync(path.join(root, 'shards/p/tasks.yaml'))).toBe(true);
     const md = fs.readFileSync(path.join(root, 'TASKS.md'), 'utf8');
-    expect(md).toContain('<!-- generated from analysis/p/tasks.yaml by shards; edit tasks.yaml, not this file -->');
+    expect(md).toContain('<!-- generated from shards/p/tasks.yaml by shards; edit tasks.yaml, not this file -->');
     expect(md).toContain('- [ ] a (bi-engineer): goal a (pending)');
     expect(text(r)).toContain('"ready": [\n    "a"\n  ]');
   });

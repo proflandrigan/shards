@@ -14,5 +14,5 @@ consult_entries:
   service: modes/service.md
   worker: modes/worker.md
 reviewers: [ml-engineer, ai-engineer, syn]
-output_dir: "services/{project}/mlops/"
+output_dir: "shards/{project}/mlops/"
 jobs: [record, tasks, knowledge, review, artifacts]

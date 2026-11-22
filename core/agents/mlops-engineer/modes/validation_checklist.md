@@ -43,7 +43,7 @@ Prediction and input drift monitoring has a characterized baseline.
 - Threshold for alerting deliberately set (not default).
 - First drift report run and reviewed before deployment.
 
-**Observed format:** `baseline: 30 days of production data, snapshot 2026-04-15 | drift metric: PSI per feature, weekly window | threshold: PSI>0.2 warn, >0.3 alert | first report: 0 features above 0.2 ✓ | config: services/<svc>/monitoring/drift.yaml`
+**Observed format:** `baseline: 30 days of production data, snapshot 2026-04-15 | drift metric: PSI per feature, weekly window | threshold: PSI>0.2 warn, >0.3 alert | first report: 0 features above 0.2 ✓ | config: <monitoring target>/drift.yaml`
 
 ## MLO-05 — Retraining Trigger Tested
 
@@ -129,7 +129,7 @@ Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/
 
 - `docs/runbooks/<svc>.md` — MLO-09
 - `docs/runbooks/rollback.md` — MLO-02
-- `services/<svc>/monitoring/` configs — MLO-03, MLO-04
+- Monitoring configs at the confirmed `## Placement` target (greenfield: `shards/<project>/mlops/monitoring/`) — MLO-03, MLO-04
 - `pipelines/retrain_<svc>.py` or equivalent — MLO-05
 - `results/deploy_smoke.log`, `results/load_test.json` — MLO-01, MLO-07
 - Registry entry with lineage metadata — MLO-10

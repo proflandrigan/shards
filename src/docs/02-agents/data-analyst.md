@@ -48,10 +48,10 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 ## Output directory
 
-`analysis/<project_name>/`
+`shards/<project_name>/`
 
 ```
-analysis/<project>/
+shards/<project>/
 ├── project-specs.md
 ├── queries/
 │   └── <query>.sql

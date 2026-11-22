@@ -16,16 +16,16 @@ This file governs Step 6 of Phase 7 (Deliver and Document) for the AI Engineer s
 
    {{gate kind=phase phase=0 id=ai-engineer-bi-engineer-handoff-phase-0}}
 
-   If yes, write `services/<project_name>/bi_engineer_handoff.md`:
+   If yes, write `shards/<project_name>/bi_engineer_handoff.md`:
 
    ```
    # BI Engineer Handoff: <project_name>
 
    ## Source Project
    - Originating agent: AI Engineer
-   - Project directory: services/<project_name>/
-   - Project specs: services/<project_name>/project-specs.md
-   - Project report: services/<project_name>/report.md
+   - Project directory: shards/<project_name>/
+   - Project specs: shards/<project_name>/project-specs.md
+   - Project report: shards/<project_name>/report.md
 
    ## What Was Built
    - System type: <prompt chain / RAG / agentic / transformation from Phase 0>
@@ -60,7 +60,7 @@ This file governs Step 6 of Phase 7 (Deliver and Document) for the AI Engineer s
    - Content filter triggers: <rate or count>
 
    ## Data Sources for Dashboard
-   - Evaluation test set: services/<project_name>/eval/
+   - Evaluation test set: <eval path from `## Placement`; greenfield default shards/<project_name>/eval/>
    - Production request logs: <log source from Phase 5 monitoring plan>
    - LLM API usage data: <API provider dashboard or internal log>
    - Safety incident log: <incident log location from Phase 5>
@@ -76,9 +76,9 @@ This file governs Step 6 of Phase 7 (Deliver and Document) for the AI Engineer s
 
    ## Next Step
    Run `shards:bi-engineer` or `shards:syn`. In Phase 0, reference this file:
-   services/<project_name>/bi_engineer_handoff.md
+   shards/<project_name>/bi_engineer_handoff.md
    ```
 
    Tell the user: "Handoff file written. Run `shards:bi-engineer` or `shards:syn` and
-   reference `services/<project_name>/bi_engineer_handoff.md` in Phase 0."
+   reference `shards/<project_name>/bi_engineer_handoff.md` in Phase 0."
    Do NOT attempt to morph into or invoke the BI Engineer.

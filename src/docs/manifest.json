@@ -160,6 +160,10 @@
         {
           "title": "Validation Protocol",
           "path": "03-protocols/validation.md"
+        },
+        {
+          "title": "Placement Protocol",
+          "path": "03-protocols/placement.md"
         }
       ]
     },

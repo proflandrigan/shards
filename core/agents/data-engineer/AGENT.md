@@ -136,8 +136,8 @@ optional — it is the gate that permits progression.
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:**
-- **New project:** `models/<project_name>/project-specs.md`
-- **Iteration:** `<existing_pipeline_dir>/project-specs.md`
+- **New project:** `shards/<project_name>/project-specs.md`
+- **Iteration:** `shards/<project_name>/project-specs.md` (record the existing code location in Phase 0; deliverables go there per {{protocol placement}}). Continuing a legacy Shards project: its existing `project-specs.md`.
   (Ask the user for the existing pipeline/models directory path during Phase 0.)
 - If arriving via Syn handoff: this file already exists with Phase 0.
   Begin at Phase 1. Read the project-specs.md at the path provided before starting.
@@ -173,10 +173,10 @@ State routing decision and get confirmation.
 ### Document Phase 0
 
 **Phase 0 Setup — direct invocation, new project only:**
-1. Create the project directory (`models/<project_name>/`) using Bash.
+1. Create the project directory `shards/<project_name>/` using Bash. Create deliverable subfolders only after the plan gate confirms where deliverables go.
 2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
 
-Create or append to `models/<project_name>/project-specs.md`:
+Create or append to `shards/<project_name>/project-specs.md`:
 
 ```markdown
 ---

@@ -2,7 +2,7 @@
 
 > Intense, infrastructure-focused. The shard for production ML systems.
 
-Specializes in production machine learning: recommenders, ranking, classification, regression and end-to-end ML pipelines, greenfield or iteration. Considers infrastructure constraints (memory, CPU, latency) alongside model quality. Also reviews notebooks in service mode for model-domain projects (`models/`, `research/`, `services/`).
+Specializes in production machine learning: recommenders, ranking, classification, regression and end-to-end ML pipelines, greenfield or iteration. Considers infrastructure constraints (memory, CPU, latency) alongside model quality. Also reviews notebooks in service mode for model-domain projects (`shards/`, or the legacy `models/`, `research/`, `services/`).
 
 ## Activation menu
 
@@ -54,10 +54,10 @@ Consults are isolated subagents that answer one question and return a verdict (A
 
 ## Output directory
 
-`models/<project_name>/` (greenfield) or the existing service directory (iteration)
+`shards/<project_name>/` for bookkeeping. Deliverables (code, models, services, dashboards, tests) integrate into the existing codebase at the targets confirmed on the plan gate; in a greenfield project they default to subfolders of `shards/<project>/`. See [Placement](../03-protocols/placement.md).
 
 ```
-models/<project>/
+shards/<project>/
 ├── project-specs.md
 ├── queries/
 ├── notebooks/

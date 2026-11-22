@@ -13,5 +13,5 @@ consult_entries:
   advise: modes/advise.md
   worker: modes/worker.md
 reviewers: [data-modeller, syn]
-output_dir: "models/{project}/"
+output_dir: "shards/{project}/"
 jobs: [record, tasks, knowledge, review, artifacts]

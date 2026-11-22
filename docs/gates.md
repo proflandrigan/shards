@@ -4,7 +4,7 @@ Developer notes for the gate subsystem: `runtime/gates/`, the `gate_request` too
 
 ## 1. Overview
 
-A gate is a human checkpoint at the end of a phase. The agent asks for one with `gate_request`. Only a human can confirm it. The agent has no confirm tool (D8). Confirming an advancing gate triggers a git commit of the agent's output directory (section 6).
+A gate is a human checkpoint at the end of a phase. The agent asks for one with `gate_request`. Only a human can confirm it. The agent has no confirm tool (D8). Confirming an advancing gate triggers a git commit of the agent's output directory plus its confirmed `targets` (section 6).
 
 | File | Role |
 |------|------|
@@ -39,6 +39,7 @@ Stored at `<root>/.shards/state/sessions/<sessionKey>/gates.json` as `{gates: {<
 | `summary` | `gate_request` | Required by the tool, max 2000 characters. |
 | `record_ref` | `gate_request` | Project-relative path, `#anchor` allowed. The file is only checked when `validates` is set. |
 | `validates` | `gate_request` | String checklist name matching the schema pattern. Stored as given. The machine does not validate it. |
+| `targets` | `gate_request` | Optional. Array of up to 100 unique root-relative paths (1 to 512 characters each) where the agent's deliverables land. Absolute, drive-prefixed (`C:`), `..`-escaping, root (`.`), `.git/` and `.shards/` paths are rejected, as are a leading `:` (pathspec magic), blank paths and control characters. Targets are literal paths: `*`, `?` and `[ ]` are ordinary characters (for example `app/[id]/page.tsx`). Backslashes are treated as separators; trailing slashes and duplicates are collapsed. Unset when omitted. Passing it replaces the confirmed list; `[]` clears it. Added to the commit paths (section 6). |
 | `requested_at`, `updated_at` | machine | ISO timestamps. |
 | `decided_at`, `decision` | `confirmGate` | `decision` is `confirmed` or `changes_requested`. |
 | `note` | `confirmGate` | Set only when a note is given (`--changes`). |
@@ -52,8 +53,8 @@ Stored at `<root>/.shards/state/sessions/<sessionKey>/gates.json` as `{gates: {<
 | From | Action | To | Notes |
 |------|--------|----|-------|
 | (none) | `requestGate`, new id | `pending` | `result: opened`. |
-| `pending` | `requestGate`, same id | `pending` | `result: already_pending`. `summary` and `record_ref` are updated when given. |
-| `changes_requested` | `requestGate`, same id | `pending` | `result: reopened`. `requested_at` resets. `summary` and `record_ref` are replaced when given. |
+| `pending` | `requestGate`, same id | `pending` | `result: already_pending`. `summary`, `record_ref` and `targets` are updated when given (`targets` replace the old list). |
+| `changes_requested` | `requestGate`, same id | `pending` | `result: reopened`. `requested_at` resets. `summary` and `record_ref` are replaced when given. `targets` are replaced when passed and kept otherwise. |
 | `pending` | `confirmGate`, `confirmed` | `confirmed` | Runs the commit (section 6). |
 | `pending` | `confirmGate`, `changes_requested` | `changes_requested` | `note` stored. No commit. |
 | `pending` | `suspendGate` (`gate_suspend`) | `suspended` | Requires `proof`. |
@@ -96,11 +97,13 @@ Input (from `core/schema/gate-request.schema.json`, `additionalProperties: false
 | `summary` | yes | string, 1 to 2000 characters |
 | `record_ref` | yes | string |
 | `validates` | no | string checklist name |
+| `targets` | no | array of 0 to 100 unique strings (1 to 512 characters each), root-relative paths inside the project; `[]` clears the list |
 
 Refusals (tool errors, gate not opened):
 
 - No resolved session.
 - No frame on the stack: `gate_request refused: no active frame ... Activate an agent with mode=switch first.` Consult workers never hold gates.
+- `targets` containing an absolute path, a path escaping the root, the root itself, a path inside `.git/` or `.shards/`, a path starting with `:`, a drive-prefixed path, or a blank or control-character path.
 - `validates` set and the record is missing, outside the project root, or fails validation. The record must be inside the project root, and the error names the checklist as `<validates>/validation_checklist.md`.
 
 Only the last `## Validation` section of the record is checked. `checkValidation` returns a list of coded errors, and each is printed with its description from `ERROR_DESCRIPTIONS`. The positive path (a valid record) has not been exercised in a smoke test. Read by code only.
@@ -128,7 +131,7 @@ If `shards.config.yaml` fails to load, `gate_request` and `load_phase` treat the
 
 `commitGate` (`runtime/git/index.js`) runs under the pending lock:
 
-1. **Collect.** `git ls-files -co --exclude-standard -z -- <outputDirs>` inside a repo, or a filesystem walk outside one. Output directories come from the agent's `output_dir` with `{project}` substituted. Agents with `output_dir: null` return `skipped: no_output_dirs`.
+1. **Collect.** `git ls-files -co --exclude-standard -z -- <outputDirs>` inside a repo, or a filesystem walk outside one. Commit paths are the agent's `output_dir` (`{project}` substituted, normally `shards/<project>/`) plus the current target list: this gate's `targets` when it passed them, otherwise the `targets` of the most recently decided confirmed gate of the same agent, project and track in the session. A target dropped from a later list is no longer committed. Paths outside the root are dropped. Name narrow targets: everything under a target (tracked, or untracked and not ignored) is included. With no commit paths (`output_dir: null` and no targets) the result is `skipped: no_output_dirs`.
 2. **Filter.** Drops `.git`, leased paths, denylisted paths, directories, and files over `max_file_size_bytes`. Keeps tracked files missing from disk as deletions.
 3. **Diff.** Hashes the files and diffs them against HEAD. Keeps only changed entries. None changed means `skipped: nothing_to_commit`.
 4. **Snapshot.** Writes a commit object (parent = HEAD) to `refs/shards/pending/<gate>-<seq>` (one ref per pending record) through a temporary index.
@@ -138,9 +141,10 @@ If `shards.config.yaml` fails to load, `gate_request` and `load_phase` treat the
 ### 6.2 Collection rules
 
 - `.gitignore` applies to untracked files only. Tracked files are included even when `.gitignore` matches them. Checked with `git ls-files -co --exclude-standard`.
-- The commit covers the full diff of each output directory against HEAD, not only the files written during this gate.
+- Commit paths: the output directory plus gate `targets`, see step 1.
+- The commit covers the full diff of each commit path against HEAD, not only the files written during this gate.
 - Denylist and size limits apply to tracked and untracked files. A tracked file excluded by these rules is left alone, not deleted.
-- `.shards/` is excluded only through the output directory. No collector rule excludes it by name. Current output directories (`analysis/`, `studies/`, `models/`, `data_models/`, `services/`, `research/`, `dashboards/`) never cover the root.
+- `.shards/` is excluded only through the output directory. No collector rule excludes it by name. Output directories (`shards/<project>/`, `shards/<project>/mlops/`) never cover the root, and `gate_request` rejects targets that are the root or inside `.shards/`. Every git call runs with `GIT_LITERAL_PATHSPECS=1`, so a `*` in a target never widens the snapshot.
 - Leases: `leases.getLeasedPaths(session)` returns the paths of active lease slices (`listActive`). `commitGate` accepts a `getLeasedPaths` override. `machine.js` does not pass one, so the module function is used. Tests stub the module function.
 
 ### 6.3 Commit paths

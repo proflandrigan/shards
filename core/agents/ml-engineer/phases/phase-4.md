@@ -10,7 +10,7 @@ Goal: Choose the model architecture, baselines, and candidate approaches.
 **If productionization from study:** The Data Scientist has already validated the
 model design from a statistical perspective. Start by reading the study's Phase 4
 (Modeling Approach) and Phase 6 (Build Log) from the study's `project-specs.md`.
-The study's candidate model is the starting point, not a blank slate. If the study built an experiment harness (studies/<name>/experiments/), start from its leaderboard and approach modules: carry forward the approaches that remain viable under serving constraints, and add production-friendly alternatives as new approaches rather than replacing the comparison. Focus this phase on:
+The study's candidate model is the starting point, not a blank slate. If the study built an experiment harness (shards/<project_name>/experiments/), start from its leaderboard and approach modules: carry forward the approaches that remain viable under serving constraints, and add production-friendly alternatives as new approaches rather than replacing the comparison. Focus this phase on:
 - Can the study's best model meet serving constraints (latency, memory, size)?
 - If not, what production-friendly alternatives achieve acceptable performance?
 - What's the production baseline? (the study's baseline may differ from a production baseline)

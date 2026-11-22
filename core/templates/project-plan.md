@@ -2,7 +2,7 @@
 - **Created:** {{DATE}}
 - **Manager:** Syn
 - **Status:** Planning | Executing | Integration Review | Complete
-- **Directory:** projects/{{PROJECT_NAME}}/
+- **Directory:** shards/{{PROJECT_NAME}}/
 
 ---
 

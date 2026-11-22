@@ -71,6 +71,12 @@
     [`protocols/delegated_build.md`](../protocols/delegated_build.md)
     [`protocols/incremental_testing.md`](../protocols/incremental_testing.md)
 
+  Placement (plan phase, before the plan gate):
+    ## Placement
+    | Deliverable | Target path | New or existing | Pattern followed |
+  The target paths are passed as `targets` on the plan gate_request. See:
+    [`protocols/placement.md`](../protocols/placement.md)
+
   Plan phase section, before the plan gate:
 
     ### Task list

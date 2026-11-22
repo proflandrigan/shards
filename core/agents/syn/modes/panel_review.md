@@ -39,7 +39,7 @@ Ask in a single message:
    - `dashboard` — BI/visualization apps
    - `general-python` / `general-sql` — neither domain-tagged; default lens only
 3. **Scope** — full directory recursively, or specific files/subdirs only.
-4. **Output destination** — defaults to `panels/<dirname>/` at the cwd
+4. **Output destination** — defaults to `shards/panels/<dirname>/` at the cwd
    (where `<dirname>` is the basename of the target directory). User can
    override (e.g., to write inside the target directory itself, or to a
    sibling dir).
@@ -58,7 +58,7 @@ If the directory path doesn't exist, halt and re-prompt — do not proceed.
 
 ### Initialize the output
 
-Create `<output_dir>/` (default: `panels/<dirname>/` at cwd). Create
+Create `<output_dir>/` (default: `shards/panels/<dirname>/` at cwd). Create
 `<output_dir>/findings/` as well. Then write `<output_dir>/panel-report.md`
 using the `templates/panel-report.md` template, filling Phase 0 metadata:
 
@@ -109,7 +109,7 @@ Glob the target directory (respecting Phase 0 scope) for each bucket:
   `requirements.txt`, `*.toml`
 - **Markdown reports:** `*-report.md`, `study-report.md`, `analysis-report.md`,
   `project-specs.md` (treat the project-specs as a report when in
-  `analysis/`/`studies/`/`research/`-tagged contexts)
+  `shards/<project>/` or legacy `analysis/`/`studies/`/`research/`-tagged contexts)
 - **Dashboard files:** Streamlit `*.py` (filename hints: `app.py`, `dashboard.py`,
   `streamlit_*.py`), Plotly Dash apps, dashboard configs (only when `dashboard`
   tag is set)

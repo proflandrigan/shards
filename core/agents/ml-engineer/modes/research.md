@@ -34,8 +34,8 @@ Same as `[EX]` Phase 0 but with expanded parameter confirmation.
 ### Context loading
 
 1. Locate `project-specs.md` in the project directory (typically
-   `models/<project_name>/project-specs.md` or
-   `<existing_service_dir>/project-specs.md`).
+   `shards/<project_name>/project-specs.md`;
+   legacy projects: their existing `project-specs.md`).
    - If no `project-specs.md` exists: stop and ask the user to provide project
      context (problem statement, model type, current metrics, code location)
      before proceeding.
@@ -44,7 +44,7 @@ Same as `[EX]` Phase 0 but with expanded parameter confirmation.
    pipelines, evaluation scripts, config files.
 4. Identify the current metrics baseline — look in project-specs.md or ask the
    user if no baseline is documented.
-5. Establish the `experiments/` subdirectory: `<project_dir>/experiments/`. If an experiment harness already exists there (`experiments.yaml` and `run_experiments.py`, built by the phased build), each iteration changes only the leading approach's module under `approaches/` and its `params` in `experiments.yaml`, is scored by the runner and is read back from `leaderboard.csv`; the runner, `base.py` and the split stay immutable. See Section F of the experiment framework. {{protocol experiment_framework}}
+5. Establish the `experiments/` subdirectory: `shards/<project_name>/experiments/`. If an experiment harness already exists there (`experiments.yaml` and `run_experiments.py`, built by the phased build), each iteration changes only the leading approach's module under `approaches/` and its `params` in `experiments.yaml`, is scored by the runner and is read back from `leaderboard.csv`; the runner, `base.py` and the split stay immutable. See Section F of the experiment framework. {{protocol experiment_framework}}
 
 ### Versioning detection
 
@@ -129,9 +129,9 @@ during Phase 3 summary writing; `"complete"` after Phase 3 finalization.
 `panel_id` (each branch's `results.json.branchContext` identifies it). After
 arbitration and promotion, emit a final converged panel for the main project file:
 
-{{artifact.emit type=experiment-dashboard path=.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
 
-{{artifact.emit type=experiment-dashboard path=<project_dir>/experiments/results.json meta="title=AR: <project_name> (converged) panel_id=ar-<project_name>-converged"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/experiments/results.json meta="title=AR: <project_name> (converged) panel_id=ar-<project_name>-converged"}}
 
 ### Document Phase 0
 
@@ -175,9 +175,9 @@ Append to `project-specs.md`:
 Follow Section A of
 [`protocols/autonomous_research.md`](../../../protocols/autonomous_research.md). Use the
 template at `templates/research-brief.md`, populate every placeholder from
-Phase 0 decisions, write to `<project_dir>/experiments/research_brief.md`.
+Phase 0 decisions, write to `shards/<project_name>/experiments/research_brief.md`.
 
-Also write `<project_dir>/experiments/results.json` per Section F schema with
+Also write `shards/<project_name>/experiments/results.json` per Section F schema with
 `mode: "autonomous-research"` and `preset: <chosen>`.
 
 Update `project-specs.md` with a new `## Autonomous Research` section
@@ -234,6 +234,8 @@ confirm it yourself. Activation is optional:
   readability.
 
 ### Gate
+
+Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=execute phase=1 id=ml-engineer-research-phase1}}
 

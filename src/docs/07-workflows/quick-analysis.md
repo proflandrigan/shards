@@ -13,7 +13,7 @@ The shortest productive path through Shards. Use it when you have a specific que
      └─ Phase 4: Syn final review, close (final gate)
 ```
 
-Output: `analysis/<project>/` with `project-specs.md` and the queries under `analysis/<project>/queries/`.
+Output: `shards/<project>/` with `project-specs.md` and the queries under `shards/<project>/queries/`.
 
 ## How the session starts
 
@@ -32,7 +32,7 @@ The default policy (`gates.policy: phase`) needs a human for phase, final, execu
 
 **You:** `/shards:syn` then "What is the weekly conversion rate by cohort for Q3?"
 
-**Syn:** confirms scope, picks `analysis/q3_conversion_by_cohort/`, activates the Data Analyst.
+**Syn:** confirms scope, picks `shards/q3_conversion_by_cohort/`, activates the Data Analyst.
 
 **Data Analyst:**
 

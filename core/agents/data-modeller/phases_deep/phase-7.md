@@ -29,7 +29,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 CODE REVIEW MODE. I am the Data Modeller shard. Project: [project_name].
-Directory: [project_dir]. Please review and fix the code artifacts produced
+Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
 in this project. The project-specs.md is at [file_path] for context.
 ```
 
@@ -55,7 +55,7 @@ Brief for the consultant (fill the bracketed fields):
 I am the Data Modeller shard. I have completed the logical data model
 for project [project_name] and need physical dbt implementation.
 
-Model specs: data_models/<project_name>/project-specs.md
+Model specs: shards/<project_name>/project-specs.md
 
 Summary:
 - Entities modeled: <entity list from Phase 3>
@@ -71,7 +71,7 @@ Please implement:
 4. dbt schema tests (uniqueness, not-null, accepted values, relationships)
 5. Column-level documentation
 
-Please read data_models/<project_name>/project-specs.md for full context and the
+Please read shards/<project_name>/project-specs.md for full context and the
 complete ER diagram.
 ```
 

@@ -251,10 +251,10 @@ Create Mode is a phased, gated specialist workflow for designing and prototyping
 a novel ML framework from scratch. It activates when the user selects `[B]` in
 the advisory menu or explicitly asks to build something novel.
 
-**Output directory:** `research/<project_name>/`
+**Output directory:** `shards/<project_name>/`
 
 ```
-research/<project_name>/
+shards/<project_name>/
 ├── project-specs.md
 ├── notebooks/
 │   └── framework_prototype.ipynb
@@ -284,10 +284,10 @@ Follow the discovery rhythm for Applied ML Scientist in [`protocols/intent_disco
 ### Document Phase 0
 
 **Phase 0 Setup — direct invocation, new project only:**
-1. Create the project directory (`research/<project_name>/`, `research/<project_name>/notebooks/`, `research/<project_name>/src/`) using Bash.
+1. Create the project directory `shards/<project_name>/` using Bash. Create deliverable subfolders only after the plan gate confirms where deliverables go. {{protocol placement}}
 2. Initialize the project-specs.md file with the standard header (project name, date, agent, track, status, directory) before appending phase content.
 
-Create `research/<project_name>/project-specs.md`:
+Create `shards/<project_name>/project-specs.md`:
 
 ```markdown
 # <Project Name> — ML Science Research Specs

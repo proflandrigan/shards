@@ -4,9 +4,9 @@ tasks:
     goal: Create staging model stg_orders
     plan_ref: project-specs.md#staging
     inputs: [data/orders.csv]
-    owned_paths: [analysis/dbuild/models/staging/]
+    owned_paths: [shards/dbuild/models/staging/]
     acceptance:
-      command: test -f analysis/dbuild/models/staging/stg_orders.sql
+      command: test -f shards/dbuild/models/staging/stg_orders.sql
       expected: exit 0
     worker: analytics-engineer
     size: 10
@@ -15,9 +15,9 @@ tasks:
     goal: Create staging model stg_customers
     plan_ref: project-specs.md#staging
     inputs: [data/customers.csv]
-    owned_paths: [analysis/dbuild/models/staging_customers/]
+    owned_paths: [shards/dbuild/models/staging_customers/]
     acceptance:
-      command: test -f analysis/dbuild/models/staging_customers/stg_customers.sql
+      command: test -f shards/dbuild/models/staging_customers/stg_customers.sql
       expected: exit 0
     worker: analytics-engineer
     size: 10
@@ -25,10 +25,10 @@ tasks:
   - id: t3
     goal: Create mart fct_orders joining both staging models
     plan_ref: project-specs.md#marts
-    inputs: [analysis/dbuild/models/staging/, analysis/dbuild/models/staging_customers/]
-    owned_paths: [analysis/dbuild/models/marts/]
+    inputs: [shards/dbuild/models/staging/, shards/dbuild/models/staging_customers/]
+    owned_paths: [shards/dbuild/models/marts/]
     acceptance:
-      command: test -f analysis/dbuild/models/marts/fct_orders.sql
+      command: test -f shards/dbuild/models/marts/fct_orders.sql
       expected: exit 0
     depends_on: [t1, t2]
     worker: analytics-engineer
@@ -37,10 +37,10 @@ tasks:
   - id: t4
     goal: Write schema tests for the mart
     plan_ref: project-specs.md#tests
-    inputs: [analysis/dbuild/models/marts/]
-    owned_paths: [analysis/dbuild/tests/]
+    inputs: [shards/dbuild/models/marts/]
+    owned_paths: [shards/dbuild/tests/]
     acceptance:
-      command: test -f analysis/dbuild/tests/schema.yml
+      command: test -f shards/dbuild/tests/schema.yml
       expected: exit 0
     depends_on: [t3]
     worker: analytics-engineer

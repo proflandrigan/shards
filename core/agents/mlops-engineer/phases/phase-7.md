@@ -20,7 +20,7 @@ I am the MLOps Engineer shard. I've completed the operational design
 for project [project_name]. Please review the infrastructure design from an
 ML engineering perspective.
 
-The project-specs.md is at: services/[project_name]/mlops/project-specs.md
+The project-specs.md is at: shards/[project_name]/mlops/project-specs.md
 
 Please assess:
 1. Does the serving infrastructure match the model's actual requirements
@@ -46,7 +46,7 @@ Brief for the consultant (fill the bracketed fields):
 ```
 I am the MLOps Engineer shard. I've completed all phases for project
 [project_name]. Please review the project-specs.md at
-services/[project_name]/mlops/project-specs.md and provide your final review
+shards/[project_name]/mlops/project-specs.md and provide your final review
 verdict. This is an MLOps project — check for: business requirement coverage,
 deployment design soundness, monitoring completeness, runbook quality, IaC
 coverage, rollback plan, and whether the operational design can actually be
@@ -63,8 +63,8 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 CODE REVIEW MODE. I am the MLOps Engineer shard. Project: [project_name].
-Directory: services/[project_name]/mlops/. Please review and fix the artifacts
-produced. The project-specs.md is at services/[project_name]/mlops/project-specs.md
+Directory: shards/[project_name]/mlops/. Please review and fix the artifacts
+produced. The project-specs.md is at shards/[project_name]/mlops/project-specs.md
 for context.
 ```
 
@@ -72,7 +72,7 @@ Append Syn's code review summary to the specs.
 
 **Then write the final report:**
 
-Write to: `services/<project_name>/mlops/report.md` (or `<existing_service_dir>/mlops/report.md`)
+Write to: `shards/<project_name>/mlops/report.md` (bookkeeping stays here, also for iteration)
 
 Report contents:
 - Executive summary: what ML system was operationalized and what was built
