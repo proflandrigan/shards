@@ -42,8 +42,8 @@ one sentence to the user, and record it in the specs entry for the review.
 
 Rules for the consults:
 
-- If your phase or mode file already shows one of these consults with its own brief, that is the same consult: run it once, with that brief.
-
+- If your phase or mode file already shows one of these consults with its own brief, that is the same consult: run it once, with that brief. A Researcher review that already ran in the same phase counts as the Researcher half of a "both" route.
+- At the plan stage, before there are results, the Statistician consult uses the `advise` entry on the planned claims or decision rule; the `service` entry needs evidence.
 - When calling both, they are independent: consults never nest, so neither reviewer calls the other. Run the Researcher first when the method is still open (its fixes may change the claims), otherwise order does not matter.
 - Pass each consultant: the claims verbatim (for the Statistician), the method/plan (for the Researcher), paths to the results, notebooks or reports, and any data-modeller context (grain, clustering, independence) you already collected.
 
@@ -51,10 +51,12 @@ Rules for the consults:
 
 - Apply {{protocol reviewer_verdict}} to each reviewer independently; the worst verdict sets the tier.
 - Statistician findings labelled OFFENDS are non-blocking: show the Statistician's "Things that merely offend me (non-blocking)" section to the user under the heading "Statistician style notes (non-blocking)" and do not act on them unless the user asks.
-- If the Statistician lists "Method notes for the Researcher" and the Researcher was not consulted, decide: if any note could change a result, consult the Researcher now; otherwise record the notes as caveats.
-- If the Researcher lists anything under "Claims for the Statistician" (or its findings otherwise question whether the conclusion follows) and the Statistician was not consulted, consult it now. At the plan stage, before there are results, use the `advise` entry on the planned claims or decision rule, or record them for the later claim review; a `service` review needs evidence.
+- If the Statistician lists "Method notes for the Researcher" and the Researcher was not consulted, decide: if any note could change a result, consult the Researcher now; otherwise record the notes as caveats. If the Researcher was already consulted, record the notes as caveats and do not re-consult it.
+- If the Researcher lists anything under "Claims for the Statistician" (or its findings otherwise question whether the conclusion follows) and the Statistician was not consulted, consult it now (at the plan stage use the `advise` entry per Step 3, or record the claims for the later claim review).
 - Use the Statistician's "What the evidence actually supports" wording as the replacement for any claim it labels INVALIDATES or WEAKENS.
-- Answer the Statistician's "Open questions for the caller" from context you already hold (data-modeller grain, clustering, independence). If only the user can answer one (was the change randomized, was there a holdout, what decision rides on it), ask the user once. If an answer could change a finding, you (the caller, never the Statistician) re-consult with the answers; this counts as the one resubmit the reviewer verdict protocol allows, not an extra one. Otherwise record the questions as caveats.
+- Each reviewer gets one resubmit in total, including any re-consult over open questions.
+- When a later brief (for example Syn's final review) mentions the claim review, state the outcome plainly: the verdict, "not applicable" if no claim review ran, or that the user overrode a second BLOCKED.
+- Answer the Statistician's "Open questions for the caller" from context you already hold (data-modeller grain, clustering, independence). If only the user can answer one (was the change randomized, was there a holdout, what decision rides on it), ask the user once, but only in the user's own session: as a consultant, a worker, or inside a goal-mode, autonomous or experiment loop, record it as a caveat instead. If an answer could change a finding, you (the caller, never the Statistician) re-consult with the answers; this counts as the one resubmit the reviewer verdict protocol allows, not an extra one. Otherwise record the questions as caveats.
 
 ## Recording
 

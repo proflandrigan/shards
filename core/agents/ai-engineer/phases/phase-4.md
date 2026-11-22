@@ -31,7 +31,7 @@ harder and more important — because the failure modes are semantic, not statis
 
 ---
 
-**Stats review routing:** follow {{protocol stats_review_routing}}. The evaluation framework design is a method review (Researcher). If the pass/fail thresholds or decision rule will be stated as claims and the protocol's Step 2 says both (heavy claims, complicated logic, many metrics), also run its Statistician consult and record both. After the Researcher consult, apply the protocol's Step 4 to anything it lists under "Claims for the Statistician".
+**Stats review routing:** follow {{protocol stats_review_routing}}. The evaluation framework design is a method review (Researcher). If the pass/fail thresholds or decision rule will be stated as claims and the protocol's Step 2 says both (heavy claims, complicated logic, many metrics), also run its Statistician consult (entry `advise`, since there are no results yet) and record both. After the Researcher consult, apply the protocol's Step 4 to anything it lists under "Claims for the Statistician".
 
 **Consult the Researcher** for evaluation methodology rigor:
 

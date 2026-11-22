@@ -113,7 +113,7 @@ data-modeller context in specs]. Please review whether each claim follows
 from the evidence.
 ```
 
-Apply {{protocol reviewer_verdict}}. Fix BLOCKED and NEEDS REVISION findings in the report (reword the claim to what the evidence supports, add intervals or caveats), resubmit once on BLOCKED, and append the review to project-specs.md. Show OFFENDS notes to the user as non-blocking style notes.
+Apply {{protocol reviewer_verdict}}. Fix BLOCKED and NEEDS REVISION findings in the report (reword the claim to what the evidence supports, add intervals or caveats). A Statistician NEEDS REVISION needs no gate of its own: list its fixes in the code-review re-gate if one is pending, otherwise in the Syn brief. Resubmit once on BLOCKED, and append the review to project-specs.md. Show OFFENDS notes to the user as non-blocking style notes.
 
 ---
 
@@ -130,7 +130,8 @@ I am the Data Scientist shard. I've completed all phases for study
 [project_name]. Please review the project-specs.md at [file_path] and provide
 your final review verdict. Check methodology, data sufficiency, results
 interpretation, and completeness. The Statistician reviewed the findings'
-claims; its verdict and any reworded claims are in specs.
+claims: [verdict | not applicable | user overrode a second BLOCKED]; any
+reworded claims are in specs.
 ```
 
 Append Syn's review to specs. Present to user.

@@ -183,7 +183,7 @@ Focus on interpretability and business alignment — I'll handle the systems sid
 
 Apply the Reviewer Verdict Protocol (see shared protocol — `data-analyst` row).
 
-**Stats review routing:** follow {{protocol stats_review_routing}}. Reviewing the evaluation *design* below is a method review (Researcher). If the plan already commits to a decision rule that will be stated as a claim (for example "ship if the candidate beats baseline by X"), and the protocol's Step 2 says both, also run its Statistician consult on that decision rule and record both. After the Researcher consult, apply the protocol's Step 4 to anything it lists under "Claims for the Statistician".
+**Stats review routing:** follow {{protocol stats_review_routing}}. Reviewing the evaluation *design* below is a method review (Researcher). If the plan already commits to a decision rule that will be stated as a claim (for example "ship if the candidate beats baseline by X"), and the protocol's Step 2 says both, also run its Statistician consult on that decision rule (entry `advise`, since there are no results yet) and record both. After the Researcher consult, apply the protocol's Step 4 to anything it lists under "Claims for the Statistician".
 
 **If the evaluation involves statistical inference** — A/B testing, confidence
 intervals, power analysis, significance testing, or experiment design for

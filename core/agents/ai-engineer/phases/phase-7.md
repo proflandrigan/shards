@@ -123,7 +123,7 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 
 **Review 3b — Statistician (claims on evaluation results):**
 
-The Researcher checked the evaluation method; the Statistician checks whether the claims made from the eval results hold ("quality is X%", "passes the threshold", "approach A beats B", "the change improved Y"). Follow {{protocol stats_review_routing}}.
+The Researcher checked the evaluation method; the Statistician checks whether the claims made from the eval results hold ("quality is X%", "passes the threshold", "approach A beats B", "the change improved Y"). Follow {{protocol stats_review_routing}}; Review 3 above is the Researcher half of the route, so do not consult the Researcher again.
 
 Tell the user: "The Statistician is now going to ask how many examples that 92% is based on. I'd have an answer ready."
 
@@ -154,7 +154,8 @@ Brief for the consultant (fill the bracketed fields):
 ```
 I am the AI Engineer shard. I've completed all phases for project
 [project_name]. The ML Engineer, MLOps Engineer, Researcher and Statistician have already
-reviewed (the Statistician's claim-review verdict is in specs).
+reviewed. Statistician claim review: [verdict | user overrode a second
+BLOCKED]; details in specs.
 Please review the project-specs.md at [file_path] and provide your final
 review verdict. This is an AI/LLM engineering project — check for: business
 alignment, justification for AI (vs. simpler solutions), evaluation

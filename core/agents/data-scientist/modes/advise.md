@@ -49,7 +49,7 @@ If the question touches areas that benefit from external review, consult as appr
 **Researcher** — statistical methodology, distribution assumptions, evaluation design:
 **Researcher input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `researcher`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Researcher input the caller supplied, otherwise list it as an open question for the caller.
 
-**Statistician** — whether a claim or conclusion holds; Bayesian vs frequentist framing; experiment design and power (route per the stats review routing protocol, `stats_review_routing`):
+**Statistician** — whether a claim or conclusion holds; Bayesian vs frequentist framing; experiment design and power (route per the stats review routing protocol, `protocols/stats_review_routing.md`):
 **Statistician input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `statistician`, entry `advise`, with the question and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Statistician input the caller supplied, otherwise list it as an open question for the caller.
 
 **ML Engineer** — production feasibility, if any option involves model deployment:

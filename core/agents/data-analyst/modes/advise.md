@@ -48,7 +48,7 @@ If the question touches statistical methodology or assumptions, consult the Rese
 
 **Researcher input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `researcher`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Researcher input the caller supplied, otherwise list it as an open question for the caller.
 
-If the question is whether a conclusion or claim holds (rather than which method to use), consult the Statistician instead, or both when the stats review routing protocol (`stats_review_routing`) says so.
+If the question is whether a conclusion or claim holds (rather than which method to use), consult the Statistician instead, or both when the stats review routing protocol (`protocols/stats_review_routing.md`) says so.
 
 **Statistician input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `statistician`, entry `advise`, with the question and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Statistician input the caller supplied, otherwise list it as an open question for the caller.
 
