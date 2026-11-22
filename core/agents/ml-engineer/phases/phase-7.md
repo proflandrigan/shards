@@ -213,8 +213,8 @@ Then:
    that a formal ethics review was not completed.
 
    Write `model-card.json` to:
-   - Greenfield: `shards/<name>/model-card.json`
-   - Iteration: `shards/<name>/model-card.json` (same; the existing service holds only confirmed Placement targets)
+   - Greenfield: `shards/<project_name>/model-card.json`
+   - Iteration: `shards/<project_name>/model-card.json` (same; the existing service holds only confirmed Placement targets)
 
    The JSON must conform to the schema defined in
    `templates/model-card-schema.json` (JSON Schema, draft 2020-12).
@@ -232,8 +232,8 @@ Then:
    {{artifact.emit type=model-card path=<path_to>/model-card.json meta="title=Model Card: <project_name> panel_id=mc-<project_name>"}}
 
 2. **Write a report** to:
-   - Greenfield: `shards/<name>/report.md`
-   - Iteration: `shards/<name>/report.md` (same; the existing service holds only confirmed Placement targets)
+   - Greenfield: `shards/<project_name>/report.md`
+   - Iteration: `shards/<project_name>/report.md` (same; the existing service holds only confirmed Placement targets)
    - Executive summary: business problem, solution, key results
    - Model performance: baseline vs. final, with business interpretation
    - Infrastructure plan: serving, monitoring, rollback

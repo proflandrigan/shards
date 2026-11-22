@@ -1010,7 +1010,7 @@ spawn time and record it in `results.json.branchContext.gitStrategy`:
 **`lockfile`:**
 - Branches share the main working ref.
 - All git operations serialize via a file lock at
-  `.shards/branches/.git-lock` (create with `O_EXCL`, retry-with-backoff on
+  `<project_dir>/.shards/branches/.git-lock` (create with `O_EXCL`, retry-with-backoff on
   contention — default 5 retries, 100ms-1s exponential backoff).
 - Acceptable for K ≤ 2; degrades under contention.
 - Tag namespace: `research/<project>/<branch-slug>/<N>-<name>` (includes slug
@@ -1060,7 +1060,7 @@ summary).
 After all branches complete, the initiating specialist (or Syn) invokes Syn
 Arbiter Mode per `protocols/diverge.md` Section F, passing the list of
 `branch-report.md` paths. The arbiter produces
-`.shards/branches/leaderboard.md`.
+`<project_dir>/.shards/branches/leaderboard.md`.
 
 The parent specialist presents the leaderboard to the user, who selects the
 winner.
@@ -1097,7 +1097,7 @@ strategies:
   (`research: converge <winner>`). Copy artifacts. Tag
   `research/<project>/converged/<winner>`.
 
-Losing branches are preserved under `.shards/branches/` for reference.
+Losing branches are preserved under `<project_dir>/.shards/branches/` for reference.
 
 ---
 

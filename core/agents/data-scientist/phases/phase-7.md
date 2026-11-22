@@ -11,18 +11,18 @@ Tell the user: "Before Syn reviews this, we're running code review. Python
 scripts → Backend Engineer; notebooks → ML Engineer; SQL queries → Analytics
 Engineer (review + LIMIT 100 validation). Peer review is good science."
 
-Glob the `## Placement` targets in `project-specs.md` (and the project folder `shards/<study_name>/`, for new-project defaults) for `.py` files,
+Glob the `## Placement` targets in `project-specs.md` (and the project folder `shards/<project_name>/`, for new-project defaults) for `.py` files,
 `.ipynb` files, and `.sql` files — three separate buckets.
 
 **Python scripts → Backend Engineer** (only if any `.py` files were found):
 
-{{consult backend-engineer entry=service task="Python code review for [study_name]"}}
+{{consult backend-engineer entry=service task="Python code review for [project_name]"}}
 
 Brief for the consultant (fill the bracketed fields):
 
 ```
 You are in SERVICE MODE. Review the Python scripts in the project at
-shards/[study_name]/. Read project-specs.md first for context.
+shards/[project_name]/. Read project-specs.md first for context.
 Files to review: [list of .py files found]
 ```
 
@@ -31,13 +31,13 @@ shard review — the ML Engineer catches code quality, modelling, and
 production-alignment issues that the author of the notebook is likely blind
 to:
 
-{{consult ml-engineer entry=service task="Notebook code review for [study_name]"}}
+{{consult ml-engineer entry=service task="Notebook code review for [project_name]"}}
 
 Brief for the consultant (fill the bracketed fields):
 
 ```
 SERVICE MODE — NOTEBOOK CODE REVIEW. Review the Jupyter notebooks in
-the project at shards/[study_name]/. Read project-specs.md first for
+the project at shards/[project_name]/. Read project-specs.md first for
 context.
 Files to review: [list of .ipynb files found]
 Your job here is review only — do not apply any fixes.
@@ -48,13 +48,13 @@ Cross-shard review — the AE catches grain, fan-out, and source-layer issues
 that the Data Scientist may have missed, and validates each query under
 LIMIT 100:
 
-{{consult analytics-engineer entry=service task="SQL code review + LIMIT 100 validation for [study_name]"}}
+{{consult analytics-engineer entry=service task="SQL code review + LIMIT 100 validation for [project_name]"}}
 
 Brief for the consultant (fill the bracketed fields):
 
 ```
 SERVICE MODE — CODE REVIEW. Review the following SQL files in
-shards/[study_name]/. Read project-specs.md first for context.
+shards/[project_name]/. Read project-specs.md first for context.
 Files to review: [list of .sql files found]
 
 Beyond the standard code review pass (correctness, quality, security,
@@ -104,7 +104,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 I am the Data Scientist shard. I've completed all phases for study
-[study_name]. Please review the project-specs.md at [file_path] and provide
+[project_name]. Please review the project-specs.md at [file_path] and provide
 your final review verdict. Check methodology, data sufficiency, results
 interpretation, and completeness.
 ```
@@ -120,7 +120,7 @@ If Syn's review includes a "Code Review" section, follow the Code Review follow-
 Brief for the consultant (fill the bracketed fields):
 
 ```
-CODE REVIEW MODE. I am the Data Scientist shard. Project: [study_name].
+CODE REVIEW MODE. I am the Data Scientist shard. Project: [project_name].
 Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
 in this project. The project-specs.md is at [file_path] for context.
 ```
@@ -129,7 +129,7 @@ Append Syn's code review summary to the specs. Present findings to user.
 
 Then:
 
-1. **Write the report** to `shards/<name>/report.md` using the report template.
+1. **Write the report** to `shards/<project_name>/report.md` using the report template.
    Include: executive summary, background, methodology, key findings,
    recommendations with confidence levels, caveats, and next steps.
 

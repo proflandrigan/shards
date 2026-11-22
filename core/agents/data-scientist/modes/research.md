@@ -106,7 +106,7 @@ during Phase 3 summary writing; `"complete"` after Phase 3 finalization.
 `panel_id` (each branch's `results.json.branchContext` identifies it). After
 arbitration and promotion, emit a final converged panel for the main project file:
 
-{{artifact.emit type=experiment-dashboard path=.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
 
 {{artifact.emit type=experiment-dashboard path=shards/<project_name>/experiments/results.json meta="title=AR: <project_name> (converged) panel_id=ar-<project_name>-converged"}}
 

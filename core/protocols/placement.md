@@ -52,7 +52,7 @@ Pass the proposed paths as `targets` on the `gate_request` that closes the plann
 - `project-specs.md`, `tasks.yaml` / `TASKS.md`
 - Reports
 - Handoff files (`*_handoff.md`, `bi-intake.md`)
-- Experiment harness records and results (`experiments/results.json`, leaderboards), unless the user asks otherwise
+- The experiment harness (`experiments/`: approach modules, `experiments.yaml`, the runner) and its records and results (`results.json`, leaderboards). Experiment and research modes look for it there, so it is never a Placement target
 - Scratch and exploration notebooks and queries
 
 Paths written elsewhere in this suite as `shards/<project_name>/...` for code (for example `shards/<project_name>/src/`) are the greenfield default only. When the plan has confirmed targets, use them instead.

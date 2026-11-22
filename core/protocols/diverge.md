@@ -227,7 +227,7 @@ the chosen strategy in each branch's Task prompt.
   requires explicit user confirmation.
 
 - **`lockfile`:** branches share the same working ref but serialize all git
-  operations via a file lock at `.shards/branches/.git-lock` (file-creation
+  operations via a file lock at `<project_dir>/.shards/branches/.git-lock` (file-creation
   with `O_EXCL`; retry-with-backoff on contention — default 5 retries,
   100ms-1s exponential backoff). Acceptable for small K (≤2); degrades under
   contention. Tag namespace includes the branch slug to prevent collisions
@@ -348,7 +348,7 @@ When the user selects a winning branch:
    directory as historical record.
 
 4. **Preserve all branch directories** — do not delete losing branches. They remain
-   in `.shards/branches/` for future reference.
+   in `<project_dir>/.shards/branches/` for future reference.
 
 5. **Document CONVERGE** in `project-specs.md`:
 
@@ -365,7 +365,7 @@ When the user selects a winning branch:
   | <primary metric> | <value> |
 - **Runners-up:**
   - `<branch-slug>`: <approach> — <primary metric value> — <one-line why not chosen>
-- **Arbiter leaderboard:** `.shards/branches/leaderboard.md`
+- **Arbiter leaderboard:** `<project_dir>/.shards/branches/leaderboard.md`
 - **Artifacts promoted to:** <main project directory paths>
 - **Date:** <date>
 ```

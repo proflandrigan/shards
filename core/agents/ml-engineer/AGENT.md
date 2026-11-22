@@ -281,7 +281,7 @@ Create or append to:
   - Current performance: <key metrics and values>
   - What needs improving: <latency | accuracy | coverage | freshness | cost | other>
 - **If productionization from study:**
-  - Source study: <path to shards/<name>/>
+  - Source study: <path to shards/<project_name>/>
   - Study specs: <path to project-specs.md>
   - Model type from study: <from study Phase 4>
   - Best performance from study: <metric: value from study Phase 6>

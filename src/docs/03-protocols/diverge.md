@@ -26,7 +26,7 @@ Gate ids for AR-initiated forks use an `-ar-<project>` suffix so they do not col
 Parallel branches share a repository, so each picks one strategy at spawn time and records it in `results.json`:
 
 - **`branch-local`** (default for AR fan-out): each branch commits on its own git branch (`ar/<branch-slug>`) with namespaced tags. Promotion squash-merges the winner. Losing refs are kept, and deleting them needs your confirmation.
-- **`lockfile`**: branches share a ref and serialize git operations through a file lock under `.shards/branches/`. Fine for two branches, degrades under contention.
+- **`lockfile`**: branches share a ref and serialize git operations through a file lock under the project folder's `.shards/branches/`. Fine for two branches, degrades under contention.
 - **`no-vcs`**: checkpoints are disabled and a single consolidation commit happens at promotion. A fallback when git is unavailable.
 
 ## See also

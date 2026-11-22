@@ -137,7 +137,7 @@ warning shows.
 
 **Fan-out sessions.** Emit one panel per branch, using the branch slug:
 
-{{artifact.emit type=experiment-dashboard path=.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
 
 After arbitration/promotion, re-emit the main `panel_id` with the converged
 `results.json`.

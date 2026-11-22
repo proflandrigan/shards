@@ -6,7 +6,7 @@ Decides where every file an agent writes goes. Shards adds one folder to your pr
 
 | Kind | Examples | Location |
 |------|----------|----------|
-| Bookkeeping | `project-specs.md`, `tasks.yaml`, reports, handoff files, experiment records, scratch notebooks and queries | `shards/<project>/` (the agent's `output_dir`) |
+| Bookkeeping | `project-specs.md`, `tasks.yaml`, reports, handoff files, the experiment harness and its records, scratch notebooks and queries | `shards/<project>/` (the agent's `output_dir`) |
 | Deliverables | model code, services, pipelines, dbt models, dashboards, tests | The confirmed targets |
 
 ## Targets on the plan gate
