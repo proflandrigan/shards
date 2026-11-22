@@ -32,9 +32,9 @@ Syn's `output_dir` is mode-dependent.
 | Panel Review | `shards/panels/<dirname>/` |
 | PM | `shards/<project>/` (`project-plan.md` and `workstreams.json`; specialists write to their own project folders) |
 | PR Review | none |
-| Diff | `<dir_A>/diff_vs_<project_B>.md` |
+| Diff | `shards/panels/diff_<project_A>_vs_<project_B>.md` |
 
-`brainstorm`, `fixes`, `panels` and `academic_reports` are reserved under `shards/`: no project can use those names.
+`brainstorm`, `fixes`, `panels` and `academic_reports` are reserved under `shards/`: agents never use them as project names, and Studio does not list them as projects. The runtime does not enforce this.
 
 ## Project files
 

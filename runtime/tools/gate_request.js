@@ -48,7 +48,7 @@ function resolveRecord(root, recordRef) {
 }
 
 // Deliverable paths the user confirms at this gate (placement protocol). Root-relative, inside the root,
-// never the root itself, never under .git/ or .shards/, no globs, pathspec magic, drive prefixes or
+// never the root itself, never under .git/ or .shards/, no leading `:`, drive prefixes or
 // control characters; normalised to forward slashes with no trailing
 // slash. Backslashes are treated as separators on every platform, so `src\..\..\x` cannot slip past
 // the containment check and later be read as `src/../../x` by the git collector.
@@ -57,8 +57,9 @@ function normTargets(targets) {
   const mapped = targets.map((t) => {
     if (typeof t !== 'string') throw new Error('targets must be strings');
     if (!t.trim() || /[\x00-\x1f\x7f]/.test(t)) throw new Error(`targets must be non-blank paths without control characters: ${JSON.stringify(t)}`);
-    // Git pathspec magic and globs would widen the snapshot past the checks below (`*` matches .shards/).
-    if (/[*?[\]]/.test(t) || t.startsWith(':')) throw new Error(`targets must be literal paths (no globs or pathspec magic): ${t}`);
+    // Git runs with GIT_LITERAL_PATHSPECS, so `*`, `?` and `[id]` are plain characters (Next.js routes work).
+    // A leading `:` is still refused as defence in depth against pathspec magic.
+    if (t.startsWith(':')) throw new Error(`targets must not start with ':' (pathspec magic): ${t}`);
     const s = t.replace(/\\/g, '/');
     // `C:foo` is drive-relative on Windows: not absolute, but it resolves outside the root.
     if (path.posix.isAbsolute(s) || path.win32.isAbsolute(s) || /^[A-Za-z]:/.test(s)) throw new Error(`targets must be project-root-relative paths: ${t}`);

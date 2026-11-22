@@ -56,7 +56,7 @@ Syn has no single output directory (`output_dir: null`). It writes to:
 
 - `shards/brainstorm/` for brainstorm sessions.
 - `shards/fixes/fix_<slug>.md` for a standalone Fixer fix (a fix inside an existing project is appended to its `project-specs.md`).
-- `<dir_A>/diff_vs_<project_B>.md` for Diff mode.
+- `shards/panels/diff_<project_A>_vs_<project_B>.md` for Diff mode.
 - `shards/<project_name>/` for PM Mode (`project-plan.md` and `workstreams.json`).
 - `shards/panels/<dirname>/` for Panel Review (the default; you can override it).
 - `<project_dir>/.shards/branches/` for DIVERGE branches.

@@ -57,7 +57,7 @@ Then for each directory:
 
 ## Step 3 — Produce Diff Report
 
-Write the report to `<dir_A>/diff_vs_<project_B_name>.md`.
+Write the report to `shards/panels/diff_<project_A_name>_vs_<project_B_name>.md` (Syn's own folder; never into either specialist's project folder).
 
 Use the diff report template from `templates/diff-report.md`. Read it via
 `[`templates/diff-report.md`](../../../templates/diff-report.md)` if available, otherwise use the structure

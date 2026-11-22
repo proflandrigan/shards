@@ -2450,7 +2450,7 @@ function renderPRMarkdown(text) {
 // ═══════════════════════════════════════════════════════════════
 //
 // Data shape (written by syn/brainstorm.md to
-//   brainstorm/brainstorm_<project>.state.json):
+//   shards/brainstorm/brainstorm_<project>.state.json):
 //
 // {
 //   "mode": "brainstorm",

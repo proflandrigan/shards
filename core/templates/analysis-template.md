@@ -16,5 +16,5 @@
     3. Execute
     4. Final Review (with Syn review)
 
-  Queries are written to: queries/*.sql
+  Queries are written to: queries/*.sql (new-project default; Placement targets override)
 -->

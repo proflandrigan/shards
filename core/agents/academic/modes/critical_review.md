@@ -159,11 +159,11 @@ present it in chat. If the user chose **file**, write to:
 
 `<report_dir>/academic-critical-review-of-<report-slug>.md`
 
-…where `<report_dir>` is the directory containing the reviewed report (or
-the user-overridden directory from Phase 1) and `<report-slug>` is a
+…where `<report_dir>` is `shards/academic_reports/` (or the user-overridden
+directory from Phase 1; never the reviewed agent's project folder) and `<report-slug>` is a
 kebab-case slug derived from the report's filename (without the `.md`
 extension). Example: `shards/onboarding/study-report.md` →
-`shards/onboarding/academic-critical-review-of-study-report.md`.
+`shards/academic_reports/academic-critical-review-of-study-report.md`.
 
 **Output template:**
 

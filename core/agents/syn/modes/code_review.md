@@ -35,7 +35,7 @@ Pick the reviewer from the project directory prefix:
 | `models/` | ML Engineer |
 | `research/` | ML Engineer |
 | `services/` | ML Engineer |
-| anything else | If the path is a target in some `shards/*/project-specs.md` `## Placement` table, use that project's row above; otherwise ML Engineer (default) |
+| anything else | If the path is a target in some `shards/*/project-specs.md` or `shards/*/mlops/project-specs.md` `## Placement` table, use that project's row above; otherwise ML Engineer (default) |
 
 Record the chosen notebook reviewer — you will use it in Step 3c and Step 5c.
 

@@ -104,7 +104,7 @@ Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/
 
 ## Artifacts Expected
 
-- Dashboard code (Streamlit `app.py`, Dash `app.py`, Altair spec, etc.) under `shards/<project>/`
+- Dashboard code (Streamlit `app.py`, Dash `app.py`, Altair spec, etc.) at the confirmed `## Placement` target (greenfield default `shards/<project>/`)
 - `shards/<project>/walkthrough.md` — BI-08
 - `shards/<project>/profile.md` (load/interaction benchmarks) — BI-05
 - `shards/<project>/a11y_checklist.md` — BI-06

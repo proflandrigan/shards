@@ -97,11 +97,16 @@ describe('target hardening', () => {
     }
     expect((await call(ok({ targets: ['.shardsx/a'] }))).isError).toBeFalsy();
   });
-  it('rejects globs, pathspec magic, drive prefixes and blank or control-character targets', async () => {
-    for (const t of ['*', '.sh*', 'src/?.py', 'src/[ab].py', ':(top)x', ':(glob)**/state/*', 'C:foo', 'c:/x', ' ', 'src/\0x', 'a\nb']) {
+  it('rejects pathspec magic, drive prefixes and blank or control-character targets', async () => {
+    for (const t of [':(top)x', ':(glob)**/state/*', 'C:foo', 'c:/x', ' ', 'src/\0x', 'a\nb']) {
       const r = await call(ok({ targets: [t] }));
       expect(r.isError, t).toBe(true);
     }
+  });
+  it('accepts literal paths with glob characters (framework route folders)', async () => {
+    const r = await call(ok({ targets: ['app/[id]/page.tsx', 'routes/[[lang]]/+page.svelte', 'a*b.txt'] }));
+    expect(r.isError).toBeFalsy();
+    expect(gates.getGate(session, 'data-analyst-phase-1').targets).toEqual(['app/[id]/page.tsx', 'routes/[[lang]]/+page.svelte', 'a*b.txt']);
   });
   it('says so when targets are passed to an already confirmed gate', async () => {
     await call(ok());

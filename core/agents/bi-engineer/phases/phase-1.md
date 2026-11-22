@@ -120,7 +120,7 @@ Document in Phase 1 specs: `**Analytics Engineer needed:** Yes — <mart/grain g
 **If the user references a `bi-intake.md` file** (written by the Data Analyst when escalating):
 Read that file. Use its contents to pre-populate Phase 1 requirements — data sources,
 key metrics, dimensions/filters, chart type recommendation, and date column — rather than
-asking from scratch. Set `Originating request: Data Analyst — shards/<project_name>/`.
+asking from scratch. Set `Originating request: Data Analyst — shards/<source_project>/`.
 
 Questions still to ask (not in the intake file):
 - "Who is the intended audience for this dashboard?"
@@ -149,7 +149,7 @@ Do not re-ask about data sources, metrics, or chart type — already captured.
 - **Data environment:** <not greenfield | Data exists but inaccessible — design only, validate before connecting | GREENFIELD — No data assets detected. Design specification only>
 - **Analytics Engineer needed:** No | Yes — <mart/grain gap>
 - **AE intake file written:** Not applicable | Yes — shards/<project_name>/ae-intake.md
-- **DA intake file source:** Not applicable | Data Analyst — shards/<project_name>/bi-intake.md
+- **DA intake file source:** Not applicable | Data Analyst — shards/<source_project>/bi-intake.md
 - **Analysis context (DA intake only):** <core question and chart sketch from DA intake, or "N/A">
 ```
 

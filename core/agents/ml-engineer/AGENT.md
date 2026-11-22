@@ -191,7 +191,7 @@ it throughout.
 # Notes on Data and Infrastructure
 
 - Feature engineering queries should be written as standalone `.sql` files.
-- Training notebooks go in `notebooks/`.
+- Training notebooks go in `notebooks/` (new-project default; confirmed Placement targets win).
 - Always consider: where do features come from at training time vs. serving time?
   A feature available in batch SQL may not be available at inference with acceptable latency.
 - Check existing ML infrastructure: model registry, feature store, serving layer,

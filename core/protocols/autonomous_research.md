@@ -13,6 +13,8 @@ type: reference
 
 # Autonomous Research (AR) Protocol
 
+`<project_dir>` below is the agent's `output_dir` (`shards/<project>/`, `shards/<project>/mlops/`, or the legacy project folder when resuming).
+
 This protocol governs `[AR]` mode — a self-steering research loop that runs a
 bounded number of iterations against a single primary metric and auto-decides
 whether to keep or revert each change. It complements `[EX]` (human-planned

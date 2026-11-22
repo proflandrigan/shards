@@ -242,8 +242,7 @@ async function collectFiles(root, outputDirs, st, cfg, leased) {
   const dirs = [...new Set((outputDirs || []).map((d) => normRel(root, d) || '.').filter((d) => !d.split('/').includes('..')))];
   let listed = [];
   if (st.inRepo) {
-    // Literal pathspecs: a `*` or `:(top)` in a target must not widen the snapshot to `.shards/` or the whole repo.
-    const r = await git(root, ['--literal-pathspecs', 'ls-files', '-co', '--exclude-standard', '-z', '--', ...dirs]);
+    const r = await git(root, ['ls-files', '-co', '--exclude-standard', '-z', '--', ...dirs]);
     if (r.code === 0) listed = r.stdout.split('\0').filter(Boolean);
   } else {
     for (const d of dirs) {
@@ -309,7 +308,7 @@ async function lsTree(root, treeish, files) {
 async function lsIndex(root, files) {
   const m = new Map();
   await chunked(files, 200, async (part) => {
-    const r = await git(root, ['--literal-pathspecs', 'ls-files', '-s', '-z', '--', ...part]);
+    const r = await git(root, ['ls-files', '-s', '-z', '--', ...part]);
     if (r.code !== 0) return;
     for (const rec of r.stdout.split('\0').filter(Boolean)) {
       const tab = rec.indexOf('\t');

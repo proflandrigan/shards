@@ -19,7 +19,7 @@ Goal: Build the prompts, evaluation harness, integration code, and safety layer 
 
 ### Component specifications
 
-Each task in `<output_dir>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: greenfield `shards/<name>/`, iteration: the confirmed Placement targets in the existing service.
+Each task in `<output_dir>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: the confirmed `## Placement` targets; paths below under `<output_dir>` are the new-project default only.
 
 **Spec A. Prompt files** (one task per prompt) in `<output_dir>/prompts/`. Each prompt file includes a metadata header:
    ```

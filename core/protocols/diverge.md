@@ -10,6 +10,8 @@ type: reference
 
 # DIVERGE Protocol — Time-Travel Branching
 
+`<project_dir>` below is the agent's `output_dir` (`shards/<project>/`, `shards/<project>/mlops/`, or the legacy project folder when resuming).
+
 This protocol governs parallel experimentation in Shards. It is referenced by
 DIVERGE-capable specialists during planning phases when multiple viable approaches
 are identified.
@@ -336,9 +338,7 @@ When the user selects a winning branch:
      `project-specs.md` that no VCS artifacts were produced.)
 
 2. **Copy artifacts** from `<project_dir>/.shards/branches/<winning-branch>/` to the
-   appropriate locations in the main project directory. Place files where they would
-   have been produced in a normal phased run (e.g., queries in `queries/`, notebooks
-   in `notebooks/`, code files at project root). Deliverable files go to the confirmed
+   appropriate locations. Deliverable files go to the confirmed
    `## Placement` targets (re-pass them as `targets` on the convergence gate); bookkeeping
    and `experiments/` records stay in the project folder. For AR fan-out, copy the
    `experiments/` contents (brief, results.json, iteration files,

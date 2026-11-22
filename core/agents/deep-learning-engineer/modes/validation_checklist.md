@@ -83,7 +83,7 @@ A model card describing the trained artifact exists and is complete.
 - Includes: intended use, training data, evaluation results (linking to this validation section), known limitations, ethical considerations (escalate to Academic for review if deployment is user-facing).
 - For iteration: card updated, not appended to stale prior-version card.
 
-**Observed format:** `model card: shards/<project>/MODEL_CARD.md (v2.0 for this version) | sections: intended use ✓, training data ✓, eval (refs §Validation here) ✓, limitations ✓, Academic-reviewed on 2026-04-20 ✓`
+**Observed format:** `model card: <placement target>/MODEL_CARD.md (v2.0 for this version) | sections: intended use ✓, training data ✓, eval (refs §Validation here) ✓, limitations ✓, Academic-reviewed on 2026-04-20 ✓`
 
 ## DL-09 — Component Tests
 
@@ -103,7 +103,7 @@ The saved model artifact loads cleanly on a fresh kernel and produces the expect
 - Loaded model produces byte-identical (fp32) or tolerance-bounded (fp16) output on a fixture input vs the in-memory model at save time.
 - Artifact metadata (config, tokenizer, preprocessor) saved alongside weights and reloaded together.
 
-**Observed format:** `artifact: shards/<project>/checkpoints/v2.0/ — weights.safetensors + config.json + preprocessor/ | load test: fresh kernel, loaded OK, 10 fixture inputs produce bit-identical fp32 outputs vs save-time model ✓ | size 430MB`
+**Observed format:** `artifact: <placement target>/checkpoints/v2.0/ — weights.safetensors + config.json + preprocessor/ | load test: fresh kernel, loaded OK, 10 fixture inputs produce bit-identical fp32 outputs vs save-time model ✓ | size 430MB`
 
 ---
 

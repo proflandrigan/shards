@@ -19,7 +19,7 @@
     6. Execute (with Data Modeller query review)
     7. Findings and Handoff (with Syn final review)
 
-  Queries are written to: queries/*.sql
-  Notebooks are written to: notebooks/*.ipynb
+  Queries are written to: queries/*.sql (new-project default; Placement targets override)
+  Notebooks are written to: notebooks/*.ipynb (new-project default; Placement targets override)
   Final report is written to: report.md
 -->
