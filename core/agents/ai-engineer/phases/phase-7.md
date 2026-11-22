@@ -153,14 +153,15 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 I am the AI Engineer shard. I've completed all phases for project
-[project_name]. The ML Engineer, MLOps Engineer, and Researcher have already reviewed.
+[project_name]. The ML Engineer, MLOps Engineer, Researcher and Statistician have already
+reviewed (the Statistician's claim-review verdict is in specs).
 Please review the project-specs.md at [file_path] and provide your final
 review verdict. This is an AI/LLM engineering project — check for: business
 alignment, justification for AI (vs. simpler solutions), evaluation
 completeness, safety plan, and production readiness.
 ```
 
-Append all four reviews to specs. Present to user.
+Append all five reviews to specs. Present to user.
 
 If Syn returns NEEDS REVISION or BLOCKED, once or twice, follow the resolution loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 

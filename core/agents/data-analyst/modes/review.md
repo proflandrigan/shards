@@ -47,7 +47,7 @@ Call the Researcher to validate statistical methodology and assumptions:
 
 If the work under review states claims on stats or metrics, also get the Statistician's view, routed per the stats review routing protocol (`protocols/stats_review_routing.md`):
 
-**Statistician input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `statistician`, entry `service`, with the claims, the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Statistician input the caller supplied, otherwise list it as an open question for the caller.
+**Statistician input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `statistician`, entry `service`, with the claims, the scope and the files you read, and record its verdict and findings under `## Statistician Input`. If you are a consultant, do not consult (consults never nest): use any Statistician input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 

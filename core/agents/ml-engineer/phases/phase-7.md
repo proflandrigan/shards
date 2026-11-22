@@ -163,7 +163,9 @@ I am the ML Engineer shard. I've completed all phases for project
 [project_name]. Please review the project-specs.md at [file_path] and provide
 your final review verdict. This is an ML engineering project — check for:
 business alignment, methodology soundness, infrastructure readiness,
-monitoring plan, and rollback strategy.
+monitoring plan, and rollback strategy. The Statistician reviewed the
+evaluation claims in Phase 6 (re-run in Phase 6.5 if the winner changed); its
+verdict is in specs.
 ```
 
 Append Syn's review to specs. Present to user.

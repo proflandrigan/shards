@@ -62,7 +62,10 @@ report paths, eval outputs) and, optionally, data-modeller context.
 - Causal language is licensed only when the effect is identified.
 
 **Frequentist specifics**
-- Power or minimum detectable effect versus the observed effect.
+- Pre-specified power or minimum detectable effect versus the effect that
+  matters; never power computed from the observed effect (post-hoc power is a
+  restatement of the p-value). For a nonsignificant result, read the interval
+  against the decision margin.
 - "No significant difference" is not equivalence; was an equivalence test or
   interval-versus-margin comparison used?
 - Sequential or repeated testing: is the error rate actually controlled?
@@ -74,8 +77,9 @@ report paths, eval outputs) and, optionally, data-modeller context.
 - Are Bayes factors shown to be robust to reasonable prior changes?
 
 **Model-based claims**
-- Clustered data: is hierarchical or mixed structure used, or are standard
-  errors anti-conservative?
+- Clustered data: is the clustering modelled (mixed/hierarchical, GEE) or
+  handled with cluster-robust standard errors or a cluster-level analysis, or
+  are the standard errors anti-conservative?
 - Survival: is censoring handled correctly?
 - Time series: autocorrelation, and forecast intervals rather than point
   forecasts.

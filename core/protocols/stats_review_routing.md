@@ -50,7 +50,9 @@ Rules for the consults:
 - Apply {{protocol reviewer_verdict}} to each reviewer independently; the worst verdict sets the tier.
 - Statistician findings labelled OFFENDS are non-blocking: show the Statistician's "Things that merely offend me (non-blocking)" section to the user under the heading "Statistician style notes (non-blocking)" and do not act on them unless the user asks.
 - If the Statistician lists "Method notes for the Researcher" and the Researcher was not consulted, decide: if any note could change a result, consult the Researcher now; otherwise record the notes as caveats.
-- If the Researcher's review reveals a claim problem beyond method (its findings question whether the conclusion follows), consult the Statistician if you have not already.
+- If the Researcher lists anything under "Claims for the Statistician" (or its findings otherwise question whether the conclusion follows) and the Statistician was not consulted, consult it now.
+- Use the Statistician's "What the evidence actually supports" wording as the replacement for any claim it labels INVALIDATES or WEAKENS.
+- Answer the Statistician's "Open questions for the caller" from context you already hold (data-modeller grain, clustering, independence). If an answer could change a finding, re-consult once with the answers; otherwise record the questions as caveats.
 
 ## Recording
 

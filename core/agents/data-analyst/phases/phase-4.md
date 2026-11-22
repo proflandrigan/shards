@@ -20,6 +20,8 @@ I am the Data Analyst shard. I've completed an adhoc analysis for
 project [project_name]. Please review the project-specs.md at [file_path]
 and provide your final review verdict. This was a quick analysis — check
 that the question was answered, the approach was sound, and nothing was missed.
+If results made claims, the Statistician reviewed them in Phase 3 Step 5b;
+its verdict is in specs.
 ```
 
 Append Syn's review to the specs. Present to user.

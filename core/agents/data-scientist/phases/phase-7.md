@@ -129,7 +129,8 @@ Brief for the consultant (fill the bracketed fields):
 I am the Data Scientist shard. I've completed all phases for study
 [project_name]. Please review the project-specs.md at [file_path] and provide
 your final review verdict. Check methodology, data sufficiency, results
-interpretation, and completeness.
+interpretation, and completeness. The Statistician reviewed the findings'
+claims; its verdict and any reworded claims are in specs.
 ```
 
 Append Syn's review to specs. Present to user.

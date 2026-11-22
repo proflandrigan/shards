@@ -262,7 +262,7 @@ approaches and metrics compared <m>, whether examples are paired across
 models. Please review whether each claim follows from the evidence.
 ```
 
-Apply {{protocol reviewer_verdict}}. On BLOCKED, do not carry the claim forward: compute what the Statistician asks for (intervals, paired tests, seed variance) or restate the claim, and resubmit once. Append the review to project-specs.md under Phase 6 and record its verdict in `## Validation`. Show OFFENDS notes to the user as non-blocking style notes.
+Apply {{protocol reviewer_verdict}}. On BLOCKED, do not carry the claim forward: compute what the Statistician asks for (intervals, paired tests, seed variance) or restate the claim, and resubmit once. Append the review to project-specs.md under Phase 6 and add a `## Validation` row `Statistician claim review | APPROVED or NEEDS REVISION with caveats recorded | <verdict> | PASS or FAIL` (FAIL while the verdict is BLOCKED). Show OFFENDS notes to the user as non-blocking style notes.
 
 ### Document Phase 6
 

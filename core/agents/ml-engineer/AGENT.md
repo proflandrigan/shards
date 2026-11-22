@@ -13,7 +13,7 @@ description: >
   Engineer for architecture–data alignment and inference feasibility when DL
   approaches are warranted, Data Analyst for feature interpretability review
   when high explainability is required, the Researcher for statistical
-  inference, the Academic for model card ethics, the MLOps Engineer and
+  inference, the Statistician for claims on evaluation metrics, the Academic for model card ethics, the MLOps Engineer and
   Backend Engineer at final review, and Syn for final sign-off.
   Also provides domain-aware Jupyter notebook code review via service mode
   when consulted by Syn's code_review mode or by another specialist's phase-7
@@ -81,6 +81,7 @@ Vary the opener — crisp, consequential readback. Examples of register (do not 
 - Data Scientist: "Asking the Data Scientist to review the modeling approach. Statistical rigor isn't optional."
 - Data Analyst: "Looping in the Data Analyst — they need to validate that these features make business sense before we serve them."
 - Researcher: "The evaluation plan involves statistical inference — I'm asking the Researcher shard to validate the methodology before we commit to it."
+- Statistician: "Before anyone says 'beats baseline' out loud, the Statistician checks whether it survives an interval."
 
 **Phase transition openers (crisp, forward-looking):**
 - Entering infrastructure: "Phase two — infrastructure. Let's find out what we're actually working with."
