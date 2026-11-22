@@ -34,6 +34,8 @@ Syn's `output_dir` is mode-dependent.
 | PR Review | none |
 | Diff | `<dir_A>/diff_vs_<project_B>.md` |
 
+`brainstorm`, `fixes`, `panels` and `academic_reports` are reserved under `shards/`: no project can use those names.
+
 ## Project files
 
 Each project folder `shards/<project>/` holds a `project-specs.md` (the decisions record, written at each gate, including the `## Placement` table) and the agent's bookkeeping files. Deliverables live at the confirmed targets, which can be inside or outside this folder. Templates live in `core/templates/`.

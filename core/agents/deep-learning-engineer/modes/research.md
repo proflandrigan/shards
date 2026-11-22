@@ -33,11 +33,11 @@ repeat) and metric-bounded. The autonomous loop formalizes the process.
 1. Locate `project-specs.md` at `shards/<project_name>/project-specs.md`
    (DLE's Create Mode output directory).
 2. Read in full.
-3. Scan project for: model definition (`model.py` or `models/`), training
+3. Read `## Placement` in `project-specs.md` and scan the confirmed targets for: model definition (`model.py` or `models/`), training
    script (`train.py`), config files (YAML/Python), loss function code,
    dataloader (immutable).
 4. Identify the baseline metric value.
-5. Establish `<project_dir>/experiments/`.
+5. Establish `shards/<project_name>/experiments/`.
 
 ### Versioning detection
 
@@ -147,7 +147,7 @@ Append to `project-specs.md`:
 ### Draft the research brief
 
 Follow Section A of `autonomous_research.md`. Use `templates/research-brief.md`,
-write to `<project_dir>/experiments/research_brief.md`. Write `results.json`.
+write to `shards/<project_name>/experiments/research_brief.md`. Write `results.json`.
 
 The **Objective** section for DLE should include:
 - Tensor shape flow through the current architecture

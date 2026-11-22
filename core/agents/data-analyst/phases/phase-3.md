@@ -32,7 +32,7 @@ grain, invoke the Data Modeller for validation before dispatching the query-writ
 this section (and the Phase 2 plan) via `plan_ref`; workers see only the
 sections a card references.
 
-- Each query lives in its own `.sql` file in `shards/<project_name>/queries/`
+- Each query lives in its own `.sql` file in `shards/<project_name>/queries/` (the new-project default; when the plan confirmed other targets in `## Placement`, use those ({{protocol placement}}))
 - Name files descriptively: `01_conversion_by_cohort.sql`, `02_revenue_trend.sql`
 - Include a header comment in each file:
   ```sql
@@ -111,7 +111,7 @@ shard. I've written Phase 3 queries for project [project_name] but have
 NOT executed them yet — your review gates execution.
 
 - project-specs.md: [file_path]
-- Queries directory: shards/[project_name]/queries/
+- Queries directory: [the `## Placement` target, or shards/[project_name]/queries/]
 - Data environment: [not greenfield | inaccessible | GREENFIELD]
 
 Please:
@@ -230,7 +230,7 @@ After delivering query results, provide visualization guidance:
      - Intended audience: <ask if not known — "Who will use this dashboard?">
 
      ## Analysis Already Done
-     - Queries location: shards/<project_name>/queries/
+     - Queries location: the `## Placement` target (default shards/<project_name>/queries/)
      - Key metrics computed: <from Phase 3 results>
      - Recommended chart type: <from Phase 3 visualization recommendation>
      - Chart sketch: <reproduce the Phase 3 chart sketch inline>

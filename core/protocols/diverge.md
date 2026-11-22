@@ -338,7 +338,9 @@ When the user selects a winning branch:
 2. **Copy artifacts** from `<project_dir>/.shards/branches/<winning-branch>/` to the
    appropriate locations in the main project directory. Place files where they would
    have been produced in a normal phased run (e.g., queries in `queries/`, notebooks
-   in `notebooks/`, code files at project root). For AR fan-out, copy the
+   in `notebooks/`, code files at project root). Deliverable files go to the confirmed
+   `## Placement` targets (re-pass them as `targets` on the convergence gate); bookkeeping
+   and `experiments/` records stay in the project folder. For AR fan-out, copy the
    `experiments/` contents (brief, results.json, iteration files,
    history_summary.md) to `<project_dir>/experiments/`.
 

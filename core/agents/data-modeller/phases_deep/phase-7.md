@@ -29,7 +29,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 CODE REVIEW MODE. I am the Data Modeller shard. Project: [project_name].
-Directory: [project_dir]. Please review and fix the code artifacts produced
+Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
 in this project. The project-specs.md is at [file_path] for context.
 ```
 

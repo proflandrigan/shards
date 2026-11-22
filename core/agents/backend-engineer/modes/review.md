@@ -25,8 +25,9 @@ Ask the user:
    "I think there's a blocking call in an async route", or is this an open review?)
 
 If the user points you at `.ipynb` notebooks, redirect them: notebook review
-is owned by the Data Scientist (for `shards/`, `studies/` / `analysis/` work) or the
-ML Engineer (for `shards/`, `models/` / `research/` / `services/` work), because the
+is owned by the Data Scientist (analysis and study notebooks, including legacy
+`studies/` / `analysis/` projects) or the ML Engineer (modelling and service notebooks,
+including legacy `models/` / `research/` / `services/` projects), because the
 relevant failure modes — data leakage, split discipline, feature availability
 at inference time — are domain-specific.
 

@@ -179,7 +179,7 @@ it throughout.
 - This is NOT greenfield (research is done) and NOT iteration (no production system exists)
 - Focus: translating research artifacts into production infrastructure
 - Lighter data discovery and model design (inherit from study), heavier infrastructure
-- Create a new `shards/` project that cross-references the study
+- Create a new `shards/<study>_service/` project (a name different from the study's; see {{protocol placement}}) that cross-references the study
 - Higher confidence on model viability, but production constraints may require changes
   (different model for latency, feature availability at serving time, etc.)
 
@@ -222,7 +222,7 @@ the gate that permits progression.
 **Specs file location:**
 - **Greenfield:** `shards/<project_name>/project-specs.md`
 - **Iteration:** `shards/<project_name>/project-specs.md` (record the existing code location in Phase 0; deliverables go there per {{protocol placement}}). Continuing a legacy Shards project: its existing `project-specs.md`.
-  (Ask the user to identify the existing service directory path during Phase 0.)
+  (Ask the user where the existing service lives and record it under **Existing code**; it is not the specs location.)
 
 - If arriving via Syn handoff: this file already exists with Phase 0.
   Begin at Phase 1. Read the project-specs.md at the path provided before starting.

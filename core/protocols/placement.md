@@ -12,7 +12,7 @@ This protocol decides where every file you write goes. Shards adds one folder to
 
 | Kind | Examples | Location |
 |------|----------|----------|
-| Bookkeeping | `project-specs.md`, `tasks.yaml`, reports, handoff files, intake notes, scratch notebooks and queries | `shards/<project>/` (your `output_dir`) |
+| Bookkeeping | `project-specs.md`, `tasks.yaml`, reports, handoff files, intake notes, scratch notebooks and queries | `shards/<project>/` (your `output_dir`; MLOps: `shards/<project>/mlops/`) |
 | Deliverables | model code, services, pipelines, dbt models, dashboards, SQL that belongs to the codebase, tests | The confirmed targets |
 
 `brainstorm`, `fixes`, `panels` and `academic_reports` under `shards/` are shared folders; never use them as a project name.

@@ -48,15 +48,20 @@ function resolveRecord(root, recordRef) {
 }
 
 // Deliverable paths the user confirms at this gate (placement protocol). Root-relative, inside the root,
-// never the root itself, never under .git/ or .shards/; normalised to forward slashes with no trailing
+// never the root itself, never under .git/ or .shards/, no globs, pathspec magic, drive prefixes or
+// control characters; normalised to forward slashes with no trailing
 // slash. Backslashes are treated as separators on every platform, so `src\..\..\x` cannot slip past
 // the containment check and later be read as `src/../../x` by the git collector.
 function normTargets(targets) {
   if (targets === undefined) return undefined;
   const mapped = targets.map((t) => {
     if (typeof t !== 'string') throw new Error('targets must be strings');
+    if (!t.trim() || /[\x00-\x1f\x7f]/.test(t)) throw new Error(`targets must be non-blank paths without control characters: ${JSON.stringify(t)}`);
+    // Git pathspec magic and globs would widen the snapshot past the checks below (`*` matches .shards/).
+    if (/[*?[\]]/.test(t) || t.startsWith(':')) throw new Error(`targets must be literal paths (no globs or pathspec magic): ${t}`);
     const s = t.replace(/\\/g, '/');
-    if (path.posix.isAbsolute(s) || path.win32.isAbsolute(s)) throw new Error(`targets must be project-root-relative paths: ${t}`);
+    // `C:foo` is drive-relative on Windows: not absolute, but it resolves outside the root.
+    if (path.posix.isAbsolute(s) || path.win32.isAbsolute(s) || /^[A-Za-z]:/.test(s)) throw new Error(`targets must be project-root-relative paths: ${t}`);
     const r = path.posix.normalize(s).replace(/\/+$/, '');
     if (r === '.' || r === '' || r === '..' || r.startsWith('../')) throw new Error(`targets must name a path inside the project root (not the root itself): ${t}`);
     // Case-insensitive: on macOS and Windows `.SHARDS/state` is the same directory as `.shards/state`.

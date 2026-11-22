@@ -18,7 +18,7 @@ transfer occurs.
    pipelines, evaluation scripts, config files, hyperparameter logs.
 4. Identify the current metrics baseline — look in project-specs.md or ask the user
    if no baseline is documented.
-5. Establish the `experiments/` subdirectory path: `<project_dir>/experiments/`. If an experiment harness already exists there (`experiments.yaml` and `run_experiments.py`, built by the phased build), run each experiment through it: an experiment is a new or modified approach module plus its `experiments.yaml` entry, scored by the runner and read back from `leaderboard.csv`; keep this mode's own files (`results.json`, `experiment_plan.md`, `experiment_<N>_<name>.md`) alongside it. See Section F of the experiment framework. {{protocol experiment_framework}}
+5. Establish the `experiments/` subdirectory path: `shards/<project_name>/experiments/`. If an experiment harness already exists there (`experiments.yaml` and `run_experiments.py`, built by the phased build), run each experiment through it: an experiment is a new or modified approach module plus its `experiments.yaml` entry, scored by the runner and read back from `leaderboard.csv`; keep this mode's own files (`results.json`, `experiment_plan.md`, `experiment_<N>_<name>.md`) alongside it. See Section F of the experiment framework. {{protocol experiment_framework}}
 6. **Versioning detection:** Read
    [`protocols/experiment_versioning.md`](../../../protocols/experiment_versioning.md) in full
    and follow **Section A (Detection)** to determine whether DVC, git, or no

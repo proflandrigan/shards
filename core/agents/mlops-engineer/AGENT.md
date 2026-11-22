@@ -196,7 +196,7 @@ is the gate that permits progression.
 **Specs file location:**
 - **Greenfield:** `shards/<project_name>/mlops/project-specs.md`
 - **Iteration:** `shards/<project_name>/mlops/project-specs.md` (record the existing code location in Phase 0; deliverables go there per {{protocol placement}}). Continuing a legacy Shards project: its existing `project-specs.md`.
-  (Ask the user to identify the existing service directory path during Phase 0.)
+  (Ask the user where the existing service lives and record it under **Existing code**; it is not the specs location.)
 - **Model Handoff:** `shards/<project_name>/mlops/project-specs.md`
   (Ask for the source model/study directory during Phase 0; cross-reference it.)
 

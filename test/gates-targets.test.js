@@ -97,6 +97,12 @@ describe('target hardening', () => {
     }
     expect((await call(ok({ targets: ['.shardsx/a'] }))).isError).toBeFalsy();
   });
+  it('rejects globs, pathspec magic, drive prefixes and blank or control-character targets', async () => {
+    for (const t of ['*', '.sh*', 'src/?.py', 'src/[ab].py', ':(top)x', ':(glob)**/state/*', 'C:foo', 'c:/x', ' ', 'src/\0x', 'a\nb']) {
+      const r = await call(ok({ targets: [t] }));
+      expect(r.isError, t).toBe(true);
+    }
+  });
   it('says so when targets are passed to an already confirmed gate', async () => {
     await call(ok());
     await state.update('gates', (cur) => { cur.gates['data-analyst-phase-1'].status = 'confirmed'; return cur; });

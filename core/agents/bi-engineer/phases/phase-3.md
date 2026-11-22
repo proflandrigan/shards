@@ -21,7 +21,7 @@ specification.
 
 ### Build Mode (data exists)
 
-The dashboard application goes in `shards/<project_name>/`. It is built as
+The dashboard application goes in the targets confirmed in `## Placement` ({{protocol placement}}); `shards/<project_name>/` is the new-project default, and the paths below assume it. It is built as
 a set of delegated tasks, one tested component each (for example one SQL query
 file, the data-access layer, one chart or page, filters/defaults, the
 requirements file). You are the lead: you dispatch, verify and record; you do

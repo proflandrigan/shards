@@ -50,7 +50,7 @@ first, or drop to `[EX]` where human review sits between iterations.
    ask the user to fix it. AR without a functioning eval is a liability, not
    a feature.
 5. Identify the current metrics baseline.
-6. Establish the `experiments/` subdirectory: `<project_dir>/experiments/`. If an experiment harness already exists there (`experiments.yaml` and `run_experiments.py`, built by the phased build), each iteration changes only the leading approach's module under `approaches/` and its `params` in `experiments.yaml`, is scored by the runner and is read back from `leaderboard.csv`; the runner, `base.py` and the split stay immutable. See Section F of the experiment framework. {{protocol experiment_framework}}
+6. Establish the `experiments/` subdirectory: `shards/<project_name>/experiments/`. If an experiment harness already exists there (`experiments.yaml` and `run_experiments.py`, built by the phased build), each iteration changes only the leading approach's module under `approaches/` and its `params` in `experiments.yaml`, is scored by the runner and is read back from `leaderboard.csv`; the runner, `base.py` and the split stay immutable. See Section F of the experiment framework. {{protocol experiment_framework}}
 
 ### Versioning detection
 
@@ -184,8 +184,8 @@ Append to `project-specs.md`:
 
 Follow Section A of `autonomous_research.md`. Use
 `templates/research-brief.md`, write to
-`<project_dir>/experiments/research_brief.md`. Write
-`<project_dir>/experiments/results.json` with `mode: "autonomous-research"`.
+`shards/<project_name>/experiments/research_brief.md`. Write
+`shards/<project_name>/experiments/results.json` with `mode: "autonomous-research"`.
 
 Update `project-specs.md` with a new `## Autonomous Research` section.
 

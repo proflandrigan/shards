@@ -63,7 +63,7 @@ directly); you run the evaluations, version the prompt, and keep
    `prompt-lab.json`. It is a watched artifact: afterwards just rewrite the
    file, do not re-emit.
 
-   {{artifact.emit type=prompt-lab path=<project_dir>/prompt-lab.json meta="title=Prompt Lab: <project_name> panel_id=pl-<project_name> project=<project_name>"}}
+   {{artifact.emit type=prompt-lab path=shards/<project_name>/prompt-lab.json meta="title=Prompt Lab: <project_name> panel_id=pl-<project_name> project=<project_name>"}}
 
 7. Tell the user the Prompt Lab is ready and explain the three actions they can
    ask for in chat:

@@ -46,7 +46,7 @@ the conversation. Draw from them naturally as follow-ups, not as a batch:
   to deliver X — is that fair?"
 
 Once you have enough to proceed (typically 2–4 exchanges), create
-`shards/<project_name>/` and write `project-plan.md`
+`shards/<project_name>/` (never a reserved name, see below) and write `project-plan.md`
 from the template at `templates/project-plan.md`. Fill in:
 - `{{PROJECT_NAME}}`: the project name
 - `{{DATE}}`: today's date
@@ -158,7 +158,7 @@ For each workstream, create:
    - Analytics Engineer: `shards/<workstream_name>/`
    - ML Engineer: `shards/<workstream_name>/`
    - AI Engineer: `shards/<workstream_name>/`
-   - MLOps Engineer: `shards/<workstream_name>/mlops/`
+   - MLOps Engineer: `shards/<workstream_name>/mlops/`, where `<workstream_name>` is the name of the model workstream it deploys
    - BI Engineer: `shards/<workstream_name>/`
    - Applied ML Scientist: `shards/<workstream_name>/`
    - Deep Learning Engineer: `shards/<workstream_name>/`
@@ -331,7 +331,7 @@ After all execution groups complete:
    - Are APIs, interfaces, and data contracts aligned?
 3. Spawn targeted review agents:
    - **Backend Engineer** for `.py` code quality (if Python scripts exist)
-   - **Data Scientist** (for `studies/` / `analysis/`) or **ML Engineer** (for `models/` / `research/` / `services/`) for `.ipynb` notebook code review (if notebooks exist) — pick by the workstream's project directory prefix (for `shards/<project>/`, by the owning agent in its `project-specs.md`), same routing as Syn's `code_review` mode
+   - **Data Scientist** or **ML Engineer** for `.ipynb` notebook code review (if notebooks exist), using the same routing as Syn's `code_review` Step 2a table
    - **Researcher** for methodology rigor (if statistical/ML work exists)
    - **Data Modeller** for data model coherence (if multiple data layers touch the same entities)
 4. If issues found:

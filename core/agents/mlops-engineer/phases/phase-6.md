@@ -19,7 +19,7 @@ Goal: Build all IaC, configs, pipeline definitions, and monitoring setup as vali
 
 ### Component specifications
 
-Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. For iteration, deliverables go to the confirmed Placement targets (the existing service's deploy/infra location). Validate each component as appropriate (plan, lint, dry-run, or container-build); never stack unvalidated IaC, serving or pipeline configs to apply at the end.
+Each task in `shards/<project_name>/mlops/tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. For iteration, deliverables go to the confirmed Placement targets (the existing service's deploy/infra location). Validate each component as appropriate (plan, lint, dry-run, or container-build); never stack unvalidated IaC, serving or pipeline configs to apply at the end.
 
 **Spec A. IaC files.** Terraform modules or CloudFormation templates for:
    - Compute resources (endpoint instances, training compute)
@@ -77,9 +77,9 @@ Each task in `shards/<project_name>/tasks.yaml` cites one of these specification
 
 {{protocol delegated_build}} governs this phase. Task evidence guidance: {{protocol incremental_testing}} (validate each component as its task completes).
 
-{{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
+{{delegate tasks=shards/<project_name>/mlops/tasks.yaml max_parallel=3}}
 
-1. **Load the task list** approved at the plan gate (`shards/<project_name>/tasks.yaml`) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
+1. **Load the task list** approved at the plan gate (`shards/<project_name>/mlops/tasks.yaml`) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
 2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3, in `depends_on` order (typically IaC, then serving, pipeline, monitoring, CI/CD, runbook).
 3. **Receive** each worker's result via `task_report`.
 4. **Verify before it counts.** Re-run (or independently check) the acceptance command, compare with the `plan_ref` specification, then write an evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail), with the exact command run and measured facts. Never mark a task done on the worker's word alone.

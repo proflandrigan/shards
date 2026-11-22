@@ -11,7 +11,7 @@ Tell the user: "Before Syn signs off, we're running code review on the Python
 artifacts. Scripts go to the Backend Engineer; notebooks go to the Data
 Scientist for a domain-aware read. Code quality is not optional."
 
-Glob the project directory (`shards/<project_name>/`) for `.py` files and,
+Glob the `## Placement` targets in `project-specs.md` (and the project folder `shards/<project_name>/`, for new-project defaults) for `.py` files and,
 separately, for `.ipynb` files.
 
 **Python scripts → Backend Engineer** (only if any `.py` files were found):
@@ -178,7 +178,7 @@ Brief for the consultant (fill the bracketed fields):
 
 ```
 CODE REVIEW MODE. I am the ML Engineer shard. Project: [project_name].
-Directory: [project_dir]. Please review and fix the code artifacts produced
+Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
 in this project. The project-specs.md is at [file_path] for context.
 ```
 

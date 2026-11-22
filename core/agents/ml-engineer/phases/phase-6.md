@@ -62,7 +62,7 @@ the bulk queries.
 
 ### Component specifications
 
-Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: greenfield `shards/<name>/`, iteration: the confirmed Placement targets in the existing service.
+Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: the confirmed `## Placement` targets; paths below under `<output_dir>` are the new-project default only.
 
 **Spec A. Feature SQL queries** (one task per query file)
    - Location: `<output_dir>/queries/`
@@ -176,7 +176,7 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
 
 {{delegate tasks=shards/<name>/tasks.yaml max_parallel=3}}
 
-1. **Load the task list** approved at the plan gate (`<output_dir>/tasks.yaml`; for iteration, in the existing service directory) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
+1. **Load the task list** approved at the plan gate (`<output_dir>/tasks.yaml`) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
 2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3. Query tasks can run in parallel; notebook, baseline and candidate tasks follow their `depends_on` order. Harness approach tasks run in parallel once the harness-core task is verified done.
 3. **Receive** each worker's result via `task_report`.
 4. **Verify before it counts.** Re-run (or independently check) the acceptance command, compare with the `plan_ref` specification, then write an evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail), with measured facts (for example `df.shape = (48211, 47)`, `null rate on join key = 0.00%`). Never mark a task done on the worker's word alone.

@@ -57,7 +57,7 @@ Address any blocking implementation concerns raised before proceeding to Syn.
 
 **Backend Engineer code review (Python artifacts):**
 
-Glob the project directory (`shards/<project_name>/`) for `.py` and `.ipynb` files.
+Glob the `## Placement` targets in `project-specs.md` (and the project folder `shards/<project_name>/`, for new-project defaults) for `.py` and `.ipynb` files.
 If any are found:
 
 Tell the user: "Before Syn signs off, the Backend Engineer is reviewing the
