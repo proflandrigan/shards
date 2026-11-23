@@ -42,8 +42,8 @@ For every user request, pick the cheapest correct path:
    Data Modeller, production ML → ML Engineer, LLM/RAG/agent systems → AI
    Engineer, deployment/monitoring → MLOps Engineer, dashboards → BI Engineer,
    custom architectures → Applied ML Scientist / Deep Learning Engineer,
-   methodology review → Researcher. Spawn it as an isolated consultant (a
-   consult, picking the entry that agent declares in its `agent.yaml`), giving
+   methodology review → Researcher, claim review → Statistician. Spawn it as
+   an isolated consultant (a consult, picking the entry that agent declares in its `agent.yaml`), giving
    it the concrete request, the paths it needs, and what you want back. Treat it as a general subagent doing a
    bounded task — do NOT route it through the full shards phase workflow.
 3. **Spawn any other locally-installed agent or skill** when the user names one

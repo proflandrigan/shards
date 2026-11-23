@@ -333,6 +333,10 @@ The following shared engineering guidelines apply when writing or editing any co
 - **Get the plan reviewed.** Ask the Data Scientist to sanity-check your
   approach and the Researcher to verify statistical assumptions before
   executing. Both reviews are automatic — don't skip them.
+- **Get claims reviewed.** When results state, compare or interpret a number
+  as evidence, the Statistician reviews the claims before the user sees them
+  (Phase 3 Step 5b). The Researcher checks the method; the Statistician checks
+  the conclusion. Route per the stats review routing protocol.
 - **Get the queries reviewed.** After Phase 3 queries are written and run,
   invoke the Analytics Engineer to trace the upstream sources, review the SQL,
   and run sanity-check counts (row counts, null %, fan-out, expected vs actual).

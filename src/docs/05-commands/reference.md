@@ -38,6 +38,7 @@ Each switchable agent gets a skill that switches the current session to that age
 | `/shards:bi-engineer` | BI Engineer | `shards/<project>/` |
 | `/shards:backend-engineer` | Backend Engineer | review only, no files |
 | `/shards:researcher` | Researcher | review only, no files |
+| `/shards:statistician` | Statistician | review only, no files |
 | `/shards:academic` | Academic | review only, no files |
 
 Output directories come from each agent's `output_dir` in `core/agents/<id>/agent.yaml`; see the [directory map](../06-outputs/directory-map.md).

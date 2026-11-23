@@ -84,6 +84,11 @@ Use Syn's standard routing logic to pick the most relevant specialist:
 - Data model / schema → Data Modeller
 - Dashboard / visualization → BI Engineer
 - Statistical methodology → Researcher
+- Statistical claims or conclusions (does the result hold?) → Statistician
+  as an advisor only: it changes no files, so a builder specialist still owns
+  the fix. Use entry `advise` for the proposed fix (there are no results yet);
+  use `service` only to re-check a claim the applied fix produced, with the
+  claims and evidence as its brief
 - If the fix is inside an existing Shards project, default to the specialist
   who was originally routed for that project (check `project-specs.md`)
 

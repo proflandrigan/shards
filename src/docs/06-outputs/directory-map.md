@@ -19,7 +19,7 @@ The `shards/` folder holds bookkeeping: `project-specs.md`, `tasks.yaml` and `TA
 | Deep Learning Engineer | `shards/<project>/` |
 | MLOps Engineer | `shards/<project>/mlops/` |
 | BI Engineer | `shards/<project>/` |
-| Researcher, Academic, Backend Engineer | none (review only) |
+| Researcher, Statistician, Academic, Backend Engineer | none (review only) |
 
 ## Syn
 

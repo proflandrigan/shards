@@ -2,7 +2,7 @@
 
 ## Shards and agents
 
-A **shard** is a specialist agent with a persona, a phased workflow and an area of expertise: 14 agents plus Syn, the orchestrator. See [Agent Taxonomy](../02-agents/overview.md).
+A **shard** is a specialist agent with a persona, a phased workflow and an area of expertise: 15 agents plus Syn, the orchestrator. See [Agent Taxonomy](../02-agents/overview.md).
 
 ## core/ is the single source
 

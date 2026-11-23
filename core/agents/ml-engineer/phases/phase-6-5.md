@@ -160,6 +160,10 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
 
 With a Harness plan, the user can add an approach at any point (now, or after handoff) per Section F of the experiment framework: one new module under `experiments/approaches/`, one `experiments.yaml` entry, re-run the runner, and re-enter this phase's state inspection. Offer this as path `[N] New approach` whenever the user names an approach that is not in the leaderboard; it is one worker task (owned paths: the new module and its `experiments.yaml` entry; run it alone, never in parallel with another task touching the yaml), verified like any candidate re-run. {{protocol experiment_framework}}
 
+### Re-review the claim if the winner changed
+
+If this phase changed `bestCandidate` from what Phase 6 reported, or the claim you will carry into Phase 7 differs from the one the Statistician reviewed in Phase 6, repeat the Phase 6 Statistician claim review on the new claim (same brief, routed per {{protocol stats_review_routing}}) before documenting this phase. Apply {{protocol reviewer_verdict}}, record the verdict below, and update the `Statistician claim review` row in the Phase 6 `## Validation` table to the new verdict (note "re-reviewed in Phase 6.5"). If the winner and claim are unchanged, note "Phase 6 claim review stands".
+
 ### Document Phase 6.5
 
 Append to `project-specs.md`:
@@ -184,6 +188,7 @@ Append to `project-specs.md`:
   - Branches (fan-out only):
     - `<branch-slug>`: <converged metric value> — <winner | runner-up>
 - **Infrastructure trade-off (if applicable):** <metric winner fails <dim> — user accepted | chose next-best | revisited Phase 2 budgets>
+- **Statistician claim review:** <verdict on the new claim | Phase 6 claim review stands>
 - **eval-results.json bestCandidate:** Locked | Skipped — bestCandidate left as-is
 - **Leaderboard:** <experiments/leaderboard.md — approaches compared: <N>> | N/A — Single approach plan
 

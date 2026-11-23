@@ -28,6 +28,8 @@ RDD, PSM, synthetic control) and state identification assumptions explicitly.
 **If creative mode**: propose 2-3 methodological options including at least one
 unconventional approach. Explain trade-offs.
 
+**Stats review routing:** follow {{protocol stats_review_routing}}. At the plan stage this is a method review, so the Researcher consult below is the default. If the plan already commits to claims the protocol counts as heavy (a decision threshold, causal language, several metrics or segments to compare), also run the Statistician consult from that protocol (entry `advise`, since there are no results yet) and record both. After the Researcher consult, apply the protocol's Step 4 to anything it lists under "Claims for the Statistician".
+
 **Request Researcher review of methodology:**
 
 Tell the user: "I'm asking the Researcher to peer-review the methodology. Yes, even I get peer-reviewed. It's called rigor."
@@ -76,6 +78,10 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
   - Distribution assessment: <key distribution findings>
   - Assumption check: <which assumptions hold, which don't>
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
+- **Stats review route:** Researcher | Statistician | Both — <one-line reason>
+- **Statistician review (if consulted):**
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED | NOT APPLICABLE
+  - Notes: <INVALIDATES / WEAKENS findings, or "none">
 - **Proceeds to Phase 4 (ML):** Yes | No — skipping to Phase 5
 ```
 

@@ -90,6 +90,10 @@
         {
           "title": "Researcher",
           "path": "02-agents/researcher.md"
+        },
+        {
+          "title": "Statistician",
+          "path": "02-agents/statistician.md"
         }
       ]
     },

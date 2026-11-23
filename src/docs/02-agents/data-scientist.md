@@ -45,14 +45,14 @@ Phase bodies are served one at a time by the `load_phase` tool, which refuses un
 4. **Modeling Approach** (ML tasks only): Data Modeller, Data Analyst (interpretability) and ML Engineer review.
 5. **Output Format**: notebook, report, deliverables; BI Engineer chart review if visual.
 6. **Execute** (validated): Data Modeller query review, Researcher build review; build work can be delegated.
-7. **Findings and Handoff**: Backend Engineer, Analytics Engineer and ML Engineer service reviews, code review, Syn sign-off, optional ML/BI handoff.
+7. **Findings and Handoff**: Backend Engineer, Analytics Engineer and ML Engineer service reviews, Statistician claim review of findings, code review, Syn sign-off, optional ML/BI handoff.
 
 ## Consults and reviewers
 
 Consults are isolated subagents that answer one question and return a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)). They never nest.
 
-- **Calls out to:** Data Modeller (phases 2-4, 6), Researcher (phases 3, 6), ML Engineer (phase 4, phase 7 notebook review), Data Analyst (phase 4), BI Engineer (phase 5), Analytics Engineer, Backend Engineer and Syn (phase 7).
-- **Declared reviewers** (`agent.yaml`): Data Modeller, Researcher, ML Engineer, Data Analyst, BI Engineer, Analytics Engineer, Backend Engineer, Syn.
+- **Calls out to:** Data Modeller (phases 2-4, 6), Researcher (phases 3, 6), ML Engineer (phase 4, phase 7 notebook review), Data Analyst (phase 4), BI Engineer (phase 5), Analytics Engineer, Backend Engineer, Statistician and Syn (phase 7; Statistician optionally phase 3).
+- **Declared reviewers** (`agent.yaml`): Data Modeller, Researcher, Statistician, ML Engineer, Data Analyst, BI Engineer, Analytics Engineer, Backend Engineer, Syn.
 - **Consulted by (reverse of declared reviewers):** [AI Engineer](ai-engineer.md), [Data Analyst](data-analyst.md), [ML Engineer](ml-engineer.md), [Syn](syn.md).
 
 ## Output directory

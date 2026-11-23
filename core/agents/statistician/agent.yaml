@@ -1,0 +1,13 @@
+# New in v2 (no v1 source). Reviewer shard for statistical and metric CLAIMS.
+# Division of labour with the Researcher: core/protocols/stats_review_routing.md
+id: statistician
+display_name: "Statistician"
+description: "Strict review of statistical and metric claims: whether a conclusion actually follows from the evidence. Bayesian and frequentist inference, experiment design and power, causal identification, hierarchical, survival and time-series models, multiplicity. Purely consultative, produces no project files."
+role: reviewer
+activation: [consult, switch]
+consult_entries:
+  service: modes/service.md
+  advise: modes/advise.md
+reviewers: []
+output_dir: null
+jobs: [review]

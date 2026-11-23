@@ -31,6 +31,8 @@ harder and more important — because the failure modes are semantic, not statis
 
 ---
 
+**Stats review routing:** follow {{protocol stats_review_routing}}. The evaluation framework design is a method review (Researcher). If the pass/fail thresholds or decision rule will be stated as claims and the protocol's Step 2 says both (heavy claims, complicated logic, many metrics), also run its Statistician consult (entry `advise`, since there are no results yet) and record both. After the Researcher consult, apply the protocol's Step 4 to anything it lists under "Claims for the Statistician".
+
 **Consult the Researcher** for evaluation methodology rigor:
 
 Tell the user: "I'm bringing in the Researcher shard to review the evaluation methodology. If we can't measure this properly, we can't know if it's working. Or if it's broken."
@@ -108,6 +110,10 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
   - Tier: Proceed | Proceed with caveats | Halt
   - Notes: <summary of methodology review>
   - Reviewer resolution: Approved | Approved on resubmit | User override — <rationale> | Project stopped
+- **Stats review route:** Researcher | Statistician | Both — <one-line reason>
+- **Statistician review (if consulted):**
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED | NOT APPLICABLE
+  - Notes: <INVALIDATES / WEAKENS findings, or "none">
 - **Evaluation dimensions:**
   | Dimension | Metric | Method | Target |
   |-----------|--------|--------|--------|

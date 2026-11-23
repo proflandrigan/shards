@@ -32,6 +32,8 @@ Are there obvious gaps or better approaches? Any concerns about the data
 sources or methodology? Keep the review brief and focused.
 ```
 
+**Stats review routing:** follow {{protocol stats_review_routing}}. At the plan stage this is a method review, so the Researcher consult below is the default. If the plan already commits to claims the protocol counts as heavy (a decision threshold, causal language, several metrics or segments to compare), also run the Statistician consult from that protocol (entry `advise`, since there are no results yet) and record both. After the Researcher consult, apply the protocol's Step 4 to anything it lists under "Claims for the Statistician".
+
 **Request Researcher review of statistical assumptions:**
 
 Tell the user: "Let me loop in the Researcher to check the statistical assumptions. Quick call, then we'll proceed."
@@ -105,6 +107,10 @@ Validate the list with the tasks_set tool; the rules are in {{protocol delegated
   - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary of statistical assumption review>
   - Issues addressed: <how concerns were resolved, or "none raised">
+- **Stats review route:** Researcher | Statistician | Both — <one-line reason>
+- **Statistician review (if consulted):**
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED | NOT APPLICABLE
+  - Notes: <INVALIDATES / WEAKENS findings, or "none">
 - **BI Engineer review (if applicable):**
   - Verdict: APPROVED | NEEDS REVISION | Not applicable
   - Notes: <summary of chart design feedback or "N/A — no visualization output">

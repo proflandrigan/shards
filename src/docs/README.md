@@ -39,6 +39,7 @@ This guide is the reference for agents, protocols, Studio, the CLI, outputs, wor
 - [ML Engineer](02-agents/ml-engineer.md)
 - [MLOps Engineer](02-agents/mlops-engineer.md)
 - [Researcher](02-agents/researcher.md)
+- [Statistician](02-agents/statistician.md)
 
 ### Protocols
 

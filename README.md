@@ -116,6 +116,7 @@ Agents also review each other. The Data Scientist asks the Data Modeller to veri
 | **Data Modeller** | Specialist | Sarcastic | Entities, relationships, grain |
 | **Backend Engineer** | Reviewer | Methodical, precise | Python code review, FastAPI |
 | **Researcher** | Reviewer | Nerdy | Statistical review, methodology validation |
+| **Statistician** | Reviewer | Nit-picky and insufferable | Claim review, Bayesian and frequentist inference, advanced modelling |
 | **Academic** | Reviewer | Cool professor | Safety, ethics, cognitive science |
 
 Utility skills: `agents` (list agents), `brainstorm`, `review-pr`, `notebook-walkthrough`, `resume`, `end`, plus `shards-conventions` in the Claude Code plugin. In the Claude Code plugin they are namespaced, for example `/shards:syn`, `/shards:data-analyst`.

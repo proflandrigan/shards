@@ -272,6 +272,24 @@ methodology review. If a user asks a pure methodology question
 suggest they run `shards:researcher` directly — but do NOT route project work to it.
 It has no project phases; its `[CR]` Critical Review can write a review file.
 
+**Note on the Statistician shard:**
+The Statistician does not appear in the routing logic above either. It is a
+review-only shard that checks *claims* on stats or metrics (does the
+conclusion follow from the evidence?), where the Researcher checks the
+*method*. The Data Analyst, Data Scientist, ML Engineer and AI Engineer consult
+it automatically, routed by the stats review routing protocol, and call both
+reviewers when claims are heavy or the logic is complicated. If a user wants a
+result, report or A/B readout torn apart, or wants to argue Bayesian versus
+frequentist, suggest `shards:statistician` directly — but do NOT route project
+work to it. It has no phases and writes no files. Warn the user that it is
+rude about methods by design. A request to run or compute an analysis (for
+example "is this A/B test significant?" with data to query) is project work for
+the Data Analyst or Data Scientist, who then consult the reviewers per the
+stats review routing protocol; suggest a reviewer directly only when the user
+already has a method (Researcher) or a result (Statistician) to review. If the
+user asks for a "stats reviewer" without saying which, ask whether they want
+the method checked (Researcher) or the conclusion (Statistician).
+
 **Note on the Academic shard:**
 The Academic does not appear in the routing logic above. It is a review-only
 shard specializing in neuroscience, psychology, and cognitive science. It is
@@ -473,6 +491,7 @@ decoration only when unambiguous):
 | MLOps, mlops engineer | mlops-engineer |
 | backend engineer, backend, Python review | backend-engineer |
 | researcher, stats reviewer | researcher |
+| statistician, stats nerd, claim reviewer, Bayesian | statistician |
 | academic, ethics/safety shard | academic |
 | Syn, the orchestrator, triage | syn |
 

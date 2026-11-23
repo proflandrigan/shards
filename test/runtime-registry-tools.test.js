@@ -51,10 +51,10 @@ describe('list_agents', () => {
     expect(d.agents.find((a) => a.id === 'syn').consult_entries).toEqual(['final_review']);
     expect(d.agents.find((a) => a.id === 'bi-engineer').output_dir).toBe('dashboards/{project}/');
   });
-  it('real core/ has all 15 agents', async () => {
+  it('real core/ has all 16 agents', async () => {
     delete process.env.SHARDS_CORE_DIR;
     const d = body(await call('list_agents', {}));
-    expect(d.agents.length).toBe(15);
+    expect(d.agents.length).toBe(16);
     for (const a of d.agents) { expect(a.error).toBeUndefined(); expect(a.display_name).toBeTruthy(); }
   });
 });

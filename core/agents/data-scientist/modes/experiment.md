@@ -250,6 +250,7 @@ Before the Researcher consultation, update `experiments/results.json`:
       "commit": "<sha or null>"
     },
     "researcherVerdict": "",
+    "statisticianVerdict": "",
     "outcome": "<Improvement|Regression|Neutral>",
     "recommendation": "<Adopt|Revert|Refine>"
   }
@@ -302,12 +303,15 @@ After receiving the Researcher response, fill in the `## Researcher Review` sect
 the result file with the Researcher's assessment. Also update the `researcherVerdict`
 field in `experiments/results.json` for this experiment entry.
 
+If this experiment's result will be reported as a win, a loss or a ranking (any claim on the outcome metric), also consult the Statistician on that claim, routed per {{protocol stats_review_routing}}: {{consult statistician entry=service task="Claim review for experiment N"}} Pass the metrics table above, the claim you intend to make, and the paths to the result file (`experiments/experiment_<N>_<name>.md`) and `experiments/results.json`. Record its verdict next to the Researcher's in the result file's `## Researcher Review` section under a `Statistician:` line, and set the entry's `statisticianVerdict` field in `experiments/results.json` (leave it empty when no claim review ran). This runs once per iteration that makes such a claim, so it adds one consult per qualifying iteration; count it toward any cost or iteration budget agreed in Phase 1. Inside the loop never ask the user: record NEEDS REVISION findings as caveats in the result file, and on BLOCKED downgrade the recommendation (Adopt becomes Refine) and rewrite the claim to the Statistician's "What the evidence actually supports" wording. The user sees these in Phase 3.
+
 ### Step 7 — Inline summary
 Print a short inline block:
 ```
 Experiment N complete.
   Outcome metric: <outcome metric> <before> → <after> (<+/->)
   Researcher note: <one-sentence excerpt from Researcher review>
+  Statistician: <verdict, or "no claim review">
   Recommendation: Adopt | Revert | Refine
 ```
 
@@ -356,10 +360,10 @@ Factual synthesis only — no opinions here. Include:
 
 ## Results
 
-| # | Experiment | Outcome Metric Delta | Researcher Verdict | Recommendation |
-|---|-----------|---------------------|-------------------|----------------|
-| 1 | <name>    | <+/->               | <excerpt>         | Adopt/Revert/Refine |
-| 2 | ...       | ...                 | ...               | ...            |
+| # | Experiment | Outcome Metric Delta | Researcher Verdict | Statistician Verdict | Recommendation |
+|---|-----------|---------------------|-------------------|----------------------|----------------|
+| 1 | <name>    | <+/->               | <excerpt>         | <verdict or —>       | Adopt/Revert/Refine |
+| 2 | ...       | ...                 | ...               | ...                  | ...            |
 
 ## Patterns
 <any patterns observed across experiments — factual only>
