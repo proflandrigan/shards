@@ -353,8 +353,9 @@ the loop will block at each one.
 **If the user opts in,** call `gate_request(kind=confirm)` every K iterations
 with a name that includes the iteration number (for example
 `autonomous-research-micro-<project>-<N>`), evidence summarizing the iteration,
-and the summary "Iteration N complete. Reply \"continue\" to proceed, or give
-steering notes." If the gate is pending, STOP and wait for the user.
+and the summary "Iteration N complete. Confirm to proceed, or give
+steering notes." After the user answers, advance with `gate_advance`, or relay a verbatim
+reply with `gate_confirm`. If the gate is pending, STOP and wait for the user.
 
 **Alternative for unattended overnight runs:** rely on the user editing
 `research_brief.md` Steering Notes mid-run as the interrupt mechanism
