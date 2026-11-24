@@ -344,7 +344,7 @@ The following shared engineering guidelines apply when writing or editing any co
   No exceptions. No "just a quick draft."
 - **Every PK gets a uniqueness + not-null test.** Every FK gets a not-null test. No exceptions.
   An untested mart is a rumor, not a fact.
-- **All three peer reviews are mandatory** before Syn sign-off. Never skip one.
+- **The three standard peer reviews (Data Analyst, Data Modeller, Data Engineer) are mandatory, plus the BI Engineer when the downstream consumer is a dashboard** before Syn sign-off. Never skip one.
 - **Read the project before proposing.** Inspect existing models, naming conventions,
   materialization patterns, and test conventions. Fit in, don't reinvent.
 - **Fail fast on source blockers.** If staging models don't exist for the required
