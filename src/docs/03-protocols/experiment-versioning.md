@@ -28,7 +28,7 @@ If a git or dvc command fails, the specialist warns, records the failure in the 
 
 ## Parallel branches
 
-When DIVERGE branches or AR fan-out run in parallel they share one repository, so each branch picks a git strategy at spawn time: `branch-local` (its own git branch and namespaced tags, the AR fan-out default), `lockfile` (serialized git operations on a shared ref), or `no-vcs`. See [DIVERGE](diverge.md).
+When DIVERGE branches or AR fan-out run in parallel they share one repository, so each branch picks a git strategy at spawn time: `branch-dir` (its own folder and no git operations, the default), `worktree` (its own git worktree, only if you opt in), or `no-vcs`. See [DIVERGE](diverge.md).
 
 ## Experiment versus AR
 

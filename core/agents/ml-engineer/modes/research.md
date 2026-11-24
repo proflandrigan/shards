@@ -246,7 +246,7 @@ Task prompt must include:
 - Full project context from completed planning phases
 - The approach constraint for this branch
 - AR configuration inherited from Phase 0
-- Git strategy (`branch-local` by default)
+- Git strategy (`branch-dir` by default)
 - Reference to the shared AR protocol
 - Instruction that the branch is in BRANCH + AR MODE and must not emit gates
 

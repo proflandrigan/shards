@@ -493,7 +493,7 @@ Respond to any of the following naturally:
      - Spawn each specialist in parallel, using the Section H.3
        branch prompt template from `autonomous_research.md`. Each branch
        prompt carries inherited Phase 0 setup (metric, budget, scope, cost
-       ceiling, git strategy — default `branch-local`) so the specialist
+       ceiling, git strategy — default `branch-dir`) so the specialist
        skips its own Phase 0 gate.
      - All branch Tasks are called in **a single message with multiple Task
        content blocks** (parallel).
