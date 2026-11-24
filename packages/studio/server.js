@@ -15,36 +15,53 @@ const gatesState = require('./gates-state');
 const eventsWatcher = require('./events-watcher');
 
 // Sessions index lives in the runtime package. When Studio is published
-// separately it cannot reach ../../runtime, so fall back to a minimal no-op
-// index: sessions still run, but INDEX.json is not maintained and the
-// Sessions panel shows an empty list.
+// separately it cannot reach ../../runtime, so fall back to a read-only reader
+// of the same file the runtime writes (<project>/.shards/sessions/INDEX.json,
+// see docs/sessions.md). The fallback never writes; the runtime owns the index.
+function readOnlySessionIndex() {
+  const read = (dir) => {
+    try {
+      const d = JSON.parse(fs.readFileSync(path.join(dir, 'INDEX.json'), 'utf8'));
+      return d && Array.isArray(d.sessions) ? d.sessions : [];
+    } catch { return []; }
+  };
+  const ts = (e) => Date.parse(e.lastActivityAt || e.createdAt || 0) || 0;
+  return {
+    INDEX_VERSION: 1,
+    appendSession() {}, updateActivity() {}, updatePhase() {},
+    markEnded() { return null; }, sweepAbandoned() { return 0; },
+    listSessions(dir, { project, agent, status } = {}) {
+      let rows = read(dir);
+      if (project) rows = rows.filter((e) => e.projectDir === project || e.projectName === project);
+      if (agent) rows = rows.filter((e) => e.agent === agent);
+      if (status) rows = rows.filter((e) => e.status === status);
+      return rows.sort((x, y) => ts(y) - ts(x));
+    },
+    getEntry(dir, id) { return read(dir).find((e) => e.sessionId === id) || null; },
+  };
+}
 let sessionIndex;
 try {
   sessionIndex = require('../../runtime/sessions/index.js');
 } catch {
-  sessionIndex = {
-    INDEX_VERSION: 1,
-    appendSession() {}, updateActivity() {}, updatePhase() {},
-    markEnded() { return null; }, sweepAbandoned() { return 0; },
-    listSessions() { return []; }, getEntry() { return null; },
-  };
+  sessionIndex = readOnlySessionIndex();
 }
 
 // v2 agent catalog: core/agents/*/agent.yaml, read through the runtime loader
-// (same packaging caveat as above). When it is unreachable, listAgents() falls
-// back to the legacy v1 layout (<project>/.claude/agents/*.md).
+// (same packaging caveat as above). When it is unreachable (standalone npm
+// install), listCoreAgents() reads agents-catalog.json shipped in this package,
+// generated from core/agents at pack time (scripts/pack-docs.js).
 let agentCatalog = null;
 try {
   agentCatalog = require('../../runtime/agents.js');
 } catch {}
+const BUNDLED_CATALOG = path.join(__dirname, 'agents-catalog.json');
 
 let PROJECT_DIR = process.cwd();
 let SHARDS_DIR = path.join(PROJECT_DIR, '.shards');
 let PORT_FILE = path.join(SHARDS_DIR, 'studio.port');
 let PID_FILE = path.join(SHARDS_DIR, 'studio.pid');
 let LOG_FILE = path.join(SHARDS_DIR, 'studio.log');
-let AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
-let COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
 let SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
 let INDEX_HTML = path.join(__dirname, 'index.html');
 
@@ -54,8 +71,6 @@ function initPaths(projectDir, options = {}) {
   PORT_FILE = path.join(SHARDS_DIR, 'studio.port');
   PID_FILE = path.join(SHARDS_DIR, 'studio.pid');
   LOG_FILE = path.join(SHARDS_DIR, 'studio.log');
-  AGENTS_DIR = path.join(PROJECT_DIR, '.claude', 'agents');
-  COMMANDS_DIR = path.join(PROJECT_DIR, '.claude', 'commands');
   SESSIONS_DIR = path.join(SHARDS_DIR, 'sessions');
   const uiDir = options.uiDir || __dirname;
   if (options.port !== undefined) PORTS = [options.port];
@@ -732,13 +747,15 @@ function docRoots() {
 // ─── Agent listing ──────────────────────────────────────────────────────────
 
 // Agents that can start a Studio session: v2 core agents whose activation
-// includes "switch". Legacy v1 projects (no runtime/core reachable) fall back
-// to <project>/.claude/agents/*.md.
+// includes "switch". Source: the runtime loader when reachable, else the
+// bundled agents-catalog.json (standalone install).
 function listCoreAgents() {
-  if (!agentCatalog) return [];
   const agents = [];
   try {
-    for (const a of agentCatalog.loadAgents(agentCatalog.coreDir()).values()) {
+    let list;
+    if (agentCatalog) list = [...agentCatalog.loadAgents(agentCatalog.coreDir()).values()];
+    else list = JSON.parse(fs.readFileSync(BUNDLED_CATALOG, 'utf8')).agents || [];
+    for (const a of list) {
       if (a.error || !(a.activation || []).includes('switch')) continue;
       agents.push({ name: a.id, description: a.description || '', source: 'core' });
     }
@@ -746,33 +763,8 @@ function listCoreAgents() {
   return agents;
 }
 
-function listLegacyAgents() {
-  const agents = [];
-  try {
-    const entries = fs.readdirSync(AGENTS_DIR, { withFileTypes: true });
-    for (const entry of entries) {
-      if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
-      const name = entry.name.replace(/\.md$/, '');
-      const content = readFileSafe(path.join(AGENTS_DIR, entry.name));
-      if (!content) continue;
-
-      // Parse YAML frontmatter
-      let description = '';
-      const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
-      if (fmMatch) {
-        const descMatch = fmMatch[1].match(/description:\s*["']?(.+?)["']?\s*$/m);
-        if (descMatch) description = descMatch[1];
-      }
-
-      agents.push({ name, description, source: 'legacy' });
-    }
-  } catch {}
-  return agents;
-}
-
 function listAgents() {
-  let agents = listCoreAgents();
-  if (!agents.length) agents = listLegacyAgents();
+  const agents = listCoreAgents();
   // Enrich with metadata
   for (const a of agents) {
     const meta = AGENT_META[a.name] || {};
@@ -981,17 +973,8 @@ function parseSlashCommand(message) {
 
 // v2: the agent is activated through the shards runtime `activate` tool
 // (mcp__plugin_shards_shards__activate when installed as the Claude Code
-// plugin). A legacy v1 agent (listed from .claude/agents) keeps using its
-// .claude/commands/<agent>.md activation prompt when that file exists.
+// plugin).
 function buildActivationPrompt(agent) {
-  const legacy = listAgents().find((a) => a.name === agent && a.source === 'legacy');
-  if (legacy) {
-    try {
-      const raw = fs.readFileSync(path.join(COMMANDS_DIR, `${agent}.md`), 'utf8');
-      const body = raw.replace(/^---\n[\s\S]*?\n---\n*/, '').trim();
-      if (body) return body;
-    } catch {}
-  }
   return `Activate the ${agent} agent: call the shards runtime \`activate\` tool ` +
     `(mcp__plugin_shards_shards__activate in the Claude Code plugin) with ` +
     `agent="${agent}" and mode="switch", adopt the persona it returns, then greet ` +
@@ -1027,7 +1010,6 @@ function startNewChatSession(agent, options = {}) {
   }
 
   // v2 core agents start plain and switch via the activation prompt; only
-  // legacy v1 agents are launched with --agent (see buildClaudeArgs).
   const agentInfo = agent ? listAgents().find((a) => a.name === agent) : null;
 
   const chatSess = new ChatSession({
@@ -2276,7 +2258,7 @@ function createHandler() {
               resumeSessionId, model } = params;
 
       // agent is optional — null/omitted starts a plain session. It must be one
-      // listAgents() offers (v2 core catalog, else legacy .claude/agents).
+      // listAgents() offers (the v2 core catalog).
       if (agent) {
         if (typeof agent !== 'string' || !listAgents().some((a) => a.name === agent)) {
           jsonResponse(res, cors, 404, { error: `Agent "${agent}" not found` });

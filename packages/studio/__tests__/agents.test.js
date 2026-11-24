@@ -72,3 +72,39 @@ describe('Studio agents (v2 core catalog)', () => {
     expect(p).not.toMatch(/\.claude\/commands/);
   });
 });
+
+describe('Studio standalone (no runtime/)', () => {
+  it('lists agents from the bundled agents-catalog.json and reads INDEX.json read-only', () => {
+    const { execFileSync } = require('node:child_process');
+    const pkg = path.dirname(require.resolve('../server.js'));
+    const copy = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-standalone-'));
+    for (const f of fs.readdirSync(pkg)) {
+      if (f.endsWith('.js')) fs.copyFileSync(path.join(pkg, f), path.join(copy, f));
+    }
+    fs.writeFileSync(path.join(copy, 'agents-catalog.json'), JSON.stringify({ version: 1, agents: [
+      { id: 'syn', description: 'Orch', activation: ['switch', 'consult'] },
+      { id: 'researcher', description: 'R', activation: ['consult'] },
+    ] }));
+    const proj = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-standalone-proj-'));
+    fs.mkdirSync(path.join(proj, '.shards', 'sessions'), { recursive: true });
+    fs.mkdirSync(path.join(proj, '.claude', 'agents'), { recursive: true });
+    fs.writeFileSync(path.join(proj, '.claude', 'agents', 'old.md'), '---\ndescription: v1\n---\n');
+    fs.writeFileSync(path.join(proj, '.shards', 'sessions', 'INDEX.json'), JSON.stringify({ version: 1, sessions: [
+      { sessionId: 'a', agent: 'syn', status: 'ended', createdAt: '2026-01-01T00:00:00Z' },
+      { sessionId: 'b', agent: 'syn', status: 'active', createdAt: '2026-02-01T00:00:00Z' },
+    ] }));
+    const script = `
+      const s = require(${JSON.stringify(path.join(copy, 'server.js'))});
+      s.createServer(${JSON.stringify(proj)}, { port: 0 }).then(async (srv) => {
+        const http = require('http');
+        const body = await new Promise((r) => http.get({ host: '127.0.0.1', port: srv.port, path: '/sessions/index', headers: { Authorization: 'Bearer ' + srv.authToken } }, (res) => { let b=''; res.on('data', c => b += c); res.on('end', () => r(b)); }));
+        console.log(JSON.stringify({ agents: s.listAgents().map(a => a.name), index: JSON.parse(body).sessions.map(x => x.sessionId) }));
+        srv.shutdown(); process.exit(0);
+      });`;
+    const out = JSON.parse(execFileSync(process.execPath, ['-e', script], { encoding: 'utf8' }).trim().split('\n').pop());
+    expect(out.agents).toEqual(['syn']);
+    expect(out.index).toEqual(['b', 'a']);
+    fs.rmSync(copy, { recursive: true, force: true });
+    fs.rmSync(proj, { recursive: true, force: true });
+  });
+});

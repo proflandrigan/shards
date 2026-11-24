@@ -29,16 +29,14 @@ describe('buildClaudeArgs', () => {
     expect(flagValue(args, '--permission-mode')).toBe('acceptEdits');
   });
 
-  it('passes --agent for a legacy v1 agent', () => {
+  it('never passes --agent (v1 legacy launch is gone)', () => {
     const args = buildClaudeArgs({ agent: 'data-analyst', agentSource: 'legacy', sessionId: 's1' });
-    expect(flagValue(args, '--agent')).toBe('data-analyst');
+    expect(args).not.toContain('--agent');
   });
 
   it('ChatSession defaults to core (no --agent) when the source is unknown', () => {
     const s = new ChatSession({ agent: 'syn', sessionId: 's2' });
     expect(s.buildArgs()).not.toContain('--agent');
-    const legacy = new ChatSession({ agent: 'syn', agentSource: 'legacy', sessionId: 's2' });
-    expect(flagValue(legacy.buildArgs(), '--agent')).toBe('syn');
   });
 
   it('allows activate under both prefixes and never the human-in-the-loop gate tools', () => {

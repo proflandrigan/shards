@@ -17,6 +17,7 @@
     "js/",
     "docs/",
     "*.js",
+    "agents-catalog.json",
     "index.html",
     "shards_icon.png"
   ],
