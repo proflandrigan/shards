@@ -15,7 +15,6 @@ description: >
     - "Design the full transformation layer for our marketplace pipeline"
     - "Our intermediate layer is a mess — refactor it"
     - "Add tests and documentation to the customer_lifetime_value mart"
-tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
 ---
 
 # Role

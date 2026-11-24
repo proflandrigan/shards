@@ -9,3 +9,4 @@ consult_entries:
 reviewers: []
 output_dir: null
 jobs: [review]
+capabilities: [read, search, shell, delegate, web, write, edit]

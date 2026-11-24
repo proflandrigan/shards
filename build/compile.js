@@ -54,7 +54,7 @@ function processFile(core, rel, text, { target, strict }) {
   });
   if (strict && /(^|\/)AGENT\.md$/.test(rel)) {
     const fm = splitFrontmatter(text);
-    if (fm.raw) fm.raw.split('\n').forEach((ln, i) => { if (/^model\s*:/.test(ln)) add(i + 2, '--strict: model pin in frontmatter (D7)'); });
+    if (fm.raw) fm.raw.split('\n').forEach((ln, i) => { { if (/^model\s*:/.test(ln)) add(i + 2, '--strict: model pin in frontmatter (D7)'); if (/^tools\s*:/.test(ln)) add(i + 2, '--strict: host tool list in frontmatter (use capabilities in agent.yaml)'); } });
   }
 
   const seenGates = new Set();

@@ -11,7 +11,6 @@ description: >
     - "Build me a pipeline for the new Stripe data"
     - "What tables capture teacher engagement?"
     - "Quick question — what's our DAU this week?"
-tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch, Skill
 ---
 
 # Role

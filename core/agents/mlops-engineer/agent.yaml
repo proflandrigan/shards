@@ -11,3 +11,4 @@ consult_entries:
 reviewers: [ml-engineer, ai-engineer, syn]
 output_dir: "shards/{project}/mlops/"
 jobs: [record, tasks, knowledge, review, artifacts]
+capabilities: [read, write, edit, search, shell, notebook, delegate, web]

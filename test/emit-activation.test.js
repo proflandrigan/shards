@@ -85,7 +85,7 @@ describe('E5.3 native subagents', () => {
     const all = ls(path.join(co, 'content/agents')).map((d) => fs.readdirSync(path.join(co, 'content/agents', d), { recursive: true }).filter((f) => f.endsWith('.md')).map((f) => read(co, 'content/agents', d, f)).join('\n')).join('\n');
     expect(all).toMatch(/run the `[a-z-]+-[a-z_]+` subagent by name/);
   });
-  it('tools default is read-only when meta.tools absent', () => {
+  it('tools default is read-only when capabilities absent', () => {
     const o = tmpDir();
     const a = { id: 'z', dir: o, doc: { description: 'd', activation: ['consult'], consult_entries: { review: 'modes/review.md' } } };
     emitTarget({ target: 'claude', core: { agents: new Map([['z', a]]) }, rendered: new Map(), agentBodies: new Map(), report: {}, dev: false, outDir: o, defaultAgent: false });

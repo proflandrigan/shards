@@ -10,3 +10,4 @@ consult_entries:
 reviewers: [researcher, deep-learning-engineer, backend-engineer, data-modeller, syn]
 output_dir: "shards/{project}/"
 jobs: [record, tasks, knowledge, review, artifacts]
+capabilities: [read, write, edit, search, shell, notebook, delegate, web]
