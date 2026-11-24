@@ -127,10 +127,10 @@ then de-dupe.
 |---|---|---|
 | `.sql` | `analytics-engineer` (grain, joins, performance, dbt) | `data-modeller` (entity relationships, conformance) |
 | `.py` | `backend-engineer` (Python structure, FastAPI, Pydantic, performance) | (tag-driven — see below) |
-| `.ipynb` | `data-scientist` *or* `ml-engineer` (code discipline, leakage, splits, features) — picked by tags | `researcher` (statistical methodology) |
+| `.ipynb` | `data-scientist` *or* `ml-engineer` (code discipline, leakage, splits, features) — picked by tags | `researcher` (statistical methodology); `statistician` (claims in notebook outputs, when results are stated) |
 | Config | `mlops-engineer` (deployment, monitoring) | `backend-engineer` (config schemas, secrets handling) |
 | Dashboard | `bi-engineer` | `data-analyst` (metric correctness) |
-| Markdown reports | (tag-driven primary — see report-primary table below) | `researcher` (when `statistical-analysis` or `novel-research` tag) |
+| Markdown reports | (tag-driven primary — see report-primary table below) | `researcher` (method) and `statistician` (claims), when `statistical-analysis` or `novel-research` tag |
 
 **Notebook-primary tiebreaker** (pick the highest-priority match):
 - `dl-model` → `deep-learning-engineer`
@@ -159,8 +159,8 @@ markdown report is in the bucket and Phase 5 needs to route a Researcher fix):
 | `ml-model` | `ml-engineer` → `.py`, `.ipynb` |
 | `llm-ai` | `ai-engineer` → `.py`, `.ipynb`, config |
 | `data-pipeline` | `data-engineer` → `.sql`, `.py` |
-| `statistical-analysis` | `researcher` → `.ipynb`, `.sql`, reports |
-| `novel-research` | `applied-ml-scientist` → `.py`, `.ipynb`; `researcher` → reports |
+| `statistical-analysis` | `researcher` → `.ipynb`, `.sql`, reports; `statistician` → `.ipynb`, reports |
+| `novel-research` | `applied-ml-scientist` → `.py`, `.ipynb`; `researcher`, `statistician` → reports |
 | `dl-model` | `deep-learning-engineer` → `.py`, `.ipynb`, config |
 | `production-service` | `mlops-engineer` → `.py`, config |
 | `dashboard` | (already in baseline) |
@@ -285,6 +285,25 @@ Stay in your statistical lane — sampling, distributions, assumptions, outliers
 power, multiple-testing, independence, group construction. Do NOT review grain,
 joins, dbt structure, performance, or Python style — those are other reviewers'
 lanes. Review only — do not apply any fixes.
+```
+
+For the **Statistician** (if in the panel), follow {{protocol stats_review_routing}}: notebooks, SQL and reports that state, compare or interpret numbers as evidence are claims, so the Statistician reviews the claims and the Researcher keeps the method; call both when Step 2 says so, and say which route you chose in one sentence. Quote the claims verbatim from the artifacts in the brief, with paths to the notebooks, SQL and reports, and pass the same data-modeller context.
+
+{{consult statistician entry=service task="Panel review of claims for <dirname>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
+```
+SERVICE MODE — PANEL REVIEW. Review of statistical and metric claims.
+
+**Target directory:** <target_dir>
+**Content tags declared by user:** <tag list>
+**Claims to review (verbatim, with file and cell/section):** <list>
+**Notebooks (.ipynb) holding the evidence:** <list, or "none">
+**Analysis SQL (.sql) holding the evidence:** <list, or "none">
+**Reports & specs holding the claims:** <list, or "none">
+
+Return your usual structured review. Review only — do not apply any fixes.
 ```
 
 ### Append findings as each consult returns

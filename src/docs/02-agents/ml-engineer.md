@@ -84,5 +84,6 @@ Reference material is reached through the `knowledge` job; see [Knowledge](../03
 - [MLOps Engineer](mlops-engineer.md)
 - [Applied ML Scientist](applied-ml-scientist.md)
 - [Deep Learning Engineer](deep-learning-engineer.md)
+- [Researcher](researcher.md) and [Statistician](statistician.md): statistical method review and claim review
 - [Autonomous Research](../03-protocols/autonomous-research.md)
 - Source: `core/agents/ml-engineer/AGENT.md`, `core/agents/ml-engineer/agent.yaml`

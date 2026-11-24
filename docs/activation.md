@@ -35,7 +35,7 @@ Entries abbreviated with a leading `-` are `<id>` plus the suffix (e.g. `analyti
 
 ## Router
 
-Syn is the router: the "Routing Reference" in `core/agents/syn/AGENT.md` maps intent to a specialist, then Syn calls `activate(agent=<id>, mode="switch")` rather than spawning it. `scripts/eval/router-eval.js` runs `test/router/prompts.json` through headless `claude -p` and scores the runtime tool calls (`--dry-run` never calls claude). Criterion 18: at least 18/20 correct routes, three consecutive runs. OPEN: needs the live budget.
+Syn is the router: the "Routing Reference" in `core/agents/syn/AGENT.md` maps intent to a specialist, then Syn calls `activate(agent=<id>, mode="switch")` rather than spawning it. `scripts/eval/router-eval.js` runs `test/router/prompts.json` through headless `claude -p` and scores the runtime tool calls (`--dry-run` never calls claude). Criterion 18: at least 20/22 correct routes, three consecutive runs. OPEN: needs the live budget.
 
 ## Return and suspend
 
@@ -60,7 +60,7 @@ Switching is by skill takeover (`$shards:<id>` loads the thin skill, which calls
 
 - switch golden check: at least 9/10, three runs
 - consult verdict returns: at least 9/10, three runs
-- router: at least 18/20, three runs
+- router: at least 20/22, three runs
 - default agent: 2 live tests per host
 
 ## Live findings (E5)
@@ -72,4 +72,4 @@ Five live `claude -p` runs against a `--dev --default-agent` build (Claude Code,
 4. Router sample "bring in the data modeller" -> `activate`. PASS.
 5. Router sample "just ask the researcher whether a t-test works..." -> `Agent` consult, no switch. PASS.
 
-OPEN (live budget): switch >= 9/10 x3 (`scripts/eval/switch-eval.js`), consult verdict >= 9/10, router 18/20 x3 (`scripts/eval/router-eval.js`), 2 live default-agent tests per host. OPEN (external): Codex model behaviour (skill takeover, `-p shards-<id>` making the model call `activate`) and the `max_depth` defaults; the profile files, the `max_depth`/`max_threads` keys and the missing default-profile key were checked on Codex 0.169.0 (`docs/compat.md` CX-4, CX-7).
+OPEN (live budget): switch >= 9/10 x3 (`scripts/eval/switch-eval.js`), consult verdict >= 9/10, router 20/22 x3 (`scripts/eval/router-eval.js`), 2 live default-agent tests per host. OPEN (external): Codex model behaviour (skill takeover, `-p shards-<id>` making the model call `activate`) and the `max_depth` defaults; the profile files, the `max_depth`/`max_threads` keys and the missing default-profile key were checked on Codex 0.169.0 (`docs/compat.md` CX-4, CX-7).
