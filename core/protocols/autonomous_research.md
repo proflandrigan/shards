@@ -1254,8 +1254,8 @@ Read both the summary and recommendations back to the user.
 
 **The Phase 3 gate is owned by the per-agent `research.md` file**, not by this
 shared protocol. Each agent requests its own Phase 3 gate with its
-agent-specific ID (e.g., `ml-engineer-research-phase3`
-for ML Engineer, `ai-engineer-research-phase3` for AI
+agent-specific ID (e.g., `ml-engineer-research-phase-3`
+for ML Engineer, `ai-engineer-research-phase-3` for AI
 Engineer, etc.). Do **not** request a shared-protocol Phase 3 gate here — doing
 so would duplicate the gate or orphan the ID namespace.
 

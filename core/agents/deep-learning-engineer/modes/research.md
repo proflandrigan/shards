@@ -138,7 +138,7 @@ Append to `project-specs.md`:
 - **Or:** No relevant findings
 ```
 
-{{gate kind=execute phase=0 id=deep-learning-engineer-research-phase0}}
+{{gate kind=execute phase=0 id=deep-learning-engineer-research-phase-0}}
 
 ---
 
@@ -200,7 +200,7 @@ confirm it yourself. Activation is optional:
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
-{{gate kind=execute phase=1 id=deep-learning-engineer-research-phase1}}
+{{gate kind=execute phase=1 id=deep-learning-engineer-research-phase-1}}
 
 ---
 
@@ -348,7 +348,7 @@ Ask the user:
 - Do you want to run another budget?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=deep-learning-engineer id=deep-learning-engineer-research-phase3}}
+{{gate kind=final phase=3 validates=deep-learning-engineer id=deep-learning-engineer-research-phase-3}}
 
 ### If adopting
 

@@ -154,6 +154,11 @@ describe('macro errors', () => {
   it('duplicate gate id', () => {
     expect(errs('{{gate kind=phase}}\n{{gate kind=phase}}')[0]).toMatch(/duplicate gate id/);
   });
+  it('explicit gate id must follow <agent>[-<mode>]-phase-<N>', () => {
+    expect(errs('{{gate kind=execute phase=1 id=alpha-research-phase1}}')[0]).toMatch(/does not follow/);
+    expect(errs('{{gate kind=execute phase=1 id=alpha-research-phase-1}}')).toEqual([]);
+    expect(errs('{{gate kind=phase phase=1 id=alpha-pr-review-phase-0.2}}')).toEqual([]);
+  });
   it('broken link with file:line, ignoring fences and urls', () => {
     const e = errs('ok\n[x](missing.md)\n[u](https://a.b/c)\n```\n[y](nope.md)\n```\n');
     expect(e).toHaveLength(1);

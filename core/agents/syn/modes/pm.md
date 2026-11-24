@@ -53,7 +53,7 @@ from the template at `templates/project-plan.md`. Fill in:
 - `{{PROJECT_SCOPE}}`: full project description from intake
 - Leave other placeholders for Phase 1
 
-{{gate kind=phase phase=0 id=syn-pm-phase0}}
+{{gate kind=phase phase=0 id=syn-pm-phase-0}}
 
 ---
 
@@ -142,7 +142,7 @@ Gate readback (pass this as the `summary`):
 Present the full plan to the user — workstreams, dependency graph, execution
 groups, and specialist feasibility feedback. Do not proceed until the user explicitly confirms.
 
-{{gate kind=phase phase=1 id=syn-pm-phase1}}
+{{gate kind=phase phase=1 id=syn-pm-phase-1}}
 
 ---
 
@@ -372,7 +372,7 @@ After all execution groups complete:
    d. Present all candidates to the user in a single numbered list (new
       items + contradiction updates), grouped by category. Summaries only.
 
-   e. {{gate kind=final phase=5 id=syn-pm-phase5}}
+   e. {{gate kind=final phase=5 id=syn-pm-phase-5}}
       This is the one gate in the write-back flow. The user may edit,
       remove, or add candidates.
 

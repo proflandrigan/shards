@@ -99,7 +99,7 @@ AND update the corresponding field under `context` in the state JSON.
 
 After all context is gathered, read the full Context section back to the user.
 
-{{gate kind=phase phase=0 id=syn-brainstorm-phase0}}
+{{gate kind=phase phase=0 id=syn-brainstorm-phase-0}}
 
 ---
 

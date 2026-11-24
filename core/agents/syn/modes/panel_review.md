@@ -81,7 +81,7 @@ using the `templates/panel-report.md` template, filling Phase 0 metadata:
 
 Read this section back to the user.
 
-{{gate kind=phase phase=0 id=syn-panel-review-phase0}}
+{{gate kind=phase phase=0 id=syn-panel-review-phase-0}}
 
 ---
 
@@ -205,7 +205,7 @@ Read this section back to the user. If any bucket is `(needs second lens?)`,
 explicitly ask: *"This bucket only has one reviewer. Add a secondary, or proceed
 with one?"*
 
-{{gate kind=phase phase=1 id=syn-panel-review-phase1}}
+{{gate kind=phase phase=1 id=syn-panel-review-phase-1}}
 
 ---
 
@@ -477,7 +477,7 @@ user to assign a specialist (or skip them). Then ask:
 "Apply fixes in this order? (y to execute, n to stop, or list specific fix IDs
 to apply only those)"
 
-{{gate kind=phase phase=4 id=syn-panel-review-phase4}}
+{{gate kind=phase phase=4 id=syn-panel-review-phase-4}}
 
 ---
 

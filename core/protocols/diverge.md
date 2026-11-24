@@ -38,7 +38,7 @@ DIVERGE is appropriate when ALL of the following are true:
 **Gate ID namespace for AR-initiated DIVERGE:**
 Use the ID prefix `diverge-ar-<project>`
 to avoid collision with planning-phase DIVERGE gates (which use
-`diverge-phase0`). See Section B.
+`diverge-phase-0`). See Section B.
 
 ---
 
@@ -72,7 +72,7 @@ so you can pick the winner.
 **Gate to emit:**
 
 - **Planning-phase DIVERGE:** emit with ID
-  `diverge-phase0`.
+  `diverge-phase-0`.
 - **AR-session-start DIVERGE:** emit with ID
   `diverge-ar-<project>` (substitute
   the project slug). This is required to avoid collision with planning-phase
@@ -293,7 +293,7 @@ instructions to produce a leaderboard and comparison.
 **Gate to emit (convergence/arbitration):**
 
 - **Planning-phase DIVERGE:** emit with ID
-  `diverge-phase0-2`.
+  `diverge-phase-0.2`.
 - **AR-session-start DIVERGE:** emit with ID
   `diverge-ar-<project>-converge` to
   avoid collision with the planning-phase convergence ID.
