@@ -1,6 +1,6 @@
-// Validation section parser + checker for the gate hook.
+// Validation section parser + checker used by gate_request `validates=`.
 // Implements core/protocols/validation.md
-// and runtime/lib/VALIDATION_SPEC.md.
+// (historical v1 design spec: docs/history/VALIDATION_SPEC.md).
 'use strict';
 
 const fs = require('fs');
@@ -278,40 +278,9 @@ const ERROR_DESCRIPTIONS = {
   SUMMARY_TOO_SHORT: 'Summary has fewer than 20 non-whitespace characters',
 };
 
-function describe(err) {
-  const base = ERROR_DESCRIPTIONS[err.code] || err.code;
-  if (err.row) return `row ${err.row}: ${base}${err.got ? ` (got: "${err.got}")` : ''}`;
-  return base;
-}
-
-function formatValidationError(checklist, gate, errors) {
-  const lines = [
-    '::GATE-BLOCK:: Validation evidence is missing or incomplete.',
-    '',
-    `Required checklist: ${checklist}/validation_checklist.md`,
-    `Gate: ${gate.id} (phase ${gate.phase || '?'}, kind ${gate.kind || '?'})`,
-    '',
-    'Problems:',
-    ...errors.map(e => `  - ${e.code}: ${describe(e)}`),
-    '',
-    'What to do:',
-    '  1. Re-read the validation protocol (protocols/validation.md)',
-    '     for the required `## Validation` section schema.',
-    `  2. Re-read .claude/agents/specific_instructions/${checklist}/validation_checklist.md`,
-    '     for the domain-specific checks.',
-    '  3. Run the checks, record observed values in the Evidence table, and',
-    '     re-emit the gate fence.',
-    '',
-    'If this phase should not require validation, remove the `validates=...`',
-    'attribute from the gate fence.',
-  ];
-  return lines.join('\n');
-}
-
 module.exports = {
   parseValidationSection,
   checkValidation,
-  formatValidationError,
   readSpecs,
   // Exported for tests
   _internals: {
