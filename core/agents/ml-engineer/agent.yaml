@@ -11,3 +11,4 @@ consult_entries:
 reviewers: [data-modeller, data-engineer, data-scientist, applied-ml-scientist, deep-learning-engineer, data-analyst, researcher, statistician, academic, mlops-engineer, backend-engineer, syn]
 output_dir: "shards/{project}/"
 jobs: [record, tasks, knowledge, review, artifacts]
+capabilities: [read, write, edit, search, shell, notebook, delegate, web]

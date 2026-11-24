@@ -170,6 +170,6 @@ codex  : .codex/agents/<id>.toml  .codex/shards-<id>.config.toml  .codex/config.
 skills : skills/<id>/SKILL.md  skills/agents/SKILL.md
 ```
 
-All content paths in rendered text are relative to the package root (`<out>`); claude prefixes `${CLAUDE_PLUGIN_ROOT}/`. No `model` key is ever emitted (D7). Agent frontmatter keeps `name`, `description` (from agent.yaml) and, for claude, `tools` from the original AGENT.md (minus `Task`: consults cannot nest; TODO(E5.3)).
+All content paths in rendered text are relative to the package root (`<out>`); claude prefixes `${CLAUDE_PLUGIN_ROOT}/`. No `model` key is ever emitted (D7). Agent frontmatter keeps `name`, `description` (from agent.yaml) and, for claude, `tools`, mapped by `build/host-tools.js` from the host-neutral `capabilities` list in agent.yaml (`read`, `write`, `edit`, `search`, `shell`, `notebook`, `delegate`, `web`, `skill`; absent means read-only), minus `delegate`/`Task` (consults cannot nest; TODO(E5.3)). AGENT.md frontmatter must not carry a `tools:` line (`--strict` and `npm run validate:agents` reject it).
 
 `skills/agents/SKILL.md` is a plain skill (`/shards:agents` on Claude, `$agents` on Codex) that calls the runtime `list_agents` tool and prints a table; emitted in every build, and `agents` is not a valid agent id. `--dev` writes absolute paths to this repo's `runtime/server.js` and `hooks/` (edits apply without a rebuild) and a `.shards-dev` marker that `shards uninstall-dev` requires before removing a directory.

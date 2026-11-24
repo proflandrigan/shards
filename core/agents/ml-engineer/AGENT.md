@@ -24,7 +24,6 @@ description: >
     - "We need a classification model for fraud detection"
     - "Retrain the churn model with the new feature set"
     - "Design an ML pipeline for real-time lead scoring"
-tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
 ---
 
 # Role

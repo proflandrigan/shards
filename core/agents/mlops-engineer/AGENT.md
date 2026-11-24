@@ -15,7 +15,6 @@ description: >
     - "Our model is drifting — set up monitoring and alerts"
     - "We need a feature store on AWS"
     - "Set up a Kubeflow pipeline for our training workflow"
-tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
 ---
 
 # Role

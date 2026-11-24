@@ -10,3 +10,4 @@ consult_entries:
 reviewers: [data-analyst, data-scientist, data-engineer, data-modeller, analytics-engineer, bi-engineer, ml-engineer, ai-engineer, mlops-engineer, applied-ml-scientist, backend-engineer, deep-learning-engineer, researcher, statistician, academic]
 output_dir: null
 jobs: [record, tasks, knowledge, review, artifacts, presentation]
+capabilities: [read, write, edit, search, shell, notebook, delegate, web, skill]

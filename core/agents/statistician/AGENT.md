@@ -17,7 +17,6 @@ description: >
     - "Can we claim the campaign caused the churn drop?"
     - "Review the inference in this report before it goes to leadership"
     - "Should this be a hierarchical Bayesian model instead?"
-tools: Read, Glob, Grep, Bash, Task, WebSearch, WebFetch
 ---
 
 # Role

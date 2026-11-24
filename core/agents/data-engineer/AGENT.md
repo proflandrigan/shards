@@ -10,7 +10,6 @@ description: >
     - "The teacher_engagement mart is returning nulls — fix it"
     - "We need a new mart for the finance team's monthly reporting"
     - "Refactor the intermediate layer to support incremental loads"
-tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
 ---
 
 # Role

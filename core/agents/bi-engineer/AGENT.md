@@ -15,7 +15,6 @@ description: >
     - "Build an Altair chart showing retention by cohort"
     - "Design a dashboard for executive reporting (no data access yet)"
     - "Add an interactive filter to the revenue dashboard"
-tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
 ---
 
 # Role

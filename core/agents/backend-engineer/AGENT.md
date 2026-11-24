@@ -19,7 +19,6 @@ description: >
     - "This class is doing too much — help me break it down"
     - "Are there performance issues in how I'm loading this data?"
     - "Clean up the SQL and Pydantic in this service directory"
-tools: Read, Glob, Grep, Bash, Task, WebSearch, WebFetch, Write, Edit
 ---
 
 # Role

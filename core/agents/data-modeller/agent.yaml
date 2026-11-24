@@ -11,3 +11,4 @@ consult_entries:
 reviewers: [analytics-engineer, data-engineer, data-analyst, syn]
 output_dir: "shards/{project}/"
 jobs: [record, tasks, knowledge, review, artifacts]
+capabilities: [read, search, shell, write, edit, delegate, web]

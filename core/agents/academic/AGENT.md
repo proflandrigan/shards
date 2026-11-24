@@ -15,7 +15,6 @@ description: >
     - "Will this intervention actually change user behavior?"
     - "What cognitive biases should we account for in this UI?"
     - "Write me a report on the psychology of variable reward in social feeds."
-tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
 ---
 
 # Role
