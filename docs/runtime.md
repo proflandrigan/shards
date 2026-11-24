@@ -43,7 +43,7 @@ The root is resolved to an absolute path (`resolveRoot` in `server.js`).
 | `runtime/state/store.js` | `StateStore`: reads and locked, atomic writes of the state tree. Also `provisionalSessionKey()` and `sanitizeSessionKey()`. |
 | `runtime/state/append.js` | `lockedAppend(file, line)`: appends one line under a cross-process lock. Building block for JSONL logs (E2.9). Shares `LOCK_OPTS` with the store. |
 | `runtime/header.js` | Builds the one-line state header and derives its fields from the store. |
-| `runtime/reground.js` | Re-ground block builder (section 4). Used by `activate` (switch) and `load_phase`. `compact` and `version_change` return empty text until E11.7. |
+| `runtime/reground.js` | Re-ground block builder (section 4). Used by `activate` (switch) and `load_phase`. `compact` and `resume` return the block when the session has content; `version_change` returns empty text until E11.7. |
 | `runtime/tools/load_phase.js` | `load_phase`. Serves a phase file for the active agent, refused until the previous gate is confirmed. See `docs/gates.md` section 9. |
 | `runtime/config/index.js` | `shards.config.yaml`: YAML parse, ajv schema validation (`core/schema/shards-config.schema.json`), model-name guard, defaults merge, first-use creation, `resolveJob`. `runtime/config/bindings.js` is a separate module not covered here. |
 | `runtime/lib/` | `validation.js`, `auto-allowlist.js`, `sql-guard.js`. Moved from the legacy gate hook (E2.5). See section 7. |
@@ -126,7 +126,7 @@ Fields:
 | `agent` | `agent` of the top frame in `frames.json`, or `-` |
 | `ph` | `phase` of the top frame, or `-` |
 | `gate` | id of a pending gate in `gates.json` that belongs to the top frame, or `-` |
-| `q` | number of queued items. Always `0` until E6.8. The store has no queue, so the header never sets it. |
+| `q` | number of queued external copies in `copies.json` (`runtime/copies`, written by `copy_report`; see `docs/config.md`). `0` when none. ` stuck=N` is appended only when N copies are stuck after 5 attempts. |
 
 Rules:
 
@@ -136,7 +136,7 @@ Rules:
 - The header is computed after the handler runs, so it reflects any state change the handler made.
 - The header is present on success, on unknown tools, on argument validation failures, and on handler exceptions. Those responses set `isError: true`.
 
-Re-ground (`runtime/reground.js`) has four event names: `activate`, `load_phase`, `compact`, `version_change`. `activate` (switch) and `load_phase` return the full block: `--- Re-ground ---`, the agent id and persona summary, current phase and track, project, confirmed gates with commit SHAs, and pending or suspended gates. Layout is in `docs/gates.md` section 9.5. `regroundHook` returns empty text for `compact` and `version_change`, which are not wired. `TODO(E11.7)`: trimmed compaction re-ground and once-per-version re-ground. The copy queue is not included (`TODO(E6.8)`).
+Re-ground (`runtime/reground.js`) has four event names: `activate`, `load_phase`, `compact`, `version_change`. `activate` (switch) and `load_phase` return the full block: `--- Re-ground ---`, the agent id and persona summary, current phase and track, project, confirmed gates with commit SHAs, and pending or suspended gates. Layout is in `docs/gates.md` section 9.5. `regroundHook` also returns the full block for `compact` and `resume` when the session has content, and empty text for `version_change`, which is not wired. `TODO(E11.7)`: trimmed compaction re-ground and once-per-version re-ground. The block carries a fixed `Copy queue: (empty)` line; it does not list real queue contents (the queue itself shipped in E6.8, see the `q` header field).
 
 ## 5. How to add a tool
 
@@ -251,7 +251,42 @@ Every tool response starts with the state header (section 4). Session-bound tool
 | `active` | none | `{stack, top, depth}` |
 | `load_phase` | `agent`, `n`, `track?` (`quick`\|`deep`) | `{text}`: rendered phase body plus the re-ground block. Refused until the previous phase's gate is confirmed; the rules and refusal text are in `docs/gates.md` section 9. Sets the top frame's `phase` and `track`. |
 
-Other registered tools: `gate_request` (`docs/gates.md` section 5) and `artifact_emit` (section 3). `shards_status` and `list_agents` are listed in section 2.
+**Complete tool index** (every file in `runtime/tools/`):
+
+| Tool | Purpose | Documented in |
+|------|---------|---------------|
+| `list_agents` | List available agents with role, activation modes, consult entries and output dir. | this section |
+| `activate` | Activate an agent (switch pushes a frame; consult is one-shot). | [`activation.md`](activation.md) |
+| `return` | Pop one frame (or up to `to`); refused while a popped frame owns a pending gate. | [`activation.md`](activation.md) |
+| `active` | Show the agent stack. | this section |
+| `load_phase` | Serve one phase, refused until the previous gate is confirmed. | [`gates.md`](gates.md) |
+| `gate_request` | Request a human gate at the end of a phase. | [`gates.md`](gates.md) |
+| `gate_advance` | Confirm a pending gate after the user approved the host permission prompt (tier 2). | [`gates.md`](gates.md) |
+| `gate_confirm` | Relay the user's verbatim chat reply to a pending gate (tier 3). | [`gates.md`](gates.md) |
+| `gate_force_close` | Force-close a stuck gate after a supervised permission prompt; not Codex. | [`gates.md`](gates.md) |
+| `gate_suspend` | Suspend a pending gate when the user asks, so the frame can return. | [`gates.md`](gates.md) |
+| `gate_resume` | Resume a suspended gate. | [`gates.md`](gates.md) |
+| `gates_open` | List pending and suspended gates. | [`gates.md`](gates.md) |
+| `copy_report` | Report the result of one external copy of a confirmed gate; failures queue for retry (max 5). | [`config.md`](config.md) |
+| `artifact_emit` | Append a UI artifact event to `.shards/events.jsonl`. | [`artifact-contract.md`](artifact-contract.md) |
+| `auto_verify_start` | Open a bounded auto-verify block that auto-approves read-only verification calls. | [`core/protocols/auto_verify_mode.md`](../core/protocols/auto_verify_mode.md) |
+| `auto_verify_end` | End the active auto-verify block. | [`core/protocols/auto_verify_mode.md`](../core/protocols/auto_verify_mode.md) |
+| `fanout_start` | Open a fan-out lease over non-overlapping worker slices; returns one card per slice. | [`delegation.md`](delegation.md) |
+| `fanout_claim` | Fan-out worker: claim a slice and get its contract. | [`delegation.md`](delegation.md) |
+| `fanout_collect` | Merge worker verdicts (worst wins) and close the lease. | [`delegation.md`](delegation.md) |
+| `tasks_set` | Register and validate the task manifest (`tasks.yaml`). | [`delegation.md`](delegation.md) |
+| `task_dispatch` | Dispatch ready tasks and open leases; returns task cards. | [`delegation.md`](delegation.md) |
+| `task_report` | Record a worker's task-result (done becomes reported). | [`delegation.md`](delegation.md) |
+| `task_verify` | Record the lead's independent verification of a reported task. | [`delegation.md`](delegation.md) |
+| `task_status` | Show manifest state, the ready list and counts. | [`delegation.md`](delegation.md) |
+| `sessions_list` | List recorded sessions, newest first. | [`sessions.md`](sessions.md) |
+| `sessions_resume` | Look up a session and return per-host resume hints. | [`sessions.md`](sessions.md) |
+| `sessions_end` | End a session cleanly; refused while gates are pending or suspended. | [`sessions.md`](sessions.md) |
+| `shards_status` | Report runtime status: root, session, state version, config and bindings, active agent. | section 2 |
+| `notebook_start` | Start a persistent Jupyter kernel for a notebook. | [`notebook.md`](notebook.md) |
+| `notebook_exec` | Execute one cell against the live kernel. | [`notebook.md`](notebook.md) |
+| `notebook_run_all` | Restart the kernel and run every code cell, stopping at the first failure. | [`notebook.md`](notebook.md) |
+| `notebook_stop` | Shut down the notebook kernel. | [`notebook.md`](notebook.md) |
 
 - `agent` must list the requested mode in its `activation` field.
 - Switch with `project` substitutes it into the agent's `output_dir`, refuses paths that escape the root, and creates the directory if missing. Without `project` it returns `output_dir_template` instead.

@@ -1,6 +1,6 @@
 # Test infrastructure: external dependencies
 
-**Status: nothing in this file is provisioned.** Every item below is `OPEN (external)`. This file lists what the done-when criteria in `shards-agent-suite-plan.md` need, as required by task E0.7. It does not record any account that exists, and it holds no credentials or secrets.
+**Status: nothing in this file is provisioned.** Every item below is `OPEN (external)`. This file lists what the done-when criteria in `docs/history/shards-agent-suite-plan.md` need, as required by task E0.7. It does not record any account that exists, and it holds no credentials or secrets.
 
 - Owner for every row: `proflandrigan` (`TODO(owner: proflandrigan)`).
 - Renewal date for every row: `TBD` (`TODO(owner: proflandrigan)`).

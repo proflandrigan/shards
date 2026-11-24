@@ -5,7 +5,7 @@
 //   {session_id, source, cwd, ts, pid, ppid_chain:[parent, grandparent, ...]}
 // A handshake matches when our parent (the host) is the hook's parent or grandparent; among
 // matches the newest ts wins (a /clear re-keys the session under the same host process). Docs: docs/compat.md, and
-// docs/gate-audit-2026-06.md Bug 1 (cross-session gate interference).
+// docs/history/gate-audit-2026-06.md Bug 1 (cross-session gate interference).
 const fs = require('fs');
 const path = require('path');
 const { toSessionKey, detectHost, argvHost, HOSTS } = require('../../hooks/lib/host');

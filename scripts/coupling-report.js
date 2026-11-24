@@ -36,7 +36,7 @@
  *                      one pass, which delegated builds replace with per-task
  *                      components.
  *
- * COUNT VS AUDIT (audit at 8e24069; see shards-agent-suite-plan.md). The
+ * COUNT VS AUDIT (audit at 8e24069; see docs/history/shards-agent-suite-plan.md). The
  * "actual" column is the run on `--roots src` at the time of writing; the plan
  * says E0.2 sets the exact figures, so differences below are definitional:
  * Default scope (--roots src) is the WHOLE src tree including src/docs, src/ui

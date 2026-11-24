@@ -67,7 +67,7 @@ Switching is by skill takeover (`$shards:<id>` loads the thin skill, which calls
 
 Five live `claude -p` runs against a `--dev --default-agent` build (Claude Code, dev plugin):
 1. `/shards:data-modeller` headless: the thin skill expands, `activate(agent=data-modeller, mode=switch)` is called, and the header shows `agent=data-modeller`. PASS (1 sample). Gotcha: the skill then reads `content/agents/<id>/AGENT.md`, which needs Read permission, so headless runs must allow Read.
-2. Consult: the subagent is addressable as `shards:researcher-service`; it returned a verdict (CONDITIONAL, with its own scale) without nesting. PASS (1 sample). The verdict vocabulary is the researcher's own, not APPROVED/NEEDS REVISION/BLOCKED: a content follow-up for the verdict protocol.
+2. Consult: the subagent is addressable as `shards:researcher-service`; it returned a verdict (CONDITIONAL, with its own scale) without nesting. PASS (1 sample). The verdict vocabulary was the researcher's own, not APPROVED/NEEDS REVISION/BLOCKED. Resolved: `core/agents/researcher/modes/service.md` now uses APPROVED / NEEDS REVISION / BLOCKED.
 3. Plugin `settings.json` `{"agent":"shards:syn"}` WORKS (CC-3), but Claude Code prints "Plugin shards set this session's agent. That will stop working in a future release: set `agent` in your own settings or pass --agent." Treat the opt-in as transitional; the durable path is `claude --agent shards:syn` or a project `.claude/settings.json` `agent` key.
 4. Router sample "bring in the data modeller" -> `activate`. PASS.
 5. Router sample "just ask the researcher whether a t-test works..." -> `Agent` consult, no switch. PASS.

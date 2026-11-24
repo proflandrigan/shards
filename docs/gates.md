@@ -277,7 +277,7 @@ Exit codes: 0 success, 1 gate or confirm error, 2 usage error.
 | Replay at session end | Not implemented. `shards doctor` exists (`docs/doctor.md`); `doctor --fix` replays stuck records. | `TODO(owner: proflandrigan)` |
 | Recovery for `stuck` records and `commit_error` gaps | Partly: `doctor --fix` force-replays stuck records. `commit_error` has no recovery. | `TODO(owner: proflandrigan)` |
 | Push | Not implemented | Section 6.9 |
-| `.shards/` in target project `.gitignore` | OPEN for the legacy installer (`tools/install.js`), which does not add `.shards/`. `shards doctor` reports it (`git.ignore`) and `doctor --fix` appends it. The repo root `.gitignore` already ignores `.shards/`, for the shards repo only. | OPEN (installer) |
+| `.shards/` in target project `.gitignore` | Not written by the v2 install paths (the plugin and `shards install --project`). `shards doctor` reports it (`git.ignore`) and `doctor --fix` appends it. The repo root `.gitignore` already ignores `.shards/`, for the shards repo only. The v1 installer (`tools/install.js`) no longer installs by default (`docs/release.md`). | OPEN (doctor reports it) |
 
 ## 9. `load_phase` gate enforcement (E2.3)
 

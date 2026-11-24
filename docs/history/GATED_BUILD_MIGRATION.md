@@ -1,6 +1,6 @@
 # Gated Build Workflow Extraction — Migration Plan
 
-> **Legacy (v1) plan, superseded.** This plan targets the v1 layout (`src/agents/{agent-slug}-build.md`, installed into `.claude/agents/`). In v2 the build phases live in `core/agents/<id>/phases*/phase-<N>.md`, served one at a time by `load_phase` after each gate (see [`CLAUDE.md`](CLAUDE.md) and [`core/INVENTORY.md`](core/INVENTORY.md)). Kept for reference only.
+> **Legacy (v1) plan, superseded.** This plan targets the v1 layout (`src/agents/{agent-slug}-build.md`, installed into `.claude/agents/`). In v2 the build phases live in `core/agents/<id>/phases*/phase-<N>.md`, served one at a time by `load_phase` after each gate (see [`CLAUDE.md`](../../CLAUDE.md) and [`core/INVENTORY.md`](../../core/INVENTORY.md)). Kept for reference only.
 
 ## Context
 
