@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://shards.dev/schema/artifacts/model-card.schema.json",
+  "$comment": "Describes only the artifact_emit meta. The full model-card.json content is validated by core/templates/model-card-schema.json.",
   "title": "artifact_emit meta: model-card",
   "description": "meta for artifact type 'model-card'. path: project-relative model-card.json (Mitchell et al. layout: modelDetails, intendedUse, factors, metrics, evaluationData, trainingData, quantitativeAnalyses, ethicalConsiderations, caveatsAndRecommendations, evalSummary).",
   "type": "object",

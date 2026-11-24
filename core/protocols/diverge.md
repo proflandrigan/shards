@@ -174,37 +174,8 @@ confirmation. Work efficiently and produce results.
 
 ## Branch Report Template
 
-```markdown
-# Branch Report: <branch-slug>
-
-- **Specialist:** <agent name>
-- **Approach:** <one-line summary>
-- **Branch directory:** <path>
-- **Date:** <date>
-
-## Approach Description
-<2-3 paragraphs: what was done and why this approach was chosen>
-
-## Implementation
-| File | Description |
-|------|-------------|
-| `<filename>` | <what it does> |
-
-## Metrics
-| Metric | Value | Notes |
-|--------|-------|-------|
-| **<primary metric>** | **<value>** | <context> |
-| <secondary metric> | <value> | <context> |
-
-## Strengths
-<bulleted list — what went well, what this approach excels at>
-
-## Weaknesses
-<bulleted list — limitations, failure modes, concerns>
-
-## Artifacts Summary
-<list of all files in the branch directory with paths>
-```
+Write the report using {{template branch-report}}. Keep every section; the
+arbiter parses them. Add one Metrics row per secondary metric.
 ````
 
 After spawning all branch subagents, wait for all of them to complete before proceeding.

@@ -26,21 +26,22 @@
 | Metric | Value | Notes |
 |--------|-------|-------|
 | **{{PRIMARY_METRIC}}** | **{{VALUE}}** | {{NOTES}} |
+| {{SECONDARY_METRIC}} | {{VALUE}} | {{NOTES}} |
 
 ---
 
 ## Strengths
 
-{{STRENGTHS}}
+{{STRENGTHS}} <!-- bulleted list: what went well, what this approach excels at -->
 
 ---
 
 ## Weaknesses
 
-{{WEAKNESSES}}
+{{WEAKNESSES}} <!-- bulleted list: limitations, failure modes, concerns -->
 
 ---
 
 ## Artifacts Summary
 
-{{ARTIFACTS_LIST}}
+{{ARTIFACTS_LIST}} <!-- all files in the branch directory, with paths -->
