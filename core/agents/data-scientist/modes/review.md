@@ -137,25 +137,23 @@ Write `reviews/<system_name>/data-scientist-review.md` using this template exact
 - {{STRENGTHS}}
 
 ### Weaknesses / Risks
-- [High|Medium|Low] `{{FILE_LINE_OR_CELL}}` — {{WEAKNESS}} — Fix | Caveat
+- [High|Medium|Low] `{{FILE_LINE_OR_CELL}}` — {{WEAKNESS}} (fix | caveat)
 
 ### Key Concerns
-- [High|Medium|Low] `{{FILE_LINE_OR_CELL}}` — {{CONCERN}} — Fix | Caveat
+- [High|Medium|Low] `{{FILE_LINE_OR_CELL}}` — {{CONCERN}} (fix | caveat)
 
 ## Researcher Input
 {{RESEARCHER_FINDINGS}}
 
 ## Statistician Input
-{{STATISTICIAN_FINDINGS}}
+{{STATISTICIAN_FINDINGS — or "Not consulted (no claims)"}}
 
 ## ML Engineer Input
 {{ML_ENGINEER_FINDINGS — or "Not consulted" if no predictive model was in scope}}
 
 ## Recommendations
 
-| # | Severity | Location | Recommendation | Fix / Caveat |
-|---|----------|----------|----------------|--------------|
-| 1 | High / Medium / Low | `{{FILE_LINE_OR_CELL}}` | {{RECOMMENDATION}} | Fix / Caveat |
+1. [High|Medium|Low] `{{FILE_LINE_OR_CELL}}` — {{RECOMMENDATION_1}} (fix | caveat)
 
 ## Verdict
 
@@ -166,8 +164,8 @@ _APPROVED = the work stands as written | NEEDS REVISION = issues to record or fi
 
 Severities are defined under the Assessment Checklist. **Verdict rule:** any
 unresolved High finding that makes the work unsafe to build on means BLOCKED;
-otherwise NEEDS REVISION when any finding exists; APPROVED only when there are no
-fix-type findings.
+otherwise any finding (fix or caveat) means NEEDS REVISION;
+APPROVED only when there are no findings.
 
 ---
 

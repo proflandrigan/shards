@@ -47,6 +47,7 @@ Declares no reviewers, because consults never nest. In the phase files:
 - [Data Scientist](data-scientist.md): phase 7 findings review; optionally phase 3; experiment mode; review and advise modes.
 - [ML Engineer](ml-engineer.md): phase 6 evaluation-results claim review; optionally phase 4.
 - [AI Engineer](ai-engineer.md): phase 7 Review 3b; optionally phase 4.
+- [Applied ML Scientist](applied-ml-scientist.md), [Deep Learning Engineer](deep-learning-engineer.md), [ML Engineer](ml-engineer.md), [AI Engineer](ai-engineer.md): review mode, when the work under review states claims on results.
 - [Syn](syn.md): brainstorm consults it through the `advise` entry; PM, fixer and free-form modes route claim questions to it.
 
 ## Output directory

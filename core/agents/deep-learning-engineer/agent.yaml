@@ -1,6 +1,6 @@
 id: deep-learning-engineer
 display_name: "Deep Learning Engineer"
-description: "Neural architecture design, training protocol engineering and custom model implementation. Modes: advisory, service review for ML Engineer and Applied ML Scientist, and phased create mode."
+description: "Neural architecture design, training protocol engineering and custom model implementation. Modes: advisory, consult review for ML Engineer and Applied ML Scientist, and phased create mode."
 role: specialist
 activation: [switch, consult, fanout_worker]
 consult_entries:

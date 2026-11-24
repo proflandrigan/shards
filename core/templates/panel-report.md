@@ -36,7 +36,7 @@
 
 ### Panel roster (de-duplicated)
 
-- {{REVIEWER}}: {{BUCKET_COUNT}} bucket(s) ({{FILE_COUNT}} files)
+- {{REVIEWER}}: {{BUCKET_COUNT}} bucket(s) ({{REVIEWER_FILE_COUNT}} files)
 
 ### Not reviewed
 
@@ -105,7 +105,7 @@
 - **Findings by severity:** High {{HIGH_COUNT}}, Medium {{MEDIUM_COUNT}}, Low {{LOW_COUNT}}
 - **Fixes applied:** {{FIXES_APPLIED}} of {{FIXES_PLANNED}} approved
 - **Fixes by specialist:**
-  - {{SPECIALIST}}: {{FIX_COUNT}}
+  - {{SPECIALIST}}: {{SPECIALIST_FIX_COUNT}}
 - **Refused fixes (specialist disagreement):** {{REFUSED_COUNT}} — see `fix-log.md`
 - **Failed fixes:** {{FAILED_COUNT}} — see `fix-log.md`
 - **Skipped fixes (user excluded or dependent on a skipped fix):** {{SKIPPED_COUNT}}

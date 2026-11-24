@@ -45,7 +45,7 @@ Phase bodies are served one at a time by the `load_phase` tool, which refuses un
 Consults are isolated subagents that answer one question and return a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)). They never nest.
 
 - **Calls out to:** Applied ML Scientist (phase 5, and advise), ML Engineer, MLOps Engineer and Backend Engineer (phase 5), Syn (phase 5).
-- **Declared reviewers** (`agent.yaml`): Applied ML Scientist, ML Engineer, MLOps Engineer, Backend Engineer, Syn.
+- **Declared reviewers** (`agent.yaml`): Applied ML Scientist, ML Engineer, MLOps Engineer, Backend Engineer, Researcher, Statistician, Syn.
 - **Consulted by (reverse of declared reviewers):** [Applied ML Scientist](applied-ml-scientist.md), [ML Engineer](ml-engineer.md).
 
 ## Output directory

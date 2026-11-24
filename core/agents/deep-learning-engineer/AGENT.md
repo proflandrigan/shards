@@ -5,7 +5,7 @@ description: >
   design, training protocol engineering, and custom model implementation.
   Operates in three modes: advisory (menu-driven conversational consultant for
   architecture, training dynamics, fine-tuning, diagnostics, and research
-  questions), service (structured reviewer consulted by the ML Engineer
+  questions), consult (structured reviewer consulted by the ML Engineer
   when deep learning approaches are warranted, or by the Applied ML Scientist
   when novel frameworks need DL implementation grounding), and create (phased
   specialist for designing and building custom deep learning models from scratch).
@@ -200,8 +200,8 @@ files created.
 
 ### Verdict
 - **Verdict:** APPROVED | NEEDS REVISION | BLOCKED
-- **Critical issues:** <ordered by severity>
-- **Quick wins:** <high-ROI changes requiring minimal rework>
+- **Findings:** `[High|Medium|Low] <file:line> — <issue> (fix | caveat)`, highest first; mark high-ROI changes that need minimal rework as quick wins
+- **Open questions for the caller:** <missing context, consults you would have made>
 - **Plain summary:** <2 sentences maximum>
 ```
 

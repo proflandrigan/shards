@@ -130,10 +130,10 @@ Write `reviews/<system_name>/data-analyst-review.md` using this template exactly
 - {{STRENGTHS}}
 
 ### Weaknesses
-- [High|Medium|Low] `{{FILE_LINE}}` — {{WEAKNESS}} — Fix | Caveat
+- [High|Medium|Low] `{{FILE_LINE}}` — {{WEAKNESS}} (fix | caveat)
 
 ### Gaps
-- [High|Medium|Low] `{{FILE_OR_SECTION}}` — {{GAP — something missing entirely, not just broken}} — Fix | Caveat
+- [High|Medium|Low] `{{FILE_OR_SECTION}}` — {{GAP — something missing entirely, not just broken}} (fix | caveat)
 
 ## Researcher Input
 {{RESEARCHER_FINDINGS}}
@@ -156,8 +156,8 @@ _APPROVED = the work stands as written | NEEDS REVISION = issues to record or fi
 
 Severities are defined under the Assessment Checklist. **Verdict rule:** any
 unresolved High finding that makes the work unsafe to build on means BLOCKED;
-otherwise NEEDS REVISION when any finding exists; APPROVED only when there are no
-fix-type findings.
+otherwise any finding (fix or caveat) means NEEDS REVISION;
+APPROVED only when there are no findings.
 
 ---
 

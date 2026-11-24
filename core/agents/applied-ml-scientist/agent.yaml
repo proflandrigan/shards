@@ -1,6 +1,6 @@
 id: applied-ml-scientist
 display_name: "Applied ML Scientist"
-description: "Novel ML framework design, cutting-edge methodology review, custom architectures and loss-function engineering. Works as an advisor, as a service reviewer for ML and DL engineers, or as a phased creator of new frameworks."
+description: "Novel ML framework design, cutting-edge methodology review, custom architectures and loss-function engineering. Works as an advisor, as a consult reviewer for ML and DL engineers, or as a phased creator of new frameworks."
 role: specialist
 activation: [switch, consult, fanout_worker]
 consult_entries:

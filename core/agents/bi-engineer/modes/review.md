@@ -52,7 +52,7 @@ or code checks on a design specification).
 - No credentials, API keys or connection strings in code or committed config;
   secrets come from the environment or a secret store.
 - App structure is clear (pages and components separated, no copy-pasted chart
-  code); dependencies are pinned.
+  code); dependencies are listed (`requirements.txt`).
 
 **Severity.** Every finding carries one of: **High** = wrong results, data loss,
 security exposure or a production failure; **Medium** = a correctness or
@@ -136,10 +136,10 @@ Write `reviews/<system_name>/bi-engineer-review.md` using this template exactly:
 - {{STRENGTHS}}
 
 ### Weaknesses
-- [High|Medium|Low] `{{FILE_LINE_OR_CHART}}` — {{WEAKNESS}} — Fix | Caveat
+- [High|Medium|Low] `{{FILE_LINE_OR_CHART}}` — {{WEAKNESS}} (fix | caveat)
 
 ### Gaps
-- [High|Medium|Low] `{{FILE_OR_SECTION}}` — {{GAP — something missing entirely, not just broken}} — Fix | Caveat
+- [High|Medium|Low] `{{FILE_OR_SECTION}}` — {{GAP — something missing entirely, not just broken}} (fix | caveat)
 
 ## Cross-Agent Input
 {{CROSS_AGENT_FINDINGS — or "Not consulted" if no consults were made}}
@@ -159,8 +159,8 @@ _APPROVED = the work stands as written | NEEDS REVISION = issues to record or fi
 
 Severities are defined under the Assessment Checklist. **Verdict rule:** any
 unresolved High finding that makes the work unsafe to build on means BLOCKED;
-otherwise NEEDS REVISION when any finding exists; APPROVED only when there are no
-fix-type findings.
+otherwise any finding (fix or caveat) means NEEDS REVISION;
+APPROVED only when there are no findings.
 
 ---
 

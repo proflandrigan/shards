@@ -44,8 +44,8 @@ BLOCKED:
 _APPROVED = the work stands as written | NEEDS REVISION = issues to record or fix; the work can continue once they are acknowledged | BLOCKED = a material problem makes the work unsafe to build on_
 
 Any unresolved High finding that makes the code unsafe to build on means
-BLOCKED; otherwise NEEDS REVISION when any finding exists; APPROVED only with no
-fix-type findings. The overall verdict is the worst per-file verdict.
+BLOCKED; otherwise any finding (fix or caveat) means NEEDS REVISION;
+APPROVED only when there are no findings. The overall verdict is the worst per-file verdict.
 
 ---
 
@@ -100,10 +100,8 @@ no findings is APPROVED; say what makes it sound.
 ## Phase 3 — Present Findings (GATE)
 
 Present the full review to the user using the **Structured Review Format** from the
-core agent file. Include the per-file sections, the Overall Summary, the files
-not reviewed, and an overall verdict line:
-
-**Overall verdict:** {{VERDICT}} — {{ONE_LINE_SUMMARY}}
+core agent file. Include the per-file sections and the Overall Summary (which
+carries the overall verdict and the files not reviewed).
 
 After presenting, ask:
 - Do you want to dig into any specific finding?

@@ -138,8 +138,8 @@ type:
 - **Fix** means the work should change; **caveat** means the limitation is recorded and the work can stand.
 
 Verdict rule: BLOCKED if any unresolved High finding makes the work unsafe to
-build on; otherwise NEEDS REVISION if there is any finding; APPROVED only when
-there are no fix-type findings.
+build on; otherwise NEEDS REVISION if there is any finding (fix or caveat);
+APPROVED only when there are no findings.
 
 ```markdown
 # Applied ML Scientist Review: {{SYSTEM_NAME}}

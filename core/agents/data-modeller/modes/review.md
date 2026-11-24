@@ -52,7 +52,8 @@ Give every finding a severity, a location (`file:line`, or the model, entity or 
 - **Medium** — a correctness or maintainability risk that should be fixed before relying on the work (for example a missing PK test, an undocumented SCD strategy, a near-conformed dimension).
 - **Low** — polish.
 
-Any unresolved High finding that makes the work unsafe to build on means BLOCKED; NEEDS REVISION otherwise when any finding exists; APPROVED only with no fix-type findings.
+Any unresolved High finding that makes the work unsafe to build on means BLOCKED; otherwise any finding (fix or caveat) means NEEDS REVISION;
+APPROVED only when there are no findings.
 
 ---
 

@@ -221,8 +221,8 @@ Repeat per file. After all files:
 _APPROVED = the work stands as written | NEEDS REVISION = issues to record or fix; the work can continue once they are acknowledged | BLOCKED = a material problem makes the work unsafe to build on_
 
 Any unresolved High finding that makes the code unsafe to build on means
-BLOCKED; otherwise any fix-type finding means NEEDS REVISION; APPROVED only when
-there are no fix-type findings.
+BLOCKED; otherwise any finding (fix or caveat) means NEEDS REVISION;
+APPROVED only when there are no findings.
 
 ---
 

@@ -37,7 +37,12 @@ directory prefix.
 Ask in a single message:
 
 1. **Directory path** — any path, absolute or relative to cwd. No requirement
-   that it be one of shards' standard project dirs.
+   that it be one of shards' standard project dirs. Fixes are applied through
+   fan-out leases, which only cover paths inside the project root: if the
+   target is outside it, the review still runs, but say at the Phase 4 gate
+   that fixes cannot be applied from this session (the panel then ends at
+   Phase 6 with `Fixes applied: 0`), or the user restarts the session from a
+   root that contains the target.
 2. **What does this directory contain?** Multi-select content tags (user can
    pick multiple, write in their own, or say "I don't know — infer it"):
    - `ml-model` — model training/serving code, feature pipelines, evaluation
@@ -221,7 +226,7 @@ confidence intervals, "significant", lift, uplift, "% increase/decrease",
 "improved", "outperforms", "caused", "drove", eval scores compared across
 versions). Record the claims verbatim with file and cell/section; they go into
 the Statistician's brief. Then apply Step 1 and Step 2 of
-`protocols/stats_review_routing.md` (Researcher for method, Statistician for
+{{protocol stats_review_routing}} (Researcher for method, Statistician for
 claims, both when heavy) and record the route in one sentence. No claims found →
 no Statistician; say so.
 
@@ -314,7 +319,7 @@ SERVICE MODE — PANEL REVIEW. Review the listed files in <target_dir>.
 - <bucket B>: <full list of paths>   # only if this specialist spans multiple buckets
 
 Read every listed file in full. Apply the Assessment Checklist in your
-review-mode file; where your service-mode file has a dedicated checklist for
+review-mode file; where your own agent has a service-mode file (`service.md` under its `modes` directory) with a dedicated checklist for
 an artifact type in this list (notebook code review, SQL code review, Python
 review, config/infra review), apply that checklist to those files as well.
 Report only issues you can point to in a file; no speculative findings.
@@ -343,7 +348,7 @@ Your job here is review only — do not apply any fixes.
 When needed (see wave 1) and the data-modeller is not already a panel
 reviewer:
 
-{{consult data-modeller entry=service task="Explore grain, entities and relationships behind the SQL and notebooks in <target_dir> for a statistical review"}}
+{{consult data-modeller entry=service task="Explore grain, entities and relationships behind the SQL and notebooks in <target_dir> (Exploration; context for the Researcher and Statistician)"}}
 
 Brief: the SQL files and notebook paths, and the question "for each table or
 query result these artifacts use: grain (one row per what), the entities and
@@ -467,9 +472,10 @@ Once all consults have returned, read all `<output_dir>/findings/*.md` files.
   For an INVALIDATES or WEAKENS claim, the suggested fix is the Statistician's
   "What the evidence actually supports" wording.
 - Statistician "Method notes for the Researcher" and Researcher "Claims for the
-  Statistician" follow Step 4 of `protocols/stats_review_routing.md`; a note
-  that could change a result and was not covered by the other reviewer becomes a
-  caveat row.
+  Statistician" follow Step 4 of `protocols/stats_review_routing.md`: when the
+  other reviewer was not on the panel and a note could change a result, consult
+  it now (`service` entry, with the note and the files it concerns) and add its
+  findings; otherwise record the note as a caveat row.
 - Academic concerns keep their severity; the suggested fix is the mitigation.
 - Open questions from all reviewers are gathered into one "Open questions"
   list for the Phase 4 gate.
@@ -691,10 +697,13 @@ Announce: *"Executing Group N — M fixes in parallel."*
 Owning specialists apply fixes as fan-out workers. Lens-only reviewers never
 own a slice. For each owning specialist with fix items in the group, start one
 fan-out whose slices are that specialist's fix items in the group (slice id =
-the fix item id in lowercase, e.g. `f2-f3`; paths = every file the fix item
-edits; acceptance = the item's acceptance check). Shown for `data-scientist`:
+the fix item id in lowercase with `+` replaced by `-`, e.g. `F2+F3` → `f2-f3`;
+paths = every file the fix item edits; acceptance = the item's acceptance
+check). Slice paths are project-root-relative: fan-out leases reject absolute
+paths and paths containing `..` (see Phase 0). Shown for `data-scientist`,
+owner of F7 in the sequencing-plan example:
 
-{{fanout data-scientist slices=f1,f4}}
+{{fanout data-scientist slices=f7}}
 
 Start every owner's fan-out for the group first, then launch **all** workers of
 the group in a single message, giving each its card plus the fix brief below.
@@ -714,6 +723,13 @@ PANEL REVIEW FIX. The user has approved the following fix in <target_dir>.
 
 Apply only this fix (file-editing tool, or the notebook editing tool for
 .ipynb). Do not exceed its scope.
+
+Run the acceptance check. Return verdict JSON with: APPROVED = fix applied
+and acceptance passed; NEEDS REVISION = fix applied with a deviation or
+caveat (describe it in summary); BLOCKED = not applied (technical
+disagreement, a file outside your owned paths, or acceptance failing), with
+the reason in summary. Put the before/after of each changed hunk and the
+acceptance output in findings.
 ```
 
 For a fix raised by a lens-only reviewer, replace the Issue and Suggested fix
@@ -753,14 +769,16 @@ dispatch until group N is complete.
 
 If any fix in the group is **Refused** or **Failed**, stop after the group,
 show the specialist's reasoning, and list the later fixes that depend on it.
-Ask the user: retry with a revised fix, skip it (and its dependents, or keep
-them), or stop.
-
-{{gate kind=confirm phase=5 name=fix-blocked id=syn-panel-review-phase-5.fix-blocked}}
+Ask the user in chat: retry with a revised fix, skip it (and its dependents, or
+keep them), or stop. This can happen in more than one group, so do not use a
+gate here: a confirmed gate id is not asked again in the same session. Wait for
+the user's reply; do not dispatch the next group, or anything else, until they
+answer.
 
 Apply the user's choice, update `sequencing-plan.md` if the dependents changed,
-then continue with the next group. A retried fix gets one retry; a second
-failure is logged and skipped.
+then continue with the next group. A retried fix gets one retry; if the retry
+is also Refused or Failed, log it, show it to the user and ask again: skip it
+(and its dependents, or keep them) or stop.
 
 ---
 
@@ -773,8 +791,9 @@ re-consult its originating reviewer(s) once, in parallel (one consult per
 reviewer, same entry as Phase 2), with the original finding and the diff:
 *"SERVICE MODE — PANEL REVIEW. Verify that these fixes resolve your findings
 without introducing new issues in the changed lines. Answer with a verdict and,
-per fix ID, Resolved / Not resolved / New issue (with location)."* Record each
-answer in `fix-log.md` under `## Verification`. Do not dispatch further fixes
+per fix ID, Resolved / Not resolved / New issue (with location)."* This verification consult is not a resubmit under the
+reviewer verdict protocol: it reviews new changes, not the original work.
+Record each answer in `fix-log.md` under `## Verification`. Do not dispatch further fixes
 here: a Not resolved or New issue result is reported to the user at the gate
 below as a candidate for a follow-up panel.
 

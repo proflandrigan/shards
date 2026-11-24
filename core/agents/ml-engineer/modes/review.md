@@ -49,7 +49,8 @@ Give every finding a severity, a location (`file:line`, or notebook cell or conf
 - **Medium** — a correctness or maintainability risk that should be fixed before relying on the work (for example no baseline, no latency budget, unseeded training, missing component tests).
 - **Low** — polish.
 
-Any unresolved High finding that makes the work unsafe to build on means BLOCKED; NEEDS REVISION otherwise when any finding exists; APPROVED only with no fix-type findings.
+Any unresolved High finding that makes the work unsafe to build on means BLOCKED; otherwise any finding (fix or caveat) means NEEDS REVISION;
+APPROVED only when there are no findings.
 
 ---
 
@@ -113,9 +114,9 @@ search, or any approach the Data Scientist review doesn't adequately cover):
 
 **Statistical review.** If the work under review rests on a statistical method choice (validation or CV strategy for small, clustered or temporal data, confidence intervals, significance tests) or states claims on metrics ("model B beats A", "eval improved", a lift, a ship decision), route statistical review per the stats review routing protocol (`protocols/stats_review_routing.md`): the Researcher for the method, the Statistician for the claims, both when a claim drives a ship or launch decision, the method is complicated, or there are several model comparisons. Say which route you chose and why in one sentence.
 
-**Researcher input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `researcher`, entry `service`, with the method, the scope and the files you read, and record its verdict under `## Researcher Input`. If you are a consultant, do not consult (consults never nest): use any Researcher input the caller supplied, otherwise list it as an open question for the caller.
+**Researcher input.** In the user's own session (you were started from the menu), when the route includes the Researcher, run the consult yourself: subagent `researcher`, entry `service`, with the method, the scope and the files you read, and record its verdict under `## Researcher Input`. If you are a consultant, do not consult (consults never nest): use any Researcher input the caller supplied, otherwise list it as an open question for the caller.
 
-**Statistician input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `statistician`, entry `service`, with the claims verbatim, the scope and the files you read, and record its verdict and findings under `## Statistician Input`. If you are a consultant, do not consult (consults never nest): use any Statistician input the caller supplied, otherwise list it as an open question for the caller.
+**Statistician input.** In the user's own session (you were started from the menu), when the route includes the Statistician, run the consult yourself: subagent `statistician`, entry `service`, with the claims verbatim, the scope and the files you read, and record its verdict and findings under `## Statistician Input`. If you are a consultant, do not consult (consults never nest): use any Statistician input the caller supplied, otherwise list it as an open question for the caller.
 
 The worse of your own verdict and the Statistician's sets the review's overall verdict in Phase 4; show its OFFENDS notes as non-blocking style notes.
 

@@ -23,7 +23,7 @@ performance, and domain fit. Triggered by `SERVICE MODE — CODE REVIEW`.
 
 **Query Review** — the Data Analyst (or another caller) wants the final analysis
 queries reviewed end-to-end: source-trace, SQL review, and sanity-check queries.
-Triggered by `SERVICE MODE — QUERY REVIEW` or `SERVICE MODE — PRE-EXECUTION QUERY REVIEW` (same procedure; skip result-vs-source checks that need executed results). See the Query Review Procedure below.
+Triggered by `SERVICE MODE — QUERY REVIEW` or `SERVICE MODE — PRE-EXECUTION QUERY REVIEW` (same procedure; for a pre-execution review there are no executed results: in the Result-vs-Source Cross-Check fill the Expected ~ column for each query and leave Actual blank). See the Query Review Procedure below.
 
 **Apply Fixes** — Syn has user approval and wants you to apply previously identified
 fixes to SQL files. Triggered by `SERVICE MODE — APPLY FIXES`.
@@ -224,7 +224,7 @@ The caller will provide:
 - Path to `project-specs.md` for business context
 - Path to the queries directory (typically `shards/<project_name>/queries/`)
 - Data environment classification (`not greenfield`, `inaccessible`, or `GREENFIELD`)
-- Result row counts per query
+- Result row counts per query (not available for a pre-execution review; see above)
 
 ### Procedure
 

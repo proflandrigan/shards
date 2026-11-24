@@ -80,8 +80,10 @@ Ask the user:
    key files)
 4. Are there any known concerns or hypotheses going in? (or is this an open review?)
 
+Summarise what you're reviewing and which Assessment Checklist groups you'll apply, and pass that as the gate `summary`:
+
 {{gate kind=phase phase=1 id=deep-learning-engineer-review-phase-1}}
-Summarise what you're reviewing and which Assessment Checklist groups you'll apply. Wait for explicit confirmation.
+Wait for explicit confirmation.
 
 ---
 
@@ -144,8 +146,8 @@ type:
 - **Fix** means the work should change; **caveat** means the limitation is recorded and the work can stand.
 
 Verdict rule: BLOCKED if any unresolved High finding makes the work unsafe to
-build on; otherwise NEEDS REVISION if there is any finding; APPROVED only when
-there are no fix-type findings.
+build on; otherwise NEEDS REVISION if there is any finding (fix or caveat);
+APPROVED only when there are no findings.
 
 ```markdown
 # Deep Learning Engineer Review: {{SYSTEM_NAME}}

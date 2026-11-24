@@ -59,6 +59,11 @@ describe('agent.yaml schema', () => {
   });
 
   it('gives the 11 build specialists and the backend-engineer (Panel Review fix owner) a worker entry', () => {
-    expect(agents.filter((a) => a.doc.consult_entries?.worker)).toHaveLength(12);
+    const withWorker = agents.filter((a) => a.doc.consult_entries?.worker).map((a) => a.doc.id).sort();
+    expect(withWorker).toEqual([
+      'ai-engineer', 'analytics-engineer', 'applied-ml-scientist', 'backend-engineer', 'bi-engineer',
+      'data-analyst', 'data-engineer', 'data-modeller', 'data-scientist', 'deep-learning-engineer',
+      'ml-engineer', 'mlops-engineer',
+    ]);
   });
 });
