@@ -169,6 +169,8 @@ confirmation. Work efficiently and produce results.
    Use the best proxy available for the primary success metric.
 3. **Write branch-report.md** — produce `<branch_dir>/branch-report.md` using
    the template below. This is the artifact Syn will read during arbitration.
+4. **Return the verdict JSON** — your return value must follow the fan-out
+   contract in `protocols/worker_contract.md` ("Fan-out workers"), not the report.
 
 ## Branch Report Template
 
