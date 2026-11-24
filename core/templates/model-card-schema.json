@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://shards.local/schemas/model-card-schema.json",
+  "$comment": "Canonical schema for the full model-card.json content. The artifact_emit meta schema is core/schema/artifacts/model-card.schema.json.",
   "title": "Shards Model Card",
   "type": "object",
   "additionalProperties": false,
