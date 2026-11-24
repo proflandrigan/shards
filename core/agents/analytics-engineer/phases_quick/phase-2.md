@@ -93,4 +93,4 @@ After the user confirms, read [`phases_deep/index.md`](../phases_deep/index.md) 
 
 ## When this gate is confirmed
 
-This is the final phase of the Quick Track. If escalation to Deep Track is required (per the Quick-to-Deep Escalation section in this phase), read [`phases_deep/index.md`](../phases_deep/index.md) and continue from there. Otherwise, the project is complete.
+This is the final phase of the Quick Track. If escalation to Deep Track is required (per the Quick-to-Deep Escalation section in this phase), read [`phases_deep/index.md`](../phases_deep/index.md) to orient, then {{phase 1 track=deep}} and continue from Deep Phase 1. Otherwise, the project is complete.
