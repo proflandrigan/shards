@@ -4,7 +4,7 @@ Developer notes for the gate subsystem: `runtime/gates/`, the `gate_request` too
 
 ## 1. Overview
 
-A gate is a human checkpoint at the end of a phase. The agent asks for one with `gate_request`. Only a human can confirm it. The agent has no confirm tool (D8). Confirming an advancing gate triggers a git commit of the agent's output directory plus its confirmed `targets` (section 6).
+A gate is a human checkpoint at the end of a phase. The agent asks for one with `gate_request`. Only a human can confirm it. The agent cannot confirm on its own (D8): `gate_advance` succeeds only after the host prompted the user, and `gate_confirm` only relays the user's verbatim chat reply, checked against the recorded prompt log. Confirming an advancing gate triggers a git commit of the agent's output directory plus its confirmed `targets` (section 6).
 
 | File | Role |
 |------|------|

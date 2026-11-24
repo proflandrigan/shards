@@ -116,8 +116,9 @@ Goal mode is the `plan` gate policy (see `goal_mode.md`). At the per-agent
 Phase 1 gate, offer the user an unattended Phase 2 loop. Present the plan and
 budget (iteration budget, cost ceiling, primary metric, target, metric floor)
 and call `gate_request` for a `plan-approval` gate. Then STOP and wait for the
-user; never confirm it yourself. The user confirms via the in-host prompt or by
-replying in chat.
+user; never confirm it yourself. The user confirms via the in-host prompt
+(elicitation, or the permission prompt `gate_advance` raises) or by replying in
+chat, in which case relay their verbatim reply with `gate_confirm`.
 
 Tell the user the activation is optional:
 - **With plan approval:** after the user confirms, every later gate kind

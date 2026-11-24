@@ -8,7 +8,7 @@ No phase ends until its decisions are written to `project-specs.md` and the spec
 
 ## 2. One phase at a time, then wait
 
-Every phase ends with a `gate_request` call. After calling it the specialist stops: no further work and no next phase until the gate is confirmed. It has no tool to confirm its own gate. Silence, questions and partial agreement are not confirmation. Phases are never batched.
+Every phase ends with a `gate_request` call. After calling it the specialist stops: no further work and no next phase until the gate is confirmed. It cannot confirm its own gate: it can only call `gate_advance` (which makes the host ask the user) or relay the user's verbatim chat reply with `gate_confirm`, and the runtime checks that a real answer exists. Silence, questions and partial agreement are not confirmation. Phases are never batched.
 
 ## 3. Load `project-specs.md` once, treat it as live
 

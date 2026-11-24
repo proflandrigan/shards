@@ -159,7 +159,7 @@ markdown report is in the bucket and Phase 5 needs to route a Researcher fix):
 | `ml-model` | `ml-engineer` → `.py`, `.ipynb` |
 | `llm-ai` | `ai-engineer` → `.py`, `.ipynb`, config |
 | `data-pipeline` | `data-engineer` → `.sql`, `.py` |
-| `statistical-analysis` | `researcher` → `.ipynb`, `.sql`, reports; `statistician` → `.ipynb`, reports |
+| `statistical-analysis` | `researcher` → `.ipynb`, `.sql`, reports; `statistician` → `.ipynb`, `.sql`, reports (when they state claims) |
 | `novel-research` | `applied-ml-scientist` → `.py`, `.ipynb`; `researcher`, `statistician` → reports |
 | `dl-model` | `deep-learning-engineer` → `.py`, `.ipynb`, config |
 | `production-service` | `mlops-engineer` → `.py`, config |
@@ -531,12 +531,13 @@ the scope of this fix. Return:
 - Verbatim the before/after diff or cell content
 ```
 
-#### Researcher fix routing
+#### Researcher and Statistician fix routing
 
-Researcher findings have "Owning specialist" set to the bucket's **primary
-reviewer** (the domain reviewer from Phase 1). The Researcher does not apply
-fixes — its recommendations are embedded in the fix prompt to that domain
-reviewer:
+Researcher and Statistician findings have "Owning specialist" set to the bucket's **primary
+reviewer** (the domain reviewer from Phase 1). Neither the Researcher nor the
+Statistician applies fixes — their recommendations are embedded in the fix prompt to that domain
+reviewer (for a Statistician finding, say "The Statistician (statistical claims shard)" and
+"Statistician's finding/recommendation" in the brief below):
 
 Fan out one worker per slice (shown for `data-scientist`; use the specialist that owns the slices and name the slices accordingly):
 
@@ -636,8 +637,8 @@ output files.
   one consult per reviewer. Never sequential when parallel is correct.
 - **Sequential dispatch between Phase 5 groups.** Wait for group N to fully
   return before dispatching group N+1. This is the race-prevention invariant.
-- **Researcher does not apply fixes.** Its recommendations route to the domain
-  reviewer of the same bucket via Syn's apply-fix dispatch.
+- **Researcher and Statistician do not apply fixes.** Their recommendations route
+  to the domain reviewer of the same bucket via Syn's apply-fix dispatch.
 - **Syn never edits the target directory's files.** Reviewers apply fixes via
   service-mode consults. Syn writes only to `<output_dir>/`.
 - **Append findings as each consult returns.** Don't batch-write at the end —

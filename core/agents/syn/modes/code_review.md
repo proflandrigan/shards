@@ -128,8 +128,8 @@ only if applicable). Then ask:
 
 Raise the gate below before Step 5, passing the consolidated findings as the
 `summary`. Then STOP and wait for the user. Do not apply any fix or begin Step 5
-until the user has answered and you have advanced the gate with `gate_advance`
-(or relayed their verbatim reply with `gate_confirm`). Never confirm this gate
+until the user has approved it, either in the host prompt raised by `gate_advance`
+or by a chat reply you relay verbatim with `gate_confirm`. Never confirm this gate
 yourself.
 
 {{gate kind=phase phase=0 id=syn-code-review-phase-0}}
