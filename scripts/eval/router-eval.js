@@ -70,7 +70,7 @@ function loadPrompts(file = path.join(ROOT, 'test', 'router', 'prompts.json')) {
 // Returns array of error strings.
 function validatePrompts(prompts, agentIds) {
   const errs = [];
-  if (!Array.isArray(prompts) || prompts.length !== 20) errs.push(`expected 20 prompts, found ${Array.isArray(prompts) ? prompts.length : 'non-array'}`);
+  if (!Array.isArray(prompts) || prompts.length !== 22) errs.push(`expected 22 prompts, found ${Array.isArray(prompts) ? prompts.length : 'non-array'}`);
   const ids = new Set(agentIds);
   for (const [i, p] of (prompts || []).entries()) {
     const at = `prompt[${i}]`;

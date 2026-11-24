@@ -61,7 +61,7 @@ describe('prompts.json and cli', () => {
     expect(validatePrompts(prompts, ids)).toEqual([]);
     const tools = new Set(prompts.map((p) => p.expect.tool));
     for (const t of ['activate', 'return', 'active', 'list_agents', 'none']) expect(tools.has(t)).toBe(true);
-    expect(prompts.filter((p) => p.expect.kind === 'consult')).toHaveLength(1);
+    expect(prompts.filter((p) => p.expect.kind === 'consult')).toHaveLength(2);
     expect(prompts.filter((p) => p.expect.kind === 'clarify')).toHaveLength(1);
   });
   it('validation rejects bad data', () => {
