@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 'use strict';
-// E1.7 / D7 lint: no literal model id anywhere an agent definition is declared.
-// Scans (1) YAML frontmatter of core/agents/*/AGENT.md, (2) core/agents/*/agent.yaml, (3) generated adapters:
+// E1.7 / D7 lint (ADR 0007): no literal model id in core/ or in generated agent definitions.
+// Scans (1) EVERY text file under core/ (.md, .yaml/.yml, .json), prose included, for model ids; the `model` /
+// `model_id` key check applies only to YAML/JSON files and markdown frontmatter, since prose may say "model:".
+// Use neutral placeholders in examples (<provider/model-id>, <judge-model-id>). (2) generated adapters:
 // frontmatter of agents/*.md + skills/*/SKILL.md, and whole .toml/.json manifests (not the rendered content/ prose,
 // where model names may appear as examples). A `model` / `model_id` key is also a finding (tier hints go in
 // `model_tier` and take effect only when mapped in shards.config.yaml).
@@ -27,11 +29,12 @@ function frontmatter(text) {
   return m ? { body: m[1], offset: 1 } : null;
 }
 
-function scanText(text, file, startLine, out) {
+function scanText(text, file, startLine, out, { prose = false } = {}) {
   text.split('\n').forEach((line, i) => {
-    const bare = line.replace(/#.*$/, (c) => (/^\s*#/.test(line) ? '' : c)); // skip pure comment lines
+    // skip pure comment lines (YAML); in prose a leading '#' is a markdown heading, so scan everything
+    const bare = prose ? line : line.replace(/#.*$/, (c) => (/^\s*#/.test(line) ? '' : c));
     if (!bare.trim()) return;
-    for (const re of KEY_RES) if (re.test(bare)) out.push({ file, line: startLine + i, what: `model key: ${bare.trim().slice(0, 60)}` });
+    if (!prose) for (const re of KEY_RES) if (re.test(bare)) out.push({ file, line: startLine + i, what: `model key: ${bare.trim().slice(0, 60)}` });
     const noPaths = bare.replace(PATH_RE, ' ');
     for (const re of ID_RES) { const m = re.exec(noPaths); if (m) out.push({ file, line: startLine + i, what: `model id '${m[0]}'` }); }
   });
@@ -39,18 +42,19 @@ function scanText(text, file, startLine, out) {
 
 function lintCore(coreDir) {
   const out = [];
-  const agents = path.join(coreDir, 'agents');
-  if (!fs.existsSync(agents)) return out;
-  for (const d of fs.readdirSync(agents)) {
-    const md = path.join(agents, d, 'AGENT.md');
-    if (fs.existsSync(md)) {
-      const fm = frontmatter(fs.readFileSync(md, 'utf8'));
-      if (fm) scanText(fm.body, md, 2, out);
+  if (!fs.existsSync(coreDir)) return out;
+  for (const f of walk(coreDir, new Set(['node_modules']))) {
+    const text = fs.readFileSync(f, 'utf8');
+    if (/\.(ya?ml|json)$/.test(f)) scanText(text, f, 1, out);
+    else if (f.endsWith('.md')) {
+      const fm = frontmatter(text);
+      if (fm) scanText(fm.body, f, 2, out);
+      scanText(text, f, 1, out, { prose: true });
     }
-    const y = path.join(agents, d, 'agent.yaml');
-    if (fs.existsSync(y)) scanText(fs.readFileSync(y, 'utf8'), y, 1, out);
   }
-  return out;
+  // frontmatter lines are scanned twice (keys, then ids as prose); drop exact duplicates
+  const seen = new Set();
+  return out.filter((x) => { const k = `${x.file}:${x.line}:${x.what}`; if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
 function walk(dir, skip, acc = []) {
