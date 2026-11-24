@@ -5,7 +5,8 @@ description: >
   be handled in a few SQL queries. No deep track — if the work grows beyond a
   few queries, escalates to the Data Scientist. Consults the Data Modeller for
   data understanding, the Data Scientist for plan review, the Researcher for
-  statistical assumption validation, the Analytics Engineer for review of the
+  statistical assumption validation, the Statistician for claims on stats and
+  metrics, the Analytics Engineer for review of the
   final queries (source trace + SQL review + sanity-check counts), and the BI
   Engineer for chart design review when the output includes a visualization.
   Examples:

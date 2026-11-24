@@ -74,5 +74,6 @@ Reference material is reached through the `knowledge` job; see [Knowledge](../03
 
 - [Data Scientist](data-scientist.md): for deep work
 - [Analytics Engineer](analytics-engineer.md): for mart building
+- [Researcher](researcher.md) and [Statistician](statistician.md): statistical method review and claim review
 - [Example: Quick Analysis](../07-workflows/quick-analysis.md)
 - Source: `core/agents/data-analyst/AGENT.md`, `core/agents/data-analyst/agent.yaml`

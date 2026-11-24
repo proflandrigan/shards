@@ -84,5 +84,6 @@ Reference material is reached through the `knowledge` job; see [Knowledge](../03
 ## See also
 
 - [Autonomous Research](../03-protocols/autonomous-research.md)
+- [Researcher](researcher.md) and [Statistician](statistician.md): statistical method review and claim review
 - [Example: Study to Production ML](../07-workflows/deep-study-to-production.md)
 - Source: `core/agents/data-scientist/AGENT.md`, `core/agents/data-scientist/agent.yaml`
