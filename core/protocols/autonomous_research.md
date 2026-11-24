@@ -982,6 +982,8 @@ Produce:
 2. A final `<branch_dir>/branch-report.md` summarizing the branch's best state
    per the DIVERGE branch-report template (`protocols/diverge.md` Section E).
 3. Git commits only if the chosen git strategy (H.5) allows them (`worktree`).
+4. Your return value: the fan-out verdict JSON per `protocols/worker_contract.md`
+   ("Fan-out workers"); `branch-report.md` is still written.
 ```
 
 ### H.4 Per-branch file layout

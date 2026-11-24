@@ -77,7 +77,8 @@ NOT call it — document your decision for the merge step and continue to
 the next phase. Skip your activation menu and Phase 0 — Syn has already scoped
 your work. Do not invoke Syn for review. Return a concise report: artifacts
 produced, key decisions, issues, confidence, and anything the merge step needs
-to know.
+to know. Your return value follows the fan-out contract in
+`protocols/worker_contract.md` ("Fan-out workers").
 ```
 
 ## Review and merge
