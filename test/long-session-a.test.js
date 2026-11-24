@@ -610,7 +610,7 @@ describe('6. pending-gate write blocking (PreToolUse) and read-only allowlist', 
     await req('data-analyst-phase-1');
     const allowed = [
       'ls -la', 'cat a.txt', 'head -n 5 a.csv', 'grep -rn foo src | wc -l', 'git status', 'git diff HEAD', 'git log --oneline -5',
-      'python3 -c "print(1)"', 'node -e "console.log(1)"', 'echo hi 2>&1', 'ls > /dev/null', 'find . -name "*.sql"', 'sed -n 1,5p a.txt',
+      'echo hi 2>&1', 'ls > /dev/null', 'find . -name "*.sql"', 'sed -n 1,5p a.txt',
       'dbt ls', 'duckdb -c "select 1"', 'pwd && ls | sort',
     ];
     for (const c of allowed) { const o = await pre('Bash', { command: c }); if (denied(o)) falseBlocks.push(c); }
@@ -619,6 +619,8 @@ describe('6. pending-gate write blocking (PreToolUse) and read-only allowlist', 
       'echo hi > out.txt', 'cat a >> log.txt', 'rm -rf build', 'mv a b', 'cp a b', 'touch f', 'mkdir d', 'sed -i s/a/b/ f', 'tee out.txt',
       'git commit -m x', 'git checkout -- .', 'git reset --hard', 'ls | tee out.txt', "python3 -c \"open('f','w').write('x')\"",
       'cat <<EOF > f\nhi\nEOF',
+      // inline interpreter code can do anything, so it counts as exec while a gate is pending
+      'python3 -c "print(1)"', 'node -e "console.log(1)"',
     ];
     for (const c of blocked) expect(denied(await pre('Bash', { command: c })), c).toBe(true);
   });
@@ -628,15 +630,15 @@ describe('6. pending-gate write blocking (PreToolUse) and read-only allowlist', 
     for (const t of ['Read', 'Glob', 'Grep', 'Bash', 'mcp__shards__gate_request', 'mcp__shards__gate_resume', 'mcp__other__gate_advance']) expect(host.isGateTool(t)).toBe(false);
   });
 
-  it('fail-open: a corrupt gates.json never blocks reads or writes and never throws', async () => {
+  it('fail-closed: a corrupt gates.json blocks writes, never blocks reads and never throws', async () => {
     await sw('data-analyst');
     await req('data-analyst-phase-1');
     fs.writeFileSync(st.file('gates'), '{not json');
-    for (const [t, i] of [['Read', { file_path: 'a' }], ...WRITE_TOOLS(root)]) {
+    for (const [t, i, blocked] of [['Read', { file_path: 'a' }, false], ...WRITE_TOOLS(root).map(([wt, wi]) => [wt, wi, true])]) {
       let o; let threw = false;
       try { o = await pre(t, i); } catch (_) { threw = true; }
       expect(threw).toBe(false);
-      expect(denied(o)).toBe(false);
+      expect(denied(o), t).toBe(blocked);
     }
   });
 });
