@@ -36,9 +36,14 @@ async function autoVerify(n, root) {
   return JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', permissionDecisionReason: `shards auto-verify: ${r.reason}` } });
 }
 
-// True when this session has a gates.json that cannot be read or parsed (and enforcement is on).
+// True when this is a write/exec call and the session has a gates.json that cannot be read or parsed
+// (and enforcement is on). Read-only calls are never blocked.
 function gateStateUnreadable(n, root, env = process.env) {
   if (String(env.SHARDS_GATE_ENFORCE) === '0') return false;
+  try {
+    const w = require('./lib/writes').writesOf(n);
+    if (!w.write && !w.exec) return false;
+  } catch (_) { /* unclassifiable: fall through to the gate-state check */ }
   try {
     const key = host.toSessionKey(n.sessionId);
     if (!key) return false;

@@ -1,10 +1,10 @@
 'use strict';
 // Conservative write detection for PreToolUse enforcement (E11.6). Best effort, no execution.
-// writesOf(n) -> {write:boolean, paths:string[] (absolute), unknown:boolean}
+// writesOf(n) -> {write:boolean, exec:boolean, paths:string[] (absolute), unknown:boolean}
 //   write   : the call is (or looks like) a write/exec
 //   paths   : target paths we could determine, resolved against cwd
 //   unknown : looks like a write but at least one target could not be determined
-//   exec    : runs code from a file / package script (counts only while a gate is pending)
+//   exec    : runs arbitrary code: script files, inline -c/-e code, programs run by path, package/build tools (counts only while a gate is pending)
 const path = require('path');
 const os = require('os');
 

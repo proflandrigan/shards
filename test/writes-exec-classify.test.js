@@ -55,6 +55,14 @@ describe('pre-tool-use fails closed on unreadable gate state', () => {
     process.env.SHARDS_GATE_ENFORCE = '0';
     expect(await call('Write', { file_path: path.join(tmp, 'a.txt'), content: 'x' })).toBeNull();
   });
+  it('a read is never blocked, even when enforce itself fails on corrupt state', async () => {
+    corrupt();
+    const st = new StateStore(tmp, SID);
+    fs.writeFileSync(st.file('leases'), '{not json');
+    expect(await call('Read', { file_path: path.join(tmp, 'a.txt') })).toBeNull();
+    const o = await call('Write', { file_path: path.join(tmp, 'a.txt'), content: 'x' });
+    expect(o.permissionDecision).toBe('deny');
+  });
   it('no gate state: allowed', async () => {
     expect(await call('Write', { file_path: path.join(tmp, 'a.txt'), content: 'x' })).toBeNull();
   });
