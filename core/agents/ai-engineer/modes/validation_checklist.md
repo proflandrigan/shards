@@ -24,7 +24,7 @@ A primary metric is measured on the full eval set, and it clears the spec thresh
 - LLM-as-judge scores must be accompanied by a human spot-check agreement rate on a sample (≥20 items) — judge drift is real.
 - Numeric value, threshold, and pass/fail status recorded.
 
-**Observed format:** `primary: win_rate vs baseline_v2 = 68% (n=128, 95% CI 60-76%) | judge: claude-sonnet-4-6, human agreement 92% on 25-sample spot-check | spec threshold ≥60% ✓ | full: results/eval_v3.json`
+**Observed format:** `primary: win_rate vs baseline_v2 = 68% (n=128, 95% CI 60-76%) | judge: <judge-model-id>, human agreement 92% on 25-sample spot-check | spec threshold ≥60% ✓ | full: results/eval_v3.json`
 
 ### AI-03 — Regression Comparison
 
@@ -123,7 +123,7 @@ Given the same input and the same provider/model/seed/temperature, the service p
 - Re-run a sample (≥10 eval items) and confirm output stability.
 - For temperature>0 services, characterize variance (e.g., agreement rate across 3 runs).
 
-**Observed format:** `model=claude-sonnet-4-6, temp=0.0, seed unsupported | 10-sample re-run: 10/10 identical outputs ✓` or `model=claude-opus-4-7, temp=0.7 | 10-sample 3×-run: 87% agreement (LLM-judge equivalence) — expected for creative-gen mode`
+**Observed format:** `model=<model-id>, temp=0.0, seed unsupported | 10-sample re-run: 10/10 identical outputs ✓` or `model=<model-id>, temp=0.7 | 10-sample 3×-run: 87% agreement (LLM-judge equivalence) — expected for creative-gen mode`
 
 ### AI-12 — Component Tests
 

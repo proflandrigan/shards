@@ -162,7 +162,7 @@ Append to `project-specs.md`:
 - **Metric floor:** <value or "none">
 - **Eval harness:** <path> — confirmed runnable
 - **Eval set:** <path> — <N> examples — IMMUTABLE
-- **Current provider/model:** <e.g., anthropic/claude-sonnet-4-6>
+- **Current provider/model:** <provider/model-id>
 - **Mutable scope:** <list>
 - **Immutable scope:** <list> (includes eval harness and eval set)
 - **Versioning mode:** <git>
