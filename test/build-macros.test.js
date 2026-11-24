@@ -176,6 +176,6 @@ describe('--strict', () => {
     const fs = require('fs');
     const text = fs.readFileSync(root + '/agents/alpha/AGENT.md', 'utf8');
     const e = processFile(core, 'agents/alpha/AGENT.md', text, { target: 'claude', strict: true }).errors;
-    expect(e.join('\n')).toMatch(/AGENT\.md:5: --strict: model pin/);
+    expect(e.join('\n')).toMatch(/AGENT\.md:4: --strict: model pin/);
   });
 });
