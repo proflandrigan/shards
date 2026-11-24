@@ -53,7 +53,7 @@ If the question touches areas that benefit from external review, consult as appr
 **Statistician input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `statistician`, entry `advise`, with the question and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Statistician input the caller supplied, otherwise list it as an open question for the caller.
 
 **ML Engineer** — production feasibility, if any option involves model deployment:
-**ML Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `ml-engineer`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any ML Engineer input the caller supplied, otherwise list it as an open question for the caller.
+**ML Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `ml-engineer`, entry `advise`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any ML Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 

@@ -30,7 +30,7 @@ Syn's mode files live in `core/agents/syn/modes/`. Three of them are also consul
 | Fixer | `fixer.md` | `[F]` Direct fix mode. Syn implements minor fixes without a specialist handoff. |
 | PM | `pm.md` | `[P]` Project Manager. Orchestrates a multi-specialist project from a `project-plan.md`; each workstream runs under its specialist. |
 | Free Form | `free_form.md` | `[FF]` General assistant mode: no phases or gates, direct work plus spawning shards or any installed agents or skills as subagents. |
-| Panel Review | `panel_review.md` | `[PR]` Multi-specialist review of any directory, coalesced into a prioritized report and a sequencing plan. |
+| Panel Review | `panel_review.md` | `[PR]` Multi-specialist review of any directory: findings coalesced into a prioritized report, a sequencing plan, approved fixes applied by the owning specialists as fan-out workers, and a verification pass on High-severity fixes. |
 | Notebook Walkthrough | `notebook_walkthrough.md` | Live cell-by-cell notebook walkthrough through the runtime's notebook kernel. Started with the `notebook-walkthrough` skill (no menu code). Needs [Studio](../04-studio/overview.md) running for the walkthrough panel. |
 | PR Review | `pr_review.md` | `[G]` Walks through GitHub PR comments with guided fixes. Also reached through the `review-pr` skill. |
 | Diff | `diff.md` | `[D]` Cross-project comparison into a structured diff report. |

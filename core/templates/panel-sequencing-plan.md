@@ -3,12 +3,14 @@
 
 - **Target directory:** {{TARGET_DIR}}
 - **Date:** {{DATE}}
-- **Total fixes:** {{TOTAL_FIXES}}
+- **Total fixes:** {{TOTAL_FIXES}} (in {{FIX_ITEM_COUNT}} fix items)
 - **Total groups:** {{TOTAL_GROUPS}}
 
-Rules: fixes that touch the same file, the same notebook cell, or a shared
-interface/contract serialize (lower fix ID first unless the user reorders).
-Fixes with no shared file or symbol run in parallel within a group.
+Rules: fixes with the same owner on the same file merge into one fix item.
+Fix items that touch the same file or a shared interface/contract serialize
+(contract order first, otherwise lower fix ID first unless the user reorders).
+Fix items with no shared file or symbol run in parallel within a group. Caveats
+and contradictions awaiting a decision are not scheduled.
 
 ---
 
@@ -16,11 +18,11 @@ Fixes with no shared file or symbol run in parallel within a group.
 
 ### Group 1 (parallel)
 
-- **{{FIX_ID}}** ({{OWNING_SPECIALIST}}) — `{{FILE_LOCATION}}` — {{FIX_SUMMARY}}
+- **{{FIX_ID}}** ({{OWNING_SPECIALIST}}) — `{{FILE_LOCATION}}` — {{FIX_SUMMARY}} — accept: {{ACCEPTANCE_CHECK}}
 
-### Group {{N}} (sequential, blocks on Group {{N_MINUS_1}})
+### Group {{N}} (blocks on Group {{N_MINUS_1}})
 
-- **{{FIX_ID}}** ({{OWNING_SPECIALIST}}) — `{{FILE_LOCATION}}` — {{FIX_SUMMARY}}
+- **{{FIX_ID}}** ({{OWNING_SPECIALIST}}) — `{{FILE_LOCATION}}` — {{FIX_SUMMARY}} — accept: {{ACCEPTANCE_CHECK}}
   - Reason: {{DEPENDENCY_REASON}}
 
 ---
@@ -37,3 +39,9 @@ conflict, or contract dependency):
 <!-- List findings with Owning specialist = unowned so the user can assign one at the Phase 4 gate; write "None" otherwise. -->
 
 {{UNOWNED_FINDINGS}}
+
+## Contradictions awaiting a decision
+
+<!-- Findings tagged contradiction-<n>: both recommendations verbatim, for the user to pick at the Phase 4 gate; write "None" otherwise. -->
+
+{{CONTRADICTIONS}}

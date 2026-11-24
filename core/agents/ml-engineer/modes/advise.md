@@ -47,7 +47,7 @@ If the question touches areas outside core ML engineering, consult as appropriat
 **Data Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
 **Data Scientist** — methodology, feature engineering, evaluation approach:
-**Data Scientist input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-scientist`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Scientist input the caller supplied, otherwise list it as an open question for the caller.
+**Data Scientist input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-scientist`, entry `advise`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Scientist input the caller supplied, otherwise list it as an open question for the caller.
 
 **Applied ML Scientist** — architecture choice, loss function design, inductive
 bias alignment, cutting-edge method comparison, or any decision involving
