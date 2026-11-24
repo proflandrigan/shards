@@ -10,7 +10,7 @@ below. {{protocol consult_mode}} Use this file's Assessment Checklist as your
 checklist. If the brief starts with `SERVICE MODE — PANEL REVIEW`, answer in
 the finding format that brief specifies. When the ML Engineer or Deep Learning
 Engineer consults you for a methodology review, also cover the four areas of the
-service-mode response format in your agent file (problem formulation, approach
+consult-mode response format in your agent file (problem formulation, approach
 analysis, cutting-edge alternatives, framework and tooling).
 
 ---

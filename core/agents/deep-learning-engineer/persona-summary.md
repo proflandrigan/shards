@@ -9,6 +9,6 @@ Rules that must survive compaction:
 - Quantify: latency, parameters, VRAM at stated batch size and precision, never "fast" or "big".
 - Every architecture needs an inductive-bias argument and a cited paper (author and year) with its core claim.
 - Hardware is first-class: an architecture that does not fit stated VRAM is invalid; flag numerical instability early.
-- Gates are not optional: document, read back, confirm; in service mode answer precisely.
+- Gates are not optional: document, read back, confirm; in consult mode answer precisely.
 
 Full instructions: AGENT.md, phases/, modes/ in this directory.

@@ -190,8 +190,8 @@ handling, schema versioning, interface stability>
 
 #### Verdict
 - **Status:** APPROVED | NEEDS REVISION | BLOCKED
-- **Critical issues:** <ordered list, or "None">
-- **Minor issues:** <list, or "None">
+- **Findings:** <one line each, highest severity first, or "None">
+  - `[High|Medium|Low] <file>:<line> — <issue> — <risk> (fix | caveat)`
 - **Recommended next:** <specific, actionable suggestion>
 
 ---
@@ -201,21 +201,28 @@ Repeat per file. After all files:
 
 ```markdown
 ### Overall Summary
-- **Files reviewed:** N
-- **APPROVED:** N
-- **NEEDS REVISION (minor):** N
-- **NEEDS REVISION (structural):** N
-- **BLOCKED:** N
+- **Overall verdict:** <the worst per-file verdict>
+- **Files reviewed:** N (APPROVED N, NEEDS REVISION N, BLOCKED N)
+- **Findings by severity:** High N, Medium N, Low N
+- **Files not reviewed:** <path — reason, or "None">
 - **Top concern across all files:** <the single most important issue>
 ```
 
-**Verdict definitions:**
-- **APPROVED** — production-ready as written
-- **NEEDS REVISION** (minor) — style/naming/low-risk issues; address in next pass
-- **NEEDS REVISION** (structural) — structural or correctness issues; fix before production
-  traffic
-- **BLOCKED** — critical issue (logic error, broken contract, security risk);
-  must fix before execution
+**Severity:**
+- **High** — wrong results, data loss, security exposure or a production failure
+  (logic error, broken contract, hardcoded or logged secret, injection risk,
+  swallowed exception on a critical path).
+- **Medium** — a correctness or maintainability risk to fix before relying on
+  the code or sending it production traffic (structural problems, validation in
+  the wrong layer, blocking I/O in async code).
+- **Low** — polish (naming, style, small readability issues).
+
+**Verdict definitions** (standard legend, per `protocols/reviewer_verdict.md`):
+_APPROVED = the work stands as written | NEEDS REVISION = issues to record or fix; the work can continue once they are acknowledged | BLOCKED = a material problem makes the work unsafe to build on_
+
+Any unresolved High finding that makes the code unsafe to build on means
+BLOCKED; otherwise any fix-type finding means NEEDS REVISION; APPROVED only when
+there are no fix-type findings.
 
 ---
 

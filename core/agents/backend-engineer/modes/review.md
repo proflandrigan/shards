@@ -90,9 +90,9 @@ review (a notebook, a non-Python file, a file too large to read in full), with
 the reason.
 
 As you audit, build your findings into the Structured Review Format defined in
-the core agent file. In each file's Verdict block, write every finding as
-`[High|Medium|Low] file:line — issue — risk (fix | caveat)`: High findings under
-**Critical issues**, Medium and Low findings under **Minor issues**. A file with
+the core agent file. In each file's Verdict block, list every finding under **Findings** as
+`[High|Medium|Low] file:line — issue — risk (fix | caveat)`, highest severity
+first. A file with
 no findings is APPROVED; say what makes it sound.
 
 ---
