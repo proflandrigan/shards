@@ -86,7 +86,7 @@ For a policed tool the hook checks the call before it runs:
 2. No marker, or a marker for an unknown, pending or changes-requested gate: on Claude Code the user gets a permission prompt (their yes is the explicit confirmation); on Codex, which cannot ask from a hook, the call is denied. Each refusal is logged to `.shards/state/gate-violations.jsonl` (see `shards gates violations`).
 3. A payload that looks like raw query results (25 or more table, TSV or CSV rows in one string) is denied even for a confirmed gate, unless `allow_raw_data` is `true`. This is a heuristic backstop; the protocol (`core/protocols/external_writes.md`) tells agents to send summaries only.
 
-`SHARDS_GUARDRAILS=0` or `SHARDS_GATE_ENFORCE=0` disables the hook check. The hook fails open on internal errors.
+`SHARDS_GUARDRAILS=0` or `SHARDS_GATE_ENFORCE=0` disables the hook check. The hook fails open on unrelated internal errors, but fails closed (denies the call) when the session's gate state file exists and cannot be read or parsed.
 
 ```yaml
 guardrails:

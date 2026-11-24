@@ -107,6 +107,10 @@ async function enforce(n, root, env = process.env) {
   }
   if (bound) return null; // exec only (tests, scripts): bound workers keep working
   if (hasGates) {
+    // An unreadable gates.json cannot prove no gate is pending: fail closed (write/exec calls only).
+    try { state.read('gates'); } catch (e) {
+      return { deny: `shards: gate state could not be read (${String(e.message).split('\n')[0]}); write/exec tools are blocked until it is repaired (fix or delete the session's gates.json, or set SHARDS_GATE_ENFORCE=0)` };
+    }
     const g = pendingGate(session);
     if (g) {
       const tgt = w.paths.length ? ` (target: ${w.paths.map((p) => path.relative(root, p) || p).join(', ')})` : '';
