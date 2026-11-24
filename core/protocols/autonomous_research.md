@@ -28,7 +28,9 @@ fixed-N experiments) rather than replacing it.
 **When NOT to use `[AR]`:**
 - You have 2-3 specific things to try — use `[EX]` instead.
 - You have not identified a primary metric — AR requires a single north-star.
-- The changes are not revertable via git — AR requires versioning for safety.
+- The changes are not revertable via git — AR requires versioning for safety. AR
+  also needs `git.commit` enabled for its per-iteration checkpoints. If it is
+  `false`, ask the user to enable it or use `[EX]`.
 
 ---
 
@@ -304,7 +306,12 @@ transcript.
 #### B.9 Git checkpoint
 
 Follow **Section B** of [`protocols/experiment_versioning.md`](experiment_versioning.md)
-with these AR-specific conventions:
+with these AR-specific conventions. That protocol's git policy applies in full:
+commit only when `git.commit` is enabled, honour `git.denylist` and its size
+limit, use `git commit --only`, never switch branches, never push. Inside a
+fan-out branch these calls are skipped (Section H.5). `experiments/` in this
+protocol means `<output_dir>/experiments/` (`<branch_dir>/experiments/` inside a
+branch).
 
 - **Tag prefix:** `research/<project_name>/<N>-<name>` (not `exp/<...>`).
 - **Annotated tag message** includes the auto-decision color:
@@ -450,8 +457,9 @@ Reverts are **file-scoped**, never `git reset --hard`, never `git clean -f`.
 4. Defensive scope check: if any file outside the mutable list shows as dirty
    after the revert, **halt the loop with a safety-rail stop** (Section G.1 —
    scope violation during the iteration). Do not auto-clean. Alert the user.
-5. Create a revert commit to keep history linear and the next iteration's
-   `git add` clean:
+5. If versioning is enabled (`git.commit` true, same policy as B.9), create a
+   revert commit of the reverted paths only (`git commit --only <paths>`) to
+   keep history linear and the next iteration's `git add` clean:
    ```bash
    git commit -m "research: revert iter <N> (<red|yellow>) — <metric> <before> -> <after>"
    git tag -a "research/<project>/<N>-revert" -m "Reverted iteration <N>: <reason>"
@@ -770,7 +778,7 @@ Populated only in branches spawned by the Section H fan-out protocol:
   "branchSlug": "<slug>",
   "approachConstraint": "<one-line description>",
   "parentProjectDir": "<path>",
-  "gitStrategy": "branch-local" | "lockfile" | "no-vcs"
+  "gitStrategy": "branch-dir" | "worktree" | "no-vcs"
 }
 ```
 
@@ -846,6 +854,7 @@ force if user chose to omit).
 - Remove git tags or refs.
 
 File-level `git checkout <sha> -- <path>` is the only allowed reverting operation.
+It restores file contents only. It never switches branches.
 
 ### G.7 Git safety
 
@@ -854,6 +863,8 @@ File-level `git checkout <sha> -- <path>` is the only allowed reverting operatio
 - Never force push.
 - Never `git clean -f` or `git clean -fd`.
 - Tag creation is append-only — never delete or force-overwrite tags.
+- Never switch or create branches (`git checkout -b`, `git switch`). Commits
+  happen only under the `git.commit` and `git.denylist` policy in B.9.
 
 ### G.8 Interrupt handling
 
@@ -932,7 +943,7 @@ autonomous research protocol.
 **Approach constraint:** <one-paragraph description of the approach family
 this branch must stay within — e.g., "tree-based methods only; no neural
 networks; no linear models">
-**Git strategy:** <branch-local | lockfile | no-vcs — see Section H.5>
+**Git strategy:** <branch-dir | worktree | no-vcs — see Section H.5>
 
 ## Project Context (from completed planning phases)
 
@@ -969,7 +980,7 @@ Produce:
    files.
 2. A final `<branch_dir>/branch-report.md` summarizing the branch's best state
    per the DIVERGE branch-report template (`protocols/diverge.md` Section E).
-3. Git commits on the chosen git strategy (H.5).
+3. Git commits only if the chosen git strategy (H.5) allows them (`worktree`).
 ```
 
 ### H.4 Per-branch file layout
@@ -994,35 +1005,33 @@ The main project dir keeps:
 
 ### H.5 Concurrent git strategy
 
-When multiple branches run in parallel, all committing to the same repo, naive
-`experiment_versioning.md` Section B calls will race on the index lock, collide
-on tag names, and interleave history. Each branch MUST pick one strategy at
-spawn time and record it in `results.json.branchContext.gitStrategy`:
+Shards never switches branches (ADR 0005), and parallel branches share one
+working tree, so concurrent checkouts or index writes would clobber each other.
+Branches isolate by directory. Each branch MUST pick one strategy at spawn time
+and record it in `results.json.branchContext.gitStrategy`:
 
-**`branch-local` (default for AR fan-out):**
-- Before Phase 2, branch runs `git checkout -b ar/<branch-slug>`.
-- All commits on its own git branch. No cross-branch collisions.
+**`branch-dir` (default for AR fan-out):**
+- The branch writes only inside `<project_dir>/.shards/branches/<branch-slug>/`
+  (or its leased slice paths). No `git checkout`, no commits, no tags.
+- Section B checkpoint calls are skipped. Lineage relies on per-iteration
+  markdown + `results.json`. Revert (C.3) is by restoring from the branch's own
+  saved copy of the last green files, since no checkpoint commit exists.
+- At promotion (Section H.11) the winner's files are copied into the main
+  project directory. The runtime commits them at the next confirmed gate under
+  `git.commit` and `git.denylist`.
+
+**`worktree` (opt-in only):**
+- Used only if the user explicitly asks at the DIVERGE proposal gate. Each branch
+  gets its own `git worktree` under `<branch_dir>/worktree/` and commits there
+  (B.9 policy applies). The main working tree is never switched.
 - Tag namespace: `research/<project>/<branch-slug>/<N>-<name>`.
-- At promotion (Section H.9), `git merge --squash ar/<winner>` onto the main
-  working branch. Losing branches remain as refs for reference — deletion
-  requires explicit user confirmation.
-
-**`lockfile`:**
-- Branches share the main working ref.
-- All git operations serialize via a file lock at
-  `<project_dir>/.shards/branches/.git-lock` (create with `O_EXCL`, retry-with-backoff on
-  contention — default 5 retries, 100ms-1s exponential backoff).
-- Acceptable for K ≤ 2; degrades under contention.
-- Tag namespace: `research/<project>/<branch-slug>/<N>-<name>` (includes slug
-  to prevent collisions even on shared ref).
+- Losing worktrees are preserved; removal requires explicit user confirmation.
 
 **`no-vcs`:**
-- Branches disable Section B checkpoint calls entirely.
-- Lineage relies solely on per-iteration markdown + `results.json`.
-- A single consolidation commit is made at promotion time.
-- Fallback only — use when git is unavailable or intentionally disabled.
+- Same layout as `branch-dir`; use when git is unavailable or `git.commit` is
+  `false`. No checkpoint calls at all.
 
-Solo AR uses the main working ref directly — no branch-local ref required.
+Solo AR uses the main working tree directly.
 
 ### H.6 Steering in fan-out
 
@@ -1085,17 +1094,12 @@ branches exploring similar territory.
 Follow `protocols/diverge.md` Section G with these extensions for AR git
 strategies:
 
-- **`branch-local`:** `git merge --squash ar/<winner>` onto the main working
-  ref. Copy branch-dir artifacts (brief, results.json, iteration files,
-  history_summary.md) to `<project_dir>/experiments/`. Tag the merge with
-  `research/<project>/converged/<winner>`.
-- **`lockfile`:** artifacts are already on the main ref under the
-  `<branch-slug>/` tag prefix. Copy branch-dir artifacts to
-  `<project_dir>/experiments/`. Tag the consolidation:
-  `research/<project>/converged/<winner>`.
-- **`no-vcs`:** make the single consolidation commit now
-  (`research: converge <winner>`). Copy artifacts. Tag
-  `research/<project>/converged/<winner>`.
+- **`branch-dir` / `no-vcs`:** no merge. Copy the winner's deliverables and
+  branch-dir artifacts (brief, results.json, iteration files,
+  history_summary.md) to `<project_dir>/experiments/` (that is,
+  `<output_dir>/experiments/`). The runtime commits them at the convergence
+  gate when `git.commit` is enabled, excluding denylisted files.
+- **`worktree`:** copy from the winner's worktree the same way. No ref merge.
 
 Losing branches are preserved under `<project_dir>/.shards/branches/` for reference.
 

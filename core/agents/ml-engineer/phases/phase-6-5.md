@@ -135,11 +135,11 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
    `diverge-ar-<project>`).
 4. On confirmation, follow `autonomous_research.md` Section H:
    - H.3 for parallel branch spawning (all branches in one message)
-   - H.5 for git strategy (default `branch-local`)
+   - H.5 for git strategy (default `branch-dir`)
    - Wait for all branches to complete
 5. Run arbiter per Section F of `protocols/diverge.md`.
-6. On user winner selection: promote per Section G — copy artifacts, squash-merge
-   on chosen git strategy, update `eval-results.json.bestCandidate` with the
+6. On user winner selection: promote per Section G — copy artifacts
+   per the chosen git strategy (no ref merge), update `eval-results.json.bestCandidate` with the
    winning branch's converged metrics.
 
 **[M] User runs notebook manually:**

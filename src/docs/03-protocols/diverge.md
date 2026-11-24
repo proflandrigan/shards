@@ -23,11 +23,11 @@ Gate ids for AR-initiated forks use an `-ar-<project>` suffix so they do not col
 
 ## Concurrent git strategy
 
-Parallel branches share a repository, so each picks one strategy at spawn time and records it in `results.json`:
+Parallel branches share one working tree, so each picks one strategy at spawn time and records it in `results.json`:
 
-- **`branch-local`** (default for AR fan-out): each branch commits on its own git branch (`ar/<branch-slug>`) with namespaced tags. Promotion squash-merges the winner. Losing refs are kept, and deleting them needs your confirmation.
-- **`lockfile`**: branches share a ref and serialize git operations through a file lock under the project folder's `.shards/branches/`. Fine for two branches, degrades under contention.
-- **`no-vcs`**: checkpoints are disabled and a single consolidation commit happens at promotion. A fallback when git is unavailable.
+- **`branch-dir`** (default): each branch writes only inside its own folder under `.shards/branches/<branch-slug>/` and makes no commits, tags or branch switches. Promotion copies the winner's files into the project, and the gate commit picks them up as usual.
+- **`worktree`** (only if you ask for it): each branch gets its own git worktree and commits there, within `git.commit` and `git.denylist`. Losing worktrees are kept, and removing them needs your confirmation.
+- **`no-vcs`**: same layout as `branch-dir`, for when git is unavailable or `git.commit` is off.
 
 ## See also
 

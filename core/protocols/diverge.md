@@ -209,43 +209,39 @@ After spawning all branch Tasks, wait for all of them to complete before proceed
 
 ### Concurrent git strategy for parallel branches
 
-When branches run in parallel they all commit to the same repo. Naive usage of
-`experiment_versioning.md` Section B (shared by AR Section B.9) will race on
-the git index lock, collide on tag names, and produce interleaved history.
+Shards never switches branches (ADR 0005), and parallel branches share one
+working tree, so concurrent `git checkout` or index writes would clobber each
+other. Parallel branches therefore isolate by **directory**, not by git ref.
 
 **Each branch MUST select one strategy at spawn time** and record it in
 `results.json.branchContext.gitStrategy`. The initiating specialist must name
 the chosen strategy in each branch's Task prompt.
 
-- **`branch-local` (default for AR fan-out):** before Phase 2 starts, the
-  branch runs `git checkout -b ar/<branch-slug>` and commits exclusively on
-  its own git branch. Tags are namespaced
-  `research/<project>/<branch-slug>/<N>-<name>` (AR) or
-  `exp/<project>/<branch-slug>/<N>-<name>` (planning-phase). No cross-branch
-  collisions. Promotion (Section G) merges the winner's ref into the main
-  working branch. Losing branches remain as refs for reference; deletion
-  requires explicit user confirmation.
+- **`branch-dir` (default):** the branch writes only inside its own directory
+  `<project_dir>/.shards/branches/<branch-slug>/` (or its leased slice paths)
+  and makes **no git commits, tags or branch switches**. Lineage lives in the
+  per-iteration markdown and `results.json`. The solo-AR Section B checkpoint
+  calls are skipped inside a branch. Promotion (Section G) copies the winner's
+  files into the main project directory, and the runtime commits them at the
+  next confirmed gate under `git.commit` and `git.denylist`.
 
-- **`lockfile`:** branches share the same working ref but serialize all git
-  operations via a file lock at `<project_dir>/.shards/branches/.git-lock` (file-creation
-  with `O_EXCL`; retry-with-backoff on contention — default 5 retries,
-  100ms-1s exponential backoff). Acceptable for small K (≤2); degrades under
-  contention. Tag namespace includes the branch slug to prevent collisions
-  even on a shared ref: `research/<project>/<branch-slug>/<N>-<name>`.
+- **`worktree` (opt-in only):** only if the user explicitly asks for it at the
+  DIVERGE proposal gate, each branch gets its own `git worktree` under
+  `<project_dir>/.shards/branches/<branch-slug>/worktree/` and commits there,
+  honouring `git.commit` and `git.denylist`. Tags are namespaced
+  `research/<project>/<branch-slug>/<N>-<name>`. Never the default, and the
+  agent never checks out a branch in the main working tree.
 
-- **`no-vcs`:** branches disable Section B checkpoint calls entirely and rely
-  solely on per-iteration markdown + `results.json` for lineage. A single
-  consolidation commit is made at promotion time. Fallback only, when git is
-  unavailable or intentionally disabled.
+- **`no-vcs`:** same file layout as `branch-dir`, stated explicitly for when git
+  is unavailable or `git.commit` is `false`. No checkpoint calls at all.
 
 The chosen strategy is included in each branch's Task prompt above (the AR
 fan-out prompt in `autonomous_research.md` Section H.3 already includes a
 `Git strategy:` field). Planning-phase DIVERGE with parallel implementation
-work should also pick a strategy explicitly rather than relying on the shared
-ref.
+work should also pick a strategy explicitly.
 
 Solo (non-fanned-out) AR and planning-phase DIVERGE with sequential branch
-execution use the main working ref directly — no branch-local ref required.
+execution use the main working tree directly.
 
 ---
 
@@ -314,28 +310,13 @@ When the user selects a winning branch:
 
 1. **Handle the git strategy** recorded in the winning branch's
    `results.json.branchContext.gitStrategy`:
-   - **`branch-local`:** run `git merge --squash ar/<winning-branch>` onto the
-     main working ref. Create a consolidation commit:
-     ```bash
-     git commit -m "research: converge <winning-branch> — <metric>: <baseline> -> <final>"
-     git tag -a "research/<project>/converged/<winning-branch>" -m "Converged from AR fan-out"
-     ```
-     Losing branches remain as refs (e.g., `ar/<losing-branch>`) for reference. **Do
-     NOT delete losing refs** without explicit user confirmation.
-   - **`lockfile`:** artifacts and tags already live on the main ref under the
-     branch-slug-prefixed tag namespace. No merge needed. Still create the
-     consolidation tag:
-     ```bash
-     git tag -a "research/<project>/converged/<winning-branch>" -m "Converged from AR fan-out (lockfile strategy)"
-     ```
-   - **`no-vcs`:** make the single consolidation commit now, staging the
-     promoted artifacts (step 2):
-     ```bash
-     git add <promoted paths>
-     git commit -m "research: converge <winning-branch> — <metric>: <baseline> -> <final>"
-     ```
-     (If git itself is unavailable, skip the commit and tag — record in
-     `project-specs.md` that no VCS artifacts were produced.)
+   - **`branch-dir` / `no-vcs`:** nothing to merge. Step 2 copies the files.
+     The agent runs no `git commit`; the runtime commits the promoted files at
+     the convergence gate when `git.commit` is enabled, excluding denylisted
+     files. Mention any excluded file in the gate summary.
+   - **`worktree`:** copy the winner's files from its worktree (step 2) rather
+     than merging refs. Losing worktrees and their refs remain for reference.
+     **Do NOT remove them** without explicit user confirmation.
 
 2. **Copy artifacts** from `<project_dir>/.shards/branches/<winning-branch>/` to the
    appropriate locations. Deliverable files go to the confirmed
