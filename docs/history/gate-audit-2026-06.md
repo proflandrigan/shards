@@ -92,4 +92,4 @@ Files: `src/ui/js/chat.js`, `src/ui/js/state.js`, `src/ui/index.html`,
 
 - `npm test` green (updated + new cross-session tests).
 - Manual: simulate two sessions writing state.json; verify isolation.
-- `node tools/install.js` from repo root to refresh the live `.shards` install.
+- `node tools/install.js` from repo root to refresh the live `.shards` install. (v1 installer; no longer the default install path, see docs/release.md)

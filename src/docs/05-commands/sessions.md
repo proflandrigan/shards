@@ -19,7 +19,7 @@ shards sessions end    [id|prefix] [--root d] [--json]
 - `resume` prints per-host resume hints. It does not change the session or relaunch anything.
 - `end` closes a session (the current one when the id is omitted). It replays pending gate git commits first and is refused while the session has pending or suspended gates; the operator resolves those (see [`shards gates`](cli.md#shards-gates)).
 
-A short id prefix is enough. A prefix that is too short or matches several rows returns not found. `shards-sessions` is the legacy bin with the same subcommands.
+A short id prefix is enough. A prefix that is too short or matches several rows returns not found. `shards-sessions` is a deprecated shim that forwards to `shards sessions` and rejects the v1-only flags `--agent` and `--project`; use `shards sessions` instead.
 
 ## From inside a session
 
