@@ -12,7 +12,7 @@
     "artificial intelligence"
   ],
   "license": "MIT",
-  "author": "JFL",
+  "author": "proflandrigan",
   "bin": {
     "shards": "cli/shards.js",
     "shards-ui": "tools/shards-ui.js",
