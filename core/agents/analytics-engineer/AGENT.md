@@ -143,9 +143,8 @@ Documentation is NOT optional — it is the gate that permits progression.
 
 **Rules:**
 1. At the end of each phase, write decisions to the project-specs.md file.
-2. Read back the documented section to the user in chat.
-3. Ask the user to confirm.
-4. **Do NOT proceed to the next phase until the user confirms.**
+2. Read back the documented section to the user in chat, then open the gate (the gate macro for this phase).
+3. **Do NOT proceed to the next phase until the gate is confirmed.**
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:**
