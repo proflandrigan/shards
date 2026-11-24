@@ -47,22 +47,16 @@ function listPhaseFiles(agentDir, dirName) {
   } catch (_) { return []; }
 }
 
-// First advancing gate declared in a phase file source: {{gate ...}} macro or legacy ::GATE:: fence.
+// First advancing gate declared in a phase file source: {{gate ...}} macro.
 function advancingGate(src, agent, track, phase) {
   const advancing = (k) => gates.ADVANCING_KINDS.includes(k);
   const attr = (s, k) => { const m = new RegExp(`(?:^|\\s)${k}=("[^"]*"|\\S+)`).exec(s); return m ? m[1].replace(/^"|"$/g, '') : undefined; };
   for (const ln of src.split('\n')) {
-    let m = /\{\{gate\s+([^}]*)\}\}/.exec(ln);
+    const m = /\{\{gate\s+([^}]*)\}\}/.exec(ln);
     if (m) {
       const kind = attr(m[1], 'kind');
       if (!advancing(kind)) continue;
       const id = attr(m[1], 'id') || `${agent}${track ? `-${track}` : ''}-phase-${attr(m[1], 'phase') || phase}`;
-      return { id, kind };
-    }
-    m = /^\s*::GATE::\s+(.*)$/.exec(ln);
-    if (m) {
-      const kind = attr(m[1], 'kind'); const id = attr(m[1], 'id');
-      if (!advancing(kind) || !id || /[<>]/.test(id)) continue;
       return { id, kind };
     }
   }

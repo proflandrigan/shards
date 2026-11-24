@@ -314,8 +314,8 @@ Loading phase N requires the advancing gate of the phase immediately before N, i
 | Index position 0 (or not found in the index) | `<agent>-phase-0` (dual-track: also `<agent>-<track>-phase-0`), **only if a gate record with that id already exists** in `gates.json`. Otherwise none. |
 
 - **Advancing kinds** are `phase`, `final`, `execute` and `handoff`. `checkpoint` and `confirm` never count.
-- **Which gate in a file.** The first advancing gate in the phase file's source wins. Two forms are read: the `{{gate ...}}` macro (what core phase files use) and the legacy `::GATE:: id=... kind=...` fence, accepted only as a fallback for older phase text. A fence needs an `id` without `<` or `>`. A macro's id is `<agent>[-<track>]-phase-<N>` unless `id=` is given.
-- **Dual-track ids** are used verbatim from the fence, for example `data-engineer-quick-phase-1`.
+- **Which gate in a file.** The first advancing gate in the phase file's source wins. Only the `{{gate ...}}` macro (what core phase files use) is read; the legacy `::GATE::` text fence is no longer parsed. A macro's id is `<agent>[-<track>]-phase-<N>` unless `id=` is given.
+- **Dual-track ids** are used verbatim from the gate declaration, for example `data-engineer-quick-phase-1`.
 - **Scope.** A confirmed gate counts only for the active frame's agent, project and track (see section 5). If the config fails to load, the policy is `strict` and the result carries `config_error` and a `WARNING` line.
 - **Confirmed** means a record with the id (or, failing an id match, the same agent, phase, and a matching or absent track) has `status: confirmed`. Among candidates a confirmed one wins. Otherwise the first candidate's status is reported. No record gives `missing`.
 - **Refusal text** (exact form; `prev` is the preceding phase, `0` for the first-phase rule, and `status` is `missing`, `pending`, `changes_requested` or `suspended`):
