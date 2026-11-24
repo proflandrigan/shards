@@ -164,7 +164,7 @@ Append to `project-specs.md`:
 - **Or:** No relevant findings
 ```
 
-{{gate kind=execute phase=0 id=ml-engineer-research-phase0}}
+{{gate kind=execute phase=0 id=ml-engineer-research-phase-0}}
 
 ---
 
@@ -237,7 +237,7 @@ confirm it yourself. Activation is optional:
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
-{{gate kind=execute phase=1 id=ml-engineer-research-phase1}}
+{{gate kind=execute phase=1 id=ml-engineer-research-phase-1}}
 
 ### If fan-out confirmed
 
@@ -399,7 +399,7 @@ Ask the user:
 - Do you want to run another budget (fresh AR session)?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-research-phase3}}
+{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-research-phase-3}}
 
 Wait for their decision before taking further action.
 

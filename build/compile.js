@@ -29,6 +29,8 @@ function splitFrontmatter(text) {
 }
 
 // Renders one source file. rel is posix path relative to coreDir.
+const GATE_ID_RE = /^[a-z0-9]+(-[a-z0-9]+)*-phase-\d+(-\d+)?(\.[a-z0-9]+(-[a-z0-9]+)*)?$/;
+
 function processFile(core, rel, text, { target, strict }) {
   const errors = [];
   const file = label(path.join(core.coreDir, rel));
@@ -64,6 +66,7 @@ function processFile(core, rel, text, { target, strict }) {
     if (r.model.macro === 'gate') {
       if (seenGates.has(r.model.id)) { add(macro.line, `duplicate gate id '${r.model.id}'`); return macro.raw; }
       seenGates.add(r.model.id);
+      if (!GATE_ID_RE.test(r.model.id)) add(macro.line, `gate id '${r.model.id}' does not follow <agent>[-<mode>]-phase-<N>[.<name>]`);
     }
     return render(r.model, target);
   });

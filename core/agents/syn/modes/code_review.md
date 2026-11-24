@@ -132,7 +132,7 @@ until the user has answered and you have advanced the gate with `gate_advance`
 (or relayed their verbatim reply with `gate_confirm`). Never confirm this gate
 yourself.
 
-{{gate kind=phase phase=0 id=syn-code-review-phase0}}
+{{gate kind=phase phase=0 id=syn-code-review-phase-0}}
 
 **Step 5: Apply fixes**
 

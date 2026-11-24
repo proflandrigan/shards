@@ -67,18 +67,18 @@
   ],
   "expected_gates": [
     {
-      "id": "syn-pm-phase0",
+      "id": "syn-pm-phase-0",
       "kind": "phase",
       "min": 1
     },
     {
-      "id": "syn-pm-phase1",
+      "id": "syn-pm-phase-1",
       "kind": "phase",
       "min": 1,
       "allowed_reemits": 1
     },
     {
-      "id": "syn-pm-phase5",
+      "id": "syn-pm-phase-5",
       "kind": "final",
       "min": 1
     }
@@ -92,10 +92,10 @@
     {
       "id": "reask-confirmed-gate",
       "type": "gate_reask",
-      "description": "Agent re-emits a gate the user already confirmed (e.g. after compaction); only gates listed in allowed_reemits may repeat (phase5 final gate fires once per workstream)",
+      "description": "Agent re-emits a gate the user already confirmed (e.g. after compaction); only gates listed in allowed_reemits may repeat (phase-5 final gate fires once per workstream)",
       "allowed_reemits": {
-        "syn-pm-phase1": 1,
-        "syn-pm-phase5": 1
+        "syn-pm-phase-1": 1,
+        "syn-pm-phase-5": 1
       }
     },
     {

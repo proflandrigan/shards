@@ -46,7 +46,7 @@ transfer occurs.
    after Phase 3 finalization. Write the result of each experiment to `results.json`
    as soon as it is recorded (Phase 2 Step 5).
 
-{{gate kind=execute phase=0 id=ml-engineer-experiment-phase0}}
+{{gate kind=execute phase=0 id=ml-engineer-experiment-phase-0}}
 
 If the user modifies any parameter, update before proceeding.
 
@@ -87,7 +87,7 @@ until the user responds.
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
-{{gate kind=execute phase=1 id=ml-engineer-experiment-phase1}}
+{{gate kind=execute phase=1 id=ml-engineer-experiment-phase-1}}
 Wait for confirmation. If the user modifies the plan, update it before proceeding.
 
 ### Write experiment plan file
@@ -396,7 +396,7 @@ Ask the user:
 - Do you want to run more experiments?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-experiment-phase3}}
+{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-experiment-phase-3}}
 
 Wait for their response before taking any further action.
 
