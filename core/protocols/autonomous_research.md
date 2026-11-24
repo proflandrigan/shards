@@ -341,7 +341,7 @@ proceed to Phase 3.
 Update `results.json.costAccounting`:
 - `tokensIn` and `tokensOut` — approximate counts from this iteration
 - `dollarsSpent` — running total
-- `reviewerTasksSpawned` — increment if a reviewer Task was called
+- `reviewerTasksSpawned` — increment if a reviewer consult was called
 
 Check against the cost ceiling (Section G.5). If at 50% or 80% of ceiling emit
 a soft warning; at 100% hard-stop the loop.
@@ -795,7 +795,7 @@ Populated only in branches spawned by the Section H fan-out protocol:
 
 ### G.1 Scope enforcement
 
-Every file-modifying tool call in Phase 2 (`Edit`, `Write`, `NotebookEdit`)
+Every file-modifying tool call in Phase 2 (`Edit`, `Write`, notebook edits)
 verifies the target path is in the mutable set from the research brief. If a
 path is not mutable:
 1. Halt the iteration immediately.
@@ -811,7 +811,7 @@ paths, `sed -i`, tooling that regenerates configs) also fall under this rule.
 If an iteration's plan requires a shell command that touches immutable paths,
 halt before running it and escalate to the user. The safe practice is to
 avoid file-modifying shell commands in the loop entirely — use `Edit` / `Write`
-/ `NotebookEdit` which are checkable ahead of time.
+/ notebook edits which are checkable ahead of time.
 
 ### G.2 Metric floor breach
 
@@ -840,7 +840,7 @@ and 80% printed inline:
      Continuing. You can edit research_brief.md to adjust the ceiling.
 ```
 
-Reviewer Tasks and proxy evaluations **both count against the ceiling**.
+Reviewer consults and proxy evaluations **both count against the ceiling**.
 
 Required for `overnight` preset; optional for `interactive` (warn but do not
 force if user chose to omit).
@@ -925,7 +925,7 @@ The user confirms one of:
 ### H.3 Branch spawning
 
 If fan-out confirmed, start K parallel branch subagents in a single message (not
-sequentially). Each Task is:
+sequentially). Each branch subagent is:
 
 Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
 
@@ -1053,11 +1053,11 @@ The user can edit either during the run:
 Each branch runs Section E convergence checks independently inside its own AR
 loop. A branch terminates when it converges, exhausts its budget, or breaches
 a safety rail. **Branches do not wait for each other.** The parent specialist
-(or Syn) waits for all branch Tasks to return before arbitration.
+(or Syn) waits for all branch subagents to return before arbitration.
 
 ### H.8 Branch gate policy
 
-Branches are Task-invoked sub-agents. Per `syn/arbiter.md` and the harness
+Branches are spawned sub-agents. Per `syn/arbiter.md` and the harness
 sub-agent rule, sub-agents **must not call `gate_request`**. All
 human-facing gates live in the parent's Phase 3 (arbitration + consolidated
 summary).
@@ -1161,7 +1161,7 @@ Factual synthesis — no opinions in this file:
 - **Tokens in:** <N>
 - **Tokens out:** <N>
 - **Dollars spent:** <value>
-- **Reviewer Tasks spawned:** <N>
+- **Reviewer consults spawned:** <N>
 - **Cost ceiling:** <value or "none set">
 
 ## Iteration Timeline

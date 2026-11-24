@@ -83,6 +83,8 @@ const DEFS = {
   missing_templates: 'templates/<name>.(md|json) referenced from commands/ or agents/ paths but absent from <root>/templates/',
   ui_mode_files: 'files named *ui_mode*.md',
   write_whole_build: 'occurrences of "write the whole/entire/full/complete <artifact>" or "in one go/pass ... write" in *.md files under phases*/ directories (instructions to write a whole build in one pass; delegated builds use per-task components)',
+  host_tool_names: 'occurrences, outside frontmatter tools: lines, of the Claude Code tool names NotebookEdit and Task used as a host tool (calls Task, branch Tasks, Task prompt, Task output, Task content blocks, Task-invoked ...)',
+  host_goal_caveat: 'occurrences of Claude Code /goal version caveats (v2.1.x, disableAllHooks) in all scanned files',
   via_task_prose: 'occurrences of /\\bvia (the )?Task( tool)?\\b/i (host-specific "via Task" prose) in all scanned files',
 };
 
@@ -96,6 +98,11 @@ function walk(dir, out) {
     else if (e.isFile() && EXTS.has(path.extname(e.name)) && e.name !== 'INVENTORY.md') out.push(p); // INVENTORY.md lists legacy file names by design
   }
 }
+
+const HOST_TOOL_RE = /\bNotebookEdit\b|\b(?:calls?|invokes?|spawn(?:s|ed)?|branch|reviewer|parallel|specialist|revision|each|all|one) Tasks?\b(?! (?:count|evidence|cards?|acceptance|type|list)\b)|\bTask(?:[- ](?:prompts?|output|content blocks?|calls?|invoked))\b/g;
+const GOAL_CAVEAT_RE = /v2\.1\.\d+|disableAllHooks/g;
+
+function stripToolsLines(text) { return text.replace(/^tools:.*$/gm, ''); }
 
 function count(re, text) { const m = text.match(re); return m ? m.length : 0; }
 
@@ -120,7 +127,7 @@ function computeReport(opts) {
   const mk = () => ({ count: 0, files: [] });
   const m = {
     ui_refs: mk(), claude_dir_refs: mk(), subagent_type: mk(), compact: mk(),
-    ledger_refs: mk(), via_task_prose: mk(), write_whole_build: mk(),
+    ledger_refs: mk(), host_tool_names: mk(), host_goal_caveat: mk(), via_task_prose: mk(), write_whole_build: mk(),
   };
   const gate = { count: 0, by_kind: {}, files: [] };
   const av = { opens: 0, closes: 0, files: [] };
@@ -140,6 +147,12 @@ function computeReport(opts) {
   for (const f of files) {
     const rel = path.relative(root, f).split(path.sep).join('/');
     const text = fs.readFileSync(f, 'utf8');
+    {
+      const stripped = stripToolsLines(text);
+      const a = count(HOST_TOOL_RE, stripped), b = count(GOAL_CAVEAT_RE, text);
+      if (a) { m.host_tool_names.count += a; m.host_tool_names.files.push(rel); }
+      if (b) { m.host_goal_caveat.count += b; m.host_goal_caveat.files.push(rel); }
+    }
     for (const [k, re] of simple) {
       const n = count(re, text);
       if (n) { m[k].count += n; m[k].files.push(rel); }
@@ -187,6 +200,8 @@ function computeReport(opts) {
     gate_fences: { count: gate.count, by_kind: sortedKinds, files: gate.files.length, file_list: gate.files, definition: DEFS.gate_fences },
     auto_verify: { opens: av.opens, closes: av.closes, count: av.opens + av.closes, files: av.files.length, file_list: av.files, definition: DEFS.auto_verify },
     ledger_refs: { count: m.ledger_refs.count, files: m.ledger_refs.files.length, file_list: m.ledger_refs.files, definition: DEFS.ledger_refs },
+    host_tool_names: { count: m.host_tool_names.count, files: m.host_tool_names.files.length, file_list: m.host_tool_names.files, definition: DEFS.host_tool_names },
+    host_goal_caveat: { count: m.host_goal_caveat.count, files: m.host_goal_caveat.files.length, file_list: m.host_goal_caveat.files, definition: DEFS.host_goal_caveat },
     via_task_prose: { count: m.via_task_prose.count, files: m.via_task_prose.files.length, file_list: m.via_task_prose.files, definition: DEFS.via_task_prose },
     write_whole_build: { count: m.write_whole_build.count, files: m.write_whole_build.files.length, file_list: m.write_whole_build.files, definition: DEFS.write_whole_build },
     model_pins: { count: pins.count, files: pins.count, file_list: pins.files, definition: DEFS.model_pins },

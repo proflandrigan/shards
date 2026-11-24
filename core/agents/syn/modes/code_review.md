@@ -1,6 +1,6 @@
 # Code Review Mode
 
-Triggered when a specialist calls Task with `CODE REVIEW MODE` in the prompt.
+Triggered when a specialist consults Syn with `CODE REVIEW MODE` in the prompt.
 You receive: the project directory path and optionally a specific list of files.
 
 **Step 1: Read project context**
@@ -186,7 +186,7 @@ Brief for each consultant or worker (fill the angle-bracket fields):
 SERVICE MODE — APPLY NOTEBOOK FIXES. The user has approved the
 following fixes to Jupyter notebooks in <project_dir>.
 Files and fixes: <paste the notebook reviewer's per-file findings>
-Use the NotebookEdit tool to apply each fix. Return a per-notebook summary
+Use the notebook editing tool to apply each fix. Return a per-notebook summary
 of what was changed.
 ```
 

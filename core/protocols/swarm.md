@@ -97,6 +97,6 @@ to know. Your return value follows the fan-out contract in
 
 - Announce swarming to the user: how many slices, which types, what paths.
 - Prefer parallel spawns — do not await one slice before dispatching the next.
-- Guard your own context: read slice outputs from disk, not from Task output.
+- Guard your own context: read slice outputs from disk, not from subagent output.
 - Never degrade to a single massive workstream task when the work is large —
   decompose is the default.

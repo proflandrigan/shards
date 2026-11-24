@@ -495,8 +495,7 @@ Respond to any of the following naturally:
        prompt carries inherited Phase 0 setup (metric, budget, scope, cost
        ceiling, git strategy — default `branch-dir`) so the specialist
        skips its own Phase 0 gate.
-     - All branch Tasks are called in **a single message with multiple Task
-       content blocks** (parallel).
+     - All branch workers are launched **in parallel** (not sequentially).
 
   5. **After all branches return:** invoke Syn Arbiter Mode per
      `protocols/diverge.md` Section F. Present the leaderboard to the user

@@ -210,7 +210,7 @@ Goal: Understand the question and confirm it's quick enough for this agent.
 
 Follow the discovery rhythm for Data Analyst in [`protocols/intent_discovery.md`](../../protocols/intent_discovery.md).
 
-Also ask the **creativity prompt** (skip if arriving via Syn Task handoff — preference already captured by Syn during triage): "Do you want me to be creative with this — explore adjacent angles and suggest things you might not have thought of — or stick strictly to what you asked for?"
+Also ask the **creativity prompt** (skip if arriving via Syn handoff — preference already captured by Syn during triage): "Do you want me to be creative with this — explore adjacent angles and suggest things you might not have thought of — or stick strictly to what you asked for?"
 
 **Routing:** Always Quick (no deep track). If the request looks too complex, suggest escalation to the Data Scientist before proceeding.
 

@@ -35,7 +35,7 @@ Each task in `<output_dir>/tasks.yaml` cites one of these specifications through
 
 **Spec B. Evaluation test set** in `<output_dir>/eval/`. Include: input-output pairs with ground truth, edge cases, adversarial examples, safety test cases (prompt injection attempts, boundary cases).
 
-**Spec C. Evaluation notebook** in `<output_dir>/notebooks/`, built with NotebookEdit. It is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group (execution and scoring; cost; safety; results). Structure:
+**Spec C. Evaluation notebook** in `<output_dir>/notebooks/`, built with the notebook editing tool. It is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group (execution and scoring; cost; safety; results). Structure:
    - **Overview** (markdown): business problem, AI approach, key decisions
    - **Setup**: imports, config, API keys, test set loading
    - **Prompt Execution**: run prompts against test set, collect outputs. With a Harness plan this section drives the harness instead: import the runner from `experiments/`, run every enabled approach on the same test set, display the leaderboard (quality, cost per request, latency p95 per approach) and name the Phase 4 decision-rule winner. Quality, cost and safety analysis then cover the winner, plus a per-approach summary row.

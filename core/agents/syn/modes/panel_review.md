@@ -11,7 +11,7 @@ multi-specialist review and orchestration, not delegation.
   build the sequencing plan, and orchestrate the fix dispatch yourself.
 - "Don't do the specialist's job" → still in force. You do **not** write SQL,
   Python, or notebook code. Reviewers review; reviewers apply fixes via
-  `SERVICE MODE — APPLY FIXES`. Syn never calls Edit/Write/NotebookEdit on the
+  `SERVICE MODE — APPLY FIXES`. Syn never calls the file-editing tools on the
   target directory's artifacts.
 
 Panel Review is pointable at **any directory** — shards project dirs, vendored
@@ -219,12 +219,11 @@ parallel. Findings will appear as each returns."*
 Dispatch **one consult per unique specialist** in the confirmed panel — not one
 per (specialist, bucket) pair. If a specialist appears in multiple buckets
 (e.g., `backend-engineer` in `.py` and config; `researcher` in `.ipynb`,
-`.sql`, and reports), bundle all of their assigned files into a single Task
+`.sql`, and reports), bundle all of their assigned files into a single consult
 prompt. This produces one findings file per specialist and avoids cross-call
 context loss within the same lens.
 
-Call **all Tasks in a single message with multiple Task content blocks** —
-parallel, not sequential.
+Launch **all consults in parallel**, not sequentially.
 
 Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
 
@@ -253,7 +252,7 @@ may surface in a sequenced fix plan, so call out:
 Your job here is review only — do not apply any fixes.
 ```
 
-For the **Researcher** specifically (if in the panel), use the same Task
+For the **Researcher** specifically (if in the panel), use the same consult
 wrapper but a Researcher-specific prompt body that itemizes notebooks, SQL,
 and reports separately so the Researcher can apply the right lens to each
 artifact type:
@@ -308,7 +307,7 @@ Return your usual structured review. Review only — do not apply any fixes.
 
 ### Append findings as each consult returns
 
-As each Task completes, immediately write the reviewer's response verbatim to:
+As each consult completes, immediately write the reviewer's response verbatim to:
 
 `<output_dir>/findings/<reviewer-name>-findings.md`
 
@@ -326,10 +325,10 @@ with this header:
 <verbatim reviewer response>
 ```
 
-Because dispatch is one Task per specialist, each reviewer produces exactly one
+Because dispatch is one consult per specialist, each reviewer produces exactly one
 findings file regardless of how many buckets they covered. Bucket subsections
 inside the file are organized by the reviewer themselves (per the prompt). Do
-not wait for all Tasks to return before writing.
+not wait for all consults to return before writing.
 
 Brief progress updates to the user as each one returns ("Backend Engineer is
 back — 4 issues flagged; ML Engineer still working...").
@@ -338,7 +337,7 @@ back — 4 issues flagged; ML Engineer still working...").
 
 ## Phase 3 — Coalescence
 
-Once all Tasks have returned, read all `<output_dir>/findings/*.md` files. Build
+Once all consults have returned, read all `<output_dir>/findings/*.md` files. Build
 a single consolidated findings table.
 
 ### Coalescence rules
@@ -526,7 +525,7 @@ SERVICE MODE — APPLY FIXES. The user has approved the following fix.
 **Suggested fix:** <fix description>
 **Originating reviewer(s):** <reviewer names>
 
-Use the Edit tool (or NotebookEdit for .ipynb) to apply the fix. Do not exceed
+Use the file-editing tool (or the notebook editing tool for .ipynb) to apply the fix. Do not exceed
 the scope of this fix. Return:
 - A one-line summary of the change
 - Verbatim the before/after diff or cell content
@@ -558,7 +557,7 @@ domain reviewer for this artifact — apply the fix.
 **Researcher's finding:** <verbatim from researcher findings>
 **Researcher's recommendation:** <verbatim recommendation>
 
-Apply the fix using Edit (or NotebookEdit for .ipynb). If you disagree with the
+Apply the fix using the file-editing tool (or the notebook editing tool for .ipynb). If you disagree with the
 recommendation on technical grounds, flag the disagreement in your response and
 do NOT apply — Syn will resurface to the user. Otherwise return the standard
 before/after diff.
@@ -578,7 +577,7 @@ Append per-fix outcomes to `<output_dir>/fix-log.md`:
 - **Diff summary:** <before/after one-liner>
 ```
 
-**Wait for all Tasks in the group to return before dispatching the next group.**
+**Wait for all consults in the group to return before dispatching the next group.**
 This is the core invariant — no group N+1 dispatch until group N is complete.
 
 If any fix in the group reports `Refused (specialist disagreement)`, stop after
@@ -640,7 +639,7 @@ output files.
 - **Researcher does not apply fixes.** Its recommendations route to the domain
   reviewer of the same bucket via Syn's apply-fix dispatch.
 - **Syn never edits the target directory's files.** Reviewers apply fixes via
-  service-mode Tasks. Syn writes only to `<output_dir>/`.
+  service-mode consults. Syn writes only to `<output_dir>/`.
 - **Append findings as each consult returns.** Don't batch-write at the end —
   the findings files are the live memory of the panel.
 - **Honor user-listed fix IDs.** If the user approves only a subset (e.g., "F1,

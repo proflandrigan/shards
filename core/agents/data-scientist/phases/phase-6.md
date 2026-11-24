@@ -107,7 +107,7 @@ Each task in `shards/<project_name>/tasks.yaml` cites one of these specification
      ```
    - Structural acceptance: the file has the header block; its join path matches the trace you presented under the join-path self-check; every required table from the Phase 2 data sources it is responsible for is referenced. Acceptance is structural (read-back, grep), never execution.
 
-**Spec B. Notebook** at `shards/<project_name>/notebooks/<project_name>.ipynb`, built with NotebookEdit. The notebook is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group:
+**Spec B. Notebook** at `shards/<project_name>/notebooks/<project_name>.ipynb`, built with the notebook editing tool. The notebook is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group:
 
    - **Overview** (markdown): business question, hypothesis, data sources, date, author
    - **Setup**: imports, config, reproducibility notes
