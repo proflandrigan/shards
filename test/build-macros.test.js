@@ -66,6 +66,18 @@ describe('macro expansion', () => {
   it('consult allows the known-missing worker entry', () => {
     expect(ok('{{consult alpha entry=worker}}', 'claude')).toContain('modes/worker.md');
   });
+  it('fanout text matches the fanout_start contract', () => {
+    for (const t of ['claude', 'codex', 'skills']) {
+      const out = ok('{{fanout alpha slices=a,b}}', t);
+      expect(out).toContain('slices=[{id, paths, acceptance}');
+      expect(out).toContain('contract card');
+      expect(out).toContain('fanout_claim');
+      expect(out).toContain('fanout_collect');
+      expect(out).toContain('pending or suspended');
+      expect(out).not.toContain('slices="a,b"');
+    }
+  });
+
   it('fanout', () => {
     expect(ok('{{fanout alpha slices=a,b}}', 'claude')).toContain('mcp__plugin_shards_shards__fanout_start');
     expect(ok('{{fanout alpha slices=3}}', 'codex')).toContain('spawn_agent');

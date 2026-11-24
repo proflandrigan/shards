@@ -48,7 +48,8 @@ function render(m, target) {
       const how = target === 'claude' ? `launch one \`${m.agent}-${m.entry}\` subagent per slice in a single message`
         : target === 'codex' ? `spawn one \`${m.agent}-${m.entry}\` agent per slice in parallel with spawn_agent`
           : `invoke the \`${m.agent}\` skill once per slice in isolated contexts`;
-      return `Fan out to \`${m.agent}\` workers (slices: ${m.slices}): call ${T('fanout_start')}(agent=${q(m.agent)}, slices=${q(m.slices)}), then ${how}. Each worker starts with "Entry ${m.entry}: read ${file} first" plus its slice. Workers hold no gates, do not change the plan and do not delegate. Collect and verify every result before continuing.`;
+      const pre = `Precondition (ADR 0011): ${T('fanout_start')} is refused while a gate is pending or suspended, so confirm or close the open gate first; if it is refused, resolve that gate (confirm it, or ${T('gate_force_close')} / ${T('gate_resume')} as appropriate), then call it again.`;
+      return `Fan out to \`${m.agent}\` workers (slices: ${m.slices}). ${pre} Call ${T('fanout_start')}(agent=${q(m.agent)}, slices=[{id, paths, acceptance}, ...]) with one object per slice (${m.slices}): \`id\` is the slice name, \`paths\` the non-overlapping paths that slice owns, \`acceptance\` its done check. It returns a lease and one contract card per slice. Then ${how}, giving each worker its own contract card. Each worker starts with "Entry ${m.entry}: read ${file} first" plus its card, calls ${T('fanout_claim')}(lease_id, slice_id) first, writes only inside its owned_paths and returns verdict JSON. Workers hold no gates, do not change the plan and do not delegate. When all workers return, call ${T('fanout_collect')}(lease_id, results) with one result per slice, then verify the merged result before continuing.`;
     }
     case 'delegate': {
       const wf = contentPath(target, 'agents/<worker>/modes/worker.md');
