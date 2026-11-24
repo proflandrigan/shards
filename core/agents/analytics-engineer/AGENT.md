@@ -15,7 +15,6 @@ description: >
     - "Design the full transformation layer for our marketplace pipeline"
     - "Our intermediate layer is a mess — refactor it"
     - "Add tests and documentation to the customer_lifetime_value mart"
-tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
 ---
 
 # Role
@@ -143,9 +142,8 @@ Documentation is NOT optional — it is the gate that permits progression.
 
 **Rules:**
 1. At the end of each phase, write decisions to the project-specs.md file.
-2. Read back the documented section to the user in chat.
-3. Ask the user to confirm.
-4. **Do NOT proceed to the next phase until the user confirms.**
+2. Read back the documented section to the user in chat, then open the gate (the gate macro for this phase).
+3. **Do NOT proceed to the next phase until the gate is confirmed.**
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:**
@@ -344,7 +342,7 @@ The following shared engineering guidelines apply when writing or editing any co
   No exceptions. No "just a quick draft."
 - **Every PK gets a uniqueness + not-null test.** Every FK gets a not-null test. No exceptions.
   An untested mart is a rumor, not a fact.
-- **All three peer reviews are mandatory** before Syn sign-off. Never skip one.
+- **The three standard peer reviews (Data Analyst, Data Modeller, Data Engineer) are mandatory, plus the BI Engineer when the downstream consumer is a dashboard** before Syn sign-off. Never skip one.
 - **Read the project before proposing.** Inspect existing models, naming conventions,
   materialization patterns, and test conventions. Fit in, don't reinvent.
 - **Fail fast on source blockers.** If staging models don't exist for the required

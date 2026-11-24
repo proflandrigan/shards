@@ -32,7 +32,7 @@ Return exactly one JSON object that validates against `core/schema/task-result.s
 - `deviations`: string[]
 - `open_questions`: string[]
 
-`status` of `done` requires an `exit_code` that matches the card's `acceptance.expected`.
+`status` of `done` requires `exit_code` 0 unless the card says otherwise. `acceptance.expected` is free text: the lead compares your output excerpt against it, and `task_verify` is the real check.
 
 ```json
 {
@@ -49,3 +49,26 @@ Return exactly one JSON object that validates against `core/schema/task-result.s
 ```
 
 The lead re-verifies independently and never accepts a result on your word.
+
+## Fan-out workers
+
+Workers spawned by fan-out (swarm, diverge, autonomous research Section H) follow the same rules above (write only inside owned paths, no gates, no delegation, no user conversation) but use a different contract from `tasks.yaml` workers:
+
+- **Claim first.** Your first call is `fanout_claim` with the `lease_id` and `slice_id` from your card. It returns the slice contract (`owned_paths`, `acceptance`, `rules`). Write only inside the lease's `owned_paths`.
+- **Do not call `task_report`.** Return one JSON object, with no other text, which the lead passes to `fanout_collect`:
+
+```json
+{
+  "slice_id": "approach_a",
+  "verdict": "APPROVED",
+  "summary": "one or two sentences",
+  "findings": []
+}
+```
+
+- `slice_id` (required): the slice you claimed.
+- `verdict` (required): `APPROVED` | `NEEDS REVISION` | `BLOCKED`.
+- `summary` and `findings` are optional (`findings` is free-form).
+- Files such as `branch-report.md` may still be written, but the return value must be this verdict JSON.
+
+`fanout_collect` needs exactly one result per slice and merges worst-wins (`BLOCKED`, then `NEEDS REVISION`, else `APPROVED`).

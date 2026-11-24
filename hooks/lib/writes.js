@@ -1,10 +1,10 @@
 'use strict';
 // Conservative write detection for PreToolUse enforcement (E11.6). Best effort, no execution.
-// writesOf(n) -> {write:boolean, paths:string[] (absolute), unknown:boolean}
+// writesOf(n) -> {write:boolean, exec:boolean, paths:string[] (absolute), unknown:boolean}
 //   write   : the call is (or looks like) a write/exec
 //   paths   : target paths we could determine, resolved against cwd
 //   unknown : looks like a write but at least one target could not be determined
-//   exec    : runs code from a file / package script (counts only while a gate is pending)
+//   exec    : runs arbitrary code: script files, inline -c/-e code, programs run by path, package/build tools (counts only while a gate is pending)
 const path = require('path');
 const os = require('os');
 
@@ -66,6 +66,19 @@ const SHELLS = /^(sh|bash|zsh|dash|ksh|fish)$/;
 const CWD_CHANGERS = new Set(['cd', 'pushd', 'popd']);
 const PKG_MANAGERS = new Set(['npm', 'pnpm', 'yarn']);
 const PKG_EXEC_SUBS = new Set(['install', 'i', 'ci', 'add', 'remove', 'rm', 'uninstall', 'update', 'up', 'upgrade', 'run', 'run-script', 'test', 't', 'exec', 'start', 'build', 'publish', 'link']);
+
+// Build/run tools that execute arbitrary code (build scripts, tasks, models). `true` = any invocation; a Set = those subcommands.
+const BUILD_TOOLS = {
+  cargo: new Set(['build', 'b', 'run', 'r', 'test', 't', 'check', 'c', 'bench', 'clippy', 'install', 'add', 'remove', 'update', 'fix', 'doc', 'publish', 'clean', 'fetch', 'vendor']),
+  go: new Set(['run', 'build', 'test', 'generate', 'install', 'get', 'mod', 'vet', 'clean', 'work']),
+  dbt: new Set(['run', 'build', 'test', 'seed', 'snapshot', 'compile', 'deps', 'run-operation', 'clean', 'docs', 'init', 'retry']),
+  mvn: true, mvnw: true, gradle: true, gradlew: true, ant: true, sbt: true, bazel: true, ninja: true, cmake: true, just: true, rake: true, mix: true,
+  dotnet: new Set(['build', 'run', 'test', 'publish', 'restore', 'pack', 'new', 'add', 'tool', 'watch', 'msbuild', 'clean']),
+  bundle: new Set(['exec', 'install', 'update', 'add', 'remove']),
+  composer: new Set(['install', 'update', 'require', 'remove', 'run-script', 'run', 'exec']),
+  gem: new Set(['install', 'uninstall', 'update']),
+  tox: true, nox: true, hatch: new Set(['run', 'build', 'env', 'test']), pdm: new Set(['run', 'install', 'add', 'remove', 'sync', 'build']), conda: new Set(['install', 'remove', 'run', 'create', 'update']),
+};
 
 const nonFlags = (a) => a.filter((x) => !x.startsWith('-'));
 
@@ -241,12 +254,14 @@ function analyzeSegment(seg) {
   }
   if (INTERP.test(cmd)) {
     const i = args.findIndex((a) => a === '-c' || a === '-e' || a === '-p' || a === '--eval' || a === '--print');
-    if (i >= 0) { if (SCRIPT_WRITE.test(args[i + 1] || '')) { write = true; unknown = true; } } // inline code: write-pattern check only
+    if (i >= 0) { if (SCRIPT_WRITE.test(args[i + 1] || '')) { write = true; unknown = true; } else exec = true; } // inline code runs arbitrary code: write pattern -> write, else exec
     else exec = true; // script file, -m module, or code on stdin
     return out();
   }
   if (PKG_MANAGERS.has(cmd)) { const sub = nonFlags(args)[0]; if (sub && PKG_EXEC_SUBS.has(sub)) exec = true; return out(); }
+  if (BUILD_TOOLS[cmd]) { const sub = nonFlags(args)[0]; if (BUILD_TOOLS[cmd] === true || (sub && BUILD_TOOLS[cmd].has(sub))) exec = true; return out(); }
   if (cmd === 'npx' || cmd === 'make' || cmd === 'pytest' || ((cmd === 'pip' || cmd === 'pip3' || cmd === 'uv' || cmd === 'poetry') && /^(install|uninstall|add|remove|sync|run)$/.test(nonFlags(args)[0] || ''))) { exec = true; return out(); }
+  if (w[0].includes('/')) exec = true; // a program run by path (./run.sh, /tmp/x/run): arbitrary code
   return out();
 }
 

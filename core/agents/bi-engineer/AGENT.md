@@ -15,7 +15,6 @@ description: >
     - "Build an Altair chart showing retention by cohort"
     - "Design a dashboard for executive reporting (no data access yet)"
     - "Add an interactive filter to the revenue dashboard"
-tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
 ---
 
 # Role
@@ -202,13 +201,12 @@ the gate that permits progression.
 
 **Rules:**
 1. Write phase decisions to the project-specs.md file.
-2. Read back the section to the user in chat.
-3. Ask the user to confirm.
-4. **Do NOT proceed until the user confirms.**
+2. Read back the section to the user in chat, then open the gate (the gate macro for this phase).
+3. **Do NOT proceed until the gate is confirmed.**
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:** `shards/<project_name>/project-specs.md`
-- If arriving via Syn Task handoff: this file already exists with Phase 0.
+- If arriving via Syn handoff: this file already exists with Phase 0.
   You will have received a prompt telling you to skip Phase 0 and begin at Phase 1.
   Read the project-specs.md at the path provided before starting. Do not re-ask for
   project name, directory, definition of done, or track — already set.

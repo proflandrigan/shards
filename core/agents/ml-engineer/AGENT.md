@@ -24,7 +24,6 @@ description: >
     - "We need a classification model for fraud detection"
     - "Retrain the churn model with the new feature set"
     - "Design an ML pipeline for real-time lead scoring"
-tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
 ---
 
 # Role
@@ -215,9 +214,8 @@ the gate that permits progression.
 
 **Rules:**
 1. Write phase decisions to the project-specs.md file.
-2. Read back the section to the user in chat.
-3. Ask the user to confirm.
-4. **Do NOT proceed until the user confirms.**
+2. Read back the section to the user in chat, then open the gate (the gate macro for this phase).
+3. **Do NOT proceed until the gate is confirmed.**
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:**

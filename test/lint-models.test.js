@@ -13,12 +13,26 @@ describe('lint-models', () => {
   it('passes on the real core/', () => {
     expect(lintCore(path.resolve(__dirname, '../core'))).toEqual([]);
   });
-  it('flags model: and literal ids in AGENT.md frontmatter, not in the body', () => {
+  it('flags model: and literal ids in AGENT.md frontmatter', () => {
     const r = tmp();
-    put(r, 'agents/a/AGENT.md', '---\nname: a\nmodel: opus-4.8\n---\nBody mentions claude-sonnet-4-6 as an example.\n');
+    put(r, 'agents/a/AGENT.md', '---\nname: a\nmodel: opus-4.8\n---\nclean body\n');
     const f = lintCore(r);
     expect(f.length).toBeGreaterThanOrEqual(2);
     expect(f.every((x) => x.line === 3)).toBe(true);
+  });
+  it('flags model ids in prose anywhere under core/ (md, yaml, json), including headings', () => {
+    const r = tmp();
+    put(r, 'agents/a/modes/m.md', '# claude-sonnet-4-6 heading\nuse <provider/model-id>\n`gpt-5` here\n');
+    put(r, 'protocols/p.md', 'judge: claude-opus-4-7\n');
+    put(r, 'schema/s.json', '{"example": "gemini-2.5-pro"}\n');
+    const f = lintCore(r);
+    expect([...new Set(f.map((x) => path.basename(x.file)))].sort()).toEqual(['m.md', 'p.md', 's.json']);
+    expect(f.some((x) => x.file.endsWith('m.md') && x.line === 1)).toBe(true);
+  });
+  it('does not flag "model:" in prose or claude-code', () => {
+    const r = tmp();
+    put(r, 'protocols/p.md', 'model: the thing\nworks in claude-code and with a <provider/model-id>\n');
+    expect(lintCore(r)).toEqual([]);
   });
   it('flags ids in agent.yaml but allows model_tier', () => {
     const r = tmp();

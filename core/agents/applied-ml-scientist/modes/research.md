@@ -145,7 +145,7 @@ Append to `project-specs.md`:
 - **Or:** No relevant findings
 ```
 
-{{gate kind=execute phase=0 id=applied-ml-scientist-research-phase0}}
+{{gate kind=execute phase=0 id=applied-ml-scientist-research-phase-0}}
 
 ---
 
@@ -223,15 +223,14 @@ If no target was set, drop clause (a). Activation is optional:
 - **Without `/goal`:** §E convergence and §G safety rails still terminate
   the loop. Per-iteration echoes remain recommended for readability.
 
-If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
-rejected), accept that and proceed — the loop still runs and terminates per
+If the host cannot run the loop unattended (see the goal-mode protocol), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
 ### Gate
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
-{{gate kind=execute phase=1 id=applied-ml-scientist-research-phase1}}
+{{gate kind=execute phase=1 id=applied-ml-scientist-research-phase-1}}
 
 ---
 
@@ -354,7 +353,7 @@ Ask the user:
 - Do you want to run another budget?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=applied-ml-scientist id=applied-ml-scientist-research-phase3}}
+{{gate kind=final phase=3 validates=applied-ml-scientist id=applied-ml-scientist-research-phase-3}}
 
 ### If adopting
 

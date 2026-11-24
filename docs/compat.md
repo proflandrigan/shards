@@ -2,7 +2,7 @@
 
 Date: 2026-11-14
 Branch: `next` (local only; nothing committed)
-Plan reference: `shards-agent-suite-plan.md` task E0.6; decisions D2, D4, D6, D8; tasks E11.0, E11.3-E11.6.
+Plan reference: `docs/history/shards-agent-suite-plan.md` task E0.6; decisions D2, D4, D6, D8; tasks E11.0, E11.3-E11.6.
 
 ## Tool versions checked
 
@@ -234,7 +234,7 @@ Owner for every row: proflandrigan. Every non-VERIFIED item above appears here. 
 |---|---|---|---|---|
 | CC-1 | Elicitation is interactive-only on Claude Code; unexercised; form/URL modes not read | E11.3, E11.5 | E0.6-F1: read the MCP page's elicitation section; test in an interactive session with a stub MCP server; design a non-interactive fallback | proflandrigan |
 | CC-3 | Plugin `settings.agent` unconfirmed; main-agent selection may need `--agent` or project settings | D4, E11.0 | E0.6-F2: local `--plugin-dir` spike with plugin `settings.json`; if unsupported, document `--agent` / project `agent` setting as the activation path | proflandrigan |
-| CC-4 | `agent_id` and `permission_mode` presence on PreToolUse unseen in a real payload; gate hook (removed in E11.9) reads neither | D8, E11.4, D2 | E0.6-F3: log real PreToolUse/SessionStart/Stop payloads from a throwaway hook in a free local session; record fields in this file | proflandrigan |
+| CC-4 | `agent_id` and `permission_mode` presence on PreToolUse unseen in a real payload; gate hook (removed in E11.9) reads neither. Update: Codex payloads incl. `permission_mode` were captured live (CX-6); Claude Code `permission_mode` is still unseen | D8, E11.4, D2 | E0.6-F3: log real PreToolUse/SessionStart/Stop payloads from a throwaway hook in a free local session; record fields in this file | proflandrigan |
 | CC-5 | `compact` SessionStart payload and context survival unobserved | D6, E11.6 | E0.6-F4: run `/compact` in a throwaway session with a SessionStart hook; confirm source and injected context | proflandrigan |
 | CC-6 | `ask` may not override a matching allow rule; repo never emits `ask` | E11.4 | E0.6-F5: local test with allow rule plus hook returning `ask`; if it fails, design E11.4 around `deny` or removing allow rules | proflandrigan |
 | CC-7 | Depth default (3) documented only; managed settings can lower it | D2 | E0.6-F6: confirm with a 2-deep Task chain locally; installer should check `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` | proflandrigan |

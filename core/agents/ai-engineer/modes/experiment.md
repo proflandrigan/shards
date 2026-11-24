@@ -49,7 +49,7 @@ an existing AI system. You are the AI Engineer throughout. No persona transfer o
    Laboratory (`[PL]`) offers an interactive editor for this. Do not switch — just
    inform. If the user wants to switch, tell them to re-invoke with `[PL]`.
 
-{{gate kind=execute phase=0 id=ai-engineer-experiment-phase0}}
+{{gate kind=execute phase=0 id=ai-engineer-experiment-phase-0}}
 
 If the user modifies any parameter, update before proceeding.
 
@@ -99,13 +99,12 @@ evaluator reads (already required by the loop, no schema change). Without
 `/goal`, the Phase 2 stop conditions (success threshold reached, user
 intervention, crash) still terminate the loop.
 
-If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
-rejected), accept that and proceed — the loop still runs and terminates per
+If the host cannot run the loop unattended (see the goal-mode protocol), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
-{{gate kind=execute phase=1 id=ai-engineer-experiment-phase1}}
+{{gate kind=execute phase=1 id=ai-engineer-experiment-phase-1}}
 Wait for confirmation. If the user modifies the plan, update it before proceeding.
 
 ### Write experiment plan file
@@ -411,7 +410,7 @@ Ask the user:
 - Do you want to run more experiments?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ai-engineer id=ai-engineer-experiment-phase3}}
+{{gate kind=final phase=3 validates=ai-engineer id=ai-engineer-experiment-phase-3}}
 
 Wait for their response before taking any further action.
 

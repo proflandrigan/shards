@@ -36,13 +36,36 @@ async function autoVerify(n, root) {
   return JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', permissionDecisionReason: `shards auto-verify: ${r.reason}` } });
 }
 
+// True when this is a write/exec call and the session has a gates.json that cannot be read or parsed
+// (and enforcement is on). Read-only calls are never blocked.
+function gateStateUnreadable(n, root, env = process.env) {
+  if (String(env.SHARDS_GATE_ENFORCE) === '0') return false;
+  try {
+    const w = require('./lib/writes').writesOf(n);
+    if (!w.write && !w.exec) return false;
+  } catch (_) { /* unclassifiable: fall through to the gate-state check */ }
+  try {
+    const key = host.toSessionKey(n.sessionId);
+    if (!key) return false;
+    const st = new StateStore(root, key);
+    if (!fs.existsSync(st.file('gates'))) return false;
+    st.read('gates');
+    return false;
+  } catch (_) { return true; }
+}
+
 async function handler(n, root) {
   if (!host.isGateTool(n.toolName)) {
     try {
       const e = await require('./lib/enforce').enforce(n, root);
       if (e && e.deny) return require('./lib/enforce').denyOutput(e.deny);
       if (e && e.ask) return require('./lib/enforce').askOutput(e.ask);
-    } catch (e) { common.logError(root, 'pre-tool-use', e); }
+    } catch (e) {
+      common.logError(root, 'pre-tool-use', e);
+      // Fail closed when gate state exists but is unreadable (corrupt gates.json, lock timeout): an unreadable
+      // state cannot prove no gate is pending. Unrelated internal errors with no gate state still fail open.
+      if (gateStateUnreadable(n, root)) return require('./lib/enforce').denyOutput(`shards: gate state could not be read (${String(e && e.message || e).split('\n')[0]}); blocking this call until it is fixed. Repair or delete the session's gates.json under .shards/state/, or set SHARDS_GATE_ENFORCE=0 to bypass.`);
+    }
     try { return await autoVerify(n, root); } catch (e) { common.logError(root, 'pre-tool-use', e); return ''; }
   }
   const key = host.toSessionKey(n.sessionId);

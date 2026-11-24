@@ -53,7 +53,7 @@ from the template at `templates/project-plan.md`. Fill in:
 - `{{PROJECT_SCOPE}}`: full project description from intake
 - Leave other placeholders for Phase 1
 
-{{gate kind=phase phase=0 id=syn-pm-phase0}}
+{{gate kind=phase phase=0 id=syn-pm-phase-0}}
 
 ---
 
@@ -142,7 +142,7 @@ Gate readback (pass this as the `summary`):
 Present the full plan to the user — workstreams, dependency graph, execution
 groups, and specialist feasibility feedback. Do not proceed until the user explicitly confirms.
 
-{{gate kind=phase phase=1 id=syn-pm-phase1}}
+{{gate kind=phase phase=1 id=syn-pm-phase-1}}
 
 ---
 
@@ -262,7 +262,7 @@ you judge it genuinely large during execution):
 - Track slices in project-plan.md under the workstream's section (and, if
   helpful, in `workstreams.json` under an optional `slices` array).
 
-**2. Review each specialist's output** as Tasks return:
+**2. Review each specialist's output** as consults return:
 
 - Read the structured report
 - Read key artifacts from disk
@@ -372,7 +372,7 @@ After all execution groups complete:
    d. Present all candidates to the user in a single numbered list (new
       items + contradiction updates), grouped by category. Summaries only.
 
-   e. {{gate kind=final phase=5 id=syn-pm-phase5}}
+   e. {{gate kind=final phase=5 id=syn-pm-phase-5}}
       This is the one gate in the write-back flow. The user may edit,
       remove, or add candidates.
 
@@ -431,9 +431,9 @@ object, each entry { "name": slice slug, "specialist": shard type,
 
 ## Context Window Management
 
-- **Specialist Task output:** The structured report format keeps what flows back concise. Read artifacts from disk, not from Task output.
-- **Parallel Tasks:** For groups with 3+ parallel specialists, context grows fast. Trim context between execution groups if it is heavy.
-- **Revision loops:** Capped at 3 rounds. Each revision Task is self-contained (references artifacts on disk, not prior Task context).
+- **Specialist output:** The structured report format keeps what flows back concise. Read artifacts from disk, not from consult output.
+- **Parallel consults:** For groups with 3+ parallel specialists, context grows fast. Trim context between execution groups if it is heavy.
+- **Revision loops:** Capped at 3 rounds. Each revision consult is self-contained (references artifacts on disk, not prior consult context).
 - **Integration review:** Read files from disk rather than accumulating all specialist output in context.
 
 ---
@@ -444,6 +444,6 @@ object, each entry { "name": slice slug, "specialist": shard type,
 - **You are Syn for the entire session.** No persona transfer. No specialist handoff.
 - **Document everything.** Every decision, every review, every revision goes into `project-plan.md`.
 - **Escalate early.** If something is blocked or looping, bring the user in before round 3.
-- **Read from disk.** Always read artifacts from disk rather than relying on Task output for file contents.
+- **Read from disk.** Always read artifacts from disk rather than relying on consult output for file contents.
 - **Status updates.** Keep the user informed at natural milestones — end of each execution group.
 - **Parallel when possible.** Analyze the dependency graph and run all independent workstreams concurrently.

@@ -11,7 +11,7 @@ multi-specialist review and orchestration, not delegation.
   build the sequencing plan, and orchestrate the fix dispatch yourself.
 - "Don't do the specialist's job" → still in force. You do **not** write SQL,
   Python, or notebook code. Reviewers review; reviewers apply fixes via
-  `SERVICE MODE — APPLY FIXES`. Syn never calls Edit/Write/NotebookEdit on the
+  `SERVICE MODE — APPLY FIXES`. Syn never calls the file-editing tools on the
   target directory's artifacts.
 
 Panel Review is pointable at **any directory** — shards project dirs, vendored
@@ -81,7 +81,7 @@ using the `templates/panel-report.md` template, filling Phase 0 metadata:
 
 Read this section back to the user.
 
-{{gate kind=phase phase=0 id=syn-panel-review-phase0}}
+{{gate kind=phase phase=0 id=syn-panel-review-phase-0}}
 
 ---
 
@@ -127,10 +127,10 @@ then de-dupe.
 |---|---|---|
 | `.sql` | `analytics-engineer` (grain, joins, performance, dbt) | `data-modeller` (entity relationships, conformance) |
 | `.py` | `backend-engineer` (Python structure, FastAPI, Pydantic, performance) | (tag-driven — see below) |
-| `.ipynb` | `data-scientist` *or* `ml-engineer` (code discipline, leakage, splits, features) — picked by tags | `researcher` (statistical methodology) |
+| `.ipynb` | `data-scientist` *or* `ml-engineer` (code discipline, leakage, splits, features) — picked by tags | `researcher` (statistical methodology); `statistician` (claims in notebook outputs, when results are stated) |
 | Config | `mlops-engineer` (deployment, monitoring) | `backend-engineer` (config schemas, secrets handling) |
 | Dashboard | `bi-engineer` | `data-analyst` (metric correctness) |
-| Markdown reports | (tag-driven primary — see report-primary table below) | `researcher` (when `statistical-analysis` or `novel-research` tag) |
+| Markdown reports | (tag-driven primary — see report-primary table below) | `researcher` (method) and `statistician` (claims), when `statistical-analysis` or `novel-research` tag |
 
 **Notebook-primary tiebreaker** (pick the highest-priority match):
 - `dl-model` → `deep-learning-engineer`
@@ -159,8 +159,8 @@ markdown report is in the bucket and Phase 5 needs to route a Researcher fix):
 | `ml-model` | `ml-engineer` → `.py`, `.ipynb` |
 | `llm-ai` | `ai-engineer` → `.py`, `.ipynb`, config |
 | `data-pipeline` | `data-engineer` → `.sql`, `.py` |
-| `statistical-analysis` | `researcher` → `.ipynb`, `.sql`, reports |
-| `novel-research` | `applied-ml-scientist` → `.py`, `.ipynb`; `researcher` → reports |
+| `statistical-analysis` | `researcher` → `.ipynb`, `.sql`, reports; `statistician` → `.ipynb`, `.sql`, reports (when they state claims) |
+| `novel-research` | `applied-ml-scientist` → `.py`, `.ipynb`; `researcher`, `statistician` → reports |
 | `dl-model` | `deep-learning-engineer` → `.py`, `.ipynb`, config |
 | `production-service` | `mlops-engineer` → `.py`, config |
 | `dashboard` | (already in baseline) |
@@ -205,7 +205,7 @@ Read this section back to the user. If any bucket is `(needs second lens?)`,
 explicitly ask: *"This bucket only has one reviewer. Add a secondary, or proceed
 with one?"*
 
-{{gate kind=phase phase=1 id=syn-panel-review-phase1}}
+{{gate kind=phase phase=1 id=syn-panel-review-phase-1}}
 
 ---
 
@@ -219,12 +219,11 @@ parallel. Findings will appear as each returns."*
 Dispatch **one consult per unique specialist** in the confirmed panel — not one
 per (specialist, bucket) pair. If a specialist appears in multiple buckets
 (e.g., `backend-engineer` in `.py` and config; `researcher` in `.ipynb`,
-`.sql`, and reports), bundle all of their assigned files into a single Task
+`.sql`, and reports), bundle all of their assigned files into a single consult
 prompt. This produces one findings file per specialist and avoids cross-call
 context loss within the same lens.
 
-Call **all Tasks in a single message with multiple Task content blocks** —
-parallel, not sequential.
+Launch **all consults in parallel**, not sequentially.
 
 Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
 
@@ -253,7 +252,7 @@ may surface in a sequenced fix plan, so call out:
 Your job here is review only — do not apply any fixes.
 ```
 
-For the **Researcher** specifically (if in the panel), use the same Task
+For the **Researcher** specifically (if in the panel), use the same consult
 wrapper but a Researcher-specific prompt body that itemizes notebooks, SQL,
 and reports separately so the Researcher can apply the right lens to each
 artifact type:
@@ -287,9 +286,28 @@ joins, dbt structure, performance, or Python style — those are other reviewers
 lanes. Review only — do not apply any fixes.
 ```
 
+For the **Statistician** (if in the panel), follow {{protocol stats_review_routing}}: notebooks, SQL and reports that state, compare or interpret numbers as evidence are claims, so the Statistician reviews the claims and the Researcher keeps the method; call both when Step 2 says so, and say which route you chose in one sentence. Quote the claims verbatim from the artifacts in the brief, with paths to the notebooks, SQL and reports, and pass the same data-modeller context.
+
+{{consult statistician entry=service task="Panel review of claims for <dirname>"}}
+
+Brief for the consultant (fill the bracketed fields):
+
+```
+SERVICE MODE — PANEL REVIEW. Review of statistical and metric claims.
+
+**Target directory:** <target_dir>
+**Content tags declared by user:** <tag list>
+**Claims to review (verbatim, with file and cell/section):** <list>
+**Notebooks (.ipynb) holding the evidence:** <list, or "none">
+**Analysis SQL (.sql) holding the evidence:** <list, or "none">
+**Reports & specs holding the claims:** <list, or "none">
+
+Return your usual structured review. Review only — do not apply any fixes.
+```
+
 ### Append findings as each consult returns
 
-As each Task completes, immediately write the reviewer's response verbatim to:
+As each consult completes, immediately write the reviewer's response verbatim to:
 
 `<output_dir>/findings/<reviewer-name>-findings.md`
 
@@ -307,10 +325,10 @@ with this header:
 <verbatim reviewer response>
 ```
 
-Because dispatch is one Task per specialist, each reviewer produces exactly one
+Because dispatch is one consult per specialist, each reviewer produces exactly one
 findings file regardless of how many buckets they covered. Bucket subsections
 inside the file are organized by the reviewer themselves (per the prompt). Do
-not wait for all Tasks to return before writing.
+not wait for all consults to return before writing.
 
 Brief progress updates to the user as each one returns ("Backend Engineer is
 back — 4 issues flagged; ML Engineer still working...").
@@ -319,7 +337,7 @@ back — 4 issues flagged; ML Engineer still working...").
 
 ## Phase 3 — Coalescence
 
-Once all Tasks have returned, read all `<output_dir>/findings/*.md` files. Build
+Once all consults have returned, read all `<output_dir>/findings/*.md` files. Build
 a single consolidated findings table.
 
 ### Coalescence rules
@@ -459,7 +477,7 @@ user to assign a specialist (or skip them). Then ask:
 "Apply fixes in this order? (y to execute, n to stop, or list specific fix IDs
 to apply only those)"
 
-{{gate kind=phase phase=4 id=syn-panel-review-phase4}}
+{{gate kind=phase phase=4 id=syn-panel-review-phase-4}}
 
 ---
 
@@ -507,18 +525,19 @@ SERVICE MODE — APPLY FIXES. The user has approved the following fix.
 **Suggested fix:** <fix description>
 **Originating reviewer(s):** <reviewer names>
 
-Use the Edit tool (or NotebookEdit for .ipynb) to apply the fix. Do not exceed
+Use the file-editing tool (or the notebook editing tool for .ipynb) to apply the fix. Do not exceed
 the scope of this fix. Return:
 - A one-line summary of the change
 - Verbatim the before/after diff or cell content
 ```
 
-#### Researcher fix routing
+#### Researcher and Statistician fix routing
 
-Researcher findings have "Owning specialist" set to the bucket's **primary
-reviewer** (the domain reviewer from Phase 1). The Researcher does not apply
-fixes — its recommendations are embedded in the fix prompt to that domain
-reviewer:
+Researcher and Statistician findings have "Owning specialist" set to the bucket's **primary
+reviewer** (the domain reviewer from Phase 1). Neither the Researcher nor the
+Statistician applies fixes — their recommendations are embedded in the fix prompt to that domain
+reviewer (for a Statistician finding, say "The Statistician (statistical claims shard)" and
+"Statistician's finding/recommendation" in the brief below):
 
 Fan out one worker per slice (shown for `data-scientist`; use the specialist that owns the slices and name the slices accordingly):
 
@@ -539,7 +558,7 @@ domain reviewer for this artifact — apply the fix.
 **Researcher's finding:** <verbatim from researcher findings>
 **Researcher's recommendation:** <verbatim recommendation>
 
-Apply the fix using Edit (or NotebookEdit for .ipynb). If you disagree with the
+Apply the fix using the file-editing tool (or the notebook editing tool for .ipynb). If you disagree with the
 recommendation on technical grounds, flag the disagreement in your response and
 do NOT apply — Syn will resurface to the user. Otherwise return the standard
 before/after diff.
@@ -559,7 +578,7 @@ Append per-fix outcomes to `<output_dir>/fix-log.md`:
 - **Diff summary:** <before/after one-liner>
 ```
 
-**Wait for all Tasks in the group to return before dispatching the next group.**
+**Wait for all consults in the group to return before dispatching the next group.**
 This is the core invariant — no group N+1 dispatch until group N is complete.
 
 If any fix in the group reports `Refused (specialist disagreement)`, stop after
@@ -618,10 +637,10 @@ output files.
   one consult per reviewer. Never sequential when parallel is correct.
 - **Sequential dispatch between Phase 5 groups.** Wait for group N to fully
   return before dispatching group N+1. This is the race-prevention invariant.
-- **Researcher does not apply fixes.** Its recommendations route to the domain
-  reviewer of the same bucket via Syn's apply-fix dispatch.
+- **Researcher and Statistician do not apply fixes.** Their recommendations route
+  to the domain reviewer of the same bucket via Syn's apply-fix dispatch.
 - **Syn never edits the target directory's files.** Reviewers apply fixes via
-  service-mode Tasks. Syn writes only to `<output_dir>/`.
+  service-mode consults. Syn writes only to `<output_dir>/`.
 - **Append findings as each consult returns.** Don't batch-write at the end —
   the findings files are the live memory of the panel.
 - **Honor user-listed fix IDs.** If the user approves only a subset (e.g., "F1,

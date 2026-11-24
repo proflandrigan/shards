@@ -1,3 +1,5 @@
+> Historical (v1): superseded by the v2 runtime; kept for reference only.
+
 # Gate Hook — Validation Enforcement Spec
 
 Design spec for extending the legacy gate hook (removed in E11.9; was `tools/gate-hook.js` + `tools/gate-hook/*.js`) to enforce the shared validation protocol (`src/agents/specific_instructions/shared/validation_protocol.md`).

@@ -1,8 +1,3 @@
-# Sources:
-#   - src/agents/specific_instructions/deep_learning_engineer/{review,advise}.md
-#   - legacy Task() consult calls in AGENT.md and modes/ (provenance)
-#   - src/agents/deep-learning-engineer.md (frontmatter, persona)
-#   - CLAUDE.md output directory table, shards-agent-suite-plan.md E1.1/E5.1/E12.2
 id: deep-learning-engineer
 display_name: "Deep Learning Engineer"
 description: "Neural architecture design, training protocol engineering and custom model implementation. Modes: advisory, service review for ML Engineer and Applied ML Scientist, and phased create mode."
@@ -15,3 +10,4 @@ consult_entries:
 reviewers: [applied-ml-scientist, ml-engineer, mlops-engineer, backend-engineer, syn]
 output_dir: "shards/{project}/"
 jobs: [record, tasks, knowledge, review, artifacts]
+capabilities: [read, write, edit, search, shell, notebook, delegate, web]

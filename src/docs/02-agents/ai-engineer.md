@@ -81,6 +81,7 @@ Reference material is reached through the `knowledge` job; see [Knowledge](../03
 
 ## See also
 
+- [Researcher](researcher.md) and [Statistician](statistician.md): statistical method review and claim review
 - [Example: AI Eval-First](../07-workflows/ai-eval-first.md)
 - [Autonomous Research](../03-protocols/autonomous-research.md)
 - [Studio](../04-studio/overview.md): panels such as Prompt Lab

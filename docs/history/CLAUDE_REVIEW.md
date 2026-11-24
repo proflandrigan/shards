@@ -102,7 +102,7 @@ No agent asks whether data contains PII before executing queries, engineering fe
 **Fix options:**
 - **Option A (Minimal):** Add a 3-question PII check (does it contain PII? what type? is compliance review in place?) to DA Phase 1 and DS Phase 2. MLE and AIE can be added separately.
 - **Option B (Full):** Add the same standard PII checkpoint to all four agents + a `**PII / sensitive data present:** Yes | No | Unknown` field to each relevant phase template. Ensures no agent starts data work without a documented compliance acknowledgment.
-- **Option C (Agent):** Build a Privacy/Compliance specialist agent (as noted in BACKLOG.md) that specialists consult via Task at data discovery phases. Higher effort but creates a real expertise layer (GDPR, CCPA, model bias audit, data minimization).
+- **Option C (Agent):** Build a Privacy/Compliance specialist agent (as noted in docs/history/BACKLOG.md) that specialists consult via Task at data discovery phases. Higher effort but creates a real expertise layer (GDPR, CCPA, model bias audit, data minimization).
 
 ---
 

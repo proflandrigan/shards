@@ -48,6 +48,13 @@
       "not": { "pattern": "([Oo][Pp][Uu][Ss]|[Ss][Oo][Nn][Nn][Ee][Tt]|[Hh][Aa][Ii][Kk][Uu]|[Gg][Pp][Tt]|[Cc][Ll][Aa][Uu][Dd][Ee])" },
       "description": "Tier hint only. Never a literal model id (D7)."
     },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["read", "write", "edit", "search", "shell", "notebook", "delegate", "web", "skill"] },
+      "description": "Host-neutral tool needs; order is the emitted order. build/host-tools.js maps each to the host's tool names. Absent means read-only (read, search, shell). Never put host tool names in AGENT.md frontmatter."
+    },
     "jobs": {
       "type": "array",
       "uniqueItems": true,

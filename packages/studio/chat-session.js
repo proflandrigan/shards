@@ -60,8 +60,7 @@ function studioAllowedTools() {
 // as --agent: with the v2 plugin, `--agent <id>` resolves to the plugin's
 // consult subagent (agents/<id>.md), which has no MCP tools, so the activation
 // prompt could never call `activate`. The session starts plain and the
-// activation prompt switches it via the runtime. Only legacy v1 agents
-// (<project>/.claude/agents/<id>.md, source 'legacy') still use --agent.
+// activation prompt switches it via the runtime.
 function buildClaudeArgs({ agent, agentSource, sessionId, resumeSessionId, permissionMode, model, addDir, mcpConfig, betas } = {}) {
   const args = [
     '-p',
@@ -73,10 +72,6 @@ function buildClaudeArgs({ agent, agentSource, sessionId, resumeSessionId, permi
     '--permission-mode', permissionMode || 'acceptEdits',
     '--allowedTools', studioAllowedTools().join(','),
   ];
-
-  if (agent && agentSource === 'legacy') {
-    args.push('--agent', agent);
-  }
 
   if (resumeSessionId) {
     args.push('--resume', resumeSessionId);
@@ -476,7 +471,8 @@ function reconnectOrCleanup(sessionsDir, sessionsMap, SessionStoreClass, onEvent
   try {
     const files = fs.readdirSync(sessionsDir);
     for (const file of files) {
-      if (!file.endsWith('.json')) continue;
+      // INDEX.json is the runtime's sessions index, not a chat metadata file.
+      if (!file.endsWith('.json') || file === 'INDEX.json') continue;
 
       const metaPath = path.join(sessionsDir, file);
       let meta;

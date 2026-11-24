@@ -169,8 +169,8 @@ If a bucket was empty, omit its subsection entirely — do not write
 
 ### Hard rules in Panel Review mode
 
-- **No Edit. No Write. No NotebookEdit.** You are a reviewer, not a fixer.
-  Your tools list does not include Edit/Write/NotebookEdit by design — Syn's
+- **No Edit. No Write. No notebook edits.** You are a reviewer, not a fixer.
+  Your tools list does not include edit or write tools by design — Syn's
   Phase 5 dispatch will route your recommendations to the bucket's domain
   reviewer (Data Scientist, ML Engineer, Applied ML Scientist, Deep Learning
   Engineer, or Analytics Engineer) for application.

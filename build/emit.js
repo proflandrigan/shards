@@ -9,6 +9,7 @@ const relpkg = require('./package');
 const { utilitySkills } = require('./skills');
 const { CLAUDE_TOOL_PREFIX, CODEX_TOOL_PREFIX, contentPath } = require('./render');
 const { codexMcpToml } = relpkg;
+const { claudeToolsOf } = require('./host-tools');
 
 const REPO = path.resolve(__dirname, '..');
 const DEV_MARKER = '.shards-dev';
@@ -18,14 +19,6 @@ const jsonText = (o) => `${JSON.stringify(o, null, 2)}\n`;
 
 function tomlMulti(s) { return `"""\n${s.replace(/\\/g, '\\\\').replace(/"""/g, '""\\"')}\n"""`; }
 function tomlStr(s) { return JSON.stringify(String(s)); }
-
-const DEFAULT_TOOLS = ['Read', 'Glob', 'Grep', 'Bash'];
-function toolsOf(meta) {
-  const t = meta && meta.tools;
-  const list = Array.isArray(t) ? t : String(t || '').split(',').map((x) => x.trim()).filter(Boolean);
-  const kept = list.filter((x) => x !== 'Task' && x !== 'Agent'); // consults cannot nest
-  return kept.length ? kept : (list.length ? kept : DEFAULT_TOOLS.slice());
-}
 
 const prefixOf = (target) => (target === 'claude' ? CLAUDE_TOOL_PREFIX : target === 'codex' ? CODEX_TOOL_PREFIX : '');
 const switchable = (a) => ((a.doc && a.doc.activation) || []).includes('switch');
@@ -118,14 +111,13 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
   const profiles = [];
 
   for (const [id, a] of [...core.agents].sort((x, y) => (x[0] < y[0] ? -1 : 1))) {
-    const res = agentBodies.get(id) || { meta: null, body: '' };
     const description = a.doc.description;
     if (switchable(a)) {
       out.set(`skills/${id}/SKILL.md`, fm({ name: id, description }) + '\n' + skillBody(a, target));
       if (target === 'codex') profiles.push(id);
     }
     if (!consultable(a) || (target !== 'claude' && target !== 'codex')) continue;
-    const tools = toolsOf(res.meta);
+    const tools = claudeToolsOf(a.doc); // host-neutral capabilities -> Claude tool names (build/host-tools.js)
     const subs = [{ name: id, description, prompt: generalPrompt(a, target, optIn && id === 'syn'), main: id === 'syn' }];
     for (const entry of Object.keys(a.doc.consult_entries || {}).sort()) {
       subs.push({ name: `${id}-${entry}`, description: `${description} (consult entry: ${entry})`, prompt: entryPrompt(a, entry, rendered) });

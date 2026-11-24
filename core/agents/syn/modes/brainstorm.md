@@ -99,7 +99,7 @@ AND update the corresponding field under `context` in the state JSON.
 
 After all context is gathered, read the full Context section back to the user.
 
-{{gate kind=phase phase=0 id=syn-brainstorm-phase0}}
+{{gate kind=phase phase=0 id=syn-brainstorm-phase-0}}
 
 ---
 
@@ -493,10 +493,9 @@ Respond to any of the following naturally:
      - Spawn each specialist in parallel, using the Section H.3
        branch prompt template from `autonomous_research.md`. Each branch
        prompt carries inherited Phase 0 setup (metric, budget, scope, cost
-       ceiling, git strategy — default `branch-local`) so the specialist
+       ceiling, git strategy — default `branch-dir`) so the specialist
        skips its own Phase 0 gate.
-     - All branch Tasks are called in **a single message with multiple Task
-       content blocks** (parallel).
+     - All branch workers are launched **in parallel** (not sequentially).
 
   5. **After all branches return:** invoke Syn Arbiter Mode per
      `protocols/diverge.md` Section F. Present the leaderboard to the user

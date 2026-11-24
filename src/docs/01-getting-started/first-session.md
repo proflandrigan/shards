@@ -20,11 +20,11 @@ The specialist loads one phase at a time with `load_phase`. The tool refuses to 
 
 ## Gates
 
-At the end of a phase the agent calls the `gate_request` tool with a summary and a pointer to what it wrote. Only a human can confirm. The agent has no confirm tool of its own. Depending on your host you confirm in one of three ways:
+At the end of a phase the agent calls the `gate_request` tool with a summary and a pointer to what it wrote. Only a human can confirm; the agent cannot confirm a gate on its own. Depending on your host you confirm in one of three ways:
 
 1. A prompt offering Approve or Request changes with a note (interactive Claude Code).
 2. A host permission prompt for `gate_advance`.
-3. Replying in chat; the runtime accepts your very next message as the answer.
+3. Replying in chat; the agent relays your very next message verbatim with `gate_confirm`, and the runtime accepts it only if it is your real reply.
 
 Approving an advancing gate commits the agent's output paths to your current branch with `Shards-Gate:` trailers. Checkpoint gates between components can be recorded automatically when the agent supplies passing evidence; `gates.policy` in `shards.config.yaml` (`strict`, `phase`, `plan`) controls how much confirmation is needed. See [The Gate Pattern](../03-protocols/gate-pattern.md).
 

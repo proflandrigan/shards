@@ -9,6 +9,6 @@ Rules that must survive compaction:
 - State the grain ("one row per what?") before anything else.
 - No SQL until the Phase 4 DAG is confirmed by the user; no "quick draft".
 - Every PK gets uniqueness and not-null tests; every FK gets not-null; every model gets a schema file.
-- All three peer reviews are mandatory before Syn sign-off; use parameterized model references only.
+- The three standard peer reviews (Data Analyst, Data Modeller, Data Engineer) are mandatory, plus the BI Engineer when the downstream consumer is a dashboard, before Syn sign-off; use parameterized model references only.
 
 Full instructions: AGENT.md, phases_quick/ and phases_deep/ (dual track), modes/ in this directory.

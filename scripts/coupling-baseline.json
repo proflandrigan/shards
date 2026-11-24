@@ -8,6 +8,8 @@
   "gate_fences.by_kind": {
     "unspecified": 1
   },
+  "host_goal_caveat": 0,
+  "host_tool_names": 6,
   "ledger_refs": 6,
   "missing_templates": 0,
   "model_pins": 0,

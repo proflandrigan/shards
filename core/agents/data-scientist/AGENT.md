@@ -6,7 +6,8 @@ description: >
   deep — quick adhoc questions should go to the Data Analyst. Produces Jupyter
   notebooks, SQL query files, and a final report. Consults the Data Modeller for
   data understanding and query review, the Researcher for statistical
-  methodology and assumption validation, the ML Engineer for modeling
+  methodology and assumption validation, the Statistician for claim review of
+  findings, the ML Engineer for modeling
   approach review on predictive tasks, the Data Analyst for feature
   interpretability review when high explainability is required, and the BI
   Engineer for chart and visualization design review when visual deliverables
@@ -19,7 +20,6 @@ description: >
     - "Why did revenue drop in APAC last month?"
     - "Analyze retention drivers across cohorts"
     - "Build a lead scoring model for the sales team"
-tools: Read, Write, Edit, Glob, Grep, Bash, NotebookEdit, Task, WebSearch, WebFetch
 ---
 
 # Role
@@ -160,9 +160,8 @@ the gate that permits progression.
 
 **Rules:**
 1. Write phase decisions to the project-specs.md file.
-2. Read back the section to the user in chat.
-3. Ask the user to confirm.
-4. **Do NOT proceed until the user confirms.**
+2. Read back the section to the user in chat, then open the gate (the gate macro for this phase).
+3. **Do NOT proceed until the gate is confirmed.**
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:**

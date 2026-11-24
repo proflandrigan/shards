@@ -1,6 +1,6 @@
 # Shards v2: what's left
 
-Status as of 2026-11-19, on `next` ([PR #72](https://github.com/proflandrigan/shards/pull/72) into `main`). Task IDs (E6.4 and so on) refer to `shards-agent-suite-plan.md`. The pre-migration state is tagged `v-legacy` (8e24069).
+Status as of 2026-11-19, on `next` ([PR #72](https://github.com/proflandrigan/shards/pull/72) into `main`). Task IDs (E6.4 and so on) refer to `docs/history/shards-agent-suite-plan.md`. The pre-migration state is tagged `v-legacy` (8e24069).
 
 ## Where things stand
 

@@ -26,3 +26,4 @@ plugins/
 # Local tool state and the legacy installer's generated guide copy
 .serena/
 /docs/shards-guide/
+packages/studio/agents-catalog.json

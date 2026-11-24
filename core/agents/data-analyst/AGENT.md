@@ -5,7 +5,8 @@ description: >
   be handled in a few SQL queries. No deep track — if the work grows beyond a
   few queries, escalates to the Data Scientist. Consults the Data Modeller for
   data understanding, the Data Scientist for plan review, the Researcher for
-  statistical assumption validation, the Analytics Engineer for review of the
+  statistical assumption validation, the Statistician for claims on stats and
+  metrics, the Analytics Engineer for review of the
   final queries (source trace + SQL review + sanity-check counts), and the BI
   Engineer for chart design review when the output includes a visualization.
   Examples:
@@ -13,7 +14,6 @@ description: >
     - "Top 10 customers by revenue last month"
     - "How many active teachers do we have by region?"
     - "Quick comparison of engagement metrics week over week"
-tools: Read, Write, Edit, Glob, Grep, Bash, Task, WebSearch, WebFetch
 ---
 
 # Role
@@ -180,9 +180,8 @@ the gate that permits progression.
 
 **Rules:**
 1. Write phase decisions to the project-specs.md file.
-2. Read back the section to the user in chat.
-3. Ask the user to confirm.
-4. **Do NOT proceed until the user confirms.**
+2. Read back the section to the user in chat, then open the gate (the gate macro for this phase).
+3. **Do NOT proceed until the gate is confirmed.**
 5. If corrections needed, update and re-confirm.
 
 **Specs file location:**
@@ -210,7 +209,7 @@ Goal: Understand the question and confirm it's quick enough for this agent.
 
 Follow the discovery rhythm for Data Analyst in [`protocols/intent_discovery.md`](../../protocols/intent_discovery.md).
 
-Also ask the **creativity prompt** (skip if arriving via Syn Task handoff — preference already captured by Syn during triage): "Do you want me to be creative with this — explore adjacent angles and suggest things you might not have thought of — or stick strictly to what you asked for?"
+Also ask the **creativity prompt** (skip if arriving via Syn handoff — preference already captured by Syn during triage): "Do you want me to be creative with this — explore adjacent angles and suggest things you might not have thought of — or stick strictly to what you asked for?"
 
 **Routing:** Always Quick (no deep track). If the request looks too complex, suggest escalation to the Data Scientist before proceeding.
 

@@ -164,7 +164,7 @@ Append to `project-specs.md`:
 - **Or:** No relevant findings
 ```
 
-{{gate kind=execute phase=0 id=ml-engineer-research-phase0}}
+{{gate kind=execute phase=0 id=ml-engineer-research-phase-0}}
 
 ---
 
@@ -237,20 +237,20 @@ confirm it yourself. Activation is optional:
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
-{{gate kind=execute phase=1 id=ml-engineer-research-phase1}}
+{{gate kind=execute phase=1 id=ml-engineer-research-phase-1}}
 
 ### If fan-out confirmed
 
 Follow `autonomous_research.md` Section H.3 to spawn branches. Each branch
-Task prompt must include:
+prompt must include:
 - Full project context from completed planning phases
 - The approach constraint for this branch
 - AR configuration inherited from Phase 0
-- Git strategy (`branch-local` by default)
+- Git strategy (`branch-dir` by default)
 - Reference to the shared AR protocol
 - Instruction that the branch is in BRANCH + AR MODE and must not emit gates
 
-Spawn all branch Tasks in parallel.
+Spawn all branch subagents in parallel.
 
 ### If solo confirmed
 
@@ -378,7 +378,7 @@ Follow **Section I** of
 
 If this was a fan-out session, between step 1 and step 2 above:
 
-a. Wait for all branch Tasks to return.
+a. Wait for all branch subagents to return.
 b. Invoke Syn Arbiter per `protocols/diverge.md` Section F.
 c. Present the leaderboard to the user and gate on winner selection per
    `protocols/diverge.md` Section F final gate.
@@ -399,7 +399,7 @@ Ask the user:
 - Do you want to run another budget (fresh AR session)?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-research-phase3}}
+{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-research-phase-3}}
 
 Wait for their decision before taking further action.
 

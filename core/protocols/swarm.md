@@ -50,6 +50,8 @@ Spawn all slices in a single parallel fan-out: one worker per slice, all in
 the same message. The same agent repeats across the calls — that is
 expected and correct; same-type instances simply get different slice briefs.
 
+Precondition: confirm or close any open gate first; the runtime refuses `fanout_start` while a gate is pending or suspended. Give each slice its own paths (`shards/<project>/slice-<n>/` or the user's targets).
+
 Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
 
 {{fanout ml-engineer slices=slice_a,slice_b}}
@@ -75,7 +77,8 @@ NOT call it — document your decision for the merge step and continue to
 the next phase. Skip your activation menu and Phase 0 — Syn has already scoped
 your work. Do not invoke Syn for review. Return a concise report: artifacts
 produced, key decisions, issues, confidence, and anything the merge step needs
-to know.
+to know. Your return value follows the fan-out contract in
+`protocols/worker_contract.md` ("Fan-out workers").
 ```
 
 ## Review and merge
@@ -94,6 +97,6 @@ to know.
 
 - Announce swarming to the user: how many slices, which types, what paths.
 - Prefer parallel spawns — do not await one slice before dispatching the next.
-- Guard your own context: read slice outputs from disk, not from Task output.
+- Guard your own context: read slice outputs from disk, not from subagent output.
 - Never degrade to a single massive workstream task when the work is large —
   decompose is the default.

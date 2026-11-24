@@ -48,10 +48,23 @@ function loadAgents(dir = AGENTS_DIR) {
   return out;
 }
 
+// AGENT.md frontmatter must not carry a host tool list; agent.yaml `capabilities` is the neutral form.
+function frontmatterToolsErrors(dir = AGENTS_DIR) {
+  const errors = [];
+  for (const d of fs.readdirSync(dir, { withFileTypes: true })) {
+    const f = path.join(dir, d.name, 'AGENT.md');
+    if (!d.isDirectory() || !fs.existsSync(f)) continue;
+    const m = fs.readFileSync(f, 'utf8').match(/^---\n([\s\S]*?)\n---/);
+    if (m && /^tools\s*:/m.test(m[1])) errors.push(`${d.name}: AGENT.md frontmatter has a 'tools:' line; declare 'capabilities' in agent.yaml instead`);
+  }
+  return errors;
+}
+
 function main() {
   const agents = loadAgents();
   const errors = agents.filter((a) => a.missing).map((a) => `${a.dir}: agent.yaml missing`);
   errors.push(...validateAgents(agents.filter((a) => !a.missing)));
+  errors.push(...frontmatterToolsErrors());
   if (errors.length) {
     console.error('Agent validation failed:');
     for (const e of errors) console.error('  - ' + e);
@@ -61,5 +74,5 @@ function main() {
   for (const a of agents) console.log(`  ${a.dir}`);
 }
 
-module.exports = { validateAgents, loadAgents, makeValidator };
+module.exports = { validateAgents, loadAgents, makeValidator, frontmatterToolsErrors };
 if (require.main === module) main();

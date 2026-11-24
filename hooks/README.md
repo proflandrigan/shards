@@ -1,7 +1,6 @@
 # Shards hook shims (E11.0)
 
-Node, CommonJS, no dependencies beyond `runtime/state/store.js`. Shims never block the host: internal
-errors are appended to `.shards/state/hook-errors.log` and the process exits 0. No shim opens the host's
+Node, CommonJS, no dependencies beyond `runtime/state/store.js`. Shims never block the host on unrelated internal errors, which are appended to `.shards/state/hook-errors.log` and the process exits 0. The one exception is `pre-tool-use.js`: if the session's `gates.json` exists but cannot be read or parsed (corrupt file, lock timeout), the tool call is denied with a message, because a pending gate cannot be ruled out. `SHARDS_GATE_ENFORCE=0` bypasses this. No shim opens the host's
 session-log file (enforced by `test/hooks-no-transcript.test.js`).
 
 | Shim | Event | Writes |

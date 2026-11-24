@@ -39,14 +39,15 @@ Before the plan gate, turn the plan just agreed into the task list.
 - Keep `size` at 60 or less. Split larger components.
 - At most 2 tasks in a phase may use `delegate: inline` (the lead does them itself).
 - Validate with the `tasks_set` tool. It refuses overlaps, cycles, unknown workers and missing acceptance. Fix every listed problem.
-- Add a `### Task list` table (id, goal, owned paths, acceptance, depends_on) to the phase's section of `project-specs.md`. The user approves plan and tasks together at the plan gate; the gate summary names the task count and the `tasks.yaml` path.
+- Add a `### Task list` table (id, goal, owned paths, acceptance, depends_on) to the phase's section of `project-specs.md`. {{record.write section="Task list"}} The user approves plan and tasks together at the plan gate; the gate summary names the task count and the `tasks.yaml` path.
+- Once the plan gate is confirmed, mirror each task to the bound task tracker (for the default git binding this keeps `TASKS.md` in step with `tasks.yaml`). For each task: {{tasks.create title="<task goal>" owns="<owned_paths>" accept="<acceptance command>"}}
 
 ## Lead loop (build phase)
 
 1. Load the task list approved at the plan gate and call `tasks_set`.
 2. Call `task_dispatch` for every ready task (dependencies satisfied), in parallel up to the thread cap.
 3. Each worker returns one result through `task_report`.
-4. LEAD VERIFICATION. A task counts only after the lead has checked it. Re-run the acceptance command (or check the evidence independently), compare the outcome with the `plan_ref` section, and record a per-task evidence row in the `## Validation` Evidence table of `project-specs.md` (Check = task id and component, Expected, Observed, Pass/Fail). Record the outcome with `task_verify` (pass or fail, with expected and observed); it appends the evidence row. A task becomes done only through `task_verify`, never on the worker's word.
+4. LEAD VERIFICATION. A task counts only after the lead has checked it. Re-run the acceptance command (or check the evidence independently), compare the outcome with the `plan_ref` section, and record a per-task evidence row in the `## Validation` Evidence table of `project-specs.md` (Check = task id and component, Expected, Observed, Pass/Fail). Record the outcome with `task_verify` (pass or fail, with expected and observed); it appends the evidence row. A task becomes done only through `task_verify`, never on the worker's word. After a passing `task_verify`, mirror the status to the tracker. {{tasks.update id="<task id>" status=done}}
 5. On a failed `task_verify`, re-dispatch with the failure output as feedback (the card carries it). Allow at most 2 retries; then the task is blocked and escalated: stop and ask the user, with a summary of what failed.
 6. Deviations or a plan that cannot be met: pause the dependent tasks and follow `{{protocol plan_drift}}`. The plan and `tasks.yaml` change only through a confirmed gate.
 7. Dispatch the tasks that the verified tasks have unblocked. Repeat from step 2.

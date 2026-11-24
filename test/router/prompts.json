@@ -143,6 +143,17 @@
     "note": "plain name; takeover"
   },
   {
+    "id": "statistician",
+    "prompt": "Switch to the statistician.",
+    "expect": {
+      "tool": "activate",
+      "agent": "statistician",
+      "mode": "switch",
+      "kind": "switch"
+    },
+    "note": "plain name; takeover"
+  },
+  {
     "id": "ml-engineer",
     "prompt": "Switch to MLE.",
     "expect": {
@@ -198,6 +209,15 @@
   {
     "id": "researcher",
     "prompt": "Just ask the researcher whether a t-test works for this data.",
+    "expect": {
+      "tool": "none",
+      "kind": "consult"
+    },
+    "note": "consult-only: must NOT switch"
+  },
+  {
+    "id": "statistician",
+    "prompt": "Just ask the statistician whether this lift claim follows from the experiment.",
     "expect": {
       "tool": "none",
       "kind": "consult"

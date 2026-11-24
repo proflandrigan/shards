@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-Decisions for the Shards agent suite migration. Source: `shards-agent-suite-plan.md`, "Key decisions".
+Decisions for the Shards agent suite migration. Source: `docs/history/shards-agent-suite-plan.md`, "Key decisions".
 
 - [0001](0001-three-layers.md): Three layers: tool-neutral core, runtime, generated packages (D1)
 - [0002](0002-activation-switch-consult-fan-out.md): Three activation modes: switch, consult, fan-out (D2)

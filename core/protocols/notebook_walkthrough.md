@@ -24,7 +24,7 @@ read-and-react session.
 Three pieces:
 
 1. **The notebook on disk** (`.ipynb`) — the source of truth for cell source
-   and cell outputs. Mutated only via `NotebookEdit` (for source) or via the
+   and cell outputs. Mutated only via the notebook editing tool (for source) or via the
    `notebook_exec` tool (for outputs after execution).
 2. **The walkthrough state JSON** — the agent's view of the walkthrough
    (current cell, which cells are stale, transcript of explanations and
@@ -119,9 +119,9 @@ User actions arrive as chat messages prefixed with
 | `Next cell` | Advance `currentCellIndex` by 1, explain the new cell |
 | `Re-explain cell <N>` | Generate a fresh explanation for cell N |
 | `Question on cell <N>: <text>` | Answer in chat; record in transcript; do not advance |
-| `Edit cell <N>: <new content>` | Mutate cell source via NotebookEdit, mark stale, re-run if user asked |
+| `Edit cell <N>: <new content>` | Mutate cell source via the notebook editing tool, mark stale, re-run if user asked |
 | `Insert cell after <N> (<type>): <content>` | Insert a cell, shift indices, update state |
-| `Delete cell <N>` | Delete via NotebookEdit, shift indices, mark downstream stale |
+| `Delete cell <N>` | Delete via the notebook editing tool, shift indices, mark downstream stale |
 | `Re-run from cell <N>` | Execute cells N..end, clearing stale flags as you go |
 | `Restart kernel` | Call `notebook_start` again for a fresh kernel; mark all executed cells stale |
 | `Restart & run all` | Call `notebook_run_all`; fresh-kernel top-to-bottom reproducibility check; report per-cell pass/fail and the first error |
@@ -142,7 +142,7 @@ Always go through the `notebook_exec` tool (`session` = the session id,
 `cell` = the cell index).
 
 The tool:
-- Reads cell source from the `.ipynb` on disk (so any prior `NotebookEdit`
+- Reads cell source from the `.ipynb` on disk (so any prior notebook edit
   is picked up automatically).
 - Sends the source to the live kernel.
 - Captures stream/result/error outputs.
@@ -168,7 +168,7 @@ to proceed.
 
 ## Cell mutation (edit / insert / delete)
 
-All cell mutations go through the **NotebookEdit** tool — never write the
+All cell mutations go through the **notebook editing** tool — never write the
 `.ipynb` directly.
 
 After any mutation:

@@ -1,6 +1,6 @@
 # Code Review Mode
 
-Triggered when a specialist calls Task with `CODE REVIEW MODE` in the prompt.
+Triggered when a specialist consults Syn with `CODE REVIEW MODE` in the prompt.
 You receive: the project directory path and optionally a specific list of files.
 
 **Step 1: Read project context**
@@ -128,10 +128,11 @@ only if applicable). Then ask:
 
 Raise the gate below before Step 5, passing the consolidated findings as the
 `summary`. Then STOP and wait for the user. Do not apply any fix or begin Step 5
-until the user confirms (via the in-host prompt or by replying). Never confirm
-this gate yourself.
+until the user has approved it, either in the host prompt raised by `gate_advance`
+or by a chat reply you relay verbatim with `gate_confirm`. Never confirm this gate
+yourself.
 
-{{gate kind=phase phase=0 id=syn-code-review-phase0}}
+{{gate kind=phase phase=0 id=syn-code-review-phase-0}}
 
 **Step 5: Apply fixes**
 
@@ -185,7 +186,7 @@ Brief for each consultant or worker (fill the angle-bracket fields):
 SERVICE MODE — APPLY NOTEBOOK FIXES. The user has approved the
 following fixes to Jupyter notebooks in <project_dir>.
 Files and fixes: <paste the notebook reviewer's per-file findings>
-Use the NotebookEdit tool to apply each fix. Return a per-notebook summary
+Use the notebook editing tool to apply each fix. Return a per-notebook summary
 of what was changed.
 ```
 

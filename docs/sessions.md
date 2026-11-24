@@ -1,6 +1,6 @@
 # Sessions (shards runtime)
 
-Developer notes for the session index and the resume/end flow. Covers `runtime/sessions/index.js`, the `sessions_*` MCP tools, the `shards sessions` CLI, and the legacy `shards-sessions` bin. Describes what the code does today. Open items are marked `OPEN` or `TODO(owner: proflandrigan)`.
+Developer notes for the session index and the resume/end flow. Covers `runtime/sessions/index.js`, the `sessions_*` MCP tools, the `shards sessions` CLI, and the deprecated `shards-sessions` shim. Describes what the code does today. Open items are marked `OPEN` or `TODO(owner: proflandrigan)`.
 
 ## 1. Purpose
 
@@ -31,7 +31,7 @@ shards sessions resume <id> [--root d] [--json]
 shards sessions end    [id] [--root d] [--json]
 ```
 
-`shards-sessions` is the legacy bin and still works with the same subcommands. Use `--json` for scripts.
+`shards-sessions` is a deprecated shim: it prints a stderr notice and forwards to `shards sessions <sub>`, and rejects v1-only flags (`--agent`, `--project`) with exit 2 (`docs/release.md`). Use `shards sessions` directly. Use `--json` for scripts.
 
 ## 4. Host resume hints
 
