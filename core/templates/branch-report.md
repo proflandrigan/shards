@@ -4,6 +4,7 @@
 - **Approach:** {{APPROACH_SUMMARY}}
 - **Branch directory:** {{BRANCH_DIR}}
 - **Date:** {{DATE}}
+- **Git strategy:** {{GIT_STRATEGY}} <!-- one of: branch-dir, worktree, no-vcs -->
 
 ---
 
