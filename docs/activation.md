@@ -18,7 +18,7 @@ Naming rule: consult subagents exist only if `consult` is in `activation`. The g
 | ai-engineer | specialist | switch, consult, fanout_worker | /shards:ai-engineer | $shards:ai-engineer / shards-ai-engineer | ai-engineer, ai-engineer-review, ai-engineer-advise, ai-engineer-worker |
 | analytics-engineer | specialist | switch, consult, fanout_worker | /shards:analytics-engineer | $shards:analytics-engineer / shards-analytics-engineer | analytics-engineer, -review, -advise, -service, -worker |
 | applied-ml-scientist | specialist | switch, consult, fanout_worker | /shards:applied-ml-scientist | $shards:applied-ml-scientist / shards-applied-ml-scientist | applied-ml-scientist, -review, -advise, -worker |
-| backend-engineer | reviewer | switch, consult | /shards:backend-engineer | $shards:backend-engineer / shards-backend-engineer | backend-engineer, -review, -service |
+| backend-engineer | reviewer | switch, consult, fanout_worker | /shards:backend-engineer | $shards:backend-engineer / shards-backend-engineer | backend-engineer, -review, -service, -worker |
 | bi-engineer | specialist | switch, consult, fanout_worker | /shards:bi-engineer | $shards:bi-engineer / shards-bi-engineer | bi-engineer, -review, -advise, -worker |
 | data-analyst | specialist | switch, consult, fanout_worker | /shards:data-analyst | $shards:data-analyst / shards-data-analyst | data-analyst, -review, -advise, -worker |
 | data-engineer | specialist | switch, consult, fanout_worker | /shards:data-engineer | $shards:data-engineer / shards-data-engineer | data-engineer, -review, -advise, -worker |

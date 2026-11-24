@@ -45,7 +45,7 @@ Phase bodies are served one at a time by the `load_phase` tool, which refuses un
 Consults are isolated subagents that answer one question and return a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)). They never nest.
 
 - **Calls out to:** Researcher and Data Modeller (phase 3), Deep Learning Engineer and Backend Engineer (phase 5), Syn (phase 5).
-- **Declared reviewers** (`agent.yaml`): Researcher, Deep Learning Engineer, Backend Engineer, Data Modeller, Syn.
+- **Declared reviewers** (`agent.yaml`): Researcher, Deep Learning Engineer, Backend Engineer, Data Modeller, Statistician, Syn.
 - **Consulted by (reverse of declared reviewers):** [Deep Learning Engineer](deep-learning-engineer.md), [ML Engineer](ml-engineer.md), [Syn](syn.md).
 
 ## Output directory

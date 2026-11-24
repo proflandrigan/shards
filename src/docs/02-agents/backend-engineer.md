@@ -25,6 +25,7 @@ Mode files live in `core/agents/backend-engineer/modes/`.
 |---|---|
 | `review.md` | `[R]` full code review, and the `review` consult entry. |
 | `service.md` | The `service` consult entry, called by other agents (and by Syn's code review) for a `.py` review; returns a verdict. |
+| `worker.md` | The `worker` entry for fan-out: applies one approved Panel Review fix to `.py` files and returns verdict JSON. |
 | `review_checklist.md` | Standardized review checklist. |
 | `clean.md` | `[C]` Clean mode, five steps: scope (gate), read and audit, change plan (gate), per-file execute, summary (gate). Behavior does not change. |
 
@@ -45,6 +46,7 @@ None. It returns conversational findings, or edits files in place in Clean mode 
 - **Claude Code:** `/shards:backend-engineer` (switch skill; calls `activate`).
 - **Codex:** `$shards:backend-engineer`, or `codex -p shards-backend-engineer`.
 - **As a consult:** subagents `backend-engineer`, `backend-engineer-review` and `backend-engineer-service`.
+- **As a fan-out worker:** subagent `backend-engineer-worker`; Syn's Panel Review leases it the `.py` fixes it owns.
 
 Nothing is published yet, so install from source: [Install](../01-getting-started/install.md).
 

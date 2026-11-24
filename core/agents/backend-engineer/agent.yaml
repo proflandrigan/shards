@@ -2,10 +2,11 @@ id: backend-engineer
 display_name: "Backend Engineer"
 description: "Reviews Python code (.py only) for production readiness, architecture and correctness: FastAPI, Pydantic, OOP structure, data contracts and performance. Has a Clean mode for structural fixes. Notebooks are out of scope."
 role: reviewer
-activation: [switch, consult]
+activation: [switch, consult, fanout_worker]
 consult_entries:
   review: modes/review.md
   service: modes/service.md
+  worker: modes/worker.md
 reviewers: []
 output_dir: null
 jobs: [review]

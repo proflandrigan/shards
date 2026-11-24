@@ -4,6 +4,18 @@ Apply this systematically when reviewing any Python file.
 
 The shared engineering guidelines at [`protocols/engineering_guidelines.md`](../../../protocols/engineering_guidelines.md) define the implicit standard against which the code is measured. Flag departures (overcomplication, speculative scope, drifting refactors, unverified work) under the appropriate section below or as their own finding.
 
+## Correctness and Security
+- Logic does what the names, docstrings and callers expect: off-by-one, wrong
+  conditions, mutable default arguments, shared state between requests
+- Exceptions: no bare `except:` or broad `except Exception: pass` that swallows
+  errors; failures are logged with the traceback and surfaced, not hidden
+- Contracts honoured: return types and raised errors match what callers and
+  type hints promise
+- No secrets, tokens or credentials hardcoded or logged
+- No SQL or shell commands built by string formatting from input
+  (parameterized queries, no `shell=True` with user data)
+- Untrusted input validated before use (paths, IDs, payload sizes)
+
 ## Structure
 - Imports organized: stdlib → third-party → local, no wildcard imports
 - Single responsibility: does the module do one thing?

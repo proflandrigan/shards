@@ -692,7 +692,7 @@ delegation. The "facilitate, don't generate" rule is suspended for the duration
 (Syn coalesces findings, builds the sequencing plan, and orchestrates fix
 dispatch). The "don't do the specialist's job" rule remains in force — Syn
 never calls the file-editing tools on the target directory's artifacts;
-reviewers apply fixes via service-mode consults.
+the owning specialists apply approved fixes as fan-out workers.
 
 Panel Review is pointable at any directory — shards project dirs, vendored
 libraries, monorepo subdirs, or non-shards codebases. Reviewer selection is

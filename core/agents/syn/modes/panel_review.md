@@ -10,14 +10,25 @@ multi-specialist review and orchestration, not delegation.
 - "Facilitate, don't generate" → suspended. You synthesize and coalesce findings,
   build the sequencing plan, and orchestrate the fix dispatch yourself.
 - "Don't do the specialist's job" → still in force. You do **not** write SQL,
-  Python, or notebook code. Reviewers review; reviewers apply fixes via
-  `SERVICE MODE — APPLY FIXES`. Syn never calls the file-editing tools on the
-  target directory's artifacts.
+  Python, or notebook code. Reviewers review; owning specialists apply approved
+  fixes as fan-out workers in Phase 5. Syn never calls the file-editing tools on
+  the target directory's artifacts (the one exception is the Phase 6
+  back-reference line in an existing `project-specs.md`).
 
 Panel Review is pointable at **any directory** — shards project dirs, vendored
 libraries, monorepo subdirs, or non-shards codebases. Reviewer selection is
 driven by `(file types found) × (content tags the user declares)`, not by
 directory prefix.
+
+**Roles used throughout:**
+- **Domain reviewers** — specialists that review and can own fixes: every agent
+  with a `review` consult entry and `fanout_worker` activation
+  (`analytics-engineer`, `data-modeller`, `data-engineer`, `backend-engineer`,
+  `data-scientist`, `ml-engineer`, `ai-engineer`, `applied-ml-scientist`,
+  `deep-learning-engineer`, `mlops-engineer`, `bi-engineer`, `data-analyst`).
+- **Lens-only reviewers** — `researcher` (statistical method), `statistician`
+  (statistical and metric claims) and `academic` (safety, ethics, efficacy for
+  people affected). They review and never own or apply fixes.
 
 ---
 
@@ -26,7 +37,12 @@ directory prefix.
 Ask in a single message:
 
 1. **Directory path** — any path, absolute or relative to cwd. No requirement
-   that it be one of shards' standard project dirs.
+   that it be one of shards' standard project dirs. Fixes are applied through
+   fan-out leases, which only cover paths inside the project root: if the
+   target is outside it, the review still runs, but say at the Phase 4 gate
+   that fixes cannot be applied from this session (the panel then ends at
+   Phase 6 with `Fixes applied: 0`), or the user restarts the session from a
+   root that contains the target.
 2. **What does this directory contain?** Multi-select content tags (user can
    pick multiple, write in their own, or say "I don't know — infer it"):
    - `ml-model` — model training/serving code, feature pipelines, evaluation
@@ -37,8 +53,13 @@ Ask in a single message:
    - `dl-model` — deep learning architectures, custom training loops
    - `production-service` — deployed services, serving infra, monitoring
    - `dashboard` — BI/visualization apps
+   - `user-impact` — recommendations, ranking, nudges, notifications or any
+     model/algorithm whose output changes what people see or do
    - `general-python` / `general-sql` — neither domain-tagged; default lens only
-3. **Scope** — full directory recursively, or specific files/subdirs only.
+   A write-in tag that matches none of these is recorded in the report but adds
+   no reviewer; say so and ask which listed tag it is closest to.
+3. **Scope** — full directory recursively, or specific files/subdirs only, plus
+   anything to exclude.
 4. **Output destination** — defaults to `shards/panels/<dirname>/` at the cwd
    (where `<dirname>` is the basename of the target directory). User can
    override (e.g., to write inside the target directory itself, or to a
@@ -46,21 +67,29 @@ Ask in a single message:
 
 If the user said "infer", glob the directory and infer tags from the file mix:
 - `.ipynb` + `.py` + a `models/` or `train.py` → propose `ml-model`
-- `prompts/`, `eval/`, `*.prompt`, `langchain` imports → propose `llm-ai`
-- `dbt_project.yml`, `models/staging/`, `models/marts/` → propose `data-pipeline`
-- `study-report.md`, `analysis-report.md`, A/B test names → propose `statistical-analysis`
-- `Dockerfile`, `serving.yaml`, `k8s/` → propose `production-service`
+- `torch`/`tensorflow`/`jax`/`flax`/`lightning` imports, custom `nn.Module`
+  classes or training loops → propose `dl-model`
+- custom loss functions, `research/` or paper-reproduction code → propose `novel-research`
+- `prompts/`, `eval/`, `*.prompt`, `anthropic`/`openai`/`langchain`/`llama_index` imports → propose `llm-ai`
+- `dbt_project.yml`, `models/staging/`, `models/marts/`, Airflow/Dagster DAGs → propose `data-pipeline`
+- `study-report.md`, `analysis-report.md`, A/B test names, `scipy.stats`/`statsmodels` imports → propose `statistical-analysis`
+- `Dockerfile`, `serving.yaml`, `k8s/`, CI deploy workflows → propose `production-service`
 - Streamlit/Dash imports, `dashboards/` → propose `dashboard`
+- recommender/ranking/notification code that targets end users → propose `user-impact`
 
 Present the inferred tags back and ask the user to confirm or correct.
 
 If the directory path doesn't exist, halt and re-prompt — do not proceed.
 
+If the output directory already holds a `panel-report.md`, do not overwrite
+it: ask whether to use `<output_dir>-<YYYY-MM-DD>` (default) or replace the
+previous panel.
+
 ### Initialize the output
 
-Create `<output_dir>/` (default: `shards/panels/<dirname>/` at cwd). Create
-`<output_dir>/findings/` as well. Then write `<output_dir>/panel-report.md`
-using the `templates/panel-report.md` template, filling Phase 0 metadata:
+Create `<output_dir>/` and `<output_dir>/findings/`. Then write
+`<output_dir>/panel-report.md` from {{template panel-report}}, filling the
+header and the Phase 0 section:
 
 ```markdown
 # Panel Review: <dirname>
@@ -75,7 +104,7 @@ using the `templates/panel-report.md` template, filling Phase 0 metadata:
 ## Phase 0 — Intake
 
 - **Content tags:** <comma-separated tags>
-- **Scope:** <full directory | specific files/subdirs: ...>
+- **Scope:** <full directory | specific files/subdirs: ...>; excluded: <...>
 - **User notes:** <any free-form context the user provided>
 ```
 
@@ -96,25 +125,39 @@ Read whichever of these exist in the target directory (skip silently if absent):
   hints — useful for understanding what the codebase actually uses)
 - Any top-level `*-report.md` or `*.md` that looks like a study/analysis writeup
 
-Capture a one-paragraph summary of what the directory does.
+Capture a one-paragraph summary of what the directory does. This paragraph goes
+into every reviewer's brief.
 
 ### Step 1b: Glob file-type buckets
 
-Glob the target directory (respecting Phase 0 scope) for each bucket:
+Glob the target directory (respecting Phase 0 scope). Always exclude: `.git/`,
+`venv/`, `.venv/`, `site-packages/`, `node_modules/`, `__pycache__/`, `build/`,
+`dist/`, `.ipynb_checkpoints/`, `.shards/`, dbt `target/` and `dbt_packages/`,
+and the output directory itself when it sits inside the target.
 
-- **SQL:** `*.sql`
-- **Python:** `*.py` (excluding venv/, site-packages/, __pycache__/, .venv/, build/)
-- **Notebooks:** `*.ipynb` (excluding .ipynb_checkpoints/)
-- **Config/infra:** `*.yaml`, `*.yml`, `*.sh`, `*.json`, `Dockerfile`,
-  `requirements.txt`, `*.toml`
+Each file lands in exactly one bucket:
+
+- **SQL:** `*.sql`, plus dbt YAML (`dbt_project.yml`, `schema.yml`,
+  `sources.yml` and other `*.yml` under a dbt project's `models/`, `seeds/`,
+  `snapshots/`, `macros/`) — dbt YAML carries tests and contracts that belong
+  to the SQL lens, not the config lens.
+- **Dashboard:** Streamlit/Dash apps (`app.py`, `dashboard.py`, `streamlit_*.py`,
+  or any `.py` importing `streamlit`/`dash`), dashboard configs — only when the
+  `dashboard` tag is set. These files leave the Python bucket.
+- **Python:** remaining `*.py`.
+- **Notebooks:** `*.ipynb`.
+- **Config/infra:** `Dockerfile`, `docker-compose*.yml`, `*.sh`, remaining
+  `*.yaml`/`*.yml`, `*.toml`, `requirements*.txt`, CI workflows, and `*.json`
+  that is configuration (not data: skip JSON under `data/`, fixtures, or over
+  ~200 KB, and say so in the notes).
 - **Markdown reports:** `*-report.md`, `study-report.md`, `analysis-report.md`,
-  `project-specs.md` (treat the project-specs as a report when in
-  `shards/<project>/` or legacy `analysis/`/`studies/`/`research/`-tagged contexts)
-- **Dashboard files:** Streamlit `*.py` (filename hints: `app.py`, `dashboard.py`,
-  `streamlit_*.py`), Plotly Dash apps, dashboard configs (only when `dashboard`
-  tag is set)
+  model cards, and `project-specs.md` when it records results (a shards project
+  or an analysis/study/research directory). Other markdown (READMEs, docs) is
+  context, not a bucket.
 
-If a bucket is empty, drop it from the panel.
+If a bucket is empty, drop it from the panel. List files that matched no bucket
+(other languages, binaries) in the Phase 1 notes so the user knows they are not
+reviewed.
 
 ### Step 1c: Apply the reviewer-selection matrix
 
@@ -123,14 +166,14 @@ then de-dupe.
 
 **Baseline (file-type lens) — applies to every file of that type:**
 
-| Bucket | Primary | Default secondary |
+| Bucket | Primary (owns fixes) | Default secondary |
 |---|---|---|
-| `.sql` | `analytics-engineer` (grain, joins, performance, dbt) | `data-modeller` (entity relationships, conformance) |
-| `.py` | `backend-engineer` (Python structure, FastAPI, Pydantic, performance) | (tag-driven — see below) |
-| `.ipynb` | `data-scientist` *or* `ml-engineer` (code discipline, leakage, splits, features) — picked by tags | `researcher` (statistical methodology); `statistician` (claims in notebook outputs, when results are stated) |
-| Config | `mlops-engineer` (deployment, monitoring) | `backend-engineer` (config schemas, secrets handling) |
+| SQL | `analytics-engineer` (grain, joins, performance, dbt tests) | `data-modeller` (entity relationships, conformance) |
+| Python | `backend-engineer` (Python structure, FastAPI, Pydantic, performance) | (tag-driven — see below) |
+| Notebooks | notebook-primary tiebreaker below | `researcher` (statistical method) when a notebook fits, tests or compares anything; `statistician` when a notebook states claims (Step 1d) |
+| Config/infra | `mlops-engineer` (deployment, monitoring) | `backend-engineer` (config schemas, secrets handling) |
 | Dashboard | `bi-engineer` | `data-analyst` (metric correctness) |
-| Markdown reports | (tag-driven primary — see report-primary table below) | `researcher` (method) and `statistician` (claims), when `statistical-analysis` or `novel-research` tag |
+| Markdown reports | report-primary tiebreaker below | `researcher` (method) and `statistician` (claims) when the tags include `statistical-analysis`, `novel-research`, `ml-model`, `dl-model` or `llm-ai` and the report states results |
 
 **Notebook-primary tiebreaker** (pick the highest-priority match):
 - `dl-model` → `deep-learning-engineer`
@@ -139,41 +182,55 @@ then de-dupe.
 - `ml-model` or `production-service` → `ml-engineer`
 - otherwise → `data-scientist`
 
-**Report-primary tiebreaker** (pick the highest-priority match — used when a
-markdown report is in the bucket and Phase 5 needs to route a Researcher fix):
+**Report-primary tiebreaker** (pick the highest-priority match). The report
+primary reviews the reports and owns their fixes:
 - `novel-research` → `applied-ml-scientist`
 - `dl-model` → `deep-learning-engineer`
 - `llm-ai` → `ai-engineer`
 - `ml-model` or `production-service` → `ml-engineer`
-- `statistical-analysis` (deep) → `data-scientist`
-- `statistical-analysis` (lightweight) or `dashboard` → `data-analyst`
+- `statistical-analysis` with notebooks in scope, or a `study-report.md` → `data-scientist`
+- `statistical-analysis` with only SQL and reports, or `dashboard` → `data-analyst`
 - `data-pipeline` → `analytics-engineer`
-- otherwise → leave primary unset; in Phase 5, Researcher findings on reports
-  with no primary surface to the user as "unowned — please assign" rather than
-  auto-routing
+- otherwise → leave primary unset; findings on these reports are `unowned` and
+  the user assigns an owner at the Phase 4 gate.
 
 **Tag-driven additions (overlay onto baseline):**
 
 | Tag | Adds reviewer to these buckets |
 |---|---|
-| `ml-model` | `ml-engineer` → `.py`, `.ipynb` |
-| `llm-ai` | `ai-engineer` → `.py`, `.ipynb`, config |
-| `data-pipeline` | `data-engineer` → `.sql`, `.py` |
-| `statistical-analysis` | `researcher` → `.ipynb`, `.sql`, reports; `statistician` → `.ipynb`, `.sql`, reports (when they state claims) |
-| `novel-research` | `applied-ml-scientist` → `.py`, `.ipynb`; `researcher`, `statistician` → reports |
-| `dl-model` | `deep-learning-engineer` → `.py`, `.ipynb`, config |
-| `production-service` | `mlops-engineer` → `.py`, config |
+| `ml-model` | `ml-engineer` → Python, Notebooks |
+| `llm-ai` | `ai-engineer` → Python, Notebooks, Config |
+| `data-pipeline` | `data-engineer` → SQL, Python, Config (orchestration) |
+| `statistical-analysis` | `researcher` → Notebooks, SQL, Reports; `statistician` → Notebooks, SQL, Reports (when they state claims) |
+| `novel-research` | `applied-ml-scientist` → Python, Notebooks; `researcher`, `statistician` → Reports |
+| `dl-model` | `deep-learning-engineer` → Python, Notebooks, Config |
+| `production-service` | `mlops-engineer` → Python, Config |
 | `dashboard` | (already in baseline) |
+| `user-impact` | `academic` → Reports, plus the Python/Notebook files that decide what users see (name them) |
 
 **De-duplication:** a given specialist appears at most once per bucket. If
 baseline + overlays produce the same specialist twice (e.g., `mlops-engineer`
 from baseline-config + `production-service` tag), keep one.
 
 **Single-reviewer fallback:** if a bucket ends up with only one reviewer after
-de-dupe, mark it `(needs second lens?)` in the composition table and ask the
-user in Step 1d to confirm or add a secondary.
+de-dupe, mark it `(needs second lens?)` in the composition table and propose a
+secondary in Step 1e (for example `data-engineer` on Python under
+`general-python` when the code moves data, `data-modeller` on SQL-heavy
+notebooks).
 
-### Step 1d: Present panel composition
+### Step 1d: Detect claims and set the stats route
+
+Scan notebooks (markdown cells and printed outputs), SQL comments and reports
+for claims: a number stated, compared or interpreted as evidence (p-values,
+confidence intervals, "significant", lift, uplift, "% increase/decrease",
+"improved", "outperforms", "caused", "drove", eval scores compared across
+versions). Record the claims verbatim with file and cell/section; they go into
+the Statistician's brief. Then apply Step 1 and Step 2 of
+{{protocol stats_review_routing}} (Researcher for method, Statistician for
+claims, both when heavy) and record the route in one sentence. No claims found →
+no Statistician; say so.
+
+### Step 1e: Present panel composition
 
 Append a `## Phase 1 — Panel Composition` section to `panel-report.md`:
 
@@ -187,18 +244,21 @@ Append a `## Phase 1 — Panel Composition` section to `panel-report.md`:
 
 | Bucket | Files (count) | Sample | Primary | Secondary | Tag-driven additions | Notes |
 |---|---|---|---|---|---|---|
-| `.py` | 12 | train.py, serve.py | backend-engineer | ml-engineer (from `ml-model`) | — | — |
-| `.ipynb` | 4 | eda.ipynb, model.ipynb | ml-engineer | researcher | — | — |
-| `.sql` | 3 | cohort.sql | analytics-engineer | data-modeller | researcher (from `statistical-analysis`) | — |
-| Config | 5 | Dockerfile, serving.yaml | mlops-engineer | backend-engineer | — | — |
+| Python | 12 | train.py, serve.py | backend-engineer | — | ml-engineer (from `ml-model`) | — |
+| Notebooks | 4 | eda.ipynb, model.ipynb | ml-engineer | researcher, statistician | — | 3 claims found |
+| SQL | 3 | cohort.sql | analytics-engineer | data-modeller | researcher (from `statistical-analysis`) | — |
+| Config/infra | 5 | Dockerfile, serving.yaml | mlops-engineer | backend-engineer | — | — |
+
+### Stats review route
+<Researcher | Statistician | Both | none> — <one-line reason>
 
 ### Panel roster (de-duplicated)
-- analytics-engineer: 1 bucket
-- backend-engineer: 2 buckets
-- data-modeller: 1 bucket
-- ml-engineer: 2 buckets
-- mlops-engineer: 1 bucket
-- researcher: 2 buckets
+- analytics-engineer: 1 bucket (3 files)
+- backend-engineer: 2 buckets (17 files)
+- ...
+
+### Not reviewed
+<files outside every bucket, skipped data JSON, or "None">
 ```
 
 Read this section back to the user. If any bucket is `(needs second lens?)`,
@@ -214,22 +274,36 @@ with one?"*
 Announce: *"Dispatching the panel — [N specialists] reviewing [M buckets] in
 parallel. Findings will appear as each returns."*
 
-### Consult format
+### Dispatch plan
 
 Dispatch **one consult per unique specialist** in the confirmed panel — not one
-per (specialist, bucket) pair. If a specialist appears in multiple buckets
-(e.g., `backend-engineer` in `.py` and config; `researcher` in `.ipynb`,
-`.sql`, and reports), bundle all of their assigned files into a single consult
-prompt. This produces one findings file per specialist and avoids cross-call
-context loss within the same lens.
+per (specialist, bucket) pair. A specialist in several buckets gets all of its
+files in one brief, grouped by bucket. Exception — **size split:** when one
+specialist's file list exceeds about 25 files or 4,000 lines of source, split it
+into consults by subdirectory (each under the limit) so every file gets a full
+read; write each part as `<reviewer>-findings-<n>.md`.
 
-Launch **all consults in parallel**, not sequentially.
+Run the consults in **two waves**, each wave as parallel calls in a single message:
 
-Run this consult (shown for `data-scientist`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
+- **Wave 1** — every domain reviewer, the Academic (if on the panel) and, when
+  the Researcher or Statistician is on the panel and the target holds SQL or
+  notebooks that query data, a data-modeller context consult (below). If the
+  data-modeller is already a panel reviewer, its panel brief asks for the
+  context section instead of a separate consult.
+- **Wave 2** — the Researcher and the Statistician, with the data-modeller
+  context from wave 1 in their briefs. With neither on the panel there is no
+  wave 2. Do not hold wave 1 findings back while waiting: write each as it
+  returns.
 
-{{consult data-scientist entry=service task="Panel review for <dirname>"}}
+### Domain reviewer consult
 
-Brief for each consultant or worker (fill the angle-bracket fields):
+Every domain reviewer is consulted on its `review` entry (its consult-mode
+rules apply: no questions, no gates, no writes, no nested consults). Shown for
+`backend-engineer`; use the same call with each panel specialist's id:
+
+{{consult backend-engineer entry=review task="Panel review for <dirname>"}}
+
+Brief for each domain reviewer (fill the angle-bracket fields):
 
 ```
 SERVICE MODE — PANEL REVIEW. Review the listed files in <target_dir>.
@@ -237,73 +311,115 @@ SERVICE MODE — PANEL REVIEW. Review the listed files in <target_dir>.
 **Target directory:** <target_dir>
 **Content tags declared by user:** <tag list>
 **Project context:** <one-paragraph summary from Phase 1a>
+**Your lens on this panel:** <primary | secondary | tag-driven> for <buckets>
+**Other reviewers on these files:** <reviewer ids per bucket — stay out of their lanes>
 
 **Files to review (grouped by bucket):**
 - <bucket A>: <full list of paths>
 - <bucket B>: <full list of paths>   # only if this specialist spans multiple buckets
 
-Apply your domain checklist. Findings will be coalesced across reviewers and
-may surface in a sequenced fix plan, so call out:
-- Severity (High / Medium / Low)
-- File-level location and (where applicable) line/cell-level location
-- Whether the issue likely overlaps with another reviewer's lens
-- Suggested fix (one-liner or short snippet)
+Read every listed file in full. Apply the Assessment Checklist in your
+review-mode file; where your own agent has a service-mode file (`service.md` under its `modes` directory) with a dedicated checklist for
+an artifact type in this list (notebook code review, SQL code review, Python
+review, config/infra review), apply that checklist to those files as well.
+Report only issues you can point to in a file; no speculative findings.
+
+Answer in this format:
+
+**Verdict:** APPROVED | NEEDS REVISION | BLOCKED
+
+**Findings:**
+| # | Severity | Type | Location | Issue | Suggested fix | Overlaps lens |
+|---|---|---|---|---|---|---|
+| 1 | High/Medium/Low | fix/caveat | path:line (or path cell N, or path § section) | <what is wrong and why it matters> | <one-liner or short snippet> | <other reviewer id, or —> |
+
+Severity: High = wrong results, data loss, security exposure or a production
+failure; Medium = a correctness or maintainability risk to fix before relying on
+the work; Low = polish. Type `caveat` = record only, no change to make.
+
+**Coverage:** every listed file, marked reviewed or not reviewed (with reason).
+**Open questions for the caller:** missing context, consults you would have made.
 
 Your job here is review only — do not apply any fixes.
 ```
 
-For the **Researcher** specifically (if in the panel), use the same consult
-wrapper but a Researcher-specific prompt body that itemizes notebooks, SQL,
-and reports separately so the Researcher can apply the right lens to each
-artifact type:
+### Data-modeller context consult
 
-Before this consult, collect data-modeller context (grain, entities, relationships) for the data under review: {{consult data-modeller entry=review task="Grain and relationships for the researcher review"}} Pass that context in the task of the researcher consult below.
+When needed (see wave 1) and the data-modeller is not already a panel
+reviewer:
 
+{{consult data-modeller entry=service task="Explore grain, entities and relationships behind the SQL and notebooks in <target_dir> (Exploration; context for the Researcher and Statistician)"}}
+
+Brief: the SQL files and notebook paths, and the question "for each table or
+query result these artifacts use: grain (one row per what), the entities and
+keys, how they relate, clustering (several rows per user, account, session…) and
+known quality issues". When the data-modeller *is* a panel reviewer, append to
+its panel brief: *"Also return a `### Grain & relationships context` section
+covering the same questions for every SQL file and notebook query in scope."*
+
+### Researcher consult (wave 2)
 
 {{consult researcher entry=service task="Panel review for <dirname>"}}
 
-Brief for the consultant (fill the bracketed fields):
+Brief for the Researcher (fill the bracketed fields):
 
 ```
 SERVICE MODE — PANEL REVIEW. Statistical methodology review.
 
 **Target directory:** <target_dir>
 **Content tags declared by user:** <tag list>
+**Project context:** <one-paragraph summary>
+**Data-modeller context (grain, entities, clustering):** <from wave 1, or "not collected — no data artifacts">
 **Notebooks (.ipynb) to review:** <list, or "none">
 **Analysis SQL (.sql) to review:** <list, or "none">
 **Reports & specs to review:** <list, or "none">
 
 Read the existing review_checklist.md and apply it to the listed artifacts.
-Return your usual structured review, plus:
-- A "Per-notebook concerns" subsection listing issues by notebook + cell number
-  (only when notebooks were reviewed)
-- A "Per-SQL concerns" subsection listing statistical implications of each
-  reviewed .sql file (only when SQL was reviewed)
+Return your usual structured review, plus the Per-notebook, Per-SQL and
+Per-report subsections for the artifact types listed, every finding with
+High/Medium/Low severity and a location. End with a Coverage list (every
+listed file, reviewed or not, with reason).
 
 Stay in your statistical lane — sampling, distributions, assumptions, outliers,
 power, multiple-testing, independence, group construction. Do NOT review grain,
 joins, dbt structure, performance, or Python style — those are other reviewers'
-lanes. Review only — do not apply any fixes.
+lanes. Claims whose conclusions you doubt go under "Claims for the
+Statistician". Review only — do not apply any fixes.
 ```
 
-For the **Statistician** (if in the panel), follow {{protocol stats_review_routing}}: notebooks, SQL and reports that state, compare or interpret numbers as evidence are claims, so the Statistician reviews the claims and the Researcher keeps the method; call both when Step 2 says so, and say which route you chose in one sentence. Quote the claims verbatim from the artifacts in the brief, with paths to the notebooks, SQL and reports, and pass the same data-modeller context.
+### Statistician consult (wave 2)
+
+Only when Step 1d found claims. The Statistician reviews the claims, the
+Researcher keeps the method; follow Step 3 of
+`protocols/stats_review_routing.md` for both consults.
 
 {{consult statistician entry=service task="Panel review of claims for <dirname>"}}
 
-Brief for the consultant (fill the bracketed fields):
+Brief for the Statistician (fill the bracketed fields):
 
 ```
 SERVICE MODE — PANEL REVIEW. Review of statistical and metric claims.
 
 **Target directory:** <target_dir>
 **Content tags declared by user:** <tag list>
-**Claims to review (verbatim, with file and cell/section):** <list>
+**Data-modeller context (grain, entities, clustering):** <from wave 1, or "not collected">
+**Claims to review (verbatim, with file and cell/section):** <list from Step 1d>
 **Notebooks (.ipynb) holding the evidence:** <list, or "none">
 **Analysis SQL (.sql) holding the evidence:** <list, or "none">
 **Reports & specs holding the claims:** <list, or "none">
 
-Return your usual structured review. Review only — do not apply any fixes.
+Return your usual structured review, with the file and cell/section of every
+claim in the findings table. Review only — do not apply any fixes.
 ```
+
+### Academic consult (wave 1, `user-impact` only)
+
+{{consult academic entry=service task="Panel review of user impact for <dirname>"}}
+
+Brief: the project context, the files that decide what users see, the reports,
+and the question "what are the safety, ethical and efficacy risks for the people
+this system affects, with the file/section each risk comes from?" Ask for
+High/Medium/Low severity per concern and a concrete mitigation.
 
 ### Append findings as each consult returns
 
@@ -318,6 +434,7 @@ with this header:
 
 - **Target directory:** <target_dir>
 - **Bucket(s) reviewed:** <bucket list>
+- **Verdict:** <APPROVED | NEEDS REVISION | BLOCKED>
 - **Date:** <date>
 
 ---
@@ -325,36 +442,76 @@ with this header:
 <verbatim reviewer response>
 ```
 
-Because dispatch is one consult per specialist, each reviewer produces exactly one
-findings file regardless of how many buckets they covered. Bucket subsections
-inside the file are organized by the reviewer themselves (per the prompt). Do
-not wait for all consults to return before writing.
-
-Brief progress updates to the user as each one returns ("Backend Engineer is
-back — 4 issues flagged; ML Engineer still working...").
+Do not wait for all consults to return before writing. Give the user a brief
+progress update as each one returns ("Backend Engineer is back — NEEDS
+REVISION, 4 findings; ML Engineer still working...").
 
 ---
 
 ## Phase 3 — Coalescence
 
-Once all consults have returned, read all `<output_dir>/findings/*.md` files. Build
-a single consolidated findings table.
+Once all consults have returned, read all `<output_dir>/findings/*.md` files.
 
-### Coalescence rules
+### Step 3a: Coverage and format check
 
-1. **Same issue, same file, multiple reviewers** → merge into one row. List all
-   reviewers in the "Reviewer(s)" column. Raise severity by one tier (Low → Med,
-   Med → High; cap at High).
+- **Coverage.** Every file in every bucket must be marked reviewed by each
+  reviewer assigned to that bucket. For gaps, or for a response that has no
+  severities or no locations, re-consult that reviewer **once** with only the
+  missing files or a request to restate its findings in the panel format. Count
+  this as the reviewer's one resubmit (reviewer verdict protocol). Gaps that
+  remain are listed under "Coverage gaps" in the report — never silently dropped.
+- **Verdicts.** Record each reviewer's verdict. A word outside APPROVED / NEEDS
+  REVISION / BLOCKED is handled per {{protocol reviewer_verdict}}.
+
+### Step 3b: Normalize
+
+- Domain reviewer and Researcher findings keep their High/Medium/Low severity.
+- Statistician findings map: INVALIDATES → High, WEAKENS → Medium. OFFENDS
+  findings are non-blocking: list them under "Statistician style notes
+  (non-blocking)" and keep them out of the findings table unless the user asks.
+  For an INVALIDATES or WEAKENS claim, the suggested fix is the Statistician's
+  "What the evidence actually supports" wording.
+- Statistician "Method notes for the Researcher" and Researcher "Claims for the
+  Statistician" follow Step 4 of `protocols/stats_review_routing.md`: when the
+  other reviewer was not on the panel and a note could change a result, consult
+  it now (`service` entry, with the note and the files it concerns) and add its
+  findings; otherwise record the note as a caveat row.
+- Academic concerns keep their severity; the suggested fix is the mitigation.
+- Open questions from all reviewers are gathered into one "Open questions"
+  list for the Phase 4 gate.
+
+### Step 3c: Coalescence rules
+
+1. **Same issue, same location, multiple reviewers** → merge into one row. List
+   all reviewers in "Reviewer(s)" and note the agreement. Severity is the
+   **highest** any of them gave; agreement raises priority within a group, not
+   severity.
 2. **Related but distinct issues, same file, multiple reviewers** (e.g.,
    "extract this SQL into a builder" + "rewrite this SQL query") → keep as
-   separate rows. Tag both with a shared `conflict-group` ID (e.g., `cg-1`) so
-   Phase 4 can serialize them.
-3. **Researcher findings on `.ipynb` or `.sql`** that overlap with the domain
-   reviewer's findings → keep as separate rows. They describe different concerns
-   (methodology vs. ML/code discipline) even when they land on the same file.
-4. **Methodological concerns from Researcher** → render in a dedicated
-   `### Methodological Concerns` subsection within the findings, in addition to
-   the main table. This makes the statistical lens visible distinctly.
+   separate rows, tagged with a shared `conflict-group` ID (e.g., `cg-1`) so
+   Phase 4 can serialize or merge them.
+3. **Contradictory recommendations** (one reviewer's fix undoes or forbids
+   another's) → keep both rows, tag them `contradiction-<n>`, and present both
+   verbatim to the user at the Phase 4 gate with a one-sentence summary of the
+   conflict. Neither is scheduled until the user picks (multi-reviewer
+   arbitration, reviewer verdict protocol).
+4. **Lens-only findings on the same file as a domain finding** (Researcher,
+   Statistician, Academic) → separate rows. They describe different concerns
+   (method, claims, people) even on the same lines.
+5. **Caveats** (type `caveat`) appear in the table but never in the sequencing
+   plan.
+
+### Step 3d: Assign the owning specialist
+
+For each fix-type row:
+- One domain reviewer raised it → that reviewer.
+- Several domain reviewers → the one whose lens the issue belongs to (Python
+  structure → backend-engineer; leakage or features → the ML/DS reviewer; grain
+  → analytics-engineer or data-modeller); if unclear, the bucket's primary.
+- Only lens-only reviewers raised it → the bucket's primary (for reports, the
+  report primary). If the bucket has no primary → `unowned`.
+- The owner must be able to edit that file type: never `backend-engineer` for
+  `.ipynb`; notebooks go to the notebook primary.
 
 ### Append the coalesced report
 
@@ -365,35 +522,47 @@ Append a `## Phase 3 — Coalesced Findings` section to `panel-report.md`:
 
 ### Summary
 
-- **Total findings:** N
+- **Total findings:** N (fixes: N, caveats: N)
 - **High severity:** N
 - **Medium severity:** N
 - **Low severity:** N
 - **Conflict groups:** N (fixes that touch overlapping locations)
+- **Contradictions awaiting a decision:** N
+
+### Reviewer verdicts
+
+| Reviewer | Verdict | Findings | Resubmitted |
+|---|---|---|---|
+| backend-engineer | NEEDS REVISION | 4 | no |
 
 ### Findings table
 
-| ID | Severity | File(s) | Reviewer(s) | Issue | Cross-reviewer agreement | Suggested fix | Owning specialist | Conflict group |
-|---|---|---|---|---|---|---|---|---|
-| F1 | High | `train.py:42-58` | backend-engineer, ml-engineer | <issue> | Both flagged this section | <fix> | ml-engineer | — |
-| F2 | Medium | `cohort.sql` | analytics-engineer | <issue> | — | <fix> | analytics-engineer | cg-1 |
-| F3 | Medium | `cohort.sql` | researcher | <statistical issue> | — | <fix recommendation> | analytics-engineer (Researcher does not apply fixes) | cg-1 |
-| ... | | | | | | | | |
+| ID | Severity | Type | File(s) | Reviewer(s) | Issue | Cross-reviewer agreement | Suggested fix | Owning specialist | Conflict group |
+|---|---|---|---|---|---|---|---|---|---|
+| F1 | High | fix | `train.py:42-58` | backend-engineer, ml-engineer | <issue> | Both flagged this section | <fix> | ml-engineer | — |
+| F2 | Medium | fix | `cohort.sql` | analytics-engineer | <issue> | — | <fix> | analytics-engineer | cg-1 |
+| F3 | Medium | fix | `cohort.sql` | researcher | <statistical issue> | — | <fix recommendation> | analytics-engineer (Researcher does not apply fixes) | cg-1 |
 
 ### Methodological Concerns (Researcher's lens)
 
-<Researcher's Per-notebook and Per-SQL subsections, or "Researcher did not participate" / "Researcher found no methodological concerns">
+<Researcher's Per-notebook, Per-SQL and Per-report subsections, or "Researcher did not participate" / "Researcher found no methodological concerns">
+
+### Claim review (Statistician's lens)
+
+<Statistician verdict, INVALIDATES/WEAKENS findings with the supported wording, or "Statistician did not participate">
+
+### Statistician style notes (non-blocking)
+
+<OFFENDS findings, or "None">
+
+### Coverage gaps
+
+<files a reviewer could not review, with reason, or "None">
+
+### Open questions
+
+<gathered open questions, or "None">
 ```
-
-The "Owning specialist" for Researcher findings is the **bucket's primary
-reviewer** (the domain reviewer chosen in Phase 1) — not the Researcher itself.
-The Researcher's recommendation will be embedded in the fix prompt to that
-specialist in Phase 5.
-
-If the bucket has no primary reviewer (possible for markdown reports under
-some tag combinations — see the Report-primary tiebreaker in Phase 1), set
-"Owning specialist" to `unowned` and surface these findings to the user at
-the Phase 4 gate so they can hand-pick a specialist before fix execution.
 
 No gate after Phase 3 — move directly into Phase 4.
 
@@ -401,83 +570,106 @@ No gate after Phase 3 — move directly into Phase 4.
 
 ## Phase 4 — Sequencing Plan
 
-Build a fix-dependency DAG and group fixes into execution groups.
+Build a fix-dependency DAG over the fix-type findings (not caveats, not
+contradictions awaiting a decision) and group them into execution groups.
+
+### Merge first
+
+Fixes with the **same owning specialist on the same file** merge into one fix
+item (keep all their IDs, e.g. `F2+F3`), so one worker applies them together
+instead of serializing. Merged items keep the highest severity.
 
 ### Algorithm
 
-For each pair of fixes `(A, B)` where A and B are different fix IDs:
+For each pair of fix items `(A, B)`:
 
-1. **File-level conflict** — if A and B touch the same file path → must
-   serialize. (Order: lower fix ID first by default; user can reorder.)
-2. **Cell-level conflict** (for `.ipynb`) — if A and B touch the same cell
-   ID/index → must serialize.
-3. **Cross-file contract dependency** — if A changes an interface (function
-   signature, schema column, prompt template, mart column, API endpoint) that B
-   imports/references — serialize A → B. Detect by string-search of the
-   changed-symbol name across all flagged files. Be conservative: when in doubt,
-   serialize.
+1. **Contract dependency** — if A changes an interface (function signature,
+   schema column, prompt template, mart column, config key, API endpoint) that
+   B's file imports or references, A runs before B. Detect by string-searching
+   the changed symbol across all flagged files *and* the rest of the target
+   directory. When in doubt, serialize.
+2. **File-level conflict** — A and B touch the same file (different owners,
+   after merging) → serialize. Orient the edge so it agrees with any contract
+   edges; otherwise lower fix ID first (user can reorder).
+3. **Cell-level conflict** (for `.ipynb`) — same notebook is already a file
+   conflict; note the cell numbers in the reason.
 4. **Independent** — no shared file, no shared symbol → can parallelize.
+
+If the edges form a cycle, merge the fixes in the cycle into one item owned by
+the specialist with the highest-severity fix, and note it.
 
 ### Build execution groups
 
-- **Group 1**: all fixes with no incoming dependencies (i.e., nothing must run
-  before them).
-- **Group N+1**: all fixes whose dependencies are entirely within Groups 1..N.
-- Continue until all fixes are placed.
+- **Group 1**: all fix items with no incoming dependencies.
+- **Group N+1**: all fix items whose dependencies are entirely within Groups 1..N.
+- Continue until all fix items are placed.
 
-### Append the plan
+### Acceptance per fix item
 
-Write `<output_dir>/sequencing-plan.md` using the `templates/panel-sequencing-plan.md`
-template, structured as:
+Give every fix item an acceptance check the worker can run, e.g. "file parses
+(`python -m py_compile train.py`)", "`dbt compile -s cohort` succeeds",
+"notebook JSON loads and cell 12 runs the Shapiro test before the t-test",
+"`pytest tests/test_serve.py` passes". Prefer an existing test command when the
+target has one.
+
+### Write the plan
+
+Write `<output_dir>/sequencing-plan.md` from {{template panel-sequencing-plan}},
+structured as:
 
 ```markdown
 # Sequencing Plan: <dirname>
 
 - **Target directory:** <target_dir>
 - **Date:** <date>
-- **Total fixes:** N
-- **Total groups:** M
+- **Total fixes:** N (in M fix items)
+- **Total groups:** G
 
 ---
 
 ## Execution Groups
 
 ### Group 1 (parallel)
-- **F1** (ml-engineer) — `train.py:42-58` — extract feature builder
-- **F4** (analytics-engineer) — `revenue.sql` — null handling
-- **F7** (researcher → routes to data-scientist) — `eda.ipynb` cell 12 — add normality check before t-test
+- **F1** (ml-engineer) — `train.py:42-58` — extract feature builder — accept: `pytest tests/test_train.py`
+- **F4** (analytics-engineer) — `revenue.sql` — null handling — accept: `dbt compile -s revenue`
+- **F7** (researcher → data-scientist) — `eda.ipynb` cell 12 — add normality check before t-test — accept: cell 12 runs
 
-### Group 2 (sequential, blocks on Group 1)
-- **F2** (analytics-engineer) — `cohort.sql` — refund attribution
-  - Reason: same file as **F3** (in Group 1); see `cg-1`
+### Group 2 (blocks on Group 1)
+- **F2+F3** (analytics-engineer) — `cohort.sql` — refund attribution + cohort filter
+  - Reason: contract with **F1** (`refund_amount`)
 - **F5** (backend-engineer) — `train.py:60-80` — Pydantic tightening
   - Reason: same file as **F1** (in Group 1)
-
-### Group 3 (sequential, blocks on Group 2)
-- **F8** (data-scientist) — `modeling.ipynb` — refit model with new mart columns
-  - Reason: depends on **F2**'s mart contract change
 
 ---
 
 ## Dependency rationale
 
-For each cross-group dependency, name the trigger:
-- F2 → blocks on F3 (file conflict, `cohort.sql`)
-- F8 → blocks on F2 (contract dependency, `cohort.sql` adds `refund_amount` column referenced in `modeling.ipynb` cell 7)
+- F5 → blocks on F1 (file conflict, `train.py`)
+- F2+F3 → blocks on F1 (contract dependency, `refund_amount` used in `cohort.sql:14`)
+
+## Unowned findings
+<list, or "None">
+
+## Contradictions awaiting a decision
+<list, or "None">
 ```
 
 Append a `## Phase 4 — Sequencing Plan` section to `panel-report.md` with the
-group counts and a pointer to `sequencing-plan.md`. Read both back to the user.
+group counts and a pointer to `sequencing-plan.md`.
 
-Gate readback (pass this as the `summary`):
-
-Read the coalesced findings and the sequencing plan back to the user. If any
-findings have `Owning specialist = unowned`, list them explicitly and ask the
-user to assign a specialist (or skip them). Then ask:
-"Apply fixes in this order? (y to execute, n to stop, or list specific fix IDs
-to apply only those)"
+Gate readback (pass this as the `summary`): read the coalesced findings and the
+sequencing plan back to the user. Then:
+- list `unowned` findings and ask the user to assign a specialist or skip them;
+- list contradictions and ask which recommendation to keep;
+- list open questions only the user can answer;
+- ask: "Apply fixes in this order? (y to execute, n to stop, or list specific
+  fix IDs to apply only those)"
 
 {{gate kind=phase phase=4 id=syn-panel-review-phase-4}}
+
+If the user's answer assigns owners, resolves contradictions or changes the
+approved set, update the findings table and `sequencing-plan.md` (recompute the
+groups) before Phase 5, and tell the user what changed.
 
 ---
 
@@ -502,67 +694,59 @@ group. Initialize `<output_dir>/fix-log.md`:
 
 Announce: *"Executing Group N — M fixes in parallel."*
 
-Dispatch all fixes in the group via parallel worker subagents (single message,
-one call per fix).
+Owning specialists apply fixes as fan-out workers. Lens-only reviewers never
+own a slice. For each owning specialist with fix items in the group, start one
+fan-out whose slices are that specialist's fix items in the group (slice id =
+the fix item id in lowercase with `+` replaced by `-`, e.g. `F2+F3` → `f2-f3`;
+paths = every file the fix item edits; acceptance = the item's acceptance
+check). Slice paths are project-root-relative: fan-out leases reject absolute
+paths and paths containing `..` (see Phase 0). Shown for `data-scientist`,
+owner of F7 in the sequencing-plan example:
 
-#### Standard fix dispatch (domain reviewer applies the fix)
+{{fanout data-scientist slices=f7}}
 
-Fan out one worker per slice (shown for `data-scientist`; use the specialist that owns the slices and name the slices accordingly):
+Start every owner's fan-out for the group first, then launch **all** workers of
+the group in a single message, giving each its card plus the fix brief below.
+When they return, collect each lease with its own results.
 
-{{fanout data-scientist slices=fix_a,fix_b}}
-
-Per-slice task: Apply fix <ID> in <dirname>
-
-Brief for each consultant or worker (fill the angle-bracket fields):
+Fix brief for each worker (fill the angle-bracket fields):
 
 ```
-SERVICE MODE — APPLY FIXES. The user has approved the following fix.
+PANEL REVIEW FIX. The user has approved the following fix in <target_dir>.
 
-**Target directory:** <target_dir>
-**Fix ID:** <ID>
-**File:** <path>
+**Fix ID(s):** <ID or merged IDs>
+**File(s):** <paths — your owned paths>
 **Issue:** <coalesced issue description>
 **Suggested fix:** <fix description>
-**Originating reviewer(s):** <reviewer names>
+**Originating reviewer(s):** <reviewer ids>
+**Acceptance check:** <command or check>
 
-Use the file-editing tool (or the notebook editing tool for .ipynb) to apply the fix. Do not exceed
-the scope of this fix. Return:
-- A one-line summary of the change
-- Verbatim the before/after diff or cell content
+Apply only this fix (file-editing tool, or the notebook editing tool for
+.ipynb). Do not exceed its scope.
+
+Run the acceptance check. Return verdict JSON with: APPROVED = fix applied
+and acceptance passed; NEEDS REVISION = fix applied with a deviation or
+caveat (describe it in summary); BLOCKED = not applied (technical
+disagreement, a file outside your owned paths, or acceptance failing), with
+the reason in summary. Put the before/after of each changed hunk and the
+acceptance output in findings.
 ```
 
-#### Researcher and Statistician fix routing
+For a fix raised by a lens-only reviewer, replace the Issue and Suggested fix
+lines with the reviewer's finding and recommendation **verbatim**, introduced as
+"The Researcher (statistical methodology shard) flagged a methodological issue",
+"The Statistician (statistical claims shard) found this claim is not supported;
+the supported wording is: …" or "The Academic (safety, ethics and efficacy
+shard) raised this concern", and add: *"You are the domain owner of this
+artifact. If you disagree with the recommendation on technical grounds, do not
+apply it: return BLOCKED with your reasoning — Syn will resurface it to the
+user."*
 
-Researcher and Statistician findings have "Owning specialist" set to the bucket's **primary
-reviewer** (the domain reviewer from Phase 1). Neither the Researcher nor the
-Statistician applies fixes — their recommendations are embedded in the fix prompt to that domain
-reviewer (for a Statistician finding, say "The Statistician (statistical claims shard)" and
-"Statistician's finding/recommendation" in the brief below):
-
-Fan out one worker per slice (shown for `data-scientist`; use the specialist that owns the slices and name the slices accordingly):
-
-{{fanout data-scientist slices=fix_a,fix_b}}
-
-Per-slice task: Apply Researcher-flagged fix <ID> in <dirname>
-
-Brief for each consultant or worker (fill the angle-bracket fields):
-
-```
-SERVICE MODE — APPLY FIXES. The Researcher (statistical methodology shard)
-flagged a methodological issue. The user has approved the fix. You are the
-domain reviewer for this artifact — apply the fix.
-
-**Target directory:** <target_dir>
-**Fix ID:** <ID>
-**File:** <path>
-**Researcher's finding:** <verbatim from researcher findings>
-**Researcher's recommendation:** <verbatim recommendation>
-
-Apply the fix using the file-editing tool (or the notebook editing tool for .ipynb). If you disagree with the
-recommendation on technical grounds, flag the disagreement in your response and
-do NOT apply — Syn will resurface to the user. Otherwise return the standard
-before/after diff.
-```
+Map each worker's verdict JSON to a fix-log status:
+- `APPROVED` → **Applied** (acceptance passed).
+- `NEEDS REVISION` → **Applied with caveat** (the deviation goes in the log).
+- `BLOCKED` → **Refused** (specialist disagreement) or **Failed** (acceptance
+  failing, out-of-scope file); the summary says which.
 
 ### After group N completes
 
@@ -573,21 +757,47 @@ Append per-fix outcomes to `<output_dir>/fix-log.md`:
 
 ### F<ID> — <one-line summary>
 - **Specialist:** <name>
-- **File:** <path>
-- **Status:** Applied | Skipped (reason) | Refused (specialist disagreement)
+- **File(s):** <paths>
+- **Status:** Applied | Applied with caveat | Refused (specialist disagreement) | Failed (reason) | Skipped (reason)
+- **Acceptance:** <command> — <result>
 - **Diff summary:** <before/after one-liner>
 ```
 
-**Wait for all consults in the group to return before dispatching the next group.**
-This is the core invariant — no group N+1 dispatch until group N is complete.
+**Wait for every worker in the group to return and every lease to be collected
+before dispatching the next group.** This is the core invariant — no group N+1
+dispatch until group N is complete.
 
-If any fix in the group reports `Refused (specialist disagreement)`, stop after
-the group completes and surface the disagreement to the user before dispatching
-group N+1.
+If any fix in the group is **Refused** or **Failed**, stop after the group,
+show the specialist's reasoning, and list the later fixes that depend on it.
+Ask the user in chat: retry with a revised fix, skip it (and its dependents, or
+keep them), or stop. This can happen in more than one group, so do not use a
+gate here: a confirmed gate id is not asked again in the same session. Wait for
+the user's reply; do not dispatch the next group, or anything else, until they
+answer.
+
+Apply the user's choice, update `sequencing-plan.md` if the dependents changed,
+then continue with the next group. A retried fix gets one retry; if the retry
+is also Refused or Failed, log it, show it to the user and ask again: skip it
+(and its dependents, or keep them) or stop.
 
 ---
 
-## Phase 6 — Summary
+## Phase 6 — Verification & Summary
+
+### Step 6a: Verify High-severity fixes
+
+For every **Applied** or **Applied with caveat** fix with High severity,
+re-consult its originating reviewer(s) once, in parallel (one consult per
+reviewer, same entry as Phase 2), with the original finding and the diff:
+*"SERVICE MODE — PANEL REVIEW. Verify that these fixes resolve your findings
+without introducing new issues in the changed lines. Answer with a verdict and,
+per fix ID, Resolved / Not resolved / New issue (with location)."* This verification consult is not a resubmit under the
+reviewer verdict protocol: it reviews new changes, not the original work.
+Record each answer in `fix-log.md` under `## Verification`. Do not dispatch further fixes
+here: a Not resolved or New issue result is reported to the user at the gate
+below as a candidate for a follow-up panel.
+
+### Step 6b: Summary
 
 Append a `## Phase 6 — Summary` section to `panel-report.md`:
 
@@ -595,20 +805,23 @@ Append a `## Phase 6 — Summary` section to `panel-report.md`:
 ## Phase 6 — Summary
 
 - **Reviewers convened:** <comma-separated list>
-- **Total findings:** N
+- **Reviewer verdicts:** <reviewer: verdict, ...>
+- **Total findings:** N (fixes N, caveats N)
 - **Findings by severity:** High <n>, Medium <n>, Low <n>
-- **Fixes applied:** N of M
+- **Fixes applied:** N of M approved
 - **Fixes by specialist:**
   - analytics-engineer: <n>
   - backend-engineer: <n>
-  - ml-engineer: <n>
   - ...
 - **Refused fixes (specialist disagreement):** <n> — see `fix-log.md`
-- **Skipped fixes (user excluded):** <n>
+- **Failed fixes:** <n> — see `fix-log.md`
+- **Skipped fixes (user excluded or dependent on a skipped fix):** <n>
+- **Verification:** <n> resolved, <n> not resolved, <n> new issues
+- **Coverage gaps:** <n files, or "None">
 ```
 
 If the target directory contains a `project-specs.md`, append a one-line
-back-reference there:
+back-reference there (the only write Syn makes inside the target):
 
 ```markdown
 
@@ -620,8 +833,12 @@ for findings and <output_dir>/fix-log.md for the applied fixes.
 
 Do **not** create a `project-specs.md` in directories that don't already have one.
 
-Announce completion to the user with the summary stats and pointers to the
-output files.
+Gate readback (pass this as the `summary`): the summary stats, any unresolved
+verification results, and pointers to `panel-report.md`, `sequencing-plan.md`
+and `fix-log.md`. Ask whether the panel is complete or whether to start a
+follow-up panel on the unresolved items.
+
+{{gate kind=final phase=6 id=syn-panel-review-phase-6}}
 
 ---
 
@@ -633,18 +850,29 @@ output files.
   and content tags, not directory prefix.
 - **Two reviewers per bucket is the goal.** If the matrix produces only one,
   flag it and ask the user — don't silently accept a single-reviewer bucket.
-- **Parallel dispatch in Phase 2 and Phase 5.** Always a single message with
-  one consult per reviewer. Never sequential when parallel is correct.
+- **Every file gets read.** Reviewers read every file in their list in full;
+  coverage gaps are re-dispatched once, then reported — never dropped.
+- **Parallel dispatch in Phase 2 waves and within each Phase 5 group.** Always a
+  single message with one call per reviewer or worker. Never sequential when
+  parallel is correct.
 - **Sequential dispatch between Phase 5 groups.** Wait for group N to fully
-  return before dispatching group N+1. This is the race-prevention invariant.
-- **Researcher and Statistician do not apply fixes.** Their recommendations route
-  to the domain reviewer of the same bucket via Syn's apply-fix dispatch.
-- **Syn never edits the target directory's files.** Reviewers apply fixes via
-  service-mode consults. Syn writes only to `<output_dir>/`.
+  return and its leases to be collected before dispatching group N+1. This is
+  the race-prevention invariant.
+- **Lens-only reviewers do not apply fixes.** Researcher, Statistician and
+  Academic recommendations route to the owning domain specialist via Syn's
+  fan-out dispatch.
+- **Syn never edits the target directory's files.** Owning specialists apply
+  fixes as fan-out workers. Syn writes only to `<output_dir>/` (plus the
+  Phase 6 back-reference line).
 - **Append findings as each consult returns.** Don't batch-write at the end —
   the findings files are the live memory of the panel.
+- **Severity is earned, not voted.** Agreement between reviewers is recorded,
+  but severity is the highest any reviewer gave, not inflated by headcount.
+- **Contradictions go to the user.** Never pick between two reviewers'
+  conflicting recommendations yourself.
 - **Honor user-listed fix IDs.** If the user approves only a subset (e.g., "F1,
-  F4, F7"), execute only those. Treat the rest as Skipped in the fix log.
+  F4, F7"), execute only those. Treat the rest as Skipped in the fix log, and
+  warn if an approved fix depends on a skipped one.
 - **Be conservative about contract dependencies.** When in doubt about whether
   fix A's change affects fix B's file, serialize. Race conditions are worse than
   unnecessary sequencing.

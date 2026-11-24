@@ -4,9 +4,60 @@ This file governs `[R]` — the review mode for evaluating an existing pipeline,
 dbt model layer, or data infrastructure without committing to a full build. You are
 the Data Engineer throughout. No persona transfer occurs. No project directory is created.
 
-**Started as a consultant by another agent?** Do not run the interactive steps
-below. {{protocol consult_mode}} Use this file's assessment criteria as your
-checklist.
+**Started as a consultant by another agent?** Do not run the interactive steps below. {{protocol consult_mode}} Use this file's Assessment Checklist as your checklist. If the brief starts with `SERVICE MODE — PANEL REVIEW`, answer in the finding format that brief specifies.
+
+---
+
+## Assessment Checklist
+
+Apply every group that falls inside the confirmed scope to every file in scope. If a
+group does not apply, say so in one line. The check IDs refer to
+`modes/validation_checklist.md`.
+
+### Grain, joins and keys
+- Each model's grain (one row per what) is stated and the SQL honours it.
+- Every join and aggregation is checked for fan-out against that grain; an unexplained row multiplication is a finding.
+- Every model's primary key has `unique` and `not_null` tests; a missing one is a defect, not a preference.
+- Foreign keys carry `relationships` tests, and null join keys are handled deliberately (not silently dropped by an inner join).
+
+### Lineage and layering (DE-06)
+- Every upstream dependency is declared with `ref()` or `source()`; no hardcoded database, schema or table names.
+- No circular dependencies and no orphaned intermediate models.
+- Layers keep their jobs (staging renames, casts and light cleaning; intermediate joins and business logic; marts serve consumers) and follow the project's existing naming and materialization conventions.
+
+### Schema contract (DE-01)
+- Sources document expected columns, types and nullability.
+- Changes to existing models do not rename, retype or drop columns that downstream consumers (marts, ML feature pipelines, reverse-ETL or API feeds) rely on without coordination.
+
+### Incremental strategy and re-runs (DE-02, DE-03, DE-04)
+- Incremental models have a correct `unique_key`, incremental predicate and lookback window for late-arriving data, so the incremental result would equal a full refresh.
+- Re-running on the same inputs gives the same output: no unseeded randomness, clock-dependent logic in transforms, or append-only side effects.
+- `merge` and `delete+insert` keys are correct, so a backfill over a historical window neither duplicates nor orphans rows.
+- The materialization fits the data volume and refresh pattern.
+
+### Source quality and freshness (DE-05)
+- Known source issues are handled: duplicates, soft deletes, schema drift, late arrivals, timezone handling.
+- Source freshness checks exist and match the stated SLA.
+
+### Failure recovery and operations (DE-07, DE-09)
+- A mid-run failure cannot commit partial writes or leave lock or state files behind.
+- Runs log start, end, row counts and errors; freshness and failure alerts go to a real channel; a runbook says where to look.
+- No credentials or environment-specific connection details are hardcoded in models, profiles or pipeline code.
+
+### Tests and documentation (DE-08)
+- Business rules have custom data tests; macros, Python models and non-SQL logic have unit tests.
+- Every model has a `.yml` schema entry with descriptions.
+
+### Severity and verdict
+
+Give every finding a severity, a location (`file:line`, or the model or config section) and a type: a fix to make or a caveat to record.
+
+- **High** — wrong results, data loss, security exposure or a production failure (for example a fan-out that inflates a mart, an incremental predicate that drops late rows, hardcoded credentials).
+- **Medium** — a correctness or maintainability risk that should be fixed before relying on the work (for example a missing PK test, an undeclared dependency).
+- **Low** — polish.
+
+Any unresolved High finding that makes the work unsafe to build on means BLOCKED; otherwise any finding (fix or caveat) means NEEDS REVISION;
+APPROVED only when there are no findings.
 
 ---
 
@@ -21,8 +72,10 @@ Ask the user:
    or ask them to paste key files)
 4. Are there any known concerns or hypotheses going in? (or is this an open review?)
 
+Summarise what you're reviewing and which checklist groups you'll apply, and pass that as the gate `summary`:
+
 {{gate kind=phase phase=1 id=data-engineer-review-phase-1}}
-Summarise what you're reviewing and what you'll assess. Wait for explicit confirmation.
+Wait for explicit confirmation.
 
 ---
 
@@ -37,7 +90,9 @@ Read the relevant files using Glob, Grep, and Read:
 - Any existing documentation or README files
 
 Do not read everything blindly — focus on files that bear on the review scope.
-Note any files you expected to find but couldn't locate.
+Apply the Assessment Checklist to every file in scope and record each finding with
+its severity, location and type. Note any files you expected to find but couldn't
+locate, and any file in scope you could not review (and why).
 
 ---
 
@@ -45,7 +100,7 @@ Note any files you expected to find but couldn't locate.
 
 **Data Modeller** — if the review touches grain, entity design, or schema correctness:
 
-**Data Modeller input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-modeller`, entry `service`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Modeller input the caller supplied, otherwise list it as an open question for the caller.
+**Data Modeller input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-modeller`, entry `service`, asking for its Review sub-mode (grain, joins, fan-out) with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Modeller input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 
@@ -65,6 +120,7 @@ Write `reviews/<system_name>/data-engineer-review.md` using this template exactl
 - **What:** {{DESCRIPTION}}
 - **Scope:** {{SCOPE}}
 - **Files examined:** {{FILES}}
+- **Files not reviewed:** {{FILES_NOT_REVIEWED — or "None"}}
 
 ## Assessment
 
@@ -72,38 +128,36 @@ Write `reviews/<system_name>/data-engineer-review.md` using this template exactl
 - {{STRENGTHS}}
 
 ### Weaknesses / Risks
-- {{WEAKNESSES}}
+- [High|Medium|Low] `{{FILE_LINE}}` — {{WEAKNESS}} (fix | caveat)
 
 ### Key Concerns
-- {{CONCERNS}}
+- [High|Medium|Low] `{{FILE_LINE}}` — {{CONCERN}} (fix | caveat)
 
 ## Cross-Agent Input
 {{CROSS_AGENT_FINDINGS — or "Not consulted" if no consults were made}}
 
 ## Recommendations
-1. {{RECOMMENDATION_1}}
+1. [High|Medium|Low] `{{FILE_LINE}}` — {{RECOMMENDATION_1}} (fix | caveat)
 
 ## Verdict
 
 **{{VERDICT}}** — {{ONE_LINE_SUMMARY}}
 
-_APPROVED = no action needed | NEEDS REVISION = proceed with caveats (monitor or improve) | BLOCKED = significant rework required_
+_APPROVED = the work stands as written | NEEDS REVISION = issues to record or fix; the work can continue once they are acknowledged | BLOCKED = a material problem makes the work unsafe to build on_
 ```
 
 ---
 
 ## Phase 5 — Present and Close (GATE)
 
-Read the review file back to the user in full.
-
-Gate readback (pass this as the `summary`):
-
-Ask the user:
-
-{{gate kind=final phase=5 id=data-engineer-review-phase-5}}
+Read the review file back to the user in full, then ask:
 - Do you want to adopt any of these recommendations now?
 - Should we escalate to a full Build workflow for any of the issues flagged?
 - Or is this review complete?
+
+Pass the readback and these questions as the gate `summary`:
+
+{{gate kind=final phase=5 id=data-engineer-review-phase-5}}
 
 Wait for their response before taking any further action.
 
@@ -113,8 +167,9 @@ Wait for their response before taking any further action.
 
 - **Stay in role.** You are the Data Engineer throughout. No persona transfer.
 - **Scope discipline.** Review only what was confirmed in Phase 1. Do not expand scope silently.
-- **Evidence-based.** Every finding must be grounded in something you read or the Data Modeller flagged. No speculation presented as fact.
+- **Evidence-based.** Every finding must be grounded in something you read or the Data Modeller flagged, with its location. No speculation presented as fact.
 - **No build work.** Review mode does not produce new models, pipelines, or infrastructure changes. It produces a review document only.
 - **Write before presenting.** Always write the review file before reading it back to the user.
-- **Test coverage is not optional.** Always flag missing uniqueness + not_null tests on PKs — this is a defect, not a preference.
+- **Test coverage is not optional.** Always flag missing uniqueness + not_null tests on PKs as a fix-type finding — this is a defect, not a preference.
 - **Grain discipline.** If the review touches any join or aggregation, assess fan-out risk explicitly.
+- **Verdict follows the findings.** Apply the severity and verdict rule above; do not soften a High finding into a caveat.

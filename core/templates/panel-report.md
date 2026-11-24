@@ -11,7 +11,7 @@
 ## Phase 0 — Intake
 
 - **Content tags:** {{CONTENT_TAGS}}
-- **Scope:** {{SCOPE}}
+- **Scope:** {{SCOPE}}; excluded: {{EXCLUSIONS}}
 - **User notes:** {{USER_NOTES}}
 
 <!-- Phase 1 onward is appended by Syn as each phase completes. -->
@@ -30,9 +30,17 @@
 |---|---|---|---|---|---|---|
 | {{BUCKET}} | {{FILE_COUNT}} | {{SAMPLE_FILES}} | {{PRIMARY_REVIEWER}} | {{SECONDARY_REVIEWER}} | {{TAG_ADDITIONS}} | {{NOTES}} |
 
+### Stats review route
+
+{{STATS_ROUTE}}
+
 ### Panel roster (de-duplicated)
 
-- {{REVIEWER}}: {{BUCKET_COUNT}} bucket(s)
+- {{REVIEWER}}: {{BUCKET_COUNT}} bucket(s) ({{REVIEWER_FILE_COUNT}} files)
+
+### Not reviewed
+
+{{NOT_REVIEWED}}
 
 ---
 
@@ -40,28 +48,51 @@
 
 ### Summary
 
-- **Total findings:** {{TOTAL_FINDINGS}}
+- **Total findings:** {{TOTAL_FINDINGS}} (fixes: {{FIX_COUNT}}, caveats: {{CAVEAT_COUNT}})
 - **High severity:** {{HIGH_COUNT}}
 - **Medium severity:** {{MEDIUM_COUNT}}
 - **Low severity:** {{LOW_COUNT}}
 - **Conflict groups:** {{CONFLICT_GROUP_COUNT}} (fixes that touch overlapping locations)
+- **Contradictions awaiting a decision:** {{CONTRADICTION_COUNT}}
+
+### Reviewer verdicts
+
+| Reviewer | Verdict | Findings | Resubmitted |
+|---|---|---|---|
+| {{REVIEWER}} | {{VERDICT}} | {{REVIEWER_FINDING_COUNT}} | {{RESUBMITTED}} |
 
 ### Findings table
 
-| ID | Severity | File(s) | Reviewer(s) | Issue | Cross-reviewer agreement | Suggested fix | Owning specialist | Conflict group |
-|---|---|---|---|---|---|---|---|---|
-| {{FINDING_ID}} | {{SEVERITY}} | {{FILES}} | {{REVIEWERS}} | {{ISSUE}} | {{AGREEMENT}} | {{SUGGESTED_FIX}} | {{OWNING_SPECIALIST}} | {{CONFLICT_GROUP}} |
+| ID | Severity | Type | File(s) | Reviewer(s) | Issue | Cross-reviewer agreement | Suggested fix | Owning specialist | Conflict group |
+|---|---|---|---|---|---|---|---|---|---|
+| {{FINDING_ID}} | {{SEVERITY}} | {{FINDING_TYPE}} | {{FILES}} | {{REVIEWERS}} | {{ISSUE}} | {{AGREEMENT}} | {{SUGGESTED_FIX}} | {{OWNING_SPECIALIST}} | {{CONFLICT_GROUP}} |
 
 ### Methodological Concerns (Researcher's lens)
 
 {{METHODOLOGICAL_CONCERNS}}
+
+### Claim review (Statistician's lens)
+
+{{CLAIM_REVIEW}}
+
+### Statistician style notes (non-blocking)
+
+{{STYLE_NOTES}}
+
+### Coverage gaps
+
+{{COVERAGE_GAPS}}
+
+### Open questions
+
+{{OPEN_QUESTIONS}}
 
 ---
 
 ## Phase 4 — Sequencing Plan
 
 - **Execution groups:** {{GROUP_COUNT}}
-- **Total fixes:** {{TOTAL_FIXES}}
+- **Total fixes:** {{TOTAL_FIXES}} (in {{FIX_ITEM_COUNT}} fix items)
 - **Plan file:** `{{OUTPUT_DIR}}/sequencing-plan.md`
 
 ---
@@ -69,10 +100,14 @@
 ## Phase 6 — Summary
 
 - **Reviewers convened:** {{REVIEWERS_CONVENED}}
-- **Total findings:** {{TOTAL_FINDINGS}}
+- **Reviewer verdicts:** {{REVIEWER_VERDICTS}}
+- **Total findings:** {{TOTAL_FINDINGS}} (fixes {{FIX_COUNT}}, caveats {{CAVEAT_COUNT}})
 - **Findings by severity:** High {{HIGH_COUNT}}, Medium {{MEDIUM_COUNT}}, Low {{LOW_COUNT}}
-- **Fixes applied:** {{FIXES_APPLIED}} of {{FIXES_PLANNED}}
+- **Fixes applied:** {{FIXES_APPLIED}} of {{FIXES_PLANNED}} approved
 - **Fixes by specialist:**
-  - {{SPECIALIST}}: {{FIX_COUNT}}
+  - {{SPECIALIST}}: {{SPECIALIST_FIX_COUNT}}
 - **Refused fixes (specialist disagreement):** {{REFUSED_COUNT}} — see `fix-log.md`
-- **Skipped fixes (user excluded):** {{SKIPPED_COUNT}}
+- **Failed fixes:** {{FAILED_COUNT}} — see `fix-log.md`
+- **Skipped fixes (user excluded or dependent on a skipped fix):** {{SKIPPED_COUNT}}
+- **Verification:** {{VERIFIED_RESOLVED}} resolved, {{VERIFIED_UNRESOLVED}} not resolved, {{VERIFIED_NEW}} new issues
+- **Coverage gaps:** {{COVERAGE_GAP_SUMMARY}}

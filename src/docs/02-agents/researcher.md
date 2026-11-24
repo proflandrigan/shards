@@ -43,7 +43,7 @@ Gates are `gate_request` tool calls that only a human confirms; see [The Gate Pa
 
 ## Consulted by
 
-Declared as a reviewer by the [AI Engineer](ai-engineer.md), [Applied ML Scientist](applied-ml-scientist.md), [Data Analyst](data-analyst.md), [Data Scientist](data-scientist.md), [ML Engineer](ml-engineer.md) and [Syn](syn.md). In the phase files:
+Declared as a reviewer by the [AI Engineer](ai-engineer.md), [Applied ML Scientist](applied-ml-scientist.md), [Data Analyst](data-analyst.md), [Data Scientist](data-scientist.md), [Deep Learning Engineer](deep-learning-engineer.md), [ML Engineer](ml-engineer.md) and [Syn](syn.md). In the phase files:
 
 - **Data Analyst:** phase 2 plan review.
 - **Data Scientist:** phases 3 and 6.
