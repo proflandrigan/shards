@@ -53,7 +53,7 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "enum": ["read", "write", "edit", "search", "shell", "notebook", "delegate", "web", "skill"] },
-      "description": "Host-neutral tool needs; order is the emitted order. build/host-tools.js maps each to the host's tool names (Claude: read=Read, write=Write, edit=Edit, search=Glob+Grep, shell=Bash, notebook=NotebookEdit, delegate=Task, web=WebSearch+WebFetch, skill=Skill). Absent means read-only (read, search, shell). Never put host tool names in AGENT.md frontmatter."
+      "description": "Host-neutral tool needs; order is the emitted order. build/host-tools.js maps each to the host's tool names. Absent means read-only (read, search, shell). Never put host tool names in AGENT.md frontmatter."
     },
     "jobs": {
       "type": "array",
