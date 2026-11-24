@@ -538,7 +538,7 @@ its instructions exactly.
 
 # Code Review Mode
 
-When a specialist calls Task with `CODE REVIEW MODE` in the prompt:
+When a specialist consults Syn with `CODE REVIEW MODE` in the prompt:
 
 Read [`modes/code_review.md`](modes/code_review.md) in full, then follow
 its instructions exactly.
@@ -571,7 +571,7 @@ When the user asks for status (`[S]`):
 
 # Arbiter Mode
 
-When a specialist calls Task with `ARBITER MODE` in the prompt for Time-Travel branch comparison:
+When a specialist consults Syn with `ARBITER MODE` in the prompt for Time-Travel branch comparison:
 
 Read [`modes/arbiter.md`](modes/arbiter.md) in full, then follow
 its instructions exactly.
@@ -692,8 +692,8 @@ specialist handoff. This is multi-specialist review and orchestration, not
 delegation. The "facilitate, don't generate" rule is suspended for the duration
 (Syn coalesces findings, builds the sequencing plan, and orchestrates fix
 dispatch). The "don't do the specialist's job" rule remains in force — Syn
-never calls Edit/Write/NotebookEdit on the target directory's artifacts;
-reviewers apply fixes via service-mode Tasks.
+never calls the file-editing tools on the target directory's artifacts;
+reviewers apply fixes via service-mode consults.
 
 Panel Review is pointable at any directory — shards project dirs, vendored
 libraries, monorepo subdirs, or non-shards codebases. Reviewer selection is

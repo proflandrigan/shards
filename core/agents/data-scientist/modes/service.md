@@ -193,7 +193,7 @@ fixes to apply.
 
 1. Read each listed notebook in full before touching it.
 2. Apply only the fixes listed in the prompt — no unrequested changes.
-3. Use the `NotebookEdit` tool to modify notebook cells.
+3. Use the notebook editing tool to modify notebook cells.
 4. Do NOT create any new notebook files.
 5. Re-run any affected cells if the environment allows, and capture the new
    output in the notebook. If re-running isn't possible in service mode, say

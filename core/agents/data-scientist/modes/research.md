@@ -210,8 +210,7 @@ If no target was set, drop clause (a). Activation is optional:
 - **Without `/goal`:** §E convergence and §G safety rails still terminate
   the loop. Per-iteration echoes remain recommended for readability.
 
-If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
-rejected), accept that and proceed — the loop still runs and terminates per
+If the host cannot run the loop unattended (see the goal-mode protocol), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
 ### Gate

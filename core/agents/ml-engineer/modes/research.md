@@ -242,7 +242,7 @@ Pass the deliverable paths the loop will edit (from `## Placement`, or new ones 
 ### If fan-out confirmed
 
 Follow `autonomous_research.md` Section H.3 to spawn branches. Each branch
-Task prompt must include:
+prompt must include:
 - Full project context from completed planning phases
 - The approach constraint for this branch
 - AR configuration inherited from Phase 0
@@ -250,7 +250,7 @@ Task prompt must include:
 - Reference to the shared AR protocol
 - Instruction that the branch is in BRANCH + AR MODE and must not emit gates
 
-Spawn all branch Tasks in parallel.
+Spawn all branch subagents in parallel.
 
 ### If solo confirmed
 
@@ -378,7 +378,7 @@ Follow **Section I** of
 
 If this was a fan-out session, between step 1 and step 2 above:
 
-a. Wait for all branch Tasks to return.
+a. Wait for all branch subagents to return.
 b. Invoke Syn Arbiter per `protocols/diverge.md` Section F.
 c. Present the leaderboard to the user and gate on winner selection per
    `protocols/diverge.md` Section F final gate.

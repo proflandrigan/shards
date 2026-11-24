@@ -99,8 +99,7 @@ evaluator reads (already required by the loop, no schema change). Without
 `/goal`, the Phase 2 stop conditions (success threshold reached, user
 intervention, crash) still terminate the loop.
 
-If `/goal` is unavailable (Code < v2.1.139, `disableAllHooks` set, command
-rejected), accept that and proceed — the loop still runs and terminates per
+If the host cannot run the loop unattended (see the goal-mode protocol), accept that and proceed — the loop still runs and terminates per
 the existing logic.
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).

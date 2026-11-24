@@ -33,7 +33,7 @@ Concrete fits:
 
 Do not enter auto-verify when **any** of these is true:
 
-- The work writes to disk (`Write`, `Edit`, `NotebookEdit`) — these are never auto-approved regardless of the block.
+- The work writes to disk (the file-writing and editing tools) — these are never auto-approved regardless of the block.
 - The work mutates external state — `dbt run`, `dbt build`, `dbt seed`, `dbt snapshot`, INSERT/UPDATE/DELETE/MERGE, `git push`, `git commit`, package installs, deployments, mutating API calls.
 - The work involves a user-facing decision point (a gate, a clarification question, a methodology choice).
 - A handoff is in progress (a consultation of another specialist). The other agent runs in its own frame; your block does not follow.
@@ -77,7 +77,7 @@ On each tool call, the PreToolUse check consults the block's runtime state and, 
 
 These always fall through to the normal prompt, even inside a block:
 
-- `Write`, `Edit`, `NotebookEdit`
+- the file-writing and editing tools
 - `Bash(rm:*)`, `Bash(mv:*)`, `sudo`, shell redirects (`>`, `>>`), pipe-to-shell, command substitution (`$(...)` or backticks)
 - Compound commands joined with `&&`, `||`, `;`, `|` at the shell level
 - `dbt run`, `dbt build`, `dbt seed`, `dbt snapshot` — even with `--select`

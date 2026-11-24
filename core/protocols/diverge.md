@@ -3,7 +3,7 @@ name: diverge-protocol
 description: >
   Time-Travel branching protocol for parallel experimentation. Defines the full
   fork-execute-converge lifecycle: when to propose DIVERGE, how to spawn parallel
-  branch Tasks, how branches produce reports, how Syn arbitrates, and how the
+  branch subagents, how branches produce reports, how Syn arbitrates, and how the
   winning branch is promoted back to the main project directory.
 type: reference
 ---
@@ -100,7 +100,7 @@ Branches do NOT get their own `project-specs.md`. They produce a `branch-report.
 
 ## D. Document DIVERGE to project-specs.md
 
-Before spawning any branch Tasks, append the following to the main `project-specs.md`:
+Before spawning any branch subagents, append the following to the main `project-specs.md`:
 
 ```markdown
 ---
@@ -121,9 +121,9 @@ Before spawning any branch Tasks, append the following to the main `project-spec
 
 ---
 
-## E. Branch Task Calls
+## E. Branch Subagent Calls
 
-Spawn one Task per branch. **All branch Tasks must be called in parallel** — do not run them sequentially.
+Spawn one subagent per branch. **All branch subagents must be called in parallel** — do not run them sequentially.
 
 **Specialist type across branches:**
 - A fork initiated by a specialist typically spawns branches of the same specialist type (a data-scientist fork spawns data-scientist branches).
@@ -207,7 +207,7 @@ confirmation. Work efficiently and produce results.
 ```
 ````
 
-After spawning all branch Tasks, wait for all of them to complete before proceeding.
+After spawning all branch subagents, wait for all of them to complete before proceeding.
 
 ### Concurrent git strategy for parallel branches
 
@@ -217,7 +217,7 @@ other. Parallel branches therefore isolate by **directory**, not by git ref.
 
 **Each branch MUST select one strategy at spawn time** and record it in
 `results.json.branchContext.gitStrategy`. The initiating specialist must name
-the chosen strategy in each branch's Task prompt.
+the chosen strategy in each branch's prompt.
 
 - **`branch-dir` (default):** the branch writes only inside its own directory
   `<project_dir>/.shards/branches/<branch-slug>/` (or its leased slice paths)
@@ -237,7 +237,7 @@ the chosen strategy in each branch's Task prompt.
 - **`no-vcs`:** same file layout as `branch-dir`, stated explicitly for when git
   is unavailable or `git.commit` is `false`. No checkpoint calls at all.
 
-The chosen strategy is included in each branch's Task prompt above (the AR
+The chosen strategy is included in each branch's prompt above (the AR
 fan-out prompt in `autonomous_research.md` Section H.3 already includes a
 `Git strategy:` field). Planning-phase DIVERGE with parallel implementation
 work should also pick a strategy explicitly.
@@ -249,7 +249,7 @@ execution use the main working tree directly.
 
 ## F. Post-Branch Convergence
 
-After ALL branch Tasks have completed:
+After ALL branch subagents have completed:
 
 1. Update the DIVERGE section in `project-specs.md`:
    ```markdown

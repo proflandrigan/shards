@@ -25,7 +25,7 @@ in full and follow it exactly. The protocol owns:
 - The bootstrap sequence (kernel start, panel push, initial state JSON)
 - The `[NOTEBOOK-WALKTHROUGH]` message protocol
 - Cell execution via the `notebook_start` / `notebook_exec` / `notebook_run_all` / `notebook_stop` tools
-- Cell mutation via `NotebookEdit`
+- Cell mutation via the notebook editing tool
 - Staleness rules and re-run flow
 - The walkthrough state JSON schema
 - End-of-walkthrough teardown

@@ -79,7 +79,7 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
      ```
    - Acceptance: each query runs under `LIMIT 100` and returns the expected shape; row counts before/after joins match the Phase 3 prediction.
 
-**Spec B. Training notebook** at `<output_dir>/notebooks/`, built with NotebookEdit. It is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group: data (Overview, Setup, Feature Engineering, EDA), baseline, candidate(s), analysis and infrastructure. With a Harness experiment plan (Phase 4), the baseline and candidate(s) groups become one "experiments" group that drives the harness (Spec F); approach code lives in the harness, not the notebook.
+**Spec B. Training notebook** at `<output_dir>/notebooks/`, built with the notebook editing tool. It is one file, so notebook tasks are chained with `depends_on` (never parallel) and split by section group: data (Overview, Setup, Feature Engineering, EDA), baseline, candidate(s), analysis and infrastructure. With a Harness experiment plan (Phase 4), the baseline and candidate(s) groups become one "experiments" group that drives the harness (Spec F); approach code lives in the harness, not the notebook.
    - **SQL loading rule.** **Do NOT re-embed SQL as Python strings.** Read `.sql`
      files directly using `Path.read_text()`. Reference files by relative path from
      the notebook location:
