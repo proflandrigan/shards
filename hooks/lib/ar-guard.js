@@ -4,7 +4,11 @@
 //
 //  1. Git guard (Bash and Codex shell): denies destructive git anywhere in the command line (chains, $(..),
 //     `git -C dir`, env/wrapper prefixes): reset --hard, clean -f*, push --force/-f/--force-with-lease/+refspec,
-//     push --delete, tag -d/--delete/-f, checkout -b/-B/--orphan, switch (any), branch -D / -d --force.
+//     push --delete, tag -d/--delete/-f, checkout -b/-B/--orphan, switch (any), branch -D / -d --force,
+//     worktree add/remove/move/prune/repair (the runtime owns AR branch worktrees and runs git itself).
+//     Worktree paths (.shards/worktrees/<run>/<branch>/..., absolute or relative) are checked like any other
+//     path: the lease holds each branch's mutable/immutable entries prefixed with its worktree, and .shards/worktrees/
+//     is NOT covered by the .shards/ state allowance.
 //     `git checkout` / `git restore` pathspecs must stay inside the AR write scope (restore mutable paths only).
 //  2. Scope: a write target must be inside the mutable globs, the `allow` prefixes (the AR project dir) or
 //     `.shards/`, and never inside (or above) an immutable path. A write whose target cannot be determined
@@ -15,7 +19,7 @@ const { bashWrites, writesOf, gitInvocations, gitCall, commandWords } = require(
 
 // git subcommands whose writes are confined to .git (index, refs, objects) or whose pathspecs this guard checks
 // itself; they are left out of the generic write analysis, which would report them as unknown-target writes.
-const SCOPED_GIT = new Set(['commit', 'add', 'tag', 'checkout', 'restore', 'reset', 'notes', 'clean']); // clean: -f is denied above; without it git refuses or dry-runs
+const SCOPED_GIT = new Set(['commit', 'add', 'tag', 'checkout', 'restore', 'reset', 'notes', 'clean', 'worktree']); // clean: -f is denied above; without it git refuses or dry-runs
 const EXEC_MCP = /(?:^|__)(notebook_exec|notebook_run_all)$/;
 const shortHas = (a, ch) => /^-[A-Za-z]+$/.test(a) && a.slice(1).includes(ch);
 
@@ -33,6 +37,8 @@ function destructiveGit({ sub, rest }) {
     case 'tag': return rest.some((a) => a === '--delete' || a === '--force' || shortHas(a, 'd') || shortHas(a, 'f')) ? 'git tag -d/-f (deleting or moving a tag)' : null;
     case 'checkout': return rest.some((a) => a === '-b' || a === '-B' || a === '--orphan' || a.startsWith('--orphan=')) ? 'git checkout -b (creating/switching branches)' : null;
     case 'switch': return 'git switch';
+    // AR branch worktrees (.shards/worktrees/<run>/<branch>) are created and removed by the runtime only.
+    case 'worktree': return rest.some((a) => ['add', 'remove', 'move', 'prune', 'repair'].includes(a)) ? `git worktree ${rest.find((a) => ['add', 'remove', 'move', 'prune', 'repair'].includes(a))} (AR branch worktrees are runtime-owned)` : null;
     case 'branch':
       if (rest.some((a) => shortHas(a, 'D'))) return 'git branch -D';
       if (rest.some((a) => a === '--delete' || shortHas(a, 'd')) && rest.some((a) => a === '--force' || shortHas(a, 'f'))) return 'git branch --delete --force';

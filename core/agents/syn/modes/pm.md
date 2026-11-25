@@ -251,6 +251,8 @@ WHEN COMPLETE, return a structured report:
 
 **1b. Large workstreams.** A large workstream does not get a Syn-level fan-out of specialist copies. Its lead scales by splitting its own task list into more task cards (disjoint `owned_paths`) and raising `max_parallel`. If the workstream is really two separate deliverables, split it into two workstreams in Phase 1 instead.
 
+**1c. Autonomous-research workstreams.** A workstream lead that runs `[AR]` writes no code either: each iteration is a task card for its workers and the runtime's `ar_iterate` is its verification (`autonomous_research.md` Section H.3, lead contract). It runs one loop as a branch run in its own git worktree and cannot fan out further (depth cap). Its AR lease scopes every writer in the session while it runs, so put an `[AR]` workstream in a group of its own, not alongside workstreams that write elsewhere.
+
 **2. Review each lead's output** as the leads return:
 
 - Read the structured report

@@ -19,18 +19,23 @@ function planBudget(ctx, run) {
   } catch (_) { return null; }
 }
 
+// The branch worktree's equivalent of the project root, project-root-relative (what card paths are prefixed with).
+const workRel = (root, run) => require('path').relative(root, R.workRoot(root, run)).split(require('path').sep).join('/');
+
 const PATHS = { type: 'array', items: { type: 'string', minLength: 1 } };
 
 module.exports = defineTool({
   name: 'ar_start',
-  description: 'Start an autonomous-research (AR) run. The runtime pins sha256 hashes of every immutable path and of the eval command, refuses if the mutable scope has uncommitted changes, snapshots the pre-loop dirty files, runs the baseline eval `repeats` times (noise floor; epsilon_abs = max(epsilon% x |baseline|, 2 sd)), opens the AR lease (writes outside mutable + the project dir are denied) and creates the research ref refs/shards/research/<project>/<run_id> whose first commit is the baseline. One active run per session. When a plan approval for the same run id exists (gate_request plan_approval: <run_id>), the plan gate budget is raised to cover this AR budget (max_gates >= iterations + 2, max_minutes >= the AR window) and reported as `plan`. Then edit mutable files and call ar_iterate for each hypothesis.',
+  description: 'Start an autonomous-research (AR) run. The runtime pins sha256 hashes of every immutable path and of the eval command, refuses if the mutable scope has uncommitted changes, snapshots the pre-loop dirty files, runs the baseline eval `repeats` times (noise floor; epsilon_abs = max(epsilon% x |baseline|, 2 sd)), opens the AR lease (writes outside mutable + the project dir are denied) and creates the research ref refs/shards/research/<project>/<run_id> whose first commit is the baseline. One active run per session, except the branch runs of one AR fan-out: with `branch` (implies worktree=true) the runtime creates a git worktree at .shards/worktrees/<run_id>/<branch> detached at HEAD (no new branch; .shards/worktrees/ is added to .git/info/exclude when not ignored), symlinks immutable paths missing there (untracked data) to the main tree, runs the eval with cwd = the worktree, scopes the AR lease to that worktree\'s mutable paths and journals to refs/shards/research/<project>/<run_id>/<branch>. Start each branch with the same run_id and its own branch name (at most 4 concurrent branches); iteration logs go to <project>/experiments/branches/<branch>/. When a plan approval for the same run id exists (gate_request plan_approval: <run_id>), the plan gate budget is raised to cover this AR budget (max_gates >= iterations + 2, max_minutes >= the AR window) and reported as `plan`. Then edit mutable files and call ar_iterate for each hypothesis.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
     required: ['project', 'brief_path', 'mutable', 'eval', 'budget'],
     properties: {
       project: { type: 'string', minLength: 1, description: 'Project directory (root-relative, e.g. shards/churn). Iteration logs go to <project>/experiments/iter_<N>.log.' },
-      run_id: { type: 'string', minLength: 1, description: 'Run id (default ar-<UTC timestamp>).' },
+      run_id: { type: 'string', minLength: 1, description: 'Run id (default ar-<UTC timestamp>). Branch runs of one fan-out share it.' },
+      branch: { type: 'string', minLength: 1, description: 'AR fan-out branch name (approach family slug, e.g. ml-xgboost). Makes this a branch run in its own git worktree.' },
+      worktree: { type: 'boolean', description: 'Run in a shards-owned git worktree (.shards/worktrees/<run_id>/<branch>). Requires branch; implied by it.' },
       brief_path: { type: 'string', minLength: 1, description: 'The research brief (root-relative); must exist.' },
       mutable: { ...PATHS, minItems: 1, description: 'Paths or globs the loop may change.' },
       immutable: { ...PATHS, description: 'Eval harness, tests, data: hashed at start and re-checked every iteration.' },
@@ -73,12 +78,15 @@ module.exports = defineTool({
     const run = await R.start(ctx, args);
     return {
       data: {
-        run_id: run.run_id, ref: run.ref, lease_id: run.lease_id,
+        run_id: run.run_id, ...(run.branch ? { branch: run.branch, worktree: run.worktree.path, work_root: workRel(ctx.root, run), linked_immutable: run.worktree.linked } : {}),
+        ref: run.ref, lease_id: run.lease_id,
         baseline: run.baseline, noise: run.noise, epsilon_abs: run.epsilon_abs,
         lastKeptCommit: run.lastKeptCommit, preLoopDirty: run.preLoopDirty,
         pinned: Object.keys(run.hashes.immutable),
         plan: planBudget(ctx, run),
-        next: 'Edit mutable files for ONE hypothesis, then call ar_iterate({hypothesis, source}). Do not run the eval or git yourself.',
+        next: run.branch
+          ? `Branch lead: dispatch ONE iteration task card to a worker (owned_paths = the mutable paths under ${workRel(ctx.root, run)}, acceptance.command = the pinned eval with acceptance.cwd = ${workRel(ctx.root, run)}), then call ar_iterate({hypothesis, source, run_id: "${run.run_id}", branch: "${run.branch}"}) and task_verify with ar_iteration. Do not run the eval or git yourself.`
+          : 'Edit mutable files for ONE hypothesis, then call ar_iterate({hypothesis, source}). Do not run the eval or git yourself.',
       },
     };
   },

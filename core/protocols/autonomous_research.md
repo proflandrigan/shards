@@ -6,8 +6,8 @@ description: >
   generation, auto-keep/revert based on metric movement, steering document
   the user can edit mid-loop, and convergence detection. Referenced by AR-capable
   agents (ML Engineer, AI Engineer, Data Scientist, Applied ML Scientist, Deep
-  Learning Engineer). Section H defines how AR composes with DIVERGE for
-  fan-out of parallel approach families.
+  Learning Engineer). Section H defines AR fan-out: one branch lead per
+  approach family, each in its own git worktree, with workers per iteration.
 type: reference
 ---
 
@@ -441,10 +441,11 @@ commits on the user branch). The manual path follows.
 Follow **Section B** of [`protocols/experiment_versioning.md`](experiment_versioning.md)
 with these AR-specific conventions. That protocol's git policy applies in full:
 commit only when `git.commit` is enabled, honour `git.denylist` and its size
-limit, use `git commit --only`, never switch branches, never push. Inside a
-fan-out branch these calls are skipped (Section H.5). `experiments/` in this
-protocol means `<output_dir>/experiments/` (`<branch_dir>/experiments/` inside a
-branch).
+limit, use `git commit --only`, never switch branches, never push. A fan-out
+branch always uses the runtime path (its journal is the branch ref, H.5); a
+`no-vcs` branch skips this step. `experiments/` in this protocol means
+`<output_dir>/experiments/` (`<output_dir>/experiments/branches/<branch-slug>/`
+for a fan-out branch's records).
 
 - **Tag prefix:** `research/<project_name>/<N>-<name>` (not `exp/<...>`).
 - **Annotated tag message** includes the auto-decision color:
@@ -1040,7 +1041,9 @@ Populated only in branches spawned by the Section H fan-out protocol:
   "branchSlug": "<slug>",
   "approachConstraint": "<one-line description>",
   "parentProjectDir": "<path>",
-  "gitStrategy": "branch-dir" | "worktree" | "no-vcs"
+  "gitStrategy": "worktree" | "no-vcs",
+  "runId": "<run-id>",
+  "ref": "refs/shards/research/<project>/<run-id>/<slug>"
 }
 ```
 
@@ -1151,11 +1154,24 @@ docs (`research.md`, "Running overnight") give the exact commands.
 
 ---
 
-## Section H — Fan-Out Composition with DIVERGE
+## Section H — Fan-Out: AR Branch Leads and Workers
 
-This section defines how AR composes with the DIVERGE protocol to support
-parallel exploration of multiple approach families. Solo AR remains the default
-and is the depth primitive. Fan-out is the breadth primitive.
+This section defines how AR explores several approach families in parallel.
+Solo AR remains the default and is the depth primitive. Fan-out is the breadth
+primitive. Fan-out runs on the same lead → worker model as Syn's PM mode:
+
+```
+Initiator (Syn, or the specialist that ran AR Phase 0-1) ── user gates only here
+ └─ AR branch LEAD, one per approach family (depth 1, lead contract: no gates,
+    no user, consults allowed)
+     └─ <specialist>-worker, one per iteration task card (depth 2, worker contract)
+          card.owned_paths     = the branch's mutable scope inside its worktree
+          card.acceptance      = the pinned eval command, run from the worktree
+```
+
+Each branch runs in its own git worktree with its own research ref, so every
+branch has real git history and edits the real mutable paths, and the runtime
+(not a subagent) measures every iteration.
 
 ### H.1 When to propose fan-out
 
@@ -1170,10 +1186,14 @@ Fan-out can be initiated by either:
   specialist types.
 
 Fan-out preconditions (inherited from DIVERGE):
-- 2-3 mutually exclusive approaches that are genuinely viable.
+- 2-3 mutually exclusive approaches that are genuinely viable (at most 4
+  branches; the runtime refuses a fifth).
 - No single approach is clearly superior.
 - The approaches are fundamentally different (not hyperparameter variations —
   that is what the AR loop itself already does).
+
+Fan-out needs the AR runtime tools and a git repository. Without them, use the
+`no-vcs` fallback (H.5).
 
 ### H.2 DIVERGE proposal at AR Phase 1
 
@@ -1186,6 +1206,8 @@ AR-specific adjustments:
   proposal gate. This avoids collision with planning-phase DIVERGE gate IDs.
 - **Branch slugs:** reflect approach families, not specialists. Example slugs
   for an ML Engineer fan-out: `ml-xgboost`, `ml-neural-net`, `ml-linear-baseline`.
+  A slug is also the `branch` name of its AR run (letters, digits, `.`, `_`,
+  `-`).
 - **Proposal context:** include the AR budget, primary metric, and per-branch
   budget split (each branch gets the full budget; the total AR budget is
   effectively multiplied by K branches — confirm with the user that cost
@@ -1195,160 +1217,225 @@ The user confirms one of:
 - (a) Solo AR with the current brief (no fan-out).
 - (b) Fan-out with the proposed K approach families.
 
-### H.3 Branch spawning
+The Phase 1 gate (with `plan_approval: "<run-id>"` for an unattended run) is
+the plan approval for every branch: all branches share that run id. It must be
+confirmed before any lead starts (a pending gate blocks subagents).
 
-If fan-out confirmed, start K parallel branch subagents in a single message (not
-sequentially). Each branch subagent is:
+### H.3 Branch leads
 
-Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
+After the Phase 1 gate is confirmed, the initiator launches one lead per
+approach family, in parallel (one message), each a subagent of the specialist
+that owns the family:
 
-{{fanout ml-engineer slices=approach_a,approach_b}}
+{{lead ml-engineer task="AR branch lead for approach family <branch-slug> of AR run <run-id>"}}
 
-Per-slice task: AR fan-out branch: <branch-slug>
+(Shown for `ml-engineer`; use the specialist that owns each family. Different
+families may use different specialists.)
 
-Brief for each consultant or worker (fill the angle-bracket fields):
+Brief for each lead (fill the angle-bracket fields):
 
 ```
-You are in BRANCH + AR MODE — an isolated Time-Travel branch running the
-autonomous research protocol.
+You are an AR BRANCH LEAD. Follow protocols/lead_contract.md and
+protocols/autonomous_research.md Section H.3 (lead loop). You write no code:
+every iteration is a task card for a <specialist> worker.
 
-**Branch slug:** <branch-slug>
-**Branch directory:** <project_dir>/.shards/branches/<branch-slug>/
-**Approach constraint:** <one-paragraph description of the approach family
-this branch must stay within — e.g., "tree-based methods only; no neural
-networks; no linear models">
-**Git strategy:** <branch-dir | worktree | no-vcs — see Section H.5>
+**Run id:** <run-id>          **Branch:** <branch-slug>
+**Approach constraint:** <one paragraph: the family this branch must stay in,
+e.g. "tree-based methods only; no neural networks; no linear models">
+**Scope (task_* calls):** <project_dir>/experiments/branches/<branch-slug>
+**Iteration budget:** <N>   **Minutes:** <M or none>   **Reviewer cadence:** <K>
+**ar_start arguments:** project, brief_path, mutable, immutable, eval
+(command, metric_regex|json_path, direction, timeout_s, repeats), budget,
+epsilon — copied verbatim from the research brief; add run_id=<run-id>,
+branch=<branch-slug>.
+**Steering:** global <project_dir>/experiments/research_brief.md; this branch
+<project_dir>/experiments/branches/<branch-slug>/research_brief.md (optional)
 
 ## Project Context (from completed planning phases)
+<completed project-specs.md phases, without the DIVERGE section or
+brainstorm transcripts>
 
-<Insert full text of completed project-specs.md phases — Phase 0 through any
-prior planning phase. Do NOT include the DIVERGE section or brainstorm
-transcripts.>
-
-## AR Configuration (inherited from parent's Phase 0)
-
-- **Primary metric:** <metric> (direction: <max | min>)
-- **Baseline:** <value>
-- **Preset:** <interactive | overnight | custom>
-- **Iteration budget (this branch):** <N>
-- **Mutable scope:** <list>
-- **Immutable scope:** <list>
-- **Cost ceiling (this branch):** <value or null>
-- **Reviewer cadence:** <K>
-- **Steering documents:**
-  - Global: `<project_dir>/experiments/research_brief.md`
-  - This branch (optional): `<branch_dir>/experiments/research_brief.md`
-
-## Your Task
-
-Execute Sections A-G of the shared AR protocol autonomously inside this branch
-directory. **Do not call `gate_request`** — sub-agents consulted must
-not request gates. Phase 0 is already set up by this spawn prompt.
-Phase 1 writes the branch-local research_brief.md without a gate. Phase 2 runs
-gate-free as designed. Phase 3 is truncated to writing `branch-report.md` only
-(no user-facing summary gate).
-
-Produce:
-1. Branch-local AR artifacts: `experiments/research_brief.md`,
-   `experiments/results.json` (with `branchContext` populated), per-iteration
-   files.
-2. A final `<branch_dir>/branch-report.md` summarizing the branch's best state
-   per the DIVERGE branch-report template (`protocols/diverge.md` Section E).
-3. Git commits only if the chosen git strategy (H.5) allows them (`worktree`).
-4. Your return value: the fan-out verdict JSON per `protocols/worker_contract.md`
-   ("Fan-out workers"); `branch-report.md` is still written.
+Return the lead report (H.7). Never call gate_request; never talk to the user.
 ```
 
-### H.4 Per-branch file layout
+**Lead loop.** The lead runs Section B through the runtime path, with the
+iteration's implementation delegated:
+
+1. `ar_start({... , run_id, branch})`. The runtime creates the worktree
+   `.shards/worktrees/<run-id>/<branch-slug>` (detached at the pre-loop HEAD;
+   no new branch, the user's checkout is never switched), runs the baseline
+   there and opens (or joins) the run's AR lease, scoped to this worktree.
+   It returns `worktree`, `work_root` (the worktree's equivalent of the
+   project root, usually the worktree itself) and `ref`
+   (`refs/shards/research/<project>/<run-id>/<branch-slug>`).
+2. Per iteration N: do B.1 to B.4 (steering, windowed history, one
+   hypothesis inside the approach constraint, announce in the branch log).
+3. Register the iteration card: `tasks_set` with `scope` (the first card),
+   then `tasks_set` with `append: true` for each later card. The card:
+   - `id: iter-<N>`, `goal`: the hypothesis, `plan_ref`: the brief section
+   - `owned_paths`: the mutable scope inside the worktree
+     (`<work_root>/<mutable path>`, e.g.
+     `.shards/worktrees/<run-id>/<branch-slug>/src/model`)
+   - `acceptance: {command: <pinned eval command>, expected: "eval prints the
+     metric", cwd: <work_root>}`
+   - `ar: {run_id, branch, iteration: N, hypothesis}`
+   - `depends_on: [iter-<N-1>]` (iterations of a branch are sequential: the
+     eval measures the whole worktree)
+   - `worker: <specialist>`
+
+   When the eval is expensive, the brief may name a cheaper smoke command
+   (one fold, a data sample) for `acceptance.command`; `ar_iterate` always
+   runs the full pinned eval, so the record never depends on the smoke run.
+4. `task_dispatch` the card and hand it to one `<specialist>` worker
+   (`max_parallel` is 1 inside a branch). The worker implements the
+   hypothesis inside `owned_paths`, runs the acceptance command from `cwd`
+   and returns its task-result (optionally with `metric`). `task_report` it.
+5. `ar_iterate({hypothesis, source, run_id, branch})`. This is the lead's
+   independent check: the runtime re-runs the pinned eval in the worktree,
+   classifies, keeps or reverts and journals to the branch ref. The worker's
+   own metric is never the record.
+6. `task_verify({id, pass, expected, observed, ar_iteration: N, scope})`.
+   GREEN or kept YELLOW makes the card `done` (`kept`); RED or unkept YELLOW
+   makes it `done` (`reverted`). A reverted iteration is a normal outcome:
+   it is never `failed` and never uses a retry (AR's stop conditions bound the
+   loop). A worker that reports `failed` (it could not implement the
+   hypothesis) is retried with feedback as usual; if the card ends `blocked`,
+   call `ar_iterate` anyway (the metric decides what the worktree keeps) and
+   move on to a new hypothesis.
+7. B.8 records go under the branch dir
+   `<project_dir>/experiments/branches/<branch-slug>/`. B.10 reviewer
+   consults run from the lead (the lead contract allows consults; if the host
+   forbids a consult from a subagent, name the skipped consult in the
+   report). Reviewer `RETRO_REVERT`, `PAUSE` and floor breaches go to
+   `ar_defer({..., run_id, branch})`; nothing blocks.
+8. When `converged` is true or the budget is spent: `ar_end({reason, run_id,
+   branch})`. The runtime records the stop on the branch ref and removes the
+   worktree; the kept state stays on the ref as `lastKeptCommit`.
+
+**Leads write no code.** Implementation is always a worker's card, so every
+change to the mutable scope is lease-scoped, reported and independently
+measured. A PM-mode workstream lead that runs `[AR]` follows the same rule:
+its iterations are task cards and `ar_iterate` is its verification. A PM lead
+cannot launch branch leads (depth cap); it runs one AR loop, as a branch run
+(`branch: <workstream>`) so its worktree stays out of other workstreams' way.
+
+**Depth and concurrency.** Initiator → lead (depth 1) → worker (depth 2),
+never deeper. A lead never launches another lead; a worker never delegates.
+Concurrency is bounded by `max_parallel` per lead (1: one iteration in flight
+per branch) and the global cap on branch leads (at most 4 concurrent branch
+runs per run id, enforced by `ar_start`).
+
+### H.4 Per-branch layout
 
 ```
-<project_dir>/.shards/branches/<branch-slug>/
-  experiments/
-    research_brief.md       # per-branch steering (optional override of global)
-    results.json             # per-branch AR results with branchContext set
-    history_summary.md       # per-branch windowed history (if N > 10)
-    experiment_1_<name>.md
-    experiment_2_<name>.md
-    ...
-  branch-report.md           # final summary for arbiter
+.shards/worktrees/<run-id>/<branch-slug>/        # git worktree (runtime-owned, removed by ar_end)
+<project_dir>/experiments/branches/<branch-slug>/
+  iter_<N>.log                # written by the runtime (ar_start/ar_iterate)
+  research_brief.md           # optional branch-level steering
+  results.json                # derived view of the branch ref, branchContext set
+  experiment_<N>_<name>.md    # B.8 iteration records
+  tasks.yaml, TASKS.md        # the lead's iteration cards (scope)
+  project-specs.md            # the lead's decisions and Validation evidence
+refs/shards/research/<project>/<run-id>/<branch-slug>   # the branch journal
 ```
 
-The main project dir keeps:
-- The global `experiments/research_brief.md` (applies to all branches unless
-  overridden at the branch level).
-- The canonical `project-specs.md` with the DIVERGE section written per
-  `protocols/diverge.md` Section D.
+The main project dir keeps the global `experiments/research_brief.md` (applies
+to all branches unless overridden) and the canonical `project-specs.md` with
+the DIVERGE section written per `protocols/diverge.md` Section D.
 
-### H.5 Concurrent git strategy
+`.shards/worktrees/` is git-ignored (the runtime adds it to the repo-local
+`.git/info/exclude` when no ignore rule covers it) and lies outside every
+tracked output dir.
 
-Shards never switches branches (ADR 0005), and parallel branches share one
-working tree, so concurrent checkouts or index writes would clobber each other.
-Branches isolate by directory. Each branch MUST pick one strategy at spawn time
-and record it in `results.json.branchContext.gitStrategy`:
+### H.5 Branch isolation
 
-**`branch-dir` (default for AR fan-out):**
-- The branch writes only inside `<project_dir>/.shards/branches/<branch-slug>/`
-  (or its leased slice paths). No `git checkout`, no commits, no tags.
-- Section B checkpoint calls are skipped. Lineage relies on per-iteration
-  markdown + `results.json`. Revert (C.3) is by restoring from the branch's own
-  saved copy of the last kept files, since no checkpoint commit exists.
-- At promotion (Section H.11) the winner's files are copied into the main
-  project directory. The runtime commits them at the next confirmed gate under
-  `git.commit` and `git.denylist`.
+Shards never switches the user's branch (ADR 0005), so parallel branches
+cannot share one working tree. Each branch gets a **git worktree** (the
+default and the only strategy with the runtime):
 
-**`worktree` (opt-in only):**
-- Used only if the user explicitly asks at the DIVERGE proposal gate. Each branch
-  gets its own `git worktree` under `<branch_dir>/worktree/` and commits there
-  (B.9 policy applies). The main working tree is never switched.
-- Tag namespace: `research/<project>/<branch-slug>/<N>-<name>`.
-- Losing worktrees are preserved; removal requires explicit user confirmation.
+- `ar_start({branch})` creates `.shards/worktrees/<run-id>/<branch-slug>`
+  with `git worktree add --detach` at the pre-loop HEAD. No branch is created
+  and nothing moves `HEAD` of the main checkout.
+- The eval runs with the worktree as its working directory. Immutable paths
+  that the worktree lacks (untracked or ignored data) are symlinked to the
+  main tree's copy and pinned there; a change to them is a tamper. List every
+  untracked input the eval reads as immutable. The runtime refuses to start
+  when the mutable or immutable scope has uncommitted changes in the main
+  tree (the worktree starts from HEAD and would not see them).
+- The AR lease holds each branch's mutable and immutable entries prefixed
+  with its worktree path. A write inside `.shards/worktrees/` must match one
+  branch's mutable scope; the `.shards/` state allowance does not cover
+  worktrees. The main tree's mutable paths are not writable while branch
+  runs are active. `git worktree add/remove/move/prune` is runtime-only.
+- Each branch commits only to its research ref
+  `refs/shards/research/<project>/<run-id>/<branch-slug>` (via plumbing; the
+  worktree's index and HEAD stay at the pre-loop commit).
+- `ar_end` removes the worktree (`keep_worktree: true` keeps it for
+  inspection; a kept one is removed by hand with `git worktree remove`).
+- `ar_status({run_id, branch, resume: true})` recreates a lost worktree at
+  the branch's kept state.
 
-**`no-vcs`:**
-- Same layout as `branch-dir`; use when git is unavailable or `git.commit` is
-  `false`. No checkpoint calls at all.
+**`no-vcs` (fallback only):** for a project without git, where the AR tools
+cannot run. Each branch lead uses `<project_dir>/.shards/branches/<branch-slug>/`
+as its working copy, follows the manual path of Sections B, C and E, reverts
+by restoring its own saved copy of the last kept files, and records
+`gitStrategy: "no-vcs"` in `results.json.branchContext`. Promotion copies the
+winner's files (H.11).
 
 Solo AR uses the main working tree directly.
 
 ### H.6 Steering in fan-out
 
-Every iteration, each branch re-reads:
-1. The **global** `research_brief.md` at the project root (applies to all
-   branches).
-2. Its **branch-level** steering notes at
-   `<branch_dir>/experiments/research_brief.md` if present.
+Every iteration, each lead re-reads:
+1. The **global** `research_brief.md` (applies to all branches).
+2. Its **branch-level** notes at
+   `<project_dir>/experiments/branches/<branch-slug>/research_brief.md` if
+   present.
 
-The user can edit either during the run:
-- Edit the global brief to steer all branches simultaneously.
-- Edit a branch-level brief to redirect one branch without affecting others.
+The user can edit either during the run: the global brief steers all branches,
+a branch-level brief redirects one branch. A `STOP` in the global brief stops
+every lead.
 
-### H.7 Branch convergence
+### H.7 Branch convergence and the lead report
 
-Each branch runs Section E convergence checks independently inside its own AR
-loop. A branch terminates when it converges, exhausts its budget, or breaches
-a safety rail. **Branches do not wait for each other.** The parent specialist
-(or Syn) waits for all branch subagents to return before arbitration.
+Each branch runs Section E convergence inside its own run (the runtime
+evaluates the stop conditions per branch). A branch terminates when it
+converges, exhausts its budget, or breaches a safety rail. **Branches do not
+wait for each other.** The initiator waits for every lead to return.
+
+Each lead returns the lead-contract report plus:
+- `branch`, `ref`, `lastKeptCommit`, `baseline`, `bestSoFar`, `iterations`,
+  `stop_reason` (from `ar_end`)
+- pending deferred decisions (`ar_defer`)
+- skipped consults, fallbacks, and one paragraph of observations
+
+The report is a pointer; the numbers come from the ref.
 
 ### H.8 Branch gate policy
 
-Branches are spawned sub-agents. Per `syn/arbiter.md` and the harness
-sub-agent rule, sub-agents **must not call `gate_request`**. All
-human-facing gates live in the parent's Phase 3 (arbitration + consolidated
-summary).
+Leads and workers are subagents: they never call `gate_request` (lead
+contract, worker contract). All human-facing gates stay with the initiator:
 
-- Phase 0: inherited from the parent's spawn prompt. No gate.
-- Phase 1: write the branch-local research_brief.md. No gate.
-- Phase 2: gate-free loop as designed.
-- Phase 3: truncated to writing `branch-report.md`. No gate.
+- Phase 0 and Phase 1 (brief, DIVERGE choice, plan approval): initiator.
+- Phase 2: gate-free branch loops (leads and workers).
+- Phase 3 (arbitration, winner selection, adoption): initiator; the adoption
+  gate is `requires_human`.
 
 ### H.9 Arbitration
 
-After all branches complete, the initiating specialist (or Syn) invokes Syn
-Arbiter Mode per `protocols/diverge.md` Section F, passing the list of
-`branch-report.md` paths. The arbiter produces
-`<project_dir>/.shards/branches/leaderboard.md`.
+Arbitration compares branch refs, not prose. After all leads return, the
+initiator calls `ar_status({run_id})`: for a branched run it returns every
+branch (rebuilt from its ref when needed) with a leaderboard ranked by
+`bestSoFar`, plus each branch's decisions, stop reason and deferred items. The
+journal of each branch is
+`git log --format='%h %s%n%(trailers:only)' <pre-loop HEAD>..refs/shards/research/<project>/<run-id>/<branch-slug>`.
 
-The parent specialist presents the leaderboard to the user, who selects the
-winner.
+The initiator then invokes Syn Arbiter Mode (`protocols/diverge.md` Section F)
+with the run id and the branch refs. The arbiter reads `ar_status` and the
+`AR-*` trailers, weighs gain against noise (`epsilon_abs`), simplicity (kept
+LOC) and robustness, and writes
+`<project_dir>/experiments/branches/leaderboard.md`. The initiator presents the
+leaderboard to the user, who selects the winner at the human gate.
 
 ### H.10 Write-backs in fan-out
 
@@ -1367,17 +1454,26 @@ branches exploring similar territory.
 
 ### H.11 Promotion
 
-Follow `protocols/diverge.md` Section G with these extensions for AR git
-strategies:
+Promotion happens only at the human Phase 3 gate, after every branch's
+`ar_end` (the AR lease is closed by then):
 
-- **`branch-dir` / `no-vcs`:** no merge. Copy the winner's deliverables and
-  branch-dir artifacts (brief, results.json, iteration files,
-  history_summary.md) to `<project_dir>/experiments/` (that is,
-  `<output_dir>/experiments/`). The runtime commits them at the convergence
-  gate when `git.commit` is enabled, excluding denylisted files.
-- **`worktree`:** copy from the winner's worktree the same way. No ref merge.
+1. The user selects the winner (diverge Section F gate).
+2. Apply the winner's kept diff to the user's working tree, using the
+   `promote` command that `ar_end` returned for that branch:
+   `git diff --binary <pre-loop HEAD> <lastKeptCommit> -- <mutable paths> | git apply`.
+   This carries additions, edits and deletions in the mutable scope only. If
+   the main tree changed since the run started and the patch does not apply,
+   stop and show the user the conflict; never force it.
+3. Copy the winner's branch records (`results.json`, iteration records) into
+   `<project_dir>/experiments/` as the run's record.
+4. The Phase 3 adoption gate (`requires_human`, with the mutable paths as
+   `targets`) commits the promoted change under `git.commit` and
+   `git.denylist`. No ref is merged into the user's branch and no branch is
+   switched.
 
-Losing branches are preserved under `<project_dir>/.shards/branches/` for reference.
+Losing branches keep their refs (and their records under
+`experiments/branches/`) for reference. `no-vcs` branches promote by copying
+the winner's files from its branch directory.
 
 ---
 

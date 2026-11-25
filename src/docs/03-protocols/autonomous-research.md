@@ -54,9 +54,16 @@ Convergence checks start only after an activation floor of `max(10, budget * 0.2
 - **Metric floor breach** on a full evaluation. This check is always live.
 - You pausing via the steering document.
 
-## AR fan-out (DIVERGE composition)
+## AR fan-out (branch leads and worktrees)
 
-When the approach space itself is unclear, AR can fan out: parallel approach families, each running its own AR loop on its own branch, compared by the Syn Arbiter at the end. This is decided at AR session start only, never mid-loop. See [DIVERGE](diverge.md).
+When the approach space itself is unclear, AR can fan out: 2 to 4 approach families explored in parallel. You confirm the fan-out (and the plan) at the Phase 1 gate; it is decided at AR session start only, never mid-loop. Then:
+
+- The initiator (Syn or the specialist) launches one **branch lead** per family. A lead follows the lead contract: no gates, no conversation with you, reviewer consults allowed.
+- Each branch gets its own **git worktree** under `.shards/worktrees/<run>/<branch>`, detached at your current commit. Your checkout and branch are never touched, and no git branch is created. Each branch journals to its own ref, `refs/shards/research/<project>/<run>/<branch>`.
+- The lead writes no code. Each iteration is a task card for one worker, scoped to the branch's mutable files inside its worktree. After the worker reports, the runtime re-runs the eval itself (`ar_iterate`) and keeps or reverts the change. A reverted iteration is a normal outcome, not a failed task.
+- When every branch has ended, `ar_status` gives a leaderboard of the branch refs and the Syn Arbiter compares them, using the refs and their trailers rather than prose reports. You pick the winner at the human gate. Its kept diff is applied to your working tree, and the Phase 3 gate commits it. Worktrees are removed when each branch ends.
+
+Projects without git fall back to plain branch directories (the manual path). See [DIVERGE](diverge.md) and `docs/research.md`.
 
 ## Studio
 

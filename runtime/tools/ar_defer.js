@@ -12,6 +12,7 @@ module.exports = defineTool({
     required: ['kind', 'detail'],
     properties: {
       run_id: { type: 'string', minLength: 1, description: 'Default: the active run of this session.' },
+      branch: { type: 'string', minLength: 1, description: 'Branch run (AR fan-out): which branch of the run. Needed when several branch runs are active.' },
       kind: { enum: R.DEFER_KINDS, description: 'retro_revert (reviewer RETRO_REVERT), pause (reviewer PAUSE or a steering PAUSE), floor_breach (metric floor breached on a full eval), other.' },
       detail: { type: 'string', minLength: 1, maxLength: 2000, description: 'What the human must decide and why (the reviewer reason, the breached value, ...).' },
       retro_to_iteration: { type: 'integer', minimum: 1, description: 'kind=retro_revert only: the first invalid iteration M; the run goes back to the kept state before M.' },

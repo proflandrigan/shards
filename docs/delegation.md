@@ -37,12 +37,13 @@ Top level: `version: 1` and `tasks` (one or more). No other keys are allowed. Ea
 | `plan_ref` | yes | Non-empty pointer into `project-specs.md`. |
 | `inputs` | yes | String array (read-only context). |
 | `owned_paths` | yes | Non-empty. Project-root-relative. No absolute paths, no `..`. |
-| `acceptance` | yes | `{command, expected}`, both non-empty. |
+| `acceptance` | yes | `{command, expected, cwd?}`; command and expected non-empty. `cwd` (project-root-relative, no `..`) is where the worker runs the command; default the project root. |
 | `depends_on` | no | Task ids. Default `[]`. |
 | `worker` | yes | Agent id. Must declare `fanout_worker` activation or a `consult_entries.worker` entry (unless `delegate: inline`). |
 | `size` | yes | Integer 1 to 60 (minutes). |
 | `phase` | no | String or integer. Groups tasks for the inline rule. |
 | `delegate` | no | `inline` or `worker`. Default `worker`. |
+| `ar` | no | `{run_id, branch?, iteration?, hypothesis?}`: marks an autonomous-research iteration card (issue #91 H4; see [`research.md`](research.md#fan-out-branch-runs-and-worktrees-h4)). Enables the AR outcome on `task_verify` and `tasks_set` `append`. |
 
 ```yaml
 version: 1
@@ -76,11 +77,11 @@ tasks:
 
 | Tool | Input | Behaviour |
 |------|-------|-----------|
-| `tasks_set` | exactly one of `manifest` (object) or `path` (existing YAML file); optional `output_dir`, `amendment_gate`, `scope` | Validates and stores the manifest. Writes `<output_dir>/tasks.yaml` when given `manifest`. `output_dir` defaults to the active specialist frame's output directory. All tasks start `pending`. Mirrors `TASKS.md` (to `<scope>/TASKS.md` when `scope` is given; with `scope` and `manifest`, `output_dir` defaults to `scope`). |
+| `tasks_set` | exactly one of `manifest` (object) or `path` (existing YAML file); optional `output_dir`, `amendment_gate`, `scope`, `append` | Validates and stores the manifest. Writes `<output_dir>/tasks.yaml` when given `manifest`. `output_dir` defaults to the active specialist frame's output directory. All tasks start `pending`. Mirrors `TASKS.md` (to `<scope>/TASKS.md` when `scope` is given; with `scope` and `manifest`, `output_dir` defaults to `scope`). |
 | `task_dispatch` | `ids` (unique, min 1), `scope?` | Atomic. Every id must be `pending` or `failed`, not paused, with all `depends_on` in `reported` or `done`. Otherwise nothing is dispatched. Opens one lease per non-inline task. Returns one card per id (`entry_file` points the worker at `agents/<worker>/modes/worker.md`). Inline cards hold no lease. |
 | `task_report` | `id`, `result` (task-result object), `scope?` | Task must be `dispatched`. Result is validated against the schema. Closes the task's lease. `done` is stored as `reported`; `failed` and `blocked` are stored as given. Runs the deviation hook (section 6). |
 | `task_status` | `scope?` | Returns each task's status, worker, `depends_on`, `lease_id`, `attempts`, `paused_reason`, the `ready` list and status counts. |
-| `task_verify` | `id`, `pass`, `expected`, `observed`, `notes?`, `check?`, `scope?` | The lead's independent check (E12.5). Only a `reported` task can be verified. Section 4 gives the state rules. Appends an evidence row to `## Validation` in `<output_dir>/project-specs.md`. |
+| `task_verify` | `id`, `pass`, `expected`, `observed`, `notes?`, `check?`, `scope?`; AR cards: `ar_iteration?`, `metric_outcome?` (`green\|yellow\|red`), `kept?` | The lead's independent check (E12.5). Only a `reported` task can be verified. Section 4 gives the state rules. Appends an evidence row to `## Validation` in `<output_dir>/project-specs.md`. |
 
 `scope` is optional on all five tools: a project-root-relative directory (no absolute path, no `..`; normalized, so `./shards/a/` equals `shards/a`). Omit it and everything behaves as a single session-wide manifest. State model: without `scope` the manifest, task statuses, drift state and consumed amendments live in the state entry `tasks`; with `scope` each scope has its own entry named `tasks-scope-<16 letters>`. The letters are the first 16 hex digits of the SHA-1 of the normalized scope with `0-9a-f` mapped to `a-p` (state names allow only `a-z` and `-`). Drift and amendment rules (section 7) apply per scope. Task ids may repeat across scopes. The TASKS.md mirror goes to `TASKS.md` unscoped (or the configured path) and to `<scope>/TASKS.md` when scoped; `task_verify` evidence goes to `project-specs.md` beside the scoped manifest. Leases opened by `task_dispatch` carry `meta.scope`. Amendment gates (`<agent>-amend-<n>`) are session-wide, so a pending amendment gate blocks `tasks_set` replacement in every scope until it is resolved.
 
@@ -168,6 +169,9 @@ Codex. Codex 0.169.0 sends `agent_id` and `agent_type` on PreToolUse inside a su
 - `reported` + `pass=false` gives `failed`, with the observed output stored as `feedback`. `task_dispatch` re-sends it to the worker. Up to 2 retries.
 - A `pass=false` after 2 retries gives `blocked` with `escalated=true`. The lead stops and asks the user with a summary of the evidence rows.
 - Every call, pass or fail, appends one row to the Evidence table in `## Validation` of `<output_dir>/project-specs.md`.
+- **AR iteration cards** (`ar` set; issue #91, bug 22): the lead first calls `ar_iterate` (the runtime re-runs the pinned eval), then `task_verify` with `ar_iteration: N` (the outcome is read from the run; a contradicting `metric_outcome` or `kept` is refused) or with `metric_outcome` (plus `kept` for a YELLOW). The task becomes `done` with `ar_outcome: {metric_outcome, result: kept|reverted, iteration?, commit?}`: GREEN or kept YELLOW is `kept`, RED or unkept YELLOW is `reverted`. It never becomes `failed`, uses no retry and never escalates; AR's own stop conditions bound the loop. The evidence row notes `AR <OUTCOME>: <result>` and TASKS.md shows it. These arguments are refused on a card without `ar`.
+
+`tasks_set` with `append: true` (AR iteration cards only) adds the cards in `manifest.tasks` to the registered manifest of that scope, keeping every existing task state, without an amendment gate: an AR lead learns each hypothesis only after the previous iteration. Every appended task must carry `ar`; the merged manifest is validated as a whole (so a card owning the same worktree paths as the previous one must depend on it); an open drift refuses it.
 
 `TASKS.md` mirror: written by `mirrorTasksMd` through the `tasks` job in `shards.config.yaml` (default `{binding: git, options: {path: TASKS.md}}`). It is a checklist generated from `tasks.yaml` (a header says so). Done tasks are `[x]`; others are `[ ]` with their status in parentheses. Any other binding skips the mirror and returns a note.
 
@@ -202,12 +206,12 @@ Expired leases stop excluding paths because `listActive` filters on `expires_at`
 
 ### 5.1 Autonomous-research (AR) lease and git guard (issue #91)
 
-A solo `[AR]` run holds one session-wide **AR lease** that makes its write scope and its git policy enforceable, not just prose. It lives in the same `leases` state with `owner: 'ar'`, `worker_type: 'ar'`, `slices: []` and an `ar` block `{run_id, project, mutable, immutable, allow}`. It has no slices, so `getLeasedPaths` never excludes the mutable code from gate commits and no worker can bind to it. At most one AR lease is active per session.
+An `[AR]` run holds one session-wide **AR lease** that makes its write scope and its git policy enforceable, not just prose. It lives in the same `leases` state with `owner: 'ar'`, `worker_type: 'ar'`, `slices: []` and an `ar` block `{run_id, project, mutable, immutable, allow}`. It has no slices, so `getLeasedPaths` never excludes the mutable code from gate commits and no worker can bind to it. At most one AR lease is active per session; the branch runs of one AR fan-out (same `run_id`, distinct `branch`) share it, with `ar.branches.<branch> = {root, mutable, immutable}` prefixed by each branch's worktree (`.shards/worktrees/<run>/<branch>`, see [`research.md`](research.md#fan-out-branch-runs-and-worktrees-h4)). For a branched lease the top-level `mutable` is the union of the branches' prefixed entries and `immutable` is the main-tree list plus every branch's prefixed list.
 
 | Function (`runtime/leases`) | Behaviour |
 |----------|-----------|
-| `openArLease(session, {runId, project?, mutable, immutable?, allow?, ttl_ms?, meta?})` | `mutable` (required) and `immutable` are project-root-relative paths or globs (`*`, `**`, `?`); `allow` is extra paths or globs. `project` (the AR project/output dir) is added to `allow`. Default TTL 6 hours. Throws if another AR lease is active. |
-| `closeArLease(session, idOrRunId)` | Closes the matching active AR lease; returns it, or `null` if none matched. |
+| `openArLease(session, {runId, project?, mutable, immutable?, allow?, ttl_ms?, meta?, branch?, workRoot?})` | `mutable` (required) and `immutable` are project-root-relative paths or globs (`*`, `**`, `?`); `allow` is extra paths or globs. `project` (the AR project/output dir) is added to `allow`. Default TTL 6 hours. Throws if another AR lease is active, unless `branch` is given and the active lease is a branched lease of the same `runId` (the branch joins it; a duplicate branch throws). `workRoot` is the branch worktree's root-relative path. |
+| `closeArLease(session, idOrRunId, {branch?})` | Closes the matching active AR lease; returns it, or `null` if none matched. With `branch`, only that branch leaves; the lease stays active (and is returned with `status: 'active'`) while other branches remain. |
 | `getActiveArLease(session, now?)` | The active AR lease, or `null`. `shards_status` reports it as `arLease`. |
 | `touchArLease(session, now?)` | Hook keepalive: refreshes `expires_at` (throttled to once per minute, no version bump) on every enforced tool call. |
 | `checkArWrite(session, lease, filePath)` | `{allowed, reason, rel}` for one write target. |
@@ -216,7 +220,7 @@ The `ar_start` / `ar_end` tools ([`research.md`](research.md)) call `openArLease
 
 **Write scope.** For Write, Edit, MultiEdit, NotebookEdit, `apply_patch` and Bash writes:
 - A target inside an `immutable` entry, or a directory that contains one (`rm -rf src` when `src/eval.py` is immutable), is denied. Immutable wins over `mutable` and `allow`.
-- Otherwise a target is allowed inside `.shards/`, an `allow` entry (the project dir), a `mutable` entry, or the OS temp dir.
+- Otherwise a target is allowed inside `.shards/` (except `.shards/worktrees/`, which only a branch's prefixed `mutable` entries open), an `allow` entry (the project dir), a `mutable` entry, or the OS temp dir.
 - Anything else is denied: other project files, paths outside the project root, and the project root itself.
 - A write whose target can't be determined (`sh -c`, `eval`, `cd ... && ...`, `git apply`/`merge`/`stash`) is denied rather than asked, because an unattended run can't answer a prompt.
 - Exec-only calls (`python train.py`, `pytest`, the eval command) and Shards notebook execution are not checked. A script can still write anywhere. Pinning hashes of the immutable paths (H1) is the backstop for that.
@@ -229,12 +233,13 @@ The `ar_start` / `ar_end` tools ([`research.md`](research.md)) call `openArLease
 - `git checkout -b`, `-B` or `--orphan`
 - `git switch` (any form)
 - `git branch -D`, or `-d` with `--force`
+- `git worktree add`, `remove`, `move`, `prune` or `repair` (AR branch worktrees are runtime-owned)
 
 `git checkout` and `git restore` pathspecs must pass the write-scope check, so a revert is `git checkout <sha> -- <mutable paths>`. Without `--`, every operand is treated as a path: `git checkout main` is denied. Wildcard pathspecs and pathspecs after a `cd` are denied. Safe commands pass, for example `git status`, `git diff`, `git log`, `git add`, `git commit --only <paths>`, `git tag <name>`, `git read-tree`, `git reset` without `--hard`, and a plain `git push`.
 
 ## 6. Task result and deviations
 
-Schema (`core/schema/task-result.schema.json`): all five fields are required; no other keys.
+Schema (`core/schema/task-result.schema.json`): all five fields are required; the only optional key is `metric: {name, value}` (AR iteration cards: the metric the worker saw; informational, `ar_iterate` is the record).
 
 | Field | Type |
 |-------|------|

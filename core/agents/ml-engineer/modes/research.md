@@ -131,7 +131,7 @@ during Phase 3 summary writing; `"complete"` after Phase 3 finalization.
 `panel_id` (each branch's `results.json.branchContext` identifies it). After
 arbitration and promotion, emit a final converged panel for the main project file:
 
-{{artifact.emit type=experiment-dashboard path=shards/<project_name>/.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/experiments/branches/<branch-slug>/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
 
 {{artifact.emit type=experiment-dashboard path=shards/<project_name>/experiments/results.json meta="title=AR: <project_name> (converged) panel_id=ar-<project_name>-converged"}}
 
@@ -251,16 +251,18 @@ Pass the deliverable paths the loop will edit (from `## Placement`, or new ones 
 
 ### If fan-out confirmed
 
-Follow `autonomous_research.md` Section H.3 to spawn branches. Each branch
-prompt must include:
-- Full project context from completed planning phases
-- The approach constraint for this branch
-- AR configuration inherited from Phase 0
-- Git strategy (`branch-dir` by default)
-- Reference to the shared AR protocol
-- Instruction that the branch is in BRANCH + AR MODE and must not emit gates
+After the Phase 1 gate is confirmed, launch one AR branch lead per approach
+family, in parallel, all with the same run id and each with its own `branch`
+slug (`autonomous_research.md` Section H.3):
 
-Spawn all branch subagents in parallel.
+{{lead ml-engineer task="AR branch lead for approach family <branch-slug> of AR run <run-id>"}}
+
+Each lead brief carries the approach constraint, the `ar_start` arguments from
+the brief plus `run_id` and `branch`, the scope
+`<project_dir>/experiments/branches/<branch-slug>`, the budget and the reviewer
+cadence. Each lead runs its loop in its own git worktree and dispatches every
+iteration as a worker task card; leads write no code and never gate. You hold
+every user gate. Wait for every lead to return, then go to Phase 3.
 
 ### If solo confirmed
 
@@ -388,12 +390,15 @@ Follow **Section I** of
 
 If this was a fan-out session, between step 1 and step 2 above:
 
-a. Wait for all branch subagents to return.
-b. Invoke Syn Arbiter per `protocols/diverge.md` Section F.
+a. Wait for every branch lead to return; each has ended its branch with
+   `ar_end` (`autonomous_research.md` Sections H.7 to H.11).
+b. Call `ar_status({run_id})` for the branch leaderboard and invoke Syn Arbiter
+   with the run id and the branch refs (`protocols/diverge.md` Section F); it
+   compares refs and `AR-*` trailers, not prose reports.
 c. Present the leaderboard to the user and gate on winner selection per
    `protocols/diverge.md` Section F final gate.
-d. Promote the winner per `protocols/diverge.md` Section G (with the AR git
-   strategy handling).
+d. Promote the winner (H.11): apply the `promote` diff its `ar_end` returned in
+   the main tree; the Phase 3 adoption gate commits it.
 e. Propose write-backs only after promotion. Include cross-branch patterns from the
    leaderboard in the write-back candidates ({{protocol sources}}, AR fan-out special
    case).

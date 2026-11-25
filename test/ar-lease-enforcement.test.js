@@ -187,3 +187,62 @@ describe('shards_status exposes the AR lease', () => {
     expect((await h({}, ctx)).data.arLease).toMatchObject({ run_id: 'run-1', mutable: ['src/model/**', 'src/features.py', 'configs/*.yaml'] });
   });
 });
+
+describe('AR branch worktrees (issue #91 H4)', () => {
+  const WT = '.shards/worktrees/run-1';
+  const openBranch = (b) => L.openArLease(sess, {
+    runId: 'run-1', project: 'projects/churn', mutable: ['src/model/**', 'src/features.py'], immutable: ['src/model/eval_harness.py', 'tests'],
+    branch: b, workRoot: `${WT}/${b}`,
+  });
+
+  it('one lease covers the branch runs of one run id; branches leave it one by one', async () => {
+    const a = await openBranch('a');
+    const b = await openBranch('b');
+    expect(b.id).toBe(a.id);
+    expect(L.getActiveArLease(sess).ar).toMatchObject({
+      mutable: [`${WT}/a/src/model/**`, `${WT}/a/src/features.py`, `${WT}/b/src/model/**`, `${WT}/b/src/features.py`],
+      immutable: ['src/model/eval_harness.py', 'tests', `${WT}/a/src/model/eval_harness.py`, `${WT}/a/tests`, `${WT}/b/src/model/eval_harness.py`, `${WT}/b/tests`],
+    });
+    await expect(openBranch('a')).rejects.toThrow(/already holds/);
+    await expect(open({ runId: 'run-2' })).rejects.toThrow(/already active/);
+    await expect(L.openArLease(sess, { runId: 'run-2', mutable: ['x'], branch: 'c', workRoot: `${WT}/c` })).rejects.toThrow(/already active/);
+    expect((await L.closeArLease(sess, 'run-1', { branch: 'a' })).status).toBe('active');
+    expect(Object.keys(L.getActiveArLease(sess).ar.branches)).toEqual(['b']);
+    expect((await L.closeArLease(sess, 'run-1', { branch: 'b' })).status).toBe('closed');
+    expect(L.getActiveArLease(sess)).toBeNull();
+  });
+
+  it('scopes worktree writes to that branch\'s mutable paths, never via the .shards/ allowance', async () => {
+    await openBranch('a');
+    for (const f of [`${WT}/a/src/model/net.py`, path.join(tmp, WT, 'a/src/features.py'), '.shards/state/x.json', 'projects/churn/experiments/branches/a/iter_1.md']) {
+      expect(await W(f), f).toBeNull();
+    }
+    for (const [f, why] of [
+      [`${WT}/a/README.md`, /outside the mutable scope/], [`${WT}/a/tests/t.py`, /immutable/], [`${WT}/a/src/model/eval_harness.py`, /immutable/],
+      [`${WT}/b/src/model/net.py`, /outside the mutable scope/], ['.shards/worktrees/other.txt', /outside the mutable scope/],
+      ['src/model/net.py', /outside the mutable scope/], // the main tree's mutable paths are not writable during a worktree run
+    ]) {
+      const d = await W(f);
+      expect(denied(d), f).toBe(true);
+      expect(d.permissionDecisionReason, f).toMatch(why);
+    }
+    expect(denied(await B(`rm -rf ${WT}/a`))).toBe(true);
+    expect(denied(await B('rm -rf .shards/worktrees'))).toBe(true);
+  });
+
+  it('git guard: worktree management is runtime-only; checkout pathspecs resolve inside the worktree', async () => {
+    await openBranch('a');
+    const wt = path.join(tmp, WT, 'a');
+    fs.mkdirSync(path.join(wt, 'src/model'), { recursive: true });
+    for (const c of [`git worktree remove --force ${WT}/a`, `git worktree add --detach ${WT}/x HEAD`, 'git worktree prune', `git worktree move ${WT}/a /tmp/y`]) {
+      const d = await B(c);
+      expect(denied(d), c).toBe(true);
+      expect(d.permissionDecisionReason).toMatch(/worktree/);
+    }
+    expect(await B('git worktree list')).toBeNull();
+    expect(await call('Bash', { command: 'git checkout abc -- src/model/net.py' }, {}, wt)).toBeNull();
+    expect(denied(await call('Bash', { command: 'git checkout abc -- tests' }, {}, wt))).toBe(true);
+    expect(await B(`git -C ${WT}/a checkout abc -- src/features.py`)).toBeNull();
+    expect(denied(await B('git checkout abc -- src/features.py'))).toBe(true); // main tree, not the branch
+  });
+});

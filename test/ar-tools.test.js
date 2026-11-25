@@ -3,6 +3,7 @@ import { createRequire } from 'module';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { execSync } from 'child_process';
 const require = createRequire(import.meta.url);
 const { Registry } = require('../runtime/registry');
 const { loadTools } = require('../runtime/tools');
@@ -319,5 +320,140 @@ describe('pure helpers', () => {
     expect(R.stopReason(run)).toBeNull();
     run.iterations.push({ n: 20, decision: 'yellow', bestSoFar: 2.4 });
     expect(R.stopReason(run)).toBe('plateau');
+  });
+});
+
+describe('AR fan-out branch runs (git worktrees, issue #91 H4)', () => {
+  const wt = (b, rel = '') => path.join(root, '.shards/worktrees/r1', b, rel);
+  const bArgs = (b, o = {}) => startArgs({ branch: b, ...o });
+  const S = () => ({ root, sessionKey: key, state });
+
+  it('creates a detached worktree per branch, runs the eval there and journals to a branch ref', async () => {
+    const head = sh(root, 'rev-parse', 'HEAD');
+    const a = await call('ar_start', bArgs('a'));
+    expect(a).toMatchObject({ run_id: 'r1', branch: 'a', worktree: '.shards/worktrees/r1/a', ref: 'refs/shards/research/p/r1/a', baseline: 1 });
+    expect(fs.existsSync(wt('a', '.git'))).toBe(true);
+    expect(sh(wt('a'), 'rev-parse', 'HEAD')).toBe(head);
+    expect(sh(wt('a'), 'status', '--porcelain', '--branch').split('\n')[0]).toMatch(/HEAD \(no branch\)/);
+    expect(sh(root, 'symbolic-ref', '--short', 'HEAD')).toBe('main'); // user checkout untouched, no new branch
+    expect(sh(root, 'branch', '--list').split('\n')).toHaveLength(1);
+    expect(fs.existsSync(path.join(root, 'shards/p/experiments/branches/a/iter_0.log'))).toBe(true);
+    // a second branch of the same run runs concurrently; the lease covers both, scoped to each worktree
+    const b = await call('ar_start', bArgs('b'));
+    expect(b.ref).toBe('refs/shards/research/p/r1/b');
+    const lease = L.getActiveArLease(S());
+    expect(Object.keys(lease.ar.branches)).toEqual(['a', 'b']);
+    expect(lease.ar.mutable).toEqual(['.shards/worktrees/r1/a/src/**', '.shards/worktrees/r1/b/src/**']);
+    expect(lease.ar.immutable).toEqual(expect.arrayContaining(['eval', '.shards/worktrees/r1/a/eval', '.shards/worktrees/r1/b/eval']));
+    await expect(call('ar_start', bArgs('a'))).rejects.toThrow(/already exists/);
+    await expect(call('ar_start', startArgs({ run_id: 'solo' }))).rejects.toThrow(/already active/);
+    await expect(call('ar_start', startArgs({ branch: 'c', worktree: false }))).rejects.toThrow(/needs its own worktree/);
+    await expect(call('ar_start', startArgs({ run_id: 'x', worktree: true }))).rejects.toThrow(/needs a branch/);
+
+    // branch a improves, branch b regresses; each is judged and kept/reverted in its own worktree
+    write(wt('a'), 'src/model.txt', '2\n# a\n# b\n');
+    write(wt('b'), 'src/model.txt', '0.5\n# a\n# b\n');
+    write(wt('b'), 'src/extra.txt', 'x\n');
+    await expect(call('ar_iterate', { hypothesis: 'which?' })).rejects.toThrow(/2 AR branch runs are active.*pass branch/);
+    const ia = await call('ar_iterate', { hypothesis: 'up', branch: 'a' });
+    expect(ia).toMatchObject({ branch: 'a', iteration: 1, decision: 'green', kept: true, after: 2 });
+    const ib = await call('ar_iterate', { hypothesis: 'down', run_id: 'r1', branch: 'b' });
+    expect(ib).toMatchObject({ branch: 'b', decision: 'red', kept: false, deleted: ['src/extra.txt'] });
+    expect(fs.readFileSync(wt('b', 'src/model.txt'), 'utf8')).toBe('1\n# a\n# b\n');
+    expect(fs.readFileSync(wt('a', 'src/model.txt'), 'utf8')).toBe('2\n# a\n# b\n');
+    expect(read('src/model.txt')).toBe('1\n# a\n# b\n'); // main tree untouched
+    expect(sh(root, 'status', '--porcelain', '--', 'src')).toBe('');
+    expect(sh(root, 'show', 'refs/shards/research/p/r1/a:src/model.txt')).toBe('2\n# a\n# b');
+    expect(trailersOf('refs/shards/research/p/r1/a')).toContain('AR-Branch: a');
+    expect(read('shards/p/experiments/branches/a/iter_1.log')).toMatch(/score=2/);
+
+    // arbitration view: every branch, ranked
+    const st = await call('ar_status', { run_id: 'r1' });
+    expect(st.branched).toBe(true);
+    expect(st.leaderboard.map((x) => [x.branch, x.bestSoFar])).toEqual([['a', 2], ['b', 1]]);
+    expect(st.branches.every((x) => x.lease_active)).toBe(true);
+    expect((await call('ar_status', { run_id: 'r1', branch: 'b' })).decisions).toMatchObject({ red: 1 });
+
+    // ending a branch removes its worktree and its part of the lease; the other branch keeps running
+    const ea = await call('ar_end', { reason: 'budget-exhausted', branch: 'a' });
+    expect(ea).toMatchObject({ branch: 'a', worktree_removed: true, lease_closed: null });
+    expect(ea.promote).toContain(`${head} ${ia.commit}`);
+    expect(fs.existsSync(wt('a'))).toBe(false);
+    expect(sh(root, 'worktree', 'list').split('\n')).toHaveLength(2);
+    expect(Object.keys(L.getActiveArLease(S()).ar.branches)).toEqual(['b']);
+    write(wt('b'), 'src/model.txt', '3\n# a\n# b\n');
+    expect(await call('ar_iterate', { hypothesis: 'up b' })).toMatchObject({ branch: 'b', decision: 'green' });
+    const eb = await call('ar_end', { reason: 'plateau', keep_worktree: true });
+    expect(eb).toMatchObject({ branch: 'b', worktree_removed: false, lease_closed: expect.stringMatching(/^lease-ar-/) });
+    expect(fs.existsSync(wt('b', 'src/model.txt'))).toBe(true);
+    expect(L.getActiveArLease(S())).toBeNull();
+    // promotion at the human gate: apply the winner's kept diff onto the user branch
+    execSync(ea.promote, { cwd: root, shell: '/bin/sh' });
+    expect(read('src/model.txt')).toBe('2\n# a\n# b\n');
+  });
+
+  it('adds .shards/worktrees/ to info/exclude, links untracked immutable data and pins it', async () => {
+    sh(root, 'rm', '-q', '--cached', '.gitignore'); fs.rmSync(path.join(root, '.gitignore'));
+    write(root, '.git/info/exclude', 'data/\n.shards/state/\n');
+    write(root, 'data/x.txt', '5\n');
+    write(root, 'eval/score.js', `${EVAL}\nconsole.log('data=' + require('fs').readFileSync('data/x.txt', 'utf8').trim());\n`);
+    sh(root, 'add', '-A'); sh(root, 'commit', '-q', '-m', 'data eval');
+    const s = await call('ar_start', bArgs('a', { immutable: ['eval', 'data'], eval: { ...startArgs().eval, metric_regex: 'data=([0-9.]+)' } }));
+    expect(s).toMatchObject({ baseline: 5, linked_immutable: ['data'] });
+    expect(fs.readFileSync(path.join(root, '.git/info/exclude'), 'utf8')).toMatch(/^\/\.shards\/worktrees\/$/m);
+    expect(sh(root, 'status', '--porcelain')).not.toMatch(/worktrees/);
+    expect(fs.lstatSync(wt('a', 'data')).isSymbolicLink()).toBe(true);
+    write(root, 'data/x.txt', '9\n'); // tampering with the main-tree data a branch reads
+    expect(await call('ar_iterate', { hypothesis: 'h', branch: 'a' })).toMatchObject({ failure: 'tamper', tampered: ['data'] });
+    await call('ar_end', { reason: 'tamper', branch: 'a' });
+    expect(fs.existsSync(path.join(root, 'data/x.txt'))).toBe(true); // removing the worktree never follows the link
+  });
+
+  it('rebuilds a branch run from its ref in a new session and recreates a lost worktree on resume', async () => {
+    await call('ar_start', bArgs('a'));
+    write(wt('a'), 'src/model.txt', '2\n# a\n# b\n');
+    const g = await call('ar_iterate', { hypothesis: 'up', branch: 'a' });
+    key = 'sess-other'; state = new StateStore(root, key);
+    sh(root, 'worktree', 'remove', '--force', wt('a'));
+    const st = await call('ar_status', { run_id: 'r1', branch: 'a' });
+    expect(st).toMatchObject({ source: 'ref', branch: 'a', lastKeptCommit: g.commit, lease_active: false });
+    const res = await call('ar_status', { run_id: 'r1', branch: 'a', resume: true });
+    expect(res).toMatchObject({ resumed: true, lease_active: true, worktree_recreated: true });
+    expect(fs.readFileSync(wt('a', 'src/model.txt'), 'utf8')).toBe('2\n# a\n# b\n'); // kept state restored
+    write(wt('a'), 'src/model.txt', '3\n# a\n# b\n');
+    expect(await call('ar_iterate', { hypothesis: 'up 3', branch: 'a' })).toMatchObject({ iteration: 2, decision: 'green', before: 2 });
+  });
+
+  it('caps concurrent branches and keeps solo and branched refs apart', async () => {
+    for (const b of ['a', 'b', 'c', 'd']) await call('ar_start', bArgs(b, { eval: { ...startArgs().eval, repeats: 1 } }));
+    await expect(call('ar_start', bArgs('e'))).rejects.toThrow(/cap 4/);
+    for (const b of ['a', 'b', 'c', 'd']) await call('ar_end', { reason: 'x', branch: b });
+    expect(fs.existsSync(path.join(root, '.shards/worktrees/r1'))).toBe(false);
+    await expect(call('ar_start', startArgs())).rejects.toThrow(/already has branch runs/);
+    await call('ar_start', startArgs({ run_id: 'solo', eval: { ...startArgs().eval, repeats: 1 } }));
+    await call('ar_end', { reason: 'x' });
+    await expect(call('ar_start', startArgs({ run_id: 'solo', branch: 'a' }))).rejects.toThrow(/already exists|is a solo run/);
+  });
+});
+
+describe('branch run with the project root below the git top level', () => {
+  it('creates the worktree at the session root and works in its prefixed copy', async () => {
+    const r0 = makeRepo({ sub: 'proj' });
+    root = r0.root;
+    write(root, 'eval/score.js', EVAL); write(root, 'src/model.txt', '1\n'); write(root, 'shards/p/research_brief.md', '#\n');
+    write(r0.top, '.gitignore', 'proj/.shards/\n');
+    sh(r0.top, 'add', '-A'); sh(r0.top, 'commit', '-q', '-m', 'sub');
+    state = new StateStore(root, key);
+    const s = await call('ar_start', startArgs({ branch: 'a' }));
+    expect(s.work_root).toBe('.shards/worktrees/r1/a/proj');
+    expect(L.getActiveArLease({ root, sessionKey: key, state }).ar.mutable).toEqual(['.shards/worktrees/r1/a/proj/src/**']);
+    write(root, '.shards/worktrees/r1/a/proj/src/model.txt', '2\n');
+    expect(await call('ar_iterate', { hypothesis: 'up', branch: 'a' })).toMatchObject({ decision: 'green', kept: true });
+    expect(sh(root, 'show', 'refs/shards/research/p/r1/a:proj/src/model.txt')).toBe('2');
+    expect(read('src/model.txt')).toBe('1\n');
+    const e = await call('ar_end', { reason: 'done', branch: 'a' });
+    expect(e.worktree_removed).toBe(true);
+    execSync(e.promote, { cwd: root, shell: '/bin/sh' });
+    expect(read('src/model.txt')).toBe('2\n');
   });
 });

@@ -7,10 +7,10 @@ const path = require('path');
 
 function usage() {
   return [
-    'Usage: shards research status [--run <id>] [--session <key>] [--json] [--root <dir>]',
+    'Usage: shards research status [--run <id>] [--branch <name>] [--session <key>] [--json] [--root <dir>]',
     '  Prints the AR run (default: the newest active run, else the newest run): iterations, best, budget left,',
     '  stop reason, pending deferred decisions. `done` is true once the run converged or ended. Exit 0 when a run',
-    '  is found, 1 when none is.',
+    '  is found, 1 when none is. --branch picks one branch run of an AR fan-out (default: the newest active one).',
     '  Overnight driver: while ! shards research status --json | node -e "process.exit(JSON.parse(require(\'fs\').readFileSync(0)).done?0:1)"; do <headless host turn>; done',
   ].join('\n');
 }
@@ -21,6 +21,7 @@ function parse(argv) {
     const a = argv[i];
     const val = () => { if (i + 1 >= argv.length) throw new Error(`${a} requires a value`); return argv[++i]; };
     if (a === '--run') o.run = val();
+    else if (a === '--branch') o.branch = val();
     else if (a === '--session') o.session = val();
     else if (a === '--json') o.json = true;
     else if (a === '--root') o.root = val();
@@ -49,11 +50,11 @@ function stateRuns(root, keys) {
 async function findRun(root, o) {
   const R = require('../../runtime/research');
   const cands = stateRuns(root, o.session ? [o.session] : sessionKeys(root))
-    .filter((c) => !o.run || c.run.run_id === o.run)
+    .filter((c) => (!o.run || c.run.run_id === o.run) && (!o.branch || c.run.branch === o.branch))
     .sort((a, b) => String(b.run.started_at).localeCompare(String(a.run.started_at)));
   // Prefer the copy that matches the research ref tip (another session may have resumed the run since).
   const pick = cands.find((c) => c.run.status === 'active') || cands[0] || null;
-  let ref = pick ? pick.run.ref : await R.findRef(root, o.run);
+  let ref = pick ? pick.run.ref : await R.findRef(root, o.run, o.branch);
   if (!ref) return null;
   const tip = await R.refTip(root, ref);
   if (pick && pick.run.tip && pick.run.tip === tip) return { run: pick.run, source: 'state', session: pick.session };
@@ -84,7 +85,7 @@ async function run(argv) {
     const s = { found: true, ...R.summary(r, { source: found.source }), session: found.session, done: r.status !== 'active' || !!pendingStop, ...(pendingStop ? { pending_stop: pendingStop } : {}) };
     delete s.lease_active;
     if (o.json) { console.log(JSON.stringify(s, null, 2)); return 0; }
-    console.log(`AR run ${s.run_id} (${s.project})  status ${s.status}${s.done ? ' (done)' : ''}  source ${s.source}`);
+    console.log(`AR run ${s.run_id}${s.branch ? ` branch ${s.branch}` : ''} (${s.project})  status ${s.status}${s.done ? ' (done)' : ''}  source ${s.source}`);
     console.log(`  iterations ${s.iterations}/${s.budget.iterations}  green ${s.decisions.green || 0}  yellow ${s.decisions.yellow || 0}  red ${s.decisions.red || 0}`);
     console.log(`  baseline ${s.baseline}  best ${s.bestSoFar}${s.budget_remaining.minutes !== null ? `  minutes left ${s.budget_remaining.minutes}` : ''}`);
     if (s.stop_reason || pendingStop) console.log(`  stop reason ${s.stop_reason || pendingStop}`);

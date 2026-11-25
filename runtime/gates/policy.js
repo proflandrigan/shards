@@ -96,7 +96,19 @@ function effectiveBudget(session, plan, budget) {
   const runId = planRunOf(plan);
   if (!runId) return b;
   let run = null;
-  try { run = ((stateOf(session).read('research') || {}).runs || {})[runId] || null; } catch (_) { run = null; }
+  try {
+    const runs = (stateOf(session).read('research') || {}).runs || {};
+    run = runs[runId] || null;
+    if (!run) {
+      // AR fan-out (issue #91, H4): branch runs are keyed <run_id>/<branch>; cover the largest branch budget.
+      const br = Object.values(runs).filter((r) => r && r.run_id === runId && r.budget);
+      if (br.length) {
+        const max = (k) => Math.max(...br.map((r) => Number(r.budget[k]) || 0));
+        const first = br.slice().sort((x, y) => String(x.started_at).localeCompare(String(y.started_at)))[0];
+        run = { ...first, budget: { iterations: max('iterations'), minutes: max('minutes') || null }, eval: { timeout_s: Math.max(...br.map((r) => Number(r.eval && r.eval.timeout_s) || 0)) } };
+      }
+    }
+  } catch (_) { run = null; }
   if (!run || !run.budget) return b;
   const it = Number(run.budget.iterations);
   if (Number.isFinite(it)) b.max_gates = Math.max(b.max_gates != null ? b.max_gates : DEFAULT_MAX_GATES, it + 2);

@@ -5,7 +5,8 @@
 // The runtime, not the agent, runs the pinned eval command, parses the metric, classifies GREEN/YELLOW/RED,
 // keeps or reverts the mutable scope and journals every iteration as a commit on a shards-owned ref:
 //
-//   refs/shards/research/<project-slug>/<run_id>
+//   refs/shards/research/<project-slug>/<run_id>            (solo run)
+//   refs/shards/research/<project-slug>/<run_id>/<branch>   (branch run, issue #91 H4)
 //
 // built with plumbing (temporary GIT_INDEX_FILE -> write-tree -> commit-tree -> update-ref), the same machinery
 // runtime/git uses for refs/shards/pending/*. The user's branch, HEAD and index are never touched: kept state
@@ -22,8 +23,15 @@
 // Every commit carries AR-Run, AR-Iter, AR-Decision, AR-Metric, AR-Eval, AR-Hypothesis-Source and AR-Base
 // (the pre-loop HEAD), so state can be rebuilt from `git log --format=%(trailers)` alone (rebuildFromRef).
 //
-// Session state: store name `research` ({active: run_id|null, runs: {<run_id>: run}}) under
-// .shards/state/sessions/<key>/research.json.
+// Branch runs (H4): an AR fan-out runs one branch run per approach family, all sharing one run_id. Each branch
+// gets its own git worktree at <root>/.shards/worktrees/<run_id>/<branch>, detached at the pre-loop HEAD (no new
+// branch, the user's checkout is never switched). The eval runs with cwd = the worktree, the mutable scope is
+// kept/reverted inside it, iteration logs go to <project>/experiments/branches/<branch>/ in the main tree, and the
+// worktree is removed by ar_end (unless keep_worktree). Immutable entries missing from the worktree (untracked or
+// ignored data) are symlinked to the main tree's copy and pinned there.
+//
+// Session state: store name `research` ({active: key|null, runs: {<key>: run}}) under
+// .shards/state/sessions/<key>/research.json, where key = run_id (solo) or <run_id>/<branch>.
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -39,6 +47,8 @@ const LOG_TAIL = 64 * 1024; // bytes of each stream written to the iteration log
 const RUN_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 const GLOB = /[*?[]/;
 const FAILURES = ['crash', 'timeout', 'parse'];
+const WORKTREES = '.shards/worktrees';
+const MAX_BRANCHES = 4; // global cap on concurrent branch runs (branch leads) of one run id
 
 // ---------- small helpers ----------
 
@@ -68,6 +78,9 @@ function stddev(xs) {
 
 // ---------- state ----------
 
+const runKey = (runId, branch) => (branch ? `${runId}/${branch}` : runId);
+const keyOf = (run) => runKey(run.run_id, run.branch);
+
 function readStore(state) {
   const s = state.read(STATE);
   return { active: s.active || null, runs: s.runs || {} };
@@ -75,7 +88,7 @@ function readStore(state) {
 async function saveRun(state, run, { active } = {}) {
   await state.update(STATE, (cur) => {
     cur.runs = cur.runs || {};
-    cur.runs[run.run_id] = run;
+    cur.runs[keyOf(run)] = run;
     if (active !== undefined) cur.active = active;
     else if (cur.active === undefined) cur.active = null;
     return cur;
@@ -91,6 +104,27 @@ function latestRun(state) {
   runs.sort((a, b) => String(b.started_at).localeCompare(String(a.started_at)));
   return runs[0] || null;
 }
+const liveRuns = (state) => Object.values(readStore(state).runs).filter((r) => r.status !== 'ended');
+
+// The live run an operation targets: by run_id and/or branch, else the session's active run. Several live branch
+// runs and no branch given is ambiguous.
+function selectLive(state, { run_id: runId, branch } = {}, op) {
+  const live = liveRuns(state);
+  if (runId || branch) {
+    const c = live.filter((r) => (!runId || r.run_id === runId) && (!branch || r.branch === branch));
+    if (c.length > 1) throw new Error(`${op}: ${c.length} AR runs match (${c.map(keyOf).join(', ')}); pass run_id and branch`);
+    return c[0] || null;
+  }
+  const branches = live.filter((r) => r.branch);
+  if (branches.length > 1) throw new Error(`${op}: ${branches.length} AR branch runs are active (${branches.map(keyOf).join(', ')}); pass branch`);
+  return activeRun(state) || (live.length === 1 ? live[0] : null);
+}
+
+// The directory that plays the session root for a run: the main root, or the same place inside its worktree.
+function workRoot(root, run) {
+  return run.worktree ? path.join(root, run.worktree.path, run.worktree.prefix || '') : root;
+}
+const logDirOf = (run) => (run.branch ? `${run.project}/experiments/branches/${run.branch}` : `${run.project}/experiments`);
 
 // ---------- git ----------
 
@@ -280,11 +314,13 @@ function hashEntry(root, entry) {
   }
   return fileDigest(abs);
 }
-function pinImmutable(root, immutable) {
+// linked: immutable entries symlinked into a worktree from the main tree (`mainRoot`); pinned at the source.
+function pinImmutable(root, immutable, { linked, mainRoot } = {}) {
   const out = {};
-  for (const e of immutable) out[e] = hashEntry(root, e);
+  for (const e of immutable) out[e] = hashEntry(linked && linked.includes(e) ? mainRoot : root, e);
   return out;
 }
+const pinRun = (root, run) => pinImmutable(workRoot(root, run), run.immutable, { linked: run.worktree && run.worktree.linked, mainRoot: root });
 
 // ---------- eval ----------
 
@@ -377,14 +413,16 @@ function writeLog(file, header, res, append) {
   if (append) fs.appendFileSync(file, text); else fs.writeFileSync(file, text);
 }
 
+// root: the main (session) root; the eval runs in the run's work root (its worktree for a branch run) and the
+// log is written under the main root.
 async function evaluate(root, run, { label, logFile, append, iter }) {
-  const res = await runCommand(run.eval.command, {
-    cwd: root, timeoutMs: run.eval.timeout_s * 1000,
-    env: { SHARDS_AR_RUN: run.run_id, SHARDS_AR_ITER: String(iter) },
-  });
+  const cwd = workRoot(root, run);
+  const env = { SHARDS_AR_RUN: run.run_id, SHARDS_AR_ITER: String(iter) };
+  if (run.branch) Object.assign(env, { SHARDS_AR_BRANCH: run.branch, SHARDS_AR_WORKTREE: cwd, SHARDS_AR_MAIN_ROOT: root });
+  const res = await runCommand(run.eval.command, { cwd, timeoutMs: run.eval.timeout_s * 1000, env });
   res.metric = res.timedOut || res.code !== 0 ? null : parseMetric(run.eval, res.stdout, res.stderr);
   res.failure = res.timedOut ? 'timeout' : res.code !== 0 ? 'crash' : res.metric === null ? 'parse' : null;
-  writeLog(path.join(root, logFile), `${label} | ${run.eval.command}`, res, append);
+  writeLog(path.join(root, logFile), `${label}${run.branch ? ` [branch ${run.branch}, cwd ${path.relative(root, cwd) || '.'}]` : ''} | ${run.eval.command}`, res, append);
   return res;
 }
 
@@ -447,7 +485,7 @@ function diminishingAbs(run) {
 
 function trailers(run, t) {
   const lines = [
-    ['AR-Run', run.run_id], ['AR-Iter', t.iter], ['AR-Decision', t.decision],
+    ['AR-Run', run.run_id], ...(run.branch ? [['AR-Branch', run.branch]] : []), ['AR-Iter', t.iter], ['AR-Decision', t.decision],
     ['AR-Metric', `${run.eval.name}=${fmt(t.before)}->${fmt(t.after)}`],
     ['AR-Eval', t.evalType || 'full'], ['AR-Hypothesis-Source', t.source || 'adaptive'],
   ];
@@ -472,7 +510,7 @@ function message(subject, body, tr) {
 
 // The run fields a rebuild needs (AR-Config on the baseline commit).
 function configOf(run) {
-  const keys = ['run_id', 'project', 'ref', 'brief_path', 'mutable', 'immutable', 'eval', 'budget', 'epsilon_pct', 'epsilon_abs', 'noise', 'baseline', 'convergence', 'hashes', 'pre_loop_head', 'preLoopDirty', 'started_at', 'session'];
+  const keys = ['run_id', 'branch', 'worktree', 'project', 'ref', 'brief_path', 'mutable', 'immutable', 'eval', 'budget', 'epsilon_pct', 'epsilon_abs', 'noise', 'baseline', 'convergence', 'hashes', 'pre_loop_head', 'preLoopDirty', 'started_at', 'session'];
   const o = {};
   for (const k of keys) o[k] = run[k];
   return o;
@@ -516,78 +554,199 @@ async function withRunLock(key, fn) {
   try { return await fn(); } finally { locks.delete(key); }
 }
 
+// ---------- branch worktrees (issue #91, H4) ----------
+
+// Make sure <root>/.shards/worktrees/ is ignored by the main repository (else every branch worktree shows up as
+// an untracked nested repository): add it to the repo-local info/exclude when no ignore rule covers it.
+async function excludeWorktrees(root, repo) {
+  const probe = `${WORKTREES}/probe`;
+  const ig = await G.git(root, ['check-ignore', '-q', '--no-index', probe]);
+  if (ig.code === 0) return false;
+  const p = (await G.gitOk(root, ['rev-parse', '--git-path', 'info/exclude'])).trim();
+  const file = path.resolve(root, p);
+  const line = `/${repo.prefix}${WORKTREES}/`;
+  let text = '';
+  try { text = fs.readFileSync(file, 'utf8'); } catch (_) { /* none yet */ }
+  if (text.split('\n').includes(line)) return false;
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.appendFileSync(file, `${text && !text.endsWith('\n') ? '\n' : ''}# shards: autonomous-research branch worktrees\n${line}\n`);
+  return true;
+}
+
+// Symlink immutable entries the worktree lacks (untracked or ignored data, local configs) to the main tree's
+// copy. Returns the linked entries (pinned at the main tree). Globs are not linked.
+function linkMissingImmutable(root, wroot, immutable) {
+  const linked = [];
+  for (const e of immutable) {
+    if (GLOB.test(e)) continue;
+    const dst = path.join(wroot, e); const src = path.join(root, e);
+    let have = false;
+    try { fs.lstatSync(dst); have = true; } catch (_) { /* missing */ }
+    if (have || !fs.existsSync(src)) continue;
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    fs.symlinkSync(src, dst, fs.statSync(src).isDirectory() ? 'dir' : 'file');
+    linked.push(e);
+  }
+  return linked;
+}
+
+async function addWorktree(root, wtAbs, commit) {
+  fs.mkdirSync(path.dirname(wtAbs), { recursive: true });
+  await G.git(root, ['worktree', 'prune']);
+  await G.gitOk(root, ['worktree', 'add', '--detach', '--quiet', wtAbs, commit]);
+}
+
+// Remove a shards-owned branch worktree. The runtime runs git itself (not through the hook's git guard).
+async function removeWorktree(root, run) {
+  if (!run.worktree) return false;
+  const wtAbs = path.join(root, run.worktree.path);
+  const wroot = workRoot(root, run);
+  for (const e of run.worktree.linked || []) {
+    try { if (fs.lstatSync(path.join(wroot, e)).isSymbolicLink()) fs.unlinkSync(path.join(wroot, e)); } catch (_) { /* gone */ }
+  }
+  let removed = false;
+  if (fs.existsSync(wtAbs)) {
+    const r = await G.git(root, ['worktree', 'remove', '--force', '--force', wtAbs]);
+    if (r.code !== 0) fs.rmSync(wtAbs, { recursive: true, force: true });
+    removed = true;
+  }
+  await G.git(root, ['worktree', 'prune']);
+  try { fs.rmdirSync(path.dirname(wtAbs)); } catch (_) { /* other branches still there */ }
+  return removed;
+}
+
+// Recreate a lost worktree (resume after a crash or a manual removal): detached at the pre-loop HEAD, immutable
+// entries relinked, the mutable scope restored to lastKeptCommit.
+async function ensureWorktree(root, run) {
+  if (!run.worktree) return false;
+  const wtAbs = path.join(root, run.worktree.path);
+  const wroot = workRoot(root, run);
+  let created = false;
+  if (!fs.existsSync(path.join(wtAbs, '.git'))) {
+    if (fs.existsSync(wtAbs)) fs.rmSync(wtAbs, { recursive: true, force: true });
+    await addWorktree(root, wtAbs, run.pre_loop_head);
+    created = true;
+  }
+  const linked = linkMissingImmutable(root, wroot, run.immutable);
+  run.worktree.linked = [...new Set([...(run.worktree.linked || []), ...linked])];
+  if (created && run.lastKeptCommit !== run.pre_loop_head) await revertMutable(wroot, await repoInfo(wroot), run.lastKeptCommit, run);
+  return created;
+}
+
 async function start(ctx, args) {
   const { root, state } = ctx;
   const session = { root, sessionKey: ctx.sessionKey, state };
-  const cur = activeRun(state);
-  if (cur && cur.status === 'active') throw new Error(`ar_start: AR run ${cur.run_id} is already active in this session; call ar_end first`);
-  const lease0 = L.getActiveArLease(session);
-  if (lease0) throw new Error(`ar_start: AR lease ${lease0.id} (run ${lease0.ar.run_id}) is already active; call ar_end first`);
-  const cfg = normalizeStartArgs(args);
+  const branch = args.branch === undefined || args.branch === null || args.branch === '' ? null : args.branch;
+  if (args.worktree === true && !branch) throw new Error('ar_start: worktree=true needs a branch name');
+  if (branch && args.worktree === false) throw new Error('ar_start: a branch run needs its own worktree (concurrent branches cannot share the working tree); omit worktree or pass worktree=true');
+  if (branch && !validRunId(branch)) throw new Error(`ar_start: invalid branch ${JSON.stringify(branch)} (letters, digits, . _ -; max 64)`);
   const runId = args.run_id || defaultRunId();
   if (!validRunId(runId)) throw new Error(`ar_start: invalid run_id ${JSON.stringify(runId)} (letters, digits, . _ -; max 64)`);
-  if (readStore(state).runs[runId]) throw new Error(`ar_start: run ${runId} already exists in this session`);
+  for (const r of liveRuns(state)) {
+    const sibling = branch && r.branch && r.run_id === runId;
+    if (!sibling) throw new Error(`ar_start: AR run ${keyOf(r)} is already active in this session; call ar_end first${branch && r.run_id === runId ? ' (a run id is either solo or branched)' : ''}`);
+  }
+  if (branch) {
+    const siblings = liveRuns(state).filter((r) => r.run_id === runId && r.branch);
+    if (siblings.length >= MAX_BRANCHES) throw new Error(`ar_start: run ${runId} already has ${siblings.length} active branch runs (cap ${MAX_BRANCHES}); end one first`);
+  }
+  const lease0 = L.getActiveArLease(session);
+  if (lease0 && !(branch && lease0.ar.run_id === runId && lease0.ar.branches)) throw new Error(`ar_start: AR lease ${lease0.id} (run ${lease0.ar.run_id}) is already active; call ar_end first`);
+  const cfg = normalizeStartArgs(args);
+  const key = runKey(runId, branch);
+  const existing = readStore(state).runs[key];
+  if (existing) throw new Error(`ar_start: run ${key} already exists in this session`);
   const brief = L.normalizeRel(args.brief_path);
   if (!fs.existsSync(path.join(root, brief))) throw new Error(`ar_start: brief_path ${brief} does not exist (write the research brief first)`);
 
-  return withRunLock(runId, async () => {
+  return withRunLock(key, async () => {
     const repo = await repoInfo(root);
-    const ref = `${REF_ROOT}/${slugOf(cfg.project)}/${runId}`;
+    const slug = slugOf(cfg.project);
+    const runRef = `${REF_ROOT}/${slug}/${runId}`;
+    const ref = branch ? `${runRef}/${branch}` : runRef;
     if (await refTip(root, ref)) throw new Error(`ar_start: ${ref} already exists; pick another run_id`);
+    // A run id is either solo (one ref) or branched (refs under it): git cannot hold both (D/F conflict).
+    if (branch && await refTip(root, runRef)) throw new Error(`ar_start: ${runRef} is a solo run; pick another run_id for a branched run`);
+    if (!branch && (await listRefs(root)).some((r) => r.startsWith(`${runRef}/`))) throw new Error(`ar_start: ${runRef} already has branch runs; pick another run_id`);
     const chk = await G.git(root, ['check-ref-format', ref]);
     if (chk.code !== 0) throw new Error(`ar_start: ${ref} is not a valid ref name`);
 
     const dirty = await dirtyPaths(root, repo);
     const isMut = mutableMatcher(cfg.mutable);
     const dirtyMut = dirty.filter(isMut);
-    if (dirtyMut.length) throw new Error(`ar_start: the mutable scope has uncommitted changes (${dirtyMut.slice(0, 10).join(', ')}${dirtyMut.length > 10 ? ', ...' : ''}); ask the user to commit or stash them first, a revert would overwrite them`);
+    if (dirtyMut.length) throw new Error(`ar_start: the mutable scope has uncommitted changes (${dirtyMut.slice(0, 10).join(', ')}${dirtyMut.length > 10 ? ', ...' : ''}); ask the user to commit or stash them first, ${branch ? 'the branch worktree starts from HEAD and would not see them' : 'a revert would overwrite them'}`);
 
     const run = {
       run_id: runId, project: cfg.project, ref, brief_path: brief, session: ctx.sessionKey,
       mutable: cfg.mutable, immutable: cfg.immutable, eval: cfg.eval, budget: cfg.budget,
       epsilon_pct: cfg.epsilon_pct, convergence: cfg.convergence,
-      hashes: { immutable: pinImmutable(root, cfg.immutable), eval_command: sha256(cfg.eval.command) },
-      pre_loop_head: repo.headSha, preLoopDirty: dirty, started_at: iso(), status: 'active',
+      pre_loop_head: repo.headSha, started_at: iso(), status: 'active',
     };
+    if (branch) run.branch = branch;
 
-    // Baseline: `repeats` runs give the mean and the noise floor.
-    const logRel = `${cfg.project}/experiments/iter_0.log`;
-    const values = [];
-    for (let i = 0; i < cfg.eval.repeats; i++) {
-      const r = await evaluate(root, run, { label: `AR ${runId} baseline run ${i + 1}/${cfg.eval.repeats}`, logFile: logRel, append: i > 0, iter: 0 });
-      if (r.failure) throw new Error(`ar_start: baseline eval run ${i + 1} failed (${r.failure}${r.failure === 'crash' ? `, exit ${r.code}` : ''}); see ${logRel}. Fix the eval command or harness before starting.`);
-      values.push(r.metric);
+    let wtAbs = null;
+    try {
+      let wroot = root;
+      if (branch) {
+        const wtRel = `${WORKTREES}/${runId}/${branch}`;
+        wtAbs = path.join(root, wtRel);
+        if (fs.existsSync(wtAbs)) { wtAbs = null; throw new Error(`ar_start: ${wtRel} already exists (an earlier run kept it); remove it with \`git worktree remove ${wtRel}\` or pick another run_id`); }
+        await excludeWorktrees(root, repo);
+        await addWorktree(root, wtAbs, repo.headSha);
+        run.worktree = { path: wtRel, prefix: repo.prefix || '', linked: [] };
+        wroot = workRoot(root, run);
+        run.worktree.linked = linkMissingImmutable(root, wroot, cfg.immutable);
+        const linked = new Set(run.worktree.linked);
+        const stale = dirty.filter((p) => cfg.immutable.some((e) => !linked.has(e) && L.entryCovers(e, p)));
+        if (stale.length) throw new Error(`ar_start: immutable paths have uncommitted changes (${stale.slice(0, 10).join(', ')}${stale.length > 10 ? ', ...' : ''}); the branch worktree is created from HEAD and would evaluate the committed version. Ask the user to commit them first.`);
+      }
+      run.hashes = { immutable: pinRun(root, run), eval_command: sha256(cfg.eval.command) };
+      run.preLoopDirty = branch ? await dirtyPaths(wroot, await repoInfo(wroot)) : dirty;
+
+      // Baseline: `repeats` runs give the mean and the noise floor.
+      const logRel = `${logDirOf(run)}/iter_0.log`;
+      const values = [];
+      for (let i = 0; i < cfg.eval.repeats; i++) {
+        const r = await evaluate(root, run, { label: `AR ${key} baseline run ${i + 1}/${cfg.eval.repeats}`, logFile: logRel, append: i > 0, iter: 0 });
+        if (r.failure) throw new Error(`ar_start: baseline eval run ${i + 1} failed (${r.failure}${r.failure === 'crash' ? `, exit ${r.code}` : ''}); see ${logRel}. Fix the eval command or harness before starting.`);
+        values.push(r.metric);
+      }
+      const m = mean(values); const sd = stddev(values);
+      run.baseline = m;
+      run.noise = { values, mean: m, stddev: sd };
+      run.epsilon_abs = Math.max((cfg.epsilon_pct / 100) * Math.abs(m), 2 * sd);
+      run.comparisonReference = m;
+      run.bestSoFar = m;
+      run.lastKeptCommit = repo.headSha;
+      run.lastGreenCommit = repo.headSha;
+      run.iterations = [];
+      run.deferred = [];
+      run.converged = false; run.stop_reason = null;
+    } catch (e) {
+      if (wtAbs && run.worktree) await removeWorktree(root, run).catch(() => {});
+      throw e;
     }
-    const m = mean(values); const sd = stddev(values);
-    run.baseline = m;
-    run.noise = { values, mean: m, stddev: sd };
-    run.epsilon_abs = Math.max((cfg.epsilon_pct / 100) * Math.abs(m), 2 * sd);
-    run.comparisonReference = m;
-    run.bestSoFar = m;
-    run.lastKeptCommit = repo.headSha;
-    run.lastGreenCommit = repo.headSha;
-    run.iterations = [];
-    run.deferred = [];
-    run.converged = false; run.stop_reason = null;
 
-    const lease = await L.openArLease(session, { runId, project: cfg.project, mutable: cfg.mutable, immutable: cfg.immutable, meta: { ref } });
+    const workRel = run.worktree ? path.relative(root, workRoot(root, run)).split(path.sep).join('/') : undefined;
+    const lease = await L.openArLease(session, { runId, project: cfg.project, mutable: cfg.mutable, immutable: cfg.immutable, meta: { ref }, ...(branch ? { branch, workRoot: workRel } : {}) });
     run.lease_id = lease.id;
     try {
       const headTree = (await G.gitOk(root, ['rev-parse', `${repo.headSha}^{tree}`])).trim();
       const msg = message(
-        `research(${slugOf(cfg.project)}): baseline ${runId}`,
-        `Baseline ${cfg.eval.name} = ${fmt(m)} (n=${values.length}, sd=${fmt(sd)}); epsilon = ${fmt(run.epsilon_abs)}.`,
-        trailers(run, { iter: 0, decision: 'baseline', before: null, after: m, source: 'baseline', best: m, config: configOf(run) }),
+        `research(${slug}): baseline ${key}`,
+        `Baseline ${cfg.eval.name} = ${fmt(run.baseline)} (n=${run.noise.values.length}, sd=${fmt(run.noise.stddev)}); epsilon = ${fmt(run.epsilon_abs)}.${branch ? ` Branch ${branch}, worktree ${run.worktree.path}.` : ''}`,
+        trailers(run, { iter: 0, decision: 'baseline', before: null, after: run.baseline, source: 'baseline', best: run.baseline, config: configOf(run) }),
       );
       const sha = await commitTree(root, headTree, repo.headSha, msg);
       await advanceRef(root, ref, sha, null);
       run.baseline_commit = sha;
       run.tip = sha;
     } catch (e) {
-      await L.closeArLease(session, runId);
+      await L.closeArLease(session, runId, branch ? { branch } : {});
+      if (run.worktree) await removeWorktree(root, run).catch(() => {});
       throw e;
     }
-    await saveRun(state, run, { active: runId });
+    await saveRun(state, run, { active: key });
     return run;
   });
 }
@@ -595,24 +754,27 @@ async function start(ctx, args) {
 async function iterate(ctx, args) {
   const { root, state } = ctx;
   const session = { root, sessionKey: ctx.sessionKey, state };
-  const run0 = activeRun(state);
-  if (!run0) throw new Error('ar_iterate: no active AR run in this session; call ar_start (or ar_status with resume=true after a context loss)');
-  if (run0.status !== 'active') throw new Error(`ar_iterate: run ${run0.run_id} has stopped (${run0.stop_reason}); call ar_end`);
+  const run0 = selectLive(state, args, 'ar_iterate');
+  if (!run0) throw new Error(`ar_iterate: no active AR run${args.branch ? ` for branch ${args.branch}` : ''} in this session; call ar_start (or ar_status with resume=true after a context loss)`);
+  const key = keyOf(run0);
+  if (run0.status !== 'active') throw new Error(`ar_iterate: run ${key} has stopped (${run0.stop_reason}); call ar_end`);
   const lease = L.getActiveArLease(session);
-  if (!lease || lease.ar.run_id !== run0.run_id) throw new Error(`ar_iterate: the AR lease for run ${run0.run_id} is not active; call ar_status with resume=true to reopen it`);
+  if (!lease || lease.ar.run_id !== run0.run_id || (run0.branch && !(lease.ar.branches || {})[run0.branch])) throw new Error(`ar_iterate: the AR lease for run ${key} is not active; call ar_status with resume=true to reopen it`);
 
-  return withRunLock(run0.run_id, async () => {
+  return withRunLock(key, async () => {
     const run = JSON.parse(JSON.stringify(run0));
-    const repo = await repoInfo(root);
+    const wroot = workRoot(root, run);
+    if (run.worktree && !fs.existsSync(path.join(root, run.worktree.path, '.git'))) throw new Error(`ar_iterate: the worktree of run ${key} (${run.worktree.path}) is missing; call ar_status with resume=true to recreate it`);
+    const repo = await repoInfo(wroot);
     const tip = await refTip(root, run.ref);
     if (!tip) throw new Error(`ar_iterate: research ref ${run.ref} is missing`);
     if (run.tip && tip !== run.tip) throw new Error(`ar_iterate: research ref ${run.ref} moved outside the runtime (${tip.slice(0, 12)} != ${run.tip.slice(0, 12)}); run ar_status`);
     const N = run.iterations.length + 1;
     const before = run.comparisonReference;
-    const logRel = `${run.project}/experiments/iter_${N}.log`;
+    const logRel = `${logDirOf(run)}/iter_${N}.log`;
 
     // 1. Tamper check: immutable pins and the eval command.
-    const now = pinImmutable(root, run.immutable);
+    const now = pinRun(root, run);
     const tampered = Object.keys(run.hashes.immutable).filter((k) => now[k] !== run.hashes.immutable[k]);
     if (sha256(run.eval.command) !== run.hashes.eval_command) tampered.push('<eval command>');
 
@@ -620,18 +782,18 @@ async function iterate(ctx, args) {
     if (tampered.length) {
       failure = 'tamper';
       fs.mkdirSync(path.dirname(path.join(root, logRel)), { recursive: true });
-      fs.writeFileSync(path.join(root, logRel), `# AR ${run.run_id} iteration ${N}: TAMPER\nimmutable paths changed since ar_start: ${tampered.join(', ')}\nThe eval was not run.\n`);
+      fs.writeFileSync(path.join(root, logRel), `# AR ${key} iteration ${N}: TAMPER\nimmutable paths changed since ar_start: ${tampered.join(', ')}\nThe eval was not run.\n`);
     } else {
-      res = await evaluate(root, run, { label: `AR ${run.run_id} iteration ${N}`, logFile: logRel, iter: N });
+      res = await evaluate(root, run, { label: `AR ${key} iteration ${N}`, logFile: logRel, iter: N });
       failure = res.failure; after = res.metric;
     }
     const decision = classify(run, after, failure);
 
     // 2. Snapshot the iteration's mutable state on top of lastKept.
-    const diff = await mutableDiff(root, repo, run.lastKeptCommit, run, { write: true });
-    const keptTree = (await G.gitOk(root, ['rev-parse', `${run.lastKeptCommit}^{tree}`])).trim();
-    const iterTree = await writeTreeFrom(root, repo, run.lastKeptCommit, diff.entries);
-    const loc = await locDelta(root, keptTree, iterTree);
+    const diff = await mutableDiff(wroot, repo, run.lastKeptCommit, run, { write: true });
+    const keptTree = (await G.gitOk(wroot, ['rev-parse', `${run.lastKeptCommit}^{tree}`])).trim();
+    const iterTree = await writeTreeFrom(wroot, repo, run.lastKeptCommit, diff.entries);
+    const loc = await locDelta(wroot, keptTree, iterTree);
     const kept = decision === 'green' || (decision === 'yellow' && loc.net < 0);
 
     let best = run.comparisonReference;
@@ -655,7 +817,7 @@ async function iterate(ctx, args) {
     // 3. Revert (after the iteration's diff is on the ref) or move the pointers (after the commit exists).
     let reverted = null; let revertCommit = null;
     if (!kept) {
-      reverted = await revertMutable(root, repo, run.lastKeptCommit, run);
+      reverted = await revertMutable(wroot, repo, run.lastKeptCommit, run);
       const revMsg = message(
         `research(${slug}): revert iter ${N} to ${run.lastKeptCommit.slice(0, 12)}`,
         `Restored ${reverted.restored.length} path(s), deleted ${reverted.deleted.length} file(s) created by the iteration.`,
@@ -683,7 +845,7 @@ async function iterate(ctx, args) {
     Object.assign(run, deriveCounters(run.iterations));
 
     // Defensive scope check (protocol C.3 step 4): report, do not clean.
-    const dirty = await dirtyPaths(root, repo);
+    const dirty = await dirtyPaths(wroot, repo);
     const pre = new Set(run.preLoopDirty);
     const isMut = mutableMatcher(run.mutable);
     const outOfScope = dirty.filter((p) => !pre.has(p) && !isMut(p) && !(p === run.project || p.startsWith(`${run.project}/`)) && !p.startsWith('.shards/'));
@@ -701,7 +863,8 @@ function summary(run, { source = 'state', leaseActive = null } = {}) {
   for (const x of its) { counts[x.decision] = (counts[x.decision] || 0) + 1; if (x.kept) counts.kept++; else counts.reverted++; }
   const elapsedMin = run.started_at ? (Date.now() - Date.parse(run.started_at)) / 60000 : null;
   return {
-    run_id: run.run_id, project: run.project, ref: run.ref, status: run.status, source,
+    run_id: run.run_id, ...(run.branch ? { branch: run.branch, worktree: run.worktree ? run.worktree.path : null } : {}),
+    project: run.project, ref: run.ref, status: run.status, source,
     iterations: its.length, decisions: counts,
     baseline: run.baseline, noise: run.noise, epsilon_abs: run.epsilon_abs,
     comparisonReference: run.comparisonReference, bestSoFar: run.bestSoFar,
@@ -794,7 +957,7 @@ async function rebuildFromRef(root, ref) {
       hypothesis: t['AR-Hypothesis'] || '', source: t['AR-Hypothesis-Source'] || null, eval_type: t['AR-Eval'] || 'full',
       loc: loc ? { added: Number(loc[1]), deleted: Number(loc[2]), net: Number(loc[3]) } : null,
       rebaselined: t['AR-Rebaseline'] === 'true' || undefined, bestSoFar: num(t['AR-Best']), commit: sha, revert_commit: null,
-      log: `${run.project}/experiments/iter_${n}.log`,
+      log: `${logDirOf(run)}/iter_${n}.log`,
     };
     run.iterations.push(e);
     if (kept) { run.lastKeptCommit = sha; if (e.decision === 'green') run.lastGreenCommit = sha; }
@@ -809,52 +972,130 @@ async function rebuildFromRef(root, ref) {
   return run;
 }
 
-async function findRef(root, runId) {
-  const refs = await listRefs(root);
-  if (!runId) return refs[0] || null;
-  return refs.find((r) => r.endsWith(`/${runId}`)) || null;
+// Research refs of a run id: [slug, run] (solo) or [slug, run, branch] under refs/shards/research/.
+function refParts(ref) { return ref.slice(REF_ROOT.length + 1).split('/'); }
+async function findRefs(root, runId, branch) {
+  return (await listRefs(root)).filter((r) => {
+    const p = refParts(r);
+    if (runId && p[1] !== runId) return false;
+    if (branch) return p[2] === branch;
+    return true;
+  });
+}
+async function findRef(root, runId, branch) {
+  const refs = await findRefs(root, runId, branch);
+  return refs[0] || null;
 }
 
-// Resolve a run: session state first (by id, else the active run, else the newest), then the research ref.
-async function resolveRun(ctx, runId) {
+// Resolve ONE run: session state first (by id/branch, else the active run, else the newest), then the research
+// ref. Several branch runs matching and no branch given is ambiguous.
+async function resolveRun(ctx, runId, branch) {
   const s = readStore(ctx.state);
-  if (runId && s.runs[runId]) return { run: s.runs[runId], source: 'state' };
-  if (!runId) {
+  if (runId && s.runs[runKey(runId, branch)]) return { run: s.runs[runKey(runId, branch)], source: 'state' };
+  if (runId && !branch) {
+    const c = Object.values(s.runs).filter((r) => r.run_id === runId);
+    if (c.length > 1) throw new Error(`AR run ${runId} has ${c.length} branch runs (${c.map((r) => r.branch).join(', ')}); pass branch`);
+    if (c.length === 1) return { run: c[0], source: 'state' };
+  }
+  if (!runId && branch) {
+    const c = Object.values(s.runs).filter((r) => r.branch === branch).sort((x, y) => String(y.started_at).localeCompare(String(x.started_at)));
+    if (c.length) return { run: c[0], source: 'state' };
+  }
+  if (!runId && !branch) {
     const r = activeRun(ctx.state) || latestRun(ctx.state);
     if (r) return { run: r, source: 'state' };
   }
-  const ref = await findRef(ctx.root, runId);
-  if (!ref) return { run: null, source: null };
-  return { run: await rebuildFromRef(ctx.root, ref), source: 'ref' };
+  const refs = await findRefs(ctx.root, runId, branch);
+  if (!refs.length) return { run: null, source: null };
+  if (runId && !branch && refs.length > 1 && refs.every((r) => refParts(r)[1] === runId)) throw new Error(`AR run ${runId} has ${refs.length} branch refs; pass branch`);
+  return { run: await rebuildFromRef(ctx.root, refs[0]), source: 'ref' };
+}
+
+// Every branch run of a run id (state first, then refs not in state), for arbitration.
+async function branchRuns(ctx, runId) {
+  const s = readStore(ctx.state);
+  const out = Object.values(s.runs).filter((r) => r.run_id === runId && r.branch).map((run) => ({ run, source: 'state' }));
+  const have = new Set(out.map((x) => x.run.ref));
+  for (const ref of await findRefs(ctx.root, runId)) {
+    if (have.has(ref) || refParts(ref).length < 3) continue;
+    out.push({ run: await rebuildFromRef(ctx.root, ref), source: 'ref' });
+  }
+  return out.sort((a, b) => String(a.run.branch).localeCompare(String(b.run.branch)));
+}
+
+const leaseCovers = (lease, run) => !!(lease && lease.ar.run_id === run.run_id && (!run.branch || (lease.ar.branches || {})[run.branch]));
+
+// Side-by-side view of a fan-out run's branches (arbitration reads this, plus the refs' trailers).
+function compareBranches(list) {
+  const rows = list.map(({ run, source }) => summary(run, { source }));
+  const dir = list.length && list[0].run.eval ? list[0].run.eval.direction : 'maximize';
+  const sgn = dir === 'minimize' ? -1 : 1;
+  const score = (r) => (r.bestSoFar === null || r.bestSoFar === undefined ? -Infinity : sgn * r.bestSoFar);
+  const ranked = rows.slice().sort((a, b) => score(b) - score(a));
+  return {
+    direction: dir,
+    leaderboard: ranked.map((r, i) => ({
+      rank: i + 1, branch: r.branch, bestSoFar: r.bestSoFar, baseline: r.baseline,
+      gain: r.bestSoFar !== null && r.baseline !== null && r.bestSoFar !== undefined ? sgn * (r.bestSoFar - r.baseline) : null,
+      epsilon_abs: r.epsilon_abs, iterations: r.iterations, decisions: r.decisions, status: r.status, stop_reason: r.stop_reason,
+      ref: r.ref, lastKeptCommit: r.lastKeptCommit, deferred: r.deferred.length,
+    })),
+    branches: rows,
+  };
 }
 
 async function status(ctx, args = {}) {
   const session = { root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state };
-  const { run, source } = await resolveRun(ctx, args.run_id);
+  if (!args.branch) {
+    // A branched run id (or, with no run_id, the active run being a branch run): show all its branches.
+    let rid = args.run_id;
+    if (!rid) { const r = activeRun(ctx.state) || latestRun(ctx.state); if (r && r.branch) rid = r.run_id; }
+    if (rid) {
+      const list = await branchRuns(ctx, rid);
+      if (list.length > 1 || (list.length === 1 && !args.run_id)) {
+        if (args.resume) throw new Error(`ar_status: run ${rid} has ${list.length} branch runs; pass branch to resume one`);
+        const lease = L.getActiveArLease(session);
+        const cmp = compareBranches(list);
+        for (const b of cmp.branches) b.lease_active = leaseCovers(lease, { run_id: rid, branch: b.branch });
+        return { run_id: rid, project: list[0].run.project, branched: true, ...cmp };
+      }
+    }
+  }
+  const { run, source } = await resolveRun(ctx, args.run_id, args.branch);
   if (!run) return null;
   let lease = L.getActiveArLease(session);
-  let leaseActive = !!(lease && lease.ar.run_id === run.run_id);
-  let resumed = false;
+  let leaseActive = leaseCovers(lease, run);
+  let resumed = false; let worktreeRecreated = false;
   if (args.resume && run.status !== 'ended') {
-    const cur = activeRun(ctx.state);
-    if (cur && cur.run_id !== run.run_id && cur.status !== 'ended') throw new Error(`ar_status: run ${cur.run_id} is active in this session; end it before resuming ${run.run_id}`);
-    if (lease && !leaseActive) throw new Error(`ar_status: AR lease ${lease.id} (run ${lease.ar.run_id}) is active; end that run first`);
+    const key = keyOf(run);
+    const clash = liveRuns(ctx.state).find((r) => keyOf(r) !== key && !(run.branch && r.branch && r.run_id === run.run_id));
+    if (clash) throw new Error(`ar_status: run ${keyOf(clash)} is active in this session; end it before resuming ${key}`);
+    if (lease && lease.ar.run_id !== run.run_id) throw new Error(`ar_status: AR lease ${lease.id} (run ${lease.ar.run_id}) is active; end that run first`);
+    if (run.worktree) worktreeRecreated = await ensureWorktree(ctx.root, run);
     if (!leaseActive) {
-      lease = await L.openArLease(session, { runId: run.run_id, project: run.project, mutable: run.mutable, immutable: run.immutable, meta: { ref: run.ref, resumed: true } });
+      const workRel = run.worktree ? path.relative(ctx.root, workRoot(ctx.root, run)).split(path.sep).join('/') : undefined;
+      lease = await L.openArLease(session, { runId: run.run_id, project: run.project, mutable: run.mutable, immutable: run.immutable, meta: { ref: run.ref, resumed: true }, ...(run.branch ? { branch: run.branch, workRoot: workRel } : {}) });
       run.lease_id = lease.id; leaseActive = true;
     }
-    await saveRun(ctx.state, run, { active: run.run_id });
+    await saveRun(ctx.state, run, { active: key });
     resumed = true;
   }
-  return { ...summary(run, { source, leaseActive }), resumed };
+  return { ...summary(run, { source, leaseActive }), resumed, ...(worktreeRecreated ? { worktree_recreated: true } : {}) };
 }
 
 async function end(ctx, args) {
   const session = { root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state };
-  const { run: run0, source } = await resolveRun(ctx, args.run_id);
-  if (!run0) throw new Error(`ar_end: no AR run${args.run_id ? ` ${args.run_id}` : ''} found`);
-  if (run0.status === 'ended') throw new Error(`ar_end: run ${run0.run_id} already ended (${run0.stop_reason})`);
-  return withRunLock(run0.run_id, async () => {
+  let picked = null;
+  if (!args.run_id && !args.branch) {
+    const live = liveRuns(ctx.state).filter((r) => r.branch);
+    if (live.length > 1) throw new Error(`ar_end: ${live.length} AR branch runs are active (${live.map(keyOf).join(', ')}); pass branch`);
+    if (live.length === 1) picked = { run: live[0], source: 'state' };
+  }
+  const { run: run0, source } = picked || await resolveRun(ctx, args.run_id, args.branch);
+  if (!run0) throw new Error(`ar_end: no AR run${args.run_id ? ` ${args.run_id}` : ''}${args.branch ? ` branch ${args.branch}` : ''} found`);
+  const key = keyOf(run0);
+  if (run0.status === 'ended') throw new Error(`ar_end: run ${key} already ended (${run0.stop_reason})`);
+  return withRunLock(key, async () => {
     const run = JSON.parse(JSON.stringify(run0));
     const tip = await refTip(ctx.root, run.ref);
     if (!tip) throw new Error(`ar_end: research ref ${run.ref} is missing`);
@@ -862,7 +1103,7 @@ async function end(ctx, args) {
     const N = (run.iterations || []).length;
     const tree = (await G.gitOk(ctx.root, ['rev-parse', `${tip}^{tree}`])).trim();
     const msg = message(
-      `research(${slugOf(run.project)}): end ${run.run_id} (${reason})`,
+      `research(${slugOf(run.project)}): end ${key} (${reason})`,
       `${N} iteration(s); best ${run.eval.name} ${fmt(run.bestSoFar)} (baseline ${fmt(run.baseline)}). Kept state: ${run.lastKeptCommit}.${pendingDeferred(run).length ? ` ${pendingDeferred(run).length} deferred decision(s) need a human at the Phase 3 gate.` : ''}`,
       trailers(run, { iter: N, decision: 'stop', before: run.baseline, after: run.bestSoFar, source: 'runtime', best: run.bestSoFar, stop: reason }),
     );
@@ -870,10 +1111,15 @@ async function end(ctx, args) {
     await advanceRef(ctx.root, run.ref, sha, tip);
     run.tip = sha;
     run.stop_reason = reason; run.converged = true; run.status = 'ended'; run.ended_at = iso();
-    const closed = await L.closeArLease(session, run.run_id);
+    const closed = await L.closeArLease(session, run.run_id, run.branch ? { branch: run.branch } : {});
+    let worktreeRemoved = false;
+    if (run.worktree) {
+      if (args.keep_worktree) run.worktree.kept = true;
+      else { worktreeRemoved = await removeWorktree(ctx.root, run); run.worktree.removed = true; }
+    }
     const cur = readStore(ctx.state);
-    await saveRun(ctx.state, run, { active: cur.active === run.run_id ? null : cur.active });
-    return { run, closed, source };
+    await saveRun(ctx.state, run, { active: cur.active === key ? null : cur.active });
+    return { run, closed: closed && closed.status === 'closed' ? closed : null, lease: closed, source, worktreeRemoved };
   });
 }
 
@@ -902,17 +1148,19 @@ function pendingDeferred(run) { return (run.deferred || []).filter((d) => d.stat
 // and moves lastKeptCommit / lastGreenCommit / comparisonReference there; the loop then continues (N+1).
 async function defer(ctx, args) {
   const { root, state } = ctx;
-  const { run: run0 } = await resolveRun(ctx, args.run_id);
-  if (!run0) throw new Error(`ar_defer: no AR run${args.run_id ? ` ${args.run_id}` : ''} found`);
-  if (run0.status === 'ended') throw new Error(`ar_defer: run ${run0.run_id} already ended (${run0.stop_reason})`);
-  if (!readStore(state).runs[run0.run_id]) throw new Error(`ar_defer: run ${run0.run_id} is not in this session; call ar_status with resume=true first`);
+  const run0 = selectLive(state, args, 'ar_defer') || (await resolveRun(ctx, args.run_id, args.branch)).run;
+  if (!run0) throw new Error(`ar_defer: no AR run${args.run_id ? ` ${args.run_id}` : ''}${args.branch ? ` branch ${args.branch}` : ''} found`);
+  const key = keyOf(run0);
+  if (run0.status === 'ended') throw new Error(`ar_defer: run ${key} already ended (${run0.stop_reason})`);
+  if (!readStore(state).runs[key]) throw new Error(`ar_defer: run ${key} is not in this session; call ar_status with resume=true first`);
   const kind = args.kind;
   if (!DEFER_KINDS.includes(kind)) throw new Error(`ar_defer: kind must be one of ${DEFER_KINDS.join(', ')}`);
   const detail = oneLine(args.detail, 1000);
   if (!detail) throw new Error('ar_defer: detail is required (what the human must decide, and why)');
-  return withRunLock(run0.run_id, async () => {
+  return withRunLock(key, async () => {
     const run = JSON.parse(JSON.stringify(run0));
-    const repo = await repoInfo(root);
+    const wroot = workRoot(root, run);
+    const repo = await repoInfo(wroot);
     const tip = await refTip(root, run.ref);
     if (!tip) throw new Error(`ar_defer: research ref ${run.ref} is missing`);
     if (run.tip && tip !== run.tip) throw new Error(`ar_defer: research ref ${run.ref} moved outside the runtime; run ar_status`);
@@ -923,7 +1171,7 @@ async function defer(ctx, args) {
       const M = args.retro_to_iteration;
       if (!Number.isInteger(M) || M < 1 || M > N) throw new Error(`ar_defer: retro_revert needs retro_to_iteration between 1 and ${N} (the first invalid iteration)`);
       const target = keptBefore(run, M);
-      const reverted = await revertMutable(root, repo, target.commit, run);
+      const reverted = await revertMutable(wroot, repo, target.commit, run);
       tree = (await G.gitOk(root, ['rev-parse', `${target.commit}^{tree}`])).trim();
       for (const x of run.iterations) if (x.n >= M && x.kept) x.retroInvalidated = true;
       run.lastKeptCommit = target.commit;
@@ -955,12 +1203,14 @@ function brief(state) {
   try {
     const r = activeRun(state) || latestRun(state);
     if (!r) return null;
-    return { run_id: r.run_id, project: r.project, ref: r.ref, status: r.status, iterations: (r.iterations || []).length, budget: r.budget, bestSoFar: r.bestSoFar, baseline: r.baseline, stop_reason: r.stop_reason || null, deferred: pendingDeferred(r).length };
+    const branches = r.branch ? liveRuns(state).filter((x) => x.run_id === r.run_id && x.branch).map((x) => x.branch) : undefined;
+    return { run_id: r.run_id, ...(r.branch ? { branch: r.branch, branches } : {}), project: r.project, ref: r.ref, status: r.status, iterations: (r.iterations || []).length, budget: r.budget, bestSoFar: r.bestSoFar, baseline: r.baseline, stop_reason: r.stop_reason || null, deferred: pendingDeferred(r).length };
   } catch (_) { return null; }
 }
 
 module.exports = {
-  start, iterate, status, end, defer, brief, rebuildFromRef, resolveRun, findRef, refTip, summary, pendingDeferred, DEFER_KINDS,
+  start, iterate, status, end, defer, brief, rebuildFromRef, resolveRun, findRef, findRefs, refTip, summary, pendingDeferred, DEFER_KINDS,
+  branchRuns, compareBranches, runKey, keyOf, workRoot, WORKTREES, MAX_BRANCHES,
   // exported for tests
   parseMetric, classify, stopReason, deriveCounters, runCommand, pinImmutable, slugOf, REF_ROOT, STATE, DEFAULTS,
 };

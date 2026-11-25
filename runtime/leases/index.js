@@ -283,10 +283,10 @@ function isPathAllowed(session, agentId, filePath, now = Date.now()) {
 }
 
 // ---------- Autonomous-research (AR) lease (issue #91, bug 1) ----------
-// A session-wide scope lease for a solo [AR] run. It holds no slices (so getLeasedPaths never excludes the
+// A session-wide scope lease for an [AR] run (solo, or the branch runs of one run id; see openArLease). It holds no slices (so getLeasedPaths never excludes the
 // mutable code from gate commits and no worker can bind to it). While it is active, hooks/lib/enforce.js denies
 // writes from every caller of the session outside `mutable` (globs) + `allow` (directory prefixes; the AR
-// project dir is always included) + `.shards/`, and denies writes inside `immutable` (eval harness, tests,
+// project dir is always included) + `.shards/` (not `.shards/worktrees/`), and denies writes inside `immutable` (eval harness, tests,
 // data) unconditionally. It also turns on the destructive-git guard. Stored in the same `leases` state as
 // {owner: 'ar', worker_type: 'ar', slices: [], ar: {run_id, project, mutable, immutable, allow}}.
 const AR_OWNER = 'ar';
@@ -327,7 +327,20 @@ function normList(list, what) {
   return [...new Set(list.map((p) => normalizeRel(String(p).replace(/\/+$/, ''))))];
 }
 
-async function openArLease(session, { runId, project, mutable, immutable, allow, ttl_ms, meta } = {}) {
+// Branch runs (issue #91, H4): concurrent AR branch runs of one run id share ONE lease. Each branch has its own git
+// worktree (`workRoot`, root-relative); its mutable and immutable entries are stored prefixed with that path, so a
+// branch's writes are scoped to its own worktree. The lease's top-level `mutable` is the union of the branches'
+// prefixed mutable entries (the main tree's mutable paths are NOT writable during a worktree run) and `immutable`
+// is the main-tree immutable list plus every branch's prefixed immutable list.
+const BRANCH_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+function recomputeBranchScope(ar) {
+  const bs = Object.values(ar.branches || {});
+  ar.mutable = [...new Set(bs.flatMap((b) => b.mutable))];
+  ar.immutable = [...new Set([...(ar.base_immutable || []), ...bs.flatMap((b) => b.immutable)])];
+  return ar;
+}
+
+async function openArLease(session, { runId, project, mutable, immutable, allow, ttl_ms, meta, branch, workRoot } = {}) {
   if (typeof runId !== 'string' || !runId.trim()) throw new Error('openArLease: runId required');
   const proj = project === undefined || project === null || project === '' ? null : normalizeRel(String(project).replace(/\/+$/, ''));
   const mut = normList(mutable, 'mutable');
@@ -337,29 +350,55 @@ async function openArLease(session, { runId, project, mutable, immutable, allow,
   if (proj && !alw.includes(proj)) alw.push(proj);
   const ttl = ttl_ms === undefined ? AR_DEFAULT_TTL_MS : ttl_ms;
   if (!Number.isFinite(ttl) || ttl <= 0) throw new Error('ttl_ms must be a positive number');
+  let entry = null;
+  if (branch !== undefined && branch !== null) {
+    if (typeof branch !== 'string' || !BRANCH_RE.test(branch) || branch.includes('..')) throw new Error(`openArLease: invalid branch ${JSON.stringify(branch)}`);
+    const wr = normalizeRel(String(workRoot || '').replace(/\/+$/, '') || '.');
+    entry = { branch, root: wr, mutable: mut.map((e) => `${wr}/${e}`), immutable: imm.map((e) => `${wr}/${e}`) };
+  }
   const t = Date.now();
-  const lease = {
-    id: `lease-ar-${crypto.randomBytes(4).toString('hex')}`, session: session.sessionKey, owner: AR_OWNER, worker_type: AR_OWNER,
-    slices: [], ar: { run_id: runId, project: proj, mutable: mut, immutable: imm, allow: alw },
-    meta: meta || {}, status: 'active', opened_at: iso(t), heartbeat_at: iso(t), expires_at: iso(t + ttl), ttl_ms: ttl,
-  };
+  let out = null;
   await storeOf(session).update('leases', (cur) => {
     cur.leases = leasesOf(cur);
     const other = Object.values(cur.leases).find((l) => l.owner === AR_OWNER && isLive(l, t));
-    if (other) throw new Error(`openArLease: AR lease ${other.id} (run ${other.ar && other.ar.run_id}) is already active in this session; close it first`);
-    cur.leases[lease.id] = lease;
+    if (other) {
+      const ar = other.ar || {};
+      if (!entry || ar.run_id !== runId || !ar.branches) throw new Error(`openArLease: AR lease ${other.id} (run ${ar.run_id}) is already active in this session; close it first`);
+      if (ar.branches[branch]) throw new Error(`openArLease: branch ${branch} of AR run ${runId} already holds lease ${other.id}`);
+      ar.branches[branch] = entry;
+      ar.base_immutable = [...new Set([...(ar.base_immutable || []), ...imm])];
+      ar.allow = [...new Set([...(ar.allow || []), ...alw])];
+      recomputeBranchScope(ar);
+      other.heartbeat_at = iso(t); other.expires_at = iso(t + other.ttl_ms);
+      out = other;
+      return cur;
+    }
+    const ar = { run_id: runId, project: proj, mutable: mut, immutable: imm, allow: alw };
+    if (entry) { ar.branches = { [branch]: entry }; ar.base_immutable = imm; recomputeBranchScope(ar); }
+    out = {
+      id: `lease-ar-${crypto.randomBytes(4).toString('hex')}`, session: session.sessionKey, owner: AR_OWNER, worker_type: AR_OWNER,
+      slices: [], ar, meta: meta || {}, status: 'active', opened_at: iso(t), heartbeat_at: iso(t), expires_at: iso(t + ttl), ttl_ms: ttl,
+    };
+    cur.leases[out.id] = out;
     return cur;
   });
-  return lease;
+  return out;
 }
 
-// Close by lease id or run id. Returns the closed lease, or null when nothing matched (idempotent).
-async function closeArLease(session, idOrRunId) {
+// Close by lease id or run id. With `branch`, only that branch leaves the lease; the lease closes when no branch
+// is left. Returns the lease (closed, or still active for the remaining branches), or null when nothing matched.
+async function closeArLease(session, idOrRunId, { branch } = {}) {
   let out = null;
   await storeOf(session).update('leases', (cur) => {
     for (const l of Object.values(leasesOf(cur))) {
       if (l.owner !== AR_OWNER || (idOrRunId !== undefined && l.id !== idOrRunId && !(l.ar && l.ar.run_id === idOrRunId))) continue;
       if (l.status !== 'active') continue;
+      if (branch && l.ar && l.ar.branches) {
+        if (!l.ar.branches[branch]) continue;
+        delete l.ar.branches[branch];
+        recomputeBranchScope(l.ar);
+        if (Object.keys(l.ar.branches).length) { out = l; continue; }
+      }
       l.status = 'closed'; l.closed_at = iso(Date.now()); out = l;
     }
     return cur;
@@ -400,7 +439,9 @@ function checkArWrite(session, lease, filePath) {
     if (entryCovers(e, rel)) return { allowed: false, rel, reason: `${rel} is immutable for AR run ${ar.run_id} (matches ${e}); the eval harness, tests and data must not change during the run` };
     if (entryUnder(e, rel)) return { allowed: false, rel, reason: `${rel} contains immutable path ${e} of AR run ${ar.run_id}` };
   }
-  if (inside(rel, '.shards')) return { allowed: true, rel, reason: '.shards state' };
+  // .shards/ is runtime state, except .shards/worktrees/ (AR branch worktrees): those writes must match a branch's
+  // own (prefixed) mutable scope below, never a blanket .shards allowance.
+  if (inside(rel, '.shards') && !inside(rel, '.shards/worktrees')) return { allowed: true, rel, reason: '.shards state' };
   for (const e of ar.allow || []) if (entryCovers(e, rel)) return { allowed: true, rel, reason: `allowed (${e})` };
   for (const e of ar.mutable || []) if (entryCovers(e, rel)) return { allowed: true, rel, reason: `mutable (${e})` };
   return { allowed: false, rel, reason: `${rel} is outside the mutable scope of AR run ${ar.run_id} (mutable: ${(ar.mutable || []).join(', ')}${(ar.allow || []).length ? `; also allowed: ${ar.allow.join(', ')}` : ''})` };

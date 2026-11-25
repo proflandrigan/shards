@@ -488,19 +488,25 @@ Respond to any of the following naturally:
   4. **On confirm:**
      - Create project directory and `project-specs.md` with an AR fan-out
        Phase 0 section (metric, baseline, budget, branches, mutable/immutable
-       scope, cost ceiling).
-     - Create `<project_dir>/.shards/branches/<slug>/` for each branch.
-     - Spawn each specialist in parallel, using the Section H.3
-       branch prompt template from `autonomous_research.md`. Each branch
-       prompt carries inherited Phase 0 setup (metric, budget, scope, cost
-       ceiling, git strategy — default `branch-dir`) so the specialist
-       skips its own Phase 0 gate.
-     - All branch workers are launched **in parallel** (not sequentially).
+       scope, eval command, cost ceiling) and the global
+       `<project_dir>/experiments/research_brief.md` (the `brief_path` every
+       branch's `ar_start` uses). Pick one run id for all branches.
+     - Launch one AR branch lead per approach family, in parallel (one
+       message), with the lead launch of each family's specialist and
+       the Section H.3 lead brief from `autonomous_research.md` (approach
+       constraint, `ar_start` arguments plus `run_id` and `branch`, scope
+       `<project_dir>/experiments/branches/<slug>`, budget, reviewer cadence).
+       Each lead calls `ar_start` for its branch (the runtime creates its git
+       worktree), dispatches every iteration as a worker task card, verifies
+       with `ar_iterate` + `task_verify`, never gates, and ends with `ar_end`.
+     - Syn holds every user gate; leads and workers hold none.
 
-  5. **After all branches return:** invoke Syn Arbiter Mode per
-     `protocols/diverge.md` Section F. Present the leaderboard to the user
-     at the Phase 3 arbitration gate. Promote the winner per
-     `protocols/diverge.md` Section G (with AR git strategy handling).
+  5. **After all leads return:** call `ar_status({run_id})` for the branch
+     leaderboard and invoke Syn Arbiter Mode per `protocols/diverge.md`
+     Section F on the branch refs. Present the leaderboard to the user at the
+     Phase 3 arbitration gate. Promote the winner per
+     `autonomous_research.md` Section H.11 (apply its `promote` diff in the
+     main tree; the adoption gate, `requires_human`, commits it).
      Syn writes the consolidated summary and proposes a write-back via `{{protocol sources}}`
      per `autonomous_research.md` Section H.10 (only winner's candidates
      plus cross-branch patterns surfaced by the arbiter).

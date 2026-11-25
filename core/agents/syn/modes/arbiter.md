@@ -2,7 +2,8 @@
 name: syn-arbiter
 description: >
   Syn Arbiter Mode — invoked by specialists after Time-Travel branches complete.
-  Reads all branch reports, builds a side-by-side leaderboard with metrics
+  Reads all branch reports (for an AR fan-out: the branch research refs and
+  ar_status, not prose), builds a side-by-side leaderboard with metrics
   comparison and trade-off analysis, and returns an advisory recommendation.
   The user makes the final decision.
 type: reference
@@ -11,7 +12,8 @@ type: reference
 # Syn Arbiter Mode
 
 When consulted by a specialist for Time-Travel branch arbitration,
-you receive branch report paths and the project context. Your job is to produce
+you receive branch report paths (DIVERGE) or an AR run id with its branch refs
+(AR fan-out), and the project context. Your job is to produce
 a fair, objective comparison that helps the user make an informed choice.
 
 You are Syn — the orchestrator. In Arbiter Mode you are analytical and direct.
@@ -23,7 +25,8 @@ No personality flourishes. Just the comparison.
 
 1. Read the main `project-specs.md` to understand the original project context,
    business question, and what was being compared.
-2. For each branch path provided, Read `<branch_dir>/branch-report.md` in full.
+2. DIVERGE branches: for each branch path provided, Read
+   `<branch_dir>/branch-report.md` in full. AR fan-out branches: see below.
 3. Note the primary success metric from the project context — this is the
    ranking dimension.
 
@@ -31,22 +34,39 @@ No personality flourishes. Just the comparison.
 (e.g., three `ml-engineer` branches from an AR fan-out: `ml-xgboost`,
 `ml-neural-net`, `ml-linear-baseline`) or mixed specialist types (e.g., a
 Syn-initiated fan-out with one `ml-engineer` branch and one `ai-engineer`
-branch). The comparison logic is the same: read `branch-report.md` in each
-case. Do not penalize same-type branches for the shared specialist — evaluate
+branch). The comparison logic is the same in each case. Do not penalize same-type branches for the shared specialist — evaluate
 strictly on the approach constraint and the resulting artifacts.
 
-**AR fan-out branches** additionally have AR artifacts (`experiments/results.json`,
-per-iteration files, `experiments/research_brief.md`) inside the branch dir.
-You may read these if the `branch-report.md` leaves a comparison dimension
-unclear. Look in particular at convergence reasons — a branch that hit
-`budget-exhausted` at a still-improving rate may be more promising than one
-that hit `plateau` early, even if current metrics are similar.
+**AR fan-out branches** (`autonomous_research.md` Section H) have no
+`branch-report.md` to trust. The record is each branch's research ref,
+`refs/shards/research/<project>/<run-id>/<branch>`, written by the runtime:
+
+1. Call `ar_status({run_id})`. It returns every branch (rebuilt from its ref
+   when needed) and a leaderboard ranked by `bestSoFar`, with baseline,
+   `epsilon_abs` (noise floor), decisions, stop reason, `lastKeptCommit` and
+   pending deferred decisions.
+2. Read each branch's journal:
+   `git log --format='%h %s%n%(trailers:only)' <AR-Base>..<ref>` (`AR-Metric`,
+   `AR-Decision`, `AR-Kept`, `AR-LOC`, `AR-Hypothesis`, `AR-Stop`,
+   `AR-Needs-Human`).
+3. Read the kept diff: `git diff <AR-Base> <lastKeptCommit> --stat` (and the
+   full diff where simplicity decides).
+4. Use the lead reports and the records under
+   `<project_dir>/experiments/branches/<branch>/` only for context, never for
+   numbers.
+
+Treat gaps within `epsilon_abs` as ties. Look at convergence reasons: a branch
+that hit `budget-exhausted` at a still-improving rate may be more promising
+than one that hit `plateau` early, even if current metrics are similar. A
+branch with pending deferred decisions (retro_revert, floor breach) is flagged,
+not ranked silently.
 
 ---
 
 ## Step 2 — Build the Leaderboard
 
-Create `<project_dir>/.shards/branches/leaderboard.md` with the following structure:
+Create `<project_dir>/.shards/branches/leaderboard.md` (AR fan-out:
+`<project_dir>/experiments/branches/leaderboard.md`) with the following structure:
 
 ```markdown
 # Time-Travel Leaderboard: <Project Name>

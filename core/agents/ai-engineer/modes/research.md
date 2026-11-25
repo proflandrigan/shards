@@ -140,7 +140,7 @@ warning shows.
 
 **Fan-out sessions.** Emit one panel per branch, using the branch slug:
 
-{{artifact.emit type=experiment-dashboard path=shards/<project_name>/.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/experiments/branches/<branch-slug>/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
 
 After arbitration/promotion, re-emit the main `panel_id` with the converged
 `results.json`.
@@ -209,9 +209,12 @@ Update `project-specs.md` with a new `## Autonomous Research` section.
 If fan-out is warranted, propose DIVERGE per `protocols/diverge.md` Section B
 with AR gate ID namespace.
 
-Remember: fan-out multiplies cost by K. For overnight preset especially, do
-the math on the cost ceiling × K before proposing. If the math says no, the
-answer is no.
+Remember: fan-out multiplies cost by K. Each branch is a lead plus one worker
+per iteration, and every iteration's eval runs twice (the worker's acceptance
+check, then `ar_iterate`'s own run), unless the brief names a cheaper smoke
+command for the cards. For overnight preset especially, do the math on the cost
+ceiling × K (× 2 evals per iteration) before proposing. If the math says no,
+the answer is no.
 
 ### Behavioral exception announcement
 
@@ -253,6 +256,21 @@ by the user, unattended or not: it is requested with `requires_human` (§A.6).
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=execute phase=1 id=ai-engineer-research-phase-1}}
+
+### If fan-out confirmed
+
+After the Phase 1 gate is confirmed, launch one AR branch lead per approach
+family, in parallel, all with the same run id and each with its own `branch`
+slug (`autonomous_research.md` Section H.3):
+
+{{lead ai-engineer task="AR branch lead for approach family <branch-slug> of AR run <run-id>"}}
+
+Each lead brief carries the approach constraint, the `ar_start` arguments from
+the brief plus `run_id` and `branch`, the scope
+`<project_dir>/experiments/branches/<branch-slug>`, the budget and the reviewer
+cadence. Each lead runs its loop in its own git worktree and dispatches every
+iteration as a worker task card; leads write no code and never gate. You hold
+every user gate. Wait for every lead to return, then go to Phase 3.
 
 ---
 
@@ -362,8 +380,17 @@ Follow Section I of `autonomous_research.md`. Include in the recommendations:
 
 ### Fan-out specific
 
-If fan-out: arbitrate before writing the consolidated summary. Standard
-`protocols/diverge.md` flow.
+If fan-out, before the summary (`autonomous_research.md` Sections H.9 to H.11):
+
+a. Wait for every lead; each has ended its branch with `ar_end`.
+b. Call `ar_status({run_id})` for the branch leaderboard and invoke Syn Arbiter
+   with the run id and the branch refs (`protocols/diverge.md` Section F); it
+   compares refs and trailers, not prose reports.
+c. Present the leaderboard; the user selects the winner at the human gate.
+d. Promote the winner: apply the `promote` diff its `ar_end` returned in the
+   main tree; the Phase 3 adoption gate commits it.
+e. Propose write-backs only after promotion (winner plus cross-branch patterns).
+f. The consolidated `research_summary.md` covers all branches.
 
 ### Phase 3 gate
 

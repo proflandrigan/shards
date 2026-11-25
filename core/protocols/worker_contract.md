@@ -10,7 +10,7 @@ You are a worker. A lead gave you one task card. Do that task, prove it with the
 
 ## Input
 
-- The task card: `{id, goal, plan_ref, inputs, owned_paths, acceptance{command, expected}, worker, size}`.
+- The task card: `{id, goal, plan_ref, inputs, owned_paths, acceptance{command, expected, cwd?}, worker, size, ar?}`. Run the acceptance command from `acceptance.cwd` when the card sets it (default: the project root).
 - Only the spec sections that `plan_ref` points at. Do not load the rest of the project record.
 
 ## Rules
@@ -50,9 +50,17 @@ Return exactly one JSON object that validates against `core/schema/task-result.s
 
 The lead re-verifies independently and never accepts a result on your word.
 
+## AR iteration cards
+
+A card with an `ar` field is one autonomous-research iteration (`autonomous_research.md` Section H.3):
+
+- Implement exactly the hypothesis in `goal` (and `ar.hypothesis`) inside `owned_paths`, which lie in the branch's git worktree (`.shards/worktrees/<run>/<branch>/...`). Never edit the eval harness, tests or data (they are immutable; a write is denied, a change through a symlink is a tamper).
+- Run `acceptance.command` from `acceptance.cwd` (the worktree). Report its exit code and excerpt, and optionally `metric: {name, value}` with the value you saw.
+- Do not run git, keep or revert anything, or judge the metric. The lead's `ar_iterate` re-runs the eval and decides; a regression is a normal outcome, not your failure. Return `failed` only when you could not implement the hypothesis.
+
 ## Fan-out workers
 
-Workers spawned by fan-out (swarm, diverge, autonomous research Section H) follow the same rules above (write only inside owned paths, no gates, no delegation, no user conversation) but use a different contract from `tasks.yaml` workers:
+Workers spawned by fan-out (swarm, diverge; AR fan-out uses branch leads and task cards instead, see above) follow the same rules above (write only inside owned paths, no gates, no delegation, no user conversation) but use a different contract from `tasks.yaml` workers:
 
 - **Claim first.** Your first call is `fanout_claim` with the `lease_id` and `slice_id` from your card. It returns the slice contract (`owned_paths`, `acceptance`, `rules`). Write only inside the lease's `owned_paths`.
 - **Do not call `task_report`.** Return one JSON object, with no other text, which the lead passes to `fanout_collect`:

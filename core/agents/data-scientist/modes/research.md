@@ -109,7 +109,7 @@ during Phase 3 summary writing; `"complete"` after Phase 3 finalization.
 `panel_id` (each branch's `results.json.branchContext` identifies it). After
 arbitration and promotion, emit a final converged panel for the main project file:
 
-{{artifact.emit type=experiment-dashboard path=shards/<project_name>/.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/experiments/branches/<branch-slug>/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
 
 {{artifact.emit type=experiment-dashboard path=shards/<project_name>/experiments/results.json meta="title=AR: <project_name> (converged) panel_id=ar-<project_name>-converged"}}
 
@@ -213,6 +213,21 @@ by the user, unattended or not: it is requested with `requires_human` (§A.6).
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=execute phase=1 id=data-scientist-research-phase-1}}
+
+### If fan-out confirmed
+
+After the Phase 1 gate is confirmed, launch one AR branch lead per approach
+family, in parallel, all with the same run id and each with its own `branch`
+slug (`autonomous_research.md` Section H.3):
+
+{{lead data-scientist task="AR branch lead for approach family <branch-slug> of AR run <run-id>"}}
+
+Each lead brief carries the approach constraint, the `ar_start` arguments from
+the brief plus `run_id` and `branch`, the scope
+`<project_dir>/experiments/branches/<branch-slug>`, the budget and the reviewer
+cadence. Each lead runs its loop in its own git worktree and dispatches every
+iteration as a worker task card; leads write no code and never gate. You hold
+every user gate. Wait for every lead to return, then go to Phase 3.
 
 ---
 
@@ -318,7 +333,17 @@ Follow Section I of `autonomous_research.md`. Additionally include:
 
 ### Fan-out specific
 
-If fan-out: arbitrate before summary.
+If fan-out, before the summary (`autonomous_research.md` Sections H.9 to H.11):
+
+a. Wait for every lead; each has ended its branch with `ar_end`.
+b. Call `ar_status({run_id})` for the branch leaderboard and invoke Syn Arbiter
+   with the run id and the branch refs (`protocols/diverge.md` Section F); it
+   compares refs and trailers, not prose reports.
+c. Present the leaderboard; the user selects the winner at the human gate.
+d. Promote the winner: apply the `promote` diff its `ar_end` returned in the
+   main tree; the Phase 3 adoption gate commits it.
+e. Propose write-backs only after promotion (winner plus cross-branch patterns).
+f. The consolidated `research_summary.md` covers all branches.
 
 ### Phase 3 gate
 

@@ -88,3 +88,69 @@ describe('task_verify', () => {
     expect((await call('task_dispatch', { ids: ['a'] })).isError).toBe(true);
   });
 });
+
+describe('task_verify AR iteration outcome (issue #91, bug 22)', () => {
+  const WT = '.shards/worktrees/r1/a';
+  const arTask = (n, o = {}) => task(`it${n}`, {
+    goal: `AR iteration ${n}`, owned_paths: [`${WT}/src/`], worker: 'ml-engineer',
+    acceptance: { command: 'node eval/score.js', expected: 'prints score=<x>', cwd: WT },
+    ar: { run_id: 'r1', branch: 'a', iteration: n }, ...(n > 1 ? { depends_on: [`it${n - 1}`] } : {}), ...o,
+  });
+  const arVerify = (id, extra) => call('task_verify', { id, pass: true, expected: 'eval ran', observed: 'score=0.5', ...extra });
+  const seedRun = (iterations) => state.update('research', (cur) => {
+    cur.runs = { 'r1/a': { run_id: 'r1', branch: 'a', status: 'active', ref: 'refs/shards/research/p/r1/a', iterations } };
+    return cur;
+  });
+  beforeEach(async () => {
+    state = new StateStore(root = fs.mkdtempSync(path.join(os.tmpdir(), 'tv-ar-')), 's1');
+    await pushFrame(state, { agent: 'ml-engineer', project: 'p' });
+    await call('tasks_set', { manifest: { version: 1, tasks: [arTask(1)] }, scope: 'shards/p/experiments/branches/a' });
+  });
+  const sc = { scope: 'shards/p/experiments/branches/a' };
+  const stS = () => state.read(require('../runtime/tasks').stateNameFor(sc.scope)).tasks;
+
+  it('a RED is done(reverted), not failed, and uses no retry; cards append one at a time', async () => {
+    let r = await call('task_dispatch', { ids: ['it1'], ...sc });
+    const card = JSON.parse(text(r).slice(text(r).indexOf('{\n  "cards"'))).cards[0];
+    expect(card).toMatchObject({ ar: { run_id: 'r1', branch: 'a', iteration: 1 }, acceptance: { cwd: WT }, owned_paths: [`${WT}/src/`] });
+    await call('task_report', { id: 'it1', result: result({ check: { command: 'node eval/score.js', exit_code: 0, output_excerpt: 'score=0.5' }, metric: { name: 'score', value: 0.5 } }), ...sc });
+    r = await arVerify('it1', { metric_outcome: 'red', ...sc });
+    expect(r.isError).toBeFalsy();
+    expect(stS().it1).toMatchObject({ status: 'done', ar_outcome: { metric_outcome: 'red', result: 'reverted' }, attempts: 1 });
+    expect(text(r)).toMatch(/not a failure: no retry/);
+    expect(fs.readFileSync(path.join(root, 'shards/p/experiments/branches/a/project-specs.md'), 'utf8')).toMatch(/AR RED: reverted/);
+    expect(fs.readFileSync(path.join(root, 'shards/p/experiments/branches/a/TASKS.md'), 'utf8')).toMatch(/\[x\] it1 .*\(AR red: reverted\)/);
+    // the next iteration card is appended without an amendment gate and is ready (reverted = done)
+    r = await call('tasks_set', { manifest: { version: 1, tasks: [arTask(2)] }, append: true, ...sc });
+    expect(r.isError).toBeFalsy();
+    expect(text(r)).toMatch(/ready: it2/);
+    expect(stS().it1.status).toBe('done');
+    expect((await call('tasks_set', { manifest: { version: 1, tasks: [task('plain')] }, append: true, ...sc })).isError).toBe(true);
+    expect((await call('tasks_set', { manifest: { version: 1, tasks: [arTask(3, { depends_on: [] })] }, append: true, ...sc })).isError).toBe(true); // overlaps it2 in parallel
+  });
+
+  it('derives the outcome from the ar_iterate record and rejects contradictions', async () => {
+    await seedRun([{ n: 1, decision: 'yellow', kept: true, commit: 'c1' }]);
+    await call('task_dispatch', { ids: ['it1'], ...sc }); await call('task_report', { id: 'it1', result: result(), ...sc });
+    expect((await arVerify('it1', { ar_iteration: 1, metric_outcome: 'red', ...sc })).isError).toBe(true);
+    expect((await arVerify('it1', { ar_iteration: 2, ...sc })).isError).toBe(true);
+    expect((await arVerify('it1', { ar_iteration: 1, ...sc })).isError).toBeFalsy();
+    expect(stS().it1).toMatchObject({ status: 'done', ar_outcome: { metric_outcome: 'yellow', result: 'kept', iteration: 1, commit: 'c1' } });
+  });
+
+  it('validates the outcome arguments', async () => {
+    await call('task_dispatch', { ids: ['it1'], ...sc }); await call('task_report', { id: 'it1', result: result(), ...sc });
+    expect(text(await arVerify('it1', { metric_outcome: 'yellow', ...sc }))).toMatch(/YELLOW outcome needs kept/);
+    expect(text(await arVerify('it1', { metric_outcome: 'red', kept: true, ...sc }))).toMatch(/impossible/);
+    expect((await arVerify('it1', { metric_outcome: 'yellow', kept: false, ...sc })).isError).toBeFalsy();
+    expect(stS().it1.ar_outcome.result).toBe('reverted');
+  });
+
+  it('metric_outcome is refused for a non-AR card; pass=false there still fails and retries', async () => {
+    await call('tasks_set', { manifest: { version: 1, tasks: [task('a')] }, output_dir: 'shards/q' });
+    await runOnce('a');
+    expect(text(await verify('a', true, { metric_outcome: 'green' }))).toMatch(/only valid for an AR iteration card/);
+    await verify('a', false);
+    expect(st().a.status).toBe('failed');
+  });
+});

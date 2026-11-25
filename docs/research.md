@@ -1,8 +1,8 @@
 # Autonomous research runtime (`ar_*` tools)
 
-Issue #91, H1, H2 and H3. The runtime owns the `[AR]` loop's bookkeeping: it runs the eval command, parses the metric, classifies each iteration, keeps or reverts the mutable scope and journals every iteration in git. The agent proposes hypotheses and edits mutable files. It never reports a metric and never runs git to keep or revert. The protocol is in [`core/protocols/autonomous_research.md`](../core/protocols/autonomous_research.md). The manual path there is a fallback for hosts without the runtime.
+Issue #91, H1 to H4. The runtime owns the `[AR]` loop's bookkeeping: it runs the eval command, parses the metric, classifies each iteration, keeps or reverts the mutable scope and journals every iteration in git. The agent proposes hypotheses and edits mutable files. It never reports a metric and never runs git to keep or revert. The protocol is in [`core/protocols/autonomous_research.md`](../core/protocols/autonomous_research.md). The manual path there is a fallback for hosts without the runtime.
 
-Code: `runtime/research/index.js`, tools `runtime/tools/ar_start.js`, `ar_iterate.js`, `ar_status.js`, `ar_defer.js`, `ar_end.js`, CLI `cli/commands/research.js`. Tests: `test/ar-tools.test.js`, `test/gates-policy.test.js` (`requires_human`, plan budget).
+Code: `runtime/research/index.js`, tools `runtime/tools/ar_start.js`, `ar_iterate.js`, `ar_status.js`, `ar_defer.js`, `ar_end.js`, CLI `cli/commands/research.js`. Tests: `test/ar-tools.test.js` (including branch runs), `test/ar-lease-enforcement.test.js` (lease, worktree scope, git guard), `test/tasks-verify.test.js` (AR iteration cards), `test/gates-policy.test.js` (`requires_human`, plan budget).
 
 ## Tools
 
@@ -12,6 +12,8 @@ Code: `runtime/research/index.js`, tools `runtime/tools/ar_start.js`, `ar_iterat
 ar_start({
   project,                 // project dir, root-relative (shards/churn). Logs go to <project>/experiments/
   run_id?,                 // default ar-<UTC timestamp>; [A-Za-z0-9._-], max 64
+  branch?,                 // AR fan-out branch (approach-family slug): a branch run in its own worktree
+  worktree?,               // true: run in .shards/worktrees/<run_id>/<branch> (requires branch; implied by it)
   brief_path,              // research brief; must exist
   mutable: [...],          // paths or globs the loop may change (required)
   immutable?: [...],       // eval harness, tests, data
@@ -24,7 +26,7 @@ ar_start({
 
 The call does the following, in order:
 
-1. Refuses when this session already has an active AR run or AR lease.
+1. Refuses when this session already has an active AR run or AR lease, except a sibling branch run of the same `run_id` (see [Fan-out](#fan-out-branch-runs-and-worktrees-h4)).
 2. Refuses when a mutable path has uncommitted changes, because a revert would overwrite them. Every other dirty path is recorded in `preLoopDirty`, and reverts never touch those paths.
 3. Pins sha256 hashes. Each immutable file is hashed by its bytes. A directory or glob is hashed as the sorted list of (path, sha) pairs of its files, ignored files included. The eval command string is hashed too.
 4. Runs the baseline eval `repeats` times. Every run must exit 0 and print a metric. The noise floor is the mean and sample standard deviation of those runs. `epsilon_abs = max(epsilon% × |baseline|, 2σ)`.
@@ -34,7 +36,7 @@ The call does the following, in order:
 
 If a plan approval exists for the same run id (`gate_request` with `plan_approval: "<run_id>"`, or the gate `plan-approval.<run_id>`), the result's `plan` field reports that gate and the budget the `plan` policy applies to it. See [Plan budget](#plan-budget-derived-from-the-ar-budget).
 
-### `ar_iterate({hypothesis, source?})`
+### `ar_iterate({hypothesis, source?, run_id?, branch?})`
 
 Call it after editing mutable files for one hypothesis. `source` is `adaptive` (the default), `steering` or `reviewer-suggested`.
 
@@ -67,13 +69,13 @@ The call returns `{iteration, decision, metric, before, after, kept, failure, lo
 
 The runtime does not decide `consecutive-failures` (protocol §E.5: three REDs). That stop needs a reviewer consult first. After the consult the agent calls `ar_end` with that reason, or carries on after a `REDIRECT`. Proxy evals are not supported yet, so every runtime eval is `AR-Eval: full`.
 
-### `ar_status({run_id?, resume?})`
+### `ar_status({run_id?, branch?, resume?})`
 
 Returns the run summary: iterations, decision counts, baseline and noise, `epsilon_abs`, `comparisonReference`/`bestSoFar`, both pointers, remaining budget (iterations and minutes), `converged`/`stop_reason`, whether the lease is active, the pending `deferred` decisions, and the last 10 iterations.
 
 The run is looked up in this session's state first. If the state is missing (a new session, or lost context), the run is rebuilt from the research ref. The rebuild uses `git log --first-parent --format=%(trailers:only,unfold) <AR-Base>..<ref>`: the baseline's `AR-Config` trailer supplies the configuration, and the iteration trailers supply the history. `resume: true` makes the run this session's active run and reopens its AR lease, so `ar_iterate` can continue.
 
-### `ar_defer({run_id?, kind, detail, retro_to_iteration?})`
+### `ar_defer({run_id?, branch?, kind, detail, retro_to_iteration?})`
 
 The deferred-decision queue (bug 14). On an unattended or overnight run, a decision that needs a human must not idle the loop until morning. `kind` is `retro_revert`, `pause`, `floor_breach` or `other`.
 
@@ -85,14 +87,15 @@ No gate is raised and the loop continues: the next `ar_iterate` is N+1. `ar_stat
 
 `ar_defer` is an exec tool for the hooks, like `ar_iterate`, because a retro-revert rewrites mutable files.
 
-### `ar_end({run_id?, reason})`
+### `ar_end({run_id?, branch?, reason, keep_worktree?})`
 
-Puts a final commit on the ref with `AR-Decision: stop` and `AR-Stop: <reason>`. Then it closes the AR lease and marks the run `ended`. It returns the summary, including the pending `deferred` items for the Phase 3 gate, plus the commands to inspect the kept diff and the journal.
+Puts a final commit on the ref with `AR-Decision: stop` and `AR-Stop: <reason>`. Then it closes the AR lease (a branch run only leaves the shared lease; the last branch closes it) and marks the run `ended`. A branch run's worktree is removed unless `keep_worktree: true`, and the result carries `promote`, the command that applies the kept diff to the main tree at the Phase 3 gate. It returns the summary, including the pending `deferred` items for the Phase 3 gate, plus the commands to inspect the kept diff and the journal.
 
 ## Research ref
 
 ```
-refs/shards/research/<project-slug>/<run_id>      # project-slug = last segment of `project`
+refs/shards/research/<project-slug>/<run_id>            # solo run; project-slug = last segment of `project`
+refs/shards/research/<project-slug>/<run_id>/<branch>   # branch run (fan-out); a run id is either solo or branched
 ```
 
 The ref is built with plumbing: a temporary `GIT_INDEX_FILE`, then `read-tree`, `update-index`, `write-tree`, `commit-tree`, and finally `update-ref` with an expected old value. This is the same machinery as `refs/shards/pending/*` in `runtime/git`. The user's HEAD, branch and index are never touched.
@@ -110,6 +113,7 @@ History follows the first parent:
 Every commit carries these trailers:
 
 - `AR-Run`
+- `AR-Branch` (branch runs only)
 - `AR-Iter: N`
 - `AR-Decision`
 - `AR-Metric: <name>=<before>-><after>` (`NA` when there is no value)
@@ -129,9 +133,10 @@ git diff <pre-loop HEAD> <lastKeptCommit> -- <mutable>                          
 
 ## State
 
-The run state lives in `.shards/state/sessions/<key>/research.json` as `{active: run_id|null, runs: {<run_id>: run}}`. Each run holds:
+The run state lives in `.shards/state/sessions/<key>/research.json` as `{active: key|null, runs: {<key>: run}}`, where `key` is `run_id` (solo) or `<run_id>/<branch>`. Each run holds:
 
 - the configuration, the hashes and `preLoopDirty`
+- branch runs: `branch` and `worktree: {path, prefix, linked}` (`linked`: immutable entries symlinked from the main tree)
 - `baseline`, `noise`, `epsilon_abs`
 - `comparisonReference`, `bestSoFar`, `lastKeptCommit`, `lastGreenCommit`, and the ref `tip`
 - `deferred[]`: the `ar_defer` queue
@@ -188,6 +193,33 @@ Fallback heartbeat: inside an interactive session, the host's own recurring prom
 
 During the run, decisions that need a human go to `ar_defer`, not to gates. The steering notes in the research brief still work, and a `STOP` there ends the run at the next iteration.
 
-## Promotion (not implemented yet)
+## Fan-out: branch runs and worktrees (H4)
 
-Kept state stays uncommitted in the user's working tree. Promotion to the user's branch happens at the Phase 3 convergence gate, which is always human. Today the git binding's gate commit (`commitGate`) commits only the agent's output dirs, so mutable code outside them is left for the user to commit. A later task adds ref-based promotion: one commit per kept GREEN, via `commitGate` with the denylist and pre-commit hook. Also deferred: fan-out branches as leads with per-branch worktrees, and a sealed holdout.
+An AR fan-out runs one **branch run** per approach family. All branch runs share one `run_id`; each has its own `branch` name. The protocol (`autonomous_research.md` §H) puts each branch under a lead → worker model, like Syn's PM mode:
+
+```
+initiator (Syn or the specialist) — every user gate
+ └─ AR branch lead per family (depth 1, lead_contract: no gates, consults allowed)
+     └─ <specialist> worker per iteration card (depth 2, worker_contract)
+```
+
+The lead writes no code. Each iteration is a task card (`tasks_set`, then `tasks_set` with `append: true`) with `owned_paths` = the branch's mutable paths inside its worktree, `acceptance.command` = the pinned eval, `acceptance.cwd` = the worktree and `ar: {run_id, branch, iteration, hypothesis}`. After `task_report`, the lead calls `ar_iterate` (the runtime re-runs the eval independently), then `task_verify` with `ar_iteration`. Cards of one branch depend on each other (`max_parallel` 1 per branch); at most 4 branch runs are active per run id.
+
+What `ar_start({branch})` does differently:
+
+1. Creates `.shards/worktrees/<run_id>/<branch>` with `git worktree add --detach` at the pre-loop HEAD. No branch is created and the user's checkout never moves (ADR 0005). If no ignore rule covers `.shards/worktrees/`, it appends `/<prefix>.shards/worktrees/` to the repo-local `info/exclude`.
+2. Symlinks every immutable entry the worktree lacks (untracked or ignored data, local config) to the main tree's copy. Those entries are pinned at the main tree, so editing the source is a tamper. Globs are not linked: list untracked inputs as plain paths.
+3. Refuses when the mutable or a (not linked) immutable scope has uncommitted changes in the main tree, because the worktree starts from HEAD and would not see them.
+4. Runs the baseline (and every later eval) with `cwd` = the worktree and `SHARDS_AR_BRANCH`, `SHARDS_AR_WORKTREE`, `SHARDS_AR_MAIN_ROOT` in the environment. Logs go to `<project>/experiments/branches/<branch>/iter_<N>.log` in the main tree.
+5. Opens the run's AR lease, or joins it when a sibling branch already holds it. The lease keeps `ar.branches.<branch> = {root, mutable, immutable}` with every entry prefixed by the worktree path; its top-level `mutable` is the union of the branches' prefixed entries, and `immutable` is the main-tree list plus every branch's prefixed list.
+6. Journals to `refs/shards/research/<project>/<run_id>/<branch>` (refs are shared by all worktrees; the worktree's own HEAD and index never move).
+
+Selection: `ar_iterate`, `ar_defer` and `ar_end` need `branch` when several branch runs are live. `ar_status({run_id})` without `branch` returns `{branched: true, leaderboard, branches}`: every branch, rebuilt from its ref when it is not in this session's state, ranked by `bestSoFar`. Arbitration reads this and the refs' trailers, not prose reports. `ar_status({run_id, branch, resume: true})` recreates a missing worktree and restores its kept state before reopening the lease.
+
+Guard: writes inside `.shards/worktrees/` must match a branch's prefixed mutable scope; the `.shards/` state allowance does not cover them, and the main tree's mutable paths are not writable while branch runs are active. `git worktree add/remove/move/prune/repair` is denied to agents; the runtime runs git itself. A plan approval for the run id covers the largest branch budget.
+
+Plain `branch-dir` remains only as the `no-vcs` fallback for git-less projects (manual path).
+
+## Promotion
+
+Solo run: kept state stays uncommitted in the user's working tree, and the Phase 3 convergence gate (always human) adopts it. Branch runs: the kept state of each branch is `lastKeptCommit` on its ref. After arbitration the user picks the winner at the human gate, and the initiator applies the winner's `promote` command from `ar_end` in the main tree (`git diff --binary <pre-loop HEAD> <lastKeptCommit> -- <mutable> | git apply`); the Phase 3 adoption gate commits it. Nothing merges a research ref into a user branch. Today the git binding's gate commit (`commitGate`) commits only the agent's output dirs and gate `targets`, so pass the mutable paths as `targets`. A dedicated promote helper (one commit per kept GREEN, via `commitGate` with the denylist and pre-commit hook) and a sealed holdout are deferred.

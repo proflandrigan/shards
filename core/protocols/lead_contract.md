@@ -29,6 +29,15 @@ Run every build or execute phase through the delegated build loop (`{{protocol d
 - Verify every task with `task_verify` (re-run the acceptance check yourself). A task is done only through `task_verify`, never on a worker's word.
 - A larger workstream means more task cards and a higher `max_parallel`, not more leads.
 
+## Autonomous research (AR) leads
+
+If you lead an AR branch (`autonomous_research.md` Section H.3), or your workstream runs `[AR]`:
+
+- **You write no code.** Each iteration is one task card for a `<specialist>` worker: `owned_paths` = the mutable scope inside your branch worktree, `acceptance.command` = the pinned eval command with `acceptance.cwd` = the worktree, and `ar: {run_id, branch, iteration, hypothesis}`. Register the first card with `tasks_set`, later ones with `tasks_set` `append: true`; each depends on the previous one (`max_parallel` 1 per branch).
+- **`ar_iterate` is your independent check.** After `task_report`, call `ar_iterate` with your `run_id` and `branch` (the runtime re-runs the eval itself), then `task_verify` with `ar_iteration`. A RED or unkept YELLOW is `done` (`reverted`), not `failed`: no retry, no escalation.
+- **No gates still.** Reviewer `RETRO_REVERT`, `PAUSE` and floor breaches go to `ar_defer`; the initiator presents them at its Phase 3 gate. Finish with `ar_end` and return the branch ref, `lastKeptCommit` and stop reason in your report.
+- Never launch another lead (an AR fan-out is started only by the initiator at depth 0).
+
 ## Consults
 
 If a phase calls for a reviewer consult, run it when your host allows a consult from a subagent. If it does not, skip it and name the skipped consult in your report. Never invent a verdict.
