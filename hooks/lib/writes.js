@@ -126,6 +126,47 @@ function inPlaceFiles(cmd, args) {
   return files;
 }
 
+// The command words of a segment with env assignments (`FOO=1`), wrappers (sudo, env, timeout 5, ...) and
+// grouping/keyword tokens stripped: ['git', '-C', 'x', 'reset', '--hard'].
+function commandWords(seg) {
+  const w = seg.words.filter((x) => x !== ')' && x !== '}');
+  if (w.length && w[0].startsWith('(') && w[0] !== '(') w[0] = w[0].replace(/^\(+/, '');
+  while (w.length && (/^[A-Za-z_][A-Za-z0-9_]*=/.test(w[0]) || WRAPPERS.has(path.basename(w[0])))) {
+    const wrapper = WRAPPERS.has(path.basename(w[0]));
+    w.shift();
+    if (wrapper) while (w.length && (w[0].startsWith('-') || /^\d+[smhd]?$/.test(w[0]))) w.shift();
+  }
+  return w;
+}
+
+// Split `git [global opts] <sub> <rest...>` -> {sub, rest, dir} (dir from -C, joined), or null when not git.
+function gitCall(words) {
+  if (!words.length || path.basename(words[0]) !== 'git') return null;
+  const args = words.slice(1);
+  let i = 0; let dir = null;
+  while (i < args.length && args[i].startsWith('-')) {
+    const a = args[i];
+    if (GIT_GLOBAL_VALUE.has(a)) { if (a === '-C') dir = dir ? path.join(dir, args[i + 1] || '') : args[i + 1]; i += 2; } else i++;
+  }
+  return { sub: args[i] || null, rest: args.slice(i + 1), dir };
+}
+
+// Every git invocation in a command line, including inside $(..)/backticks, chains (&&, ;, |) and env/wrapper
+// prefixes. A shell reached through sh -c / eval is not unwrapped here: bashWrites reports it as an unknown write.
+function gitInvocations(command, depth = 0) {
+  const src = stripHeredocs(String(command || ''));
+  const out = [];
+  let afterCd = false; // relative pathspecs after cd/pushd/popd no longer resolve against the payload cwd
+  for (const seg of parse(src)) {
+    const words = commandWords(seg);
+    if (words.length && CWD_CHANGERS.has(path.basename(words[0]))) afterCd = true;
+    const g = gitCall(words);
+    if (g) out.push({ ...g, afterCd });
+  }
+  if (depth < 5) for (const inner of substitutions(src).inner) out.push(...gitInvocations(inner, depth + 1).map((g) => ({ ...g, afterCd: g.afterCd || afterCd })));
+  return out;
+}
+
 // Segment result: write (modifies files), targets (relative or absolute strings), unknown (a write
 // whose target can't be determined), exec (runs code from a file or a package script: only counts for the
 // pending-gate check, so leased workers can still run tests/scripts), cwdChange (cd/pushd/popd seen).
@@ -141,13 +182,7 @@ function analyzeSegment(seg) {
   };
   const out = () => ({ write, targets, unknown, exec, cwdChange });
   for (const r of seg.redirects) { if (SKIP_TARGET.test(r)) continue; write = true; add(r); }
-  let w = seg.words.filter((x) => x !== ')' && x !== '}');
-  if (w.length && w[0].startsWith('(') && w[0] !== '(') w[0] = w[0].replace(/^\(+/, '');
-  while (w.length && (/^[A-Za-z_][A-Za-z0-9_]*=/.test(w[0]) || WRAPPERS.has(path.basename(w[0])))) {
-    const wrapper = WRAPPERS.has(path.basename(w[0]));
-    w.shift();
-    if (wrapper) while (w.length && (w[0].startsWith('-') || /^\d+[smhd]?$/.test(w[0]))) w.shift();
-  }
+  const w = commandWords(seg);
   if (!w.length) return out();
   const cmd = path.basename(w[0]); const args = w.slice(1);
   if (CWD_CHANGERS.has(cmd)) { cwdChange = true; return out(); }
@@ -169,15 +204,10 @@ function analyzeSegment(seg) {
   if (ALL_ARGS.has(cmd)) { write = true; const nf = nonFlags(args); if (!nf.length) unknown = true; nf.forEach(add); return out(); }
   if (cmd === 'dd') { const of = args.find((a) => a.startsWith('of=')); if (of) { write = true; add(of.slice(3)); } return out(); }
   if (cmd === 'git') {
-    let i = 0; let dir = null;
-    while (i < args.length && args[i].startsWith('-')) {
-      const a = args[i];
-      if (GIT_GLOBAL_VALUE.has(a)) { if (a === '-C') dir = dir ? path.join(dir, args[i + 1] || '') : args[i + 1]; i += 2; } else i++;
-    }
-    const sub = args[i];
+    const { sub, rest, dir } = gitCall(w);
     if (sub && GIT_WRITES.has(sub)) {
       write = true;
-      if (sub === 'rm' || sub === 'mv') nonFlags(args.slice(i + 1)).forEach((t) => add(dir && !path.isAbsolute(t) ? path.join(dir, t) : t)); else unknown = true;
+      if (sub === 'rm' || sub === 'mv') nonFlags(rest).forEach((t) => add(dir && !path.isAbsolute(t) ? path.join(dir, t) : t)); else unknown = true;
     }
     return out();
   }
@@ -302,13 +332,15 @@ function patchWrites(text, cwd) {
   return { write: true, paths, unknown: !paths.length, exec: false };
 }
 
-function bashWrites(command, cwd, depth = 0) {
+// opts.skipSeg(seg) -> true leaves a segment's command out of the analysis (its redirects still count).
+function bashWrites(command, cwd, depth = 0, opts = {}) {
   const raw = String(command || '');
   if (/^\s*apply_patch\b/.test(raw)) return patchWrites(raw, cwd);
   const src = stripHeredocs(raw);
   const segs = parse(src);
   let write = false; let unknown = false; let exec = false; let cwdChange = false; let paths = [];
-  for (const s of segs) {
+  for (const s0 of segs) {
+    const s = opts.skipSeg && opts.skipSeg(s0) ? { words: [], redirects: s0.redirects } : s0;
     const r = analyzeSegment(s);
     if (r.cwdChange) cwdChange = true;
     if (r.exec) exec = true;
@@ -320,7 +352,7 @@ function bashWrites(command, cwd, depth = 0) {
   if (sub.procsub) { write = true; unknown = true; }
   for (const inner of sub.inner) {
     if (depth > 4) { write = true; unknown = true; break; }
-    const r = bashWrites(inner, cwd, depth + 1);
+    const r = bashWrites(inner, cwd, depth + 1, opts);
     if (r.exec) exec = true;
     if (!r.write) continue;
     write = true; if (r.unknown) unknown = true; paths.push(...r.paths);
@@ -362,4 +394,4 @@ function writesOf(n) {
   return { write: false, paths: [], unknown: false, exec: false };
 }
 
-module.exports = { writesOf, bashWrites, patchWrites, FILE_TOOLS };
+module.exports = { writesOf, bashWrites, patchWrites, gitInvocations, gitCall, commandWords, FILE_TOOLS };

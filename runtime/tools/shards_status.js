@@ -3,7 +3,7 @@ const { defineTool } = require('../registry');
 
 module.exports = defineTool({
   name: 'shards_status',
-  description: 'Report Shards runtime status: project root, session (and how it was correlated), state version, config and job bindings, active agent.',
+  description: 'Report Shards runtime status: project root, session (and how it was correlated), state version, config and job bindings, active agent, and the active autonomous-research (AR) lease scope if any.',
   inputSchema: { type: 'object', properties: {}, additionalProperties: false },
   async handler(_args, ctx) {
     const cfg = ctx.getConfig();
@@ -11,6 +11,11 @@ module.exports = defineTool({
     for (const [k, v] of Object.entries(cfg.config.jobs || {})) jobs[k] = v && v.binding;
     const frames = ctx.state.read('frames').frames || [];
     const top = frames[frames.length - 1];
+    let arLease = null;
+    try {
+      const l = require('../leases').getActiveArLease({ root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state });
+      if (l) arLease = { id: l.id, ...l.ar, expires_at: l.expires_at };
+    } catch (_) { /* no lease state */ }
     return {
       data: {
         root: ctx.root,
@@ -25,6 +30,7 @@ module.exports = defineTool({
         jobs,
         gatesPolicy: cfg.config.gates && cfg.config.gates.policy,
         activeAgent: top ? top.agent : null,
+        arLease,
       },
     };
   },

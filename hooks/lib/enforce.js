@@ -16,7 +16,11 @@
 //     and denied writes into an active fan-out lease's slice paths. A write whose target can't be
 //     determined (cd, sh -c, eval, find -exec, ...) while a fan-out lease is active: Claude `ask`, Codex deny.
 //  Bound workers: exec-only calls (python x.py, npm test) are not write-checked; unknown-target writes are denied.
-// SHARDS_GATE_ENFORCE=0 disables every deny path (rules 1 and 3); binding (rule 2) still records.
+//  4. (issue #91) an active AR lease (runtime/leases openArLease): for EVERY caller, writes outside the lease's
+//     mutable globs / allow prefixes / .shards, or inside its immutable paths, are denied, and destructive git
+//     (reset --hard, clean -f, push --force, tag -d, checkout -b, switch, branch -D) is denied. See ar-guard.js.
+//     Checked before rules 1 and 3 (both still apply afterwards).
+// SHARDS_GATE_ENFORCE=0 disables every deny path (rules 1, 3 and 4); binding (rule 2) still records.
 const fs = require('fs');
 const path = require('path');
 const host = require('./host');
@@ -91,6 +95,14 @@ async function enforce(n, root, env = process.env) {
   }
   const bound = hasLeases ? leases.findWorkerLease(session, n.agentId, now) : null;
   if (bound) await leases.touchWorker(session, n.agentId, now);
+
+  // Rule 4 (issue #91): an active AR lease scopes every caller's writes and guards destructive git.
+  const arLease = hasLeases ? leases.getActiveArLease(session, now) : null;
+  if (arLease && !enforceOff(env)) {
+    await leases.touchArLease(session, now);
+    const d = require('./ar-guard').arGuard(n, session, arLease, leases);
+    if (d) return d;
+  }
 
   const w = writesOf(n);
   if ((!w.write && !w.exec) || enforceOff(env)) return null;

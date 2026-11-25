@@ -200,6 +200,38 @@ Callers in the runtime today:
 
 Expired leases stop excluding paths because `listActive` filters on `expires_at`, even before `expireStale` runs.
 
+### 5.1 Autonomous-research (AR) lease and git guard (issue #91)
+
+A solo `[AR]` run holds one session-wide **AR lease** that makes its write scope and its git policy enforceable, not just prose. It lives in the same `leases` state with `owner: 'ar'`, `worker_type: 'ar'`, `slices: []` and an `ar` block `{run_id, project, mutable, immutable, allow}`. It has no slices, so `getLeasedPaths` never excludes the mutable code from gate commits and no worker can bind to it. At most one AR lease is active per session.
+
+| Function (`runtime/leases`) | Behaviour |
+|----------|-----------|
+| `openArLease(session, {runId, project?, mutable, immutable?, allow?, ttl_ms?, meta?})` | `mutable` (required) and `immutable` are project-root-relative paths or globs (`*`, `**`, `?`); `allow` is extra paths or globs. `project` (the AR project/output dir) is added to `allow`. Default TTL 6 hours. Throws if another AR lease is active. |
+| `closeArLease(session, idOrRunId)` | Closes the matching active AR lease; returns it, or `null` if none matched. |
+| `getActiveArLease(session, now?)` | The active AR lease, or `null`. `shards_status` reports it as `arLease`. |
+| `touchArLease(session, now?)` | Hook keepalive: refreshes `expires_at` (throttled to once per minute, no version bump) on every enforced tool call. |
+| `checkArWrite(session, lease, filePath)` | `{allowed, reason, rel}` for one write target. |
+
+The `ar_start` / `ar_end` tools (planned) call `openArLease` / `closeArLease`. While the lease is active, `hooks/lib/ar-guard.js` (called from `enforce.js` as rule 4, for every caller of the session: main thread and subagents) applies two checks. `SHARDS_GATE_ENFORCE=0` turns both off.
+
+**Write scope.** For Write, Edit, MultiEdit, NotebookEdit, `apply_patch` and Bash writes:
+- A target inside an `immutable` entry, or a directory that contains one (`rm -rf src` when `src/eval.py` is immutable), is denied. Immutable wins over `mutable` and `allow`.
+- Otherwise a target is allowed inside `.shards/`, an `allow` entry (the project dir), a `mutable` entry, or the OS temp dir.
+- Anything else is denied: other project files, paths outside the project root, and the project root itself.
+- A write whose target can't be determined (`sh -c`, `eval`, `cd ... && ...`, `git apply`/`merge`/`stash`) is denied rather than asked, because an unattended run can't answer a prompt.
+- Exec-only calls (`python train.py`, `pytest`, the eval command) and Shards notebook execution are not checked. A script can still write anywhere. Pinning hashes of the immutable paths (H1) is the backstop for that.
+
+**Git guard.** Matching sees through `git -C dir` and `-c k=v`, env assignments and wrappers (`FOO=1`, `env`, `sudo`, `timeout`), chains (`&&`, `;`, `|`, newlines) and `$(...)` / backticks. Denied:
+- `git reset --hard`
+- `git clean` with `-f` in any form (`-f`, `-fd`, `-xdf`, `--force`)
+- `git push --force`, `-f`, `--force-with-lease[=...]`, `--force-if-includes` or a `+refspec`; `git push --delete`, `-d`, `:ref`, `--mirror` or `--prune`
+- `git tag -d`, `--delete` or `-f`
+- `git checkout -b`, `-B` or `--orphan`
+- `git switch` (any form)
+- `git branch -D`, or `-d` with `--force`
+
+`git checkout` and `git restore` pathspecs must pass the write-scope check, so a revert is `git checkout <sha> -- <mutable paths>`. Without `--`, every operand is treated as a path: `git checkout main` is denied. Wildcard pathspecs and pathspecs after a `cd` are denied. Safe commands pass, for example `git status`, `git diff`, `git log`, `git add`, `git commit --only <paths>`, `git tag <name>`, `git read-tree`, `git reset` without `--hard`, and a plain `git push`.
+
 ## 6. Task result and deviations
 
 Schema (`core/schema/task-result.schema.json`): all five fields are required; no other keys.
