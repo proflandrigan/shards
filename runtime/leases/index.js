@@ -439,8 +439,11 @@ function checkArWrite(session, lease, filePath) {
     if (entryCovers(e, rel)) return { allowed: false, rel, reason: `${rel} is immutable for AR run ${ar.run_id} (matches ${e}); the eval harness, tests and data must not change during the run` };
     if (entryUnder(e, rel)) return { allowed: false, rel, reason: `${rel} contains immutable path ${e} of AR run ${ar.run_id}` };
   }
-  // .shards/ is runtime state, except .shards/worktrees/ (AR branch worktrees): those writes must match a branch's
-  // own (prefixed) mutable scope below, never a blanket .shards allowance.
+  // .shards/state holds the leases, gates, research state and sealed holdout: only the runtime writes it (it does
+  // not go through the hook), so an AR caller editing it could switch the guard off or rewrite the run.
+  if (inside(rel, '.shards/state')) return { allowed: false, rel, reason: `${rel} is Shards runtime state; AR run ${ar.run_id} may not write it` };
+  // The rest of .shards/ is allowed, except .shards/worktrees/ (AR branch worktrees): those writes must match a
+  // branch's own (prefixed) mutable scope below, never a blanket .shards allowance.
   if (inside(rel, '.shards') && !inside(rel, '.shards/worktrees')) return { allowed: true, rel, reason: '.shards state' };
   for (const e of ar.allow || []) if (entryCovers(e, rel)) return { allowed: true, rel, reason: `allowed (${e})` };
   for (const e of ar.mutable || []) if (entryCovers(e, rel)) return { allowed: true, rel, reason: `mutable (${e})` };

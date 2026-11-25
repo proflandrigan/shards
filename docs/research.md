@@ -38,7 +38,7 @@ The call does the following, in order:
 2. Refuses when a mutable path has uncommitted changes, because a revert would overwrite them. Every other dirty path is recorded in `preLoopDirty`, and reverts never touch those paths.
 3. Pins sha256 hashes. Each immutable file is hashed by its bytes. A directory or glob is hashed as the sorted list of (path, sha) pairs of its files, ignored files included. The eval command string is hashed too.
 4. Runs the baseline eval `repeats` times. Every run must exit 0 and print a metric. The noise floor is the mean and sample standard deviation of those runs. `epsilon_abs = max(epsilon% × |baseline|, 2σ)`. With `eval.proxy`, the proxy is measured the same way (`proxy.repeats`, default `eval.repeats`) and gets its own baseline, noise and `epsilon_abs`. With a `holdout` (and `baseline` not false), the holdout runs once on the pre-loop state and its value is sealed (see [Sealed holdout](#sealed-holdout-h5)).
-5. Opens the AR lease ([`delegation.md`](delegation.md) §5.1). It allows `project` plus the mutable globs and denies writes to immutable paths.
+5. Opens the AR lease ([`delegation.md`](delegation.md) §5.1). It allows `project` plus the mutable globs and denies writes to immutable paths and to `.shards/state/` (leases, research state and the sealed holdout are written by the runtime only). The guard also denies reads of `.shards/state/research-sealed/`, checks the path arguments of third-party MCP write tools, and blocks git that switches branches (`git checkout <ref> --`), takes unchecked paths (`--pathspec-from-file`, `--patch`) or writes command-running config (`git config` writes, `git -c alias.*`). It is a guard against mistakes, not a sandbox: exec-only commands (the eval, `python train.py`) and code in the mutable scope are not checked.
 6. Creates the research ref and makes its first commit, the baseline.
 7. Records `lastKeptCommit = lastGreenCommit = pre-loop HEAD` and `comparisonReference = baseline`.
 
@@ -69,7 +69,7 @@ Call it after editing mutable files for one hypothesis. `source` is `adaptive` (
       - `plateau`: no GREEN in the last W iterations.
       - `diminishing-returns`: `bestSoFar` gained less than the threshold over 2W iterations, measured over every iteration. The threshold defaults to `2 × epsilon_abs`.
    4. `budget-exhausted`: the iteration count reached the budget.
-   5. `time-budget`: `budget.minutes` has elapsed since `ar_start`.
+   5. `time-budget`: `budget.minutes` has elapsed since `ar_start`. It is also checked before an iteration runs, so an `ar_iterate` after the window refuses without running the eval.
 
    Once a stop reason fires, `ar_iterate` refuses until `ar_end`.
 
@@ -94,7 +94,7 @@ Every iteration commit in proxy mode carries `AR-Proxy-Best` (the proxy referenc
 
 Returns the run summary: iterations, decision counts, baseline and noise, `epsilon_abs`, `comparisonReference`/`bestSoFar`, both pointers, remaining budget (iterations and minutes), `converged`/`stop_reason`, whether the lease is active, the pending `deferred` decisions, and the last 10 iterations.
 
-The run is looked up in this session's state first. If the state is missing (a new session, or lost context), the run is rebuilt from the research ref. The rebuild uses `git log --first-parent --format=%(trailers:only,unfold) <AR-Base>..<ref>`: the baseline's `AR-Config` trailer supplies the configuration, and the iteration trailers supply the history. `resume: true` makes the run this session's active run and reopens its AR lease, so `ar_iterate` can continue.
+The run is looked up in this session's state first; if the ref has moved past the state's `tip` (the runtime crashed between advancing the ref and saving the state), the run is rebuilt from the ref and the state is saved again. If the state is missing (a new session, or lost context), the run is rebuilt from the research ref. The rebuild uses `git log --first-parent --format=%(trailers:only,unfold) <AR-Base>..<ref>`: the baseline's `AR-Config` trailer supplies the configuration, and the iteration trailers supply the history. `resume: true` makes the run this session's active run and reopens its AR lease, so `ar_iterate` can continue.
 
 ### `ar_defer({run_id?, branch?, kind, detail, retro_to_iteration?})`
 
@@ -209,7 +209,7 @@ The runtime enforces the iteration budget, the wall-clock `budget.minutes` and t
 
 AR state lives in the runtime and in git, not in the model's context. A driver only has to keep starting turns until the run is done. Each fresh turn picks the run up with `ar_status({resume: true})`.
 
-`shards research status [--run <id>] [--session <key>] [--json] [--root <dir>]` prints the run (default: the newest active run, else the newest), with `done: true` once it has converged or ended, or once a stop condition is already due. It reads session state from any session and falls back to rebuilding from the research ref. It exits 1 when no run is found.
+`shards research status [--run <id>] [--branch <b>] [--session <key>] [--json] [--root <dir>]` prints the run (default: the newest active run, else the newest), with `done: true` once it has converged or ended, or once a stop condition is already due. It reads session state from any session and falls back to rebuilding from the research ref. It exits 1 when no run is found.
 
 A shell driver around a headless host, for example Claude Code:
 

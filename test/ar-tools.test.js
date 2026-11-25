@@ -19,7 +19,7 @@ if (t.includes('crash')) { console.error('boom'); process.exit(3); }
 if (t.includes('sleep')) { setInterval(() => {}, 1000); }
 else {
   let v = parseFloat(t);
-  if (process.env.JITTER) { let c = 0; try { c = +fs.readFileSync(process.env.JITTER, 'utf8'); } catch (_) {} fs.writeFileSync(process.env.JITTER, String(c + 1)); v += (c % 2) * 0.2; }
+  const jit = process.argv[2]; if (jit) { let c = 0; try { c = +fs.readFileSync(jit, 'utf8'); } catch (_) {} fs.writeFileSync(jit, String(c + 1)); v += (c % 2) * 0.2; }
   console.log('training...'); console.log('score=' + v);
 }
 `;
@@ -59,7 +59,7 @@ describe('ar_start', () => {
   it('measures the baseline noise floor, pins hashes, opens the lease and creates the research ref', async () => {
     const jitter = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ar-jit-')), 'c');
     write(root, 'notes.txt', 'user wip\n'); // pre-loop dirty, outside the mutable scope
-    const s = await call('ar_start', startArgs({ eval: { ...startArgs().eval, command: `JITTER=${jitter} node eval/score.js`, repeats: 3 } }));
+    const s = await call('ar_start', startArgs({ eval: { ...startArgs().eval, command: `node eval/score.js "${jitter}"`, repeats: 3 } }));
     expect(s.noise.values).toEqual([1, 1.2, 1]);
     expect(s.noise.stddev).toBeGreaterThan(0.1);
     expect(s.epsilon_abs).toBeCloseTo(2 * s.noise.stddev, 10); // 2 sd beats 1% of baseline
@@ -96,6 +96,31 @@ describe('ar_start', () => {
     await expect(call('ar_start', startArgs({ mutable: ['**/*.md'] }))).rejects.toThrow(/covers the AR project dir shards\/p/);
     await expect(call('ar_start', startArgs({ mutable: ['shards'] }))).rejects.toThrow(/covers the AR project dir/);
     await expect(call('ar_start', startArgs({ mutable: ['.shards/state'] }))).rejects.toThrow(/covers \.shards\//);
+  });
+});
+
+describe('second review of PR #93', () => {
+  it('recovers when the ref advanced but the session state save was lost', async () => {
+    await call('ar_start', startArgs());
+    const snap = JSON.parse(JSON.stringify(state.read('research')));
+    model('2\n# a\n# b\n');
+    const r1 = await call('ar_iterate', { hypothesis: 'up' });
+    await state.update('research', () => snap); // simulate a crash between advancing the ref and saving the state
+    const st = await call('ar_status', {});
+    expect(st).toMatchObject({ iterations: 1, lastKeptCommit: r1.commit });
+    model('3\n# a\n# b\n');
+    expect(await call('ar_iterate', { hypothesis: 'up again' })).toMatchObject({ iteration: 2, decision: 'green' });
+  });
+  it('refuses ar_iterate once the wall-clock budget is spent, before running the eval', async () => {
+    await call('ar_start', startArgs({ budget: { iterations: 20, minutes: 1 } }));
+    await state.update('research', (cur) => { for (const r of Object.values(cur.runs)) r.started_at = new Date(Date.now() - 120000).toISOString(); return cur; });
+    model('2\n# a\n# b\n');
+    await expect(call('ar_iterate', { hypothesis: 'late' })).rejects.toThrow(/stopped \(time-budget\)/);
+    expect(fs.existsSync(path.join(root, 'shards/p/experiments/iter_1.log'))).toBe(false);
+    expect((await call('ar_status', {})).stop_reason).toBe('time-budget');
+  });
+  it('rejects an eval name that would corrupt the journal trailers', async () => {
+    await expect(call('ar_start', startArgs({ eval: { ...startArgs().eval, name: 'a\nAR-Kept: true' } }))).rejects.toThrow(/eval.name must match/);
   });
 });
 
@@ -481,9 +506,9 @@ describe('branch run with the project root below the git top level', () => {
 
 // ---------- issue #91 H5 + bug 8: sealed holdout, fixed compute budget, proxy/full evals ----------
 
-// Holdout: model value x the holdout data factor; counts its runs in $HC (outside the repo's tracked files).
+// Holdout: model value x the holdout data factor; counts its runs in the file named by argv[2] (outside the repo's tracked files).
 const HOLDOUT = `const fs = require('fs');
-if (process.env.HC) { let c = 0; try { c = +fs.readFileSync(process.env.HC, 'utf8'); } catch (_) {} fs.writeFileSync(process.env.HC, String(c + 1)); }
+const hcf = process.argv[2]; if (hcf) { let c = 0; try { c = +fs.readFileSync(hcf, 'utf8'); } catch (_) {} fs.writeFileSync(hcf, String(c + 1)); }
 const v = parseFloat(fs.readFileSync('src/model.txt', 'utf8'));
 const k = parseFloat(fs.readFileSync('holdout/data.txt', 'utf8'));
 console.log('holdout score=' + (v * k));
@@ -502,7 +527,7 @@ describe('sealed holdout (issue #91 H5)', () => {
     sh(root, 'add', '-A'); sh(root, 'commit', '-q', '-m', 'holdout');
     hc = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ar-hc-')), 'n');
   });
-  const hArgs = (o = {}) => startArgs({ holdout: { command: `HC=${hc} node eval/holdout.js`, metric_regex: 'holdout score=([-0-9.eE]+)' }, holdout_paths: ['holdout'], ...o });
+  const hArgs = (o = {}) => startArgs({ holdout: { command: `node eval/holdout.js "${hc}"`, metric_regex: 'holdout score=([-0-9.eE]+)' }, holdout_paths: ['holdout'], ...o });
   const runs = () => Number(fs.readFileSync(hc, 'utf8'));
   const SECRET = /0\.777/;
 
@@ -548,7 +573,7 @@ describe('sealed holdout (issue #91 H5)', () => {
   it('validates the holdout configuration and supports skip_holdout', async () => {
     await expect(call('ar_start', startArgs({ holdout_paths: ['holdout'] }))).rejects.toThrow(/holdout_paths needs a holdout command/);
     await expect(call('ar_start', hArgs({ mutable: ['holdout/**'] }))).rejects.toThrow(/inside an immutable \(holdout\) path/);
-    await call('ar_start', hArgs({ holdout: { command: `HC=${hc} node eval/holdout.js`, metric_regex: 'holdout score=([-0-9.eE]+)', baseline: false } }));
+    await call('ar_start', hArgs({ holdout: { command: `node eval/holdout.js "${hc}"`, metric_regex: 'holdout score=([-0-9.eE]+)', baseline: false } }));
     expect(fs.existsSync(hc)).toBe(false);
     const e = await call('ar_end', { reason: 'user-interrupt', skip_holdout: true });
     expect(e.holdout).toMatchObject({ skipped: true });

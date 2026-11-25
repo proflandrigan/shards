@@ -19,6 +19,7 @@ function makeRepo({ sub } = {}) {
   sh(top, 'config', 'user.name', 'Test');
   sh(top, 'config', 'user.email', 't@example.com');
   sh(top, 'config', 'commit.gpgsign', 'false');
+  sh(top, 'config', 'core.autocrlf', 'false'); // Windows runners default to true
   fs.writeFileSync(path.join(top, 'README.md'), 'hi\n');
   sh(top, 'add', 'README.md');
   sh(top, 'commit', '-q', '-m', 'init');

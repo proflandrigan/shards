@@ -74,7 +74,7 @@ describe('AR lease API', () => {
 describe('AR scope enforcement (writes)', () => {
   it('allows mutable, project, .shards and temp writes', async () => {
     await open();
-    for (const f of ['src/model/net.py', 'src/model/sub/layer.py', 'src/features.py', 'configs/a.yaml', 'projects/churn/experiments/iter_1.json', '.shards/state/x.json']) {
+    for (const f of ['src/model/net.py', 'src/model/sub/layer.py', 'src/features.py', 'configs/a.yaml', 'projects/churn/experiments/iter_1.json', '.shards/tmp/x.json']) {
       expect(await W(f), f).toBeNull();
     }
     expect(await W(path.join(os.tmpdir(), 'scratch-ar.txt'))).toBeNull();
@@ -109,6 +109,26 @@ describe('AR scope enforcement (writes)', () => {
       expect(denied(await B(c)), c).toBe(true);
     }
     expect(await call('mcp__plugin_shards_shards__notebook_exec', { cell: 1 })).toBeNull();
+  });
+  it('denies runtime state writes and sealed holdout reads (review of PR #93)', async () => {
+    await open();
+    for (const f of ['.shards/state/sessions/s/leases.json', '.shards/state/research-sealed/p/r.json']) expect(denied(await W(f)), f).toBe(true);
+    expect(denied(await B('echo {} > .shards/state/sessions/s/leases.json'))).toBe(true);
+    expect(denied(await B('cat .shards/state/research-sealed/churn/run-1.json'))).toBe(true);
+    expect(denied(await call('Read', { file_path: path.join(tmp, '.shards/state/research-sealed/churn/run-1.json') }))).toBe(true);
+  });
+  it('treats `>& file` as a write and still allows fd duplication', async () => {
+    await open();
+    expect(denied(await B('echo hi >& tests/t.py'))).toBe(true);
+    expect(denied(await B('echo hi >&tests/t.py'))).toBe(true);
+    expect(await B('python train.py 2>&1 >&2')).toBeNull();
+  });
+  it('checks the path arguments of third-party MCP write tools', async () => {
+    await open();
+    expect(denied(await call('mcp__serena__replace_content', { relative_path: 'tests/t.py', needle: 'a', repl: 'b' }))).toBe(true);
+    expect(denied(await call('mcp__filesystem__move_file', { source: 'src/model/a.py', destination: 'data/a.py' }))).toBe(true);
+    expect(await call('mcp__serena__replace_content', { relative_path: 'src/model/net.py', needle: 'a', repl: 'b' })).toBeNull();
+    expect(await call('mcp__docs__update', { id: 'x', payload: 'y' })).toBeNull(); // remote, no local path
   });
   it('applies to subagents too and is lifted when the lease closes', async () => {
     await open();
@@ -146,6 +166,10 @@ describe('AR git guard', () => {
     'git branch foo', 'git branch -f main HEAD~3', 'git branch -m a b', 'git branch --mo a b', 'git commit --amend', 'git commit --am -m x',
     'git update-ref -d refs/heads/main', 'git symbolic-ref HEAD refs/heads/x', 'git checkout --detach', 'git fetch origin main:main',
     'git reflog expire --expire=now --all', 'git gc --prune=now', 'git filter-branch', 'git checkout-index -f -a', 'git read-tree -u --reset HEAD',
+    // second review of #93: branch switch via `<ref> --`, unchecked pathspecs, config that runs commands
+    'git checkout other --', 'git checkout abc1234 --', 'git restore --pathspec-from-file=p', 'git checkout --pathspec-from-file=p abc',
+    'git checkout -p', 'git restore --patch', "git -c alias.x='!git reset --hard' x", 'git config alias.x "!git reset --hard"',
+    'git config --global core.hooksPath /x', 'git config --unset user.name',
   ];
   const ALLOW = [
     'git status', 'git diff', 'git diff --name-only abc123 -- src/model', 'git log --oneline -5', 'git commit --only src/model/net.py -m "iter 3"',
@@ -154,6 +178,7 @@ describe('AR git guard', () => {
     'git branch --list', 'git branch -a', 'git branch -vv', 'git branch --show-current', 'git branch --contains abc123', 'git fetch origin',
     'git symbolic-ref HEAD', 'git gc', '(git status)', 'git push --dry-run',
     'git branch', 'git branch -d merged', 'git clean -n', 'git -C . status', 'git rev-parse HEAD',
+    'git config user.name', 'git config --get user.email', 'git config -l', 'git -c user.name=x commit -m y', 'git log -p -1',
   ];
   it.each(DENY)('denies: %s', async (command) => {
     await open();
@@ -222,7 +247,7 @@ describe('AR branch worktrees (issue #91 H4)', () => {
 
   it('scopes worktree writes to that branch\'s mutable paths, never via the .shards/ allowance', async () => {
     await openBranch('a');
-    for (const f of [`${WT}/a/src/model/net.py`, path.join(tmp, WT, 'a/src/features.py'), '.shards/state/x.json', 'projects/churn/experiments/branches/a/iter_1.md']) {
+    for (const f of [`${WT}/a/src/model/net.py`, path.join(tmp, WT, 'a/src/features.py'), '.shards/tmp/x.json', 'projects/churn/experiments/branches/a/iter_1.md']) {
       expect(await W(f), f).toBeNull();
     }
     for (const [f, why] of [

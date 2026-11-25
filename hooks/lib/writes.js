@@ -36,9 +36,12 @@ function parse(cmd) {
     if (c === '>' || (c === '&' && cmd[i + 1] === '>')) {
       if (c === '&') i++;
       if (has && /^\d+$/.test(cur) && c === '>') { cur = ''; has = false; } else pushWord();
-      if (cmd[i + 1] === '&') { // fd duplication (2>&1, >&2): not a file write
-        i++; while (/[\d-]/.test(cmd[i + 1] || '')) i++;
-        continue;
+      if (cmd[i + 1] === '&') {
+        // fd duplication (2>&1, >&2, >&-) is not a file write; `>& file` / `>&file` redirects stdout+stderr to a file.
+        let j = i + 2; while (cmd[j] === ' ' || cmd[j] === '\t') j++;
+        const m = /^(?:\d+-?|-)(?=[\s;|&)<>]|$)/.exec(cmd.slice(j));
+        if (m) { i = j + m[0].length - 1; continue; }
+        i++; pendingRedir = true; continue;
       }
       if (cmd[i + 1] === '>' || cmd[i + 1] === '|') i++;
       pendingRedir = true; continue;
@@ -144,12 +147,16 @@ function commandWords(seg) {
 function gitCall(words) {
   if (!words.length || path.basename(words[0]) !== 'git') return null;
   const args = words.slice(1);
-  let i = 0; let dir = null;
+  let i = 0; let dir = null; const configs = [];
   while (i < args.length && args[i].startsWith('-')) {
     const a = args[i];
-    if (GIT_GLOBAL_VALUE.has(a)) { if (a === '-C') dir = dir ? path.join(dir, args[i + 1] || '') : args[i + 1]; i += 2; } else i++;
+    if (GIT_GLOBAL_VALUE.has(a)) {
+      if (a === '-C') dir = dir ? path.join(dir, args[i + 1] || '') : args[i + 1];
+      if (a === '-c' || a === '--config-env') configs.push(String(args[i + 1] || ''));
+      i += 2;
+    } else { if (a.startsWith('--config-env=')) configs.push(a.slice(13)); i++; }
   }
-  return { sub: args[i] || null, rest: args.slice(i + 1), dir };
+  return { sub: args[i] || null, rest: args.slice(i + 1), dir, configs };
 }
 
 // Every git invocation in a command line, including inside $(..)/backticks, chains (&&, ;, |) and env/wrapper

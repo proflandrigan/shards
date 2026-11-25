@@ -471,7 +471,8 @@ function activationFloor(run) { return Math.max(10, Math.ceil(run.budget.iterati
 // First stop condition that fires after the latest iteration (protocol §E order, safety rails first), or null.
 function stopReason(run, now = Date.now()) {
   const it = run.iterations; const N = it.length;
-  if (!N) return null;
+  const timeUp = !!(run.budget && run.budget.minutes) && now - Date.parse(run.started_at) >= run.budget.minutes * 60000;
+  if (!N) return timeUp ? 'time-budget' : null;
   const last = it[N - 1];
   if (last.failure === 'tamper') return 'tamper';
   const c = deriveCounters(it);
@@ -486,7 +487,7 @@ function stopReason(run, now = Date.now()) {
     }
   }
   if (N >= run.budget.iterations) return 'budget-exhausted';
-  if (run.budget.minutes && now - Date.parse(run.started_at) >= run.budget.minutes * 60000) return 'time-budget';
+  if (timeUp) return 'time-budget';
   return null;
 }
 function diminishingAbs(run) {
@@ -569,6 +570,7 @@ function normalizeStartArgs(args) {
   if (!mutable.length) throw new Error('ar_start: mutable must list at least one path or glob');
   // The AR project dir holds the iteration logs and the agent's docs, and .shards/ holds runtime state: a mutable
   // entry covering either would commit and revert them with every iteration.
+  if (args.eval && args.eval.name !== undefined && !/^[A-Za-z0-9_.-]+$/.test(String(args.eval.name))) throw new Error('ar_start: eval.name must match [A-Za-z0-9_.-]+ (it is written into journal trailers)');
   const reserved = [project, `${project}/experiments/iter_1.log`, `${project}/project-specs.md`, `${project}/README.md`, '.shards', '.shards/state/x.json'];
   for (const m of mutable) {
     const hit = reserved.find((r) => L.entryCovers(m, r));
@@ -689,7 +691,12 @@ function linkMissingImmutable(root, wroot, immutable) {
     try { fs.lstatSync(dst); have = true; } catch (_) { /* missing */ }
     if (have || !fs.existsSync(src)) continue;
     fs.mkdirSync(path.dirname(dst), { recursive: true });
-    fs.symlinkSync(src, dst, fs.statSync(src).isDirectory() ? 'dir' : 'file');
+    const isDir = fs.statSync(src).isDirectory();
+    try { fs.symlinkSync(src, dst, isDir ? 'junction' : 'file'); } catch (err) {
+      // Windows without symlink rights (EPERM): copy the file; a directory junction needs no rights.
+      if (err.code !== 'EPERM' || isDir) throw new Error(`cannot link immutable ${e} into the branch worktree: ${err.message}`);
+      fs.copyFileSync(src, dst);
+    }
     linked.push(e);
   }
   return linked;
@@ -913,6 +920,13 @@ async function iterate(ctx, args) {
   if (!run0) throw new Error(`ar_iterate: no active AR run${args.branch ? ` for branch ${args.branch}` : ''} in this session; call ar_start (or ar_status with resume=true after a context loss)`);
   const key = keyOf(run0);
   if (run0.status !== 'active') throw new Error(`ar_iterate: run ${key} has stopped (${run0.stop_reason}); call ar_end`);
+  // A stop reason already due (the wall-clock budget ran out while the driver idled or deferred) is applied before
+  // paying for another eval.
+  const due = stopReason(run0);
+  if (due) {
+    await withRunLock(key, async () => saveRun(state, { ...JSON.parse(JSON.stringify(run0)), status: 'converged', converged: true, stop_reason: due }));
+    throw new Error(`ar_iterate: run ${key} has stopped (${due}); call ar_end`);
+  }
   const lease = L.getActiveArLease(session);
   if (!lease || lease.ar.run_id !== run0.run_id || (run0.branch && !(lease.ar.branches || {})[run0.branch])) throw new Error(`ar_iterate: the AR lease for run ${key} is not active; call ar_status with resume=true to reopen it`);
 
@@ -1225,7 +1239,31 @@ async function findRef(root, runId, branch) {
 
 // Resolve ONE run: session state first (by id/branch, else the active run, else the newest), then the research
 // ref. Several branch runs matching and no branch given is ambiguous.
+// The runtime advances the ref before it saves the session state: a crash in between leaves run.tip stale. When
+// the ref only moved forward from run.tip, rebuild from it (keeping the state-only lease and worktree fields).
+// A ref that moved elsewhere is left for ar_iterate / ar_defer to refuse.
+async function reconcileWithRef(root, run) {
+  if (!run || !run.tip || !run.ref) return { run, reconciled: false };
+  const tip = await refTip(root, run.ref);
+  if (!tip || tip === run.tip) return { run, reconciled: false };
+  const anc = await G.git(root, ['merge-base', '--is-ancestor', run.tip, tip]);
+  if (anc.code !== 0) return { run, reconciled: false };
+  const rebuilt = await rebuildFromRef(root, run.ref);
+  const merged = { ...run, ...rebuilt, lease_id: run.lease_id };
+  if (run.worktree) merged.worktree = { ...(rebuilt.worktree || {}), ...run.worktree };
+  if (run.status === 'ended') Object.assign(merged, { status: 'ended', stop_reason: run.stop_reason, converged: true });
+  return { run: merged, reconciled: true };
+}
+
 async function resolveRun(ctx, runId, branch) {
+  const r = await resolveRunRaw(ctx, runId, branch);
+  if (r.source !== 'state') return r;
+  const { run, reconciled } = await reconcileWithRef(ctx.root, r.run);
+  if (reconciled) await saveRun(ctx.state, run);
+  return { run, source: 'state' };
+}
+
+async function resolveRunRaw(ctx, runId, branch) {
   const s = readStore(ctx.state);
   if (runId && s.runs[runKey(runId, branch)]) return { run: s.runs[runKey(runId, branch)], source: 'state' };
   if (runId && !branch) {
