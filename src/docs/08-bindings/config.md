@@ -16,15 +16,14 @@ Must be `1`.
 
 ### `jobs`
 
-Maps each of the six jobs (`record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`) to a binding. A value is a binding name (short form) or `{ binding, options }` (long form):
+Maps each of the six jobs (`record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`) to a binding. Use a binding name such as `tasks: jira` for the short form. The long form accepts binding options.
 
 ```yaml
 jobs:
-  tasks: jira                                              # short
   tasks: { binding: jira, options: { project: ABC } }      # long
 ```
 
-`options` are binding-specific and passed to the binding's verbs as-is. Only `git` ships today; naming any other binding passes validation but the runtime cannot load it (see [Integrations status](integrations-status.md)).
+`options` are binding-specific and passed to the binding's verbs as-is. The bundled bindings are `git` and `jira`. Jira serves the tasks job (see [Integrations status](integrations-status.md)).
 
 ### `gates.policy`
 

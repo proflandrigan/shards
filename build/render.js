@@ -33,6 +33,8 @@ function toolArgs(m) {
 function render(m, target) {
   const T = (t) => `\`${tool(target, t)}\``;
   switch (m.macro) {
+    case 'jira_context':
+      return `Call ${T('jira_context')}() for the Jira binding instructions and settings.`;
     case 'switch':
       return `Switch to \`${m.agent}\`: call ${T('activate')}(agent=${q(m.agent)}, mode="switch") and adopt the persona it returns. You stay that agent until you call ${T('return')}.`;
     case 'consult': {

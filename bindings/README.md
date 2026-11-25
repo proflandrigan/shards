@@ -8,7 +8,7 @@ This document is the format spec for binding authors. The git binding is the wor
 
 1. **The agent calls the host's MCP tools itself.** The Shards runtime never holds third-party credentials and never writes to an external system (decision D4). A binding's body tells the agent exactly which MCP tools to call and what to pass.
 2. **The agent then reports the result to the runtime.** After each external write, the agent calls `copy_report(gate_id, target, ok, error?)` (E6.8). The runtime records the outcome and queues failures for retry at the next gate.
-3. **Git is the source of truth.** Every output is first written to local files and committed. External copies are one-way: local to external. Nothing is read back from an external system as authoritative.
+3. **Git is the source of truth.** Every output is first written to local files and committed. External copies are one-way: local to external. The Jira tasks binding reads issue scope and tracker status as inputs. Verification evidence and local execution state stay in git.
 4. **External writes need a confirmed gate or explicit user confirmation.** Never write to a shared system mid-phase. The PreToolUse hook enforces this for the tools listed in `write_tools` (see `docs/config.md`, `guardrails`).
 5. **Summaries only.** Send summaries and decisions to external tools, not raw query results, data samples or file dumps. Raw data is a git-denylist concern and a compliance concern.
 6. **Writes are idempotent.** Every external write carries a marker such as `[shards-gate:<id>]` in its title, body or a property, so a retry finds and updates the earlier copy instead of duplicating it.

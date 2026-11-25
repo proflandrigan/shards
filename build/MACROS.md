@@ -139,9 +139,13 @@ Args: `agent` required, `task` optional text. Used by Syn PM mode to start a wor
 Validation: the agent exists; its `activation` includes `consult` and `fanout_worker`; it has a `consult_entries.worker` entry. Anything else is a build error. The `protocols/lead_contract.md` path is referenced, not checked.
 Compiles to text only (no runtime tool of its own): launch the agent as an isolated subagent whose prompt starts "Entry lead: read <content path>/protocols/lead_contract.md first, then follow your own phases as the lead", plus the task and the brief. The lead holds no gates and does not talk to the user; it runs its build phases through the delegated build loop passing `scope=<workstream dir>` on every `task_*` call, dispatches `<agent>` workers (entry worker) itself and returns the structured report the brief asks for. Independent leads are launched in parallel. Per target: claude runs subagent `<agent>` by name (single message for parallel leads); codex uses `spawn_agent` and states that this needs `agents.max_depth = 2`; skills uses an isolated skill invocation and states that, if the host cannot give the lead its own isolated workers, the lead uses the sequential/inline fallback and says so in its report and evidence table.
 
+### 3.16 `{{jira_context}}`
+
+Takes no arguments. Calls the target's `jira_context` tool for the Jira binding instructions, project settings and writeback flag used by issue intake and Epic Captain.
+
 ## 4. Runtime tools and bindings
 
-Runtime tools referenced: `activate`, `return`, `load_phase`, `gate_request`, `gate_advance`, `gate_confirm` (the last two are never emitted into agent text: the user side confirms), `auto_verify_start`, `auto_verify_end`, `artifact_emit`, `copy_report` (E6.8, used by bindings after an external write), `fanout_start` (E5.9), `tasks_set`, `task_dispatch`, `task_report`, `task_status`, `task_verify` (E12, via `delegate`). Binding jobs (from `shards.config.yaml`): `record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`; macros render the job name, not a concrete tool.
+Runtime tools referenced: `jira_context`, `activate`, `return`, `load_phase`, `gate_request`, `gate_advance`, `gate_confirm` (the last two are never emitted into agent text: the user side confirms), `auto_verify_start`, `auto_verify_end`, `artifact_emit`, `copy_report` (E6.8, used by bindings after an external write), `fanout_start` (E5.9), `tasks_set`, `task_dispatch`, `task_report`, `task_status`, `task_verify` (E12, via `delegate`). Binding jobs (from `shards.config.yaml`): `record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`; macros render the job name, not a concrete tool.
 
 ## 5. Rendering table
 

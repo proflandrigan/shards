@@ -11,7 +11,7 @@ const NON_ADVANCING = new Set(['checkpoint', 'confirm']);
 const TRACKS = ['quick', 'deep'];
 const PHASE_RE = /^\d+(-\d+)*$/;
 const NAMES = ['switch', 'consult', 'fanout', 'return', 'phase', 'protocol', 'template', 'gate', 'auto_verify',
-  'record.write', 'tasks.create', 'tasks.update', 'tasks.list', 'tasks.get', 'knowledge.search', 'artifact.emit', 'delegate', 'lead'];
+  'record.write', 'tasks.create', 'tasks.update', 'tasks.list', 'tasks.get', 'knowledge.search', 'artifact.emit', 'delegate', 'lead', 'jira_context'];
 
 // Derive enclosing context from a path relative to core/ (posix).
 function fileContext(rel) {
@@ -201,6 +201,7 @@ function resolveMacro(macro, core, ctx) {
 }
 
 const SPECS = {
+  jira_context: { positional: [], named: [], required: [] },
   switch: { positional: ['agent'], named: [], required: ['agent'] },
   consult: { positional: ['agent'], named: ['entry', 'task'], required: ['agent', 'entry'] },
   fanout: { positional: ['agent'], named: ['slices', 'entry', 'task'], required: ['agent', 'slices'] },

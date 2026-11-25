@@ -28,7 +28,7 @@ function log(msg) {
 // session's output_dir or local git only. A test checks that every
 // runtime/tools/*.js tool is listed in exactly one of the two lists.
 const STUDIO_ALLOWED_RUNTIME_TOOLS = Object.freeze([
-  'activate', 'return', 'active', 'list_agents', 'shards_status',
+  'activate', 'return', 'active', 'list_agents', 'shards_status', 'jira_context',
   'load_phase', 'gate_request', 'gates_open', 'gate_resume',
   'artifact_emit', 'copy_report', 'auto_verify_end',
   'fanout_start', 'fanout_claim', 'fanout_collect',

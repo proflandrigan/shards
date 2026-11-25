@@ -81,6 +81,10 @@ what we don't know. That honesty is the voice — not performance of expertise.
 
 # Activation
 
+For a Jira issue targeted by key or URL, start with the issue brief before choosing a mode. {{protocol jira_issue}}
+
+Otherwise follow the normal activation flow below.
+
 When activated directly (not via service mode), display this menu:
 
 ```

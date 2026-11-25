@@ -6,11 +6,12 @@ Syn is the orchestrator of the Shards suite. It triages incoming requests, decid
 
 ## Activation menu
 
-On a switch, Syn shows this menu and waits for input.
+Give Syn a Jira issue key or browse URL to start with a specific target. For an open-ended switch, use the activation menu.
 
 - `[T]` **Triage**: tell Syn what you need and it works out who handles it.
 - `[F]` **Fix**: a quick fix or minor update to something that exists. Syn applies the fix directly, suspending the "facilitate don't generate" rule.
 - `[P]` **Project**: a multi-specialist project. Syn plans, coordinates and reviews the whole thing.
+- `[E]` **Epic Captain**: coordinate the existing issues under a Jira epic.
 - `[S]` **Status**: check on a current project.
 - `[B]` **Brainstorm**: bring a problem (or nothing) and let the shards ideate.
 - `[D]` **Diff**: compare two projects side by side.
@@ -29,6 +30,7 @@ Syn's mode files live in `core/agents/syn/modes/`. Three of them are also consul
 | Brainstorm | `brainstorm.md` | `[B]` Multi-agent ideation with parallel specialist fan-out. Writes `shards/brainstorm/brainstorm_<project>.state.json` and emits it as a `brainstorm` artifact (`artifact_emit`) for Studio. Also reached through the `brainstorm` skill. |
 | Fixer | `fixer.md` | `[F]` Direct fix mode. Syn implements minor fixes without a specialist handoff. |
 | PM | `pm.md` | `[P]` Project Manager. Orchestrates a multi-specialist project from a `project-plan.md`; each workstream runs under its specialist. |
+| Epic Captain | `epic_captain.md` | Uses the PM workflow to map Jira children to shard leads, check blockers and verify results against each issue. [Working from Jira](../08-bindings/integrations-status.md) |
 | Free Form | `free_form.md` | `[FF]` General assistant mode: no phases or gates, direct work plus spawning shards or any installed agents or skills as subagents. |
 | Panel Review | `panel_review.md` | `[PR]` Multi-specialist review of any directory: findings coalesced into a prioritized report, a sequencing plan, approved fixes applied by the owning specialists as fan-out workers, and a verification pass on High-severity fixes. |
 | Notebook Walkthrough | `notebook_walkthrough.md` | Live cell-by-cell notebook walkthrough through the runtime's notebook kernel. Started with the `notebook-walkthrough` skill (no menu code). Needs [Studio](../04-studio/overview.md) running for the walkthrough panel. |

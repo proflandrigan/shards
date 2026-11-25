@@ -21,7 +21,7 @@ Node.js 18+. Run the suite with `npm test` (`vitest run`; `vitest.config.js` alr
 | `build/` | Compiler: `compile.js`, `render.js`, `macros.js` (see `build/MACROS.md`), `emit.js`, `package.js`, `skills.js`, `activation-check.js` |
 | `runtime/` | `shards-mcp` stdio MCP server: `server.js`, `registry.js`, `tools/` (one file per tool), `gates/`, `session/`, `sessions/`, `fanout/`, `leases/`, `tasks/`, `config/`, `notebook/`, `state/` |
 | `hooks/` | Host hook shims (SessionStart, UserPromptSubmit, PreToolUse, SubagentStop) for Claude Code and Codex; `hooks/lib/enforce.js` holds the write-blocking rules |
-| `bindings/` | Binding files (`bindings/<name>.md`); only `git.md` exists. Format spec in `bindings/README.md` |
+| `bindings/` | Binding files (`bindings/<name>.md`); git serves all jobs and Jira serves tasks. Format spec in `bindings/README.md` |
 | `cli/` | The `shards` CLI (`cli/shards.js`, commands in `cli/commands/`) |
 | `packages/studio/` | Studio, the optional browser view (`@proflandrigan/shards-studio`); files-only add-on that reads `.shards/events.jsonl` and the v2 gate state in `.shards/state/` |
 | `src/docs/` | The Developer Guide (sections 01-08, `manifest.json`, `README.md`) |
@@ -59,7 +59,7 @@ node cli/shards.js migrate --dry-run
 
 **Gates are tool calls** (ADR 0008; `docs/gates.md`): the agent calls `gate_request`; the runtime records it and the PreToolUse hook blocks writes while a gate is pending. Confirmation uses three tiers (1 elicitation, 2 host permission prompt via `gate_advance`, 3 verbatim chat reply via `gate_confirm`), and `gates.policy` in `shards.config.yaml` (`strict`, `phase` or `plan`) controls how often gates ask; no text fences are involved. ADR 0011: a pending gate blocks subagents without a fan-out lease. Tools: `gate_request`, `gate_advance`, `gate_confirm`, `gate_force_close`, `gate_suspend`, `gate_resume`, `gates_open`, `load_phase`. Each phase file is served only after the previous gate is confirmed.
 
-**Jobs and bindings** (`docs/config.md`): `shards.config.yaml` maps six jobs (record, tasks, knowledge, review, artifacts, presentation) to bindings. The agent calls the host's own MCP tools; the runtime never holds third-party credentials (ADR 0004). Stage 6 integrations (Confluence, Jira, etc.) are not built.
+**Jobs and bindings** (`docs/config.md`): `shards.config.yaml` maps six jobs (record, tasks, knowledge, review, artifacts, presentation) to bindings. The agent calls the host's own MCP tools; the runtime never holds third-party credentials (ADR 0004). Jira issue intake and epic orchestration use the host’s Atlassian connection.
 
 **Sessions** (`docs/sessions.md`): state under `.shards/state/`; `shards sessions list|show|resume|end` and the `resume`/`end` skills.
 

@@ -47,3 +47,28 @@ describe('bindings', () => {
     expect(() => loadBinding('../etc')).toThrow(BindingError);
   });
 });
+
+describe('Jira task binding', () => {
+  const tool = require('../runtime/tools/jira_context');
+  const { matchesTool } = require('../runtime/guardrails');
+  const context = (config) => tool.handler({}, { getConfig: () => ({ config }) });
+
+  it('exposes read-only intake with default jobs', async () => {
+    expect(listBindings()).toContain('jira');
+    const { data } = await context({});
+    expect(data).toMatchObject({ site: null, project: null, writeback: false });
+    expect(data.instructions).toBe(loadBinding('jira').body);
+  });
+
+  it('resolves the selected Jira job and declares the host comment writers', async () => {
+    const { data } = await context({
+      jobs: { tasks: { binding: 'jira', options: { project: 'ABC' } } },
+      bindings: { jira: { site: 'https://abc.atlassian.net' } },
+    });
+    expect(data).toMatchObject({ site: 'https://abc.atlassian.net', project: 'ABC', writeback: true });
+    const binding = loadBinding('jira');
+    for (const writer of ['mcp__atlassian__addCommentToJiraIssue', 'mcp__codex_apps__atlassian_addoreditjiraissuecomment']) {
+      expect(binding.write_tools.some((name) => matchesTool(writer, name))).toBe(true);
+    }
+  });
+});

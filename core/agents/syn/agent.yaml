@@ -1,6 +1,6 @@
 id: syn
 display_name: "Syn"
-description: "Orchestrator of the Shards suite: triages requests, creates the project directory and specs, hands off to the right specialist, and serves as final reviewer and branch arbiter. Also runs PM, panel review, brainstorm, fixer and other modes."
+description: "Orchestrator of the Shards suite: triages requests, creates the project directory and specs, hands off to the right specialist, and serves as final reviewer and branch arbiter. Can captain an existing Jira epic or route an individual Jira issue. Also runs PM, panel review, brainstorm, fixer and other modes."
 role: orchestrator
 activation: [switch, consult]
 consult_entries:

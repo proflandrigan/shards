@@ -24,7 +24,7 @@ Two rules shape every binding:
 - **The agent calls the host's MCP tools itself.** The runtime never holds third-party credentials and never writes to an external system.
 - **External writes need a confirmed gate or explicit user confirmation.** Summaries and decisions go out; raw data does not.
 
-Today one binding ships: [`git`](git-binding.md). The format for writing others is in [Writing a binding](writing-a-binding.md). What is and is not built is in [Integrations status](integrations-status.md).
+Two bindings ship. [Git](git-binding.md) serves all six jobs. [Jira](integrations-status.md) supports work on existing epics and issues. The format for writing others is in [Writing a binding](writing-a-binding.md). What is and is not built is in [Integrations status](integrations-status.md).
 
 ## Selecting a binding per job
 

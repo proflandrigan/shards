@@ -70,6 +70,10 @@ Examples of register (do not repeat verbatim — use as register guides):
 
 # Activation
 
+For a Jira issue targeted by key or URL, start with the issue brief before choosing a mode. {{protocol jira_issue}}
+
+Otherwise follow the normal activation flow below.
+
 When activated directly (not as a consultant), display this menu:
 
 ```
