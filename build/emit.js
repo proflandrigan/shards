@@ -118,14 +118,15 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
     }
     if (!consultable(a) || (target !== 'claude' && target !== 'codex')) continue;
     const tools = claudeToolsOf(a.doc); // host-neutral capabilities -> Claude tool names (build/host-tools.js)
-    const subs = [{ name: id, description, prompt: generalPrompt(a, target, optIn && id === 'syn'), main: id === 'syn' }];
+    const entryTools = tools.filter((t) => t !== 'Task'); // consult entries and workers never delegate; only the general subagent (the lead) keeps Task
+    const subs = [{ name: id, description, prompt: generalPrompt(a, target, optIn && id === 'syn'), main: id === 'syn', tools }];
     for (const entry of Object.keys(a.doc.consult_entries || {}).sort()) {
-      subs.push({ name: `${id}-${entry}`, description: `${description} (consult entry: ${entry})`, prompt: entryPrompt(a, entry, rendered) });
+      subs.push({ name: `${id}-${entry}`, description: `${description} (consult entry: ${entry})`, prompt: entryPrompt(a, entry, rendered), tools: entryTools });
     }
     for (const s of subs) {
       if (target === 'claude') {
         const head = { name: s.name, description: s.description };
-        if (!(s.main && optIn) && tools.length) head.tools = tools.join(', ');
+        if (!(s.main && optIn) && s.tools.length) head.tools = s.tools.join(', ');
         out.set(`agents/${s.name}.md`, `${fm(head)}\n${s.prompt}`);
       } else {
         out.set(`.codex/agents/${s.name}.toml`, `name = ${tomlStr(s.name)}\ndescription = ${tomlStr(s.description)}\ndeveloper_instructions = ${tomlMulti(s.prompt)}\n`);

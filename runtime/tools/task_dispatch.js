@@ -22,16 +22,17 @@ function dispatchProblems(ids, tasks, byId) {
 
 module.exports = defineTool({
   name: 'task_dispatch',
-  description: 'Dispatch ready tasks. Each id must be pending (or failed with attempts < 3, for a retry; the card then carries `feedback`), have all depends_on done, and not be paused; otherwise the whole call is refused and nothing is dispatched. Opens a lease on each non-inline task\'s owned_paths and returns one task card per id. Hand each card to a worker subagent (card.entry_file says what the worker reads first); the worker returns task-result JSON; pass it to task_report. Inline cards (inline:true) are done by you directly and hold no lease.',
+  description: 'Dispatch ready tasks. Each id must be pending (or failed with attempts < 3, for a retry; the card then carries `feedback`), have all depends_on done, and not be paused; otherwise the whole call is refused and nothing is dispatched. Opens a lease on each non-inline task\'s owned_paths and returns one task card per id. Hand each card to a worker subagent (card.entry_file says what the worker reads first); the worker returns task-result JSON; pass it to task_report. Inline cards (inline:true) are done by you directly and hold no lease. Workstream leads under PM mode: pass the same `scope` you gave tasks_set (given by the lead contract); omit otherwise.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
     required: ['ids'],
-    properties: { ids: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string', minLength: 1 } } },
+    properties: { ids: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string', minLength: 1 } }, scope: T.SCOPE_PROP },
   },
   async handler(args, ctx) {
     if (!ctx.sessionKey || !ctx.state) throw new Error('task_dispatch requires a resolved session');
-    const st0 = T.readTasksState(ctx.state);
+    const scope = T.normalizeScope(args.scope);
+    const st0 = T.readTasksState(ctx.state, scope);
     if (!st0.manifest) throw new Error('task_dispatch: no task manifest registered. Call tasks_set first.');
     const byId = new Map(st0.manifest.tasks.map((t) => [t.id, t]));
     const problems = dispatchProblems(args.ids, st0.tasks, byId);
@@ -47,7 +48,7 @@ module.exports = defineTool({
         if (t.delegate === 'inline') { leaseIds[id] = null; continue; }
         const lease = await leases.openLease(session, {
           owner: 'task', worker_type: t.worker, slices: [{ id: t.id, paths: t.owned_paths }],
-          ttl_ms: T.DEFAULT_TTL_MS, meta: { task_id: t.id },
+          ttl_ms: T.DEFAULT_TTL_MS, meta: scope ? { task_id: t.id, scope } : { task_id: t.id },
         });
         const lid = typeof lease === 'string' ? lease : (lease && (lease.id || lease.lease_id));
         leaseIds[id] = lid;
@@ -61,7 +62,7 @@ module.exports = defineTool({
     const now = new Date().toISOString();
     let next;
     try {
-      next = await ctx.state.update(T.STATE_NAME, (cur) => {
+      next = await ctx.state.update(T.stateNameFor(scope), (cur) => {
         // Re-check under the state lock: a concurrent dispatch may have taken these ids since st0 was read.
         const late = dispatchProblems(args.ids, cur.tasks, byId);
         if (late.length) throw new Error(`task_dispatch refused; nothing was dispatched (state changed concurrently):\n${late.map((p) => `  - ${p}`).join('\n')}`);
@@ -75,7 +76,7 @@ module.exports = defineTool({
       for (const lid of opened) { try { await leases.closeLease(session, lid); } catch (_) { /* best effort */ } }
       throw e;
     }
-    const mirror = T.mirrorTasksMd(ctx, { ...next, manifest: st0.manifest, path: st0.path });
+    const mirror = T.mirrorTasksMd(ctx, { ...next, manifest: st0.manifest, path: st0.path }, scope);
     const cards = args.ids.map((id) => {
       const t = byId.get(id);
       return {

@@ -11,7 +11,7 @@ const NON_ADVANCING = new Set(['checkpoint', 'confirm']);
 const TRACKS = ['quick', 'deep'];
 const PHASE_RE = /^\d+(-\d+)*$/;
 const NAMES = ['switch', 'consult', 'fanout', 'return', 'phase', 'protocol', 'template', 'gate', 'auto_verify',
-  'record.write', 'tasks.create', 'tasks.update', 'tasks.list', 'tasks.get', 'knowledge.search', 'artifact.emit', 'delegate'];
+  'record.write', 'tasks.create', 'tasks.update', 'tasks.list', 'tasks.get', 'knowledge.search', 'artifact.emit', 'delegate', 'lead'];
 
 // Derive enclosing context from a path relative to core/ (posix).
 function fileContext(rel) {
@@ -76,6 +76,17 @@ function resolveMacro(macro, core, ctx) {
         }
       }
       Object.assign(model, { agent: vals.agent, entry, slices: vals.slices, task: vals.task });
+      break;
+    }
+    case 'lead': {
+      const a = agentOf(vals.agent, 'agent');
+      if (a) {
+        const act = a.doc.activation || [];
+        if (!act.includes('consult')) err(`agent '${a.id}' does not support consult activation (required to run as a workstream lead)`);
+        if (!act.includes('fanout_worker')) err(`agent '${a.id}' does not support fanout_worker activation (a lead needs its own workers)`);
+        if (!(a.doc.consult_entries || {}).worker) err(`agent '${a.id}' has no worker consult entry; a lead needs one to dispatch workers (its consult_entries: ${Object.keys(a.doc.consult_entries || {}).join(', ') || '(none)'})`);
+      }
+      Object.assign(model, { agent: vals.agent, task: vals.task });
       break;
     }
     case 'delegate': {
@@ -206,6 +217,7 @@ const SPECS = {
   'tasks.get': { positional: [], named: ['id'], required: ['id'] },
   'knowledge.search': { positional: [], named: ['query', 'scope'], required: ['query'] },
   'artifact.emit': { positional: [], named: ['type', 'path', 'meta'], required: ['type', 'path'] },
+  lead: { positional: ['agent'], named: ['task'], required: ['agent'] },
   delegate: { positional: [], named: ['tasks', 'max_parallel', 'mode'], required: [] },
 };
 

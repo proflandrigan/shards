@@ -20,11 +20,11 @@ function dependents(manifest, rootId) {
   return [...out];
 }
 
-async function onDeviations(session, taskId, result) {
+async function onDeviations(session, taskId, result, scope) {
   if (!result || !Array.isArray(result.deviations) || !result.deviations.length) return undefined;
   const paused = [];
   const reason = `dependency ${taskId} reported deviation`;
-  await session.state.update('tasks', (cur) => {
+  await session.state.update(require('./index').stateNameFor(scope), (cur) => {
     if (!cur.manifest) return cur;
     const at = new Date().toISOString();
     for (const id of dependents(cur.manifest, taskId)) {

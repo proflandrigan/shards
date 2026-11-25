@@ -86,11 +86,10 @@ For each workstream define:
 - **Outputs** (what it produces for downstream workstreams)
 - **Dependencies** (which workstreams must complete first)
 - **Definition of done** (one sentence)
-- **Scale** (single or swarm) — whether this workstream is small enough for one
-  specialist or large enough to decompose into parallel slices. Default:
-  single. Choose swarm when the workstream is genuinely large — many files,
-  several independent sub-problems, or more work than one specialist should
-  carry. A scaled workstream lists its slices here or in project-plan.md.
+- **Size hint** (optional) — small, medium or large. It is a hint only. Each
+  workstream has one lead, and the lead handles size through its own task list:
+  a larger workstream gets more task cards and a higher `max_parallel`, not
+  more leads.
 
 Build the **dependency graph** and group workstreams into **execution groups** —
 each group contains workstreams that can run in parallel (no unresolved dependencies):
@@ -201,30 +200,37 @@ Process execution groups in dependency order.
 
 ### For each execution group:
 
-**1. Start the group's specialists in parallel** (concurrent workers):
+**1. Start the group's workstream leads in parallel.** Each workstream gets one lead: its specialist, launched as an isolated subagent that orchestrates the build and dispatches its own same-specialist workers (Syn, then the lead, then workers; never deeper). Launch the leads of a group in parallel.
 
-Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
+Run this launch (shown for `data-scientist`; for each workstream use the same call with that workstream's specialist, and put every lead of the group in one parallel launch):
 
-{{fanout ml-engineer slices=workstream_a,workstream_b}}
+{{lead data-scientist}}
 
-Brief for each consultant or worker (fill the angle-bracket fields):
+Brief for each lead (fill the angle-bracket fields):
 
 ```
-PM MODE — You are running under Syn project management.
+PM MODE — You are the WORKSTREAM LEAD under Syn project management.
 
 INSTRUCTIONS:
+- Read the lead contract first: it governs you (no gates, no user
+  conversation, scope fixed by Syn, delegated build with your own workers).
+- Your scope for every task tool call is `scope=<workstream dir>`. Your task
+  list is <workstream dir>/tasks.yaml.
 - Skip your activation menu and Phase 0 — Syn has already scoped your work.
 - Read your project-specs.md at <path> for your full brief.
 - Execute all phases without waiting for user confirmation at gates.
   When you would normally gate, document your decision in project-specs.md
   and continue to the next phase.
+- Run every build phase through the delegated build loop and dispatch your own
+  <specialist>-worker workers with `scope`. Write no build code yourself
+  outside tasks marked `delegate: inline`. Verify every task with task_verify.
 - Do NOT invoke Syn final review — Syn is already reviewing your work.
 - The sources check is already done: Syn populated the `### Sources`
   subsection in your project-specs.md during workstream initialization.
   Do NOT re-run it for the initial brief. Re-read the subsection before
   building and cite sources that influence your decisions.
-- If you would normally consult another agent (Data Modeller, Researcher, etc.),
-  proceed with the consultation as normal — those are still valuable.
+- Reviewer consults that your phases call for follow the lead contract
+  (run them if your host allows, otherwise name the skipped consult in your report).
 
 UPSTREAM CONTEXT:
 <paths to completed upstream workstream artifacts, if any>
@@ -240,33 +246,17 @@ WHEN COMPLETE, return a structured report:
 4. **Confidence level** — High / Medium / Low
 5. **Integration notes** — anything downstream workstreams need to know
 6. **Source citations** — any sources that influenced decisions, and any contradictions observed between a source and what you found in the work
+7. **Delegation** — tasks.yaml path, tasks dispatched and verified, and any fallback used and why (or none)
 ```
 
-**1b. Swarm a large workstream** — if a workstream is marked Scale: swarm (or
-you judge it genuinely large during execution):
+**1b. Large workstreams.** A large workstream does not get a Syn-level fan-out of specialist copies. Its lead scales by splitting its own task list into more task cards (disjoint `owned_paths`) and raising `max_parallel`. If the workstream is really two separate deliverables, split it into two workstreams in Phase 1 instead.
 
-- {{protocol swarm}}.
-- Decompose the workstream into bounded slices. Each slice: one specialist
-  type, one clearly-scoped sub-task, its own output directory (e.g.
-  `shards/<name>/slice-<n>/`), and a definition of done.
-- Spawn all slices in parallel via a single fan-out, same
-  specialist repeated across slices. Give each slice its own brief
-  (scope, inputs, outputs, paths, definition of done) using the PM MODE prompt
-  template above, adapted per-slice.
-- Review each slice's output (same APPROVED / NEEDS REVISION / BLOCKED flow as
-  single workstreams, per-slice revision cap applies).
-- **Merge** the approved slices into the workstream's coherent deliverable:
-  reconcile interfaces, write any glue, and update the workstream's
-  `definition_of_done` confirmation in project-plan.md. Then proceed to
-  all-workstreams-in-group completion checks as normal.
-- Track slices in project-plan.md under the workstream's section (and, if
-  helpful, in `workstreams.json` under an optional `slices` array).
-
-**2. Review each specialist's output** as consults return:
+**2. Review each lead's output** as the leads return:
 
 - Read the structured report
 - Read key artifacts from disk
 - Check against the workstream's definition of done
+- Check the lead's delegation evidence: read its `tasks.yaml` (or `task_status` with the workstream `scope`). Its `## Validation` Evidence table must have a `task_verify` evidence row per task, and any `Fallback:` row must name a genuine reason (workers could not be spawned). A lead that built inline without a recorded reason, or whose tasks lack evidence rows, is NEEDS REVISION.
 - Check the **Source citations** section of the report. If the specialist
   flagged any contradictions, note them in `project-plan.md` under a
   `### Source Contradictions` section. Do not resolve them yet: batch them
@@ -281,7 +271,7 @@ you judge it genuinely large during execution):
 
 **3. Revision protocol:**
 
-Round 1-3: Re-task the specialist with the revision preamble:
+Round 1-3: Re-task the lead by repeating the launch from step 1 (same lead launch for the workstream's specialist, same scope) with the revision preamble:
 
 ```
 PM MODE — REVISION ROUND <N>/3
@@ -294,6 +284,8 @@ FEEDBACK:
 
 Your previous artifacts are at <path>. Fix the issues identified above.
 Do not redo work that was already approved — focus on the feedback.
+You remain the workstream lead: fixes go through new or failed task cards
+dispatched to your workers and verified with task_verify, with the same scope.
 
 Return the same structured report format when done.
 ```
@@ -423,16 +415,16 @@ After all execution groups complete:
 }
 ```
 
-Optional: for swarmed workstreams, add a "slices" array to the workstream
-object, each entry { "name": slice slug, "specialist": shard type,
-"directory": path, "definition_of_done": one sentence }.
+Optional per workstream: `"tasks_manifest"` (path to the lead's `tasks.yaml`)
+and `"delegation_fallback"` (`null` when the lead used workers, otherwise the
+reason it gave for a sequential or inline fallback).
 
 ---
 
 ## Context Window Management
 
 - **Specialist output:** The structured report format keeps what flows back concise. Read artifacts from disk, not from consult output.
-- **Parallel consults:** For groups with 3+ parallel specialists, context grows fast. Trim context between execution groups if it is heavy.
+- **Parallel leads:** For groups with 3+ parallel workstream leads, context grows fast. Each lead's report is all that comes back; its workers' results stay inside the lead. Trim context between execution groups if it is heavy.
 - **Revision loops:** Capped at 3 rounds. Each revision consult is self-contained (references artifacts on disk, not prior consult context).
 - **Integration review:** Read files from disk rather than accumulating all specialist output in context.
 

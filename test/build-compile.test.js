@@ -16,8 +16,9 @@ describe('compile fixture core', () => {
     const r = compile({ bundleDeps: false, target: 'claude', coreDir: makeCore(), outDir: out });
     expect(r.errors).toEqual([]);
     const agent = read(out, 'agents/alpha.md');
-    expect(agent).toMatch(/^---\nname: alpha\ndescription: Agent alpha\.\ntools: Read, Write\n---/);
+    expect(agent).toMatch(/^---\nname: alpha\ndescription: Agent alpha\.\ntools: Read, Write, Task\n---/);
     expect(agent).not.toMatch(/model/);
+    expect(read(out, 'agents/alpha-worker.md')).toMatch(/^tools: Read, Write\n/m);
     expect(agent).not.toContain('{{PROJECT_NAME}}'); // E5.3: general subagent no longer carries the persona
     expect(read(out, 'agents/alpha-worker.md')).toContain('# Worker');
     expect(read(out, 'skills/alpha/SKILL.md')).toContain('mcp__plugin_shards_shards__activate');

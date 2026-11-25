@@ -69,8 +69,12 @@ describe('E5.3 native subagents', () => {
       expect(head).not.toMatch(/^model:/m);
       expect(head).toMatch(new RegExp(`^name: ${f.replace(/\.md$/, '')}$`, 'm'));
       const tools = (head.match(/^tools: (.*)$/m) || [])[1] || '';
-      expect(tools.split(', ')).not.toContain('Task');
       expect(tools.split(', ')).not.toContain('Agent');
+      // Task only on the general subagent of builders with workers (workstream leads); never on entries/workers/reviewers.
+      const id = f.replace(/\.md$/, '');
+      const a = agents.find((x) => x.id === id);
+      const lead = !!a && a.y.activation.includes('fanout_worker') && (a.y.capabilities || []).includes('delegate');
+      if (!lead) expect(tools.split(', ')).not.toContain('Task');
     }
     for (const f of ls(path.join(cx, '.codex/agents'))) expect(read(cx, '.codex/agents', f).split('developer_instructions')[0]).not.toMatch(/^model\s*=/m);
   });

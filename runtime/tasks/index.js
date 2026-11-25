@@ -11,7 +11,32 @@ const ajv = new Ajv({ allErrors: true, strict: false });
 const validateSchema = ajv.compile(manifestSchema);
 const validateResultSchema = ajv.compile(resultSchema);
 
+const crypto = require('crypto');
 const STATE_NAME = 'tasks';
+
+// Scope = project-root-relative workstream dir (PM-mode leads). Returns null when unscoped.
+function normalizeScope(scope) {
+  if (scope === undefined || scope === null || scope === '') return null;
+  if (typeof scope !== 'string') throw new Error('scope must be a string (a project-root-relative directory)');
+  const bad = (why) => new Error(`scope "${scope}" is invalid (${why}); use a project-root-relative directory such as "shards/<workstream>"`);
+  const s = scope.replace(/\\/g, '/');
+  if (path.isAbsolute(scope) || /^[A-Za-z]:/.test(s) || s.startsWith('/')) throw bad('absolute');
+  if (s.split('/').includes('..')) throw bad('contains ".."');
+  const n = path.posix.normalize(s).replace(/\/+$/, '');
+  if (!n || n === '.') throw bad('empty or the project root');
+  return n;
+}
+
+// StateStore names must match /^[a-z]+(-[a-z]+)*$/ (no digits), so encode a hash of the scope as letters a-p.
+function stateNameFor(scope) {
+  const n = normalizeScope(scope);
+  if (!n) return STATE_NAME;
+  const h = crypto.createHash('sha1').update(n).digest('hex').slice(0, 16);
+  return `${STATE_NAME}-scope-${h.replace(/[0-9a-f]/g, (c) => String.fromCharCode(97 + parseInt(c, 16)))}`;
+}
+
+const SCOPE_DESC = 'Pass the same `scope` (project-root-relative workstream dir, e.g. "shards/churn_model") on every task_* call when you are a workstream lead under PM mode (the lead contract gives it); omit otherwise. Each scope has its own manifest, task states, drift state and TASKS.md (<scope>/TASKS.md).';
+const SCOPE_PROP = { type: 'string', minLength: 1, description: SCOPE_DESC };
 const DEFAULT_TTL_MS = 900000;
 const SATISFIED = ['done'];
 const MAX_ATTEMPTS = 3; // 1 dispatch + 2 retries
@@ -151,8 +176,8 @@ function validateResult(result) {
   return { ok, errors: ok ? [] : ajvMessages(validateResultSchema.errors) };
 }
 
-function readTasksState(store) {
-  const s = store.read(STATE_NAME) || {};
+function readTasksState(store, scope) {
+  const s = store.read(stateNameFor(scope)) || {};
   return { manifest: s.manifest || null, path: s.path || null, tasks: s.tasks || {}, drift: s.drift || null, consumed_amendments: s.consumed_amendments || [] };
 }
 
@@ -189,13 +214,14 @@ function assertMayReplace(...a) { return hooks.assertMayReplace(...a); }
 function onDeviations(...a) { return hooks.onDeviations(...a); }
 function setHooks(h) { Object.assign(hooks, h); }
 
-function mirrorTasksMd(ctx, st) {
+function mirrorTasksMd(ctx, st, scope) {
+  const sc = normalizeScope(scope);
   let cfg = null;
   try { cfg = ctx.getConfig ? ctx.getConfig() : null; } catch (_) { cfg = null; }
   const job = (cfg && cfg.config && cfg.config.jobs && cfg.config.jobs.tasks) || { binding: 'git', options: { path: 'TASKS.md' } };
   const binding = typeof job === 'string' ? job : job.binding;
   if (binding !== 'git') return { mirrored: false, path: null, note: `tasks binding is "${binding}": TASKS.md mirror skipped; sync the checklist via the host tool.` };
-  const rel = (job.options && job.options.path) || 'TASKS.md';
+  const rel = sc ? `${sc}/TASKS.md` : ((job.options && job.options.path) || 'TASKS.md');
   const rootAbs = path.resolve(ctx.root);
   const abs = path.resolve(rootAbs, rel);
   const r = path.relative(rootAbs, abs);
@@ -255,5 +281,5 @@ function stringifyYaml(obj) { return YAML.stringify(obj); }
 module.exports = {
   validateManifest, validateResult, readTasksState, initialTasksState, readyIds, countsOf,
   assertMayReplace, onDeviations, setHooks, mirrorTasksMd, appendEvidence, MAX_ATTEMPTS, parseYaml, stringifyYaml,
-  STATE_NAME, DEFAULT_TTL_MS, SATISFIED, manifestSchema, resultSchema,
+  STATE_NAME, normalizeScope, stateNameFor, SCOPE_PROP, SCOPE_DESC, DEFAULT_TTL_MS, SATISFIED, manifestSchema, resultSchema,
 };

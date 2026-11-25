@@ -76,11 +76,19 @@ tasks:
 
 | Tool | Input | Behaviour |
 |------|-------|-----------|
-| `tasks_set` | exactly one of `manifest` (object) or `path` (existing YAML file); optional `output_dir` | Validates and stores the manifest. Writes `<output_dir>/tasks.yaml` when given `manifest`. `output_dir` defaults to the active specialist frame's output directory. All tasks start `pending`. Mirrors `TASKS.md`. |
-| `task_dispatch` | `ids` (unique, min 1) | Atomic. Every id must be `pending` or `failed`, not paused, with all `depends_on` in `reported` or `done`. Otherwise nothing is dispatched. Opens one lease per non-inline task. Returns one card per id (`entry_file` points the worker at `agents/<worker>/modes/worker.md`). Inline cards hold no lease. |
-| `task_report` | `id`, `result` (task-result object) | Task must be `dispatched`. Result is validated against the schema. Closes the task's lease. `done` is stored as `reported`; `failed` and `blocked` are stored as given. Runs the deviation hook (section 6). |
-| `task_status` | none | Returns each task's status, worker, `depends_on`, `lease_id`, `attempts`, `paused_reason`, the `ready` list and status counts. |
-| `task_verify` | `id`, `pass`, `expected`, `observed`, `notes?`, `check?` | The lead's independent check (E12.5). Only a `reported` task can be verified. Section 4 gives the state rules. Appends an evidence row to `## Validation` in `<output_dir>/project-specs.md`. |
+| `tasks_set` | exactly one of `manifest` (object) or `path` (existing YAML file); optional `output_dir`, `amendment_gate`, `scope` | Validates and stores the manifest. Writes `<output_dir>/tasks.yaml` when given `manifest`. `output_dir` defaults to the active specialist frame's output directory. All tasks start `pending`. Mirrors `TASKS.md` (to `<scope>/TASKS.md` when `scope` is given; with `scope` and `manifest`, `output_dir` defaults to `scope`). |
+| `task_dispatch` | `ids` (unique, min 1), `scope?` | Atomic. Every id must be `pending` or `failed`, not paused, with all `depends_on` in `reported` or `done`. Otherwise nothing is dispatched. Opens one lease per non-inline task. Returns one card per id (`entry_file` points the worker at `agents/<worker>/modes/worker.md`). Inline cards hold no lease. |
+| `task_report` | `id`, `result` (task-result object), `scope?` | Task must be `dispatched`. Result is validated against the schema. Closes the task's lease. `done` is stored as `reported`; `failed` and `blocked` are stored as given. Runs the deviation hook (section 6). |
+| `task_status` | `scope?` | Returns each task's status, worker, `depends_on`, `lease_id`, `attempts`, `paused_reason`, the `ready` list and status counts. |
+| `task_verify` | `id`, `pass`, `expected`, `observed`, `notes?`, `check?`, `scope?` | The lead's independent check (E12.5). Only a `reported` task can be verified. Section 4 gives the state rules. Appends an evidence row to `## Validation` in `<output_dir>/project-specs.md`. |
+
+`scope` is optional on all five tools: a project-root-relative directory (no absolute path, no `..`; normalized, so `./shards/a/` equals `shards/a`). Omit it and everything behaves as a single session-wide manifest. State model: without `scope` the manifest, task statuses, drift state and consumed amendments live in the state entry `tasks`; with `scope` each scope has its own entry named `tasks-scope-<16 letters>`. The letters are the first 16 hex digits of the SHA-1 of the normalized scope with `0-9a-f` mapped to `a-p` (state names allow only `a-z` and `-`). Drift and amendment rules (section 7) apply per scope. Task ids may repeat across scopes. The TASKS.md mirror goes to `TASKS.md` unscoped (or the configured path) and to `<scope>/TASKS.md` when scoped; `task_verify` evidence goes to `project-specs.md` beside the scoped manifest. Leases opened by `task_dispatch` carry `meta.scope`. Amendment gates (`<agent>-amend-<n>`) are session-wide, so a pending amendment gate blocks `tasks_set` replacement in every scope until it is resolved.
+
+### 3.0 Workstream leads under PM mode
+
+When Syn's PM mode launches several workstream leads (specialist subagents) in parallel inside one session, each lead runs its own build loop over its own `<workstream dir>/tasks.yaml`. Each lead passes `scope=<workstream dir>` on every `tasks_set`, `task_dispatch`, `task_report`, `task_status` and `task_verify` call (the lead contract supplies the value). Parallel leads then keep separate manifests, task states and TASKS.md files and never replace or block each other's manifest. A lead outside PM mode omits `scope`.
+
+On the content side, PM mode launches each workstream with `{{lead <agent>}}` (not `{{fanout}}`), and the launched specialist follows `core/protocols/lead_contract.md`: no gates, no user conversation, no scope change, every build phase through the delegated build loop with its own `<specialist>-worker` workers, and `scope` on every task call. Depth is fixed at Syn, then lead (depth 1), then workers (depth 2). A lead falls back to sequential or inline work only when workers genuinely cannot be spawned, and records a `Fallback:` row in its `## Validation` table and its report.
 
 `tasks_set` refusal rules (all problems are listed in one error, nothing is stored):
 
@@ -246,7 +254,7 @@ Both keys are docs-only and UNVERIFIED (`docs/compat.md` CX-4): one source says 
 | Consult (specialist asks Syn or a reviewer) | `agents.max_depth = 2` | main thread (0) spawns the specialist's consult at depth 1 only if the specialist runs in the main thread; a specialist that runs as a subagent and consults needs depth 2. With depth 1 the consult is blocked: flatten it (ask the reviewer from the main thread). |
 | Fan-out (`fanout_start`, `{{fanout}}`, `{{delegate}}`) | `agents.max_threads = 4` (or the plan's `max_parallel` if lower) | workers are leaf subagents; width, not depth, is the limit. Excess slices queue or run sequentially. |
 
-The Codex build emits these as commented lines in `.codex/config.toml` (`# [agents]`, `# max_depth = 2`, `# max_threads = 4`); uncomment the keys your Codex version accepts. The generated `AGENTS.md` fragment (`shards install --agents-md`) repeats the requirement. Workers never delegate, so depth beyond 2 is never needed.
+The Codex build emits these as commented lines in `.codex/config.toml` (`# [agents]`, `# max_depth = 2`, `# max_threads = 4`); uncomment the keys your Codex version accepts. The generated `AGENTS.md` fragment (`shards install --agents-md`) repeats the requirement. Under PM mode the chain is Syn, then a workstream lead (depth 1), then its workers (depth 2), so the lead needs `agents.max_depth = 2`. Workers never delegate, so depth beyond 2 is never needed.
 
 ## 9. Not done yet
 
