@@ -7,7 +7,7 @@ an epic plan ends with the plan and does not dispatch leads.
 
 ## Discover the existing scope (PM Phase 0)
 
-Call `jira_context` for the binding instructions. Use its `tasks.read` and
+{{jira_context}} Use its `tasks.read` and
 `tasks.list` operations through the host's connected reader. Resolve the
 supplied key or URL with the shared issue intake. {{protocol jira_issue}}
 Check the returned site's identity and issue hierarchy. Route a non-epic through
@@ -35,23 +35,53 @@ individually verifiable. Give each lead disjoint ownership of its deliverables.
 
 Use the epic and child descriptions to prefill discovery. Ask only about material
 gaps. Through PM's plan gate, confirm the mapping, ready groups, unresolved work,
-and any proposed scope changes. Record proposed missing tickets in the plan for backlog refinement. Carry the canonical issue references and checks
-into each specialist's project-specs.md and lead brief.
+and any proposed scope changes. Record proposed missing tickets in the plan
+for backlog refinement. Carry the canonical issue references and checks into
+each specialist's project-specs.md and lead brief.
 
 ## Dispatch and reconcile (PM Phases 3–5)
 
-Before dispatching a group, re-read its issues and blockers. Skip completed or
-already active work and hold any ticket whose dependency, scope or ownership
-changed until reconciled. Execute ready workstreams using PM's lead launch,
-scoped task lists, worker verification and revision cycle. Leads return evidence
-against each assigned key. Syn owns Jira communication for the epic run.
+Before dispatching a group, refresh its issues, owners and blockers. For a
+dependency on an epic workstream, check the upstream acceptance evidence and
+the downstream handoff agreed in the plan. A verified handoff can satisfy a
+local dependency while Jira is still open. When the dependency requires an
+external approval, deployment or Jira transition, wait for that observed
+event. An inaccessible external prerequisite remains blocked.
 
-Update the mapping after each group with validation results and artifact paths.
-Keep local implementation status separate from the observed Jira status. On
-resume, reconcile the saved mapping and evidence with the refreshed child list,
-dependencies, statuses and any active leads. Present added, removed or materially
-changed scope for plan confirmation before dispatch. Reuse verified work and
-record externally completed issues with their source.
+Dispatch at the workstream boundary. If one child in a grouped lead brief is
+blocked, changed, removed or taken by another owner, hold the entire workstream.
+To run its remaining tickets separately, amend the plan and split the brief,
+ownership, dependencies and acceptance checks before launching a lead. Continue
+independent ready workstreams. Each ready workstream has one lead. Use PM's
+lead launch, scoped task lists, worker verification and revision cycle. Leads
+return evidence against each assigned key. Syn owns Jira communication.
+
+On resume, open the existing epic plan and workstreams.json, refresh the
+child list, and inspect each workstream's project-specs.md, validation evidence
+and scoped task_status. Check the original session for live leads or leases.
+Rejoin a live lead. If another person owns the work, confirm the handoff before
+taking over. An in-progress Jira status alone neither proves a lead is running
+nor prevents an agreed continuation. Resolve uncertain ownership before dispatch.
+
+Give a returning lead its original workstream scope. If a manifest is already
+registered, continue from its verified results and ready cards without calling
+tasks_set again. Re-registering resets task state. If the original session
+state is unavailable, reconcile the recorded evidence and ownership before
+planning the remaining work. Preserve previously verified results and their
+artifacts, and record externally completed issues with their source.
+
+For a material change to the approved scope or dependencies, follow the
+amendment procedure. {{protocol plan_drift}} Syn records the proposed change
+by issue key and requests a fresh phase gate with id `syn-amend-<n>`, using
+the next unused number. The original PM plan gate cannot approve new scope.
+Wait for the user's decision on this amendment before applying changes or
+dispatching affected work. After approval, update the affected workstream
+specs, groups and briefs. When a started manifest must be replaced, the lead
+uses its original scope and the confirmed amendment_gate for the remaining
+cards. Preserve the prior verification evidence in the project record.
+
+Update the ticket mapping after each group with validation results and artifact
+paths, keeping local implementation status separate from observed Jira status.
 
 At integration review, check every included child's acceptance criteria and the
 epic's cross-workstream outcome. Report verified, externally completed, blocked

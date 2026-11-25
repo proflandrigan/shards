@@ -120,6 +120,15 @@ describe('macro expansion', () => {
     expect(ok('{{auto_verify start tool_budget=5 ttl=60}}', 'claude')).toContain('mcp__plugin_shards_shards__auto_verify_start');
     expect(ok('{{auto_verify end}}', 'codex')).toContain('mcp__shards__auto_verify_end');
   });
+  it('renders the Jira context call with the target tool name', () => {
+    for (const [target, tool] of [
+      ['claude', 'mcp__plugin_shards_shards__jira_context'],
+      ['codex', 'mcp__shards__jira_context'],
+      ['skills', 'jira_context'],
+    ]) {
+      expect(ok('{{jira_context}}', target)).toContain(`\`${tool}\`()`);
+    }
+  });
   it('binding macros', () => {
     expect(ok('{{record.write section="Phase 1"}}')).toContain('`record` job');
     expect(ok('{{tasks.create title="T" owns="x/"}}')).toContain('`tasks` job');

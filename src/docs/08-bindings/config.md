@@ -16,11 +16,10 @@ Must be `1`.
 
 ### `jobs`
 
-Maps each of the six jobs (`record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`) to a binding. A value is a binding name (short form) or `{ binding, options }` (long form):
+Maps each of the six jobs (`record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`) to a binding. Use a binding name such as `tasks: jira` for the short form. The long form accepts binding options.
 
 ```yaml
 jobs:
-  tasks: jira                                              # short
   tasks: { binding: jira, options: { project: ABC } }      # long
 ```
 

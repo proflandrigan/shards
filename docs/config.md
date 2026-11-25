@@ -118,11 +118,10 @@ bindings:
 
 ## Short and long form
 
-A job value can be written two ways:
+Use `tasks: jira` to select the binding. To supply project options, use the long form.
 
 ```yaml
 jobs:
-  tasks: jira                          # short form: binding name only
   tasks: { binding: jira, options: { project: ABC } }   # long form
 ```
 

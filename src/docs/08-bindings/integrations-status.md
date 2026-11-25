@@ -4,6 +4,8 @@
 
 Authenticate the host’s Atlassian connection with access to the target site and project. Run `shards connect --only atlassian` to inspect the host configuration. Use a browse URL when multiple sites have the same project key.
 
+Studio runs Claude headlessly. Its built-in permissions cover the Shards runtime's `jira_context` tool. For Jira reads in Studio, allow the connected server's exact tool names for accessible sites, issue lookup and JQL search in the project's Claude Code `permissions.allow` settings. For example, a server registered as `atlassian` exposes names such as `mcp__atlassian__getJiraIssue`. For authorized writeback, also allow the comment reader and the specific comment writer used by the binding. Interactive Claude Code can prompt for these host permissions.
+
 | Request | What happens |
 | --- | --- |
 | “Syn, captain https://example.atlassian.net/browse/ML-100” | Syn reads the epic and its children, identifies ready and blocked issues, and proposes specialist assignments. |
