@@ -723,4 +723,5 @@ directory prefix.
   project. Only swarm when the task is truly large — a single query, a small
   fix, or a one-file change stays on one agent. Read
   [`protocols/swarm.md`](../../protocols/swarm.md) for the full
-  protocol.
+  protocol. In PM mode, workstream size is handled by the workstream lead's own
+  task list instead (more task cards, a higher `max_parallel`).

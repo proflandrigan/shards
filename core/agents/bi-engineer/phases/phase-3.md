@@ -119,7 +119,8 @@ worth adding?"
 
 The design document is `shards/<project_name>/dashboard-design.md`. Spec
 mode is small: the panel template below is the component specification, and
-panel tasks are normally `delegate: inline` (you write them yourself) with the
+panel tasks go to workers like any other task. Mark a panel task
+`delegate: inline` only for a trivial one, at most 2 per phase. Use the
 same loop, macro and evidence rows as Build Mode, using the same
 `shards/<project_name>/tasks.yaml`.
 

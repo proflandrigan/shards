@@ -46,6 +46,16 @@ describe('delegate host fallbacks', () => {
     expect(t).toContain('isolated context if the host supports it');
     expect(t).toContain('inline');
   });
+  for (const target of ['claude', 'codex', 'skills']) {
+    it(`${target} carries scope sentence and tightened fallback rule`, () => {
+      const t = run('{{delegate}}', target).text;
+      expect(t).toContain('If you are a workstream lead, pass the `scope` your lead contract gives you on every task tool call.');
+      expect(t).toContain('ONLY when worker subagents genuinely cannot be spawned on this host');
+      expect(t).toContain('`Fallback: <sequential|inline> — <reason>`');
+      expect(t).toContain('`## Validation` Evidence table of project-specs.md');
+      expect(t).toContain('never fall back silently');
+    });
+  }
   it('rejects invalid mode', () => {
     expect(run('{{delegate mode=turbo}}', 'claude').errors.length).toBeGreaterThan(0);
   });

@@ -98,7 +98,8 @@ describe('E7.3 release consult subagents', () => {
       expect(f.name).toBe(n);
       expect(String(f.description).length).toBeGreaterThan(0);
       expect('model' in f).toBe(false);
-      expect(String(f.tools || '').split(',').map((s) => s.trim())).not.toContain('Task');
+      const lead = agents.some((x) => x.id === n && x.y.activation.includes('fanout_worker') && (x.y.capabilities || []).includes('delegate'));
+      if (!lead) expect(String(f.tools || '').split(',').map((s) => s.trim())).not.toContain('Task');
       expect(String(f.tools || '').split(',').map((s) => s.trim())).not.toContain('Agent');
     }
   });

@@ -111,6 +111,7 @@ The E0.6 pass (2026-11-14) made no model runs. The Codex rows were later checked
 
 - Question: how deep can consult/fan-out go?
 - Finding: by default a subagent can spawn subagents up to three layers below the main conversation. At the limit the `Agent` tool is withheld (except for forks). `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` changes it; `1` turns nesting off. Syn to specialist to Syn review is depth 2, within the default.
+- Syn to lead to worker (PM mode, `{{lead}}`) is depth 2, also within the default. Setting `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` removes the lead's `Agent` tool, which forces the lead onto the sequential/inline `{{delegate}}` fallback (reported with a `Fallback:` evidence row). Builders keep `Task` in their subagent tools (`build/host-tools.js`).
 - Evidence: https://code.claude.com/docs/en/sub-agents. Binary contains `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (string presence only).
 - Status: documented (docs), not exercised locally.
 - Impact: D2 fan-out and consult chains fit Claude Code defaults. Managed settings could lower the env var.
@@ -285,6 +286,8 @@ For D2 (consult / fan-out depth):
 | Codex (codex) | parallel via `spawn_agent` | bounded by Codex `max_threads`, or `max_parallel` if lower | same sequential and inline fallbacks |
 | Skills (skills) | sequential: no parallel guarantee; one card at a time via isolated skill invocation if supported | none assumed | inline in this session under the same owned-path rule |
 | T3 | uses the underlying provider's rendering (Claude or Codex) per E0.6 | provider's limit | provider's fallbacks |
+
+Fallbacks are a last resort: sequential or inline is used ONLY when worker subagents genuinely cannot be spawned on the host. The agent names the reason in its report to its caller and adds a `Fallback: <sequential|inline> — <reason>` row to the `## Validation` Evidence table of project-specs.md; it never falls back silently, and cards, acceptance checks, `task_verify` calls and evidence rows stay identical. A workstream lead (`{{lead}}`) passes its `scope` on every task tool call; on Codex, Syn -> lead -> worker needs `agents.max_depth = 2`.
 
 Modes: `sequential` dispatches ONE ready task at a time. `inline` dispatches the cards, then the agent does each itself with no worker handoff: same cards, acceptance checks and evidence rows; only isolation is lost. In every mode step 5 calls `task_verify` (prefixed per target) to record the evidence row; a task is done only through it, with at most 2 retries before escalating to the user.
 

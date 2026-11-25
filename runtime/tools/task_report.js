@@ -6,16 +6,17 @@ const MAP = { done: 'reported', failed: 'failed', blocked: 'blocked' };
 
 module.exports = defineTool({
   name: 'task_report',
-  description: 'Record a worker\'s task-result for a dispatched task. `result` must match task-result.schema.json: {status: done|failed|blocked, files_changed[], check:{command, exit_code, output_excerpt}, deviations[], open_questions[]}. done becomes "reported" (not done until you verify it with task_verify), failed and blocked are stored as-is. Closes the task\'s lease.',
+  description: 'Record a worker\'s task-result for a dispatched task. `result` must match task-result.schema.json: {status: done|failed|blocked, files_changed[], check:{command, exit_code, output_excerpt}, deviations[], open_questions[]}. done becomes "reported" (not done until you verify it with task_verify), failed and blocked are stored as-is. Closes the task\'s lease. Workstream leads under PM mode: pass the same `scope` you gave tasks_set (given by the lead contract); omit otherwise.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
     required: ['id', 'result'],
-    properties: { id: { type: 'string', minLength: 1 }, result: { type: 'object' } },
+    properties: { id: { type: 'string', minLength: 1 }, result: { type: 'object' }, scope: T.SCOPE_PROP },
   },
   async handler(args, ctx) {
     if (!ctx.sessionKey || !ctx.state) throw new Error('task_report requires a resolved session');
-    const st0 = T.readTasksState(ctx.state);
+    const scope = T.normalizeScope(args.scope);
+    const st0 = T.readTasksState(ctx.state, scope);
     if (!st0.manifest) throw new Error('task_report: no task manifest registered.');
     const s0 = st0.tasks[args.id];
     if (!s0) throw new Error(`task_report: unknown task "${args.id}"`);
@@ -27,7 +28,7 @@ module.exports = defineTool({
     let status = MAP[args.result.status];
     const escalate = status === 'failed' && (s0.attempts || 0) >= T.MAX_ATTEMPTS;
     if (escalate) status = 'blocked';
-    const next = await ctx.state.update(T.STATE_NAME, (cur) => {
+    const next = await ctx.state.update(T.stateNameFor(scope), (cur) => {
       // Re-check under the state lock: a concurrent task_report may have recorded this task since s0 was read.
       const s = cur.tasks[args.id];
       if (!s || (s.status !== 'dispatched' && !(s.status === 'paused' && s.lease_id)) || s.lease_id !== s0.lease_id || (s.attempts || 0) !== (s0.attempts || 0)) {
@@ -37,8 +38,8 @@ module.exports = defineTool({
       return cur;
     });
     if (s0.lease_id) { try { await require('../leases').closeLease(session, s0.lease_id); } catch (_) { /* already closed/expired */ } }
-    const hookOut = await T.onDeviations(session, args.id, args.result);
-    const mirror = T.mirrorTasksMd(ctx, { ...next, manifest: st0.manifest, path: st0.path });
+    const hookOut = await T.onDeviations(session, args.id, args.result, scope);
+    const mirror = T.mirrorTasksMd(ctx, { ...next, manifest: st0.manifest, path: st0.path }, scope);
     const st = { ...next, manifest: st0.manifest };
     const lines = [
       `Task ${args.id} recorded as ${status}.`,

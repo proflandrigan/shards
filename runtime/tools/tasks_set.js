@@ -14,8 +14,9 @@ function inside(root, rel) {
   return { abs, rel: r.split(path.sep).join('/') };
 }
 
-function resolveOutputDir(ctx, args) {
+function resolveOutputDir(ctx, args, scope) {
   if (args.output_dir) return args.output_dir;
+  if (scope) return scope;
   const frames = ctx.state.read('frames').frames || [];
   const frame = frames[frames.length - 1];
   const agent = frame ? loadAgents().get(frame.agent) : null;
@@ -25,7 +26,7 @@ function resolveOutputDir(ctx, args) {
 
 module.exports = defineTool({
   name: 'tasks_set',
-  description: 'Register the task manifest for this session. Pass exactly one of `manifest` (object: {version:1, tasks:[{id, goal, plan_ref, inputs, owned_paths, acceptance:{command,expected}, depends_on, worker, size (1-60 min), phase?, delegate?}]}; written to <output_dir>/tasks.yaml) or `path` (an existing tasks.yaml). The manifest is validated (schema, unique ids, no cycles, real acceptance checks, safe owned_paths, no overlapping owned_paths between tasks that could run in parallel, inline only for phases with <= 2 tasks); ALL problems are listed in one error and nothing is stored. All tasks start pending; TASKS.md is mirrored. Then call task_dispatch with ready task ids.',
+  description: 'Register the task manifest for this session. Pass exactly one of `manifest` (object: {version:1, tasks:[{id, goal, plan_ref, inputs, owned_paths, acceptance:{command,expected}, depends_on, worker, size (1-60 min), phase?, delegate?}]}; written to <output_dir>/tasks.yaml) or `path` (an existing tasks.yaml). The manifest is validated (schema, unique ids, no cycles, real acceptance checks, safe owned_paths, no overlapping owned_paths between tasks that could run in parallel, inline only for phases with <= 2 tasks); ALL problems are listed in one error and nothing is stored. All tasks start pending; TASKS.md is mirrored. Then call task_dispatch with ready task ids. Optional `scope`: when you are a workstream lead under PM mode, pass the same `scope` (your workstream dir, given by the lead contract) on EVERY task_* call so parallel leads keep separate manifests; with `scope` and a `manifest`, output_dir defaults to `scope` and TASKS.md is mirrored to <scope>/TASKS.md. Omit `scope` otherwise.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
@@ -34,14 +35,16 @@ module.exports = defineTool({
       path: { type: 'string', minLength: 1 },
       output_dir: { type: 'string', minLength: 1 },
       amendment_gate: { type: 'string', minLength: 1 },
+      scope: T.SCOPE_PROP,
     },
   },
   async handler(args, ctx) {
     if (!ctx.sessionKey || !ctx.state) throw new Error('tasks_set requires a resolved session');
+    const scope = T.normalizeScope(args.scope);
     if ((args.manifest === undefined) === (args.path === undefined)) throw new Error('tasks_set: pass exactly one of `manifest` or `path`.');
     let manifest; let manifestPath; let toWrite = null;
     if (args.manifest !== undefined) {
-      const dir = inside(ctx.root, resolveOutputDir(ctx, args));
+      const dir = inside(ctx.root, resolveOutputDir(ctx, args, scope));
       manifest = args.manifest;
       manifestPath = `${dir.rel}/tasks.yaml`;
       toWrite = path.join(dir.abs, 'tasks.yaml');
@@ -57,7 +60,7 @@ module.exports = defineTool({
     if (!v.ok) throw new Error(`Task manifest rejected (${v.errors.length} problem${v.errors.length === 1 ? '' : 's'}):\n${v.errors.map((e) => `  - ${e}`).join('\n')}`);
 
     const session = { root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state };
-    const existing = T.readTasksState(ctx.state);
+    const existing = T.readTasksState(ctx.state, scope);
     let verdict;
     if (existing.manifest) verdict = await T.assertMayReplace(session, existing, manifest, args);
 
@@ -69,9 +72,10 @@ module.exports = defineTool({
     const consumed = [...(existing.consumed_amendments || [])];
     if (verdict && verdict.consume) consumed.push(verdict.consume);
     if (consumed.length) next.consumed_amendments = consumed;
-    await ctx.state.update(T.STATE_NAME, () => next);
-    const mirror = T.mirrorTasksMd(ctx, next);
+    await ctx.state.update(T.stateNameFor(scope), () => next);
+    const mirror = T.mirrorTasksMd(ctx, next, scope);
     const data = {
+      ...(scope ? { scope } : {}),
       manifest_path: manifestPath, total: manifest.tasks.length, counts: T.countsOf(next), ready: T.readyIds(next),
       mirror: mirror.mirrored ? mirror.path : null, ...(mirror.note ? { mirror_note: mirror.note } : {}),
     };

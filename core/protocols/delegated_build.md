@@ -51,10 +51,14 @@ Before the plan gate, turn the plan just agreed into the task list.
 5. On a failed `task_verify`, re-dispatch with the failure output as feedback (the card carries it). Allow at most 2 retries; then the task is blocked and escalated: stop and ask the user, with a summary of what failed.
 6. Deviations or a plan that cannot be met: pause the dependent tasks and follow `{{protocol plan_drift}}`. The plan and `tasks.yaml` change only through a confirmed gate.
 7. Dispatch the tasks that the verified tasks have unblocked. Repeat from step 2.
-8. The lead writes no build code itself, except for tasks marked `delegate: inline`.
+8. The lead is the orchestrator. It writes no build code itself, except for tasks marked `delegate: inline` (at most 2 per phase). Everything else goes to its own workers.
 
 When all tasks are verified, run the final integration checks (for example Restart and Run All, or the full project build). Only then request the phase gate, with the evidence table as its evidence. See `{{protocol validation}}`.
 
+## Leads under PM mode
+
+When Syn's PM mode launched you as a workstream lead, `{{protocol lead_contract}}` also applies: pass `scope=<workstream dir>` on every task tool call, and never call `gate_request`. Where this protocol says to request a gate or stop and ask the user, record the decision in `project-specs.md` or return `BLOCKED` to Syn instead.
+
 ## Sequential or inline fallback
 
-Where parallel workers are not available, the lead works through the same task cards one at a time, as inline tasks. The cards, acceptance checks and evidence rows are identical. Verification still means running the acceptance command and recording the observed result before the next task starts.
+Use a fallback only when worker subagents genuinely cannot be spawned on the host. Convenience is not a reason. In that case the lead works through the same task cards one at a time (sequential, or inline in its own session). Name the reason in the report to your caller and add a `Fallback: <sequential|inline> — <reason>` row to the `## Validation` Evidence table of `project-specs.md`. Never fall back silently. The cards, acceptance checks, `task_verify` calls and evidence rows are identical, and verification still means running the acceptance command and recording the observed result before the next task starts.

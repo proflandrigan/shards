@@ -167,6 +167,32 @@ describe('macro errors', () => {
   });
 });
 
+describe('{{lead}}', () => {
+  const errs = (src, opts) => run(src, 'claude', undefined, opts).errors;
+  const rev = { files: { 'agents/rev/agent.yaml': 'id: rev\ndisplay_name: "rev"\ndescription: "Agent rev."\nrole: reviewer\nactivation: [consult]\nconsult_entries:\n  review: modes/review.md\nreviewers: []\noutput_dir: "rev/{project}/"\njobs: [record]\n', 'agents/rev/AGENT.md': '---\nname: rev\ndescription: x\n---\n# Rev\n', 'agents/rev/modes/review.md': '# R\n' } };
+  it('validates agent, fanout_worker activation and worker entry', () => {
+    expect(errs('{{lead nope}}')[0]).toMatch(/unknown agent 'nope'/);
+    expect(errs('{{lead rev}}', rev).join('\n')).toMatch(/does not support fanout_worker activation/);
+    expect(errs('{{lead rev}}', rev).join('\n')).toMatch(/no worker consult entry/);
+    expect(errs('{{lead beta}}')[0]).toMatch(/no worker consult entry/);
+    expect(errs('{{lead}}')[0]).toMatch(/missing required argument 'agent'/);
+    expect(errs('{{lead alpha}}')).toEqual([]);
+  });
+  for (const [target, tool, extra] of [['claude', 'mcp__plugin_shards_shards__task_verify', 'single message'], ['codex', 'mcp__shards__task_verify', 'agents.max_depth = 2'], ['skills', 'task_verify', 'Fallback: <sequential|inline>']]) {
+    it(`renders on ${target}`, () => {
+      const r = run('{{lead alpha task="Build the churn model"}}', target);
+      expect(r.errors).toEqual([]);
+      expect(r.text).toContain(target === 'claude' ? '${CLAUDE_PLUGIN_ROOT}/content/protocols/lead_contract.md' : 'content/protocols/lead_contract.md');
+      expect(r.text).toContain('Entry lead: read');
+      expect(r.text).toContain('scope=<workstream dir>');
+      expect(r.text).toContain('holds no gates and does not talk to the user');
+      expect(r.text).toContain('Task: Build the churn model.');
+      expect(r.text).toContain(tool);
+      expect(r.text).toContain(extra);
+    });
+  }
+});
+
 describe('--strict', () => {
   it('fails on legacy text only when strict', () => {
     const src = 'Task(subagent_type="x")\nsee .claude/agents\n/compact\n::GATE:: a ::ENDGATE::\n';
