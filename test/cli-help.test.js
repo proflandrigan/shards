@@ -15,7 +15,7 @@ const src = (f) => fs.readFileSync(path.join(root, f), 'utf8');
 const flagsIn = (text) => [...new Set([...text.matchAll(/\ba === '(--[a-z][a-z-]*)'/g)].map((m) => m[1]))].sort();
 const subsIn = (text) => [...new Set([...text.matchAll(/\bsub === '([a-z-]+)'/g)].map((m) => m[1]))].sort();
 // command -> source files whose parser defines its flags (a new command must be added here)
-const COMMAND_FILES = { build: 'cli/shards.js', 'uninstall-dev': 'cli/shards.js', gates: 'cli/commands/gates.js', doctor: 'cli/commands/doctor.js', sessions: 'cli/commands/sessions.js', migrate: 'cli/commands/migrate.js', install: 'cli/commands/install.js', sync: 'cli/commands/sync.js', connect: 'cli/commands/connect.js' };
+const COMMAND_FILES = { build: 'cli/shards.js', 'uninstall-dev': 'cli/shards.js', gates: 'cli/commands/gates.js', doctor: 'cli/commands/doctor.js', sessions: 'cli/commands/sessions.js', migrate: 'cli/commands/migrate.js', install: 'cli/commands/install.js', sync: 'cli/commands/sync.js', research: 'cli/commands/research.js', connect: 'cli/commands/connect.js' };
 
 describe('shards --help completeness', () => {
   it('lists every registered command', () => {

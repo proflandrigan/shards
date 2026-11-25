@@ -131,6 +131,10 @@ function validateManifest(obj, { knownAgents } = {}) {
       const bad = unsafePath(p);
       if (bad) errors.push(`task "${t.id}": unsafe owned_path "${p}" (${bad}); use project-root-relative paths`);
     }
+    if (t.acceptance && t.acceptance.cwd) {
+      const bad = unsafePath(t.acceptance.cwd);
+      if (bad) errors.push(`task "${t.id}": unsafe acceptance.cwd "${t.acceptance.cwd}" (${bad}); use a project-root-relative directory`);
+    }
   }
   const cycle = findCycle(tasks);
   if (cycle && !(cycle.length === 2 && cycle[0] === cycle[1])) errors.push(`dependency cycle: ${cycle.join(' -> ')}`);
@@ -231,7 +235,8 @@ function mirrorTasksMd(ctx, st, scope) {
     const s = st.tasks[t.id] || { status: 'pending' };
     const box = s.status === 'done' ? 'x' : ' ';
     const suffix = s.status === 'done' ? '' : ` (${s.status}${s.paused_reason ? `: ${s.paused_reason}` : ''})`;
-    lines.push(s.status === 'done' ? `- [x] ${t.id} (${t.worker}): ${t.goal}` : `- [${box}] ${t.id} (${t.worker}): ${t.goal}${suffix}`);
+    const ar = s.status === 'done' && s.ar_outcome ? ` (AR ${s.ar_outcome.metric_outcome}: ${s.ar_outcome.result})` : '';
+    lines.push(s.status === 'done' ? `- [x] ${t.id} (${t.worker}): ${t.goal}${ar}` : `- [${box}] ${t.id} (${t.worker}): ${t.goal}${suffix}`);
   }
   fs.mkdirSync(path.dirname(abs), { recursive: true });
   fs.writeFileSync(abs, `${lines.join('\n')}\n`);

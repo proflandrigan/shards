@@ -19,6 +19,16 @@
       }
     },
     "deviations": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-    "open_questions": { "type": "array", "items": { "type": "string" } }
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "metric": {
+      "type": "object",
+      "description": "AR iteration cards only: the metric the worker saw when it ran the acceptance (eval) command. Informational; the ar_iterate run is the record.",
+      "required": ["name", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "type": ["number", "null"] }
+      }
+    }
   }
 }

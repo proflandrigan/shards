@@ -125,6 +125,8 @@ Before spawning any branch subagents, append the following to the main `project-
 
 Spawn one subagent per branch. **All branch subagents must be called in parallel** — do not run them sequentially.
 
+**AR fan-out** does not use this section's fan-out workers: it launches one AR branch lead per approach family (`autonomous_research.md` Section H.3). The slug and specialist-type rules below still apply.
+
 **Specialist type across branches:**
 - A fork initiated by a specialist typically spawns branches of the same specialist type (a data-scientist fork spawns data-scientist branches).
 - **AR fan-out explicitly allows multiple branches of the same specialist type**, each constrained to a different approach family. Example slugs for an ML Engineer AR fan-out: `ml-xgboost`, `ml-neural-net`, `ml-linear-baseline`. The same agent repeats across the parallel branch calls — that is expected and correct.
@@ -208,10 +210,15 @@ the chosen strategy in each branch's prompt.
 - **`no-vcs`:** same file layout as `branch-dir`, stated explicitly for when git
   is unavailable or `git.commit` is `false`. No checkpoint calls at all.
 
-The chosen strategy is included in each branch's prompt above (the AR
-fan-out prompt in `autonomous_research.md` Section H.3 already includes a
-`Git strategy:` field). Planning-phase DIVERGE with parallel implementation
-work should also pick a strategy explicitly.
+The chosen strategy is included in each branch's prompt above. Planning-phase
+DIVERGE with parallel implementation work should also pick a strategy
+explicitly.
+
+**AR fan-out does not use these strategies.** Its branches are AR branch leads
+(not fan-out workers), each in a runtime-owned git worktree under
+`.shards/worktrees/<run-id>/<branch-slug>` with its own research ref; see
+`autonomous_research.md` Sections H.3 and H.5. `no-vcs` remains its fallback
+for projects without git.
 
 Solo (non-fanned-out) AR and planning-phase DIVERGE with sequential branch
 execution use the main working tree directly.
@@ -246,6 +253,11 @@ Compare the following Time-Travel branches for project: <project_name>
 Read all branch reports and the project-specs.md, then follow your Arbiter Mode
 instructions to produce a leaderboard and comparison.
 ```
+
+For an AR fan-out, replace **Branch reports** with `**AR run:** <run-id>` and
+the branch refs (`refs/shards/research/<project>/<run-id>/<branch-slug>`, from
+`ar_status({run_id})`); the arbiter compares refs and trailers, not prose
+(`autonomous_research.md` Section H.9).
 
 3. Present Syn's leaderboard and recommendation to the user.
 
@@ -290,13 +302,18 @@ When the user selects a winning branch:
    - **`worktree`:** copy the winner's files from its worktree (step 2) rather
      than merging refs. Losing worktrees and their refs remain for reference.
      **Do NOT remove them** without explicit user confirmation.
+   - **AR fan-out:** promote per `autonomous_research.md` Section H.11 (apply
+     the winner's kept diff from its research ref; no ref merge, no branch
+     switch); steps 2 to 4 apply to its records under
+     `<project_dir>/experiments/branches/<winning-branch>/`.
 
 2. **Copy artifacts** from `<project_dir>/.shards/branches/<winning-branch>/` to the
    appropriate locations. Deliverable files go to the confirmed
    `## Placement` targets (re-pass them as `targets` on the convergence gate); bookkeeping
    and `experiments/` records stay in the project folder. For AR fan-out, copy the
-   `experiments/` contents (brief, results.json, iteration files,
-   history_summary.md) to `<project_dir>/experiments/`.
+   winner's records from `<project_dir>/experiments/branches/<winning-branch>/`
+   (brief, results.json, iteration files, history_summary.md) to
+   `<project_dir>/experiments/`.
 
 3. **Do NOT copy `branch-report.md`** to the main directory — it stays in the branch
    directory as historical record.
@@ -319,7 +336,7 @@ When the user selects a winning branch:
   | <primary metric> | <value> |
 - **Runners-up:**
   - `<branch-slug>`: <approach> — <primary metric value> — <one-line why not chosen>
-- **Arbiter leaderboard:** `<project_dir>/.shards/branches/leaderboard.md`
+- **Arbiter leaderboard:** `<project_dir>/.shards/branches/leaderboard.md` (AR fan-out: `<project_dir>/experiments/branches/leaderboard.md`)
 - **Artifacts promoted to:** <main project directory paths>
 - **Date:** <date>
 ```

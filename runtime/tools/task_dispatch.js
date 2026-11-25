@@ -81,6 +81,7 @@ module.exports = defineTool({
       const t = byId.get(id);
       return {
         id, goal: t.goal, plan_ref: t.plan_ref, inputs: t.inputs, owned_paths: t.owned_paths, acceptance: t.acceptance,
+        ...(t.ar ? { ar: t.ar } : {}),
         worker: t.worker, size: t.size, feedback: (st0.tasks[id] && st0.tasks[id].feedback) || null, lease_id: leaseIds[id], inline: t.delegate === 'inline',
         entry_file: `Entry worker: read agents/${t.worker}/modes/worker.md first`,
       };

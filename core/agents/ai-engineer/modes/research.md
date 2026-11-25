@@ -71,8 +71,8 @@ AR runs in one of two presets:
 [interactive] — budget=10, reviewer cadence=3, cost ceiling optional.
                 I iterate conversationally, you're nearby.
 
-[overnight]   — budget=100, reviewer cadence=10, cost ceiling required
-                (really required this time — LLM calls add up).
+[overnight]   — budget=100, reviewer cadence=10, wall-clock budget required
+                (cost ceiling advisory — track LLM spend yourself).
                 Interrupt anytime by editing experiments/research_brief.md
                 Steering Notes (I re-read it every iteration).
 
@@ -96,8 +96,10 @@ AR runs in one of two presets:
 - **Metric degradation floor** (optional but strongly recommended — a prompt
   that hallucinates answers more is not fine)
 - **Epsilon** (default: 2% of baseline — noisier than ML; be stricter)
-- **Cost ceiling:** **required for overnight, strongly recommended for
-  interactive.** LLM costs scale with iterations and eval set size:
+- **Wall-clock budget (minutes):** required for overnight; the runtime
+  enforces it (`ar_start` `budget.minutes`), with the per-eval timeout.
+- **Cost ceiling (advisory):** the runtime cannot observe token or dollar
+  spend, so this is a planning number, not a hard stop (§G.5). Size it as:
   ```
   ceiling ≈ budget × iterations × (eval_set_size × avg_tokens × model_price)
            + reviewer_tasks × reviewer_tokens × reviewer_price
@@ -105,9 +107,21 @@ AR runs in one of two presets:
   Always err on the side of a lower ceiling. Ceilings are a feature.
 - **Reviewer cadence** (default: 3 interactive / 10 overnight)
 - **Plateau window W** (default: 5)
-- **Diminishing returns threshold** (default: 0.5% of baseline — LLM evals
-  are noisier)
+- **Diminishing returns threshold** (minimum `bestSoFar` gain over the last
+  2W iterations; default: 2 × epsilon, i.e. 4% of baseline at the default
+  epsilon — LLM evals are noisier; `autonomous_research.md` §E.2)
 - **Full eval cadence M** (default: 5 interactive / 10 overnight)
+  (`ar_start` `eval.full_every`; used only when a proxy eval is set)
+- **Proxy eval** (optional): a cheaper command on the same metric
+  (`eval.proxy`). The runtime runs it by default and the full eval every M
+  iterations; proxy-kept changes the full eval does not confirm are unwound
+  (`autonomous_research.md` §C.6)
+- **Fixed compute budget** (optional, seconds; `eval.fixed_budget_s`): the
+  training script must stop at `SHARDS_AR_COMPUTE_BUDGET_S` so iterations stay
+  comparable (§G.10)
+- **Sealed holdout** (optional): a holdout command and split paths
+  (`holdout`, `holdout_paths`), scored only by `ar_end`; never read or run it
+  yourself (§G.11)
 - **Mutable scope** (files/dirs the agent may modify):
   - Typical: `prompts/`, `chains/config.yaml`, `rag/config.yaml`, `eval/rubric.md`
   - NOT typical (immutable): `eval/harness.py`, `eval/dataset.jsonl`, `data/`
@@ -137,7 +151,7 @@ warning shows.
 
 **Fan-out sessions.** Emit one panel per branch, using the branch slug:
 
-{{artifact.emit type=experiment-dashboard path=shards/<project_name>/.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/experiments/branches/<branch-slug>/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
 
 After arbitration/promotion, re-emit the main `panel_id` with the converged
 `results.json`.
@@ -158,7 +172,8 @@ Append to `project-specs.md`:
 - **Target:** <value or "none">
 - **Iteration budget:** <N>
 - **Reviewer cadence:** <K>
-- **Cost ceiling:** <tokens: N / dollars: N> — required
+- **Wall-clock budget:** <minutes>
+- **Cost ceiling (advisory):** <tokens: N / dollars: N, or "none">
 - **Metric floor:** <value or "none">
 - **Eval harness:** <path> — confirmed runnable
 - **Eval set:** <path> — <N> examples — IMMUTABLE
@@ -205,9 +220,12 @@ Update `project-specs.md` with a new `## Autonomous Research` section.
 If fan-out is warranted, propose DIVERGE per `protocols/diverge.md` Section B
 with AR gate ID namespace.
 
-Remember: fan-out multiplies cost by K. For overnight preset especially, do
-the math on the cost ceiling × K before proposing. If the math says no, the
-answer is no.
+Remember: fan-out multiplies cost by K. Each branch is a lead plus one worker
+per iteration, and every iteration's eval runs twice (the worker's acceptance
+check, then `ar_iterate`'s own run), unless the brief names a cheaper smoke
+command for the cards. For overnight preset especially, do the math on the cost
+ceiling × K (× 2 evals per iteration) before proposing. If the math says no,
+the answer is no.
 
 ### Behavioral exception announcement
 
@@ -220,46 +238,50 @@ Before the gate, announce (with appropriate anxiety):
 > `experiments/research_brief.md` — I re-read it every iteration. Phase 0,
 > Phase 1, Phase 3 remain gated.
 
-### Optional `/goal` activation
+### Optional unattended Phase 2 (plan approval)
 
 {{protocol goal_mode}} in full before
-writing the gate. Compose a candidate `/goal` condition from this run's
-Phase 0 settings (primary metric, direction, target if set, iteration budget,
-metric floor) using the AR condition template, and include the resulting
-copy-paste block in the message that precedes the Phase 1 gate:
+raising the gate. Goal mode is the `plan` gate policy (`autonomous_research.md`
+§A.6): in the message that precedes the Phase 1 gate, offer an unattended Phase
+2 and present the plan and budget (primary metric, direction, target if set,
+iteration budget, wall-clock minutes, metric floor). The Phase 1 gate below **is**
+the plan approval; never raise a second gate for it.
+- **If the user chooses unattended:** add `plan_approval: "<run-id>"` to the
+  `gate_request` call for the gate below, with a run id unique to this run
+  (for example `<project>-ar-<UTC yyyymmddThhmm>`). Then STOP and wait for the
+  user; never confirm it yourself. After approval Phase 2 runs without
+  prompts: per-iteration evidence is recorded in `results.json` (§C.5), not
+  gated, and mid-loop gates (opted-in micro-gates) become notices. A failure,
+  anomaly or budget exhaustion puts the next gate in front of the user. Surface the hallucination/safety floor result inline each iteration; a floor breach is deferred with `ar_defer` (§B.14).
+- **Otherwise:** raise the same gate without `plan_approval`. §E convergence
+  and §G safety rails still terminate the loop. Per-iteration echoes remain
+  recommended for readability.
 
-```text
-/goal The AR loop is complete when ANY of the following is true:
-  (a) the most recent inline iteration summary shows <primary_metric> has
-      <crossed target X in the maximize direction
-       | dropped below target X in the minimize direction>;
-  (b) the most recent iteration summary or status line contains
-      "Convergence detected" with reason in {plateau, diminishing-returns,
-      budget-exhausted, cost-ceiling, consecutive-failures,
-      metric-floor-breach, user-interrupt, reviewer-pause,
-      scope-violation, error-limit, timeout-limit};
-  (c) the agent has begun writing the Phase 3 research summary
-      (look for "Phase 3" or "research_summary.md").
-Or stop after <budget+5> turns.
-```
-
-If no target was set, drop clause (a). Activation is optional:
-- **With `/goal`:** Phase 2 runs without per-iteration prompts. Transcript
-  discipline (`autonomous_research.md` §B.4/B.8) is mandatory — the evaluator
-  reads only the conversation, not files. The hallucination/safety floor
-  language in Phase 2 should also be reflected inline so the evaluator can
-  see it.
-- **Without `/goal`:** §E convergence and §G safety rails still terminate
-  the loop. Per-iteration echoes remain recommended for readability.
-
-If the host cannot run the loop unattended (see the goal-mode protocol), accept that and proceed — the loop still runs and terminates per
-the existing logic.
+On an unattended run a reviewer `RETRO_REVERT` or `PAUSE` and a metric floor
+breach do not block: call `ar_defer` and keep looping (§B.14); the deferred
+items are presented at Phase 3. The Phase 3 adoption gate is always confirmed
+by the user, unattended or not: it is requested with `requires_human` (§A.6).
 
 ### Gate
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
 {{gate kind=execute phase=1 id=ai-engineer-research-phase-1}}
+
+### If fan-out confirmed
+
+After the Phase 1 gate is confirmed, launch one AR branch lead per approach
+family, in parallel, all with the same run id and each with its own `branch`
+slug (`autonomous_research.md` Section H.3):
+
+{{lead ai-engineer task="AR branch lead for approach family <branch-slug> of AR run <run-id>"}}
+
+Each lead brief carries the approach constraint, the `ar_start` arguments from
+the brief plus `run_id` and `branch`, the scope
+`<project_dir>/experiments/branches/<branch-slug>`, the budget and the reviewer
+cadence. Each lead runs its loop in its own git worktree and dispatches every
+iteration as a worker task card; leads write no code and never gate. You hold
+every user gate. Wait for every lead to return, then go to Phase 3.
 
 ---
 
@@ -369,8 +391,17 @@ Follow Section I of `autonomous_research.md`. Include in the recommendations:
 
 ### Fan-out specific
 
-If fan-out: arbitrate before writing the consolidated summary. Standard
-`protocols/diverge.md` flow.
+If fan-out, before the summary (`autonomous_research.md` Sections H.9 to H.11):
+
+a. Wait for every lead; each has ended its branch with `ar_end`.
+b. Call `ar_status({run_id})` for the branch leaderboard and invoke Syn Arbiter
+   with the run id and the branch refs (`protocols/diverge.md` Section F); it
+   compares refs and trailers, not prose reports.
+c. Present the leaderboard; the user selects the winner at the human gate.
+d. Promote the winner: apply the `promote` diff its `ar_end` returned in the
+   main tree; the Phase 3 adoption gate commits it.
+e. Propose write-backs only after promotion (winner plus cross-branch patterns).
+f. The consolidated `research_summary.md` covers all branches.
 
 ### Phase 3 gate
 
@@ -381,7 +412,7 @@ Ask the user:
 - Do you want to run another budget?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ai-engineer id=ai-engineer-research-phase-3}}
+{{gate kind=final phase=3 validates=ai-engineer id=ai-engineer-research-phase-3 requires_human=true}}
 
 ### If adopting
 

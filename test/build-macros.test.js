@@ -112,6 +112,15 @@ describe('macro expansion', () => {
     expect(cp).toContain('"alpha-phase-1.after-x"');
     expect(cp).toContain('does not advance');
   });
+  it('gate requires_human=true passes the flag and says it always needs a human', () => {
+    for (const t of ['claude', 'codex', 'skills']) {
+      const g = ok('{{gate kind=final requires_human=true}}', t);
+      expect(g).toContain('requires_human=true');
+      expect(g).toContain('always needs a human confirmation');
+    }
+    expect(ok('{{gate kind=final}}', 'claude')).not.toContain('requires_human');
+    expect(run('{{gate kind=final requires_human=yes}}', 'claude').errors[0]).toMatch(/requires_human= must be 'true'/);
+  });
   it('gate outside a phase file needs phase=', () => {
     expect(ok('{{gate kind=execute phase=4}}', 'claude', 'agents/alpha/modes/review.md')).toContain('"alpha-phase-4"');
     expect(run('{{gate kind=execute}}', 'claude', 'agents/alpha/modes/review.md').errors[0]).toMatch(/requires phase=N/);

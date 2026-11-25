@@ -23,7 +23,9 @@ function log(msg) {
 // (tier 3) and gate_suspend carry the user's verbatim reply as proof, and
 // gate_force_close is operator-only. auto_verify_start widens auto-approval.
 // notebook_start/exec/run_all execute arbitrary code in a kernel (same class as
-// Bash, which acceptEdits still prompts for). None of the allowed tools writes
+// Bash, which acceptEdits still prompts for); so do ar_start/ar_iterate (they run
+// the pinned eval command) and ar_defer (a deferred retro_revert rewrites files in
+// the AR mutable scope). None of the allowed tools writes
 // an external system: they touch .shards/state, .shards/events.jsonl, the
 // session's output_dir or local git only. A test checks that every
 // runtime/tools/*.js tool is listed in exactly one of the two lists.
@@ -34,12 +36,13 @@ const STUDIO_ALLOWED_RUNTIME_TOOLS = Object.freeze([
   'fanout_start', 'fanout_claim', 'fanout_collect',
   'tasks_set', 'task_dispatch', 'task_report', 'task_status', 'task_verify',
   'sessions_list', 'sessions_resume', 'sessions_end',
-  'notebook_stop',
+  'notebook_stop', 'ar_status', 'ar_end',
 ]);
 
 const STUDIO_EXCLUDED_RUNTIME_TOOLS = Object.freeze([
   'gate_advance', 'gate_confirm', 'gate_force_close', 'gate_suspend',
   'auto_verify_start', 'notebook_start', 'notebook_exec', 'notebook_run_all',
+  'ar_start', 'ar_iterate', 'ar_defer',
 ]);
 
 // Plugin install (`claude --plugin-dir` / marketplace): server "shards" inside

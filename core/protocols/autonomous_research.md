@@ -6,8 +6,8 @@ description: >
   generation, auto-keep/revert based on metric movement, steering document
   the user can edit mid-loop, and convergence detection. Referenced by AR-capable
   agents (ML Engineer, AI Engineer, Data Scientist, Applied ML Scientist, Deep
-  Learning Engineer). Section H defines how AR composes with DIVERGE for
-  fan-out of parallel approach families.
+  Learning Engineer). Section H defines AR fan-out: one branch lead per
+  approach family, each in its own git worktree, with workers per iteration.
 type: reference
 ---
 
@@ -60,11 +60,13 @@ warn you off hypotheses that look promising but are already-tested dead ends.
 
 Confirm with the user which preset is active (established at Phase 0):
 
-- **`interactive`** (default) — budget=10, reviewer cadence=3, no required cost
-  ceiling. User is nearby and expects an engaged session. Closest in character
-  to a beefed-up `[EX]`.
-- **`overnight`** — budget=100, reviewer cadence=10, cost ceiling required.
-  User is away; agent runs long. Interrupt mechanism for unattended runs
+- **`interactive`** (default) — budget=10, reviewer cadence=3, no required
+  wall-clock budget. User is nearby and expects an engaged session. Closest in
+  character to a beefed-up `[EX]`.
+- **`overnight`** — budget=100, reviewer cadence=10, wall-clock budget
+  (minutes) required. User is away; agent runs long, driven by a shell loop
+  (§G.9). Decisions that need a human are deferred, not gated (§B.14).
+  Interrupt mechanism for unattended runs
   is the Steering Notes section of `research_brief.md` — the agent re-reads
   it every iteration (see B.1) and honors directives written there
   (including "STOP" / "PAUSE"). Micro-gates exist as an opt-in feature but
@@ -85,10 +87,15 @@ Required sections:
 - **Primary metric** — name, direction (maximize/minimize), baseline value, source
   of baseline, target value (optional).
 - **Constraints** — iteration budget, per-iteration time limit, max consecutive
-  regressions, metric degradation floor, cost ceiling (tokens and/or dollars;
-  optional for interactive, required for overnight).
+  regressions, metric degradation floor, wall-clock budget in minutes (required
+  for overnight), and an optional cost ceiling (tokens and/or dollars;
+  advisory only, §G.5).
+- **Evaluation** — the full eval command; optionally a cheaper proxy eval and
+  the full eval cadence M (§C.6), and a fixed compute budget in seconds
+  (§G.10).
 - **Scope** — explicit list of mutable files/directories vs. immutable
   files/directories. Anything not listed as mutable is immutable by default.
+  Optionally a sealed holdout: its command and split paths (§G.11).
 - **Preset** — `interactive` | `overnight` | `custom`.
 - **Steering Notes** — user-editable section. Empty at brief creation; the user
   may add notes like "prioritize feature engineering over hyperparameter tuning"
@@ -107,29 +114,62 @@ Before the gate, tell the user:
 > "Facilitate, don't generate" is suspended for Phase 2 of this AR session. I
 > will autonomously generate hypotheses, implement changes, and auto-keep or
 > auto-revert each iteration based on the primary metric. Phase 0, Phase 1, and
-> Phase 3 remain gated. You can steer the loop at any time by editing
+> Phase 3 remain gated, and you confirm the Phase 3 adoption gate yourself even
+> on an unattended run. You can steer the loop at any time by editing
 > `experiments/research_brief.md` — I re-read it every iteration.
 
 ### A.6 Unattended loops: the `plan` gate policy
 
 Goal mode is the `plan` gate policy (see `goal_mode.md`). At the per-agent
 Phase 1 gate, offer the user an unattended Phase 2 loop. Present the plan and
-budget (iteration budget, cost ceiling, primary metric, target, metric floor)
-and call `gate_request` for a `plan-approval` gate. Then STOP and wait for the
-user; never confirm it yourself. The user confirms via the in-host prompt
-(elicitation, or the permission prompt `gate_advance` raises) or by replying in
-chat, in which case relay their verbatim reply with `gate_confirm`.
+budget (iteration budget, wall-clock minutes, primary metric, target, metric
+floor). The per-agent Phase 1 gate **is** the plan approval: do not raise a
+second gate.
+
+- **If the user chooses unattended:** call `gate_request` for the Phase 1 gate
+  with the extra argument `plan_approval: "<run-id>"`. The run id names this
+  run only, for example `<project>-ar-<UTC yyyymmddThhmm>` (letters, digits,
+  `.`, `_`, `-`). Then STOP and wait for the user; never confirm it yourself.
+  The user confirms via the in-host prompt (elicitation, or the permission
+  prompt `gate_advance` raises) or by replying in chat, in which case relay
+  their verbatim reply with `gate_confirm`.
+- **Otherwise:** call the same gate without `plan_approval`.
+
+A plan approval covers one run in one project. Each new run raises its own
+Phase 1 gate with a new run id; the runtime then treats the gate as a fresh,
+pending gate (it does not return "already confirmed" for the earlier run), and
+the earlier run's approval stops applying as soon as the new one is requested.
+The notice budget (`gates.budget`) is counted per plan approval. Use the same
+run id for `plan_approval` and `ar_start`'s `run_id`: the runtime then raises
+that plan's budget to cover the AR budget (`max_gates` at least iterations + 2,
+`max_minutes` at least the AR wall-clock window plus slack), so a long run does
+not exhaust the plan before its own budget. `ar_start` reports the effective
+plan budget as `plan`.
 
 Tell the user the activation is optional:
-- **With plan approval:** after the user confirms, every later gate kind
-  (`confirm`, `checkpoint`, `execute`) becomes a notice. Keep calling
-  `gate_request` with `evidence` each iteration and keep looping. The loop
-  stops on failure, anomaly, or budget exhaustion, and the next gate waits for
-  a human again.
+- **With plan approval:** after the user confirms, mid-loop gates (opted-in
+  micro-gates, §B.12) are recorded as notices and the loop keeps running. A
+  gate with failing or anomalous evidence, or budget exhaustion, puts a human
+  back in the loop: that gate waits for the user.
 - **Without it (default `phase` policy):** the loop still runs autonomously
   per §B. `confirm`/`checkpoint` gates with `evidence.status: "pass"` are
   recorded automatically; a failure or anomaly blocks until the user confirms.
   Under `strict`, a human confirms every gate.
+
+**Per-iteration evidence is recorded, not gated.** Phase 2 does not call
+`gate_request` once per iteration under any policy. Each iteration's evidence
+is its `results.json` entry (with the C.5 validation block), its experiment file
+and its checkpoint commit (B.9). The only gates inside Phase 2 are the opted-in
+micro-gates (B.12) and, on attended runs, the retro-revert confirmation (C.4).
+Unattended runs defer that confirmation instead (§B.14).
+
+**The Phase 3 adoption gate is always confirmed by a human**, under every
+policy, including `plan` after a plan approval. Each agent requests it with
+`requires_human: true`; the runtime never turns such a gate into a notice or
+auto-recorded evidence, so it waits for the user under every policy. Tell the
+user the run will stop at the Phase 3 gate for their decision. If it ever comes
+back as "notice recorded", treat it as not yet confirmed: present the summary
+and wait for the user's explicit go-ahead before any adoption step.
 
 Either way, §E convergence and §G safety rails are unchanged. The per-iteration
 **inline summary echo** in §B.4 and §B.8 stays recommended: it keeps the run
@@ -144,11 +184,107 @@ interrupts. **No intermediate gates between iterations by default** — the
 autonomous loop is the whole point. The optional micro-gate (Section B.12) is
 opt-in and only on the overnight preset.
 
-At the start of Phase 2, run `git rev-parse HEAD` (via the `experiment_versioning.md`
-Section A detection) to capture the pre-loop commit. Set
-`results.json.lastGreenCommit` to this SHA — this is the baseline you revert to
-when an iteration regresses. It is always updated by the agent, never searched
-via `git log`.
+### Runtime path (use it when the AR tools are available)
+
+When the Shards runtime offers `ar_start`, `ar_iterate`, `ar_status` and
+`ar_end`, use them. They replace the manual bookkeeping in B.6, B.7, B.9, C.1
+to C.3 and the stop checks of Section E. **Do not run the eval yourself, do not
+self-report a metric, and do not use git to keep, revert or checkpoint.** The
+runtime does all of it, and its numbers are the record.
+
+1. **Start (replaces the pre-loop setup below).** Call `ar_start` with the
+   project dir, the brief path, the mutable and immutable lists from the
+   brief, the eval spec (`command`, `metric_regex` or `json_path`, `direction`,
+   `timeout_s`, `repeats`; optional `proxy` and `full_every` per §C.6 and
+   `fixed_budget_s` per §G.10), the optional sealed `holdout` and
+   `holdout_paths` (§G.11), the budget (`iterations`, `minutes`) and
+   `epsilon` (% of baseline). It:
+   - refuses a dirty mutable scope (ask the user to commit or stash)
+   - snapshots `preLoopDirty`
+   - pins hashes of the immutable paths and of the eval command
+   - opens the AR lease that enforces the write scope
+   - measures the baseline `repeats` times, which sets the noise floor:
+     `epsilon_abs = max(epsilon% × |baseline|, 2σ)`; a proxy eval gets its
+     own baseline, noise floor and epsilon the same way
+   - with a holdout, scores the pre-loop state once and seals the value
+     (it is not returned until `ar_end`); the holdout paths are pinned and
+     immutable like the eval harness
+   - creates the research journal ref `refs/shards/research/<project>/<run>`
+     with the baseline as its first commit
+2. **Each iteration.** Do B.1 to B.5 as written. Then call
+   `ar_iterate(hypothesis, source)` instead of B.6, B.7 and B.9. It:
+   - checks the immutable pins (a change is `tamper`: RED, revert, halt)
+   - runs the eval under its timeout and writes
+     `experiments/iter_<N>.log`; with a proxy, the proxy runs by default and
+     the full eval every `full_every` iterations, and a full eval that does
+     not confirm the proxy-kept chain unwinds it (§C.6). The result's
+     `eval_type` says which ran
+   - classifies per C.1 against the comparison reference, using
+     `epsilon_abs`; a YELLOW is kept only when the mutable diff has a net LOC
+     delta below 0
+   - commits the iteration, kept or not, to the research ref with `AR-*`
+     trailers
+   - reverts a RED or an unkept YELLOW to `lastKeptCommit`: it restores
+     files and deletes the new files the loop created in the mutable scope,
+     then adds a revert commit
+   - moves the pointers only after the commit exists
+   - returns `{decision, before, after, kept, converged, stop_reason}`
+
+   Use those values in B.8 (the iteration record, the Research Log line, and
+   the `results.json` entry, which is now a derived view of the ref). Do B.10
+   as written. If `converged` is true, a stop condition fired (B.11): go to
+   Phase 3.
+3. **Status and resume.** `ar_status` reports the iterations, decisions,
+   `bestSoFar`, the budget remaining and the stop reason. After a context loss
+   or in a new session, the runtime rebuilds the run from the research ref.
+   `ar_status(run_id, resume=true)` reopens the lease so the loop can continue.
+   This replaces G.8's manual reconciliation. It also lists the pending
+   deferred decisions.
+4. **Defer (unattended runs).** A decision that needs a human (reviewer
+   `RETRO_REVERT` or `PAUSE`, a metric floor breach) goes to `ar_defer` and the
+   loop continues (§B.14); nothing blocks overnight.
+5. **Stop.** Call `ar_end(reason)` when a stop condition fired (the runtime's
+   `stop_reason`), when the user halted the run (B.1), or for a reviewer stop.
+   That includes `consecutive-failures` after the §D consult; the runtime does
+   not decide E.5 on its own. `ar_end` records the reason on the ref and closes
+   the lease. With a holdout it first scores the kept state once and returns
+   `holdout: {baseline, final, delta}` (also the `AR-Holdout` trailer); report
+   it at Phase 3 (§I.2). Kept changes stay uncommitted in the working tree
+   until the Phase 3 gate.
+
+Without the runtime (a host with no Shards MCP server), follow the manual steps
+below and in Sections C and E.
+
+### Pre-loop setup (manual path)
+
+At the start of Phase 2, before iteration 1:
+
+1. **Pre-loop commit.** Run `git rev-parse HEAD` (via the `experiment_versioning.md`
+   Section A detection) to capture the pre-loop commit. Set both
+   `results.json.lastKeptCommit` and `results.json.lastGreenCommit` to this SHA,
+   and `results.json.comparisonReference` to `baseline.value`.
+2. **Dirty snapshot.** Run `git status --porcelain --untracked-files=all` and
+   record every listed path in `results.json.preLoopDirty`. These are the
+   user's own uncommitted changes; the scope check in C.3 ignores them and the
+   revert never deletes them.
+3. **Mutable scope must start clean.** If any `preLoopDirty` path is inside the
+   mutable scope, a revert would overwrite or delete the user's uncommitted
+   work. Run this check before raising the Phase 1 gate as well; if it finds
+   such paths, ask the user to commit or stash them before Phase 2 starts.
+
+Two commit pointers drive the loop. Both are always updated by the agent, never
+searched via `git log`:
+
+- **`lastKeptCommit`** — the **revert target**: the checkpoint commit of the
+  most recent kept iteration (GREEN or kept YELLOW), or the pre-loop commit.
+  Every revert (C.3) restores the mutable scope to this commit, so a later RED
+  never discards a kept YELLOW.
+- **`lastGreenCommit`** — the checkpoint commit of the most recent GREEN. It is
+  a record of the best verified state, used by the retro-revert (C.4) and the
+  Phase 3 summary. It is not the revert target.
+
+The **comparison reference** (`results.json.comparisonReference`, C.1) is a
+metric value, separate from both pointers.
 
 ### Per-iteration steps
 
@@ -172,14 +308,16 @@ mechanism for unattended overnight runs.
 To keep per-iteration context cost bounded:
 
 - At iteration N ≤ 10: read the full `results.json` (all prior entries).
-- At iteration N > 10: read only the **last 10 experiment entries** from
-  `results.json`, plus `experiments/history_summary.md` which you maintain and
-  compress every 10 iterations.
+- At iteration N > 10: read `experiments/history_summary.md`, which covers
+  iterations 1..S where S is the largest multiple of 10 below N, plus the raw
+  `results.json` entries S+1..N-1 (at most 9). Every prior iteration is covered
+  exactly once: by the summary or by a raw entry.
 
-Writing `history_summary.md`: at iterations 11, 21, 31, ..., consolidate
-iterations 1..N-10 into a short summary (approach families tried, what worked,
-what didn't, metric trajectory). Overwrite the file. At iteration 11 it
-summarizes 1-10; at 21 it summarizes 1-20; and so on.
+Writing `history_summary.md`: at iterations 11, 21, 31, ..., first read the
+previous summary and the raw entries since it, then consolidate iterations
+1..N-1 into a short summary (approach families tried, what worked, what
+didn't, metric trajectory). Overwrite the file. At iteration 11 it summarizes
+1-10; at 21 it summarizes 1-20; and so on.
 
 #### B.3 Generate next hypothesis
 
@@ -216,20 +354,31 @@ Keep changes minimal and isolated to the hypothesis. No drive-by cleanups.
 
 #### B.6 Evaluate
 
-Run the evaluation protocol for this specialist (full train/eval, proxy, etc.)
+With the runtime, `ar_iterate` runs the eval (see "Runtime path"); skip the
+rest of this step. Otherwise run the evaluation protocol for this specialist (full train/eval, proxy, etc.)
 and measure the primary metric. Record both primary and secondary metrics.
 
-**Proxy vs full-eval rules (Section E also governs):**
+**Proxy vs full-eval rules (§C.6 and Section E also govern):**
 - Record `evalType: "full" | "proxy"` in the iteration entry.
 - Full evaluation must run at least every M iterations (M=5 interactive, M=10
-  overnight) and always on the final iteration before Phase 3.
-- A proxy below the metric floor triggers an automatic full re-evaluation on
-  the same iteration before any revert decision is made (see Section G.2).
+  overnight) and should run on the final iteration before Phase 3. With the
+  runtime, pass `eval.full_every: M`; `ar_iterate(full=true)` forces a full
+  eval now, for example as the last iteration so no proxy-kept change reaches
+  Phase 3 unverified (`ar_status` lists them as `proxy.unverified_kept`).
+- A full evaluation that does not confirm the proxy-kept chain since the last
+  full-verified state unwinds the chain (§C.6).
+- A proxy below the metric floor triggers a full re-evaluation before any
+  revert decision is made (see Section G.2). With the runtime, call the next
+  `ar_iterate` with `full=true`.
 
 #### B.7 Auto-keep/revert decision (Section C)
 
 Classify the result as GREEN / RED / YELLOW per Section C and execute the
-corresponding action (keep, revert, or conditional-keep).
+corresponding action (keep, revert, or conditional-keep). A revert happens
+here, before anything is committed: C.3 restores the working tree, so the
+iteration's discarded edits never reach the checkpoint commit in B.9. Pointer
+updates for kept iterations wait for B.9, because the checkpoint commit they
+point at does not exist yet.
 
 #### B.8 Record results
 
@@ -295,7 +444,7 @@ When a §E stop condition fires later in this iteration (at B.11) **or a §G
 safety rail halts the loop**, additionally print on the same turn:
 
 ```
-Convergence detected: <plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | error-limit | timeout-limit>
+Convergence detected: <plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | time-budget | tamper | error-limit | timeout-limit>
 ```
 
 The enum here matches §E.7's canonical list — §E stop conditions plus §G safety-rail halts.
@@ -306,13 +455,18 @@ transcript.
 
 #### B.9 Git checkpoint
 
+With the runtime, `ar_iterate` already journaled the iteration on
+`refs/shards/research/<project>/<run>`; skip this step (no tags, no per-iteration
+commits on the user branch). The manual path follows.
+
 Follow **Section B** of [`protocols/experiment_versioning.md`](experiment_versioning.md)
 with these AR-specific conventions. That protocol's git policy applies in full:
 commit only when `git.commit` is enabled, honour `git.denylist` and its size
-limit, use `git commit --only`, never switch branches, never push. Inside a
-fan-out branch these calls are skipped (Section H.5). `experiments/` in this
-protocol means `<output_dir>/experiments/` (`<branch_dir>/experiments/` inside a
-branch).
+limit, use `git commit --only`, never switch branches, never push. A fan-out
+branch always uses the runtime path (its journal is the branch ref, H.5); a
+`no-vcs` branch skips this step. `experiments/` in this protocol means
+`<output_dir>/experiments/` (`<output_dir>/experiments/branches/<branch-slug>/`
+for a fan-out branch's records).
 
 - **Tag prefix:** `research/<project_name>/<N>-<name>` (not `exp/<...>`).
 - **Annotated tag message** includes the auto-decision color:
@@ -324,8 +478,26 @@ branch).
   This matches `[EX]`'s `exp/<project>/<N>-<name>` convention and keeps
   `git tag -l "research/<project>/*"` globs clean.
 
+What the commit contains depends on the B.7 decision:
+
+- **Kept iteration (GREEN or kept YELLOW):** the iteration's records under
+  `experiments/` plus the mutable paths it changed. After the commit, capture
+  its SHA (`git rev-parse HEAD`) and set `results.json.lastKeptCommit` to it;
+  for a GREEN also set `results.json.lastGreenCommit` to it (C.2). Record the
+  SHA in the iteration's `checkpoint`.
+- **Reverted iteration (RED or reverted YELLOW):** the mutable paths were
+  already restored in B.7, so the commit contains only the records under
+  `experiments/`. The pointers do not move.
+
+If the checkpoint commit fails on a kept iteration, there is no revert target
+for the next iteration: halt the loop with `convergence.reason = "error-limit"`
+and tell the user (instead of the "continue without versioning" rule in
+`experiment_versioning.md` Section C).
+
 If versioning mode is `none`, skip this step silently (per
-`experiment_versioning.md` Section B).
+`experiment_versioning.md` Section B). AR requires versioning (see "When NOT to
+use"), so this only happens when the user explicitly accepted running without
+revert.
 
 #### B.10 Reviewer consultation if cadence hit
 
@@ -337,15 +509,12 @@ per Section D.
 Run Section E stop-condition checks. If any condition fires, break the loop and
 proceed to Phase 3.
 
-#### B.12 Cost accounting + micro-gate (overnight only)
+#### B.12 Cost notes + micro-gate (overnight only)
 
-Update `results.json.costAccounting`:
-- `tokensIn` and `tokensOut` — approximate counts from this iteration
-- `dollarsSpent` — running total
-- `reviewerTasksSpawned` — increment if a reviewer consult was called
-
-Check against the cost ceiling (Section G.5). If at 50% or 80% of ceiling emit
-a soft warning; at 100% hard-stop the loop.
+Optionally update `results.json.costAccounting` (`reviewerTasksSpawned`, and
+token or dollar estimates if you have them). These are advisory: the agent
+cannot observe its own usage, so the cost ceiling is not a stop condition
+(Section G.5).
 
 **Micro-gate (opt-in, overnight preset):** micro-gates are a user-interrupt
 window requested every K iterations (default K=5) with
@@ -376,6 +545,29 @@ which the agent reads at the next iteration and halts on.
 If no stop condition fired and iteration budget remains, proceed to iteration
 N+1. Otherwise exit to Phase 3.
 
+#### B.14 Deferred decisions (unattended and overnight runs)
+
+On an unattended run (plan approval, or the overnight preset with nobody
+watching) a decision that needs a human must not stall the loop. Instead of a
+blocking gate, call `ar_defer` and continue:
+
+| Trigger | Call | Loop |
+|---------|------|------|
+| Reviewer `RETRO_REVERT` for iteration M (C.4) | `ar_defer(kind="retro_revert", retro_to_iteration=M, detail=<reason>)` | The runtime restores the kept state before M and moves `lastKeptCommit`, `lastGreenCommit` and the comparison reference there; continue with N+1 |
+| Reviewer `PAUSE`, or a `PAUSE` in Steering Notes the user marked "defer" | `ar_defer(kind="pause", detail=<concern>)` | Continue; avoid the hypothesis family the concern names |
+| Metric floor breach on a full eval (E.6) | `ar_defer(kind="floor_breach", detail=<value vs floor>)` | The runtime has no floor check: you judge the breach from the `ar_iterate(full=true)` result. If that iteration was kept, the deferred item asks the human whether to revert it; continue |
+| Anything else only a human can decide | `ar_defer(kind="other", detail=...)` | Continue |
+
+Each call commits a `needs-human` entry (`AR-Needs-Human: <kind>`) on the
+research ref and adds it to the run's deferred list. `ar_status` and `ar_end`
+list the pending items. **The Phase 3 gate must present every deferred item for
+the user to confirm or reject** (a rejected retro-revert means restoring the
+reverted iterations from their commits on the research ref). A `STOP`/`HALT` in
+Steering Notes still ends the loop.
+
+On an attended run (the user is present, no plan approval), keep the blocking
+behaviour: C.4's confirm gate, D.2's PAUSE halt and E.6's halt.
+
 ---
 
 ## Section C — Auto-Keep/Revert Protocol
@@ -383,12 +575,15 @@ N+1. Otherwise exit to Phase 3.
 ### C.1 Classification
 
 Classify each iteration result by comparing the primary metric to the
-**comparison reference** — not to the original baseline. The comparison
-reference is the "after" value from the most recent GREEN iteration, or the
-original baseline (`results.json.baseline.value`) if no GREEN has occurred
-yet. This ensures each iteration is measured against the current best state,
-not against the original starting point (which would make every small
-improvement look GREEN and break convergence detection).
+**comparison reference** (`results.json.comparisonReference`) — not to the
+original baseline. The comparison reference is the "after" value from the most
+recent GREEN iteration, or the value measured at the most recent re-baseline
+(C.2, three-YELLOW guard), or the original baseline
+(`results.json.baseline.value`) if neither has happened yet. This ensures each
+iteration is measured against the current best state, not against the original
+starting point (which would make every small improvement look GREEN and break
+convergence detection). After classifying, record the comparison reference in
+force after this iteration as the entry's `bestSoFar` (§E uses it).
 
 - **GREEN (improved):** Primary metric moved in the configured direction
   **from the comparison reference** by more than `epsilon` (default: 1% of
@@ -405,16 +600,16 @@ it is used at Phase 3 for computing net delta and for the epsilon default.
 
 **GREEN:**
 1. Keep the changes (no revert).
-2. Update `results.json.lastGreenCommit` to the commit SHA of this iteration's
-   checkpoint. The "after" value from this iteration becomes the comparison
-   reference for the next iteration's classification (derived on-demand from
-   `results.json.experiments[lastGreenIndex].metrics.outcome.after`).
-3. Reset `consecutiveRegressions` to 0.
-4. Reset `consecutiveYellowKept` to 0.
-5. Annotate the git tag message with `color=green`.
-6. **Do NOT modify `results.json.baseline.value`** — that remains the original
-   baseline. The comparison reference is tracked via `lastGreenCommit` (and
-   its iteration's `metrics.outcome.after`).
+2. Set `results.json.comparisonReference` to this iteration's "after" value; it
+   is the reference for the next iteration's classification.
+3. After the B.9 checkpoint commit exists, set both
+   `results.json.lastKeptCommit` and `results.json.lastGreenCommit` to its SHA.
+   Never set a pointer before the commit is made.
+4. Reset `consecutiveRegressions` to 0.
+5. Reset `consecutiveYellowKept` to 0.
+6. Annotate the git tag message with `color=green`.
+7. **Do NOT modify `results.json.baseline.value`** — that remains the original
+   baseline. The comparison reference is tracked in `comparisonReference`.
 
 **RED:**
 1. Revert per C.3 (Revert Mechanism).
@@ -432,12 +627,23 @@ Default behavior: **revert**. Exceptions (keep) when either is true:
 If kept:
 1. Increment `consecutiveYellowKept`.
 2. Record `autoDecision: "yellow"`, `reverted: false`, populate `nextSteps`.
-3. Annotate the git tag with `color=yellow`.
-4. **Three-consecutive-YELLOW-kept limit:** if `consecutiveYellowKept` reaches
-   3, the next iteration — even if GREEN — must be followed by a force-revert
-   to `lastGreenCommit` before proceeding. This prevents quiet drift where a
-   series of "small simplifications" erodes the GREEN state unnoticed. Reset
-   `consecutiveYellowKept` to 0 after the force-revert.
+3. After the B.9 checkpoint commit exists, set `results.json.lastKeptCommit`
+   to its SHA. `lastGreenCommit` and `comparisonReference` do not change.
+4. Annotate the git tag with `color=yellow`.
+5. **Three-consecutive-YELLOW-kept limit (re-baseline):** if
+   `consecutiveYellowKept` reaches 3, re-baseline before iteration N+1. Each
+   kept YELLOW is within epsilon of the reference, but three of them can add
+   up to a real drift. Run a **full** evaluation of the current kept state
+   (`lastKeptCommit`), without changing anything, and compare it to
+   `comparisonReference`:
+   - Worse by more than `epsilon`: the YELLOW chain eroded the state. Revert
+     per C.3 with `lastGreenCommit` as the target, commit the restored paths
+     (C.3 step 5), and set `lastKeptCommit` to that commit.
+   - Otherwise: keep the state and set `comparisonReference` to the measured
+     value, so later iterations are judged against what the code scores now.
+   Either way, reset `consecutiveYellowKept` to 0 and add a `re-baseline` line
+   to the Research Log. A re-baseline is not an iteration: it does not take an
+   iteration number or count against the budget.
 
 If reverted:
 1. Revert per C.3.
@@ -445,27 +651,53 @@ If reverted:
 
 ### C.3 Revert mechanism
 
-Reverts are **file-scoped**, never `git reset --hard`, never `git clean -f`.
+With the runtime, `ar_iterate` performs this revert itself (files restored
+from `lastKeptCommit` without touching the user's index, loop-created files in
+the mutable scope deleted, revert commit on the research ref). The manual
+mechanism follows.
 
-1. Read `results.json.lastGreenCommit` — the target state.
-2. Compute the set of mutable paths modified since `lastGreenCommit`:
+Reverts are **file-scoped**, never `git reset --hard`, never `git clean -f`.
+They run at B.7, before the iteration's checkpoint commit, and restore the
+**working tree**: uncommitted edits and new files are the iteration's changes.
+
+1. The target state is `results.json.lastKeptCommit` (C.4 and the three-YELLOW
+   guard name a different target explicitly).
+2. Compute the revert set: every mutable path that differs from the target,
+   including uncommitted edits, plus untracked files in the mutable scope:
    ```bash
-   git diff --name-only <lastGreenCommit>..HEAD -- <mutable_path_1> <mutable_path_2> ...
+   # tracked paths changed since the target (commits AND working tree)
+   git diff --name-only <target> -- <mutable_path_1> <mutable_path_2> ...
+   # untracked, not-ignored files in the mutable scope
+   git ls-files --others --exclude-standard -- <mutable_path_1> <mutable_path_2> ...
    ```
-3. For each path in that set, run:
+   Drop any path listed in `results.json.preLoopDirty`.
+3. For each path in the revert set:
+   - If it exists in the target (`git cat-file -e <target>:<path>` succeeds),
+     restore it:
+     ```bash
+     git checkout <target> -- <path>
+     ```
+   - Otherwise the loop created it after the target: delete that one file by
+     its explicit path (`rm -- <path>`; if it is tracked, `git rm -q -- <path>`).
+     Never use `git clean`.
+4. Defensive scope check: run `git status --porcelain --untracked-files=all`.
+   If a path is dirty that is outside the mutable scope, outside
+   `<project_dir>/experiments/` and not in `results.json.preLoopDirty`,
+   **halt the loop with a safety-rail stop** (Section G.1 — scope violation
+   during the iteration). Do not auto-clean. Alert the user. Files the user had
+   dirty before the loop never trigger this check.
+5. If the restored paths now differ from `HEAD` (`git diff --name-only HEAD --
+   <revert set>` is not empty) and versioning is enabled (`git.commit` true,
+   same policy as B.9), commit them so the next iteration starts from a clean
+   mutable scope. This happens for a retro-revert (C.4), a three-YELLOW
+   re-baseline revert (C.2) and an error-limit revert (G.3); an ordinary RED at
+   B.7 restores the last kept commit, which equals `HEAD` for the mutable
+   scope, so it needs no revert commit:
    ```bash
-   git checkout <lastGreenCommit> -- <path>
+   git commit --only <revert set> -m "research: revert to <target> (<reason>)"
+   git tag -a "research/<project>/<N>-revert" -m "Reverted to <target>: <reason>"
    ```
-4. Defensive scope check: if any file outside the mutable list shows as dirty
-   after the revert, **halt the loop with a safety-rail stop** (Section G.1 —
-   scope violation during the iteration). Do not auto-clean. Alert the user.
-5. If versioning is enabled (`git.commit` true, same policy as B.9), create a
-   revert commit of the reverted paths only (`git commit --only <paths>`) to
-   keep history linear and the next iteration's `git add` clean:
-   ```bash
-   git commit -m "research: revert iter <N> (<red|yellow>) — <metric> <before> -> <after>"
-   git tag -a "research/<project>/<N>-revert" -m "Reverted iteration <N>: <reason>"
-   ```
+   Then set `results.json.lastKeptCommit` to this commit's SHA.
 6. Record `reverted: true` in the iteration's `results.json` entry.
 
 ### C.4 Retroactive revert (reviewer-initiated)
@@ -476,17 +708,23 @@ based on data leakage or a methodology flaw), execute:
 
 1. Mark `results.json.experiments[M].retroInvalidated = true` and set
    `retroInvalidationReason` to the reviewer's explanation.
-2. **Prompt the user via a confirm gate** — retro-reverts are destructive enough
-   to warrant explicit confirmation even in overnight mode:
+2. **Unattended or overnight run:** do not raise a gate. Call
+   `ar_defer(kind="retro_revert", retro_to_iteration=M, detail=<reason>)`; it
+   performs steps 3 and 4, records the decision for the Phase 3 gate (§B.14)
+   and the loop continues (step 5). **Attended run:** prompt the user via a
+   confirm gate, since retro-reverts are destructive:
    Call `gate_request(kind=confirm)` with `evidence.status: "fail"` (the
    reviewer flagged an anomaly, so it blocks under every policy) and the
    summary "Reviewer flagged iteration M's GREEN as invalid (<reason>). Rolling
    back to iteration M-1's state will discard iterations M..<current>.
    Confirm?". Then STOP and wait for the user.
-3. On confirm: revert all commits after iteration M-1's `lastGreenCommit`
-   using the file-level checkout protocol in C.3, expanded to cover the full
-   range (M..HEAD).
-4. Update `results.json.lastGreenCommit` to iteration M-1's commit SHA.
+3. On confirm: revert per C.3 with the target set to the state before
+   iteration M — the `lastKeptCommit` value in force when iteration M started
+   (the checkpoint of the last kept iteration before M, or the pre-loop
+   commit). C.3 step 5 commits the restore and moves `lastKeptCommit`.
+4. Set `results.json.lastGreenCommit` to the checkpoint of the last GREEN
+   before M (or the pre-loop commit), and `comparisonReference` to that GREEN's
+   "after" value (or `baseline.value`).
 5. Resume the loop from the reverted baseline. **Iteration counter keeps
    incrementing** — no re-use of numbers. The next iteration is N+1, not M+1.
 
@@ -520,9 +758,45 @@ Constraints:
 - Minimum: headline metric value, at-most-one component test or smoke-check result, one-sentence summary.
 - No `## Validation` section is written to `project-specs.md` during the AR loop — the Phase 3 research summary (Section I) consolidates validation across kept iterations.
 
-The runtime does **not** enforce this per-iteration block. Discipline is on the AR loop itself; the Phase 3 consolidation is where structural enforcement resumes. Per-iteration `gate_request` calls carry the same summary as `evidence` (`status` plus `checks`).
+The runtime does **not** enforce this per-iteration block. Discipline is on the AR loop itself; the Phase 3 consolidation is where structural enforcement resumes. Per-iteration evidence is recorded here, not gated: there is no per-iteration `gate_request` (A.6). An opted-in micro-gate (B.12) carries the latest block's summary as its `evidence` (`status` plus `checks`).
 
 ---
+
+### C.6 Proxy and full evaluations: chains and unwind
+
+A proxy eval (fewer epochs, a data subsample, a smaller model) is cheaper than
+the full eval but can disagree with it. A GREEN decided on a proxy is only
+provisional until a full eval confirms it.
+
+- **Two references, two noise floors.** Proxy iterations are classified
+  against the proxy reference with the proxy epsilon; full iterations against
+  the full reference (the full metric of the last full-verified kept state)
+  with the full epsilon. Both are measured at the start with `repeats` runs.
+  `bestSoFar` and the convergence checks use the full scale only.
+- **Cadence.** Iterations run the proxy by default. The full eval runs when M
+  iterations have passed since the last full eval, or on request. So at most
+  M-1 proxy-kept iterations wait for verification.
+- **The full eval judges the unit.** A full iteration evaluates the proxy-kept
+  chain since the last full-verified state plus its own change, and the keep
+  rule applies to that unit: GREEN keeps it, a YELLOW keeps it only when the
+  unit's net LOC delta (against the last full-verified state) is below 0, and
+  anything else is not kept.
+- **Unwind.** A full iteration that is not kept while a proxy-kept chain is
+  pending unwinds the chain. The mutable scope goes back to the last
+  full-verified kept state (the C.3 revert, with that state as the target),
+  the chain's iterations are marked `unwound`, the proxy reference resets to
+  its value at that state, and an unwind commit records `AR-Unwind: <iters>`.
+  `lastKeptCommit` and `lastGreenCommit` move back with it. Unwound GREENs do
+  not count as GREENs for the plateau check.
+- **Kept full iteration.** It becomes the new full-verified state. The full
+  reference moves on a GREEN (or a re-baseline), and the runtime runs the
+  proxy once on the new state so the proxy reference matches it.
+
+Only a breach of the metric floor used to trigger anything for a proxy chain;
+now any full eval that fails to confirm the chain does (issue #91, bug 8).
+The runtime implements all of this (`ar_iterate`); on the manual path, apply
+the same rule with git: revert the mutable scope to the last full-verified
+commit and mark the chain `reverted: true` with reason `unwound`.
 
 ## Section D — Reviewer Consultation Cadence
 
@@ -555,7 +829,8 @@ APPROVED/NEEDS REVISION/BLOCKED structure from `protocols/reviewer_verdict.md`):
   hypothesis direction. Record `hypothesisSource: "reviewer-suggested"` on the
   next iteration.
 - **`PAUSE`** — stop the loop and escalate to the user. Reviewer supplies the
-  concern. The loop halts immediately and Phase 3 begins.
+  concern. The loop halts immediately and Phase 3 begins. On an unattended run,
+  defer it with `ar_defer(kind="pause")` and continue instead (§B.14).
 - **`RETRO_REVERT`** — a prior GREEN is invalid. Reviewer specifies the target
   iteration. Execute Section C.4.
 
@@ -571,9 +846,9 @@ Applied ML Scientist (DL Engineer + Researcher) and Deep Learning Engineer
 2. **Methodology reviewer second** (Researcher) — gets the technical
    reviewer's verdict as input so they can comment on the combined picture.
 
-Dual-reviewer cost is **2× per cadence hit** and must be reflected in the cost
-ceiling (Section G.5). If cost ceiling pressure is high, consider raising K
-rather than dropping one reviewer — both perspectives matter.
+Dual-reviewer cost is **2× per cadence hit** and must be reflected in the
+wall-clock budget. If budget pressure is high, consider raising K rather than
+dropping one reviewer — both perspectives matter.
 
 ### D.4 Consultation call format
 
@@ -632,45 +907,74 @@ a false positive. The floor prevents premature convergence.
 **Exception:** METRIC FLOOR BREACH (E.6) is always live — emergency stops do
 not wait.
 
-Stop when ANY of the following is true:
+Stop when ANY of the following is true. Check them in order; the first that
+fires names the stop reason.
+
+With the runtime, `ar_iterate` evaluates E.1, E.2, E.3, the wall-clock budget
+(`time-budget`), G.3/G.4 (`error-limit`, `timeout-limit`) and the immutable
+tamper check (`tamper`), and returns `converged` and `stop_reason`. E.4 to E.6
+and user or reviewer stops remain the agent's call, ended with `ar_end`.
+
+E.1 and E.2 are measured over **all** iterations, GREEN or not, using each
+entry's `bestSoFar` (the comparison reference in force after that iteration,
+C.1). An iteration that is not GREEN leaves `bestSoFar` unchanged, so it adds
+zero progress. Measuring only GREENs would never fire: every GREEN beats the
+reference by more than `epsilon`.
 
 ### E.1 PLATEAU
 
-No GREEN result in W consecutive iterations (default W=5) **AND** DIMINISHING
-RETURNS (E.2) is also true. **Require both signals** — single-signal PLATEAU
-produces too many false positives on hard problems.
+No GREEN result in the last W consecutive iterations (default W=5): `bestSoFar`
+has not moved over the window. The activation floor already protects against
+early false positives on hard problems.
 
 ### E.2 DIMINISHING RETURNS
 
-Average improvement rate over the last W GREEN results is less than threshold
-(default: 0.1% of baseline per GREEN iteration). Measured as
-`mean(delta_over_last_W_greens) < threshold`.
+Progress of `bestSoFar` over the last 2W iterations (default 10) is below the
+threshold:
+
+```
+gain    = improvement from bestSoFar[N - 2W] to bestSoFar[N]   (bestSoFar[0] = baseline)
+gainPct = gain / |baseline.value| × 100
+fire when gainPct < diminishingReturnsThreshold
+```
+
+`diminishingReturnsThreshold` is the minimum total improvement over the 2W
+window, in % of baseline. Default: 2 × epsilon (2% of baseline when epsilon is
+1%). With that default, a single barely-GREEN iteration in 10 is diminishing
+returns, while two or more solid GREENs keep the loop going. Record
+`avgImprovementRate = gainPct / 2W` (% of baseline per iteration) in the
+convergence record.
 
 ### E.3 BUDGET EXHAUSTED
 
 Iteration count reaches the configured budget.
 
-### E.4 COST CEILING
+### E.4 COST CEILING (advisory)
 
-Token count or dollars-spent reaches the ceiling from Section A.3. Hard stop —
-no further iterations. See Section G.5 for the warning-and-stop schedule.
+Not a runtime stop: token and dollar counts are estimates (Section G.5). Stop
+with `ar_end("cost-ceiling")` only if the user asked for it and the host gives
+you real usage numbers.
 
 ### E.5 CONSECUTIVE FAILURES
 
 `consecutiveRegressions` reaches K (default K=3). Before stopping, consult the
 reviewer per Section D.1 item 4 — the reviewer may return `REDIRECT` and save
-the run.
+the run. The consult is a subagent call, not a gate, so it does not block an
+unattended run; a `PAUSE` or `RETRO_REVERT` from it is deferred per §B.14.
 
 ### E.6 METRIC FLOOR BREACH
 
 Primary metric falls below the configured floor (if set) on a **full
 evaluation**. Always live — ignores the activation floor. Immediately:
-1. Revert per C.3.
-2. Halt the loop.
-3. Record the breach in `results.json.convergence.reason` as `metric-floor-breach`.
+1. Revert per C.3 (with the runtime, `ar_iterate` has already reverted it).
+2. Attended run: halt the loop. Unattended run: call
+   `ar_defer(kind="floor_breach")` and continue (§B.14).
+3. On a halt, record the breach in `results.json.convergence.reason` as
+   `metric-floor-breach`.
 
 A proxy evaluation below floor does NOT trigger E.6 directly. Instead:
-1. Automatically re-run a full evaluation on the same iteration.
+1. Re-run a full evaluation of the same state (with the runtime: the next
+   `ar_iterate` with `full=true`; it also settles the proxy chain per §C.6).
 2. If the full evaluation is also below floor, trigger E.6.
 3. If the full evaluation is above floor, the proxy was noisy; continue
    normally but mark this iteration for future attention.
@@ -683,7 +987,7 @@ When any stop condition fires (Section E) **or any safety rail halts the loop
 ```json
 "convergence": {
   "detected": true,
-  "reason": "plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | error-limit | timeout-limit",
+  "reason": "plateau | diminishing-returns | budget-exhausted | time-budget | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | tamper | error-limit | timeout-limit",
   "iterationsSinceLastGreen": <N>,
   "consecutiveRegressions": <N>,
   "consecutiveYellowKept": <N>,
@@ -697,6 +1001,8 @@ The reason enum:
 - Section E stops: `plateau`, `diminishing-returns`, `budget-exhausted`,
   `cost-ceiling`, `consecutive-failures`, `metric-floor-breach`,
   `user-interrupt`, `reviewer-pause`.
+- Runtime-only: `time-budget` (the `budget.minutes` wall clock elapsed) and
+  `tamper` (an immutable path or the eval command changed since `ar_start`).
 - Section G safety-rail halts: `scope-violation` (G.1), `error-limit` (G.3 —
   three consecutive crashes), `timeout-limit` (G.4 — three consecutive
   timeouts which itself triggers G.3's error-limit path — record
@@ -705,6 +1011,11 @@ The reason enum:
 ---
 
 ## Section F — results.json Schema Extensions
+
+With the runtime, `results.json` is a derived view: the source of truth is the
+research ref (`git log --format=%(trailers) refs/shards/research/<project>/<run>`)
+and `ar_status`. Copy the values `ar_iterate` / `ar_status` return; never
+compute metrics or pointers yourself.
 
 The AR schema extends the `[EX]` results.json schema. All existing fields
 (`projectName`, `agent`, `outcomeMetric`, `baseline`, `experiments[]`,
@@ -726,11 +1037,14 @@ The AR schema extends the `[EX]` results.json schema. All existing fields
     "plateauWindow": <N>,
     "diminishingReturnsThreshold": <number>,
     "epsilon": <number>,
+    "wallClockMinutes": <N or null>,
     "costCeiling": {
       "tokens": <N or null>,
       "dollars": <number or null>
     },
     "fullEvalCadence": <N>,
+    "fixedComputeBudgetSeconds": <N or null>,
+    "holdout": <bool>,
     "microGateEveryK": <N or null>,
     "microGateAutoCloseSeconds": <N or null>
   },
@@ -744,7 +1058,10 @@ The AR schema extends the `[EX]` results.json schema. All existing fields
     "activationFloorReached": <bool>,
     "finalIteration": <N or null>
   },
+  "lastKeptCommit": "<sha or null>",
   "lastGreenCommit": "<sha or null>",
+  "comparisonReference": <number>,
+  "preLoopDirty": ["<path>", "..."],
   "costAccounting": {
     "tokensIn": <N>,
     "tokensOut": <N>,
@@ -753,6 +1070,9 @@ The AR schema extends the `[EX]` results.json schema. All existing fields
   }
 }
 ```
+
+`costCeiling` and `costAccounting` are advisory estimates (§G.5); the runtime
+enforces `iterationBudget`, `wallClockMinutes` and the per-eval timeout.
 
 ### F.2 Per-experiment additive fields
 
@@ -766,8 +1086,10 @@ Each entry in `experiments[]` gains:
   "retroInvalidationReason": "<string or null>",
   "hypothesisSource": "adaptive" | "steering" | "reviewer-suggested",
   "evalType": "full" | "proxy",
+  "unwound": <bool, a later full eval did not confirm this proxy-kept iteration (§C.6)>,
   "reviewerVerdict": "CONTINUE" | "REDIRECT" | "PAUSE" | "RETRO_REVERT" | null,
-  "nextSteps": "<string, populated for kept YELLOWs>"
+  "nextSteps": "<string, populated for kept YELLOWs>",
+  "bestSoFar": <number>
 }
 ```
 
@@ -780,7 +1102,9 @@ Populated only in branches spawned by the Section H fan-out protocol:
   "branchSlug": "<slug>",
   "approachConstraint": "<one-line description>",
   "parentProjectDir": "<path>",
-  "gitStrategy": "branch-dir" | "worktree" | "no-vcs"
+  "gitStrategy": "worktree" | "no-vcs",
+  "runId": "<run-id>",
+  "ref": "refs/shards/research/<project>/<run-id>/<slug>"
 }
 ```
 
@@ -822,29 +1146,26 @@ Covered in E.6. Full-eval-only trigger; proxy breaches force a full re-eval.
 
 3 consecutive iteration crashes (uncaught exception during implementation or
 evaluation) → stop. The codebase may be broken. Record
-`convergence.reason = "error-limit"`. Revert to `lastGreenCommit`.
+`convergence.reason = "error-limit"`. Revert per C.3 to `lastKeptCommit`.
 
 ### G.4 Time budget
 
 Per-iteration timeout. If exceeded: abandon the iteration, revert per C.3,
-record `"timeout"` in the iteration file, and do NOT increment the iteration
-counter for retry — count it as a normal iteration that happened to fail. If
-3 consecutive timeouts occur, trigger G.3 (error limit).
+and record `"timeout"` in the iteration file. A timed-out iteration counts
+against the iteration budget: it keeps its iteration number, the counter
+advances as for any other iteration, and the hypothesis is not retried under
+the same number. If 3 consecutive timeouts occur, trigger G.3 (error limit).
 
-### G.5 Cost ceiling
+### G.5 Budgets the runtime enforces (cost ceiling is advisory)
 
-Hard stop at 100% of the ceiling from Section A.3. **Soft warnings** at 50%
-and 80% printed inline:
-
-```
-[AR] Cost warning: 50% of ceiling reached (<metric>: <spent> / <ceiling>).
-     Continuing. You can edit research_brief.md to adjust the ceiling.
-```
-
-Reviewer consults and proxy evaluations **both count against the ceiling**.
-
-Required for `overnight` preset; optional for `interactive` (warn but do not
-force if user chose to omit).
+The enforced budgets are the iteration budget, the wall-clock `budget.minutes`
+(`time-budget`) and the per-eval `timeout_s`; `ar_iterate` checks all three.
+A fixed compute budget (§G.10) is a training budget the eval honours, with
+the kill timeout derived from it.
+The agent cannot observe its own token or dollar usage, so a cost ceiling in
+the brief is an advisory planning number: print a soft warning if your estimate
+passes 50% or 80% of it, but never treat it as a hard stop. Size the
+wall-clock budget to the money you are willing to spend instead.
 
 ### G.6 No destructive operations
 
@@ -856,7 +1177,9 @@ force if user chose to omit).
 - Remove git tags or refs.
 
 File-level `git checkout <sha> -- <path>` is the only allowed reverting operation.
-It restores file contents only. It never switches branches.
+It restores file contents only. It never switches branches. The one deletion C.3
+allows is a file inside the mutable scope that the loop itself created after the
+revert target (not in `preLoopDirty`), removed by its explicit path.
 
 ### G.7 Git safety
 
@@ -870,20 +1193,90 @@ It restores file contents only. It never switches branches.
 
 ### G.8 Interrupt handling
 
+With the runtime, call `ar_status` (with `resume=true` in a new session): the
+research ref is the journal, so nothing needs reconciling by hand. The manual
+procedure follows.
+
 If the agent detects it was interrupted mid-iteration (on resume, finds a
 commit without a matching `results.json` entry, or vice versa):
 1. Record the partial state as a dropped iteration in the research log.
-2. Resume from the last clean `lastGreenCommit`.
+2. Resume from the last clean `lastKeptCommit` (revert per C.3 if the mutable
+   scope differs from it).
 3. Do not auto-clean any orphan files. Present the situation to the user
    before continuing.
 
+### G.9 Running overnight
+
+An unattended run needs something to keep the host working after each turn
+and a way to survive context loss. Run the host headless in a shell loop that
+starts a fresh turn until `shards research status --json` reports `done`
+(converged or ended); each turn begins with `ar_status(resume=true)`, which
+rebuilds the run from the research ref and reopens the lease. A host-side
+scheduled wakeup or loop command is the fallback heartbeat. The Shards runtime
+docs (`research.md`, "Running overnight") give the exact commands.
+
 ---
 
-## Section H — Fan-Out Composition with DIVERGE
+### G.10 Fixed compute budget (comparable iterations)
 
-This section defines how AR composes with the DIVERGE protocol to support
-parallel exploration of multiple approach families. Solo AR remains the default
-and is the depth primitive. Fan-out is the breadth primitive.
+When iterations train a model, a change that trains longer can look better
+for that reason alone. A fixed compute budget makes every iteration spend the
+same compute: set `eval.fixed_budget_s` (alias `compute_budget_s`) at
+`ar_start`. The runtime passes it to every eval as the environment variable
+`SHARDS_AR_COMPUTE_BUDGET_S` and, unless `timeout_s` is given, sets the kill
+timeout to `fixed_budget_s + timeout_grace_s` (default 60 s). The value is
+recorded in the baseline's `AR-Config`.
+
+The runtime only passes the budget. Iterations are comparable only if the
+training script reads `SHARDS_AR_COMPUTE_BUDGET_S` and stops when it is spent
+(wall clock or an equivalent step count), and the eval harness that does so
+is immutable. A change that ignores the budget is killed at the timeout and
+recorded as a timeout RED. A proxy or holdout command can set its own
+`fixed_budget_s`; they do not inherit the full eval's.
+
+### G.11 Sealed holdout
+
+Over many iterations the loop overfits the eval it is steered by. A sealed
+holdout is a second split the loop never sees. At `ar_start`, pass
+`holdout: {command, metric_regex | json_path}` (same metric name and
+direction as the eval) and `holdout_paths` (the split's files). The runtime:
+
+- pins the holdout paths and command and adds the paths to the immutable list
+  and the AR lease, so an edit is a `tamper` (RED, revert, halt)
+- scores the pre-loop state once at `ar_start` and seals the value under
+  `.shards/state/research-sealed/`; it is not returned, logged in
+  `experiments/` or written to the research ref
+- never runs the holdout in `ar_iterate`; `ar_status` shows only that a
+  holdout is sealed
+- scores the kept state once in `ar_end` and returns
+  `holdout: {baseline, final, delta}`, with an `AR-Holdout` trailer on the stop
+  commit (`skipped` with `ar_end(skip_holdout=true)`, `tampered (...)` if the
+  holdout changed, in which case it is not run)
+
+**Never read, run or summarise the holdout data or command output yourself,**
+and do not let a worker or reviewer do it. The hash pin catches edits, not
+reads; the seal holds only as long as you respect it. Report the holdout delta
+at Phase 3 next to the eval delta: a gain on the eval with no gain on the
+holdout means the loop overfit the eval.
+
+## Section H — Fan-Out: AR Branch Leads and Workers
+
+This section defines how AR explores several approach families in parallel.
+Solo AR remains the default and is the depth primitive. Fan-out is the breadth
+primitive. Fan-out runs on the same lead → worker model as Syn's PM mode:
+
+```
+Initiator (Syn, or the specialist that ran AR Phase 0-1) ── user gates only here
+ └─ AR branch LEAD, one per approach family (depth 1, lead contract: no gates,
+    no user, consults allowed)
+     └─ <specialist>-worker, one per iteration task card (depth 2, worker contract)
+          card.owned_paths     = the branch's mutable scope inside its worktree
+          card.acceptance      = the pinned eval command, run from the worktree
+```
+
+Each branch runs in its own git worktree with its own research ref, so every
+branch has real git history and edits the real mutable paths, and the runtime
+(not a subagent) measures every iteration.
 
 ### H.1 When to propose fan-out
 
@@ -898,10 +1291,14 @@ Fan-out can be initiated by either:
   specialist types.
 
 Fan-out preconditions (inherited from DIVERGE):
-- 2-3 mutually exclusive approaches that are genuinely viable.
+- 2-3 mutually exclusive approaches that are genuinely viable (at most 4
+  branches; the runtime refuses a fifth).
 - No single approach is clearly superior.
 - The approaches are fundamentally different (not hyperparameter variations —
   that is what the AR loop itself already does).
+
+Fan-out needs the AR runtime tools and a git repository. Without them, use the
+`no-vcs` fallback (H.5).
 
 ### H.2 DIVERGE proposal at AR Phase 1
 
@@ -914,6 +1311,8 @@ AR-specific adjustments:
   proposal gate. This avoids collision with planning-phase DIVERGE gate IDs.
 - **Branch slugs:** reflect approach families, not specialists. Example slugs
   for an ML Engineer fan-out: `ml-xgboost`, `ml-neural-net`, `ml-linear-baseline`.
+  A slug is also the `branch` name of its AR run (letters, digits, `.`, `_`,
+  `-`).
 - **Proposal context:** include the AR budget, primary metric, and per-branch
   budget split (each branch gets the full budget; the total AR budget is
   effectively multiplied by K branches — confirm with the user that cost
@@ -923,160 +1322,225 @@ The user confirms one of:
 - (a) Solo AR with the current brief (no fan-out).
 - (b) Fan-out with the proposed K approach families.
 
-### H.3 Branch spawning
+The Phase 1 gate (with `plan_approval: "<run-id>"` for an unattended run) is
+the plan approval for every branch: all branches share that run id. It must be
+confirmed before any lead starts (a pending gate blocks subagents).
 
-If fan-out confirmed, start K parallel branch subagents in a single message (not
-sequentially). Each branch subagent is:
+### H.3 Branch leads
 
-Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
+After the Phase 1 gate is confirmed, the initiator launches one lead per
+approach family, in parallel (one message), each a subagent of the specialist
+that owns the family:
 
-{{fanout ml-engineer slices=approach_a,approach_b}}
+{{lead ml-engineer task="AR branch lead for approach family <branch-slug> of AR run <run-id>"}}
 
-Per-slice task: AR fan-out branch: <branch-slug>
+(Shown for `ml-engineer`; use the specialist that owns each family. Different
+families may use different specialists.)
 
-Brief for each consultant or worker (fill the angle-bracket fields):
+Brief for each lead (fill the angle-bracket fields):
 
 ```
-You are in BRANCH + AR MODE — an isolated Time-Travel branch running the
-autonomous research protocol.
+You are an AR BRANCH LEAD. Follow protocols/lead_contract.md and
+protocols/autonomous_research.md Section H.3 (lead loop). You write no code:
+every iteration is a task card for a <specialist> worker.
 
-**Branch slug:** <branch-slug>
-**Branch directory:** <project_dir>/.shards/branches/<branch-slug>/
-**Approach constraint:** <one-paragraph description of the approach family
-this branch must stay within — e.g., "tree-based methods only; no neural
-networks; no linear models">
-**Git strategy:** <branch-dir | worktree | no-vcs — see Section H.5>
+**Run id:** <run-id>          **Branch:** <branch-slug>
+**Approach constraint:** <one paragraph: the family this branch must stay in,
+e.g. "tree-based methods only; no neural networks; no linear models">
+**Scope (task_* calls):** <project_dir>/experiments/branches/<branch-slug>
+**Iteration budget:** <N>   **Minutes:** <M or none>   **Reviewer cadence:** <K>
+**ar_start arguments:** project, brief_path, mutable, immutable, eval
+(command, metric_regex|json_path, direction, timeout_s, repeats), budget,
+epsilon — copied verbatim from the research brief; add run_id=<run-id>,
+branch=<branch-slug>.
+**Steering:** global <project_dir>/experiments/research_brief.md; this branch
+<project_dir>/experiments/branches/<branch-slug>/research_brief.md (optional)
 
 ## Project Context (from completed planning phases)
+<completed project-specs.md phases, without the DIVERGE section or
+brainstorm transcripts>
 
-<Insert full text of completed project-specs.md phases — Phase 0 through any
-prior planning phase. Do NOT include the DIVERGE section or brainstorm
-transcripts.>
-
-## AR Configuration (inherited from parent's Phase 0)
-
-- **Primary metric:** <metric> (direction: <max | min>)
-- **Baseline:** <value>
-- **Preset:** <interactive | overnight | custom>
-- **Iteration budget (this branch):** <N>
-- **Mutable scope:** <list>
-- **Immutable scope:** <list>
-- **Cost ceiling (this branch):** <value or null>
-- **Reviewer cadence:** <K>
-- **Steering documents:**
-  - Global: `<project_dir>/experiments/research_brief.md`
-  - This branch (optional): `<branch_dir>/experiments/research_brief.md`
-
-## Your Task
-
-Execute Sections A-G of the shared AR protocol autonomously inside this branch
-directory. **Do not call `gate_request`** — sub-agents consulted must
-not request gates. Phase 0 is already set up by this spawn prompt.
-Phase 1 writes the branch-local research_brief.md without a gate. Phase 2 runs
-gate-free as designed. Phase 3 is truncated to writing `branch-report.md` only
-(no user-facing summary gate).
-
-Produce:
-1. Branch-local AR artifacts: `experiments/research_brief.md`,
-   `experiments/results.json` (with `branchContext` populated), per-iteration
-   files.
-2. A final `<branch_dir>/branch-report.md` summarizing the branch's best state
-   per the DIVERGE branch-report template (`protocols/diverge.md` Section E).
-3. Git commits only if the chosen git strategy (H.5) allows them (`worktree`).
-4. Your return value: the fan-out verdict JSON per `protocols/worker_contract.md`
-   ("Fan-out workers"); `branch-report.md` is still written.
+Return the lead report (H.7). Never call gate_request; never talk to the user.
 ```
 
-### H.4 Per-branch file layout
+**Lead loop.** The lead runs Section B through the runtime path, with the
+iteration's implementation delegated:
+
+1. `ar_start({... , run_id, branch})`. The runtime creates the worktree
+   `.shards/worktrees/<run-id>/<branch-slug>` (detached at the pre-loop HEAD;
+   no new branch, the user's checkout is never switched), runs the baseline
+   there and opens (or joins) the run's AR lease, scoped to this worktree.
+   It returns `worktree`, `work_root` (the worktree's equivalent of the
+   project root, usually the worktree itself) and `ref`
+   (`refs/shards/research/<project>/<run-id>/<branch-slug>`).
+2. Per iteration N: do B.1 to B.4 (steering, windowed history, one
+   hypothesis inside the approach constraint, announce in the branch log).
+3. Register the iteration card: `tasks_set` with `scope` (the first card),
+   then `tasks_set` with `append: true` for each later card. The card:
+   - `id: iter-<N>`, `goal`: the hypothesis, `plan_ref`: the brief section
+   - `owned_paths`: the mutable scope inside the worktree
+     (`<work_root>/<mutable path>`, e.g.
+     `.shards/worktrees/<run-id>/<branch-slug>/src/model`)
+   - `acceptance: {command: <pinned eval command>, expected: "eval prints the
+     metric", cwd: <work_root>}`
+   - `ar: {run_id, branch, iteration: N, hypothesis}`
+   - `depends_on: [iter-<N-1>]` (iterations of a branch are sequential: the
+     eval measures the whole worktree)
+   - `worker: <specialist>`
+
+   When the eval is expensive, the brief may name a cheaper smoke command
+   (one fold, a data sample) for `acceptance.command`; `ar_iterate` always
+   runs the full pinned eval, so the record never depends on the smoke run.
+4. `task_dispatch` the card and hand it to one `<specialist>` worker
+   (`max_parallel` is 1 inside a branch). The worker implements the
+   hypothesis inside `owned_paths`, runs the acceptance command from `cwd`
+   and returns its task-result (optionally with `metric`). `task_report` it.
+5. `ar_iterate({hypothesis, source, run_id, branch})`. This is the lead's
+   independent check: the runtime re-runs the pinned eval in the worktree,
+   classifies, keeps or reverts and journals to the branch ref. The worker's
+   own metric is never the record.
+6. `task_verify({id, pass, expected, observed, ar_iteration: N, scope})`.
+   GREEN or kept YELLOW makes the card `done` (`kept`); RED or unkept YELLOW
+   makes it `done` (`reverted`). A reverted iteration is a normal outcome:
+   it is never `failed` and never uses a retry (AR's stop conditions bound the
+   loop). A worker that reports `failed` (it could not implement the
+   hypothesis) is retried with feedback as usual; if the card ends `blocked`,
+   call `ar_iterate` anyway (the metric decides what the worktree keeps) and
+   move on to a new hypothesis.
+7. B.8 records go under the branch dir
+   `<project_dir>/experiments/branches/<branch-slug>/`. B.10 reviewer
+   consults run from the lead (the lead contract allows consults; if the host
+   forbids a consult from a subagent, name the skipped consult in the
+   report). Reviewer `RETRO_REVERT`, `PAUSE` and floor breaches go to
+   `ar_defer({..., run_id, branch})`; nothing blocks.
+8. When `converged` is true or the budget is spent: `ar_end({reason, run_id,
+   branch})`. The runtime records the stop on the branch ref and removes the
+   worktree; the kept state stays on the ref as `lastKeptCommit`.
+
+**Leads write no code.** Implementation is always a worker's card, so every
+change to the mutable scope is lease-scoped, reported and independently
+measured. A PM-mode workstream lead that runs `[AR]` follows the same rule:
+its iterations are task cards and `ar_iterate` is its verification. A PM lead
+cannot launch branch leads (depth cap); it runs one AR loop, as a branch run
+(`branch: <workstream>`) so its worktree stays out of other workstreams' way.
+
+**Depth and concurrency.** Initiator → lead (depth 1) → worker (depth 2),
+never deeper. A lead never launches another lead; a worker never delegates.
+Concurrency is bounded by `max_parallel` per lead (1: one iteration in flight
+per branch) and the global cap on branch leads (at most 4 concurrent branch
+runs per run id, enforced by `ar_start`).
+
+### H.4 Per-branch layout
 
 ```
-<project_dir>/.shards/branches/<branch-slug>/
-  experiments/
-    research_brief.md       # per-branch steering (optional override of global)
-    results.json             # per-branch AR results with branchContext set
-    history_summary.md       # per-branch windowed history (if N > 10)
-    experiment_1_<name>.md
-    experiment_2_<name>.md
-    ...
-  branch-report.md           # final summary for arbiter
+.shards/worktrees/<run-id>/<branch-slug>/        # git worktree (runtime-owned, removed by ar_end)
+<project_dir>/experiments/branches/<branch-slug>/
+  iter_<N>.log                # written by the runtime (ar_start/ar_iterate)
+  research_brief.md           # optional branch-level steering
+  results.json                # derived view of the branch ref, branchContext set
+  experiment_<N>_<name>.md    # B.8 iteration records
+  tasks.yaml, TASKS.md        # the lead's iteration cards (scope)
+  project-specs.md            # the lead's decisions and Validation evidence
+refs/shards/research/<project>/<run-id>/<branch-slug>   # the branch journal
 ```
 
-The main project dir keeps:
-- The global `experiments/research_brief.md` (applies to all branches unless
-  overridden at the branch level).
-- The canonical `project-specs.md` with the DIVERGE section written per
-  `protocols/diverge.md` Section D.
+The main project dir keeps the global `experiments/research_brief.md` (applies
+to all branches unless overridden) and the canonical `project-specs.md` with
+the DIVERGE section written per `protocols/diverge.md` Section D.
 
-### H.5 Concurrent git strategy
+`.shards/worktrees/` is git-ignored (the runtime adds it to the repo-local
+`.git/info/exclude` when no ignore rule covers it) and lies outside every
+tracked output dir.
 
-Shards never switches branches (ADR 0005), and parallel branches share one
-working tree, so concurrent checkouts or index writes would clobber each other.
-Branches isolate by directory. Each branch MUST pick one strategy at spawn time
-and record it in `results.json.branchContext.gitStrategy`:
+### H.5 Branch isolation
 
-**`branch-dir` (default for AR fan-out):**
-- The branch writes only inside `<project_dir>/.shards/branches/<branch-slug>/`
-  (or its leased slice paths). No `git checkout`, no commits, no tags.
-- Section B checkpoint calls are skipped. Lineage relies on per-iteration
-  markdown + `results.json`. Revert (C.3) is by restoring from the branch's own
-  saved copy of the last green files, since no checkpoint commit exists.
-- At promotion (Section H.11) the winner's files are copied into the main
-  project directory. The runtime commits them at the next confirmed gate under
-  `git.commit` and `git.denylist`.
+Shards never switches the user's branch (ADR 0005), so parallel branches
+cannot share one working tree. Each branch gets a **git worktree** (the
+default and the only strategy with the runtime):
 
-**`worktree` (opt-in only):**
-- Used only if the user explicitly asks at the DIVERGE proposal gate. Each branch
-  gets its own `git worktree` under `<branch_dir>/worktree/` and commits there
-  (B.9 policy applies). The main working tree is never switched.
-- Tag namespace: `research/<project>/<branch-slug>/<N>-<name>`.
-- Losing worktrees are preserved; removal requires explicit user confirmation.
+- `ar_start({branch})` creates `.shards/worktrees/<run-id>/<branch-slug>`
+  with `git worktree add --detach` at the pre-loop HEAD. No branch is created
+  and nothing moves `HEAD` of the main checkout.
+- The eval runs with the worktree as its working directory. Immutable paths
+  that the worktree lacks (untracked or ignored data) are symlinked to the
+  main tree's copy and pinned there; a change to them is a tamper. List every
+  untracked input the eval reads as immutable. The runtime refuses to start
+  when the mutable or immutable scope has uncommitted changes in the main
+  tree (the worktree starts from HEAD and would not see them).
+- The AR lease holds each branch's mutable and immutable entries prefixed
+  with its worktree path. A write inside `.shards/worktrees/` must match one
+  branch's mutable scope; the `.shards/` state allowance does not cover
+  worktrees. The main tree's mutable paths are not writable while branch
+  runs are active. `git worktree add/remove/move/prune` is runtime-only.
+- Each branch commits only to its research ref
+  `refs/shards/research/<project>/<run-id>/<branch-slug>` (via plumbing; the
+  worktree's index and HEAD stay at the pre-loop commit).
+- `ar_end` removes the worktree (`keep_worktree: true` keeps it for
+  inspection; a kept one is removed by hand with `git worktree remove`).
+- `ar_status({run_id, branch, resume: true})` recreates a lost worktree at
+  the branch's kept state.
 
-**`no-vcs`:**
-- Same layout as `branch-dir`; use when git is unavailable or `git.commit` is
-  `false`. No checkpoint calls at all.
+**`no-vcs` (fallback only):** for a project without git, where the AR tools
+cannot run. Each branch lead uses `<project_dir>/.shards/branches/<branch-slug>/`
+as its working copy, follows the manual path of Sections B, C and E, reverts
+by restoring its own saved copy of the last kept files, and records
+`gitStrategy: "no-vcs"` in `results.json.branchContext`. Promotion copies the
+winner's files (H.11).
 
 Solo AR uses the main working tree directly.
 
 ### H.6 Steering in fan-out
 
-Every iteration, each branch re-reads:
-1. The **global** `research_brief.md` at the project root (applies to all
-   branches).
-2. Its **branch-level** steering notes at
-   `<branch_dir>/experiments/research_brief.md` if present.
+Every iteration, each lead re-reads:
+1. The **global** `research_brief.md` (applies to all branches).
+2. Its **branch-level** notes at
+   `<project_dir>/experiments/branches/<branch-slug>/research_brief.md` if
+   present.
 
-The user can edit either during the run:
-- Edit the global brief to steer all branches simultaneously.
-- Edit a branch-level brief to redirect one branch without affecting others.
+The user can edit either during the run: the global brief steers all branches,
+a branch-level brief redirects one branch. A `STOP` in the global brief stops
+every lead.
 
-### H.7 Branch convergence
+### H.7 Branch convergence and the lead report
 
-Each branch runs Section E convergence checks independently inside its own AR
-loop. A branch terminates when it converges, exhausts its budget, or breaches
-a safety rail. **Branches do not wait for each other.** The parent specialist
-(or Syn) waits for all branch subagents to return before arbitration.
+Each branch runs Section E convergence inside its own run (the runtime
+evaluates the stop conditions per branch). A branch terminates when it
+converges, exhausts its budget, or breaches a safety rail. **Branches do not
+wait for each other.** The initiator waits for every lead to return.
+
+Each lead returns the lead-contract report plus:
+- `branch`, `ref`, `lastKeptCommit`, `baseline`, `bestSoFar`, `iterations`,
+  `stop_reason` (from `ar_end`)
+- pending deferred decisions (`ar_defer`)
+- skipped consults, fallbacks, and one paragraph of observations
+
+The report is a pointer; the numbers come from the ref.
 
 ### H.8 Branch gate policy
 
-Branches are spawned sub-agents. Per `syn/arbiter.md` and the harness
-sub-agent rule, sub-agents **must not call `gate_request`**. All
-human-facing gates live in the parent's Phase 3 (arbitration + consolidated
-summary).
+Leads and workers are subagents: they never call `gate_request` (lead
+contract, worker contract). All human-facing gates stay with the initiator:
 
-- Phase 0: inherited from the parent's spawn prompt. No gate.
-- Phase 1: write the branch-local research_brief.md. No gate.
-- Phase 2: gate-free loop as designed.
-- Phase 3: truncated to writing `branch-report.md`. No gate.
+- Phase 0 and Phase 1 (brief, DIVERGE choice, plan approval): initiator.
+- Phase 2: gate-free branch loops (leads and workers).
+- Phase 3 (arbitration, winner selection, adoption): initiator; the adoption
+  gate is `requires_human`.
 
 ### H.9 Arbitration
 
-After all branches complete, the initiating specialist (or Syn) invokes Syn
-Arbiter Mode per `protocols/diverge.md` Section F, passing the list of
-`branch-report.md` paths. The arbiter produces
-`<project_dir>/.shards/branches/leaderboard.md`.
+Arbitration compares branch refs, not prose. After all leads return, the
+initiator calls `ar_status({run_id})`: for a branched run it returns every
+branch (rebuilt from its ref when needed) with a leaderboard ranked by
+`bestSoFar`, plus each branch's decisions, stop reason and deferred items. The
+journal of each branch is
+`git log --format='%h %s%n%(trailers:only)' <pre-loop HEAD>..refs/shards/research/<project>/<run-id>/<branch-slug>`.
 
-The parent specialist presents the leaderboard to the user, who selects the
-winner.
+The initiator then invokes Syn Arbiter Mode (`protocols/diverge.md` Section F)
+with the run id and the branch refs. The arbiter reads `ar_status` and the
+`AR-*` trailers, weighs gain against noise (`epsilon_abs`), simplicity (kept
+LOC) and robustness, and writes
+`<project_dir>/experiments/branches/leaderboard.md`. The initiator presents the
+leaderboard to the user, who selects the winner at the human gate.
 
 ### H.10 Write-backs in fan-out
 
@@ -1095,17 +1559,26 @@ branches exploring similar territory.
 
 ### H.11 Promotion
 
-Follow `protocols/diverge.md` Section G with these extensions for AR git
-strategies:
+Promotion happens only at the human Phase 3 gate, after every branch's
+`ar_end` (the AR lease is closed by then):
 
-- **`branch-dir` / `no-vcs`:** no merge. Copy the winner's deliverables and
-  branch-dir artifacts (brief, results.json, iteration files,
-  history_summary.md) to `<project_dir>/experiments/` (that is,
-  `<output_dir>/experiments/`). The runtime commits them at the convergence
-  gate when `git.commit` is enabled, excluding denylisted files.
-- **`worktree`:** copy from the winner's worktree the same way. No ref merge.
+1. The user selects the winner (diverge Section F gate).
+2. Apply the winner's kept diff to the user's working tree, using the
+   `promote` command that `ar_end` returned for that branch:
+   `git diff --binary <pre-loop HEAD> <lastKeptCommit> -- <mutable paths> | git apply`.
+   This carries additions, edits and deletions in the mutable scope only. If
+   the main tree changed since the run started and the patch does not apply,
+   stop and show the user the conflict; never force it.
+3. Copy the winner's branch records (`results.json`, iteration records) into
+   `<project_dir>/experiments/` as the run's record.
+4. The Phase 3 adoption gate (`requires_human`, with the mutable paths as
+   `targets`) commits the promoted change under `git.commit` and
+   `git.denylist`. No ref is merged into the user's branch and no branch is
+   switched.
 
-Losing branches are preserved under `<project_dir>/.shards/branches/` for reference.
+Losing branches keep their refs (and their records under
+`experiments/branches/`) for reference. `no-vcs` branches promote by copying
+the winner's files from its branch directory.
 
 ---
 
@@ -1138,11 +1611,12 @@ Factual synthesis — no opinions in this file:
 - **Baseline:** <value> (from <source>)
 - **Final:** <value>
 - **Net delta:** <+/->
+- **Sealed holdout:** <baseline> → <final> (delta <+/->) | not configured | skipped | tampered
 - **Target reached:** Yes | No | N/A (no target set)
 
 ## Convergence
 - **Detected:** Yes | No
-- **Reason:** <plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | error-limit | timeout-limit>
+- **Reason:** <plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | time-budget | tamper | error-limit | timeout-limit>
 - **Iterations completed:** N of <budget>
 - **Activation floor reached:** Yes | No
 
@@ -1157,13 +1631,18 @@ Factual synthesis — no opinions in this file:
 - **Full evaluations:** <N>
 - **Proxy evaluations:** <N>
 - **Proxy→full re-runs triggered:** <N>
+- **Unwinds (proxy-kept iterations unwound by a full eval):** <N> (<iterations>)
 
-## Cost Accounting
+## Cost Accounting (advisory estimates)
+- **Wall-clock used:** <minutes of budget>
 - **Tokens in:** <N>
 - **Tokens out:** <N>
 - **Dollars spent:** <value>
 - **Reviewer consults spawned:** <N>
 - **Cost ceiling:** <value or "none set">
+
+## Deferred Decisions
+<one line per `ar_defer` item: id, kind, iteration, detail; "none" if empty>
 
 ## Iteration Timeline
 | # | Hypothesis | Source | Eval | Color | Kept | Delta | Reviewer |
@@ -1251,7 +1730,10 @@ parent proposes them after promotion (see Section H.10).
 
 ### I.6 Present to user (GATE)
 
-Read both the summary and recommendations back to the user.
+Read both the summary and recommendations back to the user. If `ar_end` or
+`ar_status` lists deferred decisions (§B.14), present each one (kind, detail,
+iteration, and for a retro-revert which iterations were rolled back) and ask
+the user to confirm or reject it as part of this gate.
 
 **The Phase 3 gate is owned by the per-agent `research.md` file**, not by this
 shared protocol. Each agent requests its own Phase 3 gate with its

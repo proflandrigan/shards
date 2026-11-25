@@ -91,12 +91,12 @@ Example: `{{template project-specs}}`
 Args: `name` (positional; a file in `core/templates/` with or without extension; extensionless resolves to `.md`). Validation: file exists.
 Renders as a reference to `content/templates/<file>` to copy and fill in.
 
-### 3.8 `{{gate kind=<kind> [phase=N] [track=quick|deep] [validates=<agent>] [name=<s>] [agent=<agent>] [id=<id>]}}`
+### 3.8 `{{gate kind=<kind> [phase=N] [track=quick|deep] [validates=<agent>] [name=<s>] [agent=<agent>] [id=<id>] [requires_human=true]}}`
 
 Example: `{{gate kind=phase validates=data-modeller}}` inside `phases_deep/phase-3.md` of `data-modeller`.
-Args: `kind` required, enum `phase|final|execute|handoff|checkpoint|confirm`. `phase` and `track` default to the enclosing file's (required outside a phase file; mismatch with the file is an error). `agent` defaults to the enclosing agent. `validates=<agent>` must exist; not allowed on `checkpoint|confirm` (E11). `name` is required for `checkpoint|confirm` (they repeat within a phase), optional otherwise; `[a-z0-9-]+`. `id` overrides the derived id (rarely needed).
+Args: `kind` required, enum `phase|final|execute|handoff|checkpoint|confirm`. `phase` and `track` default to the enclosing file's (required outside a phase file; mismatch with the file is an error). `agent` defaults to the enclosing agent. `validates=<agent>` must exist; not allowed on `checkpoint|confirm` (E11). `name` is required for `checkpoint|confirm` (they repeat within a phase), optional otherwise; `[a-z0-9-]+`. `id` overrides the derived id (rarely needed). `requires_human=true` (the only accepted value) passes `requires_human: true` to `gate_request`: the gate always needs a human confirmation, under every gate policy (`plan` never turns it into a notice, `phase` never auto-records it); the rendered text says so. Used for the AR Phase 3 adoption gate.
 Gate ids (explicit `id=` too) must match `<agent>[-<mode>]-phase-<N>[.<name>]` (enforced by the compiler); the default id is `<agent>-phase-<N>`, or `<agent>-<track>-phase-<N>` for dual-track agents, with `.<name>` appended when `name` is given (e.g. `ml-engineer-phase-3.after-features`). Advancing kinds: `phase final execute handoff`; non-advancing: `checkpoint confirm`.
-Compiles to runtime `gate_request(id, kind, phase, summary, record_ref, validates?)`. It is NOT a text fence. Rendered text tells the agent to: write the decisions to the record first, call the tool with a short `summary` and `record_ref` (the section written), stop and wait for the response, treat `already confirmed` as "continue", never approve or confirm its own gate, then follow the phase pointer returned. No `::GATE::` text is produced.
+Compiles to runtime `gate_request(id, kind, phase, summary, record_ref, validates?, requires_human?)`. It is NOT a text fence. Rendered text tells the agent to: write the decisions to the record first, call the tool with a short `summary` and `record_ref` (the section written), stop and wait for the response, treat `already confirmed` as "continue", never approve or confirm its own gate, then follow the phase pointer returned. No `::GATE::` text is produced.
 
 ### 3.9 `{{auto_verify start tool_budget=<int> ttl=<seconds>}}` / `{{auto_verify end}}`
 
@@ -161,7 +161,7 @@ Tool-name prefix by target (`CLAUDE_TOOL_PREFIX` / `CODEX_TOOL_PREFIX` in `build
 | return | `mcp__plugin_shards_shards__return(to?)` | `shards.return(to?)` | `return(to?)` |
 | phase | `mcp__plugin_shards_shards__load_phase(agent, n, track?)` + path | `shards.load_phase(...)` | `load_phase(...)` |
 | protocol / template | read `${CLAUDE_PLUGIN_ROOT}/content/protocols/<name>.md` (templates likewise) | read `content/protocols/<name>.md` | read `content/protocols/<name>.md` |
-| gate | `mcp__plugin_shards_shards__gate_request(id, kind, phase, summary, record_ref, validates?)` | `shards.gate_request(...)` | `gate_request(...)` |
+| gate | `mcp__plugin_shards_shards__gate_request(id, kind, phase, summary, record_ref, validates?, requires_human?)` | `shards.gate_request(...)` | `gate_request(...)` |
 | auto_verify | `mcp__plugin_shards_shards__auto_verify_start/_end` | `shards.auto_verify_start/_end` | `auto_verify_start/_end` |
 | artifact.emit | `mcp__plugin_shards_shards__artifact_emit(type, path, meta)` | `shards.artifact_emit(...)` | `artifact_emit(...)` |
 | record / tasks / knowledge | binding job instruction (identical text on every target) | same | same |

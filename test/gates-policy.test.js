@@ -108,6 +108,95 @@ describe('plan', () => {
     for (const id of ['b1', 'b2', 'b3']) expect(data(await call(mk({ id, kind: 'execute' }))).result).toBe('notice');
     expect(data(await call(mk({ id: 'b4', kind: 'execute' }))).status).toBe('pending');
   });
+  it('a gate requested with plan_approval (e.g. an agent Phase 1 gate) is the plan approval', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 10 } };
+    const p1 = mk({ id: 'ml-engineer-research-phase-1', kind: 'execute', plan_approval: 'r1' });
+    expect(data(await call(p1)).status).toBe('pending');
+    expect(gate('ml-engineer-research-phase-1').plan_run).toBe('r1');
+    await gates.confirmGate(sess(), 'ml-engineer-research-phase-1', { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    const d = data(await call(mk({ id: 'i1', kind: 'confirm', evidence: PASS })));
+    expect(d).toMatchObject({ result: 'notice', tier: 'plan-notice' });
+    expect(gate('i1').proof.plan_gate).toBe('ml-engineer-research-phase-1:r1');
+  });
+  it('a second run needs a fresh plan approval and gets its own notice budget', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 2 } };
+    const id = 'ml-engineer-research-phase-1';
+    await call(mk({ id, kind: 'execute', plan_approval: 'r1' }));
+    await gates.confirmGate(sess(), id, { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    for (const g of ['a1', 'a2']) expect(data(await call(mk({ id: g, kind: 'checkpoint' }))).result).toBe('notice');
+    // Run 2 re-requests the same Phase 1 gate for a new run: it is a fresh pending gate, not "already confirmed".
+    const r2 = data(await call(mk({ id, kind: 'execute', plan_approval: 'r2' })));
+    expect(r2.status).toBe('pending');
+    expect(gate(id)).toMatchObject({ status: 'pending', plan_run: 'r2' });
+    expect(gate(id).previous.at(-1)).toMatchObject({ status: 'confirmed', plan_run: 'r1' });
+    // The same run id again does not reopen it once confirmed.
+    await gates.confirmGate(sess(), id, { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    expect(data(await call(mk({ id, kind: 'execute', plan_approval: 'r2' }))).result).toBe('already_confirmed');
+    // Run 2 has its own budget (run 1 spent both notices).
+    for (const g of ['b1', 'b2']) expect(data(await call(mk({ id: g, kind: 'checkpoint' }))).result).toBe('notice');
+    expect(data(await call(mk({ id: 'b3', kind: 'checkpoint' }))).status).toBe('pending');
+  });
+  it('a pending plan approval for a new run suspends the old one', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 10 } };
+    await call(mk({ id: 'plan-approval.r1', kind: 'phase' }));
+    await gates.confirmGate(sess(), 'plan-approval.r1', { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    expect(data(await call(mk({ id: 'c1', kind: 'checkpoint' }))).result).toBe('notice');
+    expect(data(await call(mk({ id: 'plan-approval.r2', kind: 'phase' }))).status).toBe('pending');
+    expect(policy.planStatus(sess(), cfg.budget, undefined, gate('c1')).active).toBe(false);
+    await gates.confirmGate(sess(), 'plan-approval.r2', { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    expect(data(await call(mk({ id: 'c2', kind: 'checkpoint' }))).result).toBe('notice');
+    expect(gate('c2').proof.plan_gate).toBe('plan-approval.r2');
+  });
+  it('a plan approval only covers its own project', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 10 } };
+    await approvePlan();
+    await pushFrame(state, { agent: 'ml-engineer', project: 'q' });
+    expect(data(await call(mk({ id: 'q1', kind: 'checkpoint' }))).status).toBe('pending');
+  });
+  it('requires_human is never a notice or auto-evidence', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 10 } };
+    await approvePlan();
+    const d = data(await call(mk({ id: 'adopt', kind: 'final', requires_human: true, evidence: PASS })));
+    expect(d.status).toBe('pending');
+    expect(gate('adopt')).toMatchObject({ status: 'pending', requires_human: true });
+    expect(state.read('policy').notices || 0).toBe(0);
+    // A re-request without the flag keeps it.
+    expect(data(await call(mk({ id: 'adopt', kind: 'final' }))).status).toBe('pending');
+    expect(gate('adopt').requires_human).toBe(true);
+    await gates.confirmGate(sess(), 'adopt', { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    cfg = { policy: 'phase' };
+    expect(data(await call(mk({ id: 'ck', kind: 'checkpoint', requires_human: true, evidence: PASS }))).status).toBe('pending');
+  });
+  it('derives the plan budget from the AR run the plan approves', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 2, max_minutes: 10 } };
+    const id = 'ml-engineer-research-phase-1';
+    await call(mk({ id, kind: 'execute', plan_approval: 'r1' }));
+    await gates.confirmGate(sess(), id, { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    const started = new Date(Date.now() + 5 * 60000).toISOString();
+    await state.update('research', (cur) => { cur.runs = { r1: { run_id: 'r1', budget: { iterations: 4, minutes: 480 }, started_at: started, eval: { timeout_s: 600 } } }; return cur; });
+    const b = policy.effectiveBudget(sess(), gate(id), cfg.budget);
+    expect(b.max_gates).toBe(6);
+    expect(b.max_minutes).toBeGreaterThanOrEqual(480 + 5 + 30 + 10);
+    expect(b.max_minutes).toBeLessThan(480 + 5 + 30 + 10 + 2);
+    expect(policy.effectiveBudget(sess(), gate(id), { max_gates: 50 }).max_gates).toBe(50); // never lowered
+    expect(policy.effectiveBudget(sess(), gate(id), {}).max_minutes).toBeUndefined(); // no limit stays no limit
+    for (let i = 0; i < 6; i++) expect(data(await call(mk({ id: `n${i}`, kind: 'checkpoint' }))).result).toBe('notice');
+    expect(data(await call(mk({ id: 'n6', kind: 'checkpoint' }))).status).toBe('pending');
+    // Another run id is not raised.
+    expect(policy.effectiveBudget(sess(), { id: 'plan-approval.r9' }, cfg.budget).max_gates).toBe(2);
+    expect(policy.planRunOf({ id: 'plan-approval.r1' })).toBe('r1');
+  });
+  it('an iterations-only AR budget still raises max_minutes; an ended AR run needs a human', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 2, max_minutes: 10 } };
+    const id = 'ml-engineer-research-phase-1';
+    await call(mk({ id, kind: 'execute', plan_approval: 'r1' }));
+    await gates.confirmGate(sess(), id, { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    await state.update('research', (cur) => { cur.runs = { r1: { run_id: 'r1', status: 'active', budget: { iterations: 30 }, started_at: new Date().toISOString(), eval: { timeout_s: 600 } } }; return cur; });
+    expect(policy.effectiveBudget(sess(), gate(id), cfg.budget).max_minutes).toBeGreaterThanOrEqual(300);
+    expect(data(await call(mk({ id: 'n0', kind: 'checkpoint' }))).result).toBe('notice');
+    await state.update('research', (cur) => { cur.runs.r1.status = 'ended'; return cur; });
+    expect(data(await call(mk({ id: 'adopt', kind: 'final' }))).status).toBe('pending');
+  });
   it('behaves like phase without a confirmed plan-approval', async () => {
     expect(data(await call(mk({ id: 'p1', kind: 'phase' }))).status).toBe('pending');
     await gates.confirmGate(sess(), 'p1', { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);

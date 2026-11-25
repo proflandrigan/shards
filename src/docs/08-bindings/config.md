@@ -33,7 +33,7 @@ How much human confirmation a gate needs. Default `phase`.
 |-------|---------|
 | `strict` | A human confirms every gate, including checkpoint and confirm gates. |
 | `phase` | Default. `phase`, `final`, `execute` and `handoff` gates need a human; `checkpoint` and `confirm` gates are recorded automatically when the agent passes `evidence: { status: "pass" }` to `gate_request`. |
-| `plan` | You approve a plan and budget once through the reserved gate `plan-approval`; later gates are recorded as notices until evidence fails or the budget runs out. Without a confirmed `plan-approval`, behaves like `phase`. |
+| `plan` | You approve a plan and budget once per run through a plan approval gate (the reserved `plan-approval`, or an agent's Phase 1 gate marked as the plan approval); later gates in that project are recorded as notices until evidence fails or the budget runs out. A new run needs a new approval. Without a confirmed plan approval, behaves like `phase`. |
 
 Plan budget:
 

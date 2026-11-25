@@ -282,4 +282,179 @@ function isPathAllowed(session, agentId, filePath, now = Date.now()) {
   return { allowed: false, lease_id: mine[0].id, reason: `path ${rel} is outside leased slices for ${agentId}` };
 }
 
-module.exports = { releaseWorker, bindWorker, findWorkerLease, touchWorker, findSliceOwning, openLease, heartbeat, closeLease, listActive, expireStale, isPathAllowed, pathsOverlap, normalizeRel, OWNERS, DEFAULT_TTL_MS };
+// ---------- Autonomous-research (AR) lease (issue #91, bug 1) ----------
+// A session-wide scope lease for an [AR] run (solo, or the branch runs of one run id; see openArLease). It holds no slices (so getLeasedPaths never excludes the
+// mutable code from gate commits and no worker can bind to it). While it is active, hooks/lib/enforce.js denies
+// writes from every caller of the session outside `mutable` (globs) + `allow` (directory prefixes; the AR
+// project dir is always included) + `.shards/` (not `.shards/worktrees/`), and denies writes inside `immutable` (eval harness, tests,
+// data) unconditionally. It also turns on the destructive-git guard. Stored in the same `leases` state as
+// {owner: 'ar', worker_type: 'ar', slices: [], ar: {run_id, project, mutable, immutable, allow}}.
+const AR_OWNER = 'ar';
+const AR_DEFAULT_TTL_MS = 6 * 3600 * 1000; // refreshed by the hook on activity (touchArLease); ar_end closes it
+
+const GLOB_CHARS = /[*?[]/;
+function arGlobRe(g) {
+  let re = '';
+  for (let i = 0; i < g.length; i++) {
+    const c = g[i];
+    if (c === '*') {
+      if (g[i + 1] === '*') { if (g[i + 2] === '/') { re += '(?:.*/)?'; i += 2; } else { re += '.*'; i += 1; } } else re += '[^/]*';
+    } else if (c === '?') re += '[^/]';
+    else re += c.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  }
+  return new RegExp(`^${re}$`, CASE_INSENSITIVE ? 'i' : '');
+}
+// The literal directory prefix of a glob (`src/**/*.py` -> `src`), '' when it starts with a wildcard.
+const globBase = (g) => g.split('/').filter((_, i, a) => !a.slice(0, i + 1).some((x) => GLOB_CHARS.test(x))).join('/');
+
+// rel (root-relative) is the entry, inside it (plain path), or matched by it / by it on an ancestor (glob).
+function entryCovers(entry, rel) {
+  if (!GLOB_CHARS.test(entry)) return inside(rel, entry);
+  const re = arGlobRe(entry); const segs = rel.split('/');
+  for (let i = segs.length; i > 0; i--) if (re.test(segs.slice(0, i).join('/'))) return true;
+  return false;
+}
+// The write target rel is an ancestor of the entry (deleting/overwriting `src` reaches `src/eval.py`).
+function entryUnder(entry, rel) {
+  const base = GLOB_CHARS.test(entry) ? globBase(entry) : entry;
+  if (!base) return true; // `**/*.csv`: any directory may hold a match
+  return inside(base, rel) && fold(base) !== fold(rel);
+}
+
+function normList(list, what) {
+  if (list === undefined || list === null) return [];
+  if (!Array.isArray(list)) throw new Error(`${what} must be an array of project-root-relative paths or globs`);
+  return [...new Set(list.map((p) => normalizeRel(String(p).replace(/\/+$/, ''))))];
+}
+
+// Branch runs (issue #91, H4): concurrent AR branch runs of one run id share ONE lease. Each branch has its own git
+// worktree (`workRoot`, root-relative); its mutable and immutable entries are stored prefixed with that path, so a
+// branch's writes are scoped to its own worktree. The lease's top-level `mutable` is the union of the branches'
+// prefixed mutable entries (the main tree's mutable paths are NOT writable during a worktree run) and `immutable`
+// is the main-tree immutable list plus every branch's prefixed immutable list.
+const BRANCH_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+function recomputeBranchScope(ar) {
+  const bs = Object.values(ar.branches || {});
+  ar.mutable = [...new Set(bs.flatMap((b) => b.mutable))];
+  ar.immutable = [...new Set([...(ar.base_immutable || []), ...bs.flatMap((b) => b.immutable)])];
+  return ar;
+}
+
+async function openArLease(session, { runId, project, mutable, immutable, allow, ttl_ms, meta, branch, workRoot } = {}) {
+  if (typeof runId !== 'string' || !runId.trim()) throw new Error('openArLease: runId required');
+  const proj = project === undefined || project === null || project === '' ? null : normalizeRel(String(project).replace(/\/+$/, ''));
+  const mut = normList(mutable, 'mutable');
+  if (!mut.length) throw new Error('openArLease: mutable must list at least one path or glob');
+  const imm = normList(immutable, 'immutable');
+  const alw = normList(allow, 'allow');
+  if (proj && !alw.includes(proj)) alw.push(proj);
+  const ttl = ttl_ms === undefined ? AR_DEFAULT_TTL_MS : ttl_ms;
+  if (!Number.isFinite(ttl) || ttl <= 0) throw new Error('ttl_ms must be a positive number');
+  let entry = null;
+  if (branch !== undefined && branch !== null) {
+    if (typeof branch !== 'string' || !BRANCH_RE.test(branch) || branch.includes('..')) throw new Error(`openArLease: invalid branch ${JSON.stringify(branch)}`);
+    const wr = normalizeRel(String(workRoot || '').replace(/\/+$/, '') || '.');
+    entry = { branch, root: wr, mutable: mut.map((e) => `${wr}/${e}`), immutable: imm.map((e) => `${wr}/${e}`) };
+  }
+  const t = Date.now();
+  let out = null;
+  await storeOf(session).update('leases', (cur) => {
+    cur.leases = leasesOf(cur);
+    const other = Object.values(cur.leases).find((l) => l.owner === AR_OWNER && isLive(l, t));
+    if (other) {
+      const ar = other.ar || {};
+      if (!entry || ar.run_id !== runId || !ar.branches) throw new Error(`openArLease: AR lease ${other.id} (run ${ar.run_id}) is already active in this session; close it first`);
+      if (ar.branches[branch]) throw new Error(`openArLease: branch ${branch} of AR run ${runId} already holds lease ${other.id}`);
+      ar.branches[branch] = entry;
+      ar.base_immutable = [...new Set([...(ar.base_immutable || []), ...imm])];
+      ar.allow = [...new Set([...(ar.allow || []), ...alw])];
+      recomputeBranchScope(ar);
+      other.heartbeat_at = iso(t); other.expires_at = iso(t + other.ttl_ms);
+      out = other;
+      return cur;
+    }
+    const ar = { run_id: runId, project: proj, mutable: mut, immutable: imm, allow: alw };
+    if (entry) { ar.branches = { [branch]: entry }; ar.base_immutable = imm; recomputeBranchScope(ar); }
+    out = {
+      id: `lease-ar-${crypto.randomBytes(4).toString('hex')}`, session: session.sessionKey, owner: AR_OWNER, worker_type: AR_OWNER,
+      slices: [], ar, meta: meta || {}, status: 'active', opened_at: iso(t), heartbeat_at: iso(t), expires_at: iso(t + ttl), ttl_ms: ttl,
+    };
+    cur.leases[out.id] = out;
+    return cur;
+  });
+  return out;
+}
+
+// Close by lease id or run id. With `branch`, only that branch leaves the lease; the lease closes when no branch
+// is left. Returns the lease (closed, or still active for the remaining branches), or null when nothing matched.
+async function closeArLease(session, idOrRunId, { branch } = {}) {
+  let out = null;
+  await storeOf(session).update('leases', (cur) => {
+    for (const l of Object.values(leasesOf(cur))) {
+      if (l.owner !== AR_OWNER || (idOrRunId !== undefined && l.id !== idOrRunId && !(l.ar && l.ar.run_id === idOrRunId))) continue;
+      if (l.status !== 'active') continue;
+      if (branch && l.ar && l.ar.branches) {
+        if (!l.ar.branches[branch]) continue;
+        delete l.ar.branches[branch];
+        recomputeBranchScope(l.ar);
+        if (Object.keys(l.ar.branches).length) { out = l; continue; }
+      }
+      l.status = 'closed'; l.closed_at = iso(Date.now()); out = l;
+    }
+    return cur;
+  });
+  return out;
+}
+
+function getActiveArLease(session, now = Date.now()) {
+  return listActive(session, now).find((l) => l.owner === AR_OWNER) || null;
+}
+
+// Hook-side keepalive (no version bump), throttled like touchWorker.
+async function touchArLease(session, now = Date.now()) {
+  const l = getActiveArLease(session, now);
+  if (!l || now - Date.parse(l.heartbeat_at) < Math.min(60000, l.ttl_ms / 4)) return false;
+  let did = false;
+  await mutate(session, (cur) => {
+    const x = leasesOf(cur)[l.id];
+    if (x && isLive(x, now)) { x.heartbeat_at = iso(now); x.expires_at = iso(now + x.ttl_ms); did = true; }
+    return cur;
+  }, { bump: false });
+  return did;
+}
+
+const TMP_ROOT = (() => { try { return realish(require('os').tmpdir()); } catch (_) { return null; } })();
+
+// Verdict for one write target under an AR lease: {allowed, reason, rel}. Immutable wins over everything.
+function checkArWrite(session, lease, filePath) {
+  const ar = lease.ar || {};
+  const rel = relOf(session, filePath);
+  if (!rel) {
+    if (containsRoot(session, filePath)) return { allowed: false, rel: '.', reason: `a write aimed at the project root reaches immutable and out-of-scope paths (AR run ${ar.run_id})` };
+    const abs = realish(filePath);
+    if (TMP_ROOT && (abs === TMP_ROOT || abs.startsWith(TMP_ROOT + path.sep))) return { allowed: true, rel: null, reason: 'temp directory' };
+    return { allowed: false, rel: null, reason: `path ${filePath} is outside the project root (AR run ${ar.run_id})` };
+  }
+  for (const e of ar.immutable || []) {
+    if (entryCovers(e, rel)) return { allowed: false, rel, reason: `${rel} is immutable for AR run ${ar.run_id} (matches ${e}); the eval harness, tests and data must not change during the run` };
+    if (entryUnder(e, rel)) return { allowed: false, rel, reason: `${rel} contains immutable path ${e} of AR run ${ar.run_id}` };
+  }
+  // .shards/state holds the leases, gates, research state and sealed holdout: only the runtime writes it (it does
+  // not go through the hook), so an AR caller editing it could switch the guard off or rewrite the run.
+  if (inside(rel, '.shards/state')) return { allowed: false, rel, reason: `${rel} is Shards runtime state; AR run ${ar.run_id} may not write it` };
+  // The rest of .shards/ is allowed, except .shards/worktrees/ (AR branch worktrees): those writes must match a
+  // branch's own (prefixed) mutable scope below, never a blanket .shards allowance.
+  if (inside(rel, '.shards') && !inside(rel, '.shards/worktrees')) return { allowed: true, rel, reason: '.shards state' };
+  for (const e of ar.allow || []) if (entryCovers(e, rel)) return { allowed: true, rel, reason: `allowed (${e})` };
+  for (const e of ar.mutable || []) if (entryCovers(e, rel)) return { allowed: true, rel, reason: `mutable (${e})` };
+  return { allowed: false, rel, reason: `${rel} is outside the mutable scope of AR run ${ar.run_id} (mutable: ${(ar.mutable || []).join(', ')}${(ar.allow || []).length ? `; also allowed: ${ar.allow.join(', ')}` : ''})` };
+}
+
+// True when rel lies inside an immutable entry (used by the git guard for checkout/restore pathspecs).
+function isArImmutable(session, lease, filePath) {
+  const rel = relOf(session, filePath);
+  if (!rel) return containsRoot(session, filePath) && (lease.ar.immutable || []).length > 0;
+  return (lease.ar.immutable || []).some((e) => entryCovers(e, rel) || entryUnder(e, rel));
+}
+
+module.exports = { openArLease, closeArLease, getActiveArLease, touchArLease, checkArWrite, isArImmutable, entryCovers, globBase, AR_OWNER, AR_DEFAULT_TTL_MS, releaseWorker, bindWorker, findWorkerLease, touchWorker, findSliceOwning, openLease, heartbeat, closeLease, listActive, expireStale, isPathAllowed, pathsOverlap, normalizeRel, OWNERS, DEFAULT_TTL_MS };

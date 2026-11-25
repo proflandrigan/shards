@@ -49,9 +49,9 @@ Same as `[EX]` Phase 0 but with expanded parameter confirmation.
 ### Versioning detection
 
 {{protocol experiment_versioning}} in
-full and follow **Section A (Detection)**. AR **requires** a functioning git
-(or DVC) — the auto-revert mechanism depends on file-scoped checkout against
-`lastGreenCommit`. If versioning mode is `none`, warn the user and offer to:
+full and follow **Section A (Detection)**. AR **requires** git: the AR tools keep, revert
+and journal every iteration on the research ref (DVC alone does not satisfy
+`ar_start`). If versioning mode is `none`, warn the user and offer to:
 (a) run `git init` in the project, (b) drop to `[EX]` which can run without
 revert, or (c) cancel.
 
@@ -72,7 +72,7 @@ AR runs in one of two presets:
 [interactive] — budget=10, reviewer cadence=3, cost ceiling optional.
                 You're nearby, I go adaptive with you in the loop.
 
-[overnight]   — budget=100, reviewer cadence=10, cost ceiling required.
+[overnight]   — budget=100, reviewer cadence=10, wall-clock budget required.
                 I run long. You come back to a converged result.
                 Interrupt anytime by editing experiments/research_brief.md
                 Steering Notes (I re-read it every iteration).
@@ -94,13 +94,26 @@ Present and confirm:
 - **Max consecutive regressions** (default: 3)
 - **Metric degradation floor** (optional — loop halts if primary metric falls below this)
 - **Epsilon** (GREEN/YELLOW/RED threshold — default: 1% of baseline)
-- **Cost ceiling:**
-  - Optional for interactive
-  - **Required for overnight** (tokens, dollars, or both — set hard stop)
+- **Wall-clock budget (minutes):** required for overnight; runtime-enforced
+  (`ar_start` `budget.minutes`), with the per-eval timeout
+- **Cost ceiling (advisory):** optional planning number; not a hard stop (§G.5)
 - **Reviewer cadence** (default: 3 interactive / 10 overnight)
 - **Plateau window W** (default: 5)
-- **Diminishing returns threshold** (default: 0.1% of baseline)
+- **Diminishing returns threshold** (minimum `bestSoFar` gain over the last
+  2W iterations; default: 2 × epsilon, i.e. 2% of baseline at the default
+  epsilon — `autonomous_research.md` §E.2)
 - **Full eval cadence M** (default: 5 interactive / 10 overnight)
+  (`ar_start` `eval.full_every`; used only when a proxy eval is set)
+- **Proxy eval** (optional): a cheaper command on the same metric
+  (`eval.proxy`). The runtime runs it by default and the full eval every M
+  iterations; proxy-kept changes the full eval does not confirm are unwound
+  (`autonomous_research.md` §C.6)
+- **Fixed compute budget** (optional, seconds; `eval.fixed_budget_s`): the
+  training script must stop at `SHARDS_AR_COMPUTE_BUDGET_S` so iterations stay
+  comparable (§G.10)
+- **Sealed holdout** (optional): a holdout command and split paths
+  (`holdout`, `holdout_paths`), scored only by `ar_end`; never read or run it
+  yourself (§G.11)
 - **Mutable scope** (files/dirs/globs the agent may modify):
   - Typical: training scripts, configs, feature pipelines
   - Examples: `training/train.py`, `training/config/*.yaml`, `features/**/*.py`
@@ -114,7 +127,7 @@ Agents always emit the research dashboard, whether or not a UI exists. The panel
 type remains `experiment-dashboard`: the renderer detects `mode: "autonomous-research"`
 in `results.json` and adjusts the view (iteration budget, color-coded auto-decisions,
 cost strip). Emit once after the Phase 1 brief is confirmed, then keep rewriting
-`experiments/results.json` (after each iteration result, after git checkpoint success,
+`experiments/results.json` (after each iteration result, after each `ar_iterate` result is journaled,
 after each reviewer verdict, after Phase 3 finalization); re-emit with the same
 `panel_id` after significant transitions (iteration complete, convergence detected,
 reviewer verdict received) to update it in place.
@@ -129,7 +142,7 @@ during Phase 3 summary writing; `"complete"` after Phase 3 finalization.
 `panel_id` (each branch's `results.json.branchContext` identifies it). After
 arbitration and promotion, emit a final converged panel for the main project file:
 
-{{artifact.emit type=experiment-dashboard path=shards/<project_name>/.shards/branches/<branch-slug>/experiments/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
+{{artifact.emit type=experiment-dashboard path=shards/<project_name>/experiments/branches/<branch-slug>/results.json meta="title=AR: <project_name> (branch: <branch-slug>) panel_id=ar-<project_name>-<branch-slug>"}}
 
 {{artifact.emit type=experiment-dashboard path=shards/<project_name>/experiments/results.json meta="title=AR: <project_name> (converged) panel_id=ar-<project_name>-converged"}}
 
@@ -149,7 +162,8 @@ Append to `project-specs.md`:
 - **Target:** <value or "none">
 - **Iteration budget:** <N>
 - **Reviewer cadence:** <K>
-- **Cost ceiling:** <tokens: N / dollars: N, or "none">
+- **Wall-clock budget:** <minutes, or "none">
+- **Cost ceiling (advisory):** <tokens: N / dollars: N, or "none">
 - **Metric floor:** <value or "none">
 - **Mutable scope:** <list>
 - **Immutable scope:** <list>
@@ -222,16 +236,23 @@ Before the gate, announce:
 raising the gate. Goal mode is the `plan` gate policy (`autonomous_research.md`
 §A.6): in the message that precedes the Phase 1 gate, offer an unattended Phase
 2 and present the plan and budget (primary metric, direction, target if set,
-iteration budget, cost ceiling, metric floor). Raise the gate as a
-`plan-approval` gate via `gate_request`, then STOP and wait for the user; never
-confirm it yourself. Activation is optional:
-- **With plan approval:** Phase 2 runs without per-iteration prompts. Later
-  gates become notices: keep calling `gate_request` with `evidence` each
-  iteration and keep looping. Failure, anomaly, or budget exhaustion stops the
-  loop and the next gate waits for the user.
-- **Without it:** each gate waits for the user. §E convergence and §G safety
-  rails still terminate the loop. Per-iteration echoes remain recommended for
-  readability.
+iteration budget, wall-clock minutes, metric floor). The Phase 1 gate below **is**
+the plan approval; never raise a second gate for it.
+- **If the user chooses unattended:** add `plan_approval: "<run-id>"` to the
+  `gate_request` call for the gate below, with a run id unique to this run
+  (for example `<project>-ar-<UTC yyyymmddThhmm>`). Then STOP and wait for the
+  user; never confirm it yourself. After approval Phase 2 runs without
+  prompts: per-iteration evidence is recorded in `results.json` (§C.5), not
+  gated, and mid-loop gates (opted-in micro-gates) become notices. A failure,
+  anomaly or budget exhaustion puts the next gate in front of the user.
+- **Otherwise:** raise the same gate without `plan_approval`. §E convergence
+  and §G safety rails still terminate the loop. Per-iteration echoes remain
+  recommended for readability.
+
+On an unattended run a reviewer `RETRO_REVERT` or `PAUSE` and a metric floor
+breach do not block: call `ar_defer` and keep looping (§B.14); the deferred
+items are presented at Phase 3. The Phase 3 adoption gate is always confirmed
+by the user, unattended or not: it is requested with `requires_human` (§A.6).
 
 ### Gate
 
@@ -241,16 +262,18 @@ Pass the deliverable paths the loop will edit (from `## Placement`, or new ones 
 
 ### If fan-out confirmed
 
-Follow `autonomous_research.md` Section H.3 to spawn branches. Each branch
-prompt must include:
-- Full project context from completed planning phases
-- The approach constraint for this branch
-- AR configuration inherited from Phase 0
-- Git strategy (`branch-dir` by default)
-- Reference to the shared AR protocol
-- Instruction that the branch is in BRANCH + AR MODE and must not emit gates
+After the Phase 1 gate is confirmed, launch one AR branch lead per approach
+family, in parallel, all with the same run id and each with its own `branch`
+slug (`autonomous_research.md` Section H.3):
 
-Spawn all branch subagents in parallel.
+{{lead ml-engineer task="AR branch lead for approach family <branch-slug> of AR run <run-id>"}}
+
+Each lead brief carries the approach constraint, the `ar_start` arguments from
+the brief plus `run_id` and `branch`, the scope
+`<project_dir>/experiments/branches/<branch-slug>`, the budget and the reviewer
+cadence. Each lead runs its loop in its own git worktree and dispatches every
+iteration as a worker task card; leads write no code and never gate. You hold
+every user gate. Wait for every lead to return, then go to Phase 3.
 
 ### If solo confirmed
 
@@ -269,13 +292,12 @@ iteration N:
 3. Generate next hypothesis
 4. Announce: `[AR] Iteration N: <hypothesis>`
 5. Implement changes (mutable scope only)
-6. Evaluate (Section E proxy vs full rules)
-7. Auto-keep/revert decision (Section C)
-8. Record results (experiment file + results.json + research log)
-9. Git checkpoint (Section B.9 with `research/<project>/<N>-<name>` tag)
-10. Reviewer consultation if cadence hit (Data Scientist — Section D)
-11. Convergence check (Section E)
-12. Cost accounting (Section B.12 — micro-gate is opt-in and disabled by default; see Section B.12 for the current status of auto-close support)
+6. Call `ar_iterate` (the runtime runs the pinned eval, proxy or full per Section C.6; never run it yourself)
+7. Read the runtime's keep/revert decision (Section C); it has already kept or reverted and journaled the iteration on the research ref
+8. Record results (experiment file + results.json + research log) from the `ar_iterate` result
+9. Reviewer consultation if cadence hit (Data Scientist — Section D)
+10. Convergence check (`ar_iterate` reports the stop reason; Section E)
+11. Cost accounting (Section B.12 — micro-gate is opt-in and disabled by default; see Section B.12 for the current status of auto-close support)
 
 ### Reviewer: Data Scientist
 
@@ -378,12 +400,15 @@ Follow **Section I** of
 
 If this was a fan-out session, between step 1 and step 2 above:
 
-a. Wait for all branch subagents to return.
-b. Invoke Syn Arbiter per `protocols/diverge.md` Section F.
+a. Wait for every branch lead to return; each has ended its branch with
+   `ar_end` (`autonomous_research.md` Sections H.7 to H.11).
+b. Call `ar_status({run_id})` for the branch leaderboard and invoke Syn Arbiter
+   with the run id and the branch refs (`protocols/diverge.md` Section F); it
+   compares refs and `AR-*` trailers, not prose reports.
 c. Present the leaderboard to the user and gate on winner selection per
    `protocols/diverge.md` Section F final gate.
-d. Promote the winner per `protocols/diverge.md` Section G (with the AR git
-   strategy handling).
+d. Promote the winner (H.11): apply the `promote` diff its `ar_end` returned in
+   the main tree; the Phase 3 adoption gate commits it.
 e. Propose write-backs only after promotion. Include cross-branch patterns from the
    leaderboard in the write-back candidates ({{protocol sources}}, AR fan-out special
    case).
@@ -399,7 +424,7 @@ Ask the user:
 - Do you want to run another budget (fresh AR session)?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-research-phase-3}}
+{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-research-phase-3 requires_human=true}}
 
 Wait for their decision before taking further action.
 
@@ -420,8 +445,9 @@ Update `project-specs.md` to reflect:
   in the mutable set. Violations halt the loop.
 - **Reverts are file-scoped.** Never `git reset --hard`, never `git clean -f`.
 - **Proxy honesty.** If you use a proxy for evaluation, say so and run a full
-  eval at the configured cadence. A proxy below metric floor triggers a full
-  re-eval automatically.
+  eval at the configured cadence (`eval.full_every`). A full eval that does not
+  confirm the proxy-kept chain unwinds it; a proxy below metric floor gets a
+  full re-eval (`ar_iterate(full=true)`).
 - **Serving awareness never sleeps.** Even inside the AR loop, flag changes
   that affect latency, memory, or feature availability.
 - **Adopt only what was confirmed.** At Phase 3 the user chooses what to keep

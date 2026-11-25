@@ -125,8 +125,8 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
 5. On convergence: write converged metrics into `eval-results.json`
    `bestCandidate`. Record iterations consumed and budget spent in Phase 6.5 doc. With a Harness plan, each kept iteration also appends a leaderboard row.
 
-**[F] AR fan-out across approach families:** (one task per branch; branches have disjoint owned paths and the lead verifies each branch's converged metrics before the arbiter runs)
-1. Pre-flight: verify git/DVC available and cost ceiling confirmed.
+**[F] AR fan-out across approach families:** (one AR branch lead per family; each lead runs its loop in its own git worktree and dispatches every iteration as a worker task card; the runtime's `ar_iterate` measures every iteration)
+1. Pre-flight: verify git is available, the AR runtime tools are present, and the cost ceiling is confirmed (K branches, and each iteration's eval runs in the worker's check and in `ar_iterate`).
 2. Identify 2-3 approach families from the Phase 4 experiment plan (with a Harness plan: approach modules in `experiments/approaches/`, one family per branch). Confirm mutual
    exclusivity and genuine viability with the user.
 3. Follow
@@ -134,13 +134,12 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
    (DIVERGE proposal gate — use ID
    `diverge-ar-<project>`).
 4. On confirmation, follow `autonomous_research.md` Section H:
-   - H.3 for parallel branch spawning (all branches in one message)
-   - H.5 for git strategy (default `branch-dir`)
-   - Wait for all branches to complete
-5. Run arbiter per Section F of `protocols/diverge.md`.
-6. On user winner selection: promote per Section G — copy artifacts
-   per the chosen git strategy (no ref merge), update `eval-results.json.bestCandidate` with the
-   winning branch's converged metrics.
+   - H.3: launch one branch lead per family in one message, same run id, one `branch` slug each (at most 4)
+   - H.5: each branch gets a runtime-owned worktree under `.shards/worktrees/<run-id>/<branch>` and its own ref `refs/shards/research/<project>/<run-id>/<branch>` (`no-vcs` only without git)
+   - Wait for every lead to return (each ends its branch with `ar_end`)
+5. Call `ar_status({run_id})` for the branch leaderboard and run the arbiter per Section F of `protocols/diverge.md` on the branch refs.
+6. On user winner selection: promote per H.11 — apply the winner's `promote` diff (from its `ar_end`) in the main tree (no ref merge, no branch switch), update `eval-results.json.bestCandidate` with the
+   winning branch's converged metrics; the next gate commits it.
 
 **[M] User runs notebook manually:**
 1. Tell the user: "Run <notebook path>. Populate the metrics tables, then tell

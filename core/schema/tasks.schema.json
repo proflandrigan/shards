@@ -26,14 +26,27 @@
           "additionalProperties": false,
           "properties": {
             "command": { "type": "string", "minLength": 1 },
-            "expected": { "type": "string", "minLength": 1 }
+            "expected": { "type": "string", "minLength": 1 },
+            "cwd": { "type": "string", "minLength": 1, "description": "Project-root-relative directory to run the command from (default: the project root). AR iteration cards: the branch worktree." }
           }
         },
         "depends_on": { "type": "array", "items": { "type": "string" }, "default": [] },
         "worker": { "type": "string", "minLength": 1 },
         "size": { "type": "integer", "minimum": 1, "maximum": 60 },
         "phase": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
-        "delegate": { "enum": ["inline", "worker"], "default": "worker" }
+        "delegate": { "enum": ["inline", "worker"], "default": "worker" },
+        "ar": {
+          "type": "object",
+          "description": "Marks an autonomous-research iteration card (issue #91, H4). task_verify then takes the AR outcome (ar_iteration or metric_outcome): GREEN or kept YELLOW is done (kept), RED or unkept YELLOW is done (reverted), never failed.",
+          "required": ["run_id"],
+          "additionalProperties": false,
+          "properties": {
+            "run_id": { "type": "string", "minLength": 1 },
+            "branch": { "type": "string", "minLength": 1 },
+            "iteration": { "type": "integer", "minimum": 1 },
+            "hypothesis": { "type": "string", "minLength": 1 }
+          }
+        }
       }
     }
   }

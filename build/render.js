@@ -110,9 +110,10 @@ function render(m, target) {
     case 'template':
       return `Copy and fill in the template ${contentPath(target, `templates/${m.file}`)}`;
     case 'gate': {
-      const v = m.validates ? `, validates=${q(m.validates)}` : '';
+      const v = (m.validates ? `, validates=${q(m.validates)}` : '') + (m.requires_human ? ', requires_human=true' : '');
+      const hum = m.requires_human ? ' This gate always needs a human confirmation, under every gate policy (a plan approval never turns it into a notice).' : '';
       const adv = m.advancing ? 'Write the decisions to the project record first.' : 'This is a checkpoint: it does not advance the phase.';
-      return `**Gate \`${m.id}\`** (kind \`${m.kind}\`). ${adv} Then call ${T('gate_request')}(id=${q(m.id)}, kind=${q(m.kind)}, phase=${q(m.phase)}, summary=<one short paragraph>, record_ref=<the record section you wrote>${v}) and stop. Do not continue until the tool reports the gate confirmed; "already confirmed" means continue. Never approve or confirm the gate yourself, and do not write gate fences in text.`;
+      return `**Gate \`${m.id}\`** (kind \`${m.kind}\`). ${adv} Then call ${T('gate_request')}(id=${q(m.id)}, kind=${q(m.kind)}, phase=${q(m.phase)}, summary=<one short paragraph>, record_ref=<the record section you wrote>${v}) and stop.${hum} Do not continue until the tool reports the gate confirmed; "already confirmed" means continue. Never approve or confirm the gate yourself, and do not write gate fences in text.`;
     }
     case 'auto_verify': {
       if (m.action !== 'start') return `End auto-verify: call ${T('auto_verify_end')}().`;
