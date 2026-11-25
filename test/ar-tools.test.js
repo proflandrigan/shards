@@ -40,6 +40,16 @@ const startArgs = (o = {}) => ({
   eval: { command: 'node eval/score.js', metric_regex: 'score=([-0-9.eE]+)', name: 'score', direction: 'maximize', timeout_s: 20, repeats: 2 },
   budget: { iterations: 20 }, ...o,
 });
+// The promote command is POSIX shell (the agent's Bash tool; Git Bash on Windows): run it with Git's own sh there.
+const SH = (() => {
+  if (process.platform !== 'win32') return '/bin/sh';
+  try {
+    const git = execSync('where git', { encoding: 'utf8' }).split(/\r?\n/)[0].trim();
+    const sh = path.join(path.dirname(path.dirname(git)), 'usr', 'bin', 'sh.exe');
+    if (fs.existsSync(sh)) return sh;
+  } catch (_) { /* fall through */ }
+  return 'bash';
+})();
 const trailersOf = (ref) => sh(root, 'log', '--format=%(trailers:only,unfold)%x1e', ref);
 
 beforeEach(() => {
@@ -434,7 +444,7 @@ describe('AR fan-out branch runs (git worktrees, issue #91 H4)', () => {
     expect(fs.existsSync(wt('b', 'src/model.txt'))).toBe(true);
     expect(L.getActiveArLease(S())).toBeNull();
     // promotion at the human gate: apply the winner's kept diff onto the user branch
-    execSync(ea.promote, { cwd: root, shell: '/bin/sh' });
+    execSync(ea.promote, { cwd: root, shell: SH });
     expect(read('src/model.txt')).toBe('2\n# a\n# b\n');
   });
 
@@ -499,7 +509,7 @@ describe('branch run with the project root below the git top level', () => {
     expect(read('src/model.txt')).toBe('1\n');
     const e = await call('ar_end', { reason: 'done', branch: 'a' });
     expect(e.worktree_removed).toBe(true);
-    execSync(e.promote, { cwd: root, shell: '/bin/sh' });
+    execSync(e.promote, { cwd: root, shell: SH });
     expect(read('src/model.txt')).toBe('2\n');
   });
 });
