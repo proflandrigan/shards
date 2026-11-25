@@ -78,7 +78,7 @@ External-write guardrails (E6.11). The runtime never writes to external systems 
 | `guardrails.write_tools` | `[]` | Extra MCP tool names treated as external writes. Full name (`mcp__server__tool`) or a bare tool name (matches any server prefix); `*` is a wildcard. Added to the `write_tools` of every binding configured under `jobs`. |
 | `guardrails.allow_raw_data` | `false` | Allow external writes that carry raw query results. Default: summaries only. |
 
-Which tools count as writes: a binding file lists them in its `write_tools` frontmatter (a subset of `expected_tools`). With only the git binding, nothing is policed.
+Which tools count as writes: a binding file lists them in its `write_tools` frontmatter (a subset of `expected_tools`). The Jira binding declares the external tools used for task writes.
 
 For a policed tool the hook checks the call before it runs:
 
@@ -165,41 +165,15 @@ Module: `runtime/config/index.js`.
 - `ConfigError` extends `Error`, with `name = 'ConfigError'` and an `errors` array of individual messages.
 - The module also exports `JOBS` and `CONFIG_FILENAME` (`shards.config.yaml`).
 
-## Example: Confluence for records, Jira for tasks
+## Example Jira task configuration
 
 ```yaml
 version: 1
-
 jobs:
-  record: confluence      # short form; add options: here if the binding needs them
-  tasks:
-    binding: jira
-    options:
-      project: ABC
-  knowledge: git          # docs/ plus git log
-  review: git
-  artifacts: git
-  presentation: git
-
-gates:
-  policy: phase
-
-git:
-  commit: true            # output still committed locally
-  push: false
-
-bindings:
-  confluence:
-    space: ENG            # required_settings from bindings/confluence.md
-  jira:
-    site: https://example.atlassian.net
+  tasks: jira
 ```
 
-Notes:
-
-- `record` now points at Confluence, so the `{output_dir}/project-specs.md` default path no longer applies. Confluence receives the record through its own options.
-- Git still commits the local outputs, so the repo stays the source of truth (ADR 0005). Confluence and Jira receive one-way copies.
-- The `confluence` and `jira` binding files are not shipped in `bindings/` yet. Until they exist, `validateConfig` accepts the names but the runtime cannot load them.
+The default git tasks job also supports read-only Jira intake. Selecting `jira` enables confirmed-gate progress comments. Set `bindings.jira.site` to a site URL to resolve bare issue keys when multiple sites are connected. The `jira_context` runtime tool returns these settings and the binding instructions. Other jobs inherit their git defaults. Connect the host to Atlassian and give Syn an epic key or browse URL, or give a specialist an individual issue. See [Working from Jira](../src/docs/08-bindings/integrations-status.md).
 
 ## External copies: `copy_report`, `shards sync --status`, `shards connect`
 

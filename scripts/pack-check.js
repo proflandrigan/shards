@@ -25,7 +25,7 @@ const KINDS = {
     required: [
       'package.json', 'README.md', 'cli/shards.js', 'cli/commands/gates.js', 'build/compile.js', 'build/activation-inventory.js',
       'build/assets/icon.png', 'core/agents', 'core/templates', 'runtime/server.js', 'hooks/session-start.js', 'hooks/claude-code.hooks.json',
-      'bindings/README.md', 'scripts/validate-agents.js', 'src/commands/shards.md', 'src/docs/manifest.json',
+      'bindings/README.md', 'bindings/jira.md', 'runtime/tools/jira_context.js', 'scripts/validate-agents.js', 'src/commands/shards.md', 'src/docs/manifest.json',
       'tools/shards-ui.js', 'tools/shards-gates.js', 'tools/shards-sessions.js', 'tools/install.js', 'tools/legacy-layout.js',
     ],
     // Never in a tarball, even if a broad glob would allow it.
@@ -35,7 +35,7 @@ const KINDS = {
     allowed: ['package.json', 'runtime/*', 'core/*', 'bindings/*', 'hooks/lib/*', 'build/*', 'scripts/validate-agents.js'],
     required: [
       'package.json', 'runtime/server.js', 'runtime/tools', 'core/agents', 'core/schema', 'hooks/lib/host.js', 'hooks/lib/common.js',
-      'build/core.js', 'build/compile.js', 'build/activation-inventory.js', 'scripts/validate-agents.js', 'bindings/README.md',
+      'build/core.js', 'build/compile.js', 'build/activation-inventory.js', 'scripts/validate-agents.js', 'bindings/README.md', 'bindings/jira.md', 'runtime/tools/jira_context.js',
     ],
     forbidden: [/(^|\/)node_modules\//, /(^|\/)__tests__\//, /\.test\.js$/],
   },

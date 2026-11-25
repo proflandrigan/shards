@@ -24,7 +24,7 @@ jobs:
   tasks: { binding: jira, options: { project: ABC } }      # long
 ```
 
-`options` are binding-specific and passed to the binding's verbs as-is. Only `git` ships today; naming any other binding passes validation but the runtime cannot load it (see [Integrations status](integrations-status.md)).
+`options` are binding-specific and passed to the binding's verbs as-is. The bundled bindings are `git` and `jira`. Jira serves the tasks job (see [Integrations status](integrations-status.md)).
 
 ### `gates.policy`
 

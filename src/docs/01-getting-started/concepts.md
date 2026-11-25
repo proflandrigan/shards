@@ -14,7 +14,7 @@ Everything an agent says lives once under `core/`: `core/agents/<id>/` (`AGENT.m
 
 ## Jobs and bindings
 
-Agents do not hardcode where things go. `shards.config.yaml` maps six **jobs** (`record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`) to **bindings** (`bindings/<name>.md`). Only the `git` binding exists today, and it is the default. Integrations with Confluence, Jira, Google Slides and similar tools are planned and not built; see [integrations status](../08-bindings/integrations-status.md). Shards owns no storage. There is no Knowledge Ledger in v2; reference material lives in your repo or wiki, reached through the `knowledge` job ([Knowledge](../03-protocols/knowledge.md)).
+Agents do not hardcode where things go. `shards.config.yaml` maps six **jobs** (`record`, `tasks`, `knowledge`, `review`, `artifacts`, `presentation`) to **bindings** (`bindings/<name>.md`). Git is the default for all jobs. Jira is available for tasks; see [integrations status](../08-bindings/integrations-status.md). Shards owns no storage. There is no Knowledge Ledger in v2; reference material lives in your repo or wiki, reached through the `knowledge` job ([Knowledge](../03-protocols/knowledge.md)).
 
 ## Activation modes
 

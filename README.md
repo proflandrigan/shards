@@ -95,7 +95,7 @@ Agents also review each other. The Data Scientist asks the Data Modeller to veri
 - **`core/`** is the single source: agents (`core/agents/<id>/AGENT.md` + `agent.yaml`), shared protocols, templates, schemas.
 - **`shards build`** compiles `core/` into generated packages: a Claude Code plugin, a Codex package and a generic Agent Skills package. Generated output is never hand-edited.
 - **`shards-mcp`** is the runtime: an MCP server exposing `activate`, `gate_request`, `sessions_*`, task and fan-out tools, and keeping state under `.shards/state/`.
-- **Jobs and bindings** (`shards.config.yaml`, `bindings/`) route record, tasks, knowledge, review, artifacts and presentation output. Only the git binding exists today; external integrations (Confluence, Jira, warehouses, Google Slides) are planned, not built.
+- **Jobs and bindings** (`shards.config.yaml`, `bindings/`) route record, tasks, knowledge, review, artifacts and presentation output. Git is the default for all six jobs. The Jira tasks binding lets Syn captain an existing epic or route one issue to a specialist. You can also give a Jira task directly to a shard. [Working from Jira](src/docs/08-bindings/integrations-status.md)
 - **Studio** (`packages/studio`) is an optional browser view of what the runtime writes.
 
 ## The Shards

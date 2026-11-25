@@ -25,6 +25,15 @@ describe('generic agent-skills target (E9.2)', () => {
     expect(fs.existsSync(path.join(out, 'content', 'agents', 'syn', 'AGENT.md'))).toBe(true);
   });
 
+  it('ships Jira issue intake for every directly activated shard', () => {
+    const agents = path.join(out, 'content', 'agents');
+    expect(fs.existsSync(path.join(out, 'content', 'protocols', 'jira_issue.md'))).toBe(true);
+    for (const agent of fs.readdirSync(agents)) {
+      const persona = fs.readFileSync(path.join(agents, agent, 'AGENT.md'), 'utf8');
+      expect(persona, agent).toContain('protocols/jira_issue.md');
+    }
+  });
+
   it('emits an Agent Plugins plugin.json pointing at skills/ and mcp.json', () => {
     const p = j('plugin.json');
     expect(p).toMatchObject({ name: 'shards', version: pkg.version, skills: './skills/', mcp: './mcp.json' });

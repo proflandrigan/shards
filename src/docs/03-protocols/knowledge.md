@@ -15,7 +15,7 @@ The join-path and validation protocols also point here for pre-checks and write-
 
 ## The job and the binding
 
-`jobs.knowledge` names the binding. The default is `git`: search runs `grep` over the configured paths (default `docs/`) plus `git log`, and a write adds a markdown file under `docs/` that is committed at the next confirmed gate. Point the job at another tool by editing `jobs.knowledge`, and make sure `bindings/<name>.md` lists `knowledge` in its jobs. Only the git binding exists today. Other integrations are not built yet (see [Integrations Status](../08-bindings/integrations-status.md)).
+`jobs.knowledge` names the binding. The default is `git`: search runs `grep` over the configured paths (default `docs/`) plus `git log`, and a write adds a markdown file under `docs/` that is committed at the next confirmed gate. Point the job at another tool by editing `jobs.knowledge`, and make sure `bindings/<name>.md` lists `knowledge` in its jobs. Git is the only bundled knowledge binding (see [Integrations Status](../08-bindings/integrations-status.md)).
 
 ## Legacy ledgers
 
