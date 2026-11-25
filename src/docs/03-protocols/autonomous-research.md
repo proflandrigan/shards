@@ -30,6 +30,14 @@ Phase 0, Phase 1 and Phase 3 stay gated. Facilitate-don't-generate is suspended 
 | per-iteration markdown | One file per iteration: hypothesis, changes, metrics, auto-decision, reviewer note or self-assessment. |
 | research summary | Written in Phase 3 after the loop exits. |
 
+## Rigor options
+
+These are set at setup and passed to `ar_start`; all are optional.
+
+- **Proxy and full evals.** A cheaper proxy eval (fewer epochs, a data subsample) runs on most iterations, and the full eval runs every M iterations. Each eval has its own noise floor. A GREEN on the proxy is provisional: when the next full eval does not confirm the changes kept on the proxy since the last full eval, they are unwound, back to the last state the full eval verified. The journal marks this with an `AR-Unwind` trailer.
+- **Fixed compute budget.** Every eval gets the same training budget in seconds (`SHARDS_AR_COMPUTE_BUDGET_S`), and the kill timeout is derived from it. This keeps iterations comparable, so a change cannot win just by training longer. Your training script must read the variable and stop when the budget is spent.
+- **Sealed holdout.** A second split that the loop never sees. Its files are immutable, and it is scored once on the starting state and once on the final kept state at `ar_end`, which reports the baseline, final value and delta. Until then the value stays sealed. A gain on the eval that does not show on the holdout means the loop overfit the eval.
+
 ## Steering mid-loop
 
 Edit `experiments/research_brief.md` while the loop runs. The next iteration reads the updated brief and adjusts. This is the "let it run but keep a hand on the wheel" control.
@@ -51,7 +59,7 @@ Convergence checks start only after an activation floor of `max(10, budget * 0.2
 - **Diminishing returns**: the best-so-far metric gained less than the threshold (default 2 × epsilon) over the last 2W iterations.
 - **Budget exhausted** or **cost ceiling** reached.
 - **Consecutive failures** (default 3), after a reviewer consult that may redirect.
-- **Metric floor breach** on a full evaluation. This check is always live.
+- **Metric floor breach** on a full evaluation. This check is always live. A proxy result below the floor triggers a full evaluation first.
 - You pausing via the steering document.
 
 ## AR fan-out (branch leads and worktrees)

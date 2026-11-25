@@ -111,6 +111,17 @@ AR runs in one of two presets:
   2W iterations; default: 2 × epsilon, i.e. 4% of baseline at the default
   epsilon — LLM evals are noisier; `autonomous_research.md` §E.2)
 - **Full eval cadence M** (default: 5 interactive / 10 overnight)
+  (`ar_start` `eval.full_every`; used only when a proxy eval is set)
+- **Proxy eval** (optional): a cheaper command on the same metric
+  (`eval.proxy`). The runtime runs it by default and the full eval every M
+  iterations; proxy-kept changes the full eval does not confirm are unwound
+  (`autonomous_research.md` §C.6)
+- **Fixed compute budget** (optional, seconds; `eval.fixed_budget_s`): the
+  training script must stop at `SHARDS_AR_COMPUTE_BUDGET_S` so iterations stay
+  comparable (§G.10)
+- **Sealed holdout** (optional): a holdout command and split paths
+  (`holdout`, `holdout_paths`), scored only by `ar_end`; never read or run it
+  yourself (§G.11)
 - **Mutable scope** (files/dirs the agent may modify):
   - Typical: `prompts/`, `chains/config.yaml`, `rag/config.yaml`, `eval/rubric.md`
   - NOT typical (immutable): `eval/harness.py`, `eval/dataset.jsonl`, `data/`

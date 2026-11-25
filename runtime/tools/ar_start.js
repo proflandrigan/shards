@@ -23,10 +23,19 @@ function planBudget(ctx, run) {
 const workRel = (root, run) => require('path').relative(root, R.workRoot(root, run)).split(require('path').sep).join('/');
 
 const PATHS = { type: 'array', items: { type: 'string', minLength: 1 } };
+const EXTRACT = {
+  metric_regex: { type: 'string', minLength: 1, description: 'Regex; group 1 (or the whole match) of the last match in stdout (else stderr) is the metric.' },
+  json_path: { type: 'string', minLength: 1, description: 'Dotted path into JSON printed on stdout (whole stdout or its last JSON line).' },
+};
+const BUDGETED = {
+  fixed_budget_s: { type: 'number', exclusiveMinimum: 0, description: 'Fixed compute budget (Karpathy mode): passed to the command as SHARDS_AR_COMPUTE_BUDGET_S; the training script must stop at it for iterations to be comparable. Without timeout_s the kill timeout is fixed_budget_s + timeout_grace_s.' },
+  compute_budget_s: { type: 'number', exclusiveMinimum: 0, description: 'Alias of fixed_budget_s.' },
+  timeout_grace_s: { type: 'number', minimum: 0, description: 'Seconds added to fixed_budget_s for the kill timeout (default 60).' },
+};
 
 module.exports = defineTool({
   name: 'ar_start',
-  description: 'Start an autonomous-research (AR) run. The runtime pins sha256 hashes of every immutable path and of the eval command, refuses if the mutable scope has uncommitted changes, snapshots the pre-loop dirty files, runs the baseline eval `repeats` times (noise floor; epsilon_abs = max(epsilon% x |baseline|, 2 sd)), opens the AR lease (writes outside mutable + the project dir are denied) and creates the research ref refs/shards/research/<project>/<run_id> whose first commit is the baseline. One active run per session, except the branch runs of one AR fan-out: with `branch` (implies worktree=true) the runtime creates a git worktree at .shards/worktrees/<run_id>/<branch> detached at HEAD (no new branch; .shards/worktrees/ is added to .git/info/exclude when not ignored), symlinks immutable paths missing there (untracked data) to the main tree, runs the eval with cwd = the worktree, scopes the AR lease to that worktree\'s mutable paths and journals to refs/shards/research/<project>/<run_id>/<branch>. Start each branch with the same run_id and its own branch name (at most 4 concurrent branches); iteration logs go to <project>/experiments/branches/<branch>/. When a plan approval for the same run id exists (gate_request plan_approval: <run_id>), the plan gate budget is raised to cover this AR budget (max_gates >= iterations + 2, max_minutes >= the AR window) and reported as `plan`. Then edit mutable files and call ar_iterate for each hypothesis.',
+  description: 'Start an autonomous-research (AR) run. The runtime pins sha256 hashes of every immutable path and of the eval command, refuses if the mutable scope has uncommitted changes, snapshots the pre-loop dirty files, runs the baseline eval `repeats` times (noise floor; epsilon_abs = max(epsilon% x |baseline|, 2 sd); likewise for an optional eval.proxy), evaluates an optional sealed holdout once on the pre-loop state (value withheld until ar_end; holdout_paths are pinned as immutable), passes eval.fixed_budget_s to the eval as SHARDS_AR_COMPUTE_BUDGET_S, opens the AR lease (writes outside mutable + the project dir are denied) and creates the research ref refs/shards/research/<project>/<run_id> whose first commit is the baseline. One active run per session, except the branch runs of one AR fan-out: with `branch` (implies worktree=true) the runtime creates a git worktree at .shards/worktrees/<run_id>/<branch> detached at HEAD (no new branch; .shards/worktrees/ is added to .git/info/exclude when not ignored), symlinks immutable paths missing there (untracked data) to the main tree, runs the eval with cwd = the worktree, scopes the AR lease to that worktree\'s mutable paths and journals to refs/shards/research/<project>/<run_id>/<branch>. Start each branch with the same run_id and its own branch name (at most 4 concurrent branches); iteration logs go to <project>/experiments/branches/<branch>/. When a plan approval for the same run id exists (gate_request plan_approval: <run_id>), the plan gate budget is raised to cover this AR budget (max_gates >= iterations + 2, max_minutes >= the AR window) and reported as `plan`. Then edit mutable files and call ar_iterate for each hypothesis.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
@@ -45,14 +54,43 @@ module.exports = defineTool({
         required: ['command', 'direction'],
         properties: {
           command: { type: 'string', minLength: 1, description: 'Shell command run from the project root.' },
-          metric_regex: { type: 'string', minLength: 1, description: 'Regex; group 1 (or the whole match) of the last match in stdout (else stderr) is the metric.' },
-          json_path: { type: 'string', minLength: 1, description: 'Dotted path into JSON printed on stdout (whole stdout or its last JSON line).' },
+          ...EXTRACT,
           name: { type: 'string', minLength: 1, description: 'Metric name for trailers (default "metric").' },
           direction: { enum: ['maximize', 'minimize'] },
-          timeout_s: { type: 'number', exclusiveMinimum: 0, description: 'Per-eval timeout (default 900); a timeout is a RED.' },
+          timeout_s: { type: 'number', exclusiveMinimum: 0, description: 'Per-eval timeout (default 900, or fixed_budget_s + timeout_grace_s); a timeout is a RED.' },
           repeats: { type: 'integer', minimum: 1, maximum: 20, description: 'Baseline runs (default 3).' },
+          ...BUDGETED,
+          proxy: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['command'],
+            description: 'Cheaper proxy eval (same metric name and direction). Iterations run the proxy by default; every full_every-th iteration since the last full eval runs the full eval, which judges the proxy-kept chain and unwinds it when it disagrees. The proxy gets its own noise floor and epsilon.',
+            properties: {
+              command: { type: 'string', minLength: 1 },
+              ...EXTRACT,
+              timeout_s: { type: 'number', exclusiveMinimum: 0, description: 'Default: the eval timeout_s.' },
+              repeats: { type: 'integer', minimum: 1, maximum: 20, description: 'Proxy baseline runs (default eval.repeats).' },
+              every: { type: 'integer', minimum: 1, description: 'Alias of eval.full_every.' },
+              ...BUDGETED,
+            },
+          },
+          full_every: { type: 'integer', minimum: 1, description: 'With proxy: run the full eval when this many iterations have passed since the last full eval (default 5).' },
         },
       },
+      holdout: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['command'],
+        description: 'Sealed holdout eval (same metric name and direction). Never run by ar_iterate: evaluated once on the pre-loop state at ar_start (sealed, not returned) and once on the kept state by ar_end, which returns {baseline, final, delta}. Do not read or run the holdout yourself.',
+        properties: {
+          command: { type: 'string', minLength: 1 },
+          ...EXTRACT,
+          timeout_s: { type: 'number', exclusiveMinimum: 0, description: 'Default: the eval timeout_s.' },
+          baseline: { type: 'boolean', description: 'Evaluate the pre-loop state at ar_start (default true).' },
+          ...BUDGETED,
+        },
+      },
+      holdout_paths: { ...PATHS, description: 'Holdout data/split paths: pinned and immutable like `immutable`, and off-limits to the agent by intent.' },
       budget: {
         type: 'object',
         additionalProperties: false,
@@ -81,6 +119,9 @@ module.exports = defineTool({
         run_id: run.run_id, ...(run.branch ? { branch: run.branch, worktree: run.worktree.path, work_root: workRel(ctx.root, run), linked_immutable: run.worktree.linked } : {}),
         ref: run.ref, lease_id: run.lease_id,
         baseline: run.baseline, noise: run.noise, epsilon_abs: run.epsilon_abs,
+        ...(run.eval.fixed_budget_s ? { compute_budget_s: run.eval.fixed_budget_s, timeout_s: run.eval.timeout_s } : {}),
+        ...(run.proxy ? { proxy: { baseline: run.proxy.baseline, noise: run.proxy.noise, epsilon_abs: run.proxy.epsilon_abs, full_every: run.eval.full_every } } : {}),
+        ...(run.holdout ? { holdout: { sealed: true, paths: run.holdout.paths, baseline_evaluated: !!run.holdout.baseline } } : {}),
         lastKeptCommit: run.lastKeptCommit, preLoopDirty: run.preLoopDirty,
         pinned: Object.keys(run.hashes.immutable),
         plan: planBudget(ctx, run),

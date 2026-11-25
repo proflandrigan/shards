@@ -90,8 +90,12 @@ Required sections:
   regressions, metric degradation floor, wall-clock budget in minutes (required
   for overnight), and an optional cost ceiling (tokens and/or dollars;
   advisory only, §G.5).
+- **Evaluation** — the full eval command; optionally a cheaper proxy eval and
+  the full eval cadence M (§C.6), and a fixed compute budget in seconds
+  (§G.10).
 - **Scope** — explicit list of mutable files/directories vs. immutable
   files/directories. Anything not listed as mutable is immutable by default.
+  Optionally a sealed holdout: its command and split paths (§G.11).
 - **Preset** — `interactive` | `overnight` | `custom`.
 - **Steering Notes** — user-editable section. Empty at brief creation; the user
   may add notes like "prioritize feature engineering over hyperparameter tuning"
@@ -191,21 +195,30 @@ runtime does all of it, and its numbers are the record.
 1. **Start (replaces the pre-loop setup below).** Call `ar_start` with the
    project dir, the brief path, the mutable and immutable lists from the
    brief, the eval spec (`command`, `metric_regex` or `json_path`, `direction`,
-   `timeout_s`, `repeats`), the budget (`iterations`, `minutes`) and
+   `timeout_s`, `repeats`; optional `proxy` and `full_every` per §C.6 and
+   `fixed_budget_s` per §G.10), the optional sealed `holdout` and
+   `holdout_paths` (§G.11), the budget (`iterations`, `minutes`) and
    `epsilon` (% of baseline). It:
    - refuses a dirty mutable scope (ask the user to commit or stash)
    - snapshots `preLoopDirty`
    - pins hashes of the immutable paths and of the eval command
    - opens the AR lease that enforces the write scope
    - measures the baseline `repeats` times, which sets the noise floor:
-     `epsilon_abs = max(epsilon% × |baseline|, 2σ)`
+     `epsilon_abs = max(epsilon% × |baseline|, 2σ)`; a proxy eval gets its
+     own baseline, noise floor and epsilon the same way
+   - with a holdout, scores the pre-loop state once and seals the value
+     (it is not returned until `ar_end`); the holdout paths are pinned and
+     immutable like the eval harness
    - creates the research journal ref `refs/shards/research/<project>/<run>`
      with the baseline as its first commit
 2. **Each iteration.** Do B.1 to B.5 as written. Then call
    `ar_iterate(hypothesis, source)` instead of B.6, B.7 and B.9. It:
    - checks the immutable pins (a change is `tamper`: RED, revert, halt)
    - runs the eval under its timeout and writes
-     `experiments/iter_<N>.log`
+     `experiments/iter_<N>.log`; with a proxy, the proxy runs by default and
+     the full eval every `full_every` iterations, and a full eval that does
+     not confirm the proxy-kept chain unwinds it (§C.6). The result's
+     `eval_type` says which ran
    - classifies per C.1 against the comparison reference, using
      `epsilon_abs`; a YELLOW is kept only when the mutable diff has a net LOC
      delta below 0
@@ -234,8 +247,10 @@ runtime does all of it, and its numbers are the record.
    `stop_reason`), when the user halted the run (B.1), or for a reviewer stop.
    That includes `consecutive-failures` after the §D consult; the runtime does
    not decide E.5 on its own. `ar_end` records the reason on the ref and closes
-   the lease. Kept changes stay uncommitted in the working tree until the
-   Phase 3 gate.
+   the lease. With a holdout it first scores the kept state once and returns
+   `holdout: {baseline, final, delta}` (also the `AR-Holdout` trailer); report
+   it at Phase 3 (§I.2). Kept changes stay uncommitted in the working tree
+   until the Phase 3 gate.
 
 Without the runtime (a host with no Shards MCP server), follow the manual steps
 below and in Sections C and E.
@@ -343,12 +358,18 @@ With the runtime, `ar_iterate` runs the eval (see "Runtime path"); skip the
 rest of this step. Otherwise run the evaluation protocol for this specialist (full train/eval, proxy, etc.)
 and measure the primary metric. Record both primary and secondary metrics.
 
-**Proxy vs full-eval rules (Section E also governs):**
+**Proxy vs full-eval rules (§C.6 and Section E also govern):**
 - Record `evalType: "full" | "proxy"` in the iteration entry.
 - Full evaluation must run at least every M iterations (M=5 interactive, M=10
-  overnight) and always on the final iteration before Phase 3.
-- A proxy below the metric floor triggers an automatic full re-evaluation on
-  the same iteration before any revert decision is made (see Section G.2).
+  overnight) and should run on the final iteration before Phase 3. With the
+  runtime, pass `eval.full_every: M`; `ar_iterate(full=true)` forces a full
+  eval now, for example as the last iteration so no proxy-kept change reaches
+  Phase 3 unverified (`ar_status` lists them as `proxy.unverified_kept`).
+- A full evaluation that does not confirm the proxy-kept chain since the last
+  full-verified state unwinds the chain (§C.6).
+- A proxy below the metric floor triggers a full re-evaluation before any
+  revert decision is made (see Section G.2). With the runtime, call the next
+  `ar_iterate` with `full=true`.
 
 #### B.7 Auto-keep/revert decision (Section C)
 
@@ -741,6 +762,42 @@ The runtime does **not** enforce this per-iteration block. Discipline is on the 
 
 ---
 
+### C.6 Proxy and full evaluations: chains and unwind
+
+A proxy eval (fewer epochs, a data subsample, a smaller model) is cheaper than
+the full eval but can disagree with it. A GREEN decided on a proxy is only
+provisional until a full eval confirms it.
+
+- **Two references, two noise floors.** Proxy iterations are classified
+  against the proxy reference with the proxy epsilon; full iterations against
+  the full reference (the full metric of the last full-verified kept state)
+  with the full epsilon. Both are measured at the start with `repeats` runs.
+  `bestSoFar` and the convergence checks use the full scale only.
+- **Cadence.** Iterations run the proxy by default. The full eval runs when M
+  iterations have passed since the last full eval, or on request. So at most
+  M-1 proxy-kept iterations wait for verification.
+- **The full eval judges the unit.** A full iteration evaluates the proxy-kept
+  chain since the last full-verified state plus its own change, and the keep
+  rule applies to that unit: GREEN keeps it, a YELLOW keeps it only when the
+  unit's net LOC delta (against the last full-verified state) is below 0, and
+  anything else is not kept.
+- **Unwind.** A full iteration that is not kept while a proxy-kept chain is
+  pending unwinds the chain. The mutable scope goes back to the last
+  full-verified kept state (the C.3 revert, with that state as the target),
+  the chain's iterations are marked `unwound`, the proxy reference resets to
+  its value at that state, and an unwind commit records `AR-Unwind: <iters>`.
+  `lastKeptCommit` and `lastGreenCommit` move back with it. Unwound GREENs do
+  not count as GREENs for the plateau check.
+- **Kept full iteration.** It becomes the new full-verified state. The full
+  reference moves on a GREEN (or a re-baseline), and the runtime runs the
+  proxy once on the new state so the proxy reference matches it.
+
+Only a breach of the metric floor used to trigger anything for a proxy chain;
+now any full eval that fails to confirm the chain does (issue #91, bug 8).
+The runtime implements all of this (`ar_iterate`); on the manual path, apply
+the same rule with git: revert the mutable scope to the last full-verified
+commit and mark the chain `reverted: true` with reason `unwound`.
+
 ## Section D — Reviewer Consultation Cadence
 
 ### D.1 When to consult
@@ -916,7 +973,8 @@ evaluation**. Always live — ignores the activation floor. Immediately:
    `metric-floor-breach`.
 
 A proxy evaluation below floor does NOT trigger E.6 directly. Instead:
-1. Automatically re-run a full evaluation on the same iteration.
+1. Re-run a full evaluation of the same state (with the runtime: the next
+   `ar_iterate` with `full=true`; it also settles the proxy chain per §C.6).
 2. If the full evaluation is also below floor, trigger E.6.
 3. If the full evaluation is above floor, the proxy was noisy; continue
    normally but mark this iteration for future attention.
@@ -985,6 +1043,8 @@ The AR schema extends the `[EX]` results.json schema. All existing fields
       "dollars": <number or null>
     },
     "fullEvalCadence": <N>,
+    "fixedComputeBudgetSeconds": <N or null>,
+    "holdout": <bool>,
     "microGateEveryK": <N or null>,
     "microGateAutoCloseSeconds": <N or null>
   },
@@ -1026,6 +1086,7 @@ Each entry in `experiments[]` gains:
   "retroInvalidationReason": "<string or null>",
   "hypothesisSource": "adaptive" | "steering" | "reviewer-suggested",
   "evalType": "full" | "proxy",
+  "unwound": <bool, a later full eval did not confirm this proxy-kept iteration (§C.6)>,
   "reviewerVerdict": "CONTINUE" | "REDIRECT" | "PAUSE" | "RETRO_REVERT" | null,
   "nextSteps": "<string, populated for kept YELLOWs>",
   "bestSoFar": <number>
@@ -1099,6 +1160,8 @@ the same number. If 3 consecutive timeouts occur, trigger G.3 (error limit).
 
 The enforced budgets are the iteration budget, the wall-clock `budget.minutes`
 (`time-budget`) and the per-eval `timeout_s`; `ar_iterate` checks all three.
+A fixed compute budget (§G.10) is a training budget the eval honours, with
+the kill timeout derived from it.
 The agent cannot observe its own token or dollar usage, so a cost ceiling in
 the brief is an advisory planning number: print a soft warning if your estimate
 passes 50% or 80% of it, but never treat it as a hard stop. Size the
@@ -1153,6 +1216,48 @@ scheduled wakeup or loop command is the fallback heartbeat. The Shards runtime
 docs (`research.md`, "Running overnight") give the exact commands.
 
 ---
+
+### G.10 Fixed compute budget (comparable iterations)
+
+When iterations train a model, a change that trains longer can look better
+for that reason alone. A fixed compute budget makes every iteration spend the
+same compute: set `eval.fixed_budget_s` (alias `compute_budget_s`) at
+`ar_start`. The runtime passes it to every eval as the environment variable
+`SHARDS_AR_COMPUTE_BUDGET_S` and, unless `timeout_s` is given, sets the kill
+timeout to `fixed_budget_s + timeout_grace_s` (default 60 s). The value is
+recorded in the baseline's `AR-Config`.
+
+The runtime only passes the budget. Iterations are comparable only if the
+training script reads `SHARDS_AR_COMPUTE_BUDGET_S` and stops when it is spent
+(wall clock or an equivalent step count), and the eval harness that does so
+is immutable. A change that ignores the budget is killed at the timeout and
+recorded as a timeout RED. A proxy or holdout command can set its own
+`fixed_budget_s`; they do not inherit the full eval's.
+
+### G.11 Sealed holdout
+
+Over many iterations the loop overfits the eval it is steered by. A sealed
+holdout is a second split the loop never sees. At `ar_start`, pass
+`holdout: {command, metric_regex | json_path}` (same metric name and
+direction as the eval) and `holdout_paths` (the split's files). The runtime:
+
+- pins the holdout paths and command and adds the paths to the immutable list
+  and the AR lease, so an edit is a `tamper` (RED, revert, halt)
+- scores the pre-loop state once at `ar_start` and seals the value under
+  `.shards/state/research-sealed/`; it is not returned, logged in
+  `experiments/` or written to the research ref
+- never runs the holdout in `ar_iterate`; `ar_status` shows only that a
+  holdout is sealed
+- scores the kept state once in `ar_end` and returns
+  `holdout: {baseline, final, delta}`, with an `AR-Holdout` trailer on the stop
+  commit (`skipped` with `ar_end(skip_holdout=true)`, `tampered (...)` if the
+  holdout changed, in which case it is not run)
+
+**Never read, run or summarise the holdout data or command output yourself,**
+and do not let a worker or reviewer do it. The hash pin catches edits, not
+reads; the seal holds only as long as you respect it. Report the holdout delta
+at Phase 3 next to the eval delta: a gain on the eval with no gain on the
+holdout means the loop overfit the eval.
 
 ## Section H — Fan-Out: AR Branch Leads and Workers
 
@@ -1506,6 +1611,7 @@ Factual synthesis — no opinions in this file:
 - **Baseline:** <value> (from <source>)
 - **Final:** <value>
 - **Net delta:** <+/->
+- **Sealed holdout:** <baseline> → <final> (delta <+/->) | not configured | skipped | tampered
 - **Target reached:** Yes | No | N/A (no target set)
 
 ## Convergence
@@ -1525,6 +1631,7 @@ Factual synthesis — no opinions in this file:
 - **Full evaluations:** <N>
 - **Proxy evaluations:** <N>
 - **Proxy→full re-runs triggered:** <N>
+- **Unwinds (proxy-kept iterations unwound by a full eval):** <N> (<iterations>)
 
 ## Cost Accounting (advisory estimates)
 - **Wall-clock used:** <minutes of budget>

@@ -5,7 +5,7 @@ const R = require('../research');
 
 module.exports = defineTool({
   name: 'ar_iterate',
-  description: 'Evaluate one AR iteration after you edited mutable files. The runtime checks the immutable pins (a change is a tamper: RED, revert, run halts), runs the pinned eval command itself with its timeout, writes <project>/experiments/iter_<N>.log, parses the metric and classifies against the comparison reference: GREEN (better by > epsilon_abs, kept), YELLOW (within epsilon_abs, kept only if the mutable diff has net LOC < 0), RED (worse, crash, timeout or no metric; reverted). For a branch run (pass branch when several are active) the eval runs in that branch\'s worktree and the keep/revert happens there. Every iteration is committed to the research ref with AR-* trailers; a reverted one gets a revert commit and the working tree is restored to lastKeptCommit (new files the iteration created in the mutable scope are deleted). Returns {iteration, decision, metric, before, after, kept, converged, stop_reason}. When converged, call ar_end.',
+  description: 'Evaluate one AR iteration after you edited mutable files. The runtime checks the immutable pins (a change is a tamper: RED, revert, run halts), runs the pinned eval command itself with its timeout, writes <project>/experiments/iter_<N>.log, parses the metric and classifies against the comparison reference (with eval.proxy: proxy iterations against the proxy reference and proxy epsilon; every full_every-th iteration runs the full eval against the last full-verified kept state, and a full eval that is not GREEN (nor a simpler YELLOW) unwinds the proxy-kept chain: AR-Unwind, mutable scope restored to lastFullCommit): GREEN (better by > epsilon_abs, kept), YELLOW (within epsilon_abs, kept only if the mutable diff has net LOC < 0), RED (worse, crash, timeout or no metric; reverted). For a branch run (pass branch when several are active) the eval runs in that branch\'s worktree and the keep/revert happens there. Every iteration is committed to the research ref with AR-* trailers; a reverted one gets a revert commit and the working tree is restored to lastKeptCommit (new files the iteration created in the mutable scope are deleted). Returns {iteration, decision, metric, before, after, kept, converged, stop_reason}. When converged, call ar_end.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
@@ -15,6 +15,7 @@ module.exports = defineTool({
       source: { enum: ['adaptive', 'steering', 'reviewer-suggested'], description: 'Where the hypothesis came from (default adaptive).' },
       run_id: { type: 'string', minLength: 1, description: 'Default: the active run of this session.' },
       branch: { type: 'string', minLength: 1, description: 'Branch run (AR fan-out): which branch of the run. Needed when several branch runs are active.' },
+      full: { type: 'boolean', description: 'Proxy mode only: run the full eval for this iteration (verifies the proxy-kept chain now; resets the full_every cadence).' },
     },
   },
   async handler(args, ctx) {
@@ -23,9 +24,10 @@ module.exports = defineTool({
     return {
       data: {
         run_id: run.run_id, ...(run.branch ? { branch: run.branch } : {}),
-        iteration: entry.n, decision: entry.decision, metric: run.eval.name,
+        iteration: entry.n, decision: entry.decision, metric: run.eval.name, eval_type: entry.eval_type,
         before: entry.before, after: entry.after, kept: entry.kept, failure: entry.failure || null,
-        loc: entry.loc, epsilon_abs: run.epsilon_abs, bestSoFar: entry.bestSoFar, rebaselined: !!entry.rebaselined,
+        loc: entry.loc, epsilon_abs: entry.eval_type === 'proxy' ? run.proxy.epsilon_abs : run.epsilon_abs,
+        ...(run.proxy ? { proxy_reference: run.proxyReference, unwound: entry.unwound_iterations || [], lastFullCommit: run.lastFullCommit } : {}), bestSoFar: entry.bestSoFar, rebaselined: !!entry.rebaselined,
         commit: entry.commit, revert_commit: entry.revert_commit, restored: entry.restored, deleted: entry.deleted,
         tampered: entry.tampered, log: entry.log,
         budget_remaining: { iterations: Math.max(0, run.budget.iterations - run.iterations.length) },

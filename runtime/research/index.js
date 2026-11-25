@@ -41,7 +41,8 @@ const L = require('../leases');
 
 const STATE = 'research';
 const REF_ROOT = 'refs/shards/research';
-const DEFAULTS = Object.freeze({ repeats: 3, timeout_s: 900, epsilon_pct: 1, plateau_window: 5, error_limit: 3, metric_name: 'metric' });
+const DEFAULTS = Object.freeze({ repeats: 3, timeout_s: 900, timeout_grace_s: 60, full_every: 5, epsilon_pct: 1, plateau_window: 5, error_limit: 3, metric_name: 'metric' });
+const SEALED = '.shards/state/research-sealed'; // sealed holdout baselines (issue #91, H5); never returned before ar_end
 const OUT_CAP = 8 * 1024 * 1024; // keep at most the last 8 MB of each stream in memory
 const LOG_TAIL = 64 * 1024; // bytes of each stream written to the iteration log
 const RUN_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
@@ -415,24 +416,28 @@ function writeLog(file, header, res, append) {
 
 // root: the main (session) root; the eval runs in the run's work root (its worktree for a branch run) and the
 // log is written under the main root.
-async function evaluate(root, run, { label, logFile, append, iter }) {
+// spec: run.eval (full), run.proxy or run.holdout; kind (full|proxy|holdout) is passed as SHARDS_AR_EVAL. A fixed
+// compute budget (Karpathy mode) reaches the command as SHARDS_AR_COMPUTE_BUDGET_S; the kill timeout is timeout_s.
+async function evaluate(root, run, { label, logFile, append, iter, spec = run.eval, kind = 'full' }) {
   const cwd = workRoot(root, run);
-  const env = { SHARDS_AR_RUN: run.run_id, SHARDS_AR_ITER: String(iter) };
+  const env = { SHARDS_AR_RUN: run.run_id, SHARDS_AR_ITER: String(iter), SHARDS_AR_EVAL: kind };
+  if (spec.fixed_budget_s) env.SHARDS_AR_COMPUTE_BUDGET_S = String(spec.fixed_budget_s);
   if (run.branch) Object.assign(env, { SHARDS_AR_BRANCH: run.branch, SHARDS_AR_WORKTREE: cwd, SHARDS_AR_MAIN_ROOT: root });
-  const res = await runCommand(run.eval.command, { cwd, timeoutMs: run.eval.timeout_s * 1000, env });
-  res.metric = res.timedOut || res.code !== 0 ? null : parseMetric(run.eval, res.stdout, res.stderr);
+  const res = await runCommand(spec.command, { cwd, timeoutMs: spec.timeout_s * 1000, env });
+  res.metric = res.timedOut || res.code !== 0 ? null : parseMetric(spec, res.stdout, res.stderr);
   res.failure = res.timedOut ? 'timeout' : res.code !== 0 ? 'crash' : res.metric === null ? 'parse' : null;
-  writeLog(path.join(root, logFile), `${label}${run.branch ? ` [branch ${run.branch}, cwd ${path.relative(root, cwd) || '.'}]` : ''} | ${run.eval.command}`, res, append);
+  writeLog(path.resolve(root, logFile), `${label}${run.branch ? ` [branch ${run.branch}, cwd ${path.relative(root, cwd) || '.'}]` : ''} | ${kind} | ${spec.command}`, res, append);
   return res;
 }
 
 // ---------- classification + convergence ----------
 
-function classify(run, after, failure) {
+// ref / eps default to the full-eval reference; proxy iterations pass the proxy reference and proxy epsilon.
+function classify(run, after, failure, ref = run.comparisonReference, eps = run.epsilon_abs) {
   if (failure) return 'red';
-  const d = (run.eval.direction === 'minimize' ? -1 : 1) * (after - run.comparisonReference);
-  if (d > run.epsilon_abs) return 'green';
-  if (d < -run.epsilon_abs) return 'red';
+  const d = (run.eval.direction === 'minimize' ? -1 : 1) * (after - ref);
+  if (d > eps) return 'green';
+  if (d < -eps) return 'red';
   return 'yellow';
 }
 
@@ -465,7 +470,7 @@ function stopReason(run, now = Date.now()) {
   if (c.consecutiveFailures >= DEFAULTS.error_limit) return c.consecutiveTimeouts >= DEFAULTS.error_limit ? 'timeout-limit' : 'error-limit';
   const W = run.convergence.plateau_window;
   if (N >= activationFloor(run)) {
-    if (N >= W && it.slice(-W).every((x) => x.decision !== 'green')) return 'plateau';
+    if (N >= W && it.slice(-W).every((x) => x.decision !== 'green' || x.unwound)) return 'plateau';
     if (N >= 2 * W) {
       const prev = N - 2 * W === 0 ? run.baseline : it[N - 2 * W - 1].bestSoFar;
       const gain = (run.eval.direction === 'minimize' ? -1 : 1) * (last.bestSoFar - prev);
@@ -495,8 +500,11 @@ function trailers(run, t) {
   if (t.failure) lines.push(['AR-Failure', t.failure]);
   if (t.loc) lines.push(['AR-LOC', `+${t.loc.added} -${t.loc.deleted} (net ${t.loc.net})`]);
   if (t.rebaselined) lines.push(['AR-Rebaseline', 'true']);
+  if (t.proxyBest !== undefined) lines.push(['AR-Proxy-Best', fmt(t.proxyBest)]);
+  if (t.unwind) lines.push(['AR-Unwind', t.unwind.join(',')]);
   if (t.revert) lines.push(['AR-Revert', t.revert]);
   if (t.stop) lines.push(['AR-Stop', oneLine(t.stop, 200)]);
+  if (t.holdout) lines.push(['AR-Holdout', holdoutTrailer(run, t.holdout)]);
   if (t.needsHuman) lines.push(['AR-Needs-Human', t.needsHuman]);
   if (t.retroTo) lines.push(['AR-Retro-To', t.retroTo]);
   if (t.detail) lines.push(['AR-Detail', oneLine(t.detail, 300)]);
@@ -510,7 +518,8 @@ function message(subject, body, tr) {
 
 // The run fields a rebuild needs (AR-Config on the baseline commit).
 function configOf(run) {
-  const keys = ['run_id', 'branch', 'worktree', 'project', 'ref', 'brief_path', 'mutable', 'immutable', 'eval', 'budget', 'epsilon_pct', 'epsilon_abs', 'noise', 'baseline', 'convergence', 'hashes', 'pre_loop_head', 'preLoopDirty', 'started_at', 'session'];
+  // run.holdout is configuration only; its sealed baseline value lives under SEALED, never in the journal.
+  const keys = ['run_id', 'branch', 'worktree', 'project', 'ref', 'brief_path', 'mutable', 'immutable', 'eval', 'proxy', 'holdout', 'budget', 'epsilon_pct', 'epsilon_abs', 'noise', 'baseline', 'convergence', 'hashes', 'pre_loop_head', 'preLoopDirty', 'started_at', 'session'];
   const o = {};
   for (const k of keys) o[k] = run[k];
   return o;
@@ -518,32 +527,113 @@ function configOf(run) {
 
 // ---------- public operations ----------
 
+// One eval command spec (the full eval, the proxy or the holdout): exactly one metric extractor, a kill timeout and
+// an optional fixed compute budget (Karpathy mode, issue #91 H5): fixed_budget_s (alias compute_budget_s) is passed
+// to the command as SHARDS_AR_COMPUTE_BUDGET_S and, without an explicit timeout_s, the kill timeout becomes
+// fixed_budget_s + timeout_grace_s (default 60).
+function evalSpec(ev, label, { timeout_s: inheritTimeout } = {}) {
+  if (!ev || typeof ev.command !== 'string' || !ev.command.trim()) throw new Error(`ar_start: ${label} needs a command`);
+  if (!!ev.metric_regex === !!ev.json_path) throw new Error(`ar_start: ${label} needs exactly one of metric_regex or json_path`);
+  if (ev.metric_regex) {
+    try { new RegExp(ev.metric_regex, 'gm'); } catch (e) { throw new Error(`ar_start: invalid ${label} metric_regex: ${e.message}`); }
+  }
+  const fb = ev.fixed_budget_s; const cb = ev.compute_budget_s;
+  if (fb != null && cb != null && fb !== cb) throw new Error(`ar_start: ${label} has both fixed_budget_s and compute_budget_s (aliases); pass one`);
+  const budget = fb != null ? fb : cb != null ? cb : null;
+  if (budget !== null && !(Number.isFinite(budget) && budget > 0)) throw new Error(`ar_start: ${label} fixed_budget_s must be a positive number`);
+  const grace = ev.timeout_grace_s != null ? ev.timeout_grace_s : DEFAULTS.timeout_grace_s;
+  const timeout = ev.timeout_s || (budget ? budget + grace : inheritTimeout || DEFAULTS.timeout_s);
+  if (budget && timeout <= budget) throw new Error(`ar_start: ${label} timeout_s (${timeout}) must exceed fixed_budget_s (${budget}); omit timeout_s to get fixed_budget_s + timeout_grace_s`);
+  return {
+    command: ev.command, metric_regex: ev.metric_regex || null, json_path: ev.json_path || null, timeout_s: timeout,
+    ...(budget ? { fixed_budget_s: budget, timeout_grace_s: grace } : {}),
+  };
+}
+
 function normalizeStartArgs(args) {
   const project = L.normalizeRel(String(args.project).replace(/\/+$/, ''));
   const norm = (xs) => [...new Set((xs || []).map((p) => L.normalizeRel(String(p).replace(/\/+$/, ''))))];
   const mutable = norm(args.mutable);
-  const immutable = norm(args.immutable);
+  const holdoutPaths = norm(args.holdout_paths);
+  if (holdoutPaths.length && !args.holdout) throw new Error('ar_start: holdout_paths needs a holdout command');
+  // Holdout data is immutable (pinned, denied by the lease) on top of being sealed by intent.
+  const immutable = [...new Set([...norm(args.immutable), ...holdoutPaths])];
   if (!mutable.length) throw new Error('ar_start: mutable must list at least one path or glob');
   for (const m of mutable) {
     const probe = GLOB.test(m) ? L.globBase(m) : m;
-    if (probe && immutable.some((e) => L.entryCovers(e, probe))) throw new Error(`ar_start: mutable entry ${m} lies inside an immutable path`);
+    if (probe && immutable.some((e) => L.entryCovers(e, probe))) throw new Error(`ar_start: mutable entry ${m} lies inside an immutable${holdoutPaths.some((e) => L.entryCovers(e, probe)) ? ' (holdout)' : ''} path`);
+    if (holdoutPaths.some((h) => L.entryCovers(m, GLOB.test(h) ? L.globBase(h) || h : h))) throw new Error(`ar_start: holdout path inside the mutable entry ${m}`);
   }
   const ev = args.eval || {};
-  if (!!ev.metric_regex === !!ev.json_path) throw new Error('ar_start: eval needs exactly one of metric_regex or json_path');
-  if (ev.metric_regex) {
-    try { new RegExp(ev.metric_regex, 'gm'); } catch (e) { throw new Error(`ar_start: invalid metric_regex: ${e.message}`); }
+  const full = evalSpec(ev, 'eval');
+  const evalCfg = { ...full, direction: ev.direction, repeats: ev.repeats || DEFAULTS.repeats, name: ev.name || DEFAULTS.metric_name };
+  let proxy = null;
+  if (ev.proxy) {
+    proxy = { ...evalSpec(ev.proxy, 'eval.proxy', { timeout_s: full.timeout_s }), repeats: ev.proxy.repeats || evalCfg.repeats };
+    const every = ev.full_every != null ? ev.full_every : ev.proxy.every != null ? ev.proxy.every : DEFAULTS.full_every;
+    if (!Number.isInteger(every) || every < 1) throw new Error('ar_start: eval.full_every must be an integer >= 1');
+    evalCfg.full_every = every;
+  } else if (ev.full_every != null) throw new Error('ar_start: eval.full_every needs eval.proxy');
+  let holdout = null;
+  if (args.holdout) {
+    holdout = { ...evalSpec(args.holdout, 'holdout', { timeout_s: full.timeout_s }), paths: holdoutPaths, baseline: args.holdout.baseline !== false };
   }
-  const evalCfg = {
-    command: ev.command, metric_regex: ev.metric_regex || null, json_path: ev.json_path || null,
-    direction: ev.direction, timeout_s: ev.timeout_s || DEFAULTS.timeout_s, repeats: ev.repeats || DEFAULTS.repeats,
-    name: ev.name || DEFAULTS.metric_name,
-  };
   const budget = { iterations: args.budget.iterations, minutes: args.budget.minutes || null };
   const conv = args.convergence || {};
   return {
-    project, mutable, immutable, eval: evalCfg, budget,
+    project, mutable, immutable, eval: evalCfg, proxy, holdout, budget,
     epsilon_pct: args.epsilon === undefined ? DEFAULTS.epsilon_pct : args.epsilon,
     convergence: { plateau_window: conv.plateau_window || DEFAULTS.plateau_window, diminishing_returns_pct: conv.diminishing_returns_pct === undefined ? null : conv.diminishing_returns_pct },
+  };
+}
+
+// ---------- sealed holdout (issue #91, H5) ----------
+
+const sealedFile = (root, run) => path.join(root, SEALED, slugOf(run.project), `${keyOf(run)}.json`);
+function readSealed(root, run) {
+  try { return JSON.parse(fs.readFileSync(sealedFile(root, run), 'utf8')); } catch (_) { return null; }
+}
+function writeSealed(root, run, data) {
+  const f = sealedFile(root, run);
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  fs.writeFileSync(f, `${JSON.stringify(data, null, 2)}\n`);
+}
+function holdoutTrailer(run, h) {
+  if (h.skipped) return 'skipped';
+  if (h.tampered) return `tampered (${h.tampered.join(', ')})`;
+  const base = `${run.eval.name}=${fmt(h.baseline)}->${fmt(h.final)}`;
+  return h.failure ? `${base} (failed: ${h.failure})` : `${base} (delta ${fmt(h.delta)})`;
+}
+function parseHoldoutTrailer(v) {
+  if (!v) return null;
+  if (v === 'skipped') return { skipped: true };
+  const t = /^tampered \((.*)\)$/.exec(v);
+  if (t) return { tampered: t[1].split(', ') };
+  const m = /=(\S+)->(\S+) \((?:delta (\S+)|failed: (\S+))\)$/.exec(v);
+  if (!m) return { raw: v };
+  return { baseline: num(m[1]), final: num(m[2]), delta: m[3] !== undefined ? num(m[3]) : null, ...(m[4] ? { failure: m[4] } : {}) };
+}
+function holdoutTamper(root, run) {
+  const now = pinRun(root, run);
+  const bad = run.holdout.paths.filter((k) => now[k] !== run.hashes.immutable[k]);
+  if (run.hashes.holdout_command && sha256(run.holdout.command) !== run.hashes.holdout_command) bad.push('<holdout command>');
+  return bad;
+}
+// The one holdout evaluation of the kept state (ar_end). The sealed pre-loop value is unsealed here.
+async function runHoldout(root, run) {
+  const tampered = holdoutTamper(root, run);
+  const sealed = readSealed(root, run);
+  const baseline = sealed && Number.isFinite(sealed.baseline) ? sealed.baseline : null;
+  if (tampered.length) return { metric: run.eval.name, tampered, baseline, final: null, delta: null };
+  const logFile = `${logDirOf(run)}/holdout.log`;
+  const N = (run.iterations || []).length;
+  const r = await evaluate(root, run, { label: `AR ${keyOf(run)} holdout (kept state, ar_end)`, logFile, iter: N, spec: run.holdout, kind: 'holdout' });
+  const final = r.failure ? null : r.metric;
+  return {
+    metric: run.eval.name, direction: run.eval.direction, baseline, final,
+    delta: final !== null && baseline !== null ? final - baseline : null,
+    ...(r.failure ? { failure: r.failure } : {}), log: logFile,
+    ...(baseline === null && run.holdout.baseline ? { note: 'the sealed baseline value was not found (.shards/state/research-sealed/)' } : {}),
   };
 }
 
@@ -679,6 +769,7 @@ async function start(ctx, args) {
     const run = {
       run_id: runId, project: cfg.project, ref, brief_path: brief, session: ctx.sessionKey,
       mutable: cfg.mutable, immutable: cfg.immutable, eval: cfg.eval, budget: cfg.budget,
+      ...(cfg.proxy ? { proxy: cfg.proxy } : {}), ...(cfg.holdout ? { holdout: cfg.holdout } : {}),
       epsilon_pct: cfg.epsilon_pct, convergence: cfg.convergence,
       pre_loop_head: repo.headSha, started_at: iso(), status: 'active',
     };
@@ -700,7 +791,11 @@ async function start(ctx, args) {
         const stale = dirty.filter((p) => cfg.immutable.some((e) => !linked.has(e) && L.entryCovers(e, p)));
         if (stale.length) throw new Error(`ar_start: immutable paths have uncommitted changes (${stale.slice(0, 10).join(', ')}${stale.length > 10 ? ', ...' : ''}); the branch worktree is created from HEAD and would evaluate the committed version. Ask the user to commit them first.`);
       }
-      run.hashes = { immutable: pinRun(root, run), eval_command: sha256(cfg.eval.command) };
+      run.hashes = {
+        immutable: pinRun(root, run), eval_command: sha256(cfg.eval.command),
+        ...(cfg.proxy ? { proxy_command: sha256(cfg.proxy.command) } : {}),
+        ...(cfg.holdout ? { holdout_command: sha256(cfg.holdout.command) } : {}),
+      };
       run.preLoopDirty = branch ? await dirtyPaths(wroot, await repoInfo(wroot)) : dirty;
 
       // Baseline: `repeats` runs give the mean and the noise floor.
@@ -719,6 +814,27 @@ async function start(ctx, args) {
       run.bestSoFar = m;
       run.lastKeptCommit = repo.headSha;
       run.lastGreenCommit = repo.headSha;
+      if (cfg.proxy) {
+        // Proxy noise floor, measured the same way; the proxy keeps its own reference and epsilon.
+        const pv = [];
+        for (let i = 0; i < cfg.proxy.repeats; i++) {
+          const r = await evaluate(root, run, { label: `AR ${key} proxy baseline run ${i + 1}/${cfg.proxy.repeats}`, logFile: logRel, append: true, iter: 0, spec: cfg.proxy, kind: 'proxy' });
+          if (r.failure) throw new Error(`ar_start: proxy baseline eval run ${i + 1} failed (${r.failure}${r.failure === 'crash' ? `, exit ${r.code}` : ''}); see ${logRel}.`);
+          pv.push(r.metric);
+        }
+        const pm = mean(pv); const psd = stddev(pv);
+        Object.assign(run.proxy, { baseline: pm, noise: { values: pv, mean: pm, stddev: psd }, epsilon_abs: Math.max((cfg.epsilon_pct / 100) * Math.abs(pm), 2 * psd) });
+        run.proxyReference = pm;
+        run.lastFullCommit = repo.headSha; run.lastFullIter = 0; run.anchorProxy = pm;
+      }
+      if (cfg.holdout && cfg.holdout.baseline) {
+        // The holdout runs once on the pre-loop state; its value is sealed (written under .shards/state, never
+        // returned, logged or journaled) until ar_end.
+        const sealedLog = sealedFile(root, run).replace(/\.json$/, '.baseline.log');
+        const r = await evaluate(root, run, { label: `AR ${key} holdout baseline (sealed)`, logFile: sealedLog, iter: 0, spec: cfg.holdout, kind: 'holdout' });
+        if (r.failure) throw new Error(`ar_start: holdout baseline eval failed (${r.failure}${r.failure === 'crash' ? `, exit ${r.code}` : ''}); see ${path.relative(root, sealedLog)}. Fix the holdout command before starting.`);
+        writeSealed(root, run, { run_id: runId, branch: branch || null, baseline: r.metric, at: iso(), command_sha256: run.hashes.holdout_command });
+      }
       run.iterations = [];
       run.deferred = [];
       run.converged = false; run.stop_reason = null;
@@ -728,14 +844,14 @@ async function start(ctx, args) {
     }
 
     const workRel = run.worktree ? path.relative(root, workRoot(root, run)).split(path.sep).join('/') : undefined;
-    const lease = await L.openArLease(session, { runId, project: cfg.project, mutable: cfg.mutable, immutable: cfg.immutable, meta: { ref }, ...(branch ? { branch, workRoot: workRel } : {}) });
+    const lease = await L.openArLease(session, { runId, project: cfg.project, mutable: cfg.mutable, immutable: run.immutable, meta: { ref }, ...(branch ? { branch, workRoot: workRel } : {}) });
     run.lease_id = lease.id;
     try {
       const headTree = (await G.gitOk(root, ['rev-parse', `${repo.headSha}^{tree}`])).trim();
       const msg = message(
         `research(${slug}): baseline ${key}`,
-        `Baseline ${cfg.eval.name} = ${fmt(run.baseline)} (n=${run.noise.values.length}, sd=${fmt(run.noise.stddev)}); epsilon = ${fmt(run.epsilon_abs)}.${branch ? ` Branch ${branch}, worktree ${run.worktree.path}.` : ''}`,
-        trailers(run, { iter: 0, decision: 'baseline', before: null, after: run.baseline, source: 'baseline', best: run.baseline, config: configOf(run) }),
+        `Baseline ${cfg.eval.name} = ${fmt(run.baseline)} (n=${run.noise.values.length}, sd=${fmt(run.noise.stddev)}); epsilon = ${fmt(run.epsilon_abs)}.${run.proxy ? ` Proxy baseline ${fmt(run.proxy.baseline)}, epsilon ${fmt(run.proxy.epsilon_abs)}, full eval every ${cfg.eval.full_every}.` : ''}${run.holdout ? ' Holdout sealed until ar_end.' : ''}${cfg.eval.fixed_budget_s ? ` Fixed compute budget ${cfg.eval.fixed_budget_s}s.` : ''}${branch ? ` Branch ${branch}, worktree ${run.worktree.path}.` : ''}`,
+        trailers(run, { iter: 0, decision: 'baseline', before: null, after: run.baseline, source: 'baseline', best: run.baseline, ...(run.proxy ? { proxyBest: run.proxy.baseline } : {}), config: configOf(run) }),
       );
       const sha = await commitTree(root, headTree, repo.headSha, msg);
       await advanceRef(root, ref, sha, null);
@@ -749,6 +865,27 @@ async function start(ctx, args) {
     await saveRun(state, run, { active: key });
     return run;
   });
+}
+
+// ---------- proxy / full evals (issue #91, bug 8) ----------
+
+// Which eval an iteration runs: always full without a proxy; with one, full on request or when full_every
+// iterations have passed since the last full eval (so a proxy-kept chain is at most full_every - 1 long).
+function evalTypeFor(run, N, force) {
+  if (!run.proxy) return 'full';
+  if (force) return 'full';
+  let lastFull = 0;
+  for (const x of run.iterations) if (x.eval_type === 'full') lastFull = x.n;
+  return N - lastFull >= run.eval.full_every ? 'full' : 'proxy';
+}
+// Proxy-kept iterations since the last full-verified kept state (what a disagreeing full eval unwinds).
+function proxyChain(run) {
+  return (run.iterations || []).filter((x) => x.n > (run.lastFullIter || 0) && x.eval_type === 'proxy' && x.kept && !x.unwound && !x.retroInvalidated);
+}
+const liveKept = (x) => x.kept && !x.unwound && !x.retroInvalidated;
+function lastGreenOf(run) {
+  const g = (run.iterations || []).filter((x) => liveKept(x) && x.decision === 'green');
+  return g.length ? g[g.length - 1].commit : run.pre_loop_head;
 }
 
 async function iterate(ctx, args) {
@@ -770,13 +907,20 @@ async function iterate(ctx, args) {
     if (!tip) throw new Error(`ar_iterate: research ref ${run.ref} is missing`);
     if (run.tip && tip !== run.tip) throw new Error(`ar_iterate: research ref ${run.ref} moved outside the runtime (${tip.slice(0, 12)} != ${run.tip.slice(0, 12)}); run ar_status`);
     const N = run.iterations.length + 1;
-    const before = run.comparisonReference;
+    const evalType = evalTypeFor(run, N, args.full === true);
+    const full = evalType === 'full';
+    const proxyMode = !!run.proxy;
+    const spec = full ? run.eval : run.proxy;
+    const before = full ? run.comparisonReference : run.proxyReference;
+    const eps = full ? run.epsilon_abs : run.proxy.epsilon_abs;
     const logRel = `${logDirOf(run)}/iter_${N}.log`;
 
-    // 1. Tamper check: immutable pins and the eval command.
+    // 1. Tamper check: immutable pins (holdout paths included) and the pinned commands.
     const now = pinRun(root, run);
     const tampered = Object.keys(run.hashes.immutable).filter((k) => now[k] !== run.hashes.immutable[k]);
     if (sha256(run.eval.command) !== run.hashes.eval_command) tampered.push('<eval command>');
+    if (run.proxy && sha256(run.proxy.command) !== run.hashes.proxy_command) tampered.push('<proxy command>');
+    if (run.holdout && sha256(run.holdout.command) !== run.hashes.holdout_command) tampered.push('<holdout command>');
 
     let res = null; let failure = null; let after = null;
     if (tampered.length) {
@@ -784,62 +928,93 @@ async function iterate(ctx, args) {
       fs.mkdirSync(path.dirname(path.join(root, logRel)), { recursive: true });
       fs.writeFileSync(path.join(root, logRel), `# AR ${key} iteration ${N}: TAMPER\nimmutable paths changed since ar_start: ${tampered.join(', ')}\nThe eval was not run.\n`);
     } else {
-      res = await evaluate(root, run, { label: `AR ${key} iteration ${N}`, logFile: logRel, iter: N });
+      res = await evaluate(root, run, { label: `AR ${key} iteration ${N}`, logFile: logRel, iter: N, spec, kind: evalType });
       failure = res.failure; after = res.metric;
     }
-    const decision = classify(run, after, failure);
+    const decision = classify(run, after, failure, before, eps);
 
-    // 2. Snapshot the iteration's mutable state on top of lastKept.
+    // 2. Snapshot the iteration's mutable state on top of lastKept. A full eval in proxy mode judges the whole unit
+    // since the last full-verified kept state (the proxy-kept chain plus this change): LOC and any revert are
+    // relative to lastFullCommit, so a full eval that disagrees with the proxy chain unwinds it (issue #91, bug 8).
+    const baseCommit = full && proxyMode ? run.lastFullCommit : run.lastKeptCommit;
+    const chain = full && proxyMode ? proxyChain(run) : [];
     const diff = await mutableDiff(wroot, repo, run.lastKeptCommit, run, { write: true });
-    const keptTree = (await G.gitOk(wroot, ['rev-parse', `${run.lastKeptCommit}^{tree}`])).trim();
+    const baseTree = (await G.gitOk(wroot, ['rev-parse', `${baseCommit}^{tree}`])).trim();
     const iterTree = await writeTreeFrom(wroot, repo, run.lastKeptCommit, diff.entries);
-    const loc = await locDelta(wroot, keptTree, iterTree);
+    const loc = await locDelta(wroot, baseTree, iterTree);
     const kept = decision === 'green' || (decision === 'yellow' && loc.net < 0);
+    const unwind = !kept && chain.length ? chain.map((x) => x.n) : null;
 
-    let best = run.comparisonReference;
-    if (decision === 'green') best = after;
+    let best = run.comparisonReference; // full-eval scale
+    let proxyBest = proxyMode ? run.proxyReference : undefined;
     const counters = deriveCounters([...run.iterations, { decision, kept, failure }]);
     const rebaselined = decision === 'yellow' && kept && counters.consecutiveYellowKept >= 3;
-    if (rebaselined) best = after; // three kept YELLOWs: judge later iterations against what the kept state scores now
+    // A GREEN, or three kept YELLOWs (re-baseline: judge later iterations against what the kept state scores now),
+    // move the reference of the eval that ran.
+    if (decision === 'green' || rebaselined) { if (full) best = after; else proxyBest = after; }
+
+    // A kept full iteration in proxy mode re-anchors the proxy reference on the new full-verified state.
+    let reanchor = null;
+    if (full && proxyMode && kept) {
+      reanchor = await evaluate(root, run, { label: `AR ${key} iteration ${N} proxy re-anchor`, logFile: logRel, append: true, iter: N, spec: run.proxy, kind: 'proxy' });
+      if (!reanchor.failure) proxyBest = reanchor.metric;
+    }
+    if (unwind) proxyBest = run.anchorProxy;
 
     const hyp = oneLine(args.hypothesis, 300);
     const source = args.source || 'adaptive';
     const slug = slugOf(run.project);
     const iterMsg = message(
-      `research(${slug}): iter ${N} ${decision}${kept ? '' : ' (reverted)'}: ${oneLine(args.hypothesis, 60)}`,
-      `${run.eval.name}: ${fmt(before)} -> ${fmt(after)}${failure ? ` [${failure}]` : ''}; epsilon ${fmt(run.epsilon_abs)}; log ${logRel}.`,
-      trailers(run, { iter: N, decision, before, after, source, hypothesis: hyp, kept, best, failure, loc, rebaselined }),
+      `research(${slug}): iter ${N} ${decision}${kept ? '' : unwind ? ' (unwinds proxy chain)' : ' (reverted)'}: ${oneLine(args.hypothesis, 60)}`,
+      `${run.eval.name} (${evalType}): ${fmt(before)} -> ${fmt(after)}${failure ? ` [${failure}]` : ''}; epsilon ${fmt(eps)}; log ${logRel}.`,
+      trailers(run, { iter: N, decision, before, after, evalType, source, hypothesis: hyp, kept, best, failure, loc, rebaselined, ...(proxyMode ? { proxyBest: kept ? proxyBest : run.proxyReference } : {}) }),
     );
     const iterCommit = await commitTree(root, iterTree, tip, iterMsg);
     await advanceRef(root, run.ref, iterCommit, tip);
     run.tip = iterCommit;
 
-    // 3. Revert (after the iteration's diff is on the ref) or move the pointers (after the commit exists).
+    // 3. Revert / unwind (after the iteration's diff is on the ref) or move the pointers (after the commit exists).
     let reverted = null; let revertCommit = null;
     if (!kept) {
-      reverted = await revertMutable(wroot, repo, run.lastKeptCommit, run);
-      const revMsg = message(
-        `research(${slug}): revert iter ${N} to ${run.lastKeptCommit.slice(0, 12)}`,
-        `Restored ${reverted.restored.length} path(s), deleted ${reverted.deleted.length} file(s) created by the iteration.`,
-        trailers(run, { iter: N, decision, before, after, source, kept: false, best, failure, revert: run.lastKeptCommit }),
-      );
-      revertCommit = await commitTree(root, keptTree, iterCommit, revMsg);
+      reverted = await revertMutable(wroot, repo, baseCommit, run);
+      const revMsg = unwind
+        ? message(
+          `research(${slug}): unwind iters ${unwind.join(',')} + ${N} to ${baseCommit.slice(0, 12)}`,
+          `The full eval (${fmt(after)}${failure ? ` [${failure}]` : ''}) is not better than the last full-verified kept state (${fmt(before)}) by more than ${fmt(eps)}: the proxy-kept iterations ${unwind.join(', ')} are unwound. Restored ${reverted.restored.length} path(s), deleted ${reverted.deleted.length} file(s).`,
+          trailers(run, { iter: N, decision, before, after, evalType, source, kept: false, best, failure, proxyBest, unwind, revert: baseCommit }),
+        )
+        : message(
+          `research(${slug}): revert iter ${N} to ${baseCommit.slice(0, 12)}`,
+          `Restored ${reverted.restored.length} path(s), deleted ${reverted.deleted.length} file(s) created by the iteration.`,
+          trailers(run, { iter: N, decision, before, after, evalType, source, kept: false, best, failure, ...(proxyMode ? { proxyBest } : {}), revert: baseCommit }),
+        );
+      revertCommit = await commitTree(root, baseTree, iterCommit, revMsg);
       await advanceRef(root, run.ref, revertCommit, iterCommit);
       run.tip = revertCommit;
+      if (unwind) {
+        for (const x of run.iterations) if (unwind.includes(x.n)) x.unwound = true;
+        run.lastKeptCommit = baseCommit;
+        run.lastGreenCommit = lastGreenOf(run);
+      }
     } else {
       run.lastKeptCommit = iterCommit;
       if (decision === 'green') run.lastGreenCommit = iterCommit;
+      if (full && proxyMode) { run.lastFullCommit = iterCommit; run.lastFullIter = N; run.anchorProxy = proxyBest; }
     }
     run.comparisonReference = best;
     run.bestSoFar = best;
+    if (proxyMode) run.proxyReference = proxyBest;
 
     const entry = {
       n: N, decision, kept, reverted: !kept, before, after, failure, hypothesis: hyp, source,
-      eval_type: 'full', loc, rebaselined: rebaselined || undefined, bestSoFar: best,
+      eval_type: evalType, loc, rebaselined: rebaselined || undefined, bestSoFar: best,
+      ...(proxyMode ? { proxyBest } : {}),
       commit: iterCommit, revert_commit: revertCommit, log: logRel, at: iso(),
       exit_code: res ? res.code : null, duration_ms: res ? res.duration_ms : null,
       tampered: tampered.length ? tampered : undefined,
       restored: reverted ? reverted.restored : undefined, deleted: reverted ? reverted.deleted : undefined,
+      unwound_iterations: unwind || undefined,
+      proxy_reanchor: reanchor ? { metric: reanchor.metric, failure: reanchor.failure || null } : undefined,
     };
     run.iterations.push(entry);
     Object.assign(run, deriveCounters(run.iterations));
@@ -859,8 +1034,8 @@ async function iterate(ctx, args) {
 
 function summary(run, { source = 'state', leaseActive = null } = {}) {
   const its = run.iterations || [];
-  const counts = { green: 0, yellow: 0, red: 0, kept: 0, reverted: 0 };
-  for (const x of its) { counts[x.decision] = (counts[x.decision] || 0) + 1; if (x.kept) counts.kept++; else counts.reverted++; }
+  const counts = { green: 0, yellow: 0, red: 0, kept: 0, reverted: 0, ...(run.proxy ? { unwound: 0 } : {}) };
+  for (const x of its) { counts[x.decision] = (counts[x.decision] || 0) + 1; if (x.kept) counts.kept++; else counts.reverted++; if (x.unwound) counts.unwound++; }
   const elapsedMin = run.started_at ? (Date.now() - Date.parse(run.started_at)) / 60000 : null;
   return {
     run_id: run.run_id, ...(run.branch ? { branch: run.branch, worktree: run.worktree ? run.worktree.path : null } : {}),
@@ -869,6 +1044,16 @@ function summary(run, { source = 'state', leaseActive = null } = {}) {
     baseline: run.baseline, noise: run.noise, epsilon_abs: run.epsilon_abs,
     comparisonReference: run.comparisonReference, bestSoFar: run.bestSoFar,
     lastKeptCommit: run.lastKeptCommit, lastGreenCommit: run.lastGreenCommit, pre_loop_head: run.pre_loop_head,
+    ...(run.eval && run.eval.fixed_budget_s ? { compute_budget_s: run.eval.fixed_budget_s, timeout_s: run.eval.timeout_s } : {}),
+    ...(run.proxy ? {
+      proxy: {
+        baseline: run.proxy.baseline, noise: run.proxy.noise, epsilon_abs: run.proxy.epsilon_abs, reference: run.proxyReference,
+        full_every: run.eval.full_every, lastFullCommit: run.lastFullCommit,
+        unverified_kept: proxyChain(run).map((x) => x.n), // proxy-kept iterations no full eval has confirmed yet
+      },
+    } : {}),
+    // The holdout is sealed: only its configuration shows until ar_end has evaluated it.
+    ...(run.holdout ? { holdout: run.holdout_result || { sealed: true, paths: run.holdout.paths, evaluated_at: 'ar_end' } } : {}),
     budget: run.budget,
     budget_remaining: {
       iterations: Math.max(0, run.budget.iterations - its.length),
@@ -877,7 +1062,7 @@ function summary(run, { source = 'state', leaseActive = null } = {}) {
     converged: !!run.converged, stop_reason: run.stop_reason || null, ended_at: run.ended_at || null,
     lease_active: leaseActive,
     deferred: pendingDeferred(run),
-    recent: its.slice(-10).map((x) => ({ n: x.n, decision: x.decision, kept: x.kept, before: x.before, after: x.after, failure: x.failure || null, hypothesis: x.hypothesis, commit: x.commit })),
+    recent: its.slice(-10).map((x) => ({ n: x.n, decision: x.decision, kept: x.kept, ...(run.proxy ? { eval_type: x.eval_type, unwound: !!x.unwound } : {}), before: x.before, after: x.after, failure: x.failure || null, hypothesis: x.hypothesis, commit: x.commit })),
   };
 }
 
@@ -923,13 +1108,18 @@ async function rebuildFromRef(root, ref) {
     if (t['AR-Decision'] === 'baseline') {
       const cfg = JSON.parse(t['AR-Config']);
       run = { ...cfg, ref, status: 'active', baseline_commit: sha, comparisonReference: cfg.baseline, bestSoFar: cfg.baseline, lastKeptCommit: cfg.pre_loop_head, lastGreenCommit: cfg.pre_loop_head, iterations: [], deferred: [], converged: false, stop_reason: null };
+      if (run.proxy) Object.assign(run, { proxyReference: run.proxy.baseline, lastFullCommit: cfg.pre_loop_head, lastFullIter: 0, anchorProxy: run.proxy.baseline });
       run.tip = sha;
       continue;
     }
     if (!run) continue;
     run.tip = sha;
     const n = Number(t['AR-Iter']);
-    if (t['AR-Decision'] === 'stop') { run.status = 'ended'; run.stop_reason = t['AR-Stop'] || null; run.converged = true; continue; }
+    if (t['AR-Decision'] === 'stop') {
+      run.status = 'ended'; run.stop_reason = t['AR-Stop'] || null; run.converged = true;
+      if (t['AR-Holdout']) run.holdout_result = { metric: run.eval.name, ...parseHoldoutTrailer(t['AR-Holdout']) };
+      continue;
+    }
     if (t['AR-Decision'] === 'needs-human') {
       const kind = t['AR-Needs-Human'] || 'other';
       const item = { id: `d${(run.deferred || []).length + 1}`, kind, detail: t['AR-Detail'] || '', at_iteration: n, commit: sha, status: 'pending' };
@@ -939,12 +1129,23 @@ async function rebuildFromRef(root, ref) {
         for (const x of run.iterations) if (x.n >= M && x.kept) x.retroInvalidated = true;
         run.lastKeptCommit = t['AR-Revert']; run.lastGreenCommit = target.green;
         run.comparisonReference = target.best; run.bestSoFar = target.best;
+        if (run.proxy) Object.assign(run, { lastFullCommit: target.full.commit, lastFullIter: target.full.n, anchorProxy: target.full.proxyBest, proxyReference: target.proxyBest });
         Object.assign(item, { retro_to_iteration: M, revert_to: t['AR-Revert'] });
       }
       run.deferred = [...(run.deferred || []), item];
       continue;
     }
     const [before, after] = metricPair(t['AR-Metric']);
+    if (t['AR-Unwind']) {
+      const ns = t['AR-Unwind'].split(',').map(Number);
+      for (const x of run.iterations) if (ns.includes(x.n)) x.unwound = true;
+      const e = run.iterations.find((x) => x.n === n);
+      if (e) { e.revert_commit = sha; e.unwound_iterations = ns; }
+      run.lastKeptCommit = t['AR-Revert'];
+      run.lastGreenCommit = lastGreenOf(run);
+      if (t['AR-Proxy-Best'] !== undefined) run.proxyReference = num(t['AR-Proxy-Best']);
+      continue;
+    }
     if (t['AR-Revert']) {
       const e = run.iterations.find((x) => x.n === n);
       if (e) e.revert_commit = sha;
@@ -959,9 +1160,14 @@ async function rebuildFromRef(root, ref) {
       rebaselined: t['AR-Rebaseline'] === 'true' || undefined, bestSoFar: num(t['AR-Best']), commit: sha, revert_commit: null,
       log: `${logDirOf(run)}/iter_${n}.log`,
     };
+    if (t['AR-Proxy-Best'] !== undefined) e.proxyBest = num(t['AR-Proxy-Best']);
     run.iterations.push(e);
     if (kept) { run.lastKeptCommit = sha; if (e.decision === 'green') run.lastGreenCommit = sha; }
     if (e.bestSoFar !== null) { run.comparisonReference = e.bestSoFar; run.bestSoFar = e.bestSoFar; }
+    if (run.proxy && e.proxyBest !== undefined) {
+      run.proxyReference = e.proxyBest;
+      if (kept && e.eval_type === 'full') Object.assign(run, { lastFullCommit: sha, lastFullIter: n, anchorProxy: e.proxyBest });
+    }
   }
   if (!run) throw new Error(`research ref ${ref} has no baseline commit`);
   Object.assign(run, deriveCounters(run.iterations));
@@ -1101,11 +1307,21 @@ async function end(ctx, args) {
     if (!tip) throw new Error(`ar_end: research ref ${run.ref} is missing`);
     const reason = oneLine(args.reason, 200) || run.stop_reason || 'user-interrupt';
     const N = (run.iterations || []).length;
+    // The sealed holdout: evaluated exactly once, here, on the kept state (issue #91, H5).
+    let holdout = null;
+    if (run.holdout) {
+      if (args.skip_holdout) holdout = { metric: run.eval.name, skipped: true };
+      else {
+        if (run.worktree && !fs.existsSync(path.join(ctx.root, run.worktree.path, '.git'))) await ensureWorktree(ctx.root, run);
+        holdout = await runHoldout(ctx.root, run);
+      }
+      run.holdout_result = holdout;
+    }
     const tree = (await G.gitOk(ctx.root, ['rev-parse', `${tip}^{tree}`])).trim();
     const msg = message(
       `research(${slugOf(run.project)}): end ${key} (${reason})`,
-      `${N} iteration(s); best ${run.eval.name} ${fmt(run.bestSoFar)} (baseline ${fmt(run.baseline)}). Kept state: ${run.lastKeptCommit}.${pendingDeferred(run).length ? ` ${pendingDeferred(run).length} deferred decision(s) need a human at the Phase 3 gate.` : ''}`,
-      trailers(run, { iter: N, decision: 'stop', before: run.baseline, after: run.bestSoFar, source: 'runtime', best: run.bestSoFar, stop: reason }),
+      `${N} iteration(s); best ${run.eval.name} ${fmt(run.bestSoFar)} (baseline ${fmt(run.baseline)}). Kept state: ${run.lastKeptCommit}.${holdout ? ` Holdout: ${holdoutTrailer(run, holdout)}.` : ''}${pendingDeferred(run).length ? ` ${pendingDeferred(run).length} deferred decision(s) need a human at the Phase 3 gate.` : ''}`,
+      trailers(run, { iter: N, decision: 'stop', before: run.baseline, after: run.bestSoFar, source: 'runtime', best: run.bestSoFar, stop: reason, ...(holdout ? { holdout } : {}) }),
     );
     const sha = await commitTree(ctx.root, tree, tip, msg);
     await advanceRef(ctx.root, run.ref, sha, tip);
@@ -1119,7 +1335,7 @@ async function end(ctx, args) {
     }
     const cur = readStore(ctx.state);
     await saveRun(ctx.state, run, { active: cur.active === key ? null : cur.active });
-    return { run, closed: closed && closed.status === 'closed' ? closed : null, lease: closed, source, worktreeRemoved };
+    return { run, closed: closed && closed.status === 'closed' ? closed : null, lease: closed, source, worktreeRemoved, holdout };
   });
 }
 
@@ -1130,14 +1346,20 @@ const DEFER_KINDS = ['retro_revert', 'pause', 'floor_breach', 'other'];
 // The kept state in force when iteration M started: the last kept iteration before M, else the pre-loop HEAD.
 function keptBefore(run, M) {
   // Iterations an earlier retro_revert invalidated no longer count as kept.
-  const kept = (run.iterations || []).filter((x) => x.n < M && x.kept && !x.retroInvalidated);
+  const kept = (run.iterations || []).filter((x) => x.n < M && liveKept(x));
   const green = kept.filter((x) => x.decision === 'green');
   const last = kept[kept.length - 1];
+  const fulls = kept.filter((x) => x.eval_type === 'full');
+  const lastFull = fulls[fulls.length - 1];
+  const pb = (x) => (x && x.proxyBest !== undefined && x.proxyBest !== null ? x.proxyBest : run.proxy ? run.proxy.baseline : null);
   // The comparison reference only moves on a kept iteration (GREEN or re-baselined YELLOW).
   return {
     commit: last ? last.commit : run.pre_loop_head,
     green: green.length ? green[green.length - 1].commit : run.pre_loop_head,
     best: last && last.bestSoFar !== null && last.bestSoFar !== undefined ? last.bestSoFar : run.baseline,
+    // proxy mode: the last full-verified kept state before M and the proxy reference in force then
+    full: { commit: lastFull ? lastFull.commit : run.pre_loop_head, n: lastFull ? lastFull.n : 0, proxyBest: pb(lastFull) },
+    proxyBest: pb(last),
   };
 }
 
@@ -1178,6 +1400,7 @@ async function defer(ctx, args) {
       run.lastGreenCommit = target.green;
       run.comparisonReference = target.best;
       run.bestSoFar = target.best;
+      if (run.proxy) Object.assign(run, { lastFullCommit: target.full.commit, lastFullIter: target.full.n, anchorProxy: target.full.proxyBest, proxyReference: target.proxyBest });
       retro = { to_iteration: M, revert_to: target.commit, best: target.best, restored: reverted.restored, deleted: reverted.deleted };
     }
     const msg = message(
@@ -1212,5 +1435,5 @@ module.exports = {
   start, iterate, status, end, defer, brief, rebuildFromRef, resolveRun, findRef, findRefs, refTip, summary, pendingDeferred, DEFER_KINDS,
   branchRuns, compareBranches, runKey, keyOf, workRoot, WORKTREES, MAX_BRANCHES,
   // exported for tests
-  parseMetric, classify, stopReason, deriveCounters, runCommand, pinImmutable, slugOf, REF_ROOT, STATE, DEFAULTS,
+  parseMetric, classify, stopReason, deriveCounters, runCommand, pinImmutable, slugOf, REF_ROOT, STATE, DEFAULTS, SEALED, evalTypeFor,
 };

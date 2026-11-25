@@ -1,6 +1,6 @@
 # Autonomous research runtime (`ar_*` tools)
 
-Issue #91, H1 to H4. The runtime owns the `[AR]` loop's bookkeeping: it runs the eval command, parses the metric, classifies each iteration, keeps or reverts the mutable scope and journals every iteration in git. The agent proposes hypotheses and edits mutable files. It never reports a metric and never runs git to keep or revert. The protocol is in [`core/protocols/autonomous_research.md`](../core/protocols/autonomous_research.md). The manual path there is a fallback for hosts without the runtime.
+Issue #91, H1 to H5. The runtime owns the `[AR]` loop's bookkeeping: it runs the eval command, parses the metric, classifies each iteration, keeps or reverts the mutable scope and journals every iteration in git. The agent proposes hypotheses and edits mutable files. It never reports a metric and never runs git to keep or revert. The protocol is in [`core/protocols/autonomous_research.md`](../core/protocols/autonomous_research.md). The manual path there is a fallback for hosts without the runtime.
 
 Code: `runtime/research/index.js`, tools `runtime/tools/ar_start.js`, `ar_iterate.js`, `ar_status.js`, `ar_defer.js`, `ar_end.js`, CLI `cli/commands/research.js`. Tests: `test/ar-tools.test.js` (including branch runs), `test/ar-lease-enforcement.test.js` (lease, worktree scope, git guard), `test/tasks-verify.test.js` (AR iteration cards), `test/gates-policy.test.js` (`requires_human`, plan budget).
 
@@ -17,7 +17,15 @@ ar_start({
   brief_path,              // research brief; must exist
   mutable: [...],          // paths or globs the loop may change (required)
   immutable?: [...],       // eval harness, tests, data
-  eval: { command, metric_regex | json_path, name?, direction: "maximize"|"minimize", timeout_s? (900), repeats? (3) },
+  eval: {
+    command, metric_regex | json_path, name?, direction: "maximize"|"minimize",
+    timeout_s? (900, or fixed_budget_s + timeout_grace_s), repeats? (3),
+    fixed_budget_s? | compute_budget_s?, timeout_grace_s? (60),         // fixed compute budget (H5)
+    proxy?: { command, metric_regex | json_path, timeout_s?, repeats?, fixed_budget_s?, every? },  // bug 8
+    full_every? (5)                                                     // with proxy only
+  },
+  holdout?: { command, metric_regex | json_path, timeout_s?, baseline? (true), fixed_budget_s? },  // sealed (H5)
+  holdout_paths?: [...],   // holdout split: pinned + immutable + off-limits by intent
   budget: { iterations, minutes? },
   epsilon?,                // % of |baseline|, default 1
   convergence?: { plateau_window? (5), diminishing_returns_pct? }
@@ -29,7 +37,7 @@ The call does the following, in order:
 1. Refuses when this session already has an active AR run or AR lease, except a sibling branch run of the same `run_id` (see [Fan-out](#fan-out-branch-runs-and-worktrees-h4)).
 2. Refuses when a mutable path has uncommitted changes, because a revert would overwrite them. Every other dirty path is recorded in `preLoopDirty`, and reverts never touch those paths.
 3. Pins sha256 hashes. Each immutable file is hashed by its bytes. A directory or glob is hashed as the sorted list of (path, sha) pairs of its files, ignored files included. The eval command string is hashed too.
-4. Runs the baseline eval `repeats` times. Every run must exit 0 and print a metric. The noise floor is the mean and sample standard deviation of those runs. `epsilon_abs = max(epsilon% × |baseline|, 2σ)`.
+4. Runs the baseline eval `repeats` times. Every run must exit 0 and print a metric. The noise floor is the mean and sample standard deviation of those runs. `epsilon_abs = max(epsilon% × |baseline|, 2σ)`. With `eval.proxy`, the proxy is measured the same way (`proxy.repeats`, default `eval.repeats`) and gets its own baseline, noise and `epsilon_abs`. With a `holdout` (and `baseline` not false), the holdout runs once on the pre-loop state and its value is sealed (see [Sealed holdout](#sealed-holdout-h5)).
 5. Opens the AR lease ([`delegation.md`](delegation.md) §5.1). It allows `project` plus the mutable globs and denies writes to immutable paths.
 6. Creates the research ref and makes its first commit, the baseline.
 7. Records `lastKeptCommit = lastGreenCommit = pre-loop HEAD` and `comparisonReference = baseline`.
@@ -40,8 +48,8 @@ If a plan approval exists for the same run id (`gate_request` with `plan_approva
 
 Call it after editing mutable files for one hypothesis. `source` is `adaptive` (the default), `steering` or `reviewer-suggested`.
 
-1. **Tamper check.** The runtime re-hashes the immutable paths and the eval command. Any change makes the iteration a RED with `failure: tamper`. The eval does not run, the iteration is reverted and the run halts with `stop_reason: tamper`.
-2. **Eval.** The runtime runs the pinned command through the shell from the project root. The command gets `SHARDS_AR_RUN` and `SHARDS_AR_ITER` in its environment and runs under `timeout_s`. On timeout the whole process group is killed. The stdout and stderr tails go to `<project>/experiments/iter_<N>.log`.
+1. **Tamper check.** The runtime re-hashes the immutable paths (holdout paths included) and the eval, proxy and holdout commands. Any change makes the iteration a RED with `failure: tamper`. The eval does not run, the iteration is reverted and the run halts with `stop_reason: tamper`.
+2. **Eval.** The runtime runs the pinned command through the shell from the project root. The command gets `SHARDS_AR_RUN`, `SHARDS_AR_ITER` and `SHARDS_AR_EVAL` (`full|proxy|holdout`) in its environment, plus `SHARDS_AR_COMPUTE_BUDGET_S` with a fixed compute budget, and runs under `timeout_s`. With a proxy, the eval that runs is chosen per [Proxy and full evals](#proxy-and-full-evals-bug-8). On timeout the whole process group is killed. The stdout and stderr tails go to `<project>/experiments/iter_<N>.log`.
    - `metric_regex` reads group 1, or the whole match if the regex has no group, of the last match in stdout. If stdout has no match, it reads stderr.
    - `json_path` (`a.b[0]`, an optional `$.` prefix) is read from stdout when stdout parses as JSON as a whole, else from the last line of stdout that does.
 3. **Classify against `comparisonReference`.**
@@ -65,9 +73,22 @@ Call it after editing mutable files for one hypothesis. `source` is `adaptive` (
 
    Once a stop reason fires, `ar_iterate` refuses until `ar_end`.
 
-The call returns `{iteration, decision, metric, before, after, kept, failure, loc, bestSoFar, commit, revert_commit, restored, deleted, log, budget_remaining, converged, stop_reason}`.
+The call returns `{iteration, decision, metric, eval_type, before, after, kept, failure, loc, bestSoFar, commit, revert_commit, restored, deleted, log, budget_remaining, converged, stop_reason}`, plus `proxy_reference`, `unwound` and `lastFullCommit` in proxy mode. `full: true` forces a full eval (proxy mode only).
 
-The runtime does not decide `consecutive-failures` (protocol §E.5: three REDs). That stop needs a reviewer consult first. After the consult the agent calls `ar_end` with that reason, or carries on after a `REDIRECT`. Proxy evals are not supported yet, so every runtime eval is `AR-Eval: full`.
+The runtime does not decide `consecutive-failures` (protocol §E.5: three REDs). That stop needs a reviewer consult first. After the consult the agent calls `ar_end` with that reason, or carries on after a `REDIRECT`.
+
+### Proxy and full evals (bug 8)
+
+With `eval.proxy`, iterations run the proxy by default. Iteration N runs the full eval when `N - (last full-eval iteration) >= full_every` (`proxy.every` is an alias), or when `ar_iterate` gets `full: true`; the result's `eval_type` and the `AR-Eval` trailer say which ran.
+
+- A **proxy** iteration is classified against `proxyReference` with the proxy `epsilon_abs`, and the keep rule and revert target are as usual (`lastKeptCommit`). A GREEN (or a proxy re-baseline) moves `proxyReference`; `comparisonReference` and `bestSoFar` stay on the full scale and do not move.
+- A **full** iteration is classified against `comparisonReference`, the full metric of the last full-verified kept state `lastFullCommit`. It judges the unit "proxy-kept chain since `lastFullCommit` + this change": the YELLOW LOC rule uses the diff from `lastFullCommit`, and a revert goes to `lastFullCommit`.
+  - Kept: `lastFullCommit` (and `lastKeptCommit`) move to it, the full reference moves on a GREEN, and the runtime runs the proxy once on the new state (appended to the iteration log) to re-anchor `proxyReference`.
+  - Not kept while proxy-kept iterations are pending: **unwind**. The mutable scope is restored to `lastFullCommit` with the revert helper, the chain's entries get `unwound: true`, `lastKeptCommit`/`lastGreenCommit` move back, `proxyReference` resets to its value at `lastFullCommit`, and the revert commit carries `AR-Unwind: <n,n,...>` and `AR-Revert: <lastFullCommit>`.
+- Unwound GREENs do not count as GREENs for the plateau check. `ar_defer` retro-reverts move `lastFullCommit` back too.
+- `ar_status` reports `proxy: {baseline, noise, epsilon_abs, reference, full_every, lastFullCommit, unverified_kept}`. `unverified_kept` lists proxy-kept iterations no full eval has confirmed yet; when the run stops with some pending, a final `ar_iterate({full: true})` (with no edit) settles them before `ar_end`, budget permitting.
+
+Every iteration commit in proxy mode carries `AR-Proxy-Best` (the proxy reference after it), so a rebuild from the ref restores `proxyReference`, `lastFullCommit` and the unwound marks.
 
 ### `ar_status({run_id?, branch?, resume?})`
 
@@ -87,9 +108,24 @@ No gate is raised and the loop continues: the next `ar_iterate` is N+1. `ar_stat
 
 `ar_defer` is an exec tool for the hooks, like `ar_iterate`, because a retro-revert rewrites mutable files.
 
-### `ar_end({run_id?, branch?, reason, keep_worktree?})`
+### `ar_end({run_id?, branch?, reason, keep_worktree?, skip_holdout?})`
 
-Puts a final commit on the ref with `AR-Decision: stop` and `AR-Stop: <reason>`. Then it closes the AR lease (a branch run only leaves the shared lease; the last branch closes it) and marks the run `ended`. A branch run's worktree is removed unless `keep_worktree: true`, and the result carries `promote`, the command that applies the kept diff to the main tree at the Phase 3 gate. It returns the summary, including the pending `deferred` items for the Phase 3 gate, plus the commands to inspect the kept diff and the journal.
+With a sealed holdout it first evaluates the kept state once (see below). Then it puts a final commit on the ref with `AR-Decision: stop` and `AR-Stop: <reason>`. Then it closes the AR lease (a branch run only leaves the shared lease; the last branch closes it) and marks the run `ended`. A branch run's worktree is removed unless `keep_worktree: true`, and the result carries `promote`, the command that applies the kept diff to the main tree at the Phase 3 gate. It returns the summary, including the pending `deferred` items for the Phase 3 gate, plus the commands to inspect the kept diff and the journal.
+
+### Sealed holdout (H5)
+
+`holdout` is a second eval command (same metric name and direction) over a split the loop must never see, and `holdout_paths` are that split's files.
+
+- `holdout_paths` are added to the immutable list: pinned at `ar_start`, re-checked every iteration (a change is a `tamper`), and listed as immutable in the AR lease, so writes are denied. A mutable entry may not overlap them. The holdout command is pinned too.
+- `ar_start` runs the holdout once on the pre-loop state (skip with `holdout.baseline: false`). The value goes to `.shards/state/research-sealed/<project-slug>/<run_id>[/<branch>].json` and its log next to it. It is not returned, not written to `experiments/` and not in the research ref (`AR-Config` holds only the holdout configuration).
+- `ar_iterate` never runs it. `ar_status` shows `holdout: {sealed: true, paths}` until the run has ended.
+- `ar_end` checks the holdout pins (on a change it does not run the holdout and reports `tampered`), runs the holdout once on the kept state (a branch run: in its worktree, recreated first if missing, before it is removed), writes `<logdir>/holdout.log` and returns `holdout: {metric, direction, baseline, final, delta}` with `delta = final - baseline`. The stop commit gets `AR-Holdout: <name>=<baseline>-><final> (delta <d>)`, or `skipped` (`skip_holdout: true`), `tampered (<paths>)`, or `... (failed: crash|timeout|parse)`. A rebuild of an ended run parses it back into `holdout_result`.
+
+The seal is by intent: the agent can still read the holdout files or the sealed file. The protocol (§G.11) forbids it; the hash pin catches edits, not reads.
+
+### Fixed compute budget (H5)
+
+`eval.fixed_budget_s` (alias `compute_budget_s`) is a training budget, not just a kill switch. Every eval gets `SHARDS_AR_COMPUTE_BUDGET_S=<seconds>`, and without an explicit `timeout_s` the kill timeout is `fixed_budget_s + timeout_grace_s` (default 60). An explicit `timeout_s` must exceed the budget. It is recorded in `AR-Config` and reported by `ar_start`/`ar_status` as `compute_budget_s`. Iterations are only comparable if the training script reads the variable and stops when the budget is spent; a script that ignores it is killed at the timeout (a timeout RED). `eval.proxy` and `holdout` take their own `fixed_budget_s`; they inherit only the eval's `timeout_s` as their default timeout.
 
 ## Research ref
 
@@ -106,9 +142,9 @@ History follows the first parent:
 |---|---|---|---|
 | baseline | pre-loop HEAD | HEAD tree | `AR-Iter: 0`, `AR-Decision: baseline`, `AR-Config: {json}` |
 | iteration N | previous tip | lastKept tree + mutable changes | `AR-Decision: green\|yellow\|red`, `AR-Kept`, `AR-Best`, `AR-LOC`, `AR-Failure?`, `AR-Hypothesis` |
-| revert N (not kept) | iteration N | lastKept tree | `AR-Revert: <lastKept sha>` |
+| revert N (not kept) | iteration N | lastKept tree (an unwind: lastFull tree) | `AR-Revert: <sha>`, `AR-Unwind?: <n,...>` |
 | needs-human (`ar_defer`) | tip | tip tree, or the kept tree before M for a retro-revert | `AR-Decision: needs-human`, `AR-Needs-Human: <kind>`, `AR-Detail`, `AR-Retro-To?`, `AR-Revert?` |
-| stop | tip | tip tree | `AR-Decision: stop`, `AR-Stop: <reason>` |
+| stop | tip | tip tree | `AR-Decision: stop`, `AR-Stop: <reason>`, `AR-Holdout?` |
 
 Every commit carries these trailers:
 
@@ -137,7 +173,8 @@ The run state lives in `.shards/state/sessions/<key>/research.json` as `{active:
 
 - the configuration, the hashes and `preLoopDirty`
 - branch runs: `branch` and `worktree: {path, prefix, linked}` (`linked`: immutable entries symlinked from the main tree)
-- `baseline`, `noise`, `epsilon_abs`
+- `baseline`, `noise`, `epsilon_abs`; with a proxy, `proxy: {..., baseline, noise, epsilon_abs}`, `proxyReference`, `lastFullCommit`, `lastFullIter`, `anchorProxy`
+- `holdout` (configuration only) and, after `ar_end`, `holdout_result`; the sealed baseline value is not in session state
 - `comparisonReference`, `bestSoFar`, `lastKeptCommit`, `lastGreenCommit`, and the ref `tip`
 - `deferred[]`: the `ar_defer` queue
 - `iterations[]`, plus the counters derived from them: `consecutiveRegressions`, `consecutiveFailures`, `consecutiveTimeouts`, `consecutiveYellowKept`, `iterationsSinceLastGreen`
@@ -166,7 +203,7 @@ So use the same id for `plan_approval` and `ar_start`'s `run_id`. Until `ar_star
 
 ### Enforced budgets
 
-The runtime enforces the iteration budget, the wall-clock `budget.minutes` and the per-eval `timeout_s`. Token and dollar ceilings in the brief are advisory: the agent cannot observe its own usage (protocol §G.5).
+The runtime enforces the iteration budget, the wall-clock `budget.minutes` and the per-eval `timeout_s` (derived from a fixed compute budget when one is set). Token and dollar ceilings in the brief are advisory: the agent cannot observe its own usage (protocol §G.5).
 
 ### Running overnight
 
@@ -222,4 +259,4 @@ Plain `branch-dir` remains only as the `no-vcs` fallback for git-less projects (
 
 ## Promotion
 
-Solo run: kept state stays uncommitted in the user's working tree, and the Phase 3 convergence gate (always human) adopts it. Branch runs: the kept state of each branch is `lastKeptCommit` on its ref. After arbitration the user picks the winner at the human gate, and the initiator applies the winner's `promote` command from `ar_end` in the main tree (`git diff --binary <pre-loop HEAD> <lastKeptCommit> -- <mutable> | git apply`); the Phase 3 adoption gate commits it. Nothing merges a research ref into a user branch. Today the git binding's gate commit (`commitGate`) commits only the agent's output dirs and gate `targets`, so pass the mutable paths as `targets`. A dedicated promote helper (one commit per kept GREEN, via `commitGate` with the denylist and pre-commit hook) and a sealed holdout are deferred.
+Solo run: kept state stays uncommitted in the user's working tree, and the Phase 3 convergence gate (always human) adopts it. Branch runs: the kept state of each branch is `lastKeptCommit` on its ref. After arbitration the user picks the winner at the human gate, and the initiator applies the winner's `promote` command from `ar_end` in the main tree (`git diff --binary <pre-loop HEAD> <lastKeptCommit> -- <mutable> | git apply`); the Phase 3 adoption gate commits it. Nothing merges a research ref into a user branch. Today the git binding's gate commit (`commitGate`) commits only the agent's output dirs and gate `targets`, so pass the mutable paths as `targets`. A dedicated promote helper (one commit per kept GREEN, via `commitGate` with the denylist and pre-commit hook) is deferred.

@@ -103,6 +103,17 @@ Present and confirm:
   2W iterations; default: 2 × epsilon, i.e. 2% of baseline at the default
   epsilon — `autonomous_research.md` §E.2)
 - **Full eval cadence M** (default: 5 interactive / 10 overnight)
+  (`ar_start` `eval.full_every`; used only when a proxy eval is set)
+- **Proxy eval** (optional): a cheaper command on the same metric
+  (`eval.proxy`). The runtime runs it by default and the full eval every M
+  iterations; proxy-kept changes the full eval does not confirm are unwound
+  (`autonomous_research.md` §C.6)
+- **Fixed compute budget** (optional, seconds; `eval.fixed_budget_s`): the
+  training script must stop at `SHARDS_AR_COMPUTE_BUDGET_S` so iterations stay
+  comparable (§G.10)
+- **Sealed holdout** (optional): a holdout command and split paths
+  (`holdout`, `holdout_paths`), scored only by `ar_end`; never read or run it
+  yourself (§G.11)
 - **Mutable scope** (files/dirs/globs the agent may modify):
   - Typical: training scripts, configs, feature pipelines
   - Examples: `training/train.py`, `training/config/*.yaml`, `features/**/*.py`
@@ -435,8 +446,9 @@ Update `project-specs.md` to reflect:
   in the mutable set. Violations halt the loop.
 - **Reverts are file-scoped.** Never `git reset --hard`, never `git clean -f`.
 - **Proxy honesty.** If you use a proxy for evaluation, say so and run a full
-  eval at the configured cadence. A proxy below metric floor triggers a full
-  re-eval automatically.
+  eval at the configured cadence (`eval.full_every`). A full eval that does not
+  confirm the proxy-kept chain unwinds it; a proxy below metric floor gets a
+  full re-eval (`ar_iterate(full=true)`).
 - **Serving awareness never sleeps.** Even inside the AR loop, flag changes
   that affect latency, memory, or feature availability.
 - **Adopt only what was confirmed.** At Phase 3 the user chooses what to keep

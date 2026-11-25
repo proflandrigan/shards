@@ -41,6 +41,19 @@
 
 ---
 
+## Evaluation
+
+<!-- Passed to ar_start. The proxy, compute budget and holdout are optional: write "none" when unused. -->
+
+- **Full eval command:** {{EVAL_COMMAND}}
+- **Metric extraction (metric_regex or json_path):** {{METRIC_EXTRACTION}}
+- **Baseline repeats (noise floor):** {{EVAL_REPEATS}}
+- **Proxy eval command (same metric; full eval every M iterations, unconfirmed proxy gains are unwound):** {{PROXY_EVAL}}
+- **Fixed compute budget, seconds (training must stop at SHARDS_AR_COMPUTE_BUDGET_S):** {{COMPUTE_BUDGET_S}}
+- **Sealed holdout command (scored only at ar_end; never read or run it during the loop):** {{HOLDOUT_EVAL}}
+
+---
+
 ## Scope
 
 Anything not listed as mutable is immutable by default.
@@ -49,6 +62,8 @@ Anything not listed as mutable is immutable by default.
   - {{MUTABLE_SCOPE}}
 - **Immutable:**
   - {{IMMUTABLE_SCOPE}}
+- **Holdout (sealed, immutable, off-limits):**
+  - {{HOLDOUT_PATHS}}
 
 ---
 

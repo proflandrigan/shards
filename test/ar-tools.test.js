@@ -13,6 +13,7 @@ const R = require('../runtime/research');
 const { makeRepo, write, sh, cleanup } = require('./git-binding-fixture');
 
 const EVAL = `const fs = require('fs');
+console.log('budget=' + (process.env.SHARDS_AR_COMPUTE_BUDGET_S || 'none') + ' kind=' + (process.env.SHARDS_AR_EVAL || ''));
 const t = fs.readFileSync('src/model.txt', 'utf8');
 if (t.includes('crash')) { console.error('boom'); process.exit(3); }
 if (t.includes('sleep')) { setInterval(() => {}, 1000); }
@@ -455,5 +456,200 @@ describe('branch run with the project root below the git top level', () => {
     expect(e.worktree_removed).toBe(true);
     execSync(e.promote, { cwd: root, shell: '/bin/sh' });
     expect(read('src/model.txt')).toBe('2\n');
+  });
+});
+
+// ---------- issue #91 H5 + bug 8: sealed holdout, fixed compute budget, proxy/full evals ----------
+
+// Holdout: model value x the holdout data factor; counts its runs in $HC (outside the repo's tracked files).
+const HOLDOUT = `const fs = require('fs');
+if (process.env.HC) { let c = 0; try { c = +fs.readFileSync(process.env.HC, 'utf8'); } catch (_) {} fs.writeFileSync(process.env.HC, String(c + 1)); }
+const v = parseFloat(fs.readFileSync('src/model.txt', 'utf8'));
+const k = parseFloat(fs.readFileSync('holdout/data.txt', 'utf8'));
+console.log('holdout score=' + (v * k));
+`;
+// Proxy: src/proxy.txt (mutable) when present, else the model value; lets an iteration fool the proxy only.
+const PROXY = `const fs = require('fs');
+let t; try { t = fs.readFileSync('src/proxy.txt', 'utf8'); } catch (_) { t = fs.readFileSync('src/model.txt', 'utf8'); }
+console.log('kind=' + process.env.SHARDS_AR_EVAL); console.log('score=' + parseFloat(t));
+`;
+
+describe('sealed holdout (issue #91 H5)', () => {
+  let hc;
+  beforeEach(() => {
+    write(root, 'eval/holdout.js', HOLDOUT);
+    write(root, 'holdout/data.txt', '0.777\n');
+    sh(root, 'add', '-A'); sh(root, 'commit', '-q', '-m', 'holdout');
+    hc = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ar-hc-')), 'n');
+  });
+  const hArgs = (o = {}) => startArgs({ holdout: { command: `HC=${hc} node eval/holdout.js`, metric_regex: 'holdout score=([-0-9.eE]+)' }, holdout_paths: ['holdout'], ...o });
+  const runs = () => Number(fs.readFileSync(hc, 'utf8'));
+  const SECRET = /0\.777/;
+
+  it('evaluates the pre-loop state at ar_start, seals it, never runs it in ar_iterate and reveals it only at ar_end', async () => {
+    const s = await call('ar_start', hArgs());
+    expect(runs()).toBe(1);
+    expect(s.holdout).toEqual({ sealed: true, paths: ['holdout'], baseline_evaluated: true });
+    expect(s.pinned).toEqual(['eval', 'holdout']);
+    expect(L.getActiveArLease({ root, sessionKey: key, state }).ar.immutable).toEqual(['eval', 'holdout']);
+    expect(JSON.stringify(s)).not.toMatch(SECRET);
+    expect(fs.existsSync(path.join(root, R.SEALED, 'p/r1.json'))).toBe(true);
+
+    model('2\n# a\n# b\n');
+    expect(await call('ar_iterate', { hypothesis: 'up' })).toMatchObject({ decision: 'green', kept: true });
+    expect(runs()).toBe(1); // ar_iterate never runs the holdout
+    const st = await call('ar_status', {});
+    expect(st.holdout).toMatchObject({ sealed: true });
+    expect(JSON.stringify(st)).not.toMatch(SECRET);
+    expect(trailersOf('refs/shards/research/p/r1')).not.toMatch(SECRET);
+    for (const f of fs.readdirSync(path.join(root, 'shards/p/experiments'))) expect(read(`shards/p/experiments/${f}`)).not.toMatch(SECRET);
+
+    const e = await call('ar_end', { reason: 'done' });
+    expect(runs()).toBe(2);
+    expect(e.holdout).toMatchObject({ metric: 'score', baseline: 0.777, final: 1.554 });
+    expect(e.holdout.delta).toBeCloseTo(0.777, 10);
+    expect(sh(root, 'log', '-1', '--format=%(trailers:key=AR-Holdout,valueonly)', 'refs/shards/research/p/r1')).toBe('score=0.777->1.554 (delta 0.777)');
+    expect(read('shards/p/experiments/holdout.log')).toMatch(/holdout score=1\.554/);
+    // the rebuilt (ended) run carries the result; status after the end shows it
+    expect((await R.rebuildFromRef(root, 'refs/shards/research/p/r1')).holdout_result).toMatchObject({ baseline: 0.777, final: 1.554, delta: 0.777 });
+    expect((await call('ar_status', { run_id: 'r1' })).holdout).toMatchObject({ final: 1.554 });
+  });
+
+  it('a changed holdout path is a tamper and ar_end refuses to score the holdout', async () => {
+    await call('ar_start', hArgs());
+    write(root, 'holdout/data.txt', '5\n');
+    expect(await call('ar_iterate', { hypothesis: 'peek' })).toMatchObject({ decision: 'red', failure: 'tamper', tampered: ['holdout'], stop_reason: 'tamper' });
+    const e = await call('ar_end', { reason: 'tamper' });
+    expect(runs()).toBe(1);
+    expect(e.holdout).toMatchObject({ tampered: ['holdout'], final: null });
+    expect(sh(root, 'log', '-1', '--format=%(trailers:key=AR-Holdout,valueonly)', 'refs/shards/research/p/r1')).toBe('tampered (holdout)');
+  });
+
+  it('validates the holdout configuration and supports skip_holdout', async () => {
+    await expect(call('ar_start', startArgs({ holdout_paths: ['holdout'] }))).rejects.toThrow(/holdout_paths needs a holdout command/);
+    await expect(call('ar_start', hArgs({ mutable: ['holdout/**'] }))).rejects.toThrow(/inside an immutable \(holdout\) path/);
+    await call('ar_start', hArgs({ holdout: { command: `HC=${hc} node eval/holdout.js`, metric_regex: 'holdout score=([-0-9.eE]+)', baseline: false } }));
+    expect(fs.existsSync(hc)).toBe(false);
+    const e = await call('ar_end', { reason: 'user-interrupt', skip_holdout: true });
+    expect(e.holdout).toMatchObject({ skipped: true });
+    expect(fs.existsSync(hc)).toBe(false);
+    expect(sh(root, 'log', '-1', '--format=%(trailers:key=AR-Holdout,valueonly)', 'refs/shards/research/p/r1')).toBe('skipped');
+  });
+
+  it('branch run: the holdout runs in the worktree on the branch kept state before the worktree is removed', async () => {
+    const s = await call('ar_start', hArgs({ branch: 'a' }));
+    expect(s.holdout).toMatchObject({ sealed: true });
+    expect(fs.existsSync(path.join(root, R.SEALED, 'p/r1/a.json'))).toBe(true);
+    write(path.join(root, '.shards/worktrees/r1/a'), 'src/model.txt', '3\n');
+    await call('ar_iterate', { hypothesis: 'up', branch: 'a' });
+    const e = await call('ar_end', { reason: 'done', branch: 'a' });
+    expect(e.holdout).toMatchObject({ baseline: 0.777, final: 2.331 });
+    expect(e.worktree_removed).toBe(true);
+    expect(read('shards/p/experiments/branches/a/holdout.log')).toMatch(/holdout score=2\.331/);
+    expect(read('src/model.txt')).toBe('1\n# a\n# b\n'); // the main tree was never scored or touched
+  });
+});
+
+describe('fixed compute budget (Karpathy mode, issue #91 H5)', () => {
+  it('passes SHARDS_AR_COMPUTE_BUDGET_S, derives the kill timeout and records it in AR-Config', async () => {
+    const s = await call('ar_start', startArgs({ eval: { command: 'node eval/score.js', metric_regex: 'score=([-0-9.eE]+)', name: 'score', direction: 'maximize', repeats: 1, fixed_budget_s: 7 } }));
+    expect(s).toMatchObject({ compute_budget_s: 7, timeout_s: 67 });
+    expect(read('shards/p/experiments/iter_0.log')).toMatch(/budget=7 kind=full/);
+    expect(trailersOf('refs/shards/research/p/r1')).toMatch(/AR-Config: .*"fixed_budget_s":7,"timeout_grace_s":60/);
+    model('2\n# a\n# b\n');
+    await call('ar_iterate', { hypothesis: 'up' });
+    expect(read('shards/p/experiments/iter_1.log')).toMatch(/budget=7 kind=full/);
+    expect(await call('ar_status', {})).toMatchObject({ compute_budget_s: 7, timeout_s: 67 });
+  });
+
+  it('kills an eval that overruns the budget plus grace (a timeout RED) and validates the budget', async () => {
+    await expect(call('ar_start', startArgs({ eval: { ...startArgs().eval, fixed_budget_s: 30, timeout_s: 20 } }))).rejects.toThrow(/must exceed fixed_budget_s/);
+    await expect(call('ar_start', startArgs({ eval: { ...startArgs().eval, fixed_budget_s: 3, compute_budget_s: 4 } }))).rejects.toThrow(/aliases/);
+    const { timeout_s: _t, ...ev } = startArgs().eval;
+    const s = await call('ar_start', startArgs({ eval: { ...ev, repeats: 1, compute_budget_s: 0.5, timeout_grace_s: 0.5 } }));
+    expect(s).toMatchObject({ compute_budget_s: 0.5, timeout_s: 1 });
+    model('sleep\n');
+    expect(await call('ar_iterate', { hypothesis: 'ignores the budget' })).toMatchObject({ decision: 'red', failure: 'timeout', kept: false });
+  }, 20000);
+});
+
+describe('proxy / full evals and unwind (issue #91, bug 8)', () => {
+  beforeEach(() => {
+    write(root, 'eval/proxy.js', PROXY);
+    sh(root, 'add', '-A'); sh(root, 'commit', '-q', '-m', 'proxy');
+  });
+  const pArgs = (o = {}) => startArgs({ eval: { ...startArgs().eval, proxy: { command: 'node eval/proxy.js', metric_regex: 'score=([-0-9.eE]+)' }, full_every: 3 }, ...o });
+  const lastTr = (k, ref = 'refs/shards/research/p/r1') => sh(root, 'log', '-1', `--format=%(trailers:key=${k},valueonly)`, ref);
+
+  it('runs the proxy by default, the full eval every K-th iteration, and unwinds a proxy chain the full eval does not confirm', async () => {
+    const s = await call('ar_start', pArgs());
+    expect(s.proxy).toMatchObject({ baseline: 1, epsilon_abs: 0.01, full_every: 3 });
+    expect(read('shards/p/experiments/iter_0.log')).toMatch(/kind=proxy/);
+    write(root, 'src/proxy.txt', '2\n');
+    const i1 = await call('ar_iterate', { hypothesis: 'fool proxy 2' });
+    expect(i1).toMatchObject({ eval_type: 'proxy', decision: 'green', kept: true, before: 1, after: 2, proxy_reference: 2, bestSoFar: 1 });
+    expect(lastTr('AR-Eval')).toBe('proxy');
+    write(root, 'src/proxy.txt', '3\n');
+    expect(await call('ar_iterate', { hypothesis: 'fool proxy 3' })).toMatchObject({ eval_type: 'proxy', decision: 'green', kept: true });
+    expect((await call('ar_status', {})).proxy.unverified_kept).toEqual([1, 2]);
+    // iteration 3 is full: the model never improved, so the full eval disagrees with the proxy chain
+    const i3 = await call('ar_iterate', { hypothesis: 'no-op' });
+    expect(i3).toMatchObject({ eval_type: 'full', decision: 'yellow', kept: false, before: 1, after: 1, unwound: [1, 2], proxy_reference: 1, lastFullCommit: sh(root, 'rev-parse', 'HEAD') });
+    expect(fs.existsSync(path.join(root, 'src/proxy.txt'))).toBe(false);
+    expect(lastTr('AR-Unwind')).toBe('1,2');
+    expect(lastTr('AR-Revert')).toBe(sh(root, 'rev-parse', 'HEAD'));
+    expect(sh(root, 'log', '-1', '--skip=1', '--format=%(trailers:key=AR-Eval,valueonly)', 'refs/shards/research/p/r1')).toBe('full');
+    let st = await call('ar_status', {});
+    expect(st).toMatchObject({ lastKeptCommit: sh(root, 'rev-parse', 'HEAD'), lastGreenCommit: sh(root, 'rev-parse', 'HEAD'), decisions: { unwound: 2 }, proxy: { reference: 1, unverified_kept: [] } });
+    // a real improvement: proxy GREENs, then the full eval confirms the chain (kept, proxy re-anchored)
+    model('2\n# a\n# b\n');
+    expect(await call('ar_iterate', { hypothesis: 'model 2' })).toMatchObject({ iteration: 4, eval_type: 'proxy', decision: 'green' });
+    model('3\n# a\n# b\n');
+    expect(await call('ar_iterate', { hypothesis: 'model 3' })).toMatchObject({ iteration: 5, eval_type: 'proxy', decision: 'green' });
+    const i6 = await call('ar_iterate', { hypothesis: 'verify' });
+    expect(i6).toMatchObject({ iteration: 6, eval_type: 'full', decision: 'green', kept: true, before: 1, after: 3, bestSoFar: 3, proxy_reference: 3, unwound: [] });
+    expect(i6.lastFullCommit).toBe(i6.commit);
+    // full: true forces a full eval out of cadence
+    model('2.5\n# a\n# b\n');
+    expect(await call('ar_iterate', { hypothesis: 'worse', full: true })).toMatchObject({ iteration: 7, eval_type: 'full', decision: 'red', kept: false, unwound: [] });
+    expect(read('src/model.txt')).toBe('3\n# a\n# b\n');
+    st = await call('ar_status', {});
+    // rebuild in a new session gives the same pointers and references
+    key = 'sess-proxy'; state = new StateStore(root, key);
+    const rb = await call('ar_status', { run_id: 'r1' });
+    expect(rb).toMatchObject({ source: 'ref', lastKeptCommit: st.lastKeptCommit, lastGreenCommit: st.lastGreenCommit, comparisonReference: 3, decisions: { unwound: 2 }, proxy: { reference: 3, lastFullCommit: i6.commit, unverified_kept: [] } });
+    expect(rb.recent.filter((x) => x.unwound).map((x) => x.n)).toEqual([1, 2]);
+    await call('ar_status', { run_id: 'r1', resume: true });
+    model('4\n# a\n# b\n');
+    expect(await call('ar_iterate', { hypothesis: 'model 4' })).toMatchObject({ iteration: 8, eval_type: 'proxy', decision: 'green', before: 3, after: 4 });
+  });
+
+  it('a retro-revert in proxy mode moves the full-verified pointer back too', async () => {
+    await call('ar_start', pArgs({ eval: { ...pArgs().eval, full_every: 2 } }));
+    model('2\n# a\n# b\n'); await call('ar_iterate', { hypothesis: 'p2' });
+    const f2 = await call('ar_iterate', { hypothesis: 'verify' });
+    expect(f2).toMatchObject({ eval_type: 'full', decision: 'green', kept: true });
+    model('3\n# a\n# b\n'); await call('ar_iterate', { hypothesis: 'p3' });
+    await call('ar_defer', { kind: 'retro_revert', retro_to_iteration: 1, detail: 'leak' });
+    const st = await call('ar_status', {});
+    expect(st).toMatchObject({ comparisonReference: 1, proxy: { reference: 1, lastFullCommit: sh(root, 'rev-parse', 'HEAD') } });
+    expect(read('src/model.txt')).toBe('1\n# a\n# b\n');
+  });
+
+  it('validates the proxy configuration', async () => {
+    await expect(call('ar_start', startArgs({ eval: { ...startArgs().eval, full_every: 2 } }))).rejects.toThrow(/full_every needs eval.proxy/);
+    await expect(call('ar_start', pArgs({ eval: { ...pArgs().eval, proxy: { command: 'node eval/proxy.js' } } }))).rejects.toThrow(/eval.proxy needs exactly one of/);
+  });
+
+  it('branch run: proxy and full evals run in the worktree and an unwind restores the worktree', async () => {
+    await call('ar_start', pArgs({ branch: 'a', eval: { ...pArgs().eval, full_every: 2 } }));
+    const w = path.join(root, '.shards/worktrees/r1/a');
+    write(w, 'src/proxy.txt', '5\n');
+    expect(await call('ar_iterate', { hypothesis: 'fool', branch: 'a' })).toMatchObject({ eval_type: 'proxy', decision: 'green' });
+    expect(await call('ar_iterate', { hypothesis: 'verify', branch: 'a' })).toMatchObject({ eval_type: 'full', kept: false, unwound: [1] });
+    expect(fs.existsSync(path.join(w, 'src/proxy.txt'))).toBe(false);
+    expect(fs.existsSync(path.join(root, 'shards/p/experiments/branches/a/iter_2.log'))).toBe(true);
+    expect(lastTr('AR-Unwind', 'refs/shards/research/p/r1/a')).toBe('1');
+    await call('ar_end', { reason: 'done', branch: 'a' });
   });
 });
