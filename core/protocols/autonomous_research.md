@@ -170,7 +170,63 @@ interrupts. **No intermediate gates between iterations by default** — the
 autonomous loop is the whole point. The optional micro-gate (Section B.12) is
 opt-in and only on the overnight preset.
 
-### Pre-loop setup
+### Runtime path (use it when the AR tools are available)
+
+When the Shards runtime offers `ar_start`, `ar_iterate`, `ar_status` and
+`ar_end`, use them. They replace the manual bookkeeping in B.6, B.7, B.9, C.1
+to C.3 and the stop checks of Section E. **Do not run the eval yourself, do not
+self-report a metric, and do not use git to keep, revert or checkpoint.** The
+runtime does all of it, and its numbers are the record.
+
+1. **Start (replaces the pre-loop setup below).** Call `ar_start` with the
+   project dir, the brief path, the mutable and immutable lists from the
+   brief, the eval spec (`command`, `metric_regex` or `json_path`, `direction`,
+   `timeout_s`, `repeats`), the budget (`iterations`, `minutes`) and
+   `epsilon` (% of baseline). It:
+   - refuses a dirty mutable scope (ask the user to commit or stash)
+   - snapshots `preLoopDirty`
+   - pins hashes of the immutable paths and of the eval command
+   - opens the AR lease that enforces the write scope
+   - measures the baseline `repeats` times, which sets the noise floor:
+     `epsilon_abs = max(epsilon% × |baseline|, 2σ)`
+   - creates the research journal ref `refs/shards/research/<project>/<run>`
+     with the baseline as its first commit
+2. **Each iteration.** Do B.1 to B.5 as written. Then call
+   `ar_iterate(hypothesis, source)` instead of B.6, B.7 and B.9. It:
+   - checks the immutable pins (a change is `tamper`: RED, revert, halt)
+   - runs the eval under its timeout and writes
+     `experiments/iter_<N>.log`
+   - classifies per C.1 against the comparison reference, using
+     `epsilon_abs`; a YELLOW is kept only when the mutable diff has a net LOC
+     delta below 0
+   - commits the iteration, kept or not, to the research ref with `AR-*`
+     trailers
+   - reverts a RED or an unkept YELLOW to `lastKeptCommit`: it restores
+     files and deletes the new files the loop created in the mutable scope,
+     then adds a revert commit
+   - moves the pointers only after the commit exists
+   - returns `{decision, before, after, kept, converged, stop_reason}`
+
+   Use those values in B.8 (the iteration record, the Research Log line, and
+   the `results.json` entry, which is now a derived view of the ref). Do B.10
+   as written. If `converged` is true, a stop condition fired (B.11): go to
+   Phase 3.
+3. **Status and resume.** `ar_status` reports the iterations, decisions,
+   `bestSoFar`, the budget remaining and the stop reason. After a context loss
+   or in a new session, the runtime rebuilds the run from the research ref.
+   `ar_status(run_id, resume=true)` reopens the lease so the loop can continue.
+   This replaces G.8's manual reconciliation.
+4. **Stop.** Call `ar_end(reason)` when a stop condition fired (the runtime's
+   `stop_reason`), when the user halted the run (B.1), or for a reviewer stop.
+   That includes `consecutive-failures` after the §D consult; the runtime does
+   not decide E.5 on its own. `ar_end` records the reason on the ref and closes
+   the lease. Kept changes stay uncommitted in the working tree until the
+   Phase 3 gate.
+
+Without the runtime (a host with no Shards MCP server), follow the manual steps
+below and in Sections C and E.
+
+### Pre-loop setup (manual path)
 
 At the start of Phase 2, before iteration 1:
 
@@ -269,7 +325,8 @@ Keep changes minimal and isolated to the hypothesis. No drive-by cleanups.
 
 #### B.6 Evaluate
 
-Run the evaluation protocol for this specialist (full train/eval, proxy, etc.)
+With the runtime, `ar_iterate` runs the eval (see "Runtime path"); skip the
+rest of this step. Otherwise run the evaluation protocol for this specialist (full train/eval, proxy, etc.)
 and measure the primary metric. Record both primary and secondary metrics.
 
 **Proxy vs full-eval rules (Section E also governs):**
@@ -362,6 +419,10 @@ per-iteration markdown — the inline copy makes the run legible in the
 transcript.
 
 #### B.9 Git checkpoint
+
+With the runtime, `ar_iterate` already journaled the iteration on
+`refs/shards/research/<project>/<run>`; skip this step (no tags, no per-iteration
+commits on the user branch). The manual path follows.
 
 Follow **Section B** of [`protocols/experiment_versioning.md`](experiment_versioning.md)
 with these AR-specific conventions. That protocol's git policy applies in full:
@@ -533,6 +594,11 @@ If reverted:
 2. Record `autoDecision: "yellow"`, `reverted: true`.
 
 ### C.3 Revert mechanism
+
+With the runtime, `ar_iterate` performs this revert itself (files restored
+from `lastKeptCommit` without touching the user's index, loop-created files in
+the mutable scope deleted, revert commit on the research ref). The manual
+mechanism follows.
 
 Reverts are **file-scoped**, never `git reset --hard`, never `git clean -f`.
 They run at B.7, before the iteration's checkpoint commit, and restore the
@@ -748,6 +814,11 @@ not wait.
 Stop when ANY of the following is true. Check them in order; the first that
 fires names the stop reason.
 
+With the runtime, `ar_iterate` evaluates E.1, E.2, E.3, the wall-clock budget
+(`time-budget`), G.3/G.4 (`error-limit`, `timeout-limit`) and the immutable
+tamper check (`tamper`), and returns `converged` and `stop_reason`. E.4 to E.6
+and user or reviewer stops remain the agent's call, ended with `ar_end`.
+
 E.1 and E.2 are measured over **all** iterations, GREEN or not, using each
 entry's `bestSoFar` (the comparison reference in force after that iteration,
 C.1). An iteration that is not GREEN leaves `bestSoFar` unchanged, so it adds
@@ -815,7 +886,7 @@ When any stop condition fires (Section E) **or any safety rail halts the loop
 ```json
 "convergence": {
   "detected": true,
-  "reason": "plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | error-limit | timeout-limit",
+  "reason": "plateau | diminishing-returns | budget-exhausted | time-budget | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | tamper | error-limit | timeout-limit",
   "iterationsSinceLastGreen": <N>,
   "consecutiveRegressions": <N>,
   "consecutiveYellowKept": <N>,
@@ -829,6 +900,8 @@ The reason enum:
 - Section E stops: `plateau`, `diminishing-returns`, `budget-exhausted`,
   `cost-ceiling`, `consecutive-failures`, `metric-floor-breach`,
   `user-interrupt`, `reviewer-pause`.
+- Runtime-only: `time-budget` (the `budget.minutes` wall clock elapsed) and
+  `tamper` (an immutable path or the eval command changed since `ar_start`).
 - Section G safety-rail halts: `scope-violation` (G.1), `error-limit` (G.3 —
   three consecutive crashes), `timeout-limit` (G.4 — three consecutive
   timeouts which itself triggers G.3's error-limit path — record
@@ -837,6 +910,11 @@ The reason enum:
 ---
 
 ## Section F — results.json Schema Extensions
+
+With the runtime, `results.json` is a derived view: the source of truth is the
+research ref (`git log --format=%(trailers) refs/shards/research/<project>/<run>`)
+and `ar_status`. Copy the values `ar_iterate` / `ar_status` return; never
+compute metrics or pointers yourself.
 
 The AR schema extends the `[EX]` results.json schema. All existing fields
 (`projectName`, `agent`, `outcomeMetric`, `baseline`, `experiments[]`,
@@ -1008,6 +1086,10 @@ revert target (not in `preLoopDirty`), removed by its explicit path.
   happen only under the `git.commit` and `git.denylist` policy in B.9.
 
 ### G.8 Interrupt handling
+
+With the runtime, call `ar_status` (with `resume=true` in a new session): the
+research ref is the journal, so nothing needs reconciling by hand. The manual
+procedure follows.
 
 If the agent detects it was interrupted mid-iteration (on resume, finds a
 commit without a matching `results.json` entry, or vice versa):

@@ -282,11 +282,15 @@ Every tool response starts with the state header (section 4). Session-bound tool
 | `sessions_list` | List recorded sessions, newest first. | [`sessions.md`](sessions.md) |
 | `sessions_resume` | Look up a session and return per-host resume hints. | [`sessions.md`](sessions.md) |
 | `sessions_end` | End a session cleanly; refused while gates are pending or suspended. | [`sessions.md`](sessions.md) |
-| `shards_status` | Report runtime status: root, session, state version, config and bindings, active agent. | section 2 |
+| `shards_status` | Report runtime status: root, session, state version, config and bindings, active agent, AR lease and run. | section 2 |
 | `notebook_start` | Start a persistent Jupyter kernel for a notebook. | [`notebook.md`](notebook.md) |
 | `notebook_exec` | Execute one cell against the live kernel. | [`notebook.md`](notebook.md) |
 | `notebook_run_all` | Restart the kernel and run every code cell, stopping at the first failure. | [`notebook.md`](notebook.md) |
 | `notebook_stop` | Shut down the notebook kernel. | [`notebook.md`](notebook.md) |
+| `ar_start` | Start an autonomous-research run: pin immutable paths and the eval command, measure the baseline noise floor, open the AR lease, create `refs/shards/research/<project>/<run>`. | [`research.md`](research.md) |
+| `ar_iterate` | Run the pinned eval for one iteration, classify GREEN/YELLOW/RED, journal it on the research ref, keep or revert the mutable scope. | [`research.md`](research.md) |
+| `ar_status` | Show an AR run; rebuilds it from the research ref's trailers when session state is missing; `resume` adopts it. | [`research.md`](research.md) |
+| `ar_end` | Record the stop reason on the research ref, close the AR lease, end the run. | [`research.md`](research.md) |
 
 - `agent` must list the requested mode in its `activation` field.
 - Switch with `project` substitutes it into the agent's `output_dir`, refuses paths that escape the root, and creates the directory if missing. Without `project` it returns `output_dir_template` instead.

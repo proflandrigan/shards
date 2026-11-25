@@ -378,6 +378,10 @@ function patchText(inp) {
 
 // Shards MCP tools that execute notebook code (arbitrary side effects, target unknown).
 const EXEC_MCP = /(?:^|__)(notebook_exec|notebook_run_all)$/;
+// Shards AR tools that run the pinned eval command and revert mutable files (runtime/research). Their writes are
+// confined by the runtime itself (mutable scope + experiments logs), so they count as exec: blocked while a gate
+// is pending, never write-checked.
+const AR_EXEC_MCP = /(?:^|__)(ar_start|ar_iterate)$/;
 
 function writesOf(n) {
   const tool = n.toolName || ''; const inp = n.toolInput || {};
@@ -391,6 +395,7 @@ function writesOf(n) {
   }
   if (tool === 'Bash') return bashWrites(inp.command, n.cwd);
   if (EXEC_MCP.test(tool)) return { write: true, paths: [], unknown: true, exec: false };
+  if (AR_EXEC_MCP.test(tool)) return { write: false, paths: [], unknown: false, exec: true };
   return { write: false, paths: [], unknown: false, exec: false };
 }
 

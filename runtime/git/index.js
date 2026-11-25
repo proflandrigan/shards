@@ -851,4 +851,8 @@ function listPendingFrom(store, beforeSeq) {
   return Object.values(store.records).filter((r) => (r.status === 'pending' || r.status === 'stuck') && r.seq < beforeSeq).sort((a, b) => a.seq - b.seq);
 }
 
-module.exports = { commitGate, replayPending, listPending, loadStore, gitState, gateRef, recordRef, makeDenyMatcher, BACKOFF_MS, MAX_TRIES };
+module.exports = {
+  commitGate, replayPending, listPending, loadStore, gitState, gateRef, recordRef, makeDenyMatcher, BACKOFF_MS, MAX_TRIES,
+  // Plumbing helpers shared with runtime/research (autonomous-research ref, issue #91).
+  git, gitOk, identEnv, hashWorktree, indexInfo, withTmpDir, killTree, ZERO_SHA,
+};

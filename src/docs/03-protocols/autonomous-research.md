@@ -16,6 +16,8 @@ Use AR when you have a metric and a budget, cannot enumerate the experiments ahe
 6. **Log**: an iteration file, `history.jsonl` and `results.json` are updated, and an experiment checkpoint is made (see [Experiment Versioning](experiment-versioning.md)).
 7. **Check**: budget exhausted, converged, or steering updated? If not, go back to step 2.
 
+With the Shards runtime, steps 4 to 6 belong to the runtime, not the specialist. `ar_start` pins the eval harness and measures a baseline noise floor. `ar_iterate` runs the eval itself, classifies the result as GREEN, YELLOW or RED, and keeps or reverts the change. It also commits every iteration, kept or reverted, to the git ref `refs/shards/research/<project>/<run>`, with `AR-*` trailers; your branch is never touched. `ar_status` and `ar_end` report and close the run. After a context loss, the run is rebuilt from that ref. Details: `docs/research.md`.
+
 Phase 0, Phase 1 and Phase 3 stay gated. Facilitate-don't-generate is suspended only for the Phase 2 loop, and the specialist announces that before the Phase 1 gate.
 
 ## Key artifacts (under `experiments/`)

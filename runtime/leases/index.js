@@ -413,4 +413,4 @@ function isArImmutable(session, lease, filePath) {
   return (lease.ar.immutable || []).some((e) => entryCovers(e, rel) || entryUnder(e, rel));
 }
 
-module.exports = { openArLease, closeArLease, getActiveArLease, touchArLease, checkArWrite, isArImmutable, AR_OWNER, AR_DEFAULT_TTL_MS, releaseWorker, bindWorker, findWorkerLease, touchWorker, findSliceOwning, openLease, heartbeat, closeLease, listActive, expireStale, isPathAllowed, pathsOverlap, normalizeRel, OWNERS, DEFAULT_TTL_MS };
+module.exports = { openArLease, closeArLease, getActiveArLease, touchArLease, checkArWrite, isArImmutable, entryCovers, globBase, AR_OWNER, AR_DEFAULT_TTL_MS, releaseWorker, bindWorker, findWorkerLease, touchWorker, findSliceOwning, openLease, heartbeat, closeLease, listActive, expireStale, isPathAllowed, pathsOverlap, normalizeRel, OWNERS, DEFAULT_TTL_MS };

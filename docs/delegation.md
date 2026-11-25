@@ -212,7 +212,7 @@ A solo `[AR]` run holds one session-wide **AR lease** that makes its write scope
 | `touchArLease(session, now?)` | Hook keepalive: refreshes `expires_at` (throttled to once per minute, no version bump) on every enforced tool call. |
 | `checkArWrite(session, lease, filePath)` | `{allowed, reason, rel}` for one write target. |
 
-The `ar_start` / `ar_end` tools (planned) call `openArLease` / `closeArLease`. While the lease is active, `hooks/lib/ar-guard.js` (called from `enforce.js` as rule 4, for every caller of the session: main thread and subagents) applies two checks. `SHARDS_GATE_ENFORCE=0` turns both off.
+The `ar_start` / `ar_end` tools ([`research.md`](research.md)) call `openArLease` / `closeArLease`; `ar_status` with `resume: true` reopens it for a run rebuilt in a new session. While the lease is active, `hooks/lib/ar-guard.js` (called from `enforce.js` as rule 4, for every caller of the session: main thread and subagents) applies two checks. `SHARDS_GATE_ENFORCE=0` turns both off.
 
 **Write scope.** For Write, Edit, MultiEdit, NotebookEdit, `apply_patch` and Bash writes:
 - A target inside an `immutable` entry, or a directory that contains one (`rm -rf src` when `src/eval.py` is immutable), is denied. Immutable wins over `mutable` and `allow`.
