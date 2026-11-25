@@ -41,15 +41,16 @@ async function appendArCards(ctx, args, scope) {
   const v = T.validateManifest(manifest, { knownAgents: agents });
   if (!v.ok) throw new Error(`Task manifest rejected (${v.errors.length} problem${v.errors.length === 1 ? '' : 's'}):\n${v.errors.map((e) => `  - ${e}`).join('\n')}`);
   const f = inside(ctx.root, existing.path);
-  fs.mkdirSync(path.dirname(f.abs), { recursive: true });
-  fs.writeFileSync(f.abs, T.stringifyYaml(manifest));
   const fresh = T.initialTasksState({ version: 1, tasks: add }, existing.path).tasks;
+  // State first (it can refuse a concurrent change), then tasks.yaml, so a refusal leaves the file untouched.
   const next = await ctx.state.update(T.stateNameFor(scope), (cur) => {
     if (!cur.manifest || cur.manifest.tasks.length !== existing.manifest.tasks.length) throw new Error('tasks_set: the manifest changed concurrently; nothing was appended.');
     cur.manifest = manifest;
     cur.tasks = { ...cur.tasks, ...fresh };
     return cur;
   });
+  fs.mkdirSync(path.dirname(f.abs), { recursive: true });
+  fs.writeFileSync(f.abs, T.stringifyYaml(manifest));
   const mirror = T.mirrorTasksMd(ctx, next, scope);
   const data = {
     ...(scope ? { scope } : {}), manifest_path: existing.path, appended: add.map((t) => t.id), total: manifest.tasks.length,

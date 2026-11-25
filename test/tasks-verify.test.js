@@ -138,6 +138,17 @@ describe('task_verify AR iteration outcome (issue #91, bug 22)', () => {
     expect(stS().it1).toMatchObject({ status: 'done', ar_outcome: { metric_outcome: 'yellow', result: 'kept', iteration: 1, commit: 'c1' } });
   });
 
+  it('an AR card needs the AR arguments, its own iteration, and an iteration backs one card', async () => {
+    await seedRun([{ n: 1, decision: 'green', kept: true, commit: 'c1' }, { n: 2, decision: 'red', kept: false, commit: 'c2' }]);
+    await call('task_dispatch', { ids: ['it1'], ...sc }); await call('task_report', { id: 'it1', result: result(), ...sc });
+    expect(text(await arVerify('it1', { ...sc }))).toMatch(/AR iteration card: call ar_iterate/);
+    expect(text(await arVerify('it1', { ar_iteration: 2, ...sc }))).toMatch(/card for iteration 1, not 2/);
+    expect((await arVerify('it1', { ar_iteration: 1, ...sc })).isError).toBeFalsy();
+    await call('tasks_set', { manifest: { version: 1, tasks: [arTask(2, { ar: { run_id: 'r1', branch: 'a' } })] }, append: true, ...sc });
+    await call('task_dispatch', { ids: ['it2'], ...sc }); await call('task_report', { id: 'it2', result: result(), ...sc });
+    expect(text(await arVerify('it2', { ar_iteration: 1, ...sc }))).toMatch(/already recorded on task it1/);
+  });
+
   it('validates the outcome arguments', async () => {
     await call('task_dispatch', { ids: ['it1'], ...sc }); await call('task_report', { id: 'it1', result: result(), ...sc });
     expect(text(await arVerify('it1', { metric_outcome: 'yellow', ...sc }))).toMatch(/YELLOW outcome needs kept/);

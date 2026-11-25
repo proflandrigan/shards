@@ -401,7 +401,7 @@ Ask the user:
 - Do you want to run more experiments?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ai-engineer id=ai-engineer-experiment-phase-3}}
+{{gate kind=final phase=3 validates=ai-engineer id=ai-engineer-experiment-phase-3 requires_human=true}}
 
 Wait for their response before taking any further action.
 

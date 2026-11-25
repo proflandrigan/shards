@@ -59,7 +59,7 @@ Convergence checks start only after an activation floor of `max(10, budget * 0.2
 - **Diminishing returns**: the best-so-far metric gained less than the threshold (default 2 × epsilon) over the last 2W iterations.
 - **Budget exhausted** or **cost ceiling** reached.
 - **Consecutive failures** (default 3), after a reviewer consult that may redirect.
-- **Metric floor breach** on a full evaluation. This check is always live. A proxy result below the floor triggers a full evaluation first.
+- **Metric floor breach** on a full evaluation. This check is always live. The runtime does not check the floor: the agent compares each result to it. A proxy result below the floor makes the agent call `ar_iterate` with `full=true`; a breach on that full evaluation is queued with `ar_defer(floor_breach)` on an unattended run, or stops the loop for the user otherwise.
 - You pausing via the steering document.
 
 ## AR fan-out (branch leads and worktrees)

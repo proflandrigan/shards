@@ -444,7 +444,7 @@ When a §E stop condition fires later in this iteration (at B.11) **or a §G
 safety rail halts the loop**, additionally print on the same turn:
 
 ```
-Convergence detected: <plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | error-limit | timeout-limit>
+Convergence detected: <plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | time-budget | tamper | error-limit | timeout-limit>
 ```
 
 The enum here matches §E.7's canonical list — §E stop conditions plus §G safety-rail halts.
@@ -555,7 +555,7 @@ blocking gate, call `ar_defer` and continue:
 |---------|------|------|
 | Reviewer `RETRO_REVERT` for iteration M (C.4) | `ar_defer(kind="retro_revert", retro_to_iteration=M, detail=<reason>)` | The runtime restores the kept state before M and moves `lastKeptCommit`, `lastGreenCommit` and the comparison reference there; continue with N+1 |
 | Reviewer `PAUSE`, or a `PAUSE` in Steering Notes the user marked "defer" | `ar_defer(kind="pause", detail=<concern>)` | Continue; avoid the hypothesis family the concern names |
-| Metric floor breach on a full eval (E.6) | `ar_defer(kind="floor_breach", detail=<value vs floor>)` | `ar_iterate` already reverted the iteration; continue |
+| Metric floor breach on a full eval (E.6) | `ar_defer(kind="floor_breach", detail=<value vs floor>)` | The runtime has no floor check: you judge the breach from the `ar_iterate(full=true)` result. If that iteration was kept, the deferred item asks the human whether to revert it; continue |
 | Anything else only a human can decide | `ar_defer(kind="other", detail=...)` | Continue |
 
 Each call commits a `needs-human` entry (`AR-Needs-Human: <kind>`) on the
@@ -1616,7 +1616,7 @@ Factual synthesis — no opinions in this file:
 
 ## Convergence
 - **Detected:** Yes | No
-- **Reason:** <plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | error-limit | timeout-limit>
+- **Reason:** <plateau | diminishing-returns | budget-exhausted | cost-ceiling | consecutive-failures | metric-floor-breach | user-interrupt | reviewer-pause | scope-violation | time-budget | tamper | error-limit | timeout-limit>
 - **Iterations completed:** N of <budget>
 - **Activation floor reached:** Yes | No
 

@@ -290,7 +290,10 @@ function walkFiles(abs, rel, out, skipTop) {
 function fileDigest(abs) {
   const st = fs.lstatSync(abs);
   if (st.isSymbolicLink()) return `link:${sha256(fs.readlinkSync(abs))}`;
-  return sha256(fs.readFileSync(abs));
+  // Chunked read: datasets above 2 GiB cannot go through readFileSync.
+  const h = crypto.createHash('sha256'); const buf = Buffer.allocUnsafe(1 << 20); const fd = fs.openSync(abs, 'r');
+  try { let n; while ((n = fs.readSync(fd, buf, 0, buf.length, null)) > 0) h.update(n === buf.length ? buf : buf.subarray(0, n)); } finally { fs.closeSync(fd); }
+  return h.digest('hex');
 }
 function listDigest(root, rels) {
   const lines = rels.sort().map((r) => `${r}\0${fileDigest(path.join(root, r))}\n`);
@@ -345,6 +348,7 @@ function runCommand(command, { cwd, timeoutMs, env }) {
     const finish = (code, signal, error) => {
       if (done) return; done = true;
       clearTimeout(timer); clearTimeout(killTimer); clearTimeout(hardTimer);
+      if (timedOut && child) killGroup(child, 'SIGKILL'); // grandchildren that ignored SIGTERM outlive the leader
       resolve({ code: code === null || code === undefined ? (timedOut ? 124 : 1) : code, signal: signal || null, error: error || null, stdout, stderr, timedOut, duration_ms: Date.now() - t0 });
     };
     try {
@@ -382,10 +386,7 @@ function parseMetric(ev, stdout, stderr) {
     for (const text of [stdout, stderr]) {
       let last = null;
       for (const m of String(text || '').matchAll(re)) last = m;
-      if (last) {
-        const v = Number(last[1] !== undefined ? last[1] : last[0]);
-        return Number.isFinite(v) ? v : null;
-      }
+      if (last) return toMetric(last[1] !== undefined ? last[1] : last[0]);
     }
     return null;
   }
@@ -394,10 +395,17 @@ function parseMetric(ev, stdout, stderr) {
     if (!c) continue;
     let obj;
     try { obj = JSON.parse(c); } catch (_) { continue; }
-    const v = Number(jsonGet(obj, ev.json_path));
-    return Number.isFinite(v) ? v : null;
+    const v = toMetric(jsonGet(obj, ev.json_path));
+    if (v !== null) return v; // a later line that parses as JSON (a bare number, `true`) is not the metric line
   }
   return null;
+}
+// A metric value: a finite number or a non-empty numeric string. null, '', true, [] are not 0/1.
+function toMetric(v) {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  if (typeof v !== 'string' || !v.trim()) return null;
+  const n = Number(v.trim());
+  return Number.isFinite(n) ? n : null;
 }
 
 const tail = (s) => (Buffer.byteLength(s) > LOG_TAIL ? `[... truncated ...]\n${s.slice(-LOG_TAIL)}` : s);
@@ -559,6 +567,13 @@ function normalizeStartArgs(args) {
   // Holdout data is immutable (pinned, denied by the lease) on top of being sealed by intent.
   const immutable = [...new Set([...norm(args.immutable), ...holdoutPaths])];
   if (!mutable.length) throw new Error('ar_start: mutable must list at least one path or glob');
+  // The AR project dir holds the iteration logs and the agent's docs, and .shards/ holds runtime state: a mutable
+  // entry covering either would commit and revert them with every iteration.
+  const reserved = [project, `${project}/experiments/iter_1.log`, `${project}/project-specs.md`, `${project}/README.md`, '.shards', '.shards/state/x.json'];
+  for (const m of mutable) {
+    const hit = reserved.find((r) => L.entryCovers(m, r));
+    if (hit) throw new Error(`ar_start: mutable entry ${m} covers ${hit.startsWith('.shards') ? '.shards/' : `the AR project dir ${project}`}; list the code/config paths the loop may change, outside ${project}/ and .shards/`);
+  }
   for (const m of mutable) {
     const probe = GLOB.test(m) ? L.globBase(m) : m;
     if (probe && immutable.some((e) => L.entryCovers(e, probe))) throw new Error(`ar_start: mutable entry ${m} lies inside an immutable${holdoutPaths.some((e) => L.entryCovers(e, probe)) ? ' (holdout)' : ''} path`);
@@ -682,6 +697,10 @@ function linkMissingImmutable(root, wroot, immutable) {
 
 async function addWorktree(root, wtAbs, commit) {
   fs.mkdirSync(path.dirname(wtAbs), { recursive: true });
+  const r = await G.git(root, ['worktree', 'add', '--detach', '--quiet', wtAbs, commit]);
+  if (r.code === 0) return;
+  // A stale registration of this path (worktree dir deleted by hand) blocks `add`; prune it and retry once.
+  // Prune is repo-wide, so it only runs when add failed.
   await G.git(root, ['worktree', 'prune']);
   await G.gitOk(root, ['worktree', 'add', '--detach', '--quiet', wtAbs, commit]);
 }
@@ -697,10 +716,9 @@ async function removeWorktree(root, run) {
   let removed = false;
   if (fs.existsSync(wtAbs)) {
     const r = await G.git(root, ['worktree', 'remove', '--force', '--force', wtAbs]);
-    if (r.code !== 0) fs.rmSync(wtAbs, { recursive: true, force: true });
+    if (r.code !== 0) { fs.rmSync(wtAbs, { recursive: true, force: true }); await G.git(root, ['worktree', 'prune']); }
     removed = true;
   }
-  await G.git(root, ['worktree', 'prune']);
   try { fs.rmdirSync(path.dirname(wtAbs)); } catch (_) { /* other branches still there */ }
   return removed;
 }
@@ -915,12 +933,17 @@ async function iterate(ctx, args) {
     const eps = full ? run.epsilon_abs : run.proxy.epsilon_abs;
     const logRel = `${logDirOf(run)}/iter_${N}.log`;
 
-    // 1. Tamper check: immutable pins (holdout paths included) and the pinned commands.
-    const now = pinRun(root, run);
-    const tampered = Object.keys(run.hashes.immutable).filter((k) => now[k] !== run.hashes.immutable[k]);
-    if (sha256(run.eval.command) !== run.hashes.eval_command) tampered.push('<eval command>');
-    if (run.proxy && sha256(run.proxy.command) !== run.hashes.proxy_command) tampered.push('<proxy command>');
-    if (run.holdout && sha256(run.holdout.command) !== run.hashes.holdout_command) tampered.push('<holdout command>');
+    // 1. Tamper check: immutable pins (holdout paths included) and the pinned commands, before and after the eval
+    // (code under test could rewrite an immutable file while the eval runs).
+    const tamperCheck = () => {
+      const now = pinRun(root, run);
+      const t = Object.keys(run.hashes.immutable).filter((k) => now[k] !== run.hashes.immutable[k]);
+      if (sha256(run.eval.command) !== run.hashes.eval_command) t.push('<eval command>');
+      if (run.proxy && sha256(run.proxy.command) !== run.hashes.proxy_command) t.push('<proxy command>');
+      if (run.holdout && sha256(run.holdout.command) !== run.hashes.holdout_command) t.push('<holdout command>');
+      return t;
+    };
+    let tampered = tamperCheck();
 
     let res = null; let failure = null; let after = null;
     if (tampered.length) {
@@ -930,6 +953,11 @@ async function iterate(ctx, args) {
     } else {
       res = await evaluate(root, run, { label: `AR ${key} iteration ${N}`, logFile: logRel, iter: N, spec, kind: evalType });
       failure = res.failure; after = res.metric;
+      tampered = tamperCheck();
+      if (tampered.length) {
+        failure = 'tamper'; after = null;
+        fs.appendFileSync(path.join(root, logRel), `\n# TAMPER: immutable paths changed during the eval: ${tampered.join(', ')}\n`);
+      }
     }
     const decision = classify(run, after, failure, before, eps);
 
@@ -969,9 +997,10 @@ async function iterate(ctx, args) {
       `${run.eval.name} (${evalType}): ${fmt(before)} -> ${fmt(after)}${failure ? ` [${failure}]` : ''}; epsilon ${fmt(eps)}; log ${logRel}.`,
       trailers(run, { iter: N, decision, before, after, evalType, source, hypothesis: hyp, kept, best, failure, loc, rebaselined, ...(proxyMode ? { proxyBest: kept ? proxyBest : run.proxyReference } : {}) }),
     );
+    // Commits are created first and the ref advances once, after the revert: a failure before that point leaves the
+    // ref and the session state consistent (ar_iterate can be retried), not a moved ref with a stale run.tip.
     const iterCommit = await commitTree(root, iterTree, tip, iterMsg);
-    await advanceRef(root, run.ref, iterCommit, tip);
-    run.tip = iterCommit;
+    let newTip = iterCommit;
 
     // 3. Revert / unwind (after the iteration's diff is on the ref) or move the pointers (after the commit exists).
     let reverted = null; let revertCommit = null;
@@ -989,8 +1018,7 @@ async function iterate(ctx, args) {
           trailers(run, { iter: N, decision, before, after, evalType, source, kept: false, best, failure, ...(proxyMode ? { proxyBest } : {}), revert: baseCommit }),
         );
       revertCommit = await commitTree(root, baseTree, iterCommit, revMsg);
-      await advanceRef(root, run.ref, revertCommit, iterCommit);
-      run.tip = revertCommit;
+      newTip = revertCommit;
       if (unwind) {
         for (const x of run.iterations) if (unwind.includes(x.n)) x.unwound = true;
         run.lastKeptCommit = baseCommit;
@@ -1027,6 +1055,8 @@ async function iterate(ctx, args) {
 
     const reason = stopReason(run);
     if (reason) { run.converged = true; run.stop_reason = reason; run.status = 'converged'; }
+    await advanceRef(root, run.ref, newTip, tip);
+    run.tip = newTip;
     await saveRun(state, run);
     return { run, entry, outOfScope };
   });
@@ -1313,6 +1343,11 @@ async function end(ctx, args) {
       if (args.skip_holdout) holdout = { metric: run.eval.name, skipped: true };
       else {
         if (run.worktree && !fs.existsSync(path.join(ctx.root, run.worktree.path, '.git'))) await ensureWorktree(ctx.root, run);
+        // Score the kept state the ref records: edits to mutable paths after the last ar_iterate are not journaled.
+        const wroot = workRoot(ctx.root, run);
+        const repo = await repoInfo(wroot);
+        const stray = await mutableDiff(wroot, repo, run.lastKeptCommit, run, { write: false });
+        if (stray.entries.length) run.end_restored = await revertMutable(wroot, repo, run.lastKeptCommit, run);
         holdout = await runHoldout(ctx.root, run);
       }
       run.holdout_result = holdout;
@@ -1331,7 +1366,9 @@ async function end(ctx, args) {
     let worktreeRemoved = false;
     if (run.worktree) {
       if (args.keep_worktree) run.worktree.kept = true;
-      else { worktreeRemoved = await removeWorktree(ctx.root, run); run.worktree.removed = true; }
+      else {
+        try { worktreeRemoved = await removeWorktree(ctx.root, run); run.worktree.removed = true; } catch (e) { run.worktree.remove_failed = oneLine(e.message, 300); }
+      }
     }
     const cur = readStore(ctx.state);
     await saveRun(ctx.state, run, { active: cur.active === key ? null : cur.active });
@@ -1377,7 +1414,7 @@ async function defer(ctx, args) {
   if (!readStore(state).runs[key]) throw new Error(`ar_defer: run ${key} is not in this session; call ar_status with resume=true first`);
   const kind = args.kind;
   if (!DEFER_KINDS.includes(kind)) throw new Error(`ar_defer: kind must be one of ${DEFER_KINDS.join(', ')}`);
-  const detail = oneLine(args.detail, 1000);
+  const detail = oneLine(args.detail, 2000);
   if (!detail) throw new Error('ar_defer: detail is required (what the human must decide, and why)');
   return withRunLock(key, async () => {
     const run = JSON.parse(JSON.stringify(run0));

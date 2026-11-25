@@ -49,9 +49,9 @@ Same as `[EX]` Phase 0 but with expanded parameter confirmation.
 ### Versioning detection
 
 {{protocol experiment_versioning}} in
-full and follow **Section A (Detection)**. AR **requires** a functioning git
-(or DVC) — the auto-revert mechanism depends on file-scoped checkout against
-`lastKeptCommit`. If versioning mode is `none`, warn the user and offer to:
+full and follow **Section A (Detection)**. AR **requires** git: the AR tools keep, revert
+and journal every iteration on the research ref (DVC alone does not satisfy
+`ar_start`). If versioning mode is `none`, warn the user and offer to:
 (a) run `git init` in the project, (b) drop to `[EX]` which can run without
 revert, or (c) cancel.
 
@@ -127,7 +127,7 @@ Agents always emit the research dashboard, whether or not a UI exists. The panel
 type remains `experiment-dashboard`: the renderer detects `mode: "autonomous-research"`
 in `results.json` and adjusts the view (iteration budget, color-coded auto-decisions,
 cost strip). Emit once after the Phase 1 brief is confirmed, then keep rewriting
-`experiments/results.json` (after each iteration result, after git checkpoint success,
+`experiments/results.json` (after each iteration result, after each `ar_iterate` result is journaled,
 after each reviewer verdict, after Phase 3 finalization); re-emit with the same
 `panel_id` after significant transitions (iteration complete, convergence detected,
 reviewer verdict received) to update it in place.
@@ -292,13 +292,12 @@ iteration N:
 3. Generate next hypothesis
 4. Announce: `[AR] Iteration N: <hypothesis>`
 5. Implement changes (mutable scope only)
-6. Evaluate (Section E proxy vs full rules)
-7. Auto-keep/revert decision (Section C)
-8. Record results (experiment file + results.json + research log)
-9. Git checkpoint (Section B.9 with `research/<project>/<N>-<name>` tag)
-10. Reviewer consultation if cadence hit (Data Scientist — Section D)
-11. Convergence check (Section E)
-12. Cost accounting (Section B.12 — micro-gate is opt-in and disabled by default; see Section B.12 for the current status of auto-close support)
+6. Call `ar_iterate` (the runtime runs the pinned eval, proxy or full per Section C.6; never run it yourself)
+7. Read the runtime's keep/revert decision (Section C); it has already kept or reverted and journaled the iteration on the research ref
+8. Record results (experiment file + results.json + research log) from the `ar_iterate` result
+9. Reviewer consultation if cadence hit (Data Scientist — Section D)
+10. Convergence check (`ar_iterate` reports the stop reason; Section E)
+11. Cost accounting (Section B.12 — micro-gate is opt-in and disabled by default; see Section B.12 for the current status of auto-close support)
 
 ### Reviewer: Data Scientist
 

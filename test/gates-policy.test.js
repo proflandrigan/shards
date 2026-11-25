@@ -186,6 +186,17 @@ describe('plan', () => {
     expect(policy.effectiveBudget(sess(), { id: 'plan-approval.r9' }, cfg.budget).max_gates).toBe(2);
     expect(policy.planRunOf({ id: 'plan-approval.r1' })).toBe('r1');
   });
+  it('an iterations-only AR budget still raises max_minutes; an ended AR run needs a human', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 2, max_minutes: 10 } };
+    const id = 'ml-engineer-research-phase-1';
+    await call(mk({ id, kind: 'execute', plan_approval: 'r1' }));
+    await gates.confirmGate(sess(), id, { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    await state.update('research', (cur) => { cur.runs = { r1: { run_id: 'r1', status: 'active', budget: { iterations: 30 }, started_at: new Date().toISOString(), eval: { timeout_s: 600 } } }; return cur; });
+    expect(policy.effectiveBudget(sess(), gate(id), cfg.budget).max_minutes).toBeGreaterThanOrEqual(300);
+    expect(data(await call(mk({ id: 'n0', kind: 'checkpoint' }))).result).toBe('notice');
+    await state.update('research', (cur) => { cur.runs.r1.status = 'ended'; return cur; });
+    expect(data(await call(mk({ id: 'adopt', kind: 'final' }))).status).toBe('pending');
+  });
   it('behaves like phase without a confirmed plan-approval', async () => {
     expect(data(await call(mk({ id: 'p1', kind: 'phase' }))).status).toBe('pending');
     await gates.confirmGate(sess(), 'p1', { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);

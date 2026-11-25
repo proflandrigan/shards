@@ -40,7 +40,7 @@ full before executing this file.
 
 ### Versioning detection
 
-Per `experiment_versioning.md` Section A. AR requires git (or DVC). If
+Per `experiment_versioning.md` Section A. AR requires git (the AR tools use it for the research ref; DVC alone does not satisfy `ar_start`). If
 versioning is `none`, warn and offer to init, drop to `[EX]`, or cancel.
 
 ### Knowledge retrieval
@@ -105,7 +105,7 @@ Agents always emit the research dashboard, whether or not a UI exists. The panel
 type remains `experiment-dashboard`: the renderer detects `mode: "autonomous-research"`
 in `results.json` and adjusts the view (iteration budget, color-coded auto-decisions,
 cost strip). Emit once after the Phase 1 brief is confirmed, then keep rewriting
-`experiments/results.json` (after each iteration result, after git checkpoint success,
+`experiments/results.json` (after each iteration result, after each `ar_iterate` result is journaled,
 after each reviewer verdict, after Phase 3 finalization); re-emit with the same
 `panel_id` after significant transitions (iteration complete, convergence detected,
 reviewer verdict received) to update it in place.

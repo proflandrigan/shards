@@ -25,7 +25,8 @@ policy:
 - The loop stops on failure, anomaly, or budget exhaustion, and the next gate
   waits for a human again.
 - The Phase 3 adoption gate is always confirmed by a human, even after a plan
-  approval. A later runtime flag enforces this.
+  approval: request it with `requires_human: true`; the runtime enforces it, and
+  once every run of the approved plan has ended the plan covers no further gate.
 
 Details: `autonomous_research.md` Section A.6 and `docs/gates.md` (policies).
 Stop conditions are unchanged (AR §E convergence, §G safety rails; each

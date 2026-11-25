@@ -3,8 +3,10 @@
 // caller of a session that holds an active AR lease (runtime/leases openArLease). Returns {deny: reason} or null.
 //
 //  1. Git guard (Bash and Codex shell): denies destructive git anywhere in the command line (chains, $(..),
-//     `git -C dir`, env/wrapper prefixes): reset --hard, clean -f*, push --force/-f/--force-with-lease/+refspec,
-//     push --delete, tag -d/--delete/-f, checkout -b/-B/--orphan, switch (any), branch -D / -d --force,
+//     `git -C dir`, env/wrapper prefixes; long options also by unambiguous prefix): reset --hard and any ref-moving
+//     reset, clean -f*, push --force/-f/--force-with-lease/+refspec, push --delete, fetch <src>:<dst>, tag -d/-f,
+//     checkout -b/-B/--orphan/--detach, switch (any), any mutating git branch, commit --amend, update-ref,
+//     symbolic-ref <ref> <target>, filter-branch/filter-repo/replace, reflog expire/delete, gc --prune, prune,
 //     worktree add/remove/move/prune/repair (the runtime owns AR branch worktrees and runs git itself).
 //     Worktree paths (.shards/worktrees/<run>/<branch>/..., absolute or relative) are checked like any other
 //     path: the lease holds each branch's mutable/immutable entries prefixed with its worktree, and .shards/worktrees/
@@ -22,27 +24,77 @@ const { bashWrites, writesOf, gitInvocations, gitCall, commandWords } = require(
 const SCOPED_GIT = new Set(['commit', 'add', 'tag', 'checkout', 'restore', 'reset', 'notes', 'clean', 'worktree']); // clean: -f is denied above; without it git refuses or dry-runs
 const EXEC_MCP = /(?:^|__)(notebook_exec|notebook_run_all)$/;
 const shortHas = (a, ch) => /^-[A-Za-z]+$/.test(a) && a.slice(1).includes(ch);
+// git accepts any unambiguous prefix of a long option (`--ha` = `--hard`), so a destructive long option is matched
+// by prefix (at least one letter after `--`); `=value` is ignored. Ambiguous prefixes git itself rejects are denied too.
+const longIs = (a, ...names) => {
+  if (!/^--[A-Za-z]/.test(a)) return false;
+  const k = a.split('=')[0];
+  return names.some((n) => n.startsWith(k));
+};
+const operands = (rest) => rest.filter((a) => !a.startsWith('-'));
+const REV = /^(?:[0-9a-f]{7,40}|(?:HEAD|@|ORIG_HEAD|FETCH_HEAD)(?:[~^]\d*)+|.*(?:[~^]\d*|@\{[^}]*\})$)/;
+// git branch: read-only forms only (list, filters, show-current); creating, moving, copying, forcing, deleting
+// or re-tracking a branch is denied.
+// `-d` / `--delete` without force is left alone: git refuses to delete an unmerged branch.
+const BRANCH_MUTATE_LONG = ['--move', '--copy', '--force', '--set-upstream-to', '--unset-upstream', '--edit-description',
+  '--track', '--no-track', '--create-reflog', '--recurse-submodules'];
+const BRANCH_LIST_LONG = ['--list', '--contains', '--no-contains', '--merged', '--no-merged', '--points-at', '--show-current'];
+function branchMutates(rest) {
+  let list = false; const ops = [];
+  if (rest.some((a) => longIs(a, '--delete') || shortHas(a, 'd'))) list = true; // operands are branches to delete
+  for (let i = 0; i < rest.length; i++) {
+    const a = rest[i];
+    if (a === '--') { ops.push(...rest.slice(i + 1)); break; }
+    if (a.startsWith('--')) {
+      if (BRANCH_MUTATE_LONG.some((n) => longIs(a, n))) return true;
+      if (BRANCH_LIST_LONG.some((n) => longIs(a, n) && a.split('=')[0].length >= 4)) list = true;
+      if (!a.includes('=') && (longIs(a, '--sort') || longIs(a, '--format'))) i++;
+      continue;
+    }
+    if (a.startsWith('-') && a.length > 1) {
+      if (/[DmMcCfut]/.test(a.slice(1))) return true;
+      if (a.slice(1).includes('l')) list = true;
+      continue;
+    }
+    ops.push(a);
+  }
+  return ops.length > 0 && !list; // `git branch foo [start]` creates a branch
+}
+// git reset may only unstage: no mode flag, and no commit operand (paths go after `--`, or `HEAD` alone).
+function resetMoves(rest) {
+  if (rest.some((a) => longIs(a, '--hard', '--soft', '--keep', '--merge'))) return true; // --mixed alone just unstages
+  const dd = rest.indexOf('--');
+  const before = operands(dd >= 0 ? rest.slice(0, dd) : rest);
+  if (dd >= 0) return before.some((o) => o !== 'HEAD');
+  return before.length > 1 || (before.length === 1 && before[0] !== 'HEAD');
+}
 
 // Reason string when a git invocation is destructive, else null.
 function destructiveGit({ sub, rest }) {
-  const has = (...xs) => rest.some((a) => xs.includes(a));
   switch (sub) {
-    case 'reset': return has('--hard') ? 'git reset --hard' : null;
-    case 'clean': return rest.some((a) => a === '--force' || shortHas(a, 'f')) ? 'git clean -f' : null;
+    case 'reset':
+      if (rest.some((a) => longIs(a, '--hard'))) return 'git reset --hard';
+      return resetMoves(rest) ? 'git reset <commit> / --soft/--mixed/--keep/--merge (moving a ref; unstage with `git reset -- <paths>`)' : null;
+    case 'clean': return rest.some((a) => longIs(a, '--force') || shortHas(a, 'f')) ? 'git clean -f' : null;
     case 'push':
-      if (rest.some((a) => a === '--force' || a === '--force-if-includes' || a === '--force-with-lease' || a.startsWith('--force-with-lease=') || shortHas(a, 'f'))) return 'git push --force';
-      if (rest.some((a) => /^\+[^+]/.test(a))) return 'git push +<refspec> (forced update)';
-      if (has('--delete', '--mirror', '--prune') || rest.some((a) => shortHas(a, 'd') || /^:[^:]/.test(a))) return 'git push deleting remote refs';
+      if (rest.some((a) => longIs(a, '--force', '--force-with-lease', '--force-if-includes') || shortHas(a, 'f'))) return 'git push --force';
+      if (rest.some((a) => /(^|:)\+/.test(a) && !a.startsWith('-'))) return 'git push +<refspec> (forced update)';
+      if (rest.some((a) => longIs(a, '--delete', '--mirror', '--prune') || shortHas(a, 'd') || /^:[^:]/.test(a))) return 'git push deleting remote refs';
       return null;
-    case 'tag': return rest.some((a) => a === '--delete' || a === '--force' || shortHas(a, 'd') || shortHas(a, 'f')) ? 'git tag -d/-f (deleting or moving a tag)' : null;
-    case 'checkout': return rest.some((a) => a === '-b' || a === '-B' || a === '--orphan' || a.startsWith('--orphan=')) ? 'git checkout -b (creating/switching branches)' : null;
+    case 'fetch': return rest.some((a) => !a.startsWith('-') && /:[^:]/.test(a)) ? 'git fetch <src>:<dst> (updating a local ref)' : null;
+    case 'tag': return rest.some((a) => longIs(a, '--delete', '--force') || shortHas(a, 'd') || shortHas(a, 'f')) ? 'git tag -d/-f (deleting or moving a tag)' : null;
+    case 'checkout':
+      return rest.some((a) => /^-[A-Za-z]*[bB]/.test(a) || longIs(a, '--orphan', '--detach')) ? 'git checkout -b/--orphan/--detach (creating/switching branches)' : null;
     case 'switch': return 'git switch';
+    case 'commit': return rest.some((a) => longIs(a, '--amend')) ? 'git commit --amend (rewriting history)' : null;
+    case 'update-ref': case 'filter-branch': case 'filter-repo': case 'replace': return `git ${sub} (rewriting refs or history)`;
+    case 'symbolic-ref': return operands(rest).length > 1 || rest.some((a) => longIs(a, '--delete') || shortHas(a, 'd')) ? 'git symbolic-ref (moving HEAD)' : null;
+    case 'reflog': return rest.some((a) => a === 'expire' || a === 'delete') ? `git reflog ${rest.find((a) => a === 'expire' || a === 'delete')}` : null;
+    case 'gc': return rest.some((a) => longIs(a, '--prune')) ? 'git gc --prune' : null;
+    case 'prune': return 'git prune';
     // AR branch worktrees (.shards/worktrees/<run>/<branch>) are created and removed by the runtime only.
     case 'worktree': return rest.some((a) => ['add', 'remove', 'move', 'prune', 'repair'].includes(a)) ? `git worktree ${rest.find((a) => ['add', 'remove', 'move', 'prune', 'repair'].includes(a))} (AR branch worktrees are runtime-owned)` : null;
-    case 'branch':
-      if (rest.some((a) => shortHas(a, 'D'))) return 'git branch -D';
-      if (rest.some((a) => a === '--delete' || shortHas(a, 'd')) && rest.some((a) => a === '--force' || shortHas(a, 'f'))) return 'git branch --delete --force';
-      return null;
+    case 'branch': return branchMutates(rest) ? 'git branch (creating, moving, forcing or deleting a branch)' : null;
     default: return null;
   }
 }

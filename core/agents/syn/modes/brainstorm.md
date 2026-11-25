@@ -492,7 +492,7 @@ Respond to any of the following naturally:
        `<project_dir>/experiments/research_brief.md` (the `brief_path` every
        branch's `ar_start` uses). Pick one run id for all branches.
      - Launch one AR branch lead per approach family, in parallel (one
-       message), with the lead launch of each family's specialist and
+       message): launch each family's specialist as a branch lead, using
        the Section H.3 lead brief from `autonomous_research.md` (approach
        constraint, `ar_start` arguments plus `run_id` and `branch`, scope
        `<project_dir>/experiments/branches/<slug>`, budget, reviewer cadence).

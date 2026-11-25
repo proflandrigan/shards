@@ -7,11 +7,20 @@ const OUTCOMES = ['green', 'yellow', 'red'];
 
 // AR iteration cards (task.ar; issue #91, H4 / bug 22): the outcome of the iteration, from metric_outcome (+ kept
 // for a YELLOW) or derived from the ar_iterate record (ar_iteration). Returns null for a non-AR verification.
-async function arOutcome(ctx, t, args) {
-  if (args.metric_outcome === undefined && args.ar_iteration === undefined && args.kept === undefined) return null;
+async function arOutcome(ctx, t, args, tasksState) {
+  if (args.metric_outcome === undefined && args.ar_iteration === undefined && args.kept === undefined) {
+    if (t.ar) throw new Error(`task_verify: task ${t.id} is an AR iteration card: call ar_iterate, then task_verify with ar_iteration=<N> (a metric RED is reverted, never failed)`);
+    return null;
+  }
   if (!t.ar) throw new Error(`task_verify: metric_outcome / ar_iteration / kept are only valid for an AR iteration card (task ${t.id} has no \`ar\`)`);
   let outcome = args.metric_outcome; let kept = args.kept; let iteration = args.ar_iteration; let commit = null;
   if (iteration !== undefined) {
+    if (t.ar.iteration !== undefined && t.ar.iteration !== iteration) throw new Error(`task_verify: task ${t.id} is the card for iteration ${t.ar.iteration}, not ${iteration}`);
+    // One iteration backs one card: the same run/branch iteration cannot be claimed by two cards.
+    const sameRun = (x) => x.ar && (x.ar.run_id || null) === (t.ar.run_id || null) && (x.ar.branch || null) === (t.ar.branch || null);
+    const other = ((tasksState.manifest && tasksState.manifest.tasks) || []).find((x) => x.id !== t.id && sameRun(x)
+      && ((tasksState.tasks[x.id] || {}).ar_outcome || {}).iteration === iteration);
+    if (other) throw new Error(`task_verify: iteration ${iteration} is already recorded on task ${other.id}`);
     const R = require('../research');
     const { run } = await R.resolveRun(ctx, t.ar.run_id, t.ar.branch);
     if (!run) throw new Error(`task_verify: AR run ${t.ar.run_id}${t.ar.branch ? ` branch ${t.ar.branch}` : ''} not found`);
@@ -60,7 +69,7 @@ module.exports = defineTool({
     if (!t || !s0) throw new Error(`task_verify: unknown task "${args.id}"`);
     if (s0.status !== 'reported') throw new Error(`task_verify: task ${args.id} is ${s0.status}, not reported; only a reported task can be verified.`);
 
-    const ar = await arOutcome(ctx, t, args);
+    const ar = await arOutcome(ctx, t, args, st0);
     const attempts = s0.attempts || 0;
     const retriesUsed = Math.max(0, attempts - 1);
     const escalate = !ar && !args.pass && retriesUsed >= 2;

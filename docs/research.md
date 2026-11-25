@@ -15,7 +15,7 @@ ar_start({
   branch?,                 // AR fan-out branch (approach-family slug): a branch run in its own worktree
   worktree?,               // true: run in .shards/worktrees/<run_id>/<branch> (requires branch; implied by it)
   brief_path,              // research brief; must exist
-  mutable: [...],          // paths or globs the loop may change (required)
+  mutable: [...],          // paths or globs the loop may change (required; may not cover the project dir or .shards/)
   immutable?: [...],       // eval harness, tests, data
   eval: {
     command, metric_regex | json_path, name?, direction: "maximize"|"minimize",
@@ -48,7 +48,7 @@ If a plan approval exists for the same run id (`gate_request` with `plan_approva
 
 Call it after editing mutable files for one hypothesis. `source` is `adaptive` (the default), `steering` or `reviewer-suggested`.
 
-1. **Tamper check.** The runtime re-hashes the immutable paths (holdout paths included) and the eval, proxy and holdout commands. Any change makes the iteration a RED with `failure: tamper`. The eval does not run, the iteration is reverted and the run halts with `stop_reason: tamper`.
+1. **Tamper check.** The runtime re-hashes the immutable paths (holdout paths included) and the eval, proxy and holdout commands. Any change makes the iteration a RED with `failure: tamper`. The eval does not run, the iteration is reverted and the run halts with `stop_reason: tamper`. The check runs again right after the eval, so code that rewrites an immutable file while the eval runs gets the same RED and halt instead of a kept result.
 2. **Eval.** The runtime runs the pinned command through the shell from the project root. The command gets `SHARDS_AR_RUN`, `SHARDS_AR_ITER` and `SHARDS_AR_EVAL` (`full|proxy|holdout`) in its environment, plus `SHARDS_AR_COMPUTE_BUDGET_S` with a fixed compute budget, and runs under `timeout_s`. With a proxy, the eval that runs is chosen per [Proxy and full evals](#proxy-and-full-evals-bug-8). On timeout the whole process group is killed. The stdout and stderr tails go to `<project>/experiments/iter_<N>.log`.
    - `metric_regex` reads group 1, or the whole match if the regex has no group, of the last match in stdout. If stdout has no match, it reads stderr.
    - `json_path` (`a.b[0]`, an optional `$.` prefix) is read from stdout when stdout parses as JSON as a whole, else from the last line of stdout that does.
@@ -119,7 +119,7 @@ With a sealed holdout it first evaluates the kept state once (see below). Then i
 - `holdout_paths` are added to the immutable list: pinned at `ar_start`, re-checked every iteration (a change is a `tamper`), and listed as immutable in the AR lease, so writes are denied. A mutable entry may not overlap them. The holdout command is pinned too.
 - `ar_start` runs the holdout once on the pre-loop state (skip with `holdout.baseline: false`). The value goes to `.shards/state/research-sealed/<project-slug>/<run_id>[/<branch>].json` and its log next to it. It is not returned, not written to `experiments/` and not in the research ref (`AR-Config` holds only the holdout configuration).
 - `ar_iterate` never runs it. `ar_status` shows `holdout: {sealed: true, paths}` until the run has ended.
-- `ar_end` checks the holdout pins (on a change it does not run the holdout and reports `tampered`), runs the holdout once on the kept state (a branch run: in its worktree, recreated first if missing, before it is removed), writes `<logdir>/holdout.log` and returns `holdout: {metric, direction, baseline, final, delta}` with `delta = final - baseline`. The stop commit gets `AR-Holdout: <name>=<baseline>-><final> (delta <d>)`, or `skipped` (`skip_holdout: true`), `tampered (<paths>)`, or `... (failed: crash|timeout|parse)`. A rebuild of an ended run parses it back into `holdout_result`.
+- `ar_end` checks the holdout pins (on a change it does not run the holdout and reports `tampered`), restores the mutable scope to `lastKeptCommit` if it has edits no `ar_iterate` journaled (reported as `end_restored`), runs the holdout once on that kept state (a branch run: in its worktree, recreated first if missing, before it is removed), writes `<logdir>/holdout.log` and returns `holdout: {metric, direction, baseline, final, delta}` with `delta = final - baseline`. The stop commit gets `AR-Holdout: <name>=<baseline>-><final> (delta <d>)`, or `skipped` (`skip_holdout: true`), `tampered (<paths>)`, or `... (failed: crash|timeout|parse)`. A rebuild of an ended run parses it back into `holdout_result`.
 
 The seal is by intent: the agent can still read the holdout files or the sealed file. The protocol (§G.11) forbids it; the hash pin catches edits, not reads.
 
@@ -190,7 +190,7 @@ The run state lives in `.shards/state/sessions/<key>/research.json` as `{active:
 
 ### `requires_human` gates
 
-`gate_request` takes `requires_human: true`. Such a gate is never turned into a notice under `plan`, never auto-recorded as evidence under `phase`, and always goes to the human tiers (elicitation, host prompt, verbatim chat reply). The flag sticks to the gate when it is re-requested. Every AR agent's Phase 3 adoption gate passes it, via `{{gate ... requires_human=true}}` ([`build/MACROS.md`](../build/MACROS.md) §3.8). So a plan approval can carry an overnight loop, but it can never adopt the results.
+`gate_request` takes `requires_human: true`. Such a gate is never turned into a notice under `plan`, never auto-recorded as evidence under `phase`, and always goes to the human tiers (elicitation, host prompt, verbatim chat reply). The flag sticks to the gate when it is re-requested. Every AR agent's Phase 3 adoption gate passes it, via `{{gate ... requires_human=true}}` ([`build/MACROS.md`](../build/MACROS.md) §3.8). So a plan approval can carry an overnight loop, but it can never adopt the results. As a backstop, once every run of the plan's run id has ended the plan stops covering gates, so an adoption gate requested without the flag still waits for a human.
 
 ### Plan budget derived from the AR budget
 

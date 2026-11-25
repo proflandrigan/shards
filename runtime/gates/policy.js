@@ -112,7 +112,12 @@ function effectiveBudget(session, plan, budget) {
   if (!run || !run.budget) return b;
   const it = Number(run.budget.iterations);
   if (Number.isFinite(it)) b.max_gates = Math.max(b.max_gates != null ? b.max_gates : DEFAULT_MAX_GATES, it + 2);
-  const mins = Number(run.budget.minutes);
+  let mins = Number(run.budget.minutes);
+  // An iterations-only AR budget still has to outlast a configured max_minutes: bound it by iterations x eval timeout
+  // (x repeats), so an overnight run's gates do not fall back to human prompts mid-run.
+  if (!(Number.isFinite(mins) && mins > 0) && Number.isFinite(it) && run.eval && Number(run.eval.timeout_s) > 0) {
+    mins = Math.ceil((it * Number(run.eval.timeout_s) * (Number(run.eval.repeats) || 1)) / 60);
+  }
   if (b.max_minutes != null && Number.isFinite(mins) && mins > 0) {
     const planStart = Date.parse(plan.decided_at || plan.updated_at);
     const runStart = Date.parse(run.started_at);
@@ -130,6 +135,14 @@ function planStatus(session, budget, cur, entry) {
   const plan = activePlan(session, entry);
   if (!plan || plan.status !== 'confirmed') return { active: false };
   const key = planKey(plan);
+  // Once every run of the AR plan has ended, its results are being adopted: the plan no longer covers any gate,
+  // even one requested without requires_human (the Phase 3 adoption gate must reach a human).
+  const arRun = planRunOf(plan);
+  if (arRun) {
+    let runs = [];
+    try { runs = Object.values((stateOf(session).read('research') || {}).runs || {}).filter((r) => r && r.run_id === arRun); } catch (_) { runs = []; }
+    if (runs.length && runs.every((r) => r.status === 'ended')) return { active: true, key, exhausted: `AR run ${arRun} has ended; adopting its results needs a human` };
+  }
   budget = effectiveBudget(session, plan, budget);
   const st = cur || stateOf(session).read('policy') || {};
   // Notices count per plan gate: a counter left by another plan starts over at 0.

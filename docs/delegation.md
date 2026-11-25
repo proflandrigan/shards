@@ -169,7 +169,7 @@ Codex. Codex 0.169.0 sends `agent_id` and `agent_type` on PreToolUse inside a su
 - `reported` + `pass=false` gives `failed`, with the observed output stored as `feedback`. `task_dispatch` re-sends it to the worker. Up to 2 retries.
 - A `pass=false` after 2 retries gives `blocked` with `escalated=true`. The lead stops and asks the user with a summary of the evidence rows.
 - Every call, pass or fail, appends one row to the Evidence table in `## Validation` of `<output_dir>/project-specs.md`.
-- **AR iteration cards** (`ar` set; issue #91, bug 22): the lead first calls `ar_iterate` (the runtime re-runs the pinned eval), then `task_verify` with `ar_iteration: N` (the outcome is read from the run; a contradicting `metric_outcome` or `kept` is refused) or with `metric_outcome` (plus `kept` for a YELLOW). The task becomes `done` with `ar_outcome: {metric_outcome, result: kept|reverted, iteration?, commit?}`: GREEN or kept YELLOW is `kept`, RED or unkept YELLOW is `reverted`. It never becomes `failed`, uses no retry and never escalates; AR's own stop conditions bound the loop. The evidence row notes `AR <OUTCOME>: <result>` and TASKS.md shows it. These arguments are refused on a card without `ar`.
+- **AR iteration cards** (`ar` set; issue #91, bug 22): the lead first calls `ar_iterate` (the runtime re-runs the pinned eval), then `task_verify` with `ar_iteration: N` (the outcome is read from the run; a contradicting `metric_outcome` or `kept` is refused) or with `metric_outcome` (plus `kept` for a YELLOW). The task becomes `done` with `ar_outcome: {metric_outcome, result: kept|reverted, iteration?, commit?}`: GREEN or kept YELLOW is `kept`, RED or unkept YELLOW is `reverted`. It never becomes `failed`, uses no retry and never escalates; AR's own stop conditions bound the loop. An AR card must be verified with these arguments (plain `pass` is refused), `ar_iteration` must match the card's own `ar.iteration` when it has one, and one iteration of a run/branch can back only one card. The evidence row notes `AR <OUTCOME>: <result>` and TASKS.md shows it. These arguments are refused on a card without `ar`.
 
 `tasks_set` with `append: true` (AR iteration cards only) adds the cards in `manifest.tasks` to the registered manifest of that scope, keeping every existing task state, without an amendment gate: an AR lead learns each hypothesis only after the previous iteration. Every appended task must carry `ar`; the merged manifest is validated as a whole (so a card owning the same worktree paths as the previous one must depend on it); an open drift refuses it.
 
@@ -225,17 +225,21 @@ The `ar_start` / `ar_end` tools ([`research.md`](research.md)) call `openArLease
 - A write whose target can't be determined (`sh -c`, `eval`, `cd ... && ...`, `git apply`/`merge`/`stash`) is denied rather than asked, because an unattended run can't answer a prompt.
 - Exec-only calls (`python train.py`, `pytest`, the eval command) and Shards notebook execution are not checked. A script can still write anywhere. Pinning hashes of the immutable paths (H1) is the backstop for that.
 
-**Git guard.** Matching sees through `git -C dir` and `-c k=v`, env assignments and wrappers (`FOO=1`, `env`, `sudo`, `timeout`), chains (`&&`, `;`, `|`, newlines) and `$(...)` / backticks. Denied:
-- `git reset --hard`
+**Git guard.** Matching sees through `git -C dir` and `-c k=v`, env assignments and wrappers (`FOO=1`, `env`, `sudo`, `timeout`), chains (`&&`, `;`, `|`, newlines), subshells (`(git ...)`) and `$(...)` / backticks. Long options also match by any unambiguous prefix, as git accepts them (`--ha` is `--hard`). Denied:
+- `git reset --hard`, `--soft`, `--keep` or `--merge`, and `git reset <commit>` (any reset that moves a ref). Unstaging stays allowed: `git reset`, `git reset HEAD`, `git reset -- <paths>`
 - `git clean` with `-f` in any form (`-f`, `-fd`, `-xdf`, `--force`)
 - `git push --force`, `-f`, `--force-with-lease[=...]`, `--force-if-includes` or a `+refspec`; `git push --delete`, `-d`, `:ref`, `--mirror` or `--prune`
+- `git fetch <src>:<dst>` (updates a local ref)
 - `git tag -d`, `--delete` or `-f`
-- `git checkout -b`, `-B` or `--orphan`
+- `git checkout -b`, `-B` (also with the name attached, `-bfoo`), `--orphan` or `--detach`
 - `git switch` (any form)
-- `git branch -D`, or `-d` with `--force`
+- `git branch` in any form that creates, moves, copies, forces or re-tracks a branch (`git branch foo`, `-f`, `-m`/`-M`, `-c`/`-C`, `-u`, `-D`); listing (`--list`, `-a`, `-r`, `-v`, `--show-current`, `--contains`, ...) and a plain `-d` stay allowed
+- `git commit --amend`, `git update-ref`, `git symbolic-ref <ref> <target>`, `git filter-branch`, `git filter-repo`, `git replace`, `git reflog expire`/`delete`, `git gc --prune`, `git prune`
 - `git worktree add`, `remove`, `move`, `prune` or `repair` (AR branch worktrees are runtime-owned)
 
-`git checkout` and `git restore` pathspecs must pass the write-scope check, so a revert is `git checkout <sha> -- <mutable paths>`. Without `--`, every operand is treated as a path: `git checkout main` is denied. Wildcard pathspecs and pathspecs after a `cd` are denied. Safe commands pass, for example `git status`, `git diff`, `git log`, `git add`, `git commit --only <paths>`, `git tag <name>`, `git read-tree`, `git reset` without `--hard`, and a plain `git push`.
+`git checkout-index` and `git read-tree -u`/`--reset` write the working tree with no checkable target, so the write-scope check denies them.
+
+`git checkout` and `git restore` pathspecs must pass the write-scope check, so a revert is `git checkout <sha> -- <mutable paths>`. Without `--`, every operand is treated as a path: `git checkout main` is denied. Wildcard pathspecs and pathspecs after a `cd` are denied. Safe commands pass, for example `git status`, `git diff`, `git log`, `git add`, `git commit --only <paths>`, `git tag <name>`, `git read-tree` without `-u`, `git reset -- <paths>`, and a plain `git push`.
 
 ## 6. Task result and deviations
 

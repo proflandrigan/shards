@@ -140,11 +140,19 @@ describe('AR git guard', () => {
     'git -C sub reset --hard', 'git -c core.x=1 -C a/b clean -fdx', 'GIT_DIR=.git git reset --hard', 'env FOO=1 git switch x', 'sudo git push -f',
     'git status && git reset --hard', 'git add -A; git clean -fd', 'echo ok | git switch dev', 'echo $(git tag -d t)', '/usr/bin/git branch -D x',
     'git status\ngit reset --hard',
+    // review of #93: subshells, long-option abbreviations, branch moves, history rewrites
+    '(git reset --hard)', '(cd x && git reset --hard)', 'git reset --ha', 'git push --force-w', 'git clean --fo', 'git checkout -bfoo',
+    'git reset --soft HEAD~1', 'git reset HEAD~1', 'git reset abc1234', 'git reset --keep HEAD~1',
+    'git branch foo', 'git branch -f main HEAD~3', 'git branch -m a b', 'git branch --mo a b', 'git commit --amend', 'git commit --am -m x',
+    'git update-ref -d refs/heads/main', 'git symbolic-ref HEAD refs/heads/x', 'git checkout --detach', 'git fetch origin main:main',
+    'git reflog expire --expire=now --all', 'git gc --prune=now', 'git filter-branch', 'git checkout-index -f -a', 'git read-tree -u --reset HEAD',
   ];
   const ALLOW = [
     'git status', 'git diff', 'git diff --name-only abc123 -- src/model', 'git log --oneline -5', 'git commit --only src/model/net.py -m "iter 3"',
     'git add src/model/net.py', 'git tag research/churn/3-lr', 'git checkout abc123 -- src/model/net.py', 'git checkout -- src/features.py',
-    'git restore --source abc123 -- src/model/net.py', 'git read-tree abc123', 'git reset', 'git reset --soft HEAD~1', 'git push origin main',
+    'git restore --source abc123 -- src/model/net.py', 'git read-tree abc123', 'git reset', 'git reset -- src/model/net.py', 'git reset HEAD', 'git push origin main',
+    'git branch --list', 'git branch -a', 'git branch -vv', 'git branch --show-current', 'git branch --contains abc123', 'git fetch origin',
+    'git symbolic-ref HEAD', 'git gc', '(git status)', 'git push --dry-run',
     'git branch', 'git branch -d merged', 'git clean -n', 'git -C . status', 'git rev-parse HEAD',
   ];
   it.each(DENY)('denies: %s', async (command) => {

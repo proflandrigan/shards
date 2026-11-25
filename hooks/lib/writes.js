@@ -54,7 +54,7 @@ function parse(cmd) {
 const SKIP_TARGET = /^\/dev\/(null|stderr|stdout|tty|fd\/\d+)$/;
 const ALL_ARGS = new Set(['rm', 'touch', 'mkdir', 'rmdir', 'truncate', 'chmod', 'chown', 'chgrp', 'ln', 'install', 'mv', 'unlink', 'shred', 'patch']);
 const GIT_WRITES = new Set(['apply', 'checkout', 'commit', 'reset', 'restore', 'clean', 'merge', 'rebase', 'stash', 'cherry-pick', 'pull', 'switch', 'am', 'revert', 'add', 'rm', 'mv',
-  'clone', 'init', 'worktree', 'submodule', 'sparse-checkout']);
+  'clone', 'init', 'worktree', 'submodule', 'sparse-checkout', 'checkout-index']);
 // git global options that take a separate value (`git -C dir checkout`).
 const GIT_GLOBAL_VALUE = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path', '--config-env']);
 const WRAPPERS = new Set(['sudo', 'env', 'command', 'nohup', 'time', 'nice', 'exec', 'xargs', 'timeout', 'stdbuf', 'ionice', 'caffeinate',
@@ -131,6 +131,7 @@ function inPlaceFiles(cmd, args) {
 function commandWords(seg) {
   const w = seg.words.filter((x) => x !== ')' && x !== '}');
   if (w.length && w[0].startsWith('(') && w[0] !== '(') w[0] = w[0].replace(/^\(+/, '');
+  if (w.length && /[^)]\)+$/.test(w[w.length - 1])) w[w.length - 1] = w[w.length - 1].replace(/\)+$/, ''); // `(git reset --hard)`
   while (w.length && (/^[A-Za-z_][A-Za-z0-9_]*=/.test(w[0]) || WRAPPERS.has(path.basename(w[0])))) {
     const wrapper = WRAPPERS.has(path.basename(w[0]));
     w.shift();
@@ -205,7 +206,7 @@ function analyzeSegment(seg) {
   if (cmd === 'dd') { const of = args.find((a) => a.startsWith('of=')); if (of) { write = true; add(of.slice(3)); } return out(); }
   if (cmd === 'git') {
     const { sub, rest, dir } = gitCall(w);
-    if (sub && GIT_WRITES.has(sub)) {
+    if (sub && (GIT_WRITES.has(sub) || (sub === 'read-tree' && rest.some((a) => a === '-u' || a === '--reset')))) {
       write = true;
       if (sub === 'rm' || sub === 'mv') nonFlags(rest).forEach((t) => add(dir && !path.isAbsolute(t) ? path.join(dir, t) : t)); else unknown = true;
     }

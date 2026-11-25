@@ -92,6 +92,26 @@ describe('ar_start', () => {
     await expect(call('ar_start', startArgs())).rejects.toThrow(/baseline eval run 1 failed \(crash/);
     expect(L.getActiveArLease({ root, sessionKey: key, state })).toBeNull();
   });
+  it('refuses a mutable scope that covers the AR project dir or .shards/', async () => {
+    await expect(call('ar_start', startArgs({ mutable: ['**/*.md'] }))).rejects.toThrow(/covers the AR project dir shards\/p/);
+    await expect(call('ar_start', startArgs({ mutable: ['shards'] }))).rejects.toThrow(/covers the AR project dir/);
+    await expect(call('ar_start', startArgs({ mutable: ['.shards/state'] }))).rejects.toThrow(/covers \.shards\//);
+  });
+});
+
+describe('parseMetric', () => {
+  const j = (out) => R.parseMetric({ json_path: '$.acc' }, out, '');
+  it('accepts only real numbers', () => {
+    expect(j('{"acc": null}')).toBeNull();
+    expect(j('{"acc": ""}')).toBeNull();
+    expect(j('{"acc": true}')).toBeNull();
+    expect(j('{"acc": "0.5"}')).toBe(0.5);
+    expect(R.parseMetric({ metric_regex: 'acc=(\\d*)' }, 'acc=', '')).toBeNull();
+  });
+  it('skips later JSON lines that are not the metric line', () => {
+    expect(j('{"acc": 0.9}\n7\n')).toBe(0.9);
+    expect(j('{"acc": 0.9}\ntrue')).toBe(0.9);
+  });
 });
 
 describe('ar_iterate', () => {
