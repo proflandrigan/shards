@@ -290,6 +290,7 @@ Every tool response starts with the state header (section 4). Session-bound tool
 | `ar_start` | Start an autonomous-research run: pin immutable paths and the eval command, measure the baseline noise floor, open the AR lease, create `refs/shards/research/<project>/<run>`. | [`research.md`](research.md) |
 | `ar_iterate` | Run the pinned eval for one iteration, classify GREEN/YELLOW/RED, journal it on the research ref, keep or revert the mutable scope. | [`research.md`](research.md) |
 | `ar_status` | Show an AR run; rebuilds it from the research ref's trailers when session state is missing; `resume` adopts it. | [`research.md`](research.md) |
+| `ar_defer` | Queue a decision for a human on an unattended run (retro-revert, pause, floor breach): a `needs-human` commit on the research ref; `retro_revert` restores the kept state before iteration M. The loop continues; `ar_status`/`ar_end` list the items for the Phase 3 gate. | [`research.md`](research.md) |
 | `ar_end` | Record the stop reason on the research ref, close the AR lease, end the run. | [`research.md`](research.md) |
 
 - `agent` must list the requested mode in its `activation` field.

@@ -72,7 +72,7 @@ AR runs in one of two presets:
 [interactive] — budget=10, reviewer cadence=3, cost ceiling optional.
                 You're nearby, I go adaptive with you in the loop.
 
-[overnight]   — budget=100, reviewer cadence=10, cost ceiling required.
+[overnight]   — budget=100, reviewer cadence=10, wall-clock budget required.
                 I run long. You come back to a converged result.
                 Interrupt anytime by editing experiments/research_brief.md
                 Steering Notes (I re-read it every iteration).
@@ -94,9 +94,9 @@ Present and confirm:
 - **Max consecutive regressions** (default: 3)
 - **Metric degradation floor** (optional — loop halts if primary metric falls below this)
 - **Epsilon** (GREEN/YELLOW/RED threshold — default: 1% of baseline)
-- **Cost ceiling:**
-  - Optional for interactive
-  - **Required for overnight** (tokens, dollars, or both — set hard stop)
+- **Wall-clock budget (minutes):** required for overnight; runtime-enforced
+  (`ar_start` `budget.minutes`), with the per-eval timeout
+- **Cost ceiling (advisory):** optional planning number; not a hard stop (§G.5)
 - **Reviewer cadence** (default: 3 interactive / 10 overnight)
 - **Plateau window W** (default: 5)
 - **Diminishing returns threshold** (minimum `bestSoFar` gain over the last
@@ -151,7 +151,8 @@ Append to `project-specs.md`:
 - **Target:** <value or "none">
 - **Iteration budget:** <N>
 - **Reviewer cadence:** <K>
-- **Cost ceiling:** <tokens: N / dollars: N, or "none">
+- **Wall-clock budget:** <minutes, or "none">
+- **Cost ceiling (advisory):** <tokens: N / dollars: N, or "none">
 - **Metric floor:** <value or "none">
 - **Mutable scope:** <list>
 - **Immutable scope:** <list>
@@ -224,7 +225,7 @@ Before the gate, announce:
 raising the gate. Goal mode is the `plan` gate policy (`autonomous_research.md`
 §A.6): in the message that precedes the Phase 1 gate, offer an unattended Phase
 2 and present the plan and budget (primary metric, direction, target if set,
-iteration budget, cost ceiling, metric floor). The Phase 1 gate below **is**
+iteration budget, wall-clock minutes, metric floor). The Phase 1 gate below **is**
 the plan approval; never raise a second gate for it.
 - **If the user chooses unattended:** add `plan_approval: "<run-id>"` to the
   `gate_request` call for the gate below, with a run id unique to this run
@@ -237,8 +238,10 @@ the plan approval; never raise a second gate for it.
   and §G safety rails still terminate the loop. Per-iteration echoes remain
   recommended for readability.
 
-The Phase 3 adoption gate is always confirmed by the user, unattended or not
-(§A.6).
+On an unattended run a reviewer `RETRO_REVERT` or `PAUSE` and a metric floor
+breach do not block: call `ar_defer` and keep looping (§B.14); the deferred
+items are presented at Phase 3. The Phase 3 adoption gate is always confirmed
+by the user, unattended or not: it is requested with `requires_human` (§A.6).
 
 ### Gate
 
@@ -406,7 +409,7 @@ Ask the user:
 - Do you want to run another budget (fresh AR session)?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-research-phase-3}}
+{{gate kind=final phase=3 validates=ml-engineer id=ml-engineer-research-phase-3 requires_human=true}}
 
 Wait for their decision before taking further action.
 

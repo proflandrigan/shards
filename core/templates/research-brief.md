@@ -32,7 +32,8 @@
 - **Max consecutive regressions:** {{MAX_CONSECUTIVE_REGRESSIONS}}
 - **Metric degradation floor:** {{METRIC_FLOOR}}
 - **Epsilon (GREEN/YELLOW/RED threshold):** {{EPSILON}}
-- **Cost ceiling:** {{COST_CEILING}}
+- **Wall-clock budget (minutes):** {{WALL_CLOCK_MINUTES}}
+- **Cost ceiling (advisory, not enforced):** {{COST_CEILING}}
 - **Reviewer cadence:** {{REVIEWER_CADENCE}}
 - **Plateau window W:** {{PLATEAU_WINDOW}}
 - **Diminishing returns threshold:** {{DIMINISHING_RETURNS_THRESHOLD}}

@@ -60,11 +60,13 @@ warn you off hypotheses that look promising but are already-tested dead ends.
 
 Confirm with the user which preset is active (established at Phase 0):
 
-- **`interactive`** (default) — budget=10, reviewer cadence=3, no required cost
-  ceiling. User is nearby and expects an engaged session. Closest in character
-  to a beefed-up `[EX]`.
-- **`overnight`** — budget=100, reviewer cadence=10, cost ceiling required.
-  User is away; agent runs long. Interrupt mechanism for unattended runs
+- **`interactive`** (default) — budget=10, reviewer cadence=3, no required
+  wall-clock budget. User is nearby and expects an engaged session. Closest in
+  character to a beefed-up `[EX]`.
+- **`overnight`** — budget=100, reviewer cadence=10, wall-clock budget
+  (minutes) required. User is away; agent runs long, driven by a shell loop
+  (§G.9). Decisions that need a human are deferred, not gated (§B.14).
+  Interrupt mechanism for unattended runs
   is the Steering Notes section of `research_brief.md` — the agent re-reads
   it every iteration (see B.1) and honors directives written there
   (including "STOP" / "PAUSE"). Micro-gates exist as an opt-in feature but
@@ -85,8 +87,9 @@ Required sections:
 - **Primary metric** — name, direction (maximize/minimize), baseline value, source
   of baseline, target value (optional).
 - **Constraints** — iteration budget, per-iteration time limit, max consecutive
-  regressions, metric degradation floor, cost ceiling (tokens and/or dollars;
-  optional for interactive, required for overnight).
+  regressions, metric degradation floor, wall-clock budget in minutes (required
+  for overnight), and an optional cost ceiling (tokens and/or dollars;
+  advisory only, §G.5).
 - **Scope** — explicit list of mutable files/directories vs. immutable
   files/directories. Anything not listed as mutable is immutable by default.
 - **Preset** — `interactive` | `overnight` | `custom`.
@@ -115,8 +118,9 @@ Before the gate, tell the user:
 
 Goal mode is the `plan` gate policy (see `goal_mode.md`). At the per-agent
 Phase 1 gate, offer the user an unattended Phase 2 loop. Present the plan and
-budget (iteration budget, cost ceiling, primary metric, target, metric floor).
-The per-agent Phase 1 gate **is** the plan approval: do not raise a second gate.
+budget (iteration budget, wall-clock minutes, primary metric, target, metric
+floor). The per-agent Phase 1 gate **is** the plan approval: do not raise a
+second gate.
 
 - **If the user chooses unattended:** call `gate_request` for the Phase 1 gate
   with the extra argument `plan_approval: "<run-id>"`. The run id names this
@@ -131,7 +135,12 @@ A plan approval covers one run in one project. Each new run raises its own
 Phase 1 gate with a new run id; the runtime then treats the gate as a fresh,
 pending gate (it does not return "already confirmed" for the earlier run), and
 the earlier run's approval stops applying as soon as the new one is requested.
-The notice budget (`gates.budget`) is counted per plan approval.
+The notice budget (`gates.budget`) is counted per plan approval. Use the same
+run id for `plan_approval` and `ar_start`'s `run_id`: the runtime then raises
+that plan's budget to cover the AR budget (`max_gates` at least iterations + 2,
+`max_minutes` at least the AR wall-clock window plus slack), so a long run does
+not exhaust the plan before its own budget. `ar_start` reports the effective
+plan budget as `plan`.
 
 Tell the user the activation is optional:
 - **With plan approval:** after the user confirms, mid-loop gates (opted-in
@@ -147,15 +156,16 @@ Tell the user the activation is optional:
 `gate_request` once per iteration under any policy. Each iteration's evidence
 is its `results.json` entry (with the C.5 validation block), its experiment file
 and its checkpoint commit (B.9). The only gates inside Phase 2 are the opted-in
-micro-gates (B.12) and the retro-revert confirmation (C.4).
+micro-gates (B.12) and, on attended runs, the retro-revert confirmation (C.4).
+Unattended runs defer that confirmation instead (§B.14).
 
 **The Phase 3 adoption gate is always confirmed by a human**, under every
-policy, including `plan` after a plan approval. A later runtime flag enforces
-this. Until then, the plan approval does not extend to Phase 3: tell the user
-the run will stop at the Phase 3 gate for their decision, and policy `plan`
-must not be used to notice-through it. If the Phase 3 gate comes back as
-"notice recorded", treat it as not yet confirmed: present the summary and wait
-for the user's explicit go-ahead before any adoption step.
+policy, including `plan` after a plan approval. Each agent requests it with
+`requires_human: true`; the runtime never turns such a gate into a notice or
+auto-recorded evidence, so it waits for the user under every policy. Tell the
+user the run will stop at the Phase 3 gate for their decision. If it ever comes
+back as "notice recorded", treat it as not yet confirmed: present the summary
+and wait for the user's explicit go-ahead before any adoption step.
 
 Either way, §E convergence and §G safety rails are unchanged. The per-iteration
 **inline summary echo** in §B.4 and §B.8 stays recommended: it keeps the run
@@ -215,8 +225,12 @@ runtime does all of it, and its numbers are the record.
    `bestSoFar`, the budget remaining and the stop reason. After a context loss
    or in a new session, the runtime rebuilds the run from the research ref.
    `ar_status(run_id, resume=true)` reopens the lease so the loop can continue.
-   This replaces G.8's manual reconciliation.
-4. **Stop.** Call `ar_end(reason)` when a stop condition fired (the runtime's
+   This replaces G.8's manual reconciliation. It also lists the pending
+   deferred decisions.
+4. **Defer (unattended runs).** A decision that needs a human (reviewer
+   `RETRO_REVERT` or `PAUSE`, a metric floor breach) goes to `ar_defer` and the
+   loop continues (§B.14); nothing blocks overnight.
+5. **Stop.** Call `ar_end(reason)` when a stop condition fired (the runtime's
    `stop_reason`), when the user halted the run (B.1), or for a reviewer stop.
    That includes `consecutive-failures` after the §D consult; the runtime does
    not decide E.5 on its own. `ar_end` records the reason on the ref and closes
@@ -473,15 +487,12 @@ per Section D.
 Run Section E stop-condition checks. If any condition fires, break the loop and
 proceed to Phase 3.
 
-#### B.12 Cost accounting + micro-gate (overnight only)
+#### B.12 Cost notes + micro-gate (overnight only)
 
-Update `results.json.costAccounting`:
-- `tokensIn` and `tokensOut` — approximate counts from this iteration
-- `dollarsSpent` — running total
-- `reviewerTasksSpawned` — increment if a reviewer consult was called
-
-Check against the cost ceiling (Section G.5). If at 50% or 80% of ceiling emit
-a soft warning; at 100% hard-stop the loop.
+Optionally update `results.json.costAccounting` (`reviewerTasksSpawned`, and
+token or dollar estimates if you have them). These are advisory: the agent
+cannot observe its own usage, so the cost ceiling is not a stop condition
+(Section G.5).
 
 **Micro-gate (opt-in, overnight preset):** micro-gates are a user-interrupt
 window requested every K iterations (default K=5) with
@@ -511,6 +522,29 @@ which the agent reads at the next iteration and halts on.
 
 If no stop condition fired and iteration budget remains, proceed to iteration
 N+1. Otherwise exit to Phase 3.
+
+#### B.14 Deferred decisions (unattended and overnight runs)
+
+On an unattended run (plan approval, or the overnight preset with nobody
+watching) a decision that needs a human must not stall the loop. Instead of a
+blocking gate, call `ar_defer` and continue:
+
+| Trigger | Call | Loop |
+|---------|------|------|
+| Reviewer `RETRO_REVERT` for iteration M (C.4) | `ar_defer(kind="retro_revert", retro_to_iteration=M, detail=<reason>)` | The runtime restores the kept state before M and moves `lastKeptCommit`, `lastGreenCommit` and the comparison reference there; continue with N+1 |
+| Reviewer `PAUSE`, or a `PAUSE` in Steering Notes the user marked "defer" | `ar_defer(kind="pause", detail=<concern>)` | Continue; avoid the hypothesis family the concern names |
+| Metric floor breach on a full eval (E.6) | `ar_defer(kind="floor_breach", detail=<value vs floor>)` | `ar_iterate` already reverted the iteration; continue |
+| Anything else only a human can decide | `ar_defer(kind="other", detail=...)` | Continue |
+
+Each call commits a `needs-human` entry (`AR-Needs-Human: <kind>`) on the
+research ref and adds it to the run's deferred list. `ar_status` and `ar_end`
+list the pending items. **The Phase 3 gate must present every deferred item for
+the user to confirm or reject** (a rejected retro-revert means restoring the
+reverted iterations from their commits on the research ref). A `STOP`/`HALT` in
+Steering Notes still ends the loop.
+
+On an attended run (the user is present, no plan approval), keep the blocking
+behaviour: C.4's confirm gate, D.2's PAUSE halt and E.6's halt.
 
 ---
 
@@ -652,8 +686,11 @@ based on data leakage or a methodology flaw), execute:
 
 1. Mark `results.json.experiments[M].retroInvalidated = true` and set
    `retroInvalidationReason` to the reviewer's explanation.
-2. **Prompt the user via a confirm gate** — retro-reverts are destructive enough
-   to warrant explicit confirmation even in overnight mode:
+2. **Unattended or overnight run:** do not raise a gate. Call
+   `ar_defer(kind="retro_revert", retro_to_iteration=M, detail=<reason>)`; it
+   performs steps 3 and 4, records the decision for the Phase 3 gate (§B.14)
+   and the loop continues (step 5). **Attended run:** prompt the user via a
+   confirm gate, since retro-reverts are destructive:
    Call `gate_request(kind=confirm)` with `evidence.status: "fail"` (the
    reviewer flagged an anomaly, so it blocks under every policy) and the
    summary "Reviewer flagged iteration M's GREEN as invalid (<reason>). Rolling
@@ -734,7 +771,8 @@ APPROVED/NEEDS REVISION/BLOCKED structure from `protocols/reviewer_verdict.md`):
   hypothesis direction. Record `hypothesisSource: "reviewer-suggested"` on the
   next iteration.
 - **`PAUSE`** — stop the loop and escalate to the user. Reviewer supplies the
-  concern. The loop halts immediately and Phase 3 begins.
+  concern. The loop halts immediately and Phase 3 begins. On an unattended run,
+  defer it with `ar_defer(kind="pause")` and continue instead (§B.14).
 - **`RETRO_REVERT`** — a prior GREEN is invalid. Reviewer specifies the target
   iteration. Execute Section C.4.
 
@@ -750,9 +788,9 @@ Applied ML Scientist (DL Engineer + Researcher) and Deep Learning Engineer
 2. **Methodology reviewer second** (Researcher) — gets the technical
    reviewer's verdict as input so they can comment on the combined picture.
 
-Dual-reviewer cost is **2× per cadence hit** and must be reflected in the cost
-ceiling (Section G.5). If cost ceiling pressure is high, consider raising K
-rather than dropping one reviewer — both perspectives matter.
+Dual-reviewer cost is **2× per cadence hit** and must be reflected in the
+wall-clock budget. If budget pressure is high, consider raising K rather than
+dropping one reviewer — both perspectives matter.
 
 ### D.4 Consultation call format
 
@@ -853,24 +891,28 @@ convergence record.
 
 Iteration count reaches the configured budget.
 
-### E.4 COST CEILING
+### E.4 COST CEILING (advisory)
 
-Token count or dollars-spent reaches the ceiling from Section A.3. Hard stop —
-no further iterations. See Section G.5 for the warning-and-stop schedule.
+Not a runtime stop: token and dollar counts are estimates (Section G.5). Stop
+with `ar_end("cost-ceiling")` only if the user asked for it and the host gives
+you real usage numbers.
 
 ### E.5 CONSECUTIVE FAILURES
 
 `consecutiveRegressions` reaches K (default K=3). Before stopping, consult the
 reviewer per Section D.1 item 4 — the reviewer may return `REDIRECT` and save
-the run.
+the run. The consult is a subagent call, not a gate, so it does not block an
+unattended run; a `PAUSE` or `RETRO_REVERT` from it is deferred per §B.14.
 
 ### E.6 METRIC FLOOR BREACH
 
 Primary metric falls below the configured floor (if set) on a **full
 evaluation**. Always live — ignores the activation floor. Immediately:
-1. Revert per C.3.
-2. Halt the loop.
-3. Record the breach in `results.json.convergence.reason` as `metric-floor-breach`.
+1. Revert per C.3 (with the runtime, `ar_iterate` has already reverted it).
+2. Attended run: halt the loop. Unattended run: call
+   `ar_defer(kind="floor_breach")` and continue (§B.14).
+3. On a halt, record the breach in `results.json.convergence.reason` as
+   `metric-floor-breach`.
 
 A proxy evaluation below floor does NOT trigger E.6 directly. Instead:
 1. Automatically re-run a full evaluation on the same iteration.
@@ -936,6 +978,7 @@ The AR schema extends the `[EX]` results.json schema. All existing fields
     "plateauWindow": <N>,
     "diminishingReturnsThreshold": <number>,
     "epsilon": <number>,
+    "wallClockMinutes": <N or null>,
     "costCeiling": {
       "tokens": <N or null>,
       "dollars": <number or null>
@@ -966,6 +1009,9 @@ The AR schema extends the `[EX]` results.json schema. All existing fields
   }
 }
 ```
+
+`costCeiling` and `costAccounting` are advisory estimates (§G.5); the runtime
+enforces `iterationBudget`, `wallClockMinutes` and the per-eval timeout.
 
 ### F.2 Per-experiment additive fields
 
@@ -1046,20 +1092,14 @@ against the iteration budget: it keeps its iteration number, the counter
 advances as for any other iteration, and the hypothesis is not retried under
 the same number. If 3 consecutive timeouts occur, trigger G.3 (error limit).
 
-### G.5 Cost ceiling
+### G.5 Budgets the runtime enforces (cost ceiling is advisory)
 
-Hard stop at 100% of the ceiling from Section A.3. **Soft warnings** at 50%
-and 80% printed inline:
-
-```
-[AR] Cost warning: 50% of ceiling reached (<metric>: <spent> / <ceiling>).
-     Continuing. You can edit research_brief.md to adjust the ceiling.
-```
-
-Reviewer consults and proxy evaluations **both count against the ceiling**.
-
-Required for `overnight` preset; optional for `interactive` (warn but do not
-force if user chose to omit).
+The enforced budgets are the iteration budget, the wall-clock `budget.minutes`
+(`time-budget`) and the per-eval `timeout_s`; `ar_iterate` checks all three.
+The agent cannot observe its own token or dollar usage, so a cost ceiling in
+the brief is an advisory planning number: print a soft warning if your estimate
+passes 50% or 80% of it, but never treat it as a hard stop. Size the
+wall-clock budget to the money you are willing to spend instead.
 
 ### G.6 No destructive operations
 
@@ -1098,6 +1138,16 @@ commit without a matching `results.json` entry, or vice versa):
    scope differs from it).
 3. Do not auto-clean any orphan files. Present the situation to the user
    before continuing.
+
+### G.9 Running overnight
+
+An unattended run needs something to keep the host working after each turn
+and a way to survive context loss. Run the host headless in a shell loop that
+starts a fresh turn until `shards research status --json` reports `done`
+(converged or ended); each turn begins with `ar_status(resume=true)`, which
+rebuilds the run from the research ref and reopens the lease. A host-side
+scheduled wakeup or loop command is the fallback heartbeat. The Shards runtime
+docs (`research.md`, "Running overnight") give the exact commands.
 
 ---
 
@@ -1380,12 +1430,16 @@ Factual synthesis — no opinions in this file:
 - **Proxy evaluations:** <N>
 - **Proxy→full re-runs triggered:** <N>
 
-## Cost Accounting
+## Cost Accounting (advisory estimates)
+- **Wall-clock used:** <minutes of budget>
 - **Tokens in:** <N>
 - **Tokens out:** <N>
 - **Dollars spent:** <value>
 - **Reviewer consults spawned:** <N>
 - **Cost ceiling:** <value or "none set">
+
+## Deferred Decisions
+<one line per `ar_defer` item: id, kind, iteration, detail; "none" if empty>
 
 ## Iteration Timeline
 | # | Hypothesis | Source | Eval | Color | Kept | Delta | Reviewer |
@@ -1473,7 +1527,10 @@ parent proposes them after promotion (see Section H.10).
 
 ### I.6 Present to user (GATE)
 
-Read both the summary and recommendations back to the user.
+Read both the summary and recommendations back to the user. If `ar_end` or
+`ar_status` lists deferred decisions (§B.14), present each one (kind, detail,
+iteration, and for a retro-revert which iterations were rolled back) and ask
+the user to confirm or reject it as part of this gate.
 
 **The Phase 3 gate is owned by the per-agent `research.md` file**, not by this
 shared protocol. Each agent requests its own Phase 3 gate with its

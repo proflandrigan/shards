@@ -16,6 +16,8 @@
 //   baseline   parent = pre-loop HEAD, tree = HEAD tree, trailers AR-Iter: 0, AR-Decision: baseline, AR-Config
 //   iter N     tree = lastKept tree + the iteration's mutable changes (kept OR not), decision trailers
 //   revert N   (only when not kept) tree = lastKept tree, AR-Revert: <lastKept sha>
+//   defer      (ar_defer) AR-Decision: needs-human, AR-Needs-Human: <kind>, AR-Detail; tree = tip tree, or for a
+//              retro_revert the kept state before iteration M (AR-Retro-To: M, AR-Revert: <that commit>)
 //   stop       (ar_end) tree = tip tree, AR-Decision: stop, AR-Stop: <reason>
 // Every commit carries AR-Run, AR-Iter, AR-Decision, AR-Metric, AR-Eval, AR-Hypothesis-Source and AR-Base
 // (the pre-loop HEAD), so state can be rebuilt from `git log --format=%(trailers)` alone (rebuildFromRef).
@@ -457,6 +459,9 @@ function trailers(run, t) {
   if (t.rebaselined) lines.push(['AR-Rebaseline', 'true']);
   if (t.revert) lines.push(['AR-Revert', t.revert]);
   if (t.stop) lines.push(['AR-Stop', oneLine(t.stop, 200)]);
+  if (t.needsHuman) lines.push(['AR-Needs-Human', t.needsHuman]);
+  if (t.retroTo) lines.push(['AR-Retro-To', t.retroTo]);
+  if (t.detail) lines.push(['AR-Detail', oneLine(t.detail, 300)]);
   lines.push(['AR-Base', run.pre_loop_head]);
   if (t.config) lines.push(['AR-Config', JSON.stringify(t.config)]);
   return lines.map(([k, v]) => `${k}: ${v}`).join('\n');
@@ -562,6 +567,7 @@ async function start(ctx, args) {
     run.lastKeptCommit = repo.headSha;
     run.lastGreenCommit = repo.headSha;
     run.iterations = [];
+    run.deferred = [];
     run.converged = false; run.stop_reason = null;
 
     const lease = await L.openArLease(session, { runId, project: cfg.project, mutable: cfg.mutable, immutable: cfg.immutable, meta: { ref } });
@@ -707,6 +713,7 @@ function summary(run, { source = 'state', leaseActive = null } = {}) {
     },
     converged: !!run.converged, stop_reason: run.stop_reason || null, ended_at: run.ended_at || null,
     lease_active: leaseActive,
+    deferred: pendingDeferred(run),
     recent: its.slice(-10).map((x) => ({ n: x.n, decision: x.decision, kept: x.kept, before: x.before, after: x.after, failure: x.failure || null, hypothesis: x.hypothesis, commit: x.commit })),
   };
 }
@@ -752,7 +759,7 @@ async function rebuildFromRef(root, ref) {
     if (!t['AR-Run']) continue;
     if (t['AR-Decision'] === 'baseline') {
       const cfg = JSON.parse(t['AR-Config']);
-      run = { ...cfg, ref, status: 'active', baseline_commit: sha, comparisonReference: cfg.baseline, bestSoFar: cfg.baseline, lastKeptCommit: cfg.pre_loop_head, lastGreenCommit: cfg.pre_loop_head, iterations: [], converged: false, stop_reason: null };
+      run = { ...cfg, ref, status: 'active', baseline_commit: sha, comparisonReference: cfg.baseline, bestSoFar: cfg.baseline, lastKeptCommit: cfg.pre_loop_head, lastGreenCommit: cfg.pre_loop_head, iterations: [], deferred: [], converged: false, stop_reason: null };
       run.tip = sha;
       continue;
     }
@@ -760,6 +767,20 @@ async function rebuildFromRef(root, ref) {
     run.tip = sha;
     const n = Number(t['AR-Iter']);
     if (t['AR-Decision'] === 'stop') { run.status = 'ended'; run.stop_reason = t['AR-Stop'] || null; run.converged = true; continue; }
+    if (t['AR-Decision'] === 'needs-human') {
+      const kind = t['AR-Needs-Human'] || 'other';
+      const item = { id: `d${(run.deferred || []).length + 1}`, kind, detail: t['AR-Detail'] || '', at_iteration: n, commit: sha, status: 'pending' };
+      if (kind === 'retro_revert' && t['AR-Revert']) {
+        const M = Number(t['AR-Retro-To']);
+        const target = keptBefore(run, M);
+        for (const x of run.iterations) if (x.n >= M && x.kept) x.retroInvalidated = true;
+        run.lastKeptCommit = t['AR-Revert']; run.lastGreenCommit = target.green;
+        run.comparisonReference = target.best; run.bestSoFar = target.best;
+        Object.assign(item, { retro_to_iteration: M, revert_to: t['AR-Revert'] });
+      }
+      run.deferred = [...(run.deferred || []), item];
+      continue;
+    }
     const [before, after] = metricPair(t['AR-Metric']);
     if (t['AR-Revert']) {
       const e = run.iterations.find((x) => x.n === n);
@@ -842,7 +863,7 @@ async function end(ctx, args) {
     const tree = (await G.gitOk(ctx.root, ['rev-parse', `${tip}^{tree}`])).trim();
     const msg = message(
       `research(${slugOf(run.project)}): end ${run.run_id} (${reason})`,
-      `${N} iteration(s); best ${run.eval.name} ${fmt(run.bestSoFar)} (baseline ${fmt(run.baseline)}). Kept state: ${run.lastKeptCommit}.`,
+      `${N} iteration(s); best ${run.eval.name} ${fmt(run.bestSoFar)} (baseline ${fmt(run.baseline)}). Kept state: ${run.lastKeptCommit}.${pendingDeferred(run).length ? ` ${pendingDeferred(run).length} deferred decision(s) need a human at the Phase 3 gate.` : ''}`,
       trailers(run, { iter: N, decision: 'stop', before: run.baseline, after: run.bestSoFar, source: 'runtime', best: run.bestSoFar, stop: reason }),
     );
     const sha = await commitTree(ctx.root, tree, tip, msg);
@@ -856,17 +877,90 @@ async function end(ctx, args) {
   });
 }
 
+// ---------- deferred decisions (issue #91, bug 14) ----------
+
+const DEFER_KINDS = ['retro_revert', 'pause', 'floor_breach', 'other'];
+
+// The kept state in force when iteration M started: the last kept iteration before M, else the pre-loop HEAD.
+function keptBefore(run, M) {
+  // Iterations an earlier retro_revert invalidated no longer count as kept.
+  const kept = (run.iterations || []).filter((x) => x.n < M && x.kept && !x.retroInvalidated);
+  const green = kept.filter((x) => x.decision === 'green');
+  const last = kept[kept.length - 1];
+  // The comparison reference only moves on a kept iteration (GREEN or re-baselined YELLOW).
+  return {
+    commit: last ? last.commit : run.pre_loop_head,
+    green: green.length ? green[green.length - 1].commit : run.pre_loop_head,
+    best: last && last.bestSoFar !== null && last.bestSoFar !== undefined ? last.bestSoFar : run.baseline,
+  };
+}
+
+function pendingDeferred(run) { return (run.deferred || []).filter((d) => d.status === 'pending'); }
+
+// Record a decision that needs a human without blocking the loop: a `needs-human` commit on the research ref
+// and an entry in run.deferred. A retro_revert restores the mutable scope to the kept state before iteration M
+// and moves lastKeptCommit / lastGreenCommit / comparisonReference there; the loop then continues (N+1).
+async function defer(ctx, args) {
+  const { root, state } = ctx;
+  const { run: run0 } = await resolveRun(ctx, args.run_id);
+  if (!run0) throw new Error(`ar_defer: no AR run${args.run_id ? ` ${args.run_id}` : ''} found`);
+  if (run0.status === 'ended') throw new Error(`ar_defer: run ${run0.run_id} already ended (${run0.stop_reason})`);
+  if (!readStore(state).runs[run0.run_id]) throw new Error(`ar_defer: run ${run0.run_id} is not in this session; call ar_status with resume=true first`);
+  const kind = args.kind;
+  if (!DEFER_KINDS.includes(kind)) throw new Error(`ar_defer: kind must be one of ${DEFER_KINDS.join(', ')}`);
+  const detail = oneLine(args.detail, 1000);
+  if (!detail) throw new Error('ar_defer: detail is required (what the human must decide, and why)');
+  return withRunLock(run0.run_id, async () => {
+    const run = JSON.parse(JSON.stringify(run0));
+    const repo = await repoInfo(root);
+    const tip = await refTip(root, run.ref);
+    if (!tip) throw new Error(`ar_defer: research ref ${run.ref} is missing`);
+    if (run.tip && tip !== run.tip) throw new Error(`ar_defer: research ref ${run.ref} moved outside the runtime; run ar_status`);
+    const N = (run.iterations || []).length;
+    let tree = (await G.gitOk(root, ['rev-parse', `${tip}^{tree}`])).trim();
+    let retro = null;
+    if (kind === 'retro_revert') {
+      const M = args.retro_to_iteration;
+      if (!Number.isInteger(M) || M < 1 || M > N) throw new Error(`ar_defer: retro_revert needs retro_to_iteration between 1 and ${N} (the first invalid iteration)`);
+      const target = keptBefore(run, M);
+      const reverted = await revertMutable(root, repo, target.commit, run);
+      tree = (await G.gitOk(root, ['rev-parse', `${target.commit}^{tree}`])).trim();
+      for (const x of run.iterations) if (x.n >= M && x.kept) x.retroInvalidated = true;
+      run.lastKeptCommit = target.commit;
+      run.lastGreenCommit = target.green;
+      run.comparisonReference = target.best;
+      run.bestSoFar = target.best;
+      retro = { to_iteration: M, revert_to: target.commit, best: target.best, restored: reverted.restored, deleted: reverted.deleted };
+    }
+    const msg = message(
+      `research(${slugOf(run.project)}): needs-human ${kind}${retro ? ` (back to before iter ${retro.to_iteration})` : ''}`,
+      `${detail}${retro ? `\nRestored ${retro.restored.length} path(s), deleted ${retro.deleted.length} file(s); kept state ${retro.revert_to}.` : ''}\nThe loop continues; a human confirms this at the Phase 3 gate.`,
+      trailers(run, { iter: N, decision: 'needs-human', before: run.comparisonReference, after: null, source: 'runtime', best: run.bestSoFar, needsHuman: kind, detail, ...(retro ? { retroTo: retro.to_iteration, revert: retro.revert_to } : {}) }),
+    );
+    const sha = await commitTree(root, tree, tip, msg);
+    await advanceRef(root, run.ref, sha, tip);
+    run.tip = sha;
+    const item = {
+      id: `d${(run.deferred || []).length + 1}`, kind, detail, at_iteration: N, commit: sha, status: 'pending', at: iso(),
+      ...(retro ? { retro_to_iteration: retro.to_iteration, revert_to: retro.revert_to } : {}),
+    };
+    run.deferred = [...(run.deferred || []), item];
+    await saveRun(state, run);
+    return { run, item, retro };
+  });
+}
+
 // Brief line for shards_status / sessions_resume.
 function brief(state) {
   try {
     const r = activeRun(state) || latestRun(state);
     if (!r) return null;
-    return { run_id: r.run_id, project: r.project, ref: r.ref, status: r.status, iterations: (r.iterations || []).length, budget: r.budget, bestSoFar: r.bestSoFar, baseline: r.baseline, stop_reason: r.stop_reason || null };
+    return { run_id: r.run_id, project: r.project, ref: r.ref, status: r.status, iterations: (r.iterations || []).length, budget: r.budget, bestSoFar: r.bestSoFar, baseline: r.baseline, stop_reason: r.stop_reason || null, deferred: pendingDeferred(r).length };
   } catch (_) { return null; }
 }
 
 module.exports = {
-  start, iterate, status, end, brief, rebuildFromRef, resolveRun, summary,
+  start, iterate, status, end, defer, brief, rebuildFromRef, resolveRun, findRef, refTip, summary, pendingDeferred, DEFER_KINDS,
   // exported for tests
   parseMetric, classify, stopReason, deriveCounters, runCommand, pinImmutable, slugOf, REF_ROOT, STATE, DEFAULTS,
 };

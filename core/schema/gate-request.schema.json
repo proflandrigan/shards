@@ -60,6 +60,10 @@
       "maxLength": 128,
       "description": "Marks this gate as the plan approval for run <value> (gate policy `plan`). A confirmed gate re-requested with a different run starts over as a fresh gate."
     },
+    "requires_human": {
+      "type": "boolean",
+      "description": "When true the gate always needs a human confirmation, under every gate policy: `plan` never turns it into a notice and `phase` never auto-records it as evidence (e.g. the AR Phase 3 adoption gate)."
+    },
     "targets": {
       "type": "array",
       "items": { "type": "string", "minLength": 1, "maxLength": 512 },

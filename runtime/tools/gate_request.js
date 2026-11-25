@@ -90,7 +90,7 @@ function normPhase(p) { return typeof p === 'string' && /^\d+$/.test(p) ? Number
 
 module.exports = defineTool({
   name: 'gate_request',
-  description: 'Request a human gate at the end of a phase. Opens (or re-opens) a pending gate owned by your switch frame; you cannot confirm it. After calling, stop and wait for the user to confirm. With `validates`, the record must contain a complete `## Validation` section. A confirmed gate returns "already confirmed" and is never reopened. Pass `targets` (project-root-relative paths) to record the deliverable locations the user is confirming at this gate; confirmed targets are included in the gate\'s git snapshot. Pass `plan_approval: "<run>"` to make this gate the plan approval for that run under the `plan` gate policy (a new run needs a fresh approval).',
+  description: 'Request a human gate at the end of a phase. Opens (or re-opens) a pending gate owned by your switch frame; you cannot confirm it. After calling, stop and wait for the user to confirm. With `validates`, the record must contain a complete `## Validation` section. A confirmed gate returns "already confirmed" and is never reopened. Pass `targets` (project-root-relative paths) to record the deliverable locations the user is confirming at this gate; confirmed targets are included in the gate\'s git snapshot. Pass `plan_approval: "<run>"` to make this gate the plan approval for that run under the `plan` gate policy (a new run needs a fresh approval). Pass `requires_human: true` for a gate that must always be confirmed by a human, whatever the gate policy (e.g. adopting autonomous-research results).',
   inputSchema: schema,
   async handler(args, ctx) {
     if (!ctx.sessionKey || !ctx.state) throw new Error('gate_request requires a resolved session');
@@ -122,6 +122,7 @@ module.exports = defineTool({
       frame, id: args.id, kind: args.kind, phase, summary: args.summary, record_ref: args.record_ref,
       validates: args.validates || null, targets,
       ...(args.plan_approval ? { plan_run: args.plan_approval } : {}),
+      ...(args.requires_human ? { requires_human: true } : {}),
     });
 
     let replayed = null;

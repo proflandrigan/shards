@@ -3,12 +3,27 @@
 // create the research ref refs/shards/research/<project>/<run_id>. See docs/research.md.
 const { defineTool } = require('../registry');
 const R = require('../research');
+const policy = require('../gates/policy');
+const machine = require('../gates/machine');
+
+// The plan approval for this run (gate_request plan_approval:<run_id> or plan-approval.<run_id>) and the
+// budget the plan policy applies to it, raised to cover the AR budget (issue #91, bug 13).
+function planBudget(ctx, run) {
+  try {
+    const session = { root: ctx.root, sessionKey: ctx.sessionKey, state: ctx.state };
+    const plan = machine.listGates(session).find((g) => policy.isPlanGate(g) && policy.planRunOf(g) === run.run_id);
+    if (!plan) return null;
+    const { gates: g } = policy.resolveGatesConfig(ctx);
+    const b = policy.effectiveBudget(session, plan, g.budget);
+    return { gate: plan.id, status: plan.status, policy: g.policy || 'phase', max_gates: b.max_gates != null ? b.max_gates : policy.DEFAULT_MAX_GATES, max_minutes: b.max_minutes != null ? b.max_minutes : null };
+  } catch (_) { return null; }
+}
 
 const PATHS = { type: 'array', items: { type: 'string', minLength: 1 } };
 
 module.exports = defineTool({
   name: 'ar_start',
-  description: 'Start an autonomous-research (AR) run. The runtime pins sha256 hashes of every immutable path and of the eval command, refuses if the mutable scope has uncommitted changes, snapshots the pre-loop dirty files, runs the baseline eval `repeats` times (noise floor; epsilon_abs = max(epsilon% x |baseline|, 2 sd)), opens the AR lease (writes outside mutable + the project dir are denied) and creates the research ref refs/shards/research/<project>/<run_id> whose first commit is the baseline. One active run per session. Then edit mutable files and call ar_iterate for each hypothesis.',
+  description: 'Start an autonomous-research (AR) run. The runtime pins sha256 hashes of every immutable path and of the eval command, refuses if the mutable scope has uncommitted changes, snapshots the pre-loop dirty files, runs the baseline eval `repeats` times (noise floor; epsilon_abs = max(epsilon% x |baseline|, 2 sd)), opens the AR lease (writes outside mutable + the project dir are denied) and creates the research ref refs/shards/research/<project>/<run_id> whose first commit is the baseline. One active run per session. When a plan approval for the same run id exists (gate_request plan_approval: <run_id>), the plan gate budget is raised to cover this AR budget (max_gates >= iterations + 2, max_minutes >= the AR window) and reported as `plan`. Then edit mutable files and call ar_iterate for each hypothesis.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
@@ -62,6 +77,7 @@ module.exports = defineTool({
         baseline: run.baseline, noise: run.noise, epsilon_abs: run.epsilon_abs,
         lastKeptCommit: run.lastKeptCommit, preLoopDirty: run.preLoopDirty,
         pinned: Object.keys(run.hashes.immutable),
+        plan: planBudget(ctx, run),
         next: 'Edit mutable files for ONE hypothesis, then call ar_iterate({hypothesis, source}). Do not run the eval or git yourself.',
       },
     };

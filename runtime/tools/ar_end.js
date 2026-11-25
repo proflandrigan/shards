@@ -5,7 +5,7 @@ const R = require('../research');
 
 module.exports = defineTool({
   name: 'ar_end',
-  description: 'End an autonomous-research run: commits the stop reason (AR-Stop trailer) on its research ref, closes the AR lease and marks the run ended. The kept state stays uncommitted in the working tree; it reaches the user branch only through the Phase 3 convergence gate (human).',
+  description: 'End an autonomous-research run: commits the stop reason (AR-Stop trailer) on its research ref, closes the AR lease and marks the run ended. The kept state stays uncommitted in the working tree; it reaches the user branch only through the Phase 3 convergence gate (human). Returns the pending deferred decisions (ar_defer) that the Phase 3 gate must present.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
@@ -24,7 +24,7 @@ module.exports = defineTool({
         lease_closed: closed ? closed.id : null,
         kept_diff: `git diff ${run.pre_loop_head} ${run.lastKeptCommit} -- ${run.mutable.join(' ')}`,
         journal: `git log --format='%h %s%n%(trailers:only)' ${run.pre_loop_head}..${run.ref}`,
-        note: 'Kept changes are uncommitted in the working tree. Present them at the Phase 3 gate; the user branch is never changed by the AR tools.',
+        note: `Kept changes are uncommitted in the working tree. Present them at the Phase 3 gate (requires_human); the user branch is never changed by the AR tools.${R.pendingDeferred(run).length ? ' The deferred decisions listed above must be presented there for the user to confirm or reject (a rejected retro_revert means restoring the reverted iterations by hand).' : ''}`,
       },
     };
   },

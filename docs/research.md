@@ -1,8 +1,8 @@
 # Autonomous research runtime (`ar_*` tools)
 
-Issue #91, H1 and H2. The runtime owns the `[AR]` loop's bookkeeping: it runs the eval command, parses the metric, classifies each iteration, keeps or reverts the mutable scope and journals every iteration in git. The agent proposes hypotheses and edits mutable files. It never reports a metric and never runs git to keep or revert. The protocol is in [`core/protocols/autonomous_research.md`](../core/protocols/autonomous_research.md). The manual path there is a fallback for hosts without the runtime.
+Issue #91, H1, H2 and H3. The runtime owns the `[AR]` loop's bookkeeping: it runs the eval command, parses the metric, classifies each iteration, keeps or reverts the mutable scope and journals every iteration in git. The agent proposes hypotheses and edits mutable files. It never reports a metric and never runs git to keep or revert. The protocol is in [`core/protocols/autonomous_research.md`](../core/protocols/autonomous_research.md). The manual path there is a fallback for hosts without the runtime.
 
-Code: `runtime/research/index.js`, tools `runtime/tools/ar_start.js`, `ar_iterate.js`, `ar_status.js`, `ar_end.js`. Tests: `test/ar-tools.test.js`.
+Code: `runtime/research/index.js`, tools `runtime/tools/ar_start.js`, `ar_iterate.js`, `ar_status.js`, `ar_defer.js`, `ar_end.js`, CLI `cli/commands/research.js`. Tests: `test/ar-tools.test.js`, `test/gates-policy.test.js` (`requires_human`, plan budget).
 
 ## Tools
 
@@ -31,6 +31,8 @@ The call does the following, in order:
 5. Opens the AR lease ([`delegation.md`](delegation.md) §5.1). It allows `project` plus the mutable globs and denies writes to immutable paths.
 6. Creates the research ref and makes its first commit, the baseline.
 7. Records `lastKeptCommit = lastGreenCommit = pre-loop HEAD` and `comparisonReference = baseline`.
+
+If a plan approval exists for the same run id (`gate_request` with `plan_approval: "<run_id>"`, or the gate `plan-approval.<run_id>`), the result's `plan` field reports that gate and the budget the `plan` policy applies to it. See [Plan budget](#plan-budget-derived-from-the-ar-budget).
 
 ### `ar_iterate({hypothesis, source?})`
 
@@ -67,13 +69,25 @@ The runtime does not decide `consecutive-failures` (protocol §E.5: three REDs).
 
 ### `ar_status({run_id?, resume?})`
 
-Returns the run summary: iterations, decision counts, baseline and noise, `epsilon_abs`, `comparisonReference`/`bestSoFar`, both pointers, remaining budget (iterations and minutes), `converged`/`stop_reason`, whether the lease is active, and the last 10 iterations.
+Returns the run summary: iterations, decision counts, baseline and noise, `epsilon_abs`, `comparisonReference`/`bestSoFar`, both pointers, remaining budget (iterations and minutes), `converged`/`stop_reason`, whether the lease is active, the pending `deferred` decisions, and the last 10 iterations.
 
 The run is looked up in this session's state first. If the state is missing (a new session, or lost context), the run is rebuilt from the research ref. The rebuild uses `git log --first-parent --format=%(trailers:only,unfold) <AR-Base>..<ref>`: the baseline's `AR-Config` trailer supplies the configuration, and the iteration trailers supply the history. `resume: true` makes the run this session's active run and reopens its AR lease, so `ar_iterate` can continue.
 
+### `ar_defer({run_id?, kind, detail, retro_to_iteration?})`
+
+The deferred-decision queue (bug 14). On an unattended or overnight run, a decision that needs a human must not idle the loop until morning. `kind` is `retro_revert`, `pause`, `floor_breach` or `other`.
+
+1. Commits a `needs-human` entry on the research ref: `AR-Decision: needs-human`, `AR-Needs-Human: <kind>`, `AR-Detail: <detail>`. Its tree is the tip tree.
+2. For `retro_revert` with `retro_to_iteration: M` (1..N), the runtime first restores the mutable scope to the kept state in force when iteration M started. That is the last kept iteration before M that an earlier retro-revert did not invalidate, or the pre-loop HEAD. It uses the same revert helper as `ar_iterate`, so files the loop created are deleted and `preLoopDirty` is untouched. The commit's tree is that kept tree, with `AR-Retro-To: M` and `AR-Revert: <sha>`. `lastKeptCommit`, `lastGreenCommit` and `comparisonReference`/`bestSoFar` move back to it, and kept iterations from M on are marked `retroInvalidated`.
+3. Appends `{id, kind, detail, at_iteration, commit, status: "pending", retro_to_iteration?, revert_to?}` to the run's `deferred[]`.
+
+No gate is raised and the loop continues: the next `ar_iterate` is N+1. `ar_status` and `ar_end` list the pending items, and the Phase 3 gate (always human, see below) presents them for the user to confirm or reject. A rejected retro-revert is undone by restoring the reverted iterations from their commits on the ref. The rebuild from the ref replays `needs-human` commits, so the queue and the moved pointers survive context loss. Attended runs keep the protocol's blocking gate.
+
+`ar_defer` is an exec tool for the hooks, like `ar_iterate`, because a retro-revert rewrites mutable files.
+
 ### `ar_end({run_id?, reason})`
 
-Puts a final commit on the ref with `AR-Decision: stop` and `AR-Stop: <reason>`. Then it closes the AR lease and marks the run `ended`. It returns the summary plus the commands to inspect the kept diff and the journal.
+Puts a final commit on the ref with `AR-Decision: stop` and `AR-Stop: <reason>`. Then it closes the AR lease and marks the run `ended`. It returns the summary, including the pending `deferred` items for the Phase 3 gate, plus the commands to inspect the kept diff and the journal.
 
 ## Research ref
 
@@ -90,6 +104,7 @@ History follows the first parent:
 | baseline | pre-loop HEAD | HEAD tree | `AR-Iter: 0`, `AR-Decision: baseline`, `AR-Config: {json}` |
 | iteration N | previous tip | lastKept tree + mutable changes | `AR-Decision: green\|yellow\|red`, `AR-Kept`, `AR-Best`, `AR-LOC`, `AR-Failure?`, `AR-Hypothesis` |
 | revert N (not kept) | iteration N | lastKept tree | `AR-Revert: <lastKept sha>` |
+| needs-human (`ar_defer`) | tip | tip tree, or the kept tree before M for a retro-revert | `AR-Decision: needs-human`, `AR-Needs-Human: <kind>`, `AR-Detail`, `AR-Retro-To?`, `AR-Revert?` |
 | stop | tip | tip tree | `AR-Decision: stop`, `AR-Stop: <reason>` |
 
 Every commit carries these trailers:
@@ -119,6 +134,7 @@ The run state lives in `.shards/state/sessions/<key>/research.json` as `{active:
 - the configuration, the hashes and `preLoopDirty`
 - `baseline`, `noise`, `epsilon_abs`
 - `comparisonReference`, `bestSoFar`, `lastKeptCommit`, `lastGreenCommit`, and the ref `tip`
+- `deferred[]`: the `ar_defer` queue
 - `iterations[]`, plus the counters derived from them: `consecutiveRegressions`, `consecutiveFailures`, `consecutiveTimeouts`, `consecutiveYellowKept`, `iterationsSinceLastGreen`
 - `status` (`active|converged|ended`) and `stop_reason`
 
@@ -126,8 +142,52 @@ The run state lives in `.shards/state/sessions/<key>/research.json` as `{active:
 
 ## Hooks
 
-`ar_start` and `ar_iterate` count as exec tools in `hooks/lib/writes.js`. A pending gate blocks them, like scripts and notebook execution. They are not write-checked, because the runtime confines their writes to the mutable scope and `<project>/experiments/`.
+`ar_start`, `ar_iterate` and `ar_defer` count as exec tools in `hooks/lib/writes.js`. A pending gate blocks them, like scripts and notebook execution. They are not write-checked, because the runtime confines their writes to the mutable scope and `<project>/experiments/`.
+
+## Unattended runs (H3)
+
+### `requires_human` gates
+
+`gate_request` takes `requires_human: true`. Such a gate is never turned into a notice under `plan`, never auto-recorded as evidence under `phase`, and always goes to the human tiers (elicitation, host prompt, verbatim chat reply). The flag sticks to the gate when it is re-requested. Every AR agent's Phase 3 adoption gate passes it, via `{{gate ... requires_human=true}}` ([`build/MACROS.md`](../build/MACROS.md) §3.8). So a plan approval can carry an overnight loop, but it can never adopt the results.
+
+### Plan budget derived from the AR budget
+
+Under the `plan` policy the notice budget is `gates.budget` (`max_gates`, default 100; `max_minutes`), counted per plan approval. When the plan approval's run id (`plan_run`, or the suffix of `plan-approval.<run>`) is an AR run in this session's research state, `runtime/gates/policy.js` (`effectiveBudget`) raises it. It never lowers it:
+
+- `max_gates` becomes at least `budget.iterations + 2`.
+- `max_minutes`, when configured, becomes at least the time from the plan approval to `ar_start`, plus `budget.minutes`, plus 30 minutes and one eval timeout of slack. That covers the wrap-up gates after a `time-budget` stop. With no `max_minutes`, there is no time limit.
+
+So use the same id for `plan_approval` and `ar_start`'s `run_id`. Until `ar_start` runs, the configured budget applies.
+
+### Enforced budgets
+
+The runtime enforces the iteration budget, the wall-clock `budget.minutes` and the per-eval `timeout_s`. Token and dollar ceilings in the brief are advisory: the agent cannot observe its own usage (protocol §G.5).
+
+### Running overnight
+
+AR state lives in the runtime and in git, not in the model's context. A driver only has to keep starting turns until the run is done. Each fresh turn picks the run up with `ar_status({resume: true})`.
+
+`shards research status [--run <id>] [--session <key>] [--json] [--root <dir>]` prints the run (default: the newest active run, else the newest), with `done: true` once it has converged or ended, or once a stop condition is already due. It reads session state from any session and falls back to rebuilding from the research ref. It exits 1 when no run is found.
+
+A shell driver around a headless host, for example Claude Code:
+
+```bash
+RUN=churn-ar-20261125T2200
+done_() { shards research status --run "$RUN" --json | node -e 'process.exit(JSON.parse(require("fs").readFileSync(0)).done ? 0 : 1)'; }
+until done_; do
+  claude -p "Continue the autonomous-research run $RUN: call ar_status({run_id: \"$RUN\", resume: true}), then keep iterating per the protocol until it converges or this turn ends." \
+    --permission-mode acceptEdits
+  sleep 5
+done
+claude -p "AR run $RUN is done: call ar_end with the stop reason and prepare the Phase 3 summary (do not adopt anything)."
+```
+
+Headless turns cannot answer permission prompts, so pre-allow the shards MCP tools and the eval's shell needs first (`shards install --permissions`, or the host's own allowlist). Otherwise a turn stops at the first prompt. For Codex, use `codex exec "<same prompt>"` with a profile that has the shards MCP server. The Phase 1 plan approval and the Phase 3 adoption gate stay interactive. Start the loop only after the plan is approved, and come back for Phase 3.
+
+Fallback heartbeat: inside an interactive session, the host's own recurring prompt (Claude Code `/loop`, or a scheduled wakeup) can re-issue the same "continue run $RUN" prompt on an interval. Prefer the shell loop for long runs, because every turn starts with a fresh context and nothing depends on one context surviving 100 iterations.
+
+During the run, decisions that need a human go to `ar_defer`, not to gates. The steering notes in the research brief still work, and a `STOP` there ends the run at the next iteration.
 
 ## Promotion (not implemented yet)
 
-Kept state stays uncommitted in the user's working tree. Promotion to the user's branch happens at the Phase 3 convergence gate, which is always human. Today the git binding's gate commit (`commitGate`) commits only the agent's output dirs, so mutable code outside them is left for the user to commit. A later task adds ref-based promotion: one commit per kept GREEN, via `commitGate` with the denylist and pre-commit hook. Also deferred: overnight automation (`requires_human`, the deferred-decision queue, driver docs), fan-out branches as leads with per-branch worktrees, and a sealed holdout.
+Kept state stays uncommitted in the user's working tree. Promotion to the user's branch happens at the Phase 3 convergence gate, which is always human. Today the git binding's gate commit (`commitGate`) commits only the agent's output dirs, so mutable code outside them is left for the user to commit. A later task adds ref-based promotion: one commit per kept GREEN, via `commitGate` with the denylist and pre-commit hook. Also deferred: fan-out branches as leads with per-branch worktrees, and a sealed holdout.

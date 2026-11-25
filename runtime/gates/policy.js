@@ -16,6 +16,14 @@
 // run's plan gate suspends notices until a human confirms it. The notice budget is counted per
 // plan gate (keyed by id and run).
 //
+// A plan gate whose run is an autonomous-research run of this session (`ar_start`, run_id == plan_run
+// or the `plan-approval.<run>` suffix) gets a budget derived from the AR budget (issue #91, bug 13):
+// max_gates >= iterations + 2 and max_minutes >= (AR start - plan approval) + budget.minutes + slack
+// (one eval timeout + 30 min), so an overnight run cannot exhaust the plan budget before its own.
+//
+// A gate requested with `requires_human: true` is never a notice or auto-evidence under any policy
+// (e.g. the AR Phase 3 adoption gate).
+//
 // Counters live in <session>/policy.json: {notices:int, plan_gate, started_at}.
 const machine = require('./machine');
 
@@ -73,12 +81,44 @@ function stateOf(session) {
   return session.state || new (require('../state/store').StateStore)(session.root, session.sessionKey);
 }
 
+const AR_SLACK_MINUTES = 30;
+
+// The run a plan gate approves: `plan_run`, else the suffix of `plan-approval.<run>`.
+function planRunOf(plan) {
+  if (!plan) return null;
+  if (plan.plan_run) return plan.plan_run;
+  return typeof plan.id === 'string' && plan.id.startsWith(`${PLAN_GATE_ID}.`) ? plan.id.slice(PLAN_GATE_ID.length + 1) : null;
+}
+
+// The configured budget, raised to cover the AR run the plan approves (if any). Never lowers a limit.
+function effectiveBudget(session, plan, budget) {
+  const b = { ...(budget || {}) };
+  const runId = planRunOf(plan);
+  if (!runId) return b;
+  let run = null;
+  try { run = ((stateOf(session).read('research') || {}).runs || {})[runId] || null; } catch (_) { run = null; }
+  if (!run || !run.budget) return b;
+  const it = Number(run.budget.iterations);
+  if (Number.isFinite(it)) b.max_gates = Math.max(b.max_gates != null ? b.max_gates : DEFAULT_MAX_GATES, it + 2);
+  const mins = Number(run.budget.minutes);
+  if (b.max_minutes != null && Number.isFinite(mins) && mins > 0) {
+    const planStart = Date.parse(plan.decided_at || plan.updated_at);
+    const runStart = Date.parse(run.started_at);
+    const lead = Number.isFinite(planStart) && Number.isFinite(runStart) ? Math.max(0, (runStart - planStart) / 60000) : 0;
+    const slack = AR_SLACK_MINUTES + (Number(run.eval && run.eval.timeout_s) || 0) / 60;
+    b.max_minutes = Math.max(b.max_minutes, Math.ceil(lead + mins + slack));
+  }
+  b.ar_run = runId;
+  return b;
+}
+
 // `cur`: policy state already read under the lock (apply() checks and increments in one update).
 // `entry`: the gate being decided (scopes the plan to its project); omitted means any project.
 function planStatus(session, budget, cur, entry) {
   const plan = activePlan(session, entry);
   if (!plan || plan.status !== 'confirmed') return { active: false };
   const key = planKey(plan);
+  budget = effectiveBudget(session, plan, budget);
   const st = cur || stateOf(session).read('policy') || {};
   // Notices count per plan gate: a counter left by another plan starts over at 0.
   const used = st.plan_gate && st.plan_gate !== key ? 0 : (Number(st.notices) || 0);
@@ -89,7 +129,7 @@ function planStatus(session, budget, cur, entry) {
     if (Number.isFinite(start) && (Date.now() - start) / 60000 >= budget.max_minutes) return { active: true, key, exhausted: `max_minutes (${budget.max_minutes}) exhausted` };
   }
   if (budget && budget.max_tool_calls != null && Number(st.tool_calls) >= budget.max_tool_calls) return { active: true, key, exhausted: `max_tool_calls (${budget.max_tool_calls}) exhausted` };
-  return { active: true, key, used, maxGates };
+  return { active: true, key, used, maxGates, budget };
 }
 
 // apply(session, entry, evidence, {policy, budget}, deps) ->
@@ -101,6 +141,7 @@ async function apply(session, entry, evidence, cfg = {}, deps = {}) {
   if (ev) entry = await recordEvidence(session, entry, ev, policy);
   if (entry.status !== 'pending') return { handled: false };
   if (isPlanGate(entry)) return { handled: false, reason: 'plan-approval needs a human' };
+  if (entry.requires_human) return { handled: false, reason: 'requires_human: a human must confirm this gate' };
   if (policy === 'strict') return { handled: false, reason: 'strict policy: human required' };
   const failed = ev && ev.status !== 'pass';
 
@@ -145,4 +186,4 @@ function resolveGatesConfig(ctx) {
   }
 }
 
-module.exports = { resolveGatesConfig, PLAN_GATE_ID, DEFAULT_MAX_GATES, decide, recordEvidence, isPlanGate, activePlan, planStatus, apply };
+module.exports = { resolveGatesConfig, PLAN_GATE_ID, DEFAULT_MAX_GATES, decide, recordEvidence, isPlanGate, activePlan, planRunOf, effectiveBudget, planStatus, apply };

@@ -76,6 +76,7 @@ async function requestGate(session, req) {
       if (req.record_ref !== undefined) existing.record_ref = req.record_ref;
       if (req.targets !== undefined) existing.targets = req.targets;
       if (req.plan_run) existing.plan_run = req.plan_run;
+      if (req.requires_human) existing.requires_human = true;
       existing.updated_at = ts;
       result = 'already_pending'; entry = existing; return cur;
     }
@@ -90,6 +91,7 @@ async function requestGate(session, req) {
       });
       if (req.targets !== undefined) existing.targets = req.targets;
       if (req.plan_run) existing.plan_run = req.plan_run;
+      if (req.requires_human) existing.requires_human = true;
       result = 'reopened'; entry = existing; return cur;
     }
     entry = gates[id] = {
@@ -101,6 +103,7 @@ async function requestGate(session, req) {
       // Absent (not []) when the agent passed no targets: the gate then inherits the latest confirmed list.
       ...(req.targets !== undefined ? { targets: req.targets } : {}),
       ...(req.plan_run ? { plan_run: req.plan_run } : {}),
+      ...(req.requires_human ? { requires_human: true } : {}),
       requested_at: ts, updated_at: ts,
       history: [{ ts, from: null, to: 'pending' }],
       ...(previous ? { previous } : {}),

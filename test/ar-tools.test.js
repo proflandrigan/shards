@@ -74,6 +74,13 @@ describe('ar_start', () => {
     await expect(call('ar_start', startArgs({ run_id: 'r2' }))).rejects.toThrow(/already active/);
   });
 
+  it('reports the plan budget raised to cover the AR budget when the run has a plan approval', async () => {
+    const at = new Date().toISOString();
+    await state.update('gates', (cur) => { cur.gates = { 'ml-engineer-research-phase-1': { id: 'ml-engineer-research-phase-1', kind: 'execute', status: 'confirmed', plan_run: 'r1', requested_at: at, decided_at: at } }; return cur; });
+    const s = await call('ar_start', startArgs({ budget: { iterations: 150, minutes: 600 } }));
+    expect(s.plan).toMatchObject({ gate: 'ml-engineer-research-phase-1', status: 'confirmed', max_gates: 152, max_minutes: null });
+  });
+
   it('refuses a dirty mutable scope and a failing baseline', async () => {
     model('5\n');
     await expect(call('ar_start', startArgs())).rejects.toThrow(/mutable scope has uncommitted changes.*src\/model.txt/);
@@ -203,6 +210,78 @@ describe('convergence, status rebuild and end', () => {
   });
 });
 
+describe('ar_defer (deferred-decision queue)', () => {
+  beforeEach(async () => { await call('ar_start', startArgs()); });
+
+  it('retro_revert restores the kept state before M, records needs-human and the loop continues', async () => {
+    model('2\n# a\n# b\n'); const g1 = await call('ar_iterate', { hypothesis: 'up 2' });
+    model('3\n# a\n# b\n'); write(root, 'src/leak.txt', 'leak\n'); const g2 = await call('ar_iterate', { hypothesis: 'leaky 3' });
+    model('4\n# a\n# b\n'); write(root, 'src/leak.txt', 'leak\n'); await call('ar_iterate', { hypothesis: 'leaky 4' });
+    expect(g2.decision).toBe('green');
+    const d = await call('ar_defer', { kind: 'retro_revert', retro_to_iteration: 2, detail: 'iter 2 GREEN used test labels' });
+    expect(d.deferred).toMatchObject({ id: 'd1', kind: 'retro_revert', retro_to_iteration: 2, revert_to: g1.commit, at_iteration: 3, status: 'pending' });
+    expect(d.retro_revert).toMatchObject({ lastKeptCommit: g1.commit, lastGreenCommit: g1.commit, comparisonReference: 2, deleted: ['src/leak.txt'] });
+    expect(read('src/model.txt')).toBe('2\n# a\n# b\n');
+    expect(fs.existsSync(path.join(root, 'src/leak.txt'))).toBe(false);
+    const tr = sh(root, 'log', '-1', '--format=%(trailers:only,unfold)', 'refs/shards/research/p/r1');
+    for (const t of ['AR-Decision: needs-human', 'AR-Needs-Human: retro_revert', 'AR-Retro-To: 2', `AR-Revert: ${g1.commit}`, 'AR-Detail: iter 2 GREEN used test labels']) expect(tr).toContain(t);
+    expect(sh(root, 'show', 'refs/shards/research/p/r1:src/model.txt')).toBe('2\n# a\n# b');
+    // The loop continues from the reverted state: iteration 4 is judged against 2.
+    model('2.5\n# a\n# b\n');
+    expect(await call('ar_iterate', { hypothesis: 'honest 2.5' })).toMatchObject({ iteration: 4, decision: 'green', before: 2, after: 2.5 });
+    await call('ar_defer', { kind: 'pause', detail: 'reviewer wants a look at feature drift' });
+    const st = await call('ar_status', {});
+    expect(st.deferred.map((x) => x.kind)).toEqual(['retro_revert', 'pause']);
+    // A rebuild from the ref sees the same queue and pointers.
+    key = 'sess-new2'; state = new StateStore(root, key);
+    const rb = await call('ar_status', { run_id: 'r1' });
+    expect(rb).toMatchObject({ source: 'ref', comparisonReference: 2.5, iterations: 4 });
+    expect(rb.deferred.map((x) => [x.kind, x.retro_to_iteration])).toEqual([['retro_revert', 2], ['pause', undefined]]);
+    const run = await R.rebuildFromRef(root, 'refs/shards/research/p/r1');
+    expect(run.iterations.filter((x) => x.retroInvalidated).map((x) => x.n)).toEqual([2, 3]);
+  });
+
+  it('ar_end lists pending deferred items for the Phase 3 gate', async () => {
+    await call('ar_defer', { kind: 'floor_breach', detail: 'full eval 0.4 below floor 0.5' });
+    const e = await call('ar_end', { reason: 'budget-exhausted' });
+    expect(e.deferred).toEqual([expect.objectContaining({ kind: 'floor_breach', status: 'pending' })]);
+    expect(e.note).toMatch(/deferred decisions/);
+    await expect(call('ar_defer', { kind: 'other', detail: 'x' })).rejects.toThrow(/already ended/);
+  });
+
+  it('validates retro_to_iteration', async () => {
+    await expect(call('ar_defer', { kind: 'retro_revert', detail: 'x' })).rejects.toThrow(/retro_to_iteration between 1 and 0/);
+    await expect(call('ar_defer', { kind: 'pause', detail: 'x', retro_to_iteration: 1 })).rejects.toThrow(/only valid with kind=retro_revert/);
+  });
+});
+
+describe('shards research status (CLI)', () => {
+  const { spawnSync } = require('child_process');
+  const CLI = path.resolve(__dirname, '..', 'cli', 'shards.js');
+  const cli = (...a) => { const r = spawnSync('node', [CLI, 'research', 'status', '--root', root, ...a], { encoding: 'utf8' }); return { code: r.status, out: r.stdout, err: r.stderr }; };
+
+  it('reports the run, done once converged or ended, and falls back to the ref', async () => {
+    expect(cli('--json').code).toBe(1);
+    await call('ar_start', startArgs({ budget: { iterations: 2 } }));
+    model('2\n'); await call('ar_iterate', { hypothesis: 'a' });
+    let r = cli('--json');
+    expect(r.code).toBe(0);
+    expect(JSON.parse(r.out)).toMatchObject({ found: true, run_id: 'r1', status: 'active', done: false, iterations: 1, source: 'state', session: key });
+    await call('ar_defer', { kind: 'pause', detail: 'look' });
+    model('3\n'); await call('ar_iterate', { hypothesis: 'b' });
+    r = JSON.parse(cli('--json').out);
+    expect(r).toMatchObject({ status: 'converged', done: true, stop_reason: 'budget-exhausted' });
+    expect(r.deferred).toHaveLength(1);
+    expect(cli().out).toMatch(/status converged \(done\)/);
+    // No session state at all: rebuilt from the research ref.
+    fs.rmSync(path.join(root, '.shards', 'state'), { recursive: true, force: true });
+    r = JSON.parse(cli('--run', 'r1', '--json').out);
+    expect(r).toMatchObject({ source: 'ref', run_id: 'r1', done: true, iterations: 2 });
+    expect(cli('--run', 'nope', '--json').code).toBe(1);
+    expect(spawnSync('node', [CLI, 'research', 'bogus'], { encoding: 'utf8' }).status).toBe(2);
+  });
+});
+
 describe('project root below the git top level', () => {
   it('keeps and reverts with prefixed paths', async () => {
     const r0 = makeRepo({ sub: 'proj' });
@@ -224,7 +303,7 @@ describe('project root below the git top level', () => {
 describe('pure helpers', () => {
   it('hooks treat ar_start/ar_iterate as exec (blocked by a pending gate, not write-checked)', () => {
     const { writesOf } = require('../hooks/lib/writes');
-    for (const t of ['mcp__plugin_shards_shards__ar_iterate', 'mcp__shards__ar_start']) expect(writesOf({ toolName: t, toolInput: {} })).toMatchObject({ write: false, exec: true });
+    for (const t of ['mcp__plugin_shards_shards__ar_iterate', 'mcp__shards__ar_start', 'mcp__shards__ar_defer']) expect(writesOf({ toolName: t, toolInput: {} })).toMatchObject({ write: false, exec: true });
     expect(writesOf({ toolName: 'mcp__shards__ar_status', toolInput: {} })).toMatchObject({ write: false, exec: false });
   });
   it('parses metrics by regex and JSON path', () => {

@@ -8,7 +8,7 @@ Use AR when you have a metric and a budget, cannot enumerate the experiments ahe
 
 ## The core loop
 
-1. **Setup**: you define the metric, the budget (iterations, cost ceiling, optional metric floor) and the starting point. The specialist first checks the knowledge source for prior runs (see [Knowledge](knowledge.md)).
+1. **Setup**: you define the metric, the budget (iterations, wall-clock minutes, optional metric floor; a token or dollar ceiling is advisory only) and the starting point. The specialist first checks the knowledge source for prior runs (see [Knowledge](knowledge.md)).
 2. **Hypothesis**: the specialist adapts a hypothesis based on prior iterations and the steering document.
 3. **Implement**: a small, reversible change to the current candidate.
 4. **Evaluate**: run the eval and record the metric.
@@ -36,7 +36,7 @@ Edit `experiments/research_brief.md` while the loop runs. The next iteration rea
 
 ## Unattended loops: the `plan` gate policy
 
-Goal mode is the `plan` gate policy. At the Phase 1 gate the specialist offers an unattended Phase 2. It presents the plan and budget (iterations, cost ceiling, metric, target, floor). If you choose unattended, the specialist marks its Phase 1 gate as the plan approval for this run, and you confirm it. The loop then runs without prompts: each iteration's evidence is recorded in `results.json` and the git checkpoint, not gated, and any mid-loop gate is a notice. It stops on a failure, an anomaly or budget exhaustion, and then the next gate waits for you again. An approval covers one run: the next run asks again. The Phase 3 adoption gate always waits for you. Without plan approval, the default `phase` policy still lets the loop run. Convergence and safety rails are the same either way. See [Gate Pattern](gate-pattern.md).
+Goal mode is the `plan` gate policy. At the Phase 1 gate the specialist offers an unattended Phase 2. It presents the plan and budget (iterations, wall-clock minutes, metric, target, floor). If you choose unattended, the specialist marks its Phase 1 gate as the plan approval for this run, and you confirm it. The loop then runs without prompts: each iteration's evidence is recorded in `results.json` and the git checkpoint, not gated, and any mid-loop gate is a notice. It stops on a failure, an anomaly or budget exhaustion, and then the next gate waits for you again. An approval covers one run: the next run asks again. The Phase 3 adoption gate always waits for you: it is requested with `requires_human`, which no policy can turn into a notice. When the plan approval and the AR run share a run id, the runtime raises the plan's gate budget to cover the AR budget. On an unattended run, a reviewer retro-revert or pause and a metric floor breach do not stop the loop. The specialist records them with `ar_defer`, the loop continues from a safe state, and the Phase 3 gate lists them for you to confirm. To run overnight, drive a headless host from a shell loop until `shards research status --json` reports `done` (see `docs/research.md`, "Running overnight"). Without plan approval, the default `phase` policy still lets the loop run. Convergence and safety rails are the same either way. See [Gate Pattern](gate-pattern.md).
 
 ## Reviewer cadence
 

@@ -5,7 +5,7 @@ const R = require('../research');
 
 module.exports = defineTool({
   name: 'ar_status',
-  description: 'Show an autonomous-research run: iterations, decisions, bestSoFar, budget remaining, converged/stop_reason. Reads session state, or rebuilds the run from the trailers of refs/shards/research/<project>/<run_id> when the state is missing (new session, context loss). resume=true makes the run the active run of this session and reopens its AR lease so ar_iterate can continue.',
+  description: 'Show an autonomous-research run: iterations, decisions, bestSoFar, budget remaining, converged/stop_reason and the pending deferred decisions (ar_defer). Reads session state, or rebuilds the run from the trailers of refs/shards/research/<project>/<run_id> when the state is missing (new session, context loss). resume=true makes the run the active run of this session and reopens its AR lease so ar_iterate can continue.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,

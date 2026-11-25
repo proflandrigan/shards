@@ -71,8 +71,8 @@ AR runs in one of two presets:
 [interactive] — budget=10, reviewer cadence=3, cost ceiling optional.
                 I iterate conversationally, you're nearby.
 
-[overnight]   — budget=100, reviewer cadence=10, cost ceiling required
-                (really required this time — LLM calls add up).
+[overnight]   — budget=100, reviewer cadence=10, wall-clock budget required
+                (cost ceiling advisory — track LLM spend yourself).
                 Interrupt anytime by editing experiments/research_brief.md
                 Steering Notes (I re-read it every iteration).
 
@@ -96,8 +96,10 @@ AR runs in one of two presets:
 - **Metric degradation floor** (optional but strongly recommended — a prompt
   that hallucinates answers more is not fine)
 - **Epsilon** (default: 2% of baseline — noisier than ML; be stricter)
-- **Cost ceiling:** **required for overnight, strongly recommended for
-  interactive.** LLM costs scale with iterations and eval set size:
+- **Wall-clock budget (minutes):** required for overnight; the runtime
+  enforces it (`ar_start` `budget.minutes`), with the per-eval timeout.
+- **Cost ceiling (advisory):** the runtime cannot observe token or dollar
+  spend, so this is a planning number, not a hard stop (§G.5). Size it as:
   ```
   ceiling ≈ budget × iterations × (eval_set_size × avg_tokens × model_price)
            + reviewer_tasks × reviewer_tokens × reviewer_price
@@ -159,7 +161,8 @@ Append to `project-specs.md`:
 - **Target:** <value or "none">
 - **Iteration budget:** <N>
 - **Reviewer cadence:** <K>
-- **Cost ceiling:** <tokens: N / dollars: N> — required
+- **Wall-clock budget:** <minutes>
+- **Cost ceiling (advisory):** <tokens: N / dollars: N, or "none">
 - **Metric floor:** <value or "none">
 - **Eval harness:** <path> — confirmed runnable
 - **Eval set:** <path> — <N> examples — IMMUTABLE
@@ -227,7 +230,7 @@ Before the gate, announce (with appropriate anxiety):
 raising the gate. Goal mode is the `plan` gate policy (`autonomous_research.md`
 §A.6): in the message that precedes the Phase 1 gate, offer an unattended Phase
 2 and present the plan and budget (primary metric, direction, target if set,
-iteration budget, cost ceiling, metric floor). The Phase 1 gate below **is**
+iteration budget, wall-clock minutes, metric floor). The Phase 1 gate below **is**
 the plan approval; never raise a second gate for it.
 - **If the user chooses unattended:** add `plan_approval: "<run-id>"` to the
   `gate_request` call for the gate below, with a run id unique to this run
@@ -235,13 +238,15 @@ the plan approval; never raise a second gate for it.
   user; never confirm it yourself. After approval Phase 2 runs without
   prompts: per-iteration evidence is recorded in `results.json` (§C.5), not
   gated, and mid-loop gates (opted-in micro-gates) become notices. A failure,
-  anomaly or budget exhaustion puts the next gate in front of the user. Surface the hallucination/safety floor result inline each iteration; a floor breach is a failure.
+  anomaly or budget exhaustion puts the next gate in front of the user. Surface the hallucination/safety floor result inline each iteration; a floor breach is deferred with `ar_defer` (§B.14).
 - **Otherwise:** raise the same gate without `plan_approval`. §E convergence
   and §G safety rails still terminate the loop. Per-iteration echoes remain
   recommended for readability.
 
-The Phase 3 adoption gate is always confirmed by the user, unattended or not
-(§A.6).
+On an unattended run a reviewer `RETRO_REVERT` or `PAUSE` and a metric floor
+breach do not block: call `ar_defer` and keep looping (§B.14); the deferred
+items are presented at Phase 3. The Phase 3 adoption gate is always confirmed
+by the user, unattended or not: it is requested with `requires_human` (§A.6).
 
 ### Gate
 
@@ -369,7 +374,7 @@ Ask the user:
 - Do you want to run another budget?
 - Or should we stop here?
 
-{{gate kind=final phase=3 validates=ai-engineer id=ai-engineer-research-phase-3}}
+{{gate kind=final phase=3 validates=ai-engineer id=ai-engineer-research-phase-3 requires_human=true}}
 
 ### If adopting
 

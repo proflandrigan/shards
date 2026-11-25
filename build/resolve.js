@@ -143,6 +143,7 @@ function resolveMacro(macro, core, ctx) {
         if (NON_ADVANCING.has(vals.kind)) err(`validates= is not allowed on kind=${vals.kind}`);
       }
       if (NON_ADVANCING.has(vals.kind) && !vals.name) err(`kind=${vals.kind} requires name=<s> (it repeats within a phase)`);
+      if (vals.requires_human !== undefined && vals.requires_human !== 'true') err(`requires_human= must be 'true' (omit it otherwise), got '${vals.requires_human}'`);
       const agent = vals.agent || ctx.agent;
       if (!agent) { err('{{gate}} outside an agent file requires agent=<agent>'); break; }
       agentOf(agent, 'agent');
@@ -153,7 +154,7 @@ function resolveMacro(macro, core, ctx) {
       if (ctx.track && vals.track && vals.track !== ctx.track) { err(`gate track=${vals.track} does not match enclosing file track '${ctx.track}'`); break; }
       let id = vals.id || `${agent}${track ? `-${track}` : ''}-phase-${phase}`;
       if (vals.name && !vals.id) id += `.${vals.name}`;
-      Object.assign(model, { id, kind: vals.kind, phase, track: track || null, agent, validates: vals.validates, advancing: !NON_ADVANCING.has(vals.kind) });
+      Object.assign(model, { id, kind: vals.kind, phase, track: track || null, agent, validates: vals.validates, requires_human: vals.requires_human === 'true', advancing: !NON_ADVANCING.has(vals.kind) });
       break;
     }
     case 'auto_verify': {
@@ -208,7 +209,7 @@ const SPECS = {
   phase: { positional: ['n'], named: ['track', 'agent'], required: ['n'] },
   protocol: { positional: ['name'], named: [], required: ['name'] },
   template: { positional: ['name'], named: [], required: ['name'] },
-  gate: { positional: [], named: ['kind', 'phase', 'track', 'validates', 'name', 'agent', 'id'], required: ['kind'] },
+  gate: { positional: [], named: ['kind', 'phase', 'track', 'validates', 'name', 'agent', 'id', 'requires_human'], required: ['kind'] },
   auto_verify: { positional: ['action'], named: ['tool_budget', 'ttl'], required: ['action'] },
   'record.write': { positional: [], named: ['section', 'file'], required: ['section'] },
   'tasks.create': { positional: [], named: ['title', 'owns', 'accept'], required: ['title'] },

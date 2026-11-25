@@ -12,6 +12,7 @@ const COMMANDS = {
   migrate: { summary: 'Migrate a legacy v1 install to v2 (ledger export, gate-history import, manifest-driven cleanup)', run: (argv) => require('./commands/migrate').run(argv) },
   install: { summary: 'Opt-in project config: skills (--project), permission preset (--permissions), CLAUDE.md conventions (--claude-md) and AGENTS.md section (--agents-md), Codex MCP entry and profiles (--codex)', run: (argv) => require('./commands/install').run(argv) },
   sync: { summary: 'List the external copy queue: pending and stuck copies per gate and target (--status)', run: (argv) => require('./commands/sync').run(argv) },
+  research: { summary: 'Autonomous-research run status for overnight shell drivers (status [--json]; `done` once converged or ended)', run: (argv) => require('./commands/research').run(argv) },
   connect: { summary: 'Check which MCP servers (Atlassian, Google Drive, GitHub) are registered and print the official add commands', run: (argv) => require('./commands/connect').run(argv) },
   // EXTENSION POINT: register doctor / gates / sessions here, e.g.
   //   doctor: { summary: '...', run: (argv) => require('./doctor').run(argv) },
@@ -33,6 +34,7 @@ function usage() {
   lines.push('doctor: doctor [--root d] [--json] [--fix]');
   lines.push('sessions: sessions list|show|resume|end [id] [--root d] [--status s] [--limit n] [--json]');
   lines.push('sync: sync --status [--json] [--all] [--root d]');
+  lines.push('research: research status [--run id] [--session k] [--json] [--root d]  (read-only; exit 1 when no run is found)');
   lines.push('connect: connect [--host claude|codex] [--only atlassian,drive,github] [--json] [--root d] [--home d]  (read-only; prints commands, never runs them)');
   lines.push('install: install (--project | --permissions | --claude-md | --agents-md | --codex) [--root d] [--preset <file>] [--remove] [--dry-run] [--force]  (--remove is the uninstall: it removes only what install added)');
   lines.push('  --codex: [mcp_servers.shards] in Codex config.toml + shards-<agent> profiles [--codex-home d] [--codex-config file] [--server path | --plugin-dir d]');
