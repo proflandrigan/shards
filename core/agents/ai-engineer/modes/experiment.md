@@ -71,36 +71,27 @@ For each experiment, provide:
 
 Present the list clearly. Explain your prioritisation rationale briefly.
 
-### Optional `/goal` activation
+### Optional unattended Phase 2 (plan approval)
 
-{{protocol goal_mode}} in full
-before writing the gate. Compose a candidate `/goal` condition from the
-Phase 0 + Phase 1 settings (outcome metric, success threshold if set, number
-of experiments planned) using the Experiment condition template, and include
-the resulting copy-paste block in the message that precedes the Phase 1 gate:
+{{protocol goal_mode}} in full before
+raising the gate. Goal mode is the `plan` gate policy: in the message that
+precedes the Phase 1 gate, offer an unattended Phase 2 and present the plan and
+budget (number of experiments planned, outcome metric, success threshold if
+set). The Phase 1 gate below **is** the plan approval; never raise a second
+gate for it. If the user chooses unattended, add `plan_approval: "<run-id>"` to
+the `gate_request` call for the gate below, with a run id unique to this run
+(for example `<project>-ex-<UTC yyyymmddThhmm>`). Then STOP and wait for the
+user; never confirm it yourself. Otherwise raise the same gate without
+`plan_approval`.
 
-```text
-/goal The experiment run is complete when ANY of the following is true:
-  (a) the most recent inline experiment summary shows <outcome_metric> has
-      <reached or exceeded <success_threshold> if the metric is being
-       maximized | dropped to or below <success_threshold> if the metric
-       is being minimized>;
-  (b) the agent has printed "Experiment <N> complete" with N == <planned_count>;
-  (c) the agent has begun writing the Phase 3 summary
-      (look for "experiment_summary.md" or "Phase 3").
-Or stop after <planned_count+3> turns.
-```
-
-If no success threshold was set, drop clause (a) and rely on (b) and (c).
-
-Activation is optional. With `/goal`, Phase 2 runs without per-experiment
-prompts — the existing **Step 7 inline summary** is exactly the evidence the
-evaluator reads (already required by the loop, no schema change). Without
-`/goal`, the Phase 2 stop conditions (success threshold reached, user
-intervention, crash) still terminate the loop.
-
-If the host cannot run the loop unattended (see the goal-mode protocol), accept that and proceed — the loop still runs and terminates per
-the existing logic.
+Activation is optional. With plan approval, Phase 2 runs without
+per-experiment prompts: later gates become notices (keep calling `gate_request`
+with `evidence` after each experiment) and the existing **Step 7 inline
+summary** continues each iteration. Without it, each gate waits for the user.
+Either way, the Phase 2 stop conditions (success threshold reached, user
+intervention, crash) still terminate the loop, and a failure or anomaly blocks
+until the user responds. The Phase 3 gate is always confirmed by the user,
+unattended or not.
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 

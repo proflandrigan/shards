@@ -43,7 +43,7 @@ Controls how much human confirmation a gate needs. Default: `phase`.
 
 Checkpoint and confirm gates are auto-recorded under `phase` only when the agent passes `evidence: { status: "pass" }` to `gate_request`. A `fail` or `anomaly` status, or no evidence, leaves the gate pending for a human. The auto-recorded proof tier is `auto-evidence`.
 
-Under `plan`, the agent first requests the reserved gate `plan-approval` (kind `phase`, summary = plan plus budget) and a human confirms it. After that, every gate is recorded as a notice (proof tier `plan-notice`, advancing kinds still commit) until evidence is `fail`/`anomaly` or the budget runs out; then the gate stays pending for a human. Without a confirmed `plan-approval`, `plan` behaves like `phase`.
+Under `plan`, the agent first requests a plan approval gate (summary = plan plus budget) and a human confirms it. A plan approval is the reserved id `plan-approval`, a run-scoped id `plan-approval.<run>`, or any gate requested with `plan_approval: "<run>"` (AR and experiment modes mark their own Phase 1 gate this way). After that, every gate in the same project is recorded as a notice (proof tier `plan-notice`, advancing kinds still commit) until evidence is `fail`/`anomaly` or the budget runs out; then the gate stays pending for a human. Approvals are per run: the newest plan approval requested in a project governs it, so requesting the next run's approval stops notices until a human confirms it, and the notice budget is counted per approval. Re-requesting a confirmed gate with a different `plan_approval` run opens it again as a fresh pending gate. Without a confirmed plan approval, `plan` behaves like `phase`.
 
 ```yaml
 gates:

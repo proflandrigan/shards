@@ -34,7 +34,7 @@ Edit `experiments/research_brief.md` while the loop runs. The next iteration rea
 
 ## Unattended loops: the `plan` gate policy
 
-Goal mode is the `plan` gate policy. At the Phase 1 gate the specialist offers an unattended Phase 2. It presents the plan and budget (iterations, cost ceiling, metric, target, floor) and requests a `plan-approval` gate, which you confirm. After that every later gate (`confirm`, `checkpoint`, `execute`) is a notice and the loop keeps running. It stops on a failure, an anomaly or budget exhaustion, and then the next gate waits for you again. Without it, the default `phase` policy still lets the loop run, with checkpoint and confirm gates auto-recorded when evidence passes. Convergence and safety rails are the same either way. See [Gate Pattern](gate-pattern.md).
+Goal mode is the `plan` gate policy. At the Phase 1 gate the specialist offers an unattended Phase 2. It presents the plan and budget (iterations, cost ceiling, metric, target, floor). If you choose unattended, the specialist marks its Phase 1 gate as the plan approval for this run, and you confirm it. The loop then runs without prompts: each iteration's evidence is recorded in `results.json` and the git checkpoint, not gated, and any mid-loop gate is a notice. It stops on a failure, an anomaly or budget exhaustion, and then the next gate waits for you again. An approval covers one run: the next run asks again. The Phase 3 adoption gate always waits for you. Without plan approval, the default `phase` policy still lets the loop run. Convergence and safety rails are the same either way. See [Gate Pattern](gate-pattern.md).
 
 ## Reviewer cadence
 
@@ -45,7 +45,8 @@ Goal mode is the `plan` gate policy. At the Phase 1 gate the specialist offers a
 
 Convergence checks start only after an activation floor of `max(10, budget * 0.2)` iterations, so a hard problem is not stopped early. The loop stops on:
 
-- **Plateau**: no improvement over several iterations and diminishing returns together.
+- **Plateau**: no GREEN in the last W iterations (default 5).
+- **Diminishing returns**: the best-so-far metric gained less than the threshold (default 2 × epsilon) over the last 2W iterations.
 - **Budget exhausted** or **cost ceiling** reached.
 - **Consecutive failures** (default 3), after a reviewer consult that may redirect.
 - **Metric floor breach** on a full evaluation. This check is always live.

@@ -74,8 +74,12 @@ Present the list clearly. Explain your prioritisation rationale briefly.
 raising the gate. Goal mode is the `plan` gate policy: in the message that
 precedes the Phase 1 gate, offer an unattended Phase 2 and present the plan and
 budget (number of experiments planned, outcome metric, success threshold if
-set). Raise the gate as a `plan-approval` gate via `gate_request`, then STOP and
-wait for the user; never confirm it yourself.
+set). The Phase 1 gate below **is** the plan approval; never raise a second
+gate for it. If the user chooses unattended, add `plan_approval: "<run-id>"` to
+the `gate_request` call for the gate below, with a run id unique to this run
+(for example `<project>-ex-<UTC yyyymmddThhmm>`). Then STOP and wait for the
+user; never confirm it yourself. Otherwise raise the same gate without
+`plan_approval`.
 
 Activation is optional. With plan approval, Phase 2 runs without
 per-experiment prompts: later gates become notices (keep calling `gate_request`
@@ -83,7 +87,8 @@ with `evidence` after each experiment) and the existing **Step 7 inline
 summary** continues each iteration. Without it, each gate waits for the user.
 Either way, the Phase 2 stop conditions (success threshold reached, user
 intervention, crash) still terminate the loop, and a failure or anomaly blocks
-until the user responds.
+until the user responds. The Phase 3 gate is always confirmed by the user,
+unattended or not.
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 

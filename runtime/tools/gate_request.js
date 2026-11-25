@@ -90,7 +90,7 @@ function normPhase(p) { return typeof p === 'string' && /^\d+$/.test(p) ? Number
 
 module.exports = defineTool({
   name: 'gate_request',
-  description: 'Request a human gate at the end of a phase. Opens (or re-opens) a pending gate owned by your switch frame; you cannot confirm it. After calling, stop and wait for the user to confirm. With `validates`, the record must contain a complete `## Validation` section. A confirmed gate returns "already confirmed" and is never reopened. Pass `targets` (project-root-relative paths) to record the deliverable locations the user is confirming at this gate; confirmed targets are included in the gate\'s git snapshot.',
+  description: 'Request a human gate at the end of a phase. Opens (or re-opens) a pending gate owned by your switch frame; you cannot confirm it. After calling, stop and wait for the user to confirm. With `validates`, the record must contain a complete `## Validation` section. A confirmed gate returns "already confirmed" and is never reopened. Pass `targets` (project-root-relative paths) to record the deliverable locations the user is confirming at this gate; confirmed targets are included in the gate\'s git snapshot. Pass `plan_approval: "<run>"` to make this gate the plan approval for that run under the `plan` gate policy (a new run needs a fresh approval).',
   inputSchema: schema,
   async handler(args, ctx) {
     if (!ctx.sessionKey || !ctx.state) throw new Error('gate_request requires a resolved session');
@@ -105,7 +105,9 @@ module.exports = defineTool({
 
     // A confirmed gate only counts for the same agent/project/track (ids like `<agent>-phase-1` repeat).
     const existing = gates.getGate(session, args.id);
-    if (existing && existing.status === 'confirmed' && gates.sameScope(existing, frame)) {
+    // A plan approval for a different run is a fresh gate (machine.requestGate archives the old one).
+    const newRun = !!(args.plan_approval && existing && existing.plan_run !== args.plan_approval);
+    if (existing && existing.status === 'confirmed' && gates.sameScope(existing, frame) && !newRun) {
       return both(`${gates.formatConfirmedMessage(existing)}${targets !== undefined ? '\nThe targets you passed were NOT recorded: this gate is already confirmed. Pass the updated list on your next gate.' : ''}`, { result: 'already_confirmed', gate_id: existing.id, kind: existing.kind, phase: existing.phase, status: 'confirmed', commit: existing.commit || null });
     }
 
@@ -119,6 +121,7 @@ module.exports = defineTool({
     const { result, entry } = await gates.requestGate(session, {
       frame, id: args.id, kind: args.kind, phase, summary: args.summary, record_ref: args.record_ref,
       validates: args.validates || null, targets,
+      ...(args.plan_approval ? { plan_run: args.plan_approval } : {}),
     });
 
     let replayed = null;

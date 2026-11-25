@@ -51,7 +51,7 @@ Same as `[EX]` Phase 0 but with expanded parameter confirmation.
 {{protocol experiment_versioning}} in
 full and follow **Section A (Detection)**. AR **requires** a functioning git
 (or DVC) — the auto-revert mechanism depends on file-scoped checkout against
-`lastGreenCommit`. If versioning mode is `none`, warn the user and offer to:
+`lastKeptCommit`. If versioning mode is `none`, warn the user and offer to:
 (a) run `git init` in the project, (b) drop to `[EX]` which can run without
 revert, or (c) cancel.
 
@@ -99,7 +99,9 @@ Present and confirm:
   - **Required for overnight** (tokens, dollars, or both — set hard stop)
 - **Reviewer cadence** (default: 3 interactive / 10 overnight)
 - **Plateau window W** (default: 5)
-- **Diminishing returns threshold** (default: 0.1% of baseline)
+- **Diminishing returns threshold** (minimum `bestSoFar` gain over the last
+  2W iterations; default: 2 × epsilon, i.e. 2% of baseline at the default
+  epsilon — `autonomous_research.md` §E.2)
 - **Full eval cadence M** (default: 5 interactive / 10 overnight)
 - **Mutable scope** (files/dirs/globs the agent may modify):
   - Typical: training scripts, configs, feature pipelines
@@ -222,16 +224,21 @@ Before the gate, announce:
 raising the gate. Goal mode is the `plan` gate policy (`autonomous_research.md`
 §A.6): in the message that precedes the Phase 1 gate, offer an unattended Phase
 2 and present the plan and budget (primary metric, direction, target if set,
-iteration budget, cost ceiling, metric floor). Raise the gate as a
-`plan-approval` gate via `gate_request`, then STOP and wait for the user; never
-confirm it yourself. Activation is optional:
-- **With plan approval:** Phase 2 runs without per-iteration prompts. Later
-  gates become notices: keep calling `gate_request` with `evidence` each
-  iteration and keep looping. Failure, anomaly, or budget exhaustion stops the
-  loop and the next gate waits for the user.
-- **Without it:** each gate waits for the user. §E convergence and §G safety
-  rails still terminate the loop. Per-iteration echoes remain recommended for
-  readability.
+iteration budget, cost ceiling, metric floor). The Phase 1 gate below **is**
+the plan approval; never raise a second gate for it.
+- **If the user chooses unattended:** add `plan_approval: "<run-id>"` to the
+  `gate_request` call for the gate below, with a run id unique to this run
+  (for example `<project>-ar-<UTC yyyymmddThhmm>`). Then STOP and wait for the
+  user; never confirm it yourself. After approval Phase 2 runs without
+  prompts: per-iteration evidence is recorded in `results.json` (§C.5), not
+  gated, and mid-loop gates (opted-in micro-gates) become notices. A failure,
+  anomaly or budget exhaustion puts the next gate in front of the user.
+- **Otherwise:** raise the same gate without `plan_approval`. §E convergence
+  and §G safety rails still terminate the loop. Per-iteration echoes remain
+  recommended for readability.
+
+The Phase 3 adoption gate is always confirmed by the user, unattended or not
+(§A.6).
 
 ### Gate
 

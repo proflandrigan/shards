@@ -54,6 +54,12 @@
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
       "maxLength": 128
     },
+    "plan_approval": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "maxLength": 128,
+      "description": "Marks this gate as the plan approval for run <value> (gate policy `plan`). A confirmed gate re-requested with a different run starts over as a fresh gate."
+    },
     "targets": {
       "type": "array",
       "items": { "type": "string", "minLength": 1, "maxLength": 512 },

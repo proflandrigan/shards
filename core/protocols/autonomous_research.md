@@ -107,29 +107,55 @@ Before the gate, tell the user:
 > "Facilitate, don't generate" is suspended for Phase 2 of this AR session. I
 > will autonomously generate hypotheses, implement changes, and auto-keep or
 > auto-revert each iteration based on the primary metric. Phase 0, Phase 1, and
-> Phase 3 remain gated. You can steer the loop at any time by editing
+> Phase 3 remain gated, and you confirm the Phase 3 adoption gate yourself even
+> on an unattended run. You can steer the loop at any time by editing
 > `experiments/research_brief.md` — I re-read it every iteration.
 
 ### A.6 Unattended loops: the `plan` gate policy
 
 Goal mode is the `plan` gate policy (see `goal_mode.md`). At the per-agent
 Phase 1 gate, offer the user an unattended Phase 2 loop. Present the plan and
-budget (iteration budget, cost ceiling, primary metric, target, metric floor)
-and call `gate_request` for a `plan-approval` gate. Then STOP and wait for the
-user; never confirm it yourself. The user confirms via the in-host prompt
-(elicitation, or the permission prompt `gate_advance` raises) or by replying in
-chat, in which case relay their verbatim reply with `gate_confirm`.
+budget (iteration budget, cost ceiling, primary metric, target, metric floor).
+The per-agent Phase 1 gate **is** the plan approval: do not raise a second gate.
+
+- **If the user chooses unattended:** call `gate_request` for the Phase 1 gate
+  with the extra argument `plan_approval: "<run-id>"`. The run id names this
+  run only, for example `<project>-ar-<UTC yyyymmddThhmm>` (letters, digits,
+  `.`, `_`, `-`). Then STOP and wait for the user; never confirm it yourself.
+  The user confirms via the in-host prompt (elicitation, or the permission
+  prompt `gate_advance` raises) or by replying in chat, in which case relay
+  their verbatim reply with `gate_confirm`.
+- **Otherwise:** call the same gate without `plan_approval`.
+
+A plan approval covers one run in one project. Each new run raises its own
+Phase 1 gate with a new run id; the runtime then treats the gate as a fresh,
+pending gate (it does not return "already confirmed" for the earlier run), and
+the earlier run's approval stops applying as soon as the new one is requested.
+The notice budget (`gates.budget`) is counted per plan approval.
 
 Tell the user the activation is optional:
-- **With plan approval:** after the user confirms, every later gate kind
-  (`confirm`, `checkpoint`, `execute`) becomes a notice. Keep calling
-  `gate_request` with `evidence` each iteration and keep looping. The loop
-  stops on failure, anomaly, or budget exhaustion, and the next gate waits for
-  a human again.
+- **With plan approval:** after the user confirms, mid-loop gates (opted-in
+  micro-gates, §B.12) are recorded as notices and the loop keeps running. A
+  gate with failing or anomalous evidence, or budget exhaustion, puts a human
+  back in the loop: that gate waits for the user.
 - **Without it (default `phase` policy):** the loop still runs autonomously
   per §B. `confirm`/`checkpoint` gates with `evidence.status: "pass"` are
   recorded automatically; a failure or anomaly blocks until the user confirms.
   Under `strict`, a human confirms every gate.
+
+**Per-iteration evidence is recorded, not gated.** Phase 2 does not call
+`gate_request` once per iteration under any policy. Each iteration's evidence
+is its `results.json` entry (with the C.5 validation block), its experiment file
+and its checkpoint commit (B.9). The only gates inside Phase 2 are the opted-in
+micro-gates (B.12) and the retro-revert confirmation (C.4).
+
+**The Phase 3 adoption gate is always confirmed by a human**, under every
+policy, including `plan` after a plan approval. A later runtime flag enforces
+this. Until then, the plan approval does not extend to Phase 3: tell the user
+the run will stop at the Phase 3 gate for their decision, and policy `plan`
+must not be used to notice-through it. If the Phase 3 gate comes back as
+"notice recorded", treat it as not yet confirmed: present the summary and wait
+for the user's explicit go-ahead before any adoption step.
 
 Either way, §E convergence and §G safety rails are unchanged. The per-iteration
 **inline summary echo** in §B.4 and §B.8 stays recommended: it keeps the run
@@ -144,11 +170,36 @@ interrupts. **No intermediate gates between iterations by default** — the
 autonomous loop is the whole point. The optional micro-gate (Section B.12) is
 opt-in and only on the overnight preset.
 
-At the start of Phase 2, run `git rev-parse HEAD` (via the `experiment_versioning.md`
-Section A detection) to capture the pre-loop commit. Set
-`results.json.lastGreenCommit` to this SHA — this is the baseline you revert to
-when an iteration regresses. It is always updated by the agent, never searched
-via `git log`.
+### Pre-loop setup
+
+At the start of Phase 2, before iteration 1:
+
+1. **Pre-loop commit.** Run `git rev-parse HEAD` (via the `experiment_versioning.md`
+   Section A detection) to capture the pre-loop commit. Set both
+   `results.json.lastKeptCommit` and `results.json.lastGreenCommit` to this SHA,
+   and `results.json.comparisonReference` to `baseline.value`.
+2. **Dirty snapshot.** Run `git status --porcelain --untracked-files=all` and
+   record every listed path in `results.json.preLoopDirty`. These are the
+   user's own uncommitted changes; the scope check in C.3 ignores them and the
+   revert never deletes them.
+3. **Mutable scope must start clean.** If any `preLoopDirty` path is inside the
+   mutable scope, a revert would overwrite or delete the user's uncommitted
+   work. Run this check before raising the Phase 1 gate as well; if it finds
+   such paths, ask the user to commit or stash them before Phase 2 starts.
+
+Two commit pointers drive the loop. Both are always updated by the agent, never
+searched via `git log`:
+
+- **`lastKeptCommit`** — the **revert target**: the checkpoint commit of the
+  most recent kept iteration (GREEN or kept YELLOW), or the pre-loop commit.
+  Every revert (C.3) restores the mutable scope to this commit, so a later RED
+  never discards a kept YELLOW.
+- **`lastGreenCommit`** — the checkpoint commit of the most recent GREEN. It is
+  a record of the best verified state, used by the retro-revert (C.4) and the
+  Phase 3 summary. It is not the revert target.
+
+The **comparison reference** (`results.json.comparisonReference`, C.1) is a
+metric value, separate from both pointers.
 
 ### Per-iteration steps
 
@@ -172,14 +223,16 @@ mechanism for unattended overnight runs.
 To keep per-iteration context cost bounded:
 
 - At iteration N ≤ 10: read the full `results.json` (all prior entries).
-- At iteration N > 10: read only the **last 10 experiment entries** from
-  `results.json`, plus `experiments/history_summary.md` which you maintain and
-  compress every 10 iterations.
+- At iteration N > 10: read `experiments/history_summary.md`, which covers
+  iterations 1..S where S is the largest multiple of 10 below N, plus the raw
+  `results.json` entries S+1..N-1 (at most 9). Every prior iteration is covered
+  exactly once: by the summary or by a raw entry.
 
-Writing `history_summary.md`: at iterations 11, 21, 31, ..., consolidate
-iterations 1..N-10 into a short summary (approach families tried, what worked,
-what didn't, metric trajectory). Overwrite the file. At iteration 11 it
-summarizes 1-10; at 21 it summarizes 1-20; and so on.
+Writing `history_summary.md`: at iterations 11, 21, 31, ..., first read the
+previous summary and the raw entries since it, then consolidate iterations
+1..N-1 into a short summary (approach families tried, what worked, what
+didn't, metric trajectory). Overwrite the file. At iteration 11 it summarizes
+1-10; at 21 it summarizes 1-20; and so on.
 
 #### B.3 Generate next hypothesis
 
@@ -229,7 +282,11 @@ and measure the primary metric. Record both primary and secondary metrics.
 #### B.7 Auto-keep/revert decision (Section C)
 
 Classify the result as GREEN / RED / YELLOW per Section C and execute the
-corresponding action (keep, revert, or conditional-keep).
+corresponding action (keep, revert, or conditional-keep). A revert happens
+here, before anything is committed: C.3 restores the working tree, so the
+iteration's discarded edits never reach the checkpoint commit in B.9. Pointer
+updates for kept iterations wait for B.9, because the checkpoint commit they
+point at does not exist yet.
 
 #### B.8 Record results
 
@@ -324,8 +381,26 @@ branch).
   This matches `[EX]`'s `exp/<project>/<N>-<name>` convention and keeps
   `git tag -l "research/<project>/*"` globs clean.
 
+What the commit contains depends on the B.7 decision:
+
+- **Kept iteration (GREEN or kept YELLOW):** the iteration's records under
+  `experiments/` plus the mutable paths it changed. After the commit, capture
+  its SHA (`git rev-parse HEAD`) and set `results.json.lastKeptCommit` to it;
+  for a GREEN also set `results.json.lastGreenCommit` to it (C.2). Record the
+  SHA in the iteration's `checkpoint`.
+- **Reverted iteration (RED or reverted YELLOW):** the mutable paths were
+  already restored in B.7, so the commit contains only the records under
+  `experiments/`. The pointers do not move.
+
+If the checkpoint commit fails on a kept iteration, there is no revert target
+for the next iteration: halt the loop with `convergence.reason = "error-limit"`
+and tell the user (instead of the "continue without versioning" rule in
+`experiment_versioning.md` Section C).
+
 If versioning mode is `none`, skip this step silently (per
-`experiment_versioning.md` Section B).
+`experiment_versioning.md` Section B). AR requires versioning (see "When NOT to
+use"), so this only happens when the user explicitly accepted running without
+revert.
 
 #### B.10 Reviewer consultation if cadence hit
 
@@ -383,12 +458,15 @@ N+1. Otherwise exit to Phase 3.
 ### C.1 Classification
 
 Classify each iteration result by comparing the primary metric to the
-**comparison reference** — not to the original baseline. The comparison
-reference is the "after" value from the most recent GREEN iteration, or the
-original baseline (`results.json.baseline.value`) if no GREEN has occurred
-yet. This ensures each iteration is measured against the current best state,
-not against the original starting point (which would make every small
-improvement look GREEN and break convergence detection).
+**comparison reference** (`results.json.comparisonReference`) — not to the
+original baseline. The comparison reference is the "after" value from the most
+recent GREEN iteration, or the value measured at the most recent re-baseline
+(C.2, three-YELLOW guard), or the original baseline
+(`results.json.baseline.value`) if neither has happened yet. This ensures each
+iteration is measured against the current best state, not against the original
+starting point (which would make every small improvement look GREEN and break
+convergence detection). After classifying, record the comparison reference in
+force after this iteration as the entry's `bestSoFar` (§E uses it).
 
 - **GREEN (improved):** Primary metric moved in the configured direction
   **from the comparison reference** by more than `epsilon` (default: 1% of
@@ -405,16 +483,16 @@ it is used at Phase 3 for computing net delta and for the epsilon default.
 
 **GREEN:**
 1. Keep the changes (no revert).
-2. Update `results.json.lastGreenCommit` to the commit SHA of this iteration's
-   checkpoint. The "after" value from this iteration becomes the comparison
-   reference for the next iteration's classification (derived on-demand from
-   `results.json.experiments[lastGreenIndex].metrics.outcome.after`).
-3. Reset `consecutiveRegressions` to 0.
-4. Reset `consecutiveYellowKept` to 0.
-5. Annotate the git tag message with `color=green`.
-6. **Do NOT modify `results.json.baseline.value`** — that remains the original
-   baseline. The comparison reference is tracked via `lastGreenCommit` (and
-   its iteration's `metrics.outcome.after`).
+2. Set `results.json.comparisonReference` to this iteration's "after" value; it
+   is the reference for the next iteration's classification.
+3. After the B.9 checkpoint commit exists, set both
+   `results.json.lastKeptCommit` and `results.json.lastGreenCommit` to its SHA.
+   Never set a pointer before the commit is made.
+4. Reset `consecutiveRegressions` to 0.
+5. Reset `consecutiveYellowKept` to 0.
+6. Annotate the git tag message with `color=green`.
+7. **Do NOT modify `results.json.baseline.value`** — that remains the original
+   baseline. The comparison reference is tracked in `comparisonReference`.
 
 **RED:**
 1. Revert per C.3 (Revert Mechanism).
@@ -432,12 +510,23 @@ Default behavior: **revert**. Exceptions (keep) when either is true:
 If kept:
 1. Increment `consecutiveYellowKept`.
 2. Record `autoDecision: "yellow"`, `reverted: false`, populate `nextSteps`.
-3. Annotate the git tag with `color=yellow`.
-4. **Three-consecutive-YELLOW-kept limit:** if `consecutiveYellowKept` reaches
-   3, the next iteration — even if GREEN — must be followed by a force-revert
-   to `lastGreenCommit` before proceeding. This prevents quiet drift where a
-   series of "small simplifications" erodes the GREEN state unnoticed. Reset
-   `consecutiveYellowKept` to 0 after the force-revert.
+3. After the B.9 checkpoint commit exists, set `results.json.lastKeptCommit`
+   to its SHA. `lastGreenCommit` and `comparisonReference` do not change.
+4. Annotate the git tag with `color=yellow`.
+5. **Three-consecutive-YELLOW-kept limit (re-baseline):** if
+   `consecutiveYellowKept` reaches 3, re-baseline before iteration N+1. Each
+   kept YELLOW is within epsilon of the reference, but three of them can add
+   up to a real drift. Run a **full** evaluation of the current kept state
+   (`lastKeptCommit`), without changing anything, and compare it to
+   `comparisonReference`:
+   - Worse by more than `epsilon`: the YELLOW chain eroded the state. Revert
+     per C.3 with `lastGreenCommit` as the target, commit the restored paths
+     (C.3 step 5), and set `lastKeptCommit` to that commit.
+   - Otherwise: keep the state and set `comparisonReference` to the measured
+     value, so later iterations are judged against what the code scores now.
+   Either way, reset `consecutiveYellowKept` to 0 and add a `re-baseline` line
+   to the Research Log. A re-baseline is not an iteration: it does not take an
+   iteration number or count against the budget.
 
 If reverted:
 1. Revert per C.3.
@@ -446,26 +535,47 @@ If reverted:
 ### C.3 Revert mechanism
 
 Reverts are **file-scoped**, never `git reset --hard`, never `git clean -f`.
+They run at B.7, before the iteration's checkpoint commit, and restore the
+**working tree**: uncommitted edits and new files are the iteration's changes.
 
-1. Read `results.json.lastGreenCommit` — the target state.
-2. Compute the set of mutable paths modified since `lastGreenCommit`:
+1. The target state is `results.json.lastKeptCommit` (C.4 and the three-YELLOW
+   guard name a different target explicitly).
+2. Compute the revert set: every mutable path that differs from the target,
+   including uncommitted edits, plus untracked files in the mutable scope:
    ```bash
-   git diff --name-only <lastGreenCommit>..HEAD -- <mutable_path_1> <mutable_path_2> ...
+   # tracked paths changed since the target (commits AND working tree)
+   git diff --name-only <target> -- <mutable_path_1> <mutable_path_2> ...
+   # untracked, not-ignored files in the mutable scope
+   git ls-files --others --exclude-standard -- <mutable_path_1> <mutable_path_2> ...
    ```
-3. For each path in that set, run:
+   Drop any path listed in `results.json.preLoopDirty`.
+3. For each path in the revert set:
+   - If it exists in the target (`git cat-file -e <target>:<path>` succeeds),
+     restore it:
+     ```bash
+     git checkout <target> -- <path>
+     ```
+   - Otherwise the loop created it after the target: delete that one file by
+     its explicit path (`rm -- <path>`; if it is tracked, `git rm -q -- <path>`).
+     Never use `git clean`.
+4. Defensive scope check: run `git status --porcelain --untracked-files=all`.
+   If a path is dirty that is outside the mutable scope, outside
+   `<project_dir>/experiments/` and not in `results.json.preLoopDirty`,
+   **halt the loop with a safety-rail stop** (Section G.1 — scope violation
+   during the iteration). Do not auto-clean. Alert the user. Files the user had
+   dirty before the loop never trigger this check.
+5. If the restored paths now differ from `HEAD` (`git diff --name-only HEAD --
+   <revert set>` is not empty) and versioning is enabled (`git.commit` true,
+   same policy as B.9), commit them so the next iteration starts from a clean
+   mutable scope. This happens for a retro-revert (C.4), a three-YELLOW
+   re-baseline revert (C.2) and an error-limit revert (G.3); an ordinary RED at
+   B.7 restores the last kept commit, which equals `HEAD` for the mutable
+   scope, so it needs no revert commit:
    ```bash
-   git checkout <lastGreenCommit> -- <path>
+   git commit --only <revert set> -m "research: revert to <target> (<reason>)"
+   git tag -a "research/<project>/<N>-revert" -m "Reverted to <target>: <reason>"
    ```
-4. Defensive scope check: if any file outside the mutable list shows as dirty
-   after the revert, **halt the loop with a safety-rail stop** (Section G.1 —
-   scope violation during the iteration). Do not auto-clean. Alert the user.
-5. If versioning is enabled (`git.commit` true, same policy as B.9), create a
-   revert commit of the reverted paths only (`git commit --only <paths>`) to
-   keep history linear and the next iteration's `git add` clean:
-   ```bash
-   git commit -m "research: revert iter <N> (<red|yellow>) — <metric> <before> -> <after>"
-   git tag -a "research/<project>/<N>-revert" -m "Reverted iteration <N>: <reason>"
-   ```
+   Then set `results.json.lastKeptCommit` to this commit's SHA.
 6. Record `reverted: true` in the iteration's `results.json` entry.
 
 ### C.4 Retroactive revert (reviewer-initiated)
@@ -483,10 +593,13 @@ based on data leakage or a methodology flaw), execute:
    summary "Reviewer flagged iteration M's GREEN as invalid (<reason>). Rolling
    back to iteration M-1's state will discard iterations M..<current>.
    Confirm?". Then STOP and wait for the user.
-3. On confirm: revert all commits after iteration M-1's `lastGreenCommit`
-   using the file-level checkout protocol in C.3, expanded to cover the full
-   range (M..HEAD).
-4. Update `results.json.lastGreenCommit` to iteration M-1's commit SHA.
+3. On confirm: revert per C.3 with the target set to the state before
+   iteration M — the `lastKeptCommit` value in force when iteration M started
+   (the checkpoint of the last kept iteration before M, or the pre-loop
+   commit). C.3 step 5 commits the restore and moves `lastKeptCommit`.
+4. Set `results.json.lastGreenCommit` to the checkpoint of the last GREEN
+   before M (or the pre-loop commit), and `comparisonReference` to that GREEN's
+   "after" value (or `baseline.value`).
 5. Resume the loop from the reverted baseline. **Iteration counter keeps
    incrementing** — no re-use of numbers. The next iteration is N+1, not M+1.
 
@@ -520,7 +633,7 @@ Constraints:
 - Minimum: headline metric value, at-most-one component test or smoke-check result, one-sentence summary.
 - No `## Validation` section is written to `project-specs.md` during the AR loop — the Phase 3 research summary (Section I) consolidates validation across kept iterations.
 
-The runtime does **not** enforce this per-iteration block. Discipline is on the AR loop itself; the Phase 3 consolidation is where structural enforcement resumes. Per-iteration `gate_request` calls carry the same summary as `evidence` (`status` plus `checks`).
+The runtime does **not** enforce this per-iteration block. Discipline is on the AR loop itself; the Phase 3 consolidation is where structural enforcement resumes. Per-iteration evidence is recorded here, not gated: there is no per-iteration `gate_request` (A.6). An opted-in micro-gate (B.12) carries the latest block's summary as its `evidence` (`status` plus `checks`).
 
 ---
 
@@ -632,19 +745,38 @@ a false positive. The floor prevents premature convergence.
 **Exception:** METRIC FLOOR BREACH (E.6) is always live — emergency stops do
 not wait.
 
-Stop when ANY of the following is true:
+Stop when ANY of the following is true. Check them in order; the first that
+fires names the stop reason.
+
+E.1 and E.2 are measured over **all** iterations, GREEN or not, using each
+entry's `bestSoFar` (the comparison reference in force after that iteration,
+C.1). An iteration that is not GREEN leaves `bestSoFar` unchanged, so it adds
+zero progress. Measuring only GREENs would never fire: every GREEN beats the
+reference by more than `epsilon`.
 
 ### E.1 PLATEAU
 
-No GREEN result in W consecutive iterations (default W=5) **AND** DIMINISHING
-RETURNS (E.2) is also true. **Require both signals** — single-signal PLATEAU
-produces too many false positives on hard problems.
+No GREEN result in the last W consecutive iterations (default W=5): `bestSoFar`
+has not moved over the window. The activation floor already protects against
+early false positives on hard problems.
 
 ### E.2 DIMINISHING RETURNS
 
-Average improvement rate over the last W GREEN results is less than threshold
-(default: 0.1% of baseline per GREEN iteration). Measured as
-`mean(delta_over_last_W_greens) < threshold`.
+Progress of `bestSoFar` over the last 2W iterations (default 10) is below the
+threshold:
+
+```
+gain    = improvement from bestSoFar[N - 2W] to bestSoFar[N]   (bestSoFar[0] = baseline)
+gainPct = gain / |baseline.value| × 100
+fire when gainPct < diminishingReturnsThreshold
+```
+
+`diminishingReturnsThreshold` is the minimum total improvement over the 2W
+window, in % of baseline. Default: 2 × epsilon (2% of baseline when epsilon is
+1%). With that default, a single barely-GREEN iteration in 10 is diminishing
+returns, while two or more solid GREENs keep the loop going. Record
+`avgImprovementRate = gainPct / 2W` (% of baseline per iteration) in the
+convergence record.
 
 ### E.3 BUDGET EXHAUSTED
 
@@ -744,7 +876,10 @@ The AR schema extends the `[EX]` results.json schema. All existing fields
     "activationFloorReached": <bool>,
     "finalIteration": <N or null>
   },
+  "lastKeptCommit": "<sha or null>",
   "lastGreenCommit": "<sha or null>",
+  "comparisonReference": <number>,
+  "preLoopDirty": ["<path>", "..."],
   "costAccounting": {
     "tokensIn": <N>,
     "tokensOut": <N>,
@@ -767,7 +902,8 @@ Each entry in `experiments[]` gains:
   "hypothesisSource": "adaptive" | "steering" | "reviewer-suggested",
   "evalType": "full" | "proxy",
   "reviewerVerdict": "CONTINUE" | "REDIRECT" | "PAUSE" | "RETRO_REVERT" | null,
-  "nextSteps": "<string, populated for kept YELLOWs>"
+  "nextSteps": "<string, populated for kept YELLOWs>",
+  "bestSoFar": <number>
 }
 ```
 
@@ -822,14 +958,15 @@ Covered in E.6. Full-eval-only trigger; proxy breaches force a full re-eval.
 
 3 consecutive iteration crashes (uncaught exception during implementation or
 evaluation) → stop. The codebase may be broken. Record
-`convergence.reason = "error-limit"`. Revert to `lastGreenCommit`.
+`convergence.reason = "error-limit"`. Revert per C.3 to `lastKeptCommit`.
 
 ### G.4 Time budget
 
 Per-iteration timeout. If exceeded: abandon the iteration, revert per C.3,
-record `"timeout"` in the iteration file, and do NOT increment the iteration
-counter for retry — count it as a normal iteration that happened to fail. If
-3 consecutive timeouts occur, trigger G.3 (error limit).
+and record `"timeout"` in the iteration file. A timed-out iteration counts
+against the iteration budget: it keeps its iteration number, the counter
+advances as for any other iteration, and the hypothesis is not retried under
+the same number. If 3 consecutive timeouts occur, trigger G.3 (error limit).
 
 ### G.5 Cost ceiling
 
@@ -856,7 +993,9 @@ force if user chose to omit).
 - Remove git tags or refs.
 
 File-level `git checkout <sha> -- <path>` is the only allowed reverting operation.
-It restores file contents only. It never switches branches.
+It restores file contents only. It never switches branches. The one deletion C.3
+allows is a file inside the mutable scope that the loop itself created after the
+revert target (not in `preLoopDirty`), removed by its explicit path.
 
 ### G.7 Git safety
 
@@ -873,7 +1012,8 @@ It restores file contents only. It never switches branches.
 If the agent detects it was interrupted mid-iteration (on resume, finds a
 commit without a matching `results.json` entry, or vice versa):
 1. Record the partial state as a dropped iteration in the research log.
-2. Resume from the last clean `lastGreenCommit`.
+2. Resume from the last clean `lastKeptCommit` (revert per C.3 if the mutable
+   scope differs from it).
 3. Do not auto-clean any orphan files. Present the situation to the user
    before continuing.
 
@@ -1019,7 +1159,7 @@ and record it in `results.json.branchContext.gitStrategy`:
   (or its leased slice paths). No `git checkout`, no commits, no tags.
 - Section B checkpoint calls are skipped. Lineage relies on per-iteration
   markdown + `results.json`. Revert (C.3) is by restoring from the branch's own
-  saved copy of the last green files, since no checkpoint commit exists.
+  saved copy of the last kept files, since no checkpoint commit exists.
 - At promotion (Section H.11) the winner's files are copied into the main
   project directory. The runtime commits them at the next confirmed gate under
   `git.commit` and `git.denylist`.

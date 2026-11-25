@@ -108,6 +108,51 @@ describe('plan', () => {
     for (const id of ['b1', 'b2', 'b3']) expect(data(await call(mk({ id, kind: 'execute' }))).result).toBe('notice');
     expect(data(await call(mk({ id: 'b4', kind: 'execute' }))).status).toBe('pending');
   });
+  it('a gate requested with plan_approval (e.g. an agent Phase 1 gate) is the plan approval', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 10 } };
+    const p1 = mk({ id: 'ml-engineer-research-phase-1', kind: 'execute', plan_approval: 'r1' });
+    expect(data(await call(p1)).status).toBe('pending');
+    expect(gate('ml-engineer-research-phase-1').plan_run).toBe('r1');
+    await gates.confirmGate(sess(), 'ml-engineer-research-phase-1', { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    const d = data(await call(mk({ id: 'i1', kind: 'confirm', evidence: PASS })));
+    expect(d).toMatchObject({ result: 'notice', tier: 'plan-notice' });
+    expect(gate('i1').proof.plan_gate).toBe('ml-engineer-research-phase-1:r1');
+  });
+  it('a second run needs a fresh plan approval and gets its own notice budget', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 2 } };
+    const id = 'ml-engineer-research-phase-1';
+    await call(mk({ id, kind: 'execute', plan_approval: 'r1' }));
+    await gates.confirmGate(sess(), id, { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    for (const g of ['a1', 'a2']) expect(data(await call(mk({ id: g, kind: 'checkpoint' }))).result).toBe('notice');
+    // Run 2 re-requests the same Phase 1 gate for a new run: it is a fresh pending gate, not "already confirmed".
+    const r2 = data(await call(mk({ id, kind: 'execute', plan_approval: 'r2' })));
+    expect(r2.status).toBe('pending');
+    expect(gate(id)).toMatchObject({ status: 'pending', plan_run: 'r2' });
+    expect(gate(id).previous.at(-1)).toMatchObject({ status: 'confirmed', plan_run: 'r1' });
+    // The same run id again does not reopen it once confirmed.
+    await gates.confirmGate(sess(), id, { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    expect(data(await call(mk({ id, kind: 'execute', plan_approval: 'r2' }))).result).toBe('already_confirmed');
+    // Run 2 has its own budget (run 1 spent both notices).
+    for (const g of ['b1', 'b2']) expect(data(await call(mk({ id: g, kind: 'checkpoint' }))).result).toBe('notice');
+    expect(data(await call(mk({ id: 'b3', kind: 'checkpoint' }))).status).toBe('pending');
+  });
+  it('a pending plan approval for a new run suspends the old one', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 10 } };
+    await call(mk({ id: 'plan-approval.r1', kind: 'phase' }));
+    await gates.confirmGate(sess(), 'plan-approval.r1', { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    expect(data(await call(mk({ id: 'c1', kind: 'checkpoint' }))).result).toBe('notice');
+    expect(data(await call(mk({ id: 'plan-approval.r2', kind: 'phase' }))).status).toBe('pending');
+    expect(policy.planStatus(sess(), cfg.budget, undefined, gate('c1')).active).toBe(false);
+    await gates.confirmGate(sess(), 'plan-approval.r2', { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);
+    expect(data(await call(mk({ id: 'c2', kind: 'checkpoint' }))).result).toBe('notice');
+    expect(gate('c2').proof.plan_gate).toBe('plan-approval.r2');
+  });
+  it('a plan approval only covers its own project', async () => {
+    cfg = { policy: 'plan', budget: { max_gates: 10 } };
+    await approvePlan();
+    await pushFrame(state, { agent: 'ml-engineer', project: 'q' });
+    expect(data(await call(mk({ id: 'q1', kind: 'checkpoint' }))).status).toBe('pending');
+  });
   it('behaves like phase without a confirmed plan-approval', async () => {
     expect(data(await call(mk({ id: 'p1', kind: 'phase' }))).status).toBe('pending');
     await gates.confirmGate(sess(), 'p1', { decision: 'confirmed', proof: { tier: 'operator-cli' } }, gateDeps);

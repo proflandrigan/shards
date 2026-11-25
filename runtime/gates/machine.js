@@ -53,11 +53,13 @@ async function requestGate(session, req) {
     // agent/project/track. Otherwise the id starts over as a fresh gate (old one kept in `previous`).
     let previous;
     const same = existing && sameScope(existing, { agent: frame.agent, project, track });
+    // A plan approval is per run: a confirmed gate re-requested for a different run starts over.
+    const runChanged = !!(req.plan_run && existing && same && existing.status === 'confirmed' && existing.plan_run !== req.plan_run);
     if (existing && !same && (existing.status === 'pending' || existing.status === 'suspended')) {
       throw new Error(`gate ${id} is already ${existing.status} for ${existing.agent}${existing.project ? ` (project ${existing.project})` : ''}; resolve it or use a different gate id`);
     }
-    if (existing && existing.status === 'confirmed' && same) { result = 'already_confirmed'; entry = existing; return cur; }
-    if (existing && !same) {
+    if (existing && existing.status === 'confirmed' && same && !runChanged) { result = 'already_confirmed'; entry = existing; return cur; }
+    if (existing && (!same || runChanged)) {
       const { previous: older, ...rest } = existing;
       previous = [...(older || []), rest];
       existing = null;
@@ -73,6 +75,7 @@ async function requestGate(session, req) {
       if (req.summary !== undefined) existing.summary = req.summary;
       if (req.record_ref !== undefined) existing.record_ref = req.record_ref;
       if (req.targets !== undefined) existing.targets = req.targets;
+      if (req.plan_run) existing.plan_run = req.plan_run;
       existing.updated_at = ts;
       result = 'already_pending'; entry = existing; return cur;
     }
@@ -86,6 +89,7 @@ async function requestGate(session, req) {
         requested_at: ts,
       });
       if (req.targets !== undefined) existing.targets = req.targets;
+      if (req.plan_run) existing.plan_run = req.plan_run;
       result = 'reopened'; entry = existing; return cur;
     }
     entry = gates[id] = {
@@ -96,6 +100,7 @@ async function requestGate(session, req) {
       summary: req.summary || '', record_ref: req.record_ref || null, validates: req.validates || null,
       // Absent (not []) when the agent passed no targets: the gate then inherits the latest confirmed list.
       ...(req.targets !== undefined ? { targets: req.targets } : {}),
+      ...(req.plan_run ? { plan_run: req.plan_run } : {}),
       requested_at: ts, updated_at: ts,
       history: [{ ts, from: null, to: 'pending' }],
       ...(previous ? { previous } : {}),

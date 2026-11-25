@@ -105,8 +105,9 @@ AR runs in one of two presets:
   Always err on the side of a lower ceiling. Ceilings are a feature.
 - **Reviewer cadence** (default: 3 interactive / 10 overnight)
 - **Plateau window W** (default: 5)
-- **Diminishing returns threshold** (default: 0.5% of baseline — LLM evals
-  are noisier)
+- **Diminishing returns threshold** (minimum `bestSoFar` gain over the last
+  2W iterations; default: 2 × epsilon, i.e. 4% of baseline at the default
+  epsilon — LLM evals are noisier; `autonomous_research.md` §E.2)
 - **Full eval cadence M** (default: 5 interactive / 10 overnight)
 - **Mutable scope** (files/dirs the agent may modify):
   - Typical: `prompts/`, `chains/config.yaml`, `rag/config.yaml`, `eval/rubric.md`
@@ -220,40 +221,27 @@ Before the gate, announce (with appropriate anxiety):
 > `experiments/research_brief.md` — I re-read it every iteration. Phase 0,
 > Phase 1, Phase 3 remain gated.
 
-### Optional `/goal` activation
+### Optional unattended Phase 2 (plan approval)
 
 {{protocol goal_mode}} in full before
-writing the gate. Compose a candidate `/goal` condition from this run's
-Phase 0 settings (primary metric, direction, target if set, iteration budget,
-metric floor) using the AR condition template, and include the resulting
-copy-paste block in the message that precedes the Phase 1 gate:
+raising the gate. Goal mode is the `plan` gate policy (`autonomous_research.md`
+§A.6): in the message that precedes the Phase 1 gate, offer an unattended Phase
+2 and present the plan and budget (primary metric, direction, target if set,
+iteration budget, cost ceiling, metric floor). The Phase 1 gate below **is**
+the plan approval; never raise a second gate for it.
+- **If the user chooses unattended:** add `plan_approval: "<run-id>"` to the
+  `gate_request` call for the gate below, with a run id unique to this run
+  (for example `<project>-ar-<UTC yyyymmddThhmm>`). Then STOP and wait for the
+  user; never confirm it yourself. After approval Phase 2 runs without
+  prompts: per-iteration evidence is recorded in `results.json` (§C.5), not
+  gated, and mid-loop gates (opted-in micro-gates) become notices. A failure,
+  anomaly or budget exhaustion puts the next gate in front of the user. Surface the hallucination/safety floor result inline each iteration; a floor breach is a failure.
+- **Otherwise:** raise the same gate without `plan_approval`. §E convergence
+  and §G safety rails still terminate the loop. Per-iteration echoes remain
+  recommended for readability.
 
-```text
-/goal The AR loop is complete when ANY of the following is true:
-  (a) the most recent inline iteration summary shows <primary_metric> has
-      <crossed target X in the maximize direction
-       | dropped below target X in the minimize direction>;
-  (b) the most recent iteration summary or status line contains
-      "Convergence detected" with reason in {plateau, diminishing-returns,
-      budget-exhausted, cost-ceiling, consecutive-failures,
-      metric-floor-breach, user-interrupt, reviewer-pause,
-      scope-violation, error-limit, timeout-limit};
-  (c) the agent has begun writing the Phase 3 research summary
-      (look for "Phase 3" or "research_summary.md").
-Or stop after <budget+5> turns.
-```
-
-If no target was set, drop clause (a). Activation is optional:
-- **With `/goal`:** Phase 2 runs without per-iteration prompts. Transcript
-  discipline (`autonomous_research.md` §B.4/B.8) is mandatory — the evaluator
-  reads only the conversation, not files. The hallucination/safety floor
-  language in Phase 2 should also be reflected inline so the evaluator can
-  see it.
-- **Without `/goal`:** §E convergence and §G safety rails still terminate
-  the loop. Per-iteration echoes remain recommended for readability.
-
-If the host cannot run the loop unattended (see the goal-mode protocol), accept that and proceed — the loop still runs and terminates per
-the existing logic.
+The Phase 3 adoption gate is always confirmed by the user, unattended or not
+(§A.6).
 
 ### Gate
 
