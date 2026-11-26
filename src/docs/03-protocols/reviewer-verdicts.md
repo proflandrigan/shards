@@ -14,7 +14,7 @@ Older specs may use earlier words. Sound, Aligned, Suitable, Clear, DEPLOY and C
 
 ## Escalation
 
-- **Resubmission cap.** A specialist never resubmits to the same reviewer more than once per phase. A second BLOCKED verdict goes to you with the reviewer's concern verbatim, a one-line summary of the current plan, and three options: revise further, override and proceed (the disagreement is documented), or stop the project.
+- **Resubmission cap.** A specialist never resubmits to the same reviewer more than once per phase. A second BLOCKED verdict goes to you with the reviewer's concern verbatim, a one-line summary of the current plan, and three options: (a) override and proceed (the disagreement is documented), (b) revise further, or (c) stop the project.
 - **Resolution is recorded** in the specs as `Approved`, `Approved on resubmit`, `User override`, or `Project stopped`.
 - **Conflicting reviewers.** When two reviewers in one phase return conflicting tiers, the specialist presents both verbatim and asks you which way to go. It does not resolve the conflict unilaterally.
 

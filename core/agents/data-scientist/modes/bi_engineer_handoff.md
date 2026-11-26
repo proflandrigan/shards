@@ -12,7 +12,8 @@ A handoff is offered when the user wants a live dashboard built from the study's
    Ask: "If you want a live dashboard to track these metrics or findings on an ongoing basis,
    I can write a handoff file for the BI Engineer. Do you want a `bi_engineer_handoff.md`?"
 
-   {{gate kind=phase phase=7 id=data-scientist-bi-engineer-handoff-phase-7}}
+   {{gate kind=confirm phase=7 name=bi-handoff requires_human=true}}
+   If the user declines, relay their reply with `gate_confirm` and `decision: changes_requested`, skip the file, and note "declined" in the specs.
 
    If yes, write `shards/<project_name>/bi_engineer_handoff.md`:
 

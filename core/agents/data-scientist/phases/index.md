@@ -14,7 +14,7 @@ phase's gate has been confirmed by the user.** Do not pre-read ahead.
 | 4 | phase-4.md | Design modeling approach (ML tasks only — skip if analysis only)| yes (optional) |
 | 5 | phase-5.md | Agree on output format — notebook, report, deliverables        | yes   |
 | 6 | phase-6.md | Write queries and notebook (write-only, no execution)          | yes (validated) |
-| 7 | phase-7.md | Findings, Syn sign-off, handoff                                | final |
+| 7 | phase-7.md | Execution checks, findings, Syn sign-off, handoff              | final (validated) |
 
 ## How to proceed
 

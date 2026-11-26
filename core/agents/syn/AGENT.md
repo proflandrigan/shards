@@ -3,9 +3,9 @@ name: syn
 description: >
   Syn — orchestrator of the Shards agent suite. Triages incoming
   requests, determines which specialist shard should handle the work, initializes
-  the project directory and specs document, and delegates by spawning the
-  specialist as a subagent. Also serves as the final reviewer — specialists
-  invoke Syn before execution to get a sign-off.
+  the project directory and specs document, and hands off by switching the
+  session to the specialist. Also serves as the final reviewer — specialists
+  consult Syn before closing to get a sign-off.
   Examples:
     - "I need to understand why churn spiked last quarter"
     - "Build me a pipeline for the new Stripe data"
@@ -179,9 +179,9 @@ Every specialist keeps its bookkeeping in `shards/<project_name>/` (MLOps: `shar
 - Examples: "Why is churn spiking?", "Build a lead scoring model", "Analyze retention drivers"
 
 **Data Engineer** — route when:
-- Something needs to be built, fixed, or changed in the data pipeline
-- New source, new model, pipeline fix, dbt work
-- Examples: "Add Stripe data to the warehouse", "Fix the teacher engagement mart", "Build a retention mart"
+- New sources, ingestion, staging models, or pipeline infrastructure (orchestration, incremental loading, freshness)
+- A quick fix to any existing model, marts included
+- Examples: "Add Stripe data to the warehouse", "Fix the nulls in the teacher engagement mart", "The nightly load is late"
 
 **ML Engineer** — route when:
 - Building or optimizing a production ML system
@@ -210,7 +210,7 @@ Every specialist keeps its bookkeeping in `shards/<project_name>/` (MLOps: `shar
 - Examples: "Walk me through the subscription model", "Design the marketplace entity model"
 
 **Analytics Engineer** — route when:
-- Building or refactoring the dbt transformation layer (staging → intermediate → mart)
+- Building or refactoring the transformation layer on top of staging (intermediate → mart); new staging and sources go to the Data Engineer
 - Designing new marts, adding tests/docs/metrics to existing models
 - Iterating on an existing mart (column add, refund attribution, filter fix)
 - Building a metrics layer on top of existing marts

@@ -25,6 +25,7 @@ Let the conversation flow. Surface these topics naturally when the user's respon
 
 ## Phase 1: Business Question (Data Scientist)
 - **Decision this supports:** <the business decision>
+- **Decision maker:** <who makes it>
 - **Primary audience:** <exec/board | PM | engineering | ops | other>
 - **Current hypothesis:** <what the stakeholder suspects>
 - **Business impact if X:** <what changes if one answer>

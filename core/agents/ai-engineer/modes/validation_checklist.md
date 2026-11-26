@@ -11,7 +11,7 @@ Check IDs (AI-01 through AI-12) are stable. AI validation is eval-set-centric: m
 A representative eval set exists on disk, and its composition is deliberate — not a happy-path cherry-pick.
 
 - Minimum coverage: golden path (typical queries), edge cases (empty, very long, adversarial-adjacent), known-hard cases (things the system gets wrong), and a factual-correctness subset with known answers.
-- Set size: at least 50 items for a new service; 20 for iteration on an existing one with known-good regression set.
+- Set size: at least 100 items for a new production service, 50 for a prototype, 20 for iteration on an existing one with a known-good regression set.
 - Composition documented: count per category, how items were collected, refresh policy.
 
 **Observed format:** `eval set: evals/v3/cases.jsonl — 128 items | golden=60, edge=28, hard=22, factual=18 | composition: evals/v3/README.md`

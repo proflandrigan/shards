@@ -244,7 +244,7 @@ Before the gate, announce (with appropriate anxiety):
 unattended Phase 2 exactly as `autonomous_research.md` §A.6 describes: the
 Phase 1 gate below **is** the plan approval (run id for example
 `<project>-ar-<UTC yyyymmddThhmm>`), unattended runs defer a reviewer
-`RETRO_REVERT` or `PAUSE` and a metric floor breach with `ar_defer` (§B.14), and
+BLOCKED (`retro_revert` or `pause`) and a metric floor breach with `ar_defer` (§B.14), and
 the Phase 3 adoption gate is always confirmed by the user (`requires_human`).
 AI Engineer addition for unattended runs: surface the hallucination/safety
 floor result inline each iteration.
@@ -281,8 +281,8 @@ Follow Section B of `autonomous_research.md`.
   analysis, statistical significance of prompt differences)
 
 The Researcher is NOT on cadence unless you explicitly elevate to dual-reviewer
-mode at Phase 0 (not default). Cadence and the AR verdicts (`CONTINUE`,
-`REDIRECT`, `PAUSE`, `RETRO_REVERT`) are in `autonomous_research.md` §D.1-D.2.
+mode at Phase 0 (not default). Cadence and the AR mapping of reviewer verdicts to loop
+actions are in `autonomous_research.md` §D.1-D.2.
 
 ### Hypothesis categories for AI Engineer
 

@@ -53,7 +53,7 @@ The Data Analyst is a single 4-phase track by design; it escalates to the Data S
 | Design or debug a neural architecture | [Deep Learning Engineer](deep-learning-engineer.md) |
 | Propose a novel ML method | [Applied ML Scientist](applied-ml-scientist.md) |
 | Deploy/monitor/retrain a model | [MLOps Engineer](mlops-engineer.md) |
-| Build a data pipeline or dbt model | [Data Engineer](data-engineer.md) |
+| Add a source, build staging or fix a pipeline (or quick-fix any model) | [Data Engineer](data-engineer.md) |
 | Design a schema or resolve grain issues | [Data Modeller](data-modeller.md) |
 | Build a mart or transformation layer | [Analytics Engineer](analytics-engineer.md) |
 | Build a dashboard | [BI Engineer](bi-engineer.md) |

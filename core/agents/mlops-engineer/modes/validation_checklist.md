@@ -123,12 +123,13 @@ Rows are indexed by `(Track, Mode)` per `protocols/validation.md`.
 | **quick** | `hotfix` | MLO-01, MLO-02 | MLO-03 | rest |
 | **fixer** | (Mode omitted) | MLO-01 + MLO-02 rehearsal + "what changed, what didn't break" | — | rest |
 
+**Where each check is applied (deep track).** MLO-01, MLO-02 and MLO-03 need a deployed staging environment, so they are applied in Phase 7 (the staging deployment step), not at the Phase 6 build gate. At the Phase 6 gate, record them as `n/a` with Notes `applied in Phase 7 (staging deploy)`. Every other required check is applied at Phase 6.
+
 Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. {{protocol validation}}.
 
 ## Artifacts Expected
 
-- `docs/runbooks/<svc>.md` — MLO-09
-- `docs/runbooks/rollback.md` — MLO-02
+- The runbook at the confirmed `## Placement` target (greenfield: `shards/<project>/mlops/runbook.md`) — MLO-09, and its rollback procedure section — MLO-02
 - Monitoring configs at the confirmed `## Placement` target (greenfield: `shards/<project>/mlops/monitoring/`) — MLO-03, MLO-04
 - `pipelines/retrain_<svc>.py` or equivalent — MLO-05
 - `results/deploy_smoke.log`, `results/load_test.json` — MLO-01, MLO-07

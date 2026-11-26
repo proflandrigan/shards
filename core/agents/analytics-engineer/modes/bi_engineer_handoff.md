@@ -16,7 +16,8 @@ This file governs Step 6 of Deep Phase 8 (Peer Review and Handoff) for the Analy
      `bi_engineer_handoff.md` so the BI Engineer shard can build a dashboard on
      top of it?"
 
-     {{gate kind=phase phase=0 id=analytics-engineer-bi-engineer-handoff-phase-0}}
+     {{gate kind=confirm phase=8 track=deep name=bi-handoff requires_human=true}}
+     If the user declines, relay their reply with `gate_confirm` and `decision: changes_requested`, skip the file, and note "declined" in the specs.
 
    If writing the file (either automatically or after user confirmation), write `shards/<project_name>/bi_engineer_handoff.md`:
 
@@ -44,7 +45,7 @@ This file governs Step 6 of Deep Phase 8 (Peer Review and Handoff) for the Analy
    - Measures: <measure columns from Phase 4 model design>
    - Dimensions: <dimension columns from Phase 4>
    - Date spine: <date column and grain for time-series charts>
-   - Filters: <high-cardinality columns suitable for filters>
+   - Filters: <dimension columns with manageable cardinality, suitable for filter dropdowns>
 
    ## Data Source Details
    - Mart model: <mart model name>

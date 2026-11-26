@@ -145,8 +145,10 @@ verdict and key findings to the user.
 
 **If AE returns NEEDS REVISION or BLOCKED:**
 1. Address SQL bugs, wrong-layer source choices, or fan-out risks: rewrite the
-   affected queries (re-dispatch the affected query tasks and re-verify each
-   with an evidence row). Do this BEFORE running anything.
+   affected queries. The query tasks are already done and cannot be
+   re-dispatched, so add fix tasks through {{protocol plan_drift}} (amendment
+   gate with the findings, then `tasks_set` with `amendment_gate`), dispatch
+   them and verify each with an evidence row. Do this BEFORE running anything.
 2. Data-quality findings on the sources (not query bugs) become caveats in the
    Phase 3 result interpretation — surface them alongside the results when you
    present them.

@@ -6,6 +6,6 @@ activation: [consult, switch]
 consult_entries:
   service: modes/service.md
 reviewers: []
-output_dir: null
+output_dir: "shards/academic_reports/"
 jobs: [review]
 capabilities: [read, write, edit, search, shell, delegate, web]

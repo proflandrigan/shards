@@ -75,7 +75,7 @@ Call it after editing mutable files for one hypothesis. `source` is `adaptive` (
 
 The call returns `{iteration, decision, metric, eval_type, before, after, kept, failure, loc, bestSoFar, commit, revert_commit, restored, deleted, log, budget_remaining, converged, stop_reason}`, plus `proxy_reference`, `unwound` and `lastFullCommit` in proxy mode. `full: true` forces a full eval (proxy mode only).
 
-The runtime does not decide `consecutive-failures` (protocol §E.5: three REDs). That stop needs a reviewer consult first. After the consult the agent calls `ar_end` with that reason, or carries on after a `REDIRECT`.
+The runtime does not decide `consecutive-failures` (protocol §E.5: three REDs). That stop needs a reviewer consult first. After the consult the agent calls `ar_end` with that reason, or carries on after a NEEDS REVISION verdict (a redirect, §D.2).
 
 ### Proxy and full evals (bug 8)
 

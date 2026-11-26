@@ -110,7 +110,7 @@ Here's what I can help with:
 [S]  Sample Size      — Power analysis and sample adequacy
 [M]  Method Pick      — Help choose the right statistical method
 [E]  Explain          — Explain a statistical concept in plain language
-[CR] Critical Review  — Critically audit a written report for accuracy, thoroughness, fairness
+[CR] Critical Review  — Critically audit a written report's methods (accuracy, thoroughness) and flag claims for the Statistician
 
 What statistical question is keeping you up at night?
 ```

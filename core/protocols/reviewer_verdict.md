@@ -4,7 +4,7 @@ description: Universal three-tier reviewer verdict mapping and escalation script
 type: reference
 ---
 
-Every reviewer returns exactly one of three verdict words: **APPROVED**, **NEEDS REVISION**, or **BLOCKED**. No reviewer defines its own vocabulary. Reviewer-specific nuance (what kind of concern, how severe, which alternatives) goes in the body of the review, never in the verdict word. Map the verdict to a tier and act accordingly. One exception: Syn's final review (`entry=final_review`) treats NEEDS REVISION as fix and resubmit; follow {{protocol syn_review_resolution}} for it.
+Every reviewer returns exactly one of three verdict words: **APPROVED**, **NEEDS REVISION**, or **BLOCKED**. No reviewer defines its own vocabulary. Reviewer-specific nuance (what kind of concern, how severe, which alternatives) goes in the body of the review, never in the verdict word. Map the verdict to a tier and act accordingly. Exceptions: Syn's final review (`entry=final_review`) treats NEEDS REVISION as fix and resubmit; follow {{protocol syn_review_resolution}} for it. Inside an autonomous loop no verdict raises a gate: the Autonomous Research loop acts on each verdict per `autonomous_research.md` §D.2, and the experiment-mode Phase 2 loop records NEEDS REVISION findings as caveats and, on BLOCKED, downgrades the experiment's recommendation (Adopt becomes Refine or Revert); the user sees both at Phase 3.
 
 | Verdict | Tier | Meaning | Action |
 |---------|------|---------|--------|
@@ -30,8 +30,8 @@ If a reviewer returns a word outside APPROVED / NEEDS REVISION / BLOCKED, record
 > - Current plan: [one-sentence summary of what exists]
 >
 > How would you like to proceed?
-> (a) Revise further — tell me what to change.
-> (b) Override and proceed — I'll document the disagreement in specs.
+> (a) Override and proceed — I'll document the disagreement in specs.
+> (b) Revise further — tell me what to change.
 > (c) Stop the project."
 
 Document the resolution in specs:

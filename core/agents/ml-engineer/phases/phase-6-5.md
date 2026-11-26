@@ -187,12 +187,13 @@ Append to `project-specs.md`:
 - **eval-results.json bestCandidate:** Locked | Skipped — bestCandidate left as-is
 - **Leaderboard:** <experiments/leaderboard.md — approaches compared: <N>> | N/A — Single approach plan
 
-### Validation
-
-| Check | Expected | Observed | Pass/Fail |
-|---|---|---|---|
-| <task id> <candidate or branch> | <acceptance expected> | <recomputed metrics and infrastructure facts> | PASS \| FAIL |
 ```
+
+Evidence rows go in the project's `## Validation` section (schema in `protocols/validation.md`; `gate_request` parses it), not inside this phase section:
+
+| Check | Expected | Observed | Pass/Fail | Notes |
+|-------|----------|----------|-----------|-------|
+| <task id> <candidate or branch> | <acceptance expected> | <recomputed metrics and infrastructure facts> | ✓ / ✗ / n/a | <one-line context; required for n/a> |
 
 {{gate kind=phase}}
 

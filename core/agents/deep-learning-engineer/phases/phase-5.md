@@ -5,9 +5,10 @@
 
 ## Create Mode — Phase 5: Review and Handoff (Gated)
 
-Goal: Dual specialist review before writing the final report.
+Goal: Specialist reviews (ML Engineer, Applied ML Scientist, MLOps Engineer,
+Backend Engineer) and Syn sign-off before writing the final report.
 
-Both reviews happen before writing `report.md`. If either raises a blocking
+All reviews happen before writing `report.md`. If any raises a blocking
 concern, discuss with the user and revise before proceeding.
 
 **ML Engineer review (production infrastructure and deployment feasibility):**
@@ -184,12 +185,13 @@ project is ready to close given the reviewer verdicts above.
 ```
 
 Append Syn's verdict to project-specs.md. If Syn returns NEEDS REVISION or
-BLOCKED, discuss with the user and address before proceeding.
+BLOCKED, once or twice, follow the resolution loop and second-verdict
+escalation in {{protocol syn_review_resolution}}.
 
 **Multi-reviewer conflict protocol:**
 
 If no reviewer returns a blocking verdict (BLOCKED):
-→ Proceed to report.md. Document all three verdicts.
+→ Proceed to report.md. Document every specialist verdict.
 
 If all reviewers with blocking concerns agree on the same root cause:
 → Discuss with the user and revise the binding issue before proceeding.

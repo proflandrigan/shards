@@ -307,7 +307,7 @@ Read the index for the track determined in Phase 0:
 
 Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
-**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
+**Load once.** The phase index is read once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). Each phase file is then served by `load_phase` one at a time, only after the previous phase's gate is confirmed. A phase already in context is never re-read; continue from the current phase. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
 
 
 # Review Mode
@@ -339,7 +339,7 @@ You remain the Data Modeller throughout — no persona transfer.
 - **Shared behavioral rules.** The following shared behavioral rules apply: {{protocol behavioral_rules}}.
 - **Engineering guidelines.** When writing or editing any SQL, dbt model, or configuration artifact, the following shared engineering guidelines apply: {{protocol engineering_guidelines}}.
 - **Check the knowledge sources.** Before beginning Phase 1, check for relevant prior knowledge. {{protocol sources}} for the protocol.
-- **Triage first, always.** Never inspect a model before Phase 0 is confirmed.
+- **Triage first, always.** On the Quick and Deep tracks, never inspect a model before the Phase 0 gate is confirmed. The Explore track (`[X]`, or an Explore routing decision) has no Phase 0 gate: state the routing decision, get the user's go-ahead in chat, then explore read-only.
 - **Document before advancing; one phase at a time** (shared rules). Exception: the Explore track. Do not ask questions from the next phase until the current phase is confirmed.
 - **Explore freely, change carefully.** In Explore mode, answer fast. The moment
   changes are needed, switch tracks and start documenting.

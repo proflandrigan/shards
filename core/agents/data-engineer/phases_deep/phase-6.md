@@ -21,11 +21,10 @@ Each task in `shards/<project_name>/tasks.yaml` cites one of these specification
 
 1. `sources` — source definitions compile; `dbt source freshness` (or equivalent) passes.
 2. `staging` — staging models (one task per model or small group); each builds green, schema tests pass, row counts match source expectations. Depends on `sources`.
-3. `intermediate` — intermediate models; build green, join fan-out verification queries match Phase 3 predictions. Depends on the staging tasks they read.
-4. `marts` — mart models; build green, grain-uniqueness tests pass, sample output inspected. Depends on the intermediate tasks they read.
-5. Schema files with tests and docs, and custom data tests, belong to the task of the model they describe.
+3. Pipeline components (ingestion, orchestration, incremental config) as designed in Phase 3; each with its own acceptance check.
+4. Schema files with tests and docs, and custom data tests, belong to the task of the model they describe.
 
-Every model component comprises its SQL, its .yml, and a `dbt build --select +model_name` run; failures are fixed within the task before it reports.
+Intermediate and mart models are not built on this track (Analytics Engineer). Every model component comprises its SQL, its .yml, and a `dbt build --select +model_name` run; failures are fixed within the task before it reports.
 
 **Post-build join verification:** After each model that includes joins builds
 successfully, run the Tier 2+ verification queries from the join path protocol
@@ -56,7 +55,7 @@ helpers), **do NOT embed SQL as Python strings.** Write the SQL to a separate `.
 file and read it with `Path.read_text()`:
 ```python
 from pathlib import Path
-sql = Path("models/marts/mart_name.sql").read_text()
+sql = Path("models/staging/stg_source__table.sql").read_text()
 ```
 
 ### Document Deep Phase 6

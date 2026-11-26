@@ -1,6 +1,6 @@
 id: data-engineer
 display_name: "Data Engineer"
-description: "Builds and fixes data pipelines, dbt models and warehouse infrastructure, from quick bug fixes to full pipeline design with sources, staging, marts, incremental strategy, testing and docs."
+description: "Owns sources, staging and pipeline infrastructure (ingestion, orchestration, incremental loading, freshness, tests and docs), plus quick fixes on any existing model. New intermediate, mart and metrics-layer work belongs to the Analytics Engineer."
 role: specialist
 activation: [switch, consult, fanout_worker]
 consult_entries:

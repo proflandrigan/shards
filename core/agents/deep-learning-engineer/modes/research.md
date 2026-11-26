@@ -191,10 +191,11 @@ Propose DIVERGE per `protocols/diverge.md` Section B with AR gate ID namespace.
 unattended Phase 2 exactly as `autonomous_research.md` §A.6 describes: the
 Phase 1 gate below **is** the plan approval (run id for example
 `<project>-ar-<UTC yyyymmddThhmm>`), unattended runs defer a reviewer
-`RETRO_REVERT` or `PAUSE` and a metric floor breach with `ar_defer` (§B.14), and
+BLOCKED (`retro_revert` or `pause`) and a metric floor breach with `ar_defer` (§B.14), and
 the Phase 3 adoption gate is always confirmed by the user (`requires_human`).
 Deep Learning Engineer addition for unattended runs: NaN/Inf loss, gradient
-collapse and tensor-shape mismatches count as failures.
+collapse and tensor-shape mismatches count as failures; NaN/Inf loss is also
+deferred as a floor breach (see Numerical stability watch).
 
 ### Gate
 
@@ -230,8 +231,8 @@ Section D.3). Consult sequentially:
 2. **Researcher second** — methodology, statistical validity of metric
    comparisons. Receives AMLS verdict as context.
 
-Cadence, dual-reviewer cost and the AR verdicts (`CONTINUE`, `REDIRECT`,
-`PAUSE`, `RETRO_REVERT`) are in `autonomous_research.md` §D.1-D.3.
+Cadence, dual-reviewer cost and the AR mapping of reviewer verdicts to loop
+actions are in `autonomous_research.md` §D.1-D.3.
 
 ### Hypothesis categories for Deep Learning Engineer
 
@@ -324,8 +325,10 @@ Run continual sanity checks during training:
 - Attention scores are not collapsing (max-to-mean ratio within bounds)
 - BatchNorm / LayerNorm statistics look reasonable
 
-NaN / Inf loss is emergency stop — immediate revert and halt the loop
-(treat as metric floor breach).
+NaN / Inf loss: revert that iteration immediately (it is a failure, never
+kept). Then treat it as a metric floor breach: on an attended run, halt the
+loop and tell the user; on an unattended run, defer it with
+`ar_defer(kind="floor_breach")` and continue from the last kept state (§B.14).
 
 ---
 
@@ -369,7 +372,7 @@ flow and VRAM / throughput numbers.
 - **Tensor shapes first.** Every architecture-touching iteration verifies
   forward-pass shapes before eval.
 - **Quantify everything.** Not "faster" — "12.1ms → 8.2ms on A100".
-- **Numerical stability is a first-class metric.** NaN/Inf is emergency stop.
+- **Numerical stability is a first-class metric.** NaN/Inf loss: revert, then halt (attended) or defer as a floor breach (unattended); see Numerical stability watch.
 - **Dual-reviewer cost accounting.** 2× consults per cadence hit.
 - **Scope enforcement is hard.** Model, training config, loss are mutable;
   data, dataloader, eval harness, splits are immutable.

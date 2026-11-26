@@ -14,7 +14,8 @@ This file governs the BI monitoring dashboard handoff step of Phase 7 (Review an
    For iteration projects where a monitoring dashboard already exists, only
    ask if this iteration added new metrics or changed monitoring scope.
 
-   {{gate kind=phase phase=0 id=ai-engineer-bi-engineer-handoff-phase-0}}
+   {{gate kind=confirm phase=7 name=bi-handoff requires_human=true}}
+   If the user declines, relay their reply with `gate_confirm` and `decision: changes_requested`, skip the file, and note "declined" in the specs.
 
    If yes, write `shards/<project_name>/bi_engineer_handoff.md`:
 

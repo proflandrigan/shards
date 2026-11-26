@@ -169,13 +169,14 @@ When all tasks are verified done, finalize `eval-results.json` (status `complete
 - **Failure modes discovered:** <categories and frequency>
 - **Surprising findings:** <anything unexpected>
 
-### Validation
-
-| Check | Expected | Observed | Pass/Fail |
-|---|---|---|---|
-| <task id> <component> | <acceptance expected> | <measured facts> | PASS \| FAIL |
-| <task id> harness: <core or approach_id> | interface per protocol Section C; smoke subset runs and parses; leaderboard row written | <file path>; <smoke result>; <primary metric, cost/request, p95> | PASS \| FAIL |
 ```
+
+Evidence rows go in the project's `## Validation` section (schema in `protocols/validation.md`; `gate_request` parses it), not inside this phase section:
+
+| Check | Expected | Observed | Pass/Fail | Notes |
+|-------|----------|----------|-----------|-------|
+| <task id> <component> | <acceptance expected> | <measured facts> | ✓ / ✗ / n/a | <one-line context; required for n/a> |
+| <task id> harness: <core or approach_id> | interface per protocol Section C; smoke subset runs and parses; leaderboard row written | <file path>; <smoke result>; <primary metric, cost/request, p95> | ✓ / ✗ / n/a | <one-line context; required for n/a> |
 
 {{gate kind=phase validates=ai-engineer}}
 

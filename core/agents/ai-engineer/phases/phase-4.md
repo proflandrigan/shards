@@ -15,7 +15,7 @@ harder and more important — because the failure modes are semantic, not statis
 **Required Eval Specification**
 
 ```
-- **Minimum eval set size:** <N examples — minimum 100 for production; 50 for prototype>
+- **Minimum eval set size:** <N examples — minimum 100 for production, 50 for a prototype, 20 for an iteration with a known-good regression set (AI-01)>
 - **Required metrics for this task type:**
   - Classification/routing: accuracy, precision, recall, F1 per class
   - Generation: ROUGE/BERTScore + human eval rubric (1-5 scale on [quality dimensions])
@@ -92,8 +92,9 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 - **Regression testing:** Fixed test set that must pass before every deployment
 
 **Minimum viable evaluation (non-negotiable):**
-- A test set with ground truth or human-annotated expected outputs (minimum 50-100
-  examples for prototype, more for production)
+- A test set with ground truth or human-annotated expected outputs (minimum 100
+  examples for production, 50 for a prototype, 20 for an iteration on an
+  existing service with a known-good regression set; AI-01)
 - An automated scoring pipeline that can run on every prompt change
 - A quality threshold below which the system should not deploy
 - A regression test suite that catches known failure modes

@@ -62,7 +62,7 @@ Syn has no single output directory (`output_dir: null`). It writes to:
 - `shards/panels/<dirname>/` for Panel Review (the default; you can override it).
 - `<project_dir>/.shards/branches/` for DIVERGE branches.
 - The target project directory when acting as final reviewer.
-- Free Form writes where you ask (there is no default). Swarmed workstreams nest slices under the specialist's own convention (for example `shards/<name>/slice-<n>/`).
+- Free Form writes where you ask (there is no default); delegated write work keeps its task list and evidence in `shards/free-form-<slug>/`. Swarmed workstreams nest slices under the specialist's own convention (for example `shards/<name>/slice-<n>/`).
 
 Syn's jobs are `record`, `tasks`, `knowledge`, `review`, `artifacts` and `presentation`. Gate-confirmed work is committed to git as the record; see [Output Directory Map](../06-outputs/directory-map.md).
 

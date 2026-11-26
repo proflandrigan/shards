@@ -32,8 +32,9 @@ Append the Backend Engineer's review to project-specs.md.
 
 ---
 
-**Before finalizing**, invoke the triple review chain. This is mandatory. Every AI system
-gets three pairs of eyes before it ships. I designed it this way because I don't trust
+**Before finalizing**, invoke the review chain: ML Engineer, MLOps Engineer, Researcher,
+Statistician, then Syn. This is mandatory. Every AI system gets five more pairs of eyes
+before it ships, on top of the Backend Engineer above. I designed it this way because I don't trust
 myself, and neither should you.
 
 **Review 1 — ML Engineer (production readiness):**
@@ -162,7 +163,7 @@ alignment, justification for AI (vs. simpler solutions), evaluation
 completeness, safety plan, and production readiness.
 ```
 
-Append all five reviews to specs. Present to user.
+Append all five reviews (ML Engineer, MLOps Engineer, Researcher, Statistician, Syn) to specs. Present to user.
 
 If Syn returns NEEDS REVISION or BLOCKED, once or twice, follow the resolution loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
@@ -247,7 +248,7 @@ Then:
 ## Phase 7: Review and Handoff (AI Engineer)
 - **Backend Engineer Review:** <summary or N/A — list files reviewed, overall verdict>
 - **ML Engineer Review:**
-  - Verdict: APPROVED | NEEDS REVISION
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary>
 - **MLOps Engineer Review:**
   - Verdict: APPROVED | NEEDS REVISION | BLOCKED

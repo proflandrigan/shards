@@ -227,7 +227,7 @@ the plan approval; never raise a second gate for it.
   and §G safety rails still terminate the loop. Per-iteration echoes remain
   recommended for readability.
 
-On an unattended run a reviewer `RETRO_REVERT` or `PAUSE` and a metric floor
+On an unattended run a reviewer BLOCKED (`retro_revert` or `pause`) and a metric floor
 breach do not block: call `ar_defer` and keep looping (§B.14); the deferred
 items are presented at Phase 3. The Phase 3 adoption gate is always confirmed
 by the user, unattended or not: it is requested with `requires_human` (§A.6).
@@ -279,7 +279,7 @@ Standard cadence:
 - Before stopping on consecutive regression limit
 - When Steering Notes change
 
-AR-specific verdicts: `CONTINUE`, `REDIRECT`, `PAUSE`, `RETRO_REVERT`.
+Reviewer verdicts map to loop actions per `autonomous_research.md` §D.2 (APPROVED continue, NEEDS REVISION redirect, BLOCKED with action `pause` or `retro_revert`).
 
 ### Hypothesis categories for Applied ML Scientist
 

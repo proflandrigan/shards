@@ -30,7 +30,7 @@ If you lead an AR branch (`autonomous_research.md` Section H.3), or your workstr
 
 - **You write no code.** Each iteration is one task card for a `<specialist>` worker: `owned_paths` = the mutable scope inside your branch worktree, `acceptance.command` = the pinned eval command with `acceptance.cwd` = the worktree, and `ar: {run_id, branch, iteration, hypothesis}`. Register the first card with `tasks_set`, later ones with `tasks_set` `append: true`; each depends on the previous one (`max_parallel` 1 per branch).
 - **`ar_iterate` is your independent check.** After `task_report`, call `ar_iterate` with your `run_id` and `branch` (the runtime re-runs the eval itself), then `task_verify` with `ar_iteration`. A RED or unkept YELLOW is `done` (`reverted`), not `failed`: no retry, no escalation.
-- **No gates still.** Reviewer `RETRO_REVERT`, `PAUSE` and floor breaches go to `ar_defer`; the initiator presents them at its Phase 3 gate. Finish with `ar_end` and return the branch ref, `lastKeptCommit` and stop reason in your report.
+- **No gates still.** Reviewer BLOCKED verdicts (`retro_revert`, `pause`) and floor breaches go to `ar_defer`; the initiator presents them at its Phase 3 gate. Finish with `ar_end` and return the branch ref, `lastKeptCommit` and stop reason in your report.
 - Never launch another lead (an AR fan-out is started only by the initiator at depth 0).
 
 ## Consults

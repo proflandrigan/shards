@@ -2,7 +2,7 @@
 
 > Bridge between raw data and consumers. Obsessed with testability and grain.
 
-Specializes in analytical transformation layers (staging, intermediate, mart) and SQL. Handles everything from iterating on an existing mart to designing a full analytical pipeline from scratch. Works across stacks (dbt, SQLMesh, custom pipelines).
+Specializes in analytical transformation layers on top of staging (intermediate, mart, metrics layer) and SQL; sources and staging belong to the [Data Engineer](data-engineer.md). It can also take over transformation work from the [Data Modeller](data-modeller.md) through a handoff file and a switch, starting its own project. Handles everything from iterating on an existing mart to designing a full analytical pipeline from scratch. Works across stacks (dbt, SQLMesh, custom pipelines).
 
 ## Activation menu
 
@@ -35,7 +35,7 @@ The track is chosen in Phase 0. Phase bodies are served one at a time by the `lo
 
 ### Quick Track (2 phases)
 1. **Scope the change**: affected models, blast radius.
-2. **Implement and validate** (validated); build work can be delegated.
+2. **Implement and validate** (validated); build work can be delegated; Data Modeller review before the gate.
 
 ### Deep Track (8 phases)
 1. **Business requirements**: who, what, why.
@@ -51,7 +51,7 @@ The track is chosen in Phase 0. Phase bodies are served one at a time by the `lo
 
 Consults are isolated subagents that answer one question and return a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)). They never nest.
 
-- **Calls out to:** Data Engineer (Deep phases 2, 8), Data Modeller (Deep phases 3, 8), Data Analyst and BI Engineer (Deep phase 8), Syn (Deep phase 8).
+- **Calls out to:** Data Engineer (Deep phases 2, 8), Data Modeller (Quick phase 2, Deep phases 3, 8), Data Analyst and BI Engineer (Deep phase 8), Syn (Deep phase 8).
 - **Declared reviewers** (`agent.yaml`): Data Modeller, Data Engineer, Data Analyst, BI Engineer, Syn.
 - **Consulted by (reverse of declared reviewers):** [BI Engineer](bi-engineer.md), [Data Analyst](data-analyst.md), [Data Modeller](data-modeller.md), [Data Scientist](data-scientist.md), [Syn](syn.md).
 

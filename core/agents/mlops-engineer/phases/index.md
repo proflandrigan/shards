@@ -14,7 +14,7 @@ phase's gate has been confirmed by the user.** Do not pre-read ahead.
 | 4 | phase-4.md | Design the training pipeline — orchestration, scheduling          | yes   |
 | 5 | phase-5.md | Design monitoring — drift, performance, alerting                  | yes   |
 | 6 | phase-6.md | Build IaC, serving, pipeline, monitoring and runbook artifacts    | yes (validated) |
-| 7 | phase-7.md | Review and handoff — Syn sign-off, ops runbook                    | final |
+| 7 | phase-7.md | Staging deploy and operational checks, review, handoff — Syn sign-off | final (validated) |
 
 ## How to proceed
 

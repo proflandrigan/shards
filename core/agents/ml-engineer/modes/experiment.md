@@ -28,9 +28,9 @@ transfer occurs.
      experiment run (e.g., "F1 on test set", "RMSE on holdout", "precision@k"). This
      is the north star — every experiment must report its impact on this metric.
    - **Number of experiments:** How many experiments to run this session. Default: 3.
-   - **Success threshold** (optional): A target value for the outcome metric. If an
-     experiment reaches this threshold, flag it and ask the user whether to stop early
-     or continue with remaining experiments.
+   - **Success threshold** (optional): A target value for the outcome metric.
+   - **Stopping rule:** run all planned experiments, or stop at the first one that
+     reaches the success threshold. Agreed now; Phase 2 does not ask again.
 
 8. **Experiment dashboard:** Agents always emit the dashboard, whether or not a UI
    exists. Experiment data lives in `experiments/results.json` (the file the panel
@@ -68,13 +68,21 @@ For each experiment, provide:
 
 Present the list clearly. Explain your prioritisation rationale briefly.
 
-### Optional unattended Phase 2 (plan approval)
+### Agreed plan and stopping point
 
-{{protocol goal_mode}} in full before raising the gate and follow it. The plan
-and budget to present are: number of experiments planned, outcome metric,
-success threshold if set. Run id example: `<project>-ex-<UTC yyyymmddThhmm>`.
-With plan approval the **Step 7 inline summary** still runs each iteration, and
-the Phase 2 stop conditions still terminate the loop.
+Phase 2 runs autonomously, with no gates and no questions between experiments.
+This gate is where the user agrees to the whole run, so the message before it
+must state the plan in full:
+- the experiments, in order, and the experiment count;
+- the outcome metric and the success threshold (or "none set");
+- the stopping rule: run all planned experiments, or stop at the first
+  experiment that reaches the threshold (ask the user which, now);
+- the stop conditions below, which end the loop early in any case.
+
+Record the agreed stopping rule in the experiment plan. If the user changes the
+plan, update it and re-present it before raising the gate. After confirmation,
+run Phase 2 to the agreed stopping point without asking again; the Step 7 inline
+summary keeps the user informed. The Phase 3 gate is always confirmed by the user.
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
@@ -93,6 +101,7 @@ exactly:
 - **Agent:** ml-engineer
 - **Outcome metric:** <the agreed metric>
 - **Success threshold:** <value or "none set">
+- **Stopping rule:** <run all planned | stop at first experiment reaching the threshold>
 - **Planned experiments:** <N>
 
 ## Baseline
@@ -276,6 +285,8 @@ After receiving the DS response, fill in the `## Data Scientist Review` section 
 the result file with the DS's assessment. Also update the `dsVerdict` field in
 `experiments/results.json` for this experiment entry.
 
+**No gates in the loop.** Act on this step's verdicts without asking the user: record NEEDS REVISION findings as caveats in the result file, and on BLOCKED downgrade the recommendation (Adopt becomes Refine or Revert). The user sees both at Phase 3 ({{protocol reviewer_verdict}}, loop exception).
+
 ### Step 7 — Inline summary
 Print a short inline block:
 ```
@@ -289,10 +300,9 @@ Experiment N complete.
 Stop the loop early if:
 - A training or evaluation crash makes results unmeasurable
 - The user intervenes
-- **Success threshold reached** — if the outcome metric meets or exceeds the agreed
-  threshold after any experiment, announce it inline and ask the user: "The outcome
-  metric has reached the success threshold (<value>). Continue with remaining
-  experiments or stop here?"
+- **Success threshold reached** and the agreed stopping rule is "stop at first
+  experiment reaching the threshold": announce it inline and stop. If the rule is
+  "run all planned", announce it and continue. Do not ask the user mid-loop.
 
 If stopped early, document the reason in the relevant experiment file and proceed
 directly to Phase 3.

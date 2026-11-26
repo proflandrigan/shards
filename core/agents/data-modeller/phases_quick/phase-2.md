@@ -39,6 +39,12 @@ Follow the lead loop in {{protocol delegated_build}} (task evidence guidance: {{
 
 This is a small build (two tasks or fewer in practice). Tasks marked `delegate: inline` are done by the lead itself, through the same loop, acceptance commands and per-task evidence rows. When all tasks are done, summarize what changed.
 
+**Analytics Engineer review.** You orchestrate the build; the Analytics Engineer reviews it and surfaces issues, without editing:
+
+{{consult analytics-engineer entry=review task="Review the quick-track model change for [project_name]"}}
+
+Brief: the project-specs path, the files changed and the change's intent; ask for each issue with file, line and the change to make. Apply {{protocol reviewer_verdict}}: for NEEDS REVISION or BLOCKED findings, the reviewed tasks are already done and cannot be re-dispatched, so add review-fix tasks through {{protocol plan_drift}}: raise its amendment gate with the findings as the proposed change, then call `tasks_set` with the revised manifest (one fix task per affected component, for your own workers, acceptance = the original check plus the finding resolved) and `amendment_gate`, dispatch them and verify each with `task_verify`.
+
 **Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
 {{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
 
@@ -55,6 +61,7 @@ Append to project-specs.md:
 - **Downstream updates:** <files updated or "none needed">
 - **Task evidence:** one row per task in the `## Validation` Evidence table
 - **Validation result:** Pass | Fail — <details>
+- **Analytics Engineer review:** APPROVED | NEEDS REVISION → resolved | BLOCKED → resolved — <issues or "none">
 - **Post-build validation:** PASS | FAIL | SKIPPED (no data) — <details>
 - **Follow-up needed:** Yes / No — <if yes, describe>
 - **Write-backs proposed:**

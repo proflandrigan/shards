@@ -25,47 +25,25 @@ If Syn's review includes a "Code Review" section, follow the Code Review follow-
 
 If the user wants the code pass: {{protocol code_review}}
 
-**Analytics Engineer handoff (conditional):**
+**Analytics Engineer handoff (only for a true handoff):**
 
-After presenting the completed logical model, ask:
-"The logical data model is complete. Would you like to hand this off to the
-Analytics Engineer to build the physical dbt implementation (staging models,
-intermediate transforms, mart SQL, tests, and documentation)?
+You built and the Analytics Engineer reviewed in Phase 6, so no handoff is needed
+for the models in this project. Offer one only when further physical work should
+be owned by the Analytics Engineer (for example new marts, a metrics layer or
+transformation work on top of this model):
 
-- (a) Yes — I'll invoke the Analytics Engineer with a full handoff.
-- (b) No — the logical model is the deliverable."
+"The model is built and reviewed. Do you want to hand further transformation
+work to the Analytics Engineer to build and own?
 
-If user says (a), invoke:
+- (a) Yes — I'll write a handoff and switch to the Analytics Engineer after sign-off.
+- (b) No — this project is complete."
 
-{{consult analytics-engineer entry=review task="Physical dbt implementation of logical model: [project_name]"}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-I am the Data Modeller shard. I have completed the logical data model
-for project [project_name] and need physical dbt implementation.
-
-Model specs: shards/<project_name>/project-specs.md
-
-Summary:
-- Entities modeled: <entity list from Phase 2>
-- Source tables: <source list from Phase 1>
-- Grain definitions: <from Phase 2>
-- Key relationships: <from Phase 3>
-- Proposed mart structure: <from Phase 5>
-
-Please implement:
-1. Staging models for each source
-2. Intermediate transforms as needed
-3. Mart models matching the logical model's entity grain
-4. dbt schema tests (uniqueness, not-null, accepted values, relationships)
-5. Column-level documentation
-
-Please read shards/<project_name>/project-specs.md for full context and the
-complete ER diagram.
-```
-
-Document the outcome in Phase 7 specs.
+If (a), write `shards/<project_name>/analytics_engineer_handoff.md` with: the
+project-specs path, entities and grains (Phase 2), key relationships (Phase 3),
+the built models and their tests (Phase 6 build log), the Analytics Engineer's
+Phase 6 review findings, and the work being handed over. Record the choice
+under **Analytics Engineer handoff** below; the switch happens after the final
+gate (see "When this gate is confirmed").
 
 Then:
 1. Run full DAG validation
@@ -102,7 +80,7 @@ Then:
   - <file path>
 - **Known limitations:**
   - <limitation>
-- **Analytics Engineer handoff:** Not requested | Invoked — <handoff summary>
+- **Analytics Engineer handoff:** Not requested | Requested — <work handed over; handoff file path>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
 - **Write-backs proposed:**
   - <title> → <knowledge job destination> (confirmed | declined | pending)
@@ -119,3 +97,11 @@ Update specs header status to `Complete`.
 ## When this gate is confirmed
 
 This is the final phase. Once Syn returns APPROVED sign-off, the project is complete. Do not read further files.
+
+If the user requested the Analytics Engineer handoff, tell the user the handoff
+file path, then switch and pass a new project in the `activate` call,
+`project="<project_name>_transform"` (or a name the user gives); the Analytics
+Engineer builds the handed-over work in that project, starting from the handoff
+file:
+
+{{switch analytics-engineer}}

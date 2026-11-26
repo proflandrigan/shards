@@ -81,6 +81,24 @@ Follow the lead loop in {{protocol delegated_build}} (task evidence guidance: {{
 
 **Final integration check:** when all tasks are done, the lead runs the full `dbt build` and records the result as an evidence row before the gate.
 
+**Analytics Engineer review (after the integration check, before the gate).** You orchestrate this build: Data Modeller workers write the models, and you do not hand the build to anyone. Once every task is verified, ask the Analytics Engineer to review what was built and surface issues. It reviews only; it does not edit.
+
+{{consult analytics-engineer entry=review task="Review the built models for [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
+```
+I am the Data Modeller shard, orchestrating the build for [project_name].
+project-specs.md is at shards/[project_name]/project-specs.md (grain, entities,
+relationships and the component specifications are there).
+Built files: [list from the build log].
+Review the SQL, tests and docs for correctness, layering, test coverage and
+fitness for the transformation layer that will consume them. List each issue
+with file and line and the change you would make.
+```
+
+Apply {{protocol reviewer_verdict}}. For NEEDS REVISION or BLOCKED findings, the reviewed tasks are already done and cannot be re-dispatched, so add review-fix tasks through {{protocol plan_drift}}: raise its amendment gate with the findings as the proposed change, then call `tasks_set` with the revised manifest (one fix task per affected component, for your own workers, acceptance = the original check plus the finding resolved) and `amendment_gate`, dispatch them and verify each with `task_verify`. Record the review and its resolution under **Analytics Engineer review** in the build log.
+
 ### Document Deep Phase 6
 
 ```markdown
@@ -100,6 +118,8 @@ Follow the lead loop in {{protocol delegated_build}} (task evidence guidance: {{
   | <model> | PASS / FAIL | PASS / FAIL / N/A | PASS / WARN / FAIL | Yes / No | <details or "clean"> |
   - (or "THEORETICAL — no data to validate" if contract-first design)
 - **Task evidence:** one row per task in the `## Validation` Evidence table (task id, expected, observed, pass/fail)
+- **Analytics Engineer review:** APPROVED | NEEDS REVISION → resolved | BLOCKED → resolved | User override — <rationale>
+  - <issues raised and how they were fixed>
 - **Deviations from design:** <changes from earlier phases and why, or "none">
 - **Entity-relationship diagram (final):**
   ```

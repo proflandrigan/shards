@@ -292,13 +292,14 @@ Apply {{protocol reviewer_verdict}}. On BLOCKED, do not carry the claim forward:
 - **Deviations from plan:** <changes and why, or "none">
 - **Surprising findings:** <anything unexpected>
 
-### Validation
-
-| Check | Expected | Observed | Pass/Fail |
-|---|---|---|---|
-| <task id> <component> | <acceptance expected> | <measured facts> | PASS \| FAIL |
-| <task id> harness: <core or approach_id> | interface per protocol Section C; smoke-fit passes; leaderboard row written | <file path>; <smoke-fit result>; <primary metric> | PASS \| FAIL |
 ```
+
+Evidence rows go in the project's `## Validation` section (schema in `protocols/validation.md`; `gate_request` parses it), not inside this phase section:
+
+| Check | Expected | Observed | Pass/Fail | Notes |
+|-------|----------|----------|-----------|-------|
+| <task id> <component> | <acceptance expected> | <measured facts> | ✓ / ✗ / n/a | <one-line context; required for n/a> |
+| <task id> harness: <core or approach_id> | interface per protocol Section C; smoke-fit passes; leaderboard row written | <file path>; <smoke-fit result>; <primary metric> | ✓ / ✗ / n/a | <one-line context; required for n/a> |
 
 {{gate kind=phase validates=ml-engineer}}
 

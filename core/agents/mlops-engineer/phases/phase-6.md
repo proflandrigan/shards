@@ -72,7 +72,7 @@ Each task in `shards/<project_name>/mlops/tasks.yaml` cites one of these specifi
    - Deployment checklist (pre-deploy, deploy, post-deploy validation)
 
    Location: `shards/<project_name>/mlops/runbook.md`.
-   Acceptance: the rollback procedure is walked through against the staging environment (or manually verified on the sandbox).
+   Acceptance: the runbook exists at its target with every section above, and the rollback procedure names exact commands and artifact versions. (Rehearsing the rollback is MLO-02, applied in Phase 7 after the staging deploy.)
 
 ### Lead loop
 
@@ -110,12 +110,13 @@ When all tasks are verified done, record the final integration evidence row in `
 - **Deviations from plan:** <changes and why, or "none">
 - **Known gaps:** <anything that requires manual setup or future work>
 
-### Validation
-
-| Check | Expected | Observed | Pass/Fail |
-|---|---|---|---|
-| <task id> <component> | <acceptance expected> | <command and measured facts> | PASS \| FAIL |
 ```
+
+Evidence rows go in the project's `## Validation` section (schema in `protocols/validation.md`; `gate_request` parses it), not inside this phase section:
+
+| Check | Expected | Observed | Pass/Fail | Notes |
+|-------|----------|----------|-----------|-------|
+| <task id> <component> | <acceptance expected> | <command and measured facts> | ✓ / ✗ / n/a | <one-line context; required for n/a> |
 
 {{gate kind=phase validates=mlops-engineer}}
 

@@ -212,7 +212,7 @@ of the `[CR]` Critical Review menu mode.
 ### Inputs the prompt will include
 
 - **Report path** — full path to the `.md` report under review
-- **Review lens** — Accuracy | Thoroughness | Fairness | all
+- **Review lens** — Accuracy | Thoroughness | both (claims for the Statistician are always listed, never ruled on)
 - **Optional referenced artifacts** — data files, SQL, notebooks the report
   cites (the calling agent may want you to spot-read them)
 - **Calling context** — why the review was requested
@@ -222,7 +222,7 @@ of the `[CR]` Critical Review menu mode.
 1. Read the target report at the provided path.
 2. Read [`modes/critical_review.md`](critical_review.md)
    and apply Phases 2–4 (Read & Extract Methodological Claims → Apply
-   Statistical Checklist → Three-Lens Critical Assessment) to the report.
+   Statistical Checklist → Critical Assessment) to the report.
 3. Spot-read any referenced artifacts the calling agent listed.
 4. Return findings **inline** using the Critical Review output template
    from Phase 5 of `critical_review.md`. **Do NOT write a file** in service

@@ -28,9 +28,9 @@ transfer occurs.
      "R-squared on validation", "mean absolute percentage error"). This is the
      north star — every experiment must report its impact on this metric.
    - **Number of experiments:** How many experiments to run this session. Default: 3.
-   - **Success threshold** (optional): A target value for the outcome metric. If an
-     experiment reaches this threshold, flag it and ask the user whether to stop early
-     or continue with remaining experiments.
+   - **Success threshold** (optional): A target value for the outcome metric.
+   - **Stopping rule:** run all planned experiments, or stop at the first one that
+     reaches the success threshold. Agreed now; Phase 2 does not ask again.
 
 8. **Experiment dashboard:** Agents always emit the dashboard, whether or not a UI
    exists. Experiment data lives in `experiments/results.json` (the file the panel
@@ -68,27 +68,21 @@ For each experiment, provide:
 
 Present the list clearly. Explain your prioritisation rationale briefly.
 
-### Optional unattended Phase 2 (plan approval)
+### Agreed plan and stopping point
 
-{{protocol goal_mode}} in full before
-raising the gate. Goal mode is the `plan` gate policy: in the message that
-precedes the Phase 1 gate, offer an unattended Phase 2 and present the plan and
-budget (number of experiments planned, outcome metric, success threshold if
-set). The Phase 1 gate below **is** the plan approval; never raise a second
-gate for it. If the user chooses unattended, add `plan_approval: "<run-id>"` to
-the `gate_request` call for the gate below, with a run id unique to this run
-(for example `<project>-ex-<UTC yyyymmddThhmm>`). Then STOP and wait for the
-user; never confirm it yourself. Otherwise raise the same gate without
-`plan_approval`.
+Phase 2 runs autonomously, with no gates and no questions between experiments.
+This gate is where the user agrees to the whole run, so the message before it
+must state the plan in full:
+- the experiments, in order, and the experiment count;
+- the outcome metric and the success threshold (or "none set");
+- the stopping rule: run all planned experiments, or stop at the first
+  experiment that reaches the threshold (ask the user which, now);
+- the stop conditions below, which end the loop early in any case.
 
-Activation is optional. With plan approval, Phase 2 runs without
-per-experiment prompts: later gates become notices (keep calling `gate_request`
-with `evidence` after each experiment) and the existing **Step 7 inline
-summary** continues each iteration. Without it, each gate waits for the user.
-Either way, the Phase 2 stop conditions (success threshold reached, user
-intervention, crash) still terminate the loop, and a failure or anomaly blocks
-until the user responds. The Phase 3 gate is always confirmed by the user,
-unattended or not.
+Record the agreed stopping rule in the experiment plan. If the user changes the
+plan, update it and re-present it before raising the gate. After confirmation,
+run Phase 2 to the agreed stopping point without asking again; the Step 7 inline
+summary keeps the user informed. The Phase 3 gate is always confirmed by the user.
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
@@ -107,6 +101,7 @@ exactly:
 - **Agent:** data-scientist
 - **Outcome metric:** <the agreed metric>
 - **Success threshold:** <value or "none set">
+- **Stopping rule:** <run all planned | stop at first experiment reaching the threshold>
 - **Planned experiments:** <N>
 
 ## Baseline
@@ -293,7 +288,9 @@ After receiving the Researcher response, fill in the `## Researcher Review` sect
 the result file with the Researcher's assessment. Also update the `researcherVerdict`
 field in `experiments/results.json` for this experiment entry.
 
-If this experiment's result will be reported as a win, a loss or a ranking (any claim on the outcome metric), also consult the Statistician on that claim, routed per {{protocol stats_review_routing}}: {{consult statistician entry=service task="Claim review for experiment N"}} Pass the metrics table above, the claim you intend to make, and the paths to the result file (`experiments/experiment_<N>_<name>.md`) and `experiments/results.json`. Record its verdict next to the Researcher's in the result file's `## Researcher Review` section under a `Statistician:` line, and set the entry's `statisticianVerdict` field in `experiments/results.json` (leave it empty when no claim review ran). This runs once per iteration that makes such a claim, so it adds one consult per qualifying iteration; count it toward any cost or iteration budget agreed in Phase 1. Inside the loop never ask the user: record NEEDS REVISION findings as caveats in the result file, and on BLOCKED downgrade the recommendation (Adopt becomes Refine) and rewrite the claim to the Statistician's "What the evidence actually supports" wording. The user sees these in Phase 3.
+If this experiment's result will be reported as a win, a loss or a ranking (any claim on the outcome metric), also consult the Statistician on that claim, routed per {{protocol stats_review_routing}}: {{consult statistician entry=service task="Claim review for experiment N"}} Pass the metrics table above, the claim you intend to make, and the paths to the result file (`experiments/experiment_<N>_<name>.md`) and `experiments/results.json`. Record its verdict next to the Researcher's in the result file's `## Researcher Review` section under a `Statistician:` line, and set the entry's `statisticianVerdict` field in `experiments/results.json` (leave it empty when no claim review ran). This runs once per iteration that makes such a claim, so it adds one consult per qualifying iteration; count it toward the experiment count and stopping rule agreed in Phase 1. Inside the loop never ask the user: record NEEDS REVISION findings as caveats in the result file, and on BLOCKED downgrade the recommendation (Adopt becomes Refine) and rewrite the claim to the Statistician's "What the evidence actually supports" wording. The user sees these in Phase 3.
+
+**No gates in the loop.** Act on this step's verdicts without asking the user: record NEEDS REVISION findings as caveats in the result file, and on BLOCKED downgrade the recommendation (Adopt becomes Refine or Revert). The user sees both at Phase 3 ({{protocol reviewer_verdict}}, loop exception).
 
 ### Step 7 — Inline summary
 Print a short inline block:
@@ -309,10 +306,9 @@ Experiment N complete.
 Stop the loop early if:
 - A training or evaluation crash makes results unmeasurable
 - The user intervenes
-- **Success threshold reached** — if the outcome metric meets or exceeds the agreed
-  threshold after any experiment, announce it inline and ask the user: "The outcome
-  metric has reached the success threshold (<value>). Continue with remaining
-  experiments or stop here?"
+- **Success threshold reached** and the agreed stopping rule is "stop at first
+  experiment reaching the threshold": announce it inline and stop. If the rule is
+  "run all planned", announce it and continue. Do not ask the user mid-loop.
 
 If stopped early, document the reason in the relevant experiment file and proceed
 directly to Phase 3.

@@ -20,6 +20,7 @@ describe('verdict vocabulary lint', () => {
     '- **Verdict:** CONDITIONAL',
     '- **Verdict:** Pass | Fail',
     '- **Status:** Clean | Minor Issues | Refactor Required | Blocked',
+    '1. **Verdict:** CONTINUE | REDIRECT | PAUSE | RETRO_REVERT',
   ])('flags retired or foreign vocabulary: %s', (line) => {
     expect(lintText(line, 'x.md').length).toBe(1);
   });
@@ -30,7 +31,7 @@ describe('verdict vocabulary lint', () => {
     '**Backend Engineer verdict:** <APPROVED | NEEDS REVISION | BLOCKED | N/A — no Python artifacts>',
     '  - **Verdict:** APPROVED | NEEDS REVISION | BLOCKED | Skipped — <reason>',
     '1. **Verdict:** GOOD / CAUTION / TOO COMPLEX',
-    '1. **Verdict:** CONTINUE | REDIRECT | PAUSE | RETRO_REVERT',
+    '1. **Verdict:** APPROVED | NEEDS REVISION | BLOCKED',
     '- **Status:** Planning | Executing | Integration Review | Complete',
     'Sound right? Once you confirm I will set up the project.',
     '### Key Concerns',

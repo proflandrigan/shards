@@ -116,12 +116,12 @@ infrastructure). If no data exists, flag and discuss scope.
 **Opener:** "What's changing in the data pipeline — new source, model fix, or something else?"
 
 **Domain probes:**
-- Scope: new source, model fix, mart build, performance issue
+- Scope: new source, staging build, pipeline or model fix, performance issue (a new mart build is the Analytics Engineer's)
 - Current state: what exists, what's working, what's broken
 - Upstream/downstream: what feeds the affected models, what they feed
 - "Done" criteria: what should be true after the change
 
-**Assessment:** Determine track — Quick (targeted fix) or Deep (new source, new mart).
+**Assessment:** Determine track — Quick (targeted fix on any model) or Deep (new source or staging layer). A new or redesigned mart goes to the Analytics Engineer.
 Route to Quick if the user can point at a specific model and describe the gap precisely.
 
 ### Data Modeller

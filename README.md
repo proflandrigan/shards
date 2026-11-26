@@ -112,7 +112,7 @@ Agents also review each other. The Data Scientist asks the Data Modeller to veri
 | **MLOps Engineer** | Specialist | Perpetually stressed | Serving, training pipelines, drift monitoring |
 | **Analytics Engineer** | Specialist | Bored | dbt transformation layers, SQL, metrics |
 | **BI Engineer** | Specialist | Bored and exhausted | Dashboards, Streamlit, Plotly, Altair |
-| **Data Engineer** | Specialist | Grumpy | Pipelines, dbt models, infrastructure |
+| **Data Engineer** | Specialist | Grumpy | Sources, staging, pipeline infrastructure |
 | **Data Modeller** | Specialist | Sarcastic | Entities, relationships, grain |
 | **Backend Engineer** | Reviewer | Methodical, precise | Python code review, FastAPI |
 | **Researcher** | Reviewer | Nerdy | Statistical review, methodology validation |

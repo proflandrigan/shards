@@ -26,11 +26,11 @@ If Syn's review includes a "Code Review" section, follow the Code Review follow-
 If the user wants the code pass: {{protocol code_review}}
 
 Then:
-1. Run full DAG: `dbt build --select +mart_name`
+1. Run the full build for this layer: `dbt build --select <source and staging models>`
 2. Spot-check final output
 3. Summarize in 3-5 bullet points
 4. List all files created/modified
-5. Flag limitations and follow-ups
+5. Flag limitations and follow-ups. If transformation work on top of the staging layer is needed, recommend the Analytics Engineer for it
 
 **Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
 {{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).

@@ -19,11 +19,12 @@ Wait for any signal from the user before beginning build steps.
 
 Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`. Components, in dependency order:
 
-1. Source definitions (sources.yml updates); source freshness passes.
-2. Staging models (one task per model or small related group), each with its schema file.
-3. Intermediate models, each with its schema file; fan-out matches Phase 3 predictions.
-4. Mart models, each with its schema file; full validation suite.
-5. Snapshot models (if SCD Type 2).
+Source definitions and staging models are the Data Engineer's; this build reads
+the existing staging layer.
+
+1. Intermediate models, each with its schema file; fan-out matches Phase 3 predictions.
+2. Mart models, each with its schema file; full validation suite.
+3. Snapshot models (if SCD Type 2).
 6. Singular test files.
 
 Every model component comprises:
@@ -87,30 +88,6 @@ Run the protocol's lead loop on `shards/<project_name>/tasks.yaml` (approved at 
 1. **DAG updates.** After the lead verifies a model task, update the DAG file with the completed model highlighted (e.g. `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`) and re-emit with the same `panel_id` from Phase 4 so it updates in place:
    {{artifact.emit type=dag path=shards/<project_name>/dag.mmd meta="title=DAG: <project_name> panel_id=dag-<project_name>"}}
 2. **Final integration check.** When all tasks are done, the lead runs the full stack build/test (e.g. `dbt build`) and records the result as an evidence row before the gate.
-
-**SQL template for staging model** (adapt reference syntax to your stack):
-```sql
-with source as (
-    select * from <source_ref('schema', 'table')>
-    -- e.g., {{ source('schema', 'table') }} in dbt
-),
-
-renamed as (
-    select
-        -- primary key
-        <source_pk_col>     as <entity_id>,
-
-        -- attributes
-        <col_a>             as <standardized_name>,
-        <col_b>::<type>     as <standardized_name>,
-
-        -- metadata
-        _loaded_at
-    from source
-)
-
-select * from renamed
-```
 
 **SQL template for intermediate model** (adapt reference syntax to your stack):
 ```sql

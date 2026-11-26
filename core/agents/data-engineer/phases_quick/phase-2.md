@@ -62,6 +62,28 @@ Update specs header status to `Complete`.
 
 ---
 
+## Quick-to-Deep Escalation
+
+If during Quick Phase 1 or Quick Phase 2 the scope grows beyond a quick fix (new
+source ingestion, new or redesigned staging models, grain or materialization
+decisions, or several models or layers affected), escalate:
+
+1. **Announce** what triggered the escalation and why the Quick track can't handle it.
+2. **Check ownership.** If the work is new or redesigned intermediate, mart or
+   metrics-layer models, it belongs to the Analytics Engineer, not the Deep
+   track: say so and recommend `shards:analytics-engineer` (or Syn).
+3. **Otherwise propose** the Deep track within the same Data Engineer session.
+4. **Preserve context:** write an `## Escalation Brief` section to
+   `project-specs.md` in the format defined in
+   [`protocols/behavioral_rules.md`](../../../protocols/behavioral_rules.md), with
+   **Target agent** `Data Engineer (Deep Track)` (or `Analytics Engineer`).
+
+After the user confirms a Deep escalation, read
+[`phases_deep/index.md`](../phases_deep/index.md), then {{phase 1 track=deep}} and
+resume from Deep Phase 1, treating the Escalation Brief as prior context.
+
+---
+
 ## When this gate is confirmed
 
-This is the final phase of the Quick Track. If escalation to Deep Track is required, read [`phases_deep/index.md`](../phases_deep/index.md) to orient, then {{phase 1 track=deep}} and continue from Deep Phase 1. Otherwise, the project is complete.
+This is the final phase of the Quick Track. If escalation to Deep Track is required (per the Quick-to-Deep Escalation section in this phase), read [`phases_deep/index.md`](../phases_deep/index.md) to orient, then {{phase 1 track=deep}} and continue from Deep Phase 1. Otherwise, the project is complete.

@@ -5,6 +5,21 @@
 
 ## Phase 7 — Review and Handoff
 
+**Step 0: Deploy to staging and run the operational checks.** MLO-01 (smoke
+test), MLO-02 (rollback rehearsal) and MLO-03 (alerts fire) need a running
+deployment, so they are applied here, not at the Phase 6 build gate
+(`modes/validation_checklist.md`). Deploying is an outward action: tell the user
+exactly what you will deploy and where (staging only, never production), then ask.
+
+{{gate kind=confirm name=staging-deploy requires_human=true}}
+
+Once confirmed, deploy to staging with the Phase 6 artifacts, run MLO-01, MLO-02
+and MLO-03 as the checklist describes, and add their rows (replacing the Phase 6
+`n/a` rows) to the `## Validation` Evidence table with the commands run and the
+measured facts. Update the `## Validation` section's `**Applied at:**` line to Phase 7, and keep the Evidence table's Notes column: every `n/a` row needs a non-empty note (`protocols/validation.md`). If no staging environment is available, record each as `✗`
+with the reason and list it under Open Issues; do not mark it passed. A failed
+check is fixed (or the user decides) before the reviews below.
+
 **Before finalizing**, get external reviews:
 
 **Step 1: Consult ML Engineer for infrastructure design review:**
@@ -89,13 +104,13 @@ Report contents:
 - **Deployment checklist:**
   - [ ] IaC reviewed and applied (Terraform plan approved)
   - [ ] Model packaged and registered in model registry
-  - [ ] Serving endpoint deployed in staging environment
+  - [ ] Serving endpoint deployed in staging environment (Step 0; MLO-01)
   - [ ] Endpoint performance validated against SLA (latency, throughput)
   - [ ] Monitoring dashboards configured and receiving data
-  - [ ] Alert thresholds set and tested (test alert fired)
+  - [ ] Alert thresholds set and tested (test alert fired; Step 0, MLO-03)
   - [ ] Retraining pipeline tested end-to-end in staging
   - [ ] Promotion validation gate tested
-  - [ ] Rollback procedure documented and tested
+  - [ ] Rollback procedure documented and tested (Step 0; MLO-02)
   - [ ] Runbook reviewed by on-call owner
   - [ ] Shadow / canary deployment plan approved
   - [ ] Production traffic cutover plan confirmed
@@ -119,7 +134,7 @@ Report contents:
 
 Update specs header status to `Complete`.
 
-{{gate kind=final}}
+{{gate kind=final validates=mlops-engineer}}
 
 ---
 

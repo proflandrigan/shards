@@ -16,9 +16,10 @@ const path = require('path');
 const ALLOWED = new Set(['APPROVED', 'NEEDS REVISION', 'BLOCKED']);
 // Non-verdict states that legitimately sit beside a verdict in a template line.
 const EXTRAS = new Set(['SKIPPED', 'NOT APPLICABLE', 'NA', 'NONE']);
-// Non-reviewer vocabularies that also use a `Verdict:` label: Syn's fixer complexity call and Autonomous Research
-// loop control. They are not sign-offs on someone else's work, so they are exempt by name.
-for (const w of ['GOOD', 'CAUTION', 'TOO COMPLEX', 'CONTINUE', 'REDIRECT', 'PAUSE', 'RETRO_REVERT']) EXTRAS.add(w);
+// Non-reviewer vocabulary that also uses a `Verdict:` label: Syn's fixer complexity call. It is not a sign-off on
+// someone else's work, so it is exempt by name. (Autonomous Research reviewers use the standard three verdicts;
+// AR loop actions `pause` / `retro_revert` ride on BLOCKED.)
+for (const w of ['GOOD', 'CAUTION', 'TOO COMPLEX']) EXTRAS.add(w);
 const RETIRED = [
   /\bCONDITIONAL\b/, /\bSound\b/, /\bSOUND\b/, /\bRevise\b/, /\bREVISE\b/, /\bRedesign(?: needed)?\b/, /\bREDESIGN\b/,
   /\bDEPLOY\b/, /\bOPTIMIZE\b/, /\bConcerns raised\b/, /\bAligned\b/, /\bSuitable\b/, /\bNuanced\b/, /\bNUANCED\b/,

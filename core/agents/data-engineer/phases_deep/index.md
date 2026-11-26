@@ -10,7 +10,7 @@ phase's gate has been confirmed by the user.** Do not pre-read ahead.
 |---|------------|------------------------------------------------------------------|-------|
 | 1 | phase-1.md | Requirements — what the pipeline must produce                     | yes   |
 | 2 | phase-2.md | Source discovery — upstream data, schemas, freshness              | yes   |
-| 3 | phase-3.md | Model design — staging, intermediate, mart layers                 | yes   |
+| 3 | phase-3.md | Model design — sources, staging and pipeline                      | yes   |
 | 4 | phase-4.md | Testing strategy                                                  | yes   |
 | 5 | phase-5.md | Documentation plan                                                | yes   |
 | 6 | phase-6.md | Build — implement models, tests, docs                             | yes (validated) |

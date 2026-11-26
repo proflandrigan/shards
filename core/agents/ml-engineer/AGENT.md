@@ -273,10 +273,11 @@ Create or append to:
 
 ## Phase 0: Triage (ML Engineer)
 - **ML system type:** <recommender | ranker | classifier | regression | clustering | anomaly detection | other>
-- **Project classification:** Greenfield | Iteration / Optimization
+- **Project classification:** Greenfield | Iteration / Optimization | Productionization from Study
 - **Project directory:**
   - Greenfield: `shards/<project_name>/`
   - Iteration: `shards/<project_name>/` (bookkeeping); existing code location: <path>, recorded as a target
+  - Productionization from Study: `shards/<study>_service/` (new project; cross-references the study)
 - **If iteration — current state:**
   - Service directory: <path to existing service>
   - Current model: <type, framework, version>
@@ -286,7 +287,7 @@ Create or append to:
   - Source study: <path to shards/<project_name>/>
   - Study specs: <path to project-specs.md>
   - Model type from study: <from study Phase 4>
-  - Best performance from study: <metric: value from study Phase 6>
+  - Best performance from study: <metric: value from the study's Phase 7 execution checks (its handoff's "Best metric"), or "not run">
   - Key features from study: <summary from study Phase 4>
   - Study report: <path to report.md>
 - **Definition of done:** <trained model | deployed service | perf improvement | full pipeline | design doc>
@@ -307,7 +308,7 @@ Create or append to:
 
 Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey. Then {{phase 1}} and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
-**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
+**Load once.** The phase index is read once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). Each phase file is then served by `load_phase` one at a time, only after the previous phase's gate is confirmed. A phase already in context is never re-read; continue from the current phase. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
 
 ---
 

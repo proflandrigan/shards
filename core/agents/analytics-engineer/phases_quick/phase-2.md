@@ -40,6 +40,17 @@ Run the protocol's lead loop on `shards/<project_name>/tasks.yaml` (approved at 
 
 - **Wrap up.** When all tasks are verified, summarize what changed.
 
+**Data Modeller review (quick track).** The quick track replaces the deep
+track's peer review set with one review: the Data Modeller checks the change
+against grain, keys and relationships and surfaces issues, without editing.
+
+{{consult data-modeller entry=review task="Grain and relationship review of the quick-track change for [project_name]"}}
+
+Brief: the project-specs path, the files changed, each changed model's stated
+grain and the joins touched; ask for each issue with file, line and the change
+to make. Apply {{protocol reviewer_verdict}}: for NEEDS REVISION or BLOCKED
+findings, the reviewed tasks are already done and cannot be re-dispatched, so add review-fix tasks through {{protocol plan_drift}}: raise its amendment gate with the findings as the proposed change, then call `tasks_set` with the revised manifest (one fix task per affected component, for your own workers, acceptance = the original check plus the finding resolved) and `amendment_gate`, dispatch them and verify each with `task_verify`. Do this before the gate.
+
 **Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
 {{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
 
@@ -56,6 +67,7 @@ Run the protocol's lead loop on `shards/<project_name>/tasks.yaml` (approved at 
 - **Validation result:** Pass | Fail — <details>
 - **Tests passing:** <N> / <N>
 - **Post-build validation:** PASS | FAIL | SKIPPED (no data) — <details>
+- **Data Modeller review:** APPROVED | NEEDS REVISION → resolved | BLOCKED → resolved — <issues or "none">
 - **Follow-up needed:** Yes / No — <if yes, describe>
 - **Write-backs proposed:**
   - <title> → <knowledge job destination> (confirmed | declined | pending)

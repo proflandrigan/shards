@@ -11,7 +11,8 @@ Ask the user: "Every production model benefits from a monitoring dashboard.
 Do you want a `bi_engineer_handoff.md` so the BI Engineer shard can build
 performance monitoring on top of this model?"
 
-{{gate kind=phase phase=7 id=ml-engineer-bi-engineer-handoff-phase-7}}
+{{gate kind=confirm phase=7 name=bi-handoff requires_human=true}}
+If the user declines, relay their reply with `gate_confirm` and `decision: changes_requested`, skip the file, and note "declined" in the specs.
 
 If yes, write `shards/<project_name>/bi_engineer_handoff.md`:
 

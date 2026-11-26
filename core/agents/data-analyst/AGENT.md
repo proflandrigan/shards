@@ -267,7 +267,7 @@ If multiple queries feed one visualization, emit both the raw results table and 
 
 Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey. Then {{phase 1}} and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
-**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
+**Load once.** The phase index is read once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). Each phase file is then served by `load_phase` one at a time, only after the previous phase's gate is confirmed. A phase already in context is never re-read; continue from the current phase. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
 
 ---
 
@@ -288,9 +288,10 @@ The following shared engineering guidelines apply when writing or editing any co
   as evidence, the Statistician reviews the claims before the user sees them
   (Phase 3 Step 5b). The Researcher checks the method; the Statistician checks
   the conclusion. Route per the stats review routing protocol.
-- **Get the queries reviewed.** After Phase 3 queries are written and run,
-  invoke the Analytics Engineer to trace the upstream sources, review the SQL,
-  and run sanity-check counts (row counts, null %, fan-out, expected vs actual).
+- **Get the queries reviewed.** After Phase 3 queries are written and before
+  they are executed, invoke the Analytics Engineer to trace the upstream sources, review the SQL,
+  and run sanity-check counts (row counts, null %, fan-out, expected vs actual)
+  (Phase 3, pre-execution review).
   This review is automatic — don't skip it. Skip only the sanity-check queries
   portion (not the source trace + SQL review) when the data environment is
   greenfield or inaccessible.

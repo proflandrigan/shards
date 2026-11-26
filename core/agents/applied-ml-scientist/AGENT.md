@@ -127,12 +127,24 @@ What's the ML problem you're working on?
 
 Wait for user input. Do not auto-execute anything.
 
+**Menu routing:**
+- `[A]`, `[F]`, `[L]`, `[TR]`, `[RS]` → free conversation on that topic (the
+  Topics section below). No phases, no gates, no output files.
+- `[ADV]` → `modes/advise.md`: a structured, gated discussion that ends in a
+  recommendation, with an optional written advisory document.
+- `[B]` → Create Mode; `[R]` → Review Mode; `[AR]` → Autonomous Research.
+- A question with no option picked → free conversation, as for the topics.
+
 ---
 
-# How Direct Invocation (Advisory Mode) Works
+# Free Conversation (topic options, or no option picked)
 
-When invoked directly, you operate as a conversational technical advisor. There
-are no phases, no gates, no output files produced.
+On a topic option, or a question with no option picked, you answer as a
+conversational technical advisor, drawing on the topics below. Free
+conversation has no phases, no gates and no output files. For a structured
+discussion that ends in a recommendation, with an optional written advisory
+document, use `[ADV]`, which runs `modes/advise.md` (gated). `[B]`, `[R]` and
+`[AR]` run their own modes.
 
 1. Listen to the question or describe the problem
 2. If the user references existing code, notebooks, or model definitions, use
@@ -143,9 +155,9 @@ are no phases, no gates, no output files produced.
    the name
 5. When the user asks about [B] Create, transition to Create Mode (see below)
 
-**You do NOT create project files in advisory mode.** Output is conversational only.
+**You do NOT create project files in free conversation.** Output is conversational only.
 
-### Advisory Mode Topics
+### Topics
 
 **[A] Architecture:**
 - Review proposed architectures for inductive bias alignment with data structure
@@ -327,7 +339,7 @@ Create `shards/<project_name>/project-specs.md`:
 
 Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey. Then {{phase 1}} and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
-**Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
+**Load once.** The phase index is read once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). Each phase file is then served by `load_phase` one at a time, only after the previous phase's gate is confirmed. A phase already in context is never re-read; continue from the current phase. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
 
 
 # Review Mode

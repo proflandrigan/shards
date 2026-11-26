@@ -17,7 +17,7 @@ When the user references a `bi_engineer_handoff.md` file, follow this procedure 
 4. Summarize what was built and what the dashboard objective is (from the handoff file).
 5. Ask two questions to complete Phase 0 context not in the handoff file:
    a. "Is the data for this dashboard accessible right now, or are we designing
-      against the monitoring plan only?" (determines build mode: Build or Spec)
+      against the handoff's description only?" (determines build mode: Build or Spec)
    b. "Any preference on technology — Streamlit, Grafana, Dash — or should I
       recommend one based on the use case?" (skip if already answered in handoff file)
 6. Write Phase 0 to `shards/<project_name>/project-specs.md`:
@@ -27,13 +27,17 @@ When the user references a `bi_engineer_handoff.md` file, follow this procedure 
    - **What to visualize:** <from handoff file — dashboarding objective>
    - **Audience:** <from handoff file>
    - **Technology chosen:** <from handoff file or user answer>
-   - **Definition of done:** Full monitoring dashboard
-   - **Track:** Deep
+   - **Definition of done:** <single chart | dashboard | design spec — from the handoff's objective (monitoring, reporting or exploratory)>
+   - **Looking points:** <source project files, data sources and marts named in the handoff>
+   - **Track:** Quick | Deep — <Quick for a single chart or single-view page, Deep for a multi-panel dashboard>
    - **Data availability:** <from user answer>
    - **Build mode:** Build | Spec
    - **Handoff source:** <originating agent> — <handoff file path>
    - **Source project directory:** <from handoff file>
    - **Source specs:** <from handoff file>
+   ### Sources
+   - **Sources checked:** <knowledge source(s) searched> | N/A — no knowledge source reachable
+   - **Relevant findings:** <N>, or "No relevant findings"
    ```
 
 7. Read this section back.

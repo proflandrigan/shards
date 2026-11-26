@@ -15,7 +15,8 @@ This file governs Step 7 of Deep Phase 8 (Peer Review and Handoff) for the Analy
      Ask the user: "This mart is built for downstream consumption. Do you want a
      `data_analyst_handoff.md` so the Data Analyst shard can run the analysis on top of it?"
 
-     {{gate kind=phase phase=0 id=analytics-engineer-data-analyst-handoff-phase-0}}
+     {{gate kind=confirm phase=8 track=deep name=data-analyst-handoff requires_human=true}}
+     If the user declines, relay their reply with `gate_confirm` and `decision: changes_requested`, skip the file, and note "declined" in the specs.
 
    If writing the file (either automatically or after user confirmation), write `shards/<project_name>/data_analyst_handoff.md`:
 

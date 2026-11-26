@@ -57,7 +57,7 @@ Does that match what you had in mind?
 
 **Scale check:** If the scope includes more than 2 of the following, raise a flag:
 - New source tables or data sources not in the existing transformation chain
-- More than 2 new models (staging, intermediate, or mart)
+- More than 2 new models (intermediate or mart; new staging models go to the Data Engineer)
 - A change to the grain of an existing mart
 - Structural redesign of the DAG or layer architecture
 

@@ -232,7 +232,7 @@ metric, direction, target if set, iteration budget, wall-clock minutes, metric
 floor). The Phase 1 gate below **is** the plan approval; if the user chooses
 unattended, add `plan_approval: "<run-id>"` (for example
 `<project>-ar-<UTC yyyymmddThhmm>`) to it. On an unattended run, reviewer
-`RETRO_REVERT`/`PAUSE` and metric floor breaches are deferred with `ar_defer`
+BLOCKED (`retro_revert`/`pause`) and metric floor breaches are deferred with `ar_defer`
 (§B.14).
 
 ### Gate
