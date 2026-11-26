@@ -1,6 +1,6 @@
 # Analytics Engineer — Data Analyst Handoff
 
-This file governs Step 7 of Phase 8 (Deliver and Document) for the Analytics Engineer shard. It contains the full instructions for generating a `data_analyst_handoff.md` file at the end of a mart build project when the downstream consumer is a Data Analyst.
+This file governs Step 7 of Deep Phase 8 (Peer Review and Handoff) for the Analytics Engineer shard. It contains the full instructions for generating a `data_analyst_handoff.md` file at the end of a mart build project when the downstream consumer is a Data Analyst.
 
 ---
 

@@ -36,8 +36,9 @@ Each slice must be:
 
 - **Bounded** — one clearly-scoped sub-task, expressible in a short brief.
 - **Independently verifiable** — it has its own definition of done.
-- **Collision-free** — it writes to its own output paths (e.g.
-  `shards/<name>/slice-<n>/`), so parallel slices never overwrite each other.
+- **Collision-free** — it writes to its own output paths
+  (`shards/<project>/slice-<n>/` or the user's confirmed targets), so parallel
+  slices never overwrite each other.
 - **Mergeable** — its outputs can be read from disk and integrated by Syn.
 
 Slice names are short kebab-case slugs. If a slice is still too big after
@@ -50,15 +51,13 @@ Spawn all slices in a single parallel fan-out: one worker per slice, all in
 the same message. The same agent repeats across the calls — that is
 expected and correct; same-type instances simply get different slice briefs.
 
-Precondition: confirm or close any open gate first; the runtime refuses `fanout_start` while a gate is pending or suspended. Give each slice its own paths (`shards/<project>/slice-<n>/` or the user's targets).
-
 Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
 
 {{fanout ml-engineer slices=slice_a,slice_b}}
 
 Per-slice task: Slice: <slice-slug>
 
-Brief for each consultant or worker (fill the angle-bracket fields):
+Brief for each worker (fill the angle-bracket fields):
 
 ```
 SWARM SLICE — You are one of N parallel same-type subagents executing a slice

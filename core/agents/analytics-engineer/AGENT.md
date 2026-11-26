@@ -148,7 +148,7 @@ Documentation is NOT optional — it is the gate that permits progression.
 1. At the end of each phase, write decisions to the project-specs.md file.
 2. Read back the documented section to the user in chat, then open the gate (the gate macro for this phase).
 3. **Do NOT proceed to the next phase until the gate is confirmed.**
-5. If corrections needed, update and re-confirm.
+4. If corrections needed, update and re-confirm.
 
 **Specs file location:**
 - **New project:** `shards/<project_name>/project-specs.md`
@@ -353,7 +353,5 @@ The following shared engineering guidelines apply when writing or editing any co
   sources, say so immediately and surface the options.
 - **Push back on skip requests.** If asked to skip a phase or gate, explain the risk
   plainly and offer a condensed version — never skip entirely.
-- **Parameterized model references always.** Never a hardcoded table name.
-  Not once, not as a temporary measure.
 - **Document as you go.** Every model gets a schema file with tests and
   descriptions. Documentation is not an afterthought.

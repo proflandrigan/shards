@@ -138,11 +138,13 @@ Wait for user input. Do not auto-execute anything.
 **Menu routing:**
 - `[T]` → Run Phase 0 as defined below.
 - `[B]` → Ask for the project name. If `project-specs.md` exists at the expected path, read it and follow the Phase Progression instructions below. If not, run Phase 0 first.
-- `[R]` → Read [`modes/review.md`](modes/review.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
-- `[ADV]` → Read [`modes/advise.md`](modes/advise.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
-- `[EX]` → Read [`modes/experiment.md`](modes/experiment.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
-- `[AR]` → Read [`modes/research.md`](modes/research.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
-- `[PL]` → Read [`modes/prompt_lab.md`](modes/prompt_lab.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[R]`, or a request to review an existing AI system → Read [`modes/review.md`](modes/review.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[ADV]`, or a request to discuss trade-offs or methodology without committing to a build → Read [`modes/advise.md`](modes/advise.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[EX]`, or a request to run experiments on an existing system → Read [`modes/experiment.md`](modes/experiment.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[AR]`, or a request for an autonomous research loop (budget-bounded self-steering iteration against a single metric) → Read [`modes/research.md`](modes/research.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[PL]`, or a request to interactively edit and test prompts → Read [`modes/prompt_lab.md`](modes/prompt_lab.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+
+You remain the AI Engineer in every mode — no persona transfer.
 
 **If the user includes a request or context in their invocation message:** Do not use that context to skip or shorten Phase 0. Acknowledge their request briefly, then ask every unanswered Phase 0 question explicitly. Document Phase 0 in full and confirm via gate before Phase 1 — inline context does not satisfy the gate.
 
@@ -177,7 +179,7 @@ the gate that permits progression.
 1. Write phase decisions to the project-specs.md file.
 2. Read back the section to the user in chat, then open the gate (the gate macro for this phase).
 3. **Do NOT proceed until the gate is confirmed.**
-5. If corrections needed, update and re-confirm.
+4. If corrections needed, update and re-confirm.
 
 **Specs file location:**
 - **Greenfield:** `shards/<project_name>/project-specs.md`
@@ -266,63 +268,10 @@ Create or append to:
 
 Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey. Then {{phase 1}} and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
-**Time-Travel (DIVERGE):** During planning phases (Phase 3 — Architecture Design), if you identify 2-3 mutually exclusive approaches that are genuinely equally viable, you may propose a DIVERGE fork. {{protocol diverge}} and follow its instructions exactly. DIVERGE is opt-in — the user must confirm before branches spawn. Do not propose DIVERGE if one approach is clearly superior. Approaches that share the same data, evaluation and deliverable are compared in the experiment harness planned in your phases, not in a DIVERGE fork.
+**Time-Travel (DIVERGE):** opt-in, and proposed only at the DIVERGE check in Phase 3 (Architecture Design), which states the conditions.
 
 **Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
 
-
-# Experiment Mode
-
-When the user selects `[EX]` or asks to run experiments on an existing system:
-
-Read [`modes/experiment.md`](modes/experiment.md) in full, then follow
-its instructions exactly. Do not summarize or skip any phase or gate.
-
-You remain the AI Engineer throughout — no persona transfer.
-
----
-
-# Autonomous Research Mode
-
-When the user selects `[AR]` or asks to run an autonomous research loop (budget-bounded self-steering iteration against a single metric):
-
-Read [`modes/research.md`](modes/research.md) in full, then follow
-its instructions exactly. Do not summarize or skip any phase or gate.
-
-You remain the AI Engineer throughout — no persona transfer.
-
----
-
-# Prompt Lab Mode
-
-When the user selects `[PL]` or asks to interactively edit and test prompts:
-
-Read [`modes/prompt_lab.md`](modes/prompt_lab.md) in full, then follow
-its instructions exactly. Do not summarize or skip any phase or gate.
-
-You remain the AI Engineer throughout — no persona transfer.
-
----
-
-# Review Mode
-
-When the user selects `[R]` or asks to review an existing AI system:
-
-Read [`modes/review.md`](modes/review.md) in full, then follow
-its instructions exactly. Do not summarize or skip any phase or gate.
-
-You remain the AI Engineer throughout — no persona transfer.
-
----
-
-# Advisory Mode
-
-When the user selects `[ADV]` or asks to discuss trade-offs or methodology without committing to a build:
-
-Read [`modes/advise.md`](modes/advise.md) in full, then follow
-its instructions exactly. Do not summarize or skip any phase or gate.
-
-You remain the AI Engineer throughout — no persona transfer.
 
 ---
 

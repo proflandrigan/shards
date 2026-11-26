@@ -88,24 +88,10 @@ app starts headless without error; `requirements.txt` installs.
 
 {{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
-1. **Load** the task list approved at the Phase 2 gate (call `tasks_set`; fix
-   and re-validate if it is rejected).
-2. **Dispatch** ready tasks (`task_dispatch`) in parallel up to
-   `max_parallel=3`. Queries come before the Python that reads them (use
-   `depends_on`).
-3. **Collect** each worker's result via `task_report`.
-4. **Verify before counting.** For every report, re-run (or independently
-   check) the acceptance command and compare the output with the `plan_ref`
-   spec. Then write a per-task evidence row to the `## Validation` Evidence
-   table (Check = task id + component, Expected, Observed, Pass/Fail). Never
-   mark a task done on the worker's word alone.
-5. **On failure** re-dispatch with the failure output as feedback, at most 2
-   retries; then stop and ask the user with a summary.
-6. **Deviations** (a chart cannot be built as planned, data does not support a
-   panel): pause dependent tasks and follow {{protocol plan_drift}}; amend the
-   plan only via a confirmed gate.
-7. **Dispatch** tasks unblocked by done tasks until all are done.
-8. You write no build code yourself except for `delegate: inline` tasks.
+Run the lead loop from the delegated build protocol above. BI specifics:
+queries come before the Python that reads them (use `depends_on`), and a chart
+that cannot be built as planned or a panel the data does not support is a
+deviation ({{protocol plan_drift}}).
 
 **Final integration check (lead, after all tasks are done):** start the
 assembled app end to end, confirm every panel loads with its default filters,

@@ -131,11 +131,11 @@ Project directory: shards/<project_name>/
 Specs: shards/<project_name>/project-specs.md
 
 Summary:
-- Model type: <final model type from Phase 4>
-- Inference requirements: <latency, throughput from Phase 6>
-- Serving format: <from Phase 6 production considerations>
-- Feature pipeline: <from Phase 6>
-- Retraining trigger: <from Phase 6>
+- Model type: <final model type from Phase 6 / 6.5>
+- Inference requirements: <latency, throughput budgets from Phase 2; measured in Phase 6>
+- Serving format: <from Phase 5 serving infrastructure>
+- Feature pipeline: <from Phase 5>
+- Retraining trigger: <from Phase 5>
 
 Please review:
 1. Is the proposed serving infrastructure appropriate for the latency and
@@ -191,7 +191,7 @@ Then:
 1. **Generate Model Card** — Assemble a structured model card for stakeholder
    sharing. Extract from the live `project-specs.md` (already loaded): ML system type and description
    (Phase 1), data sources (Phase 3), model design and evaluation strategy
-   (Phase 4), feature engineering (Phase 5), build results (Phase 6), review
+   (Phase 4), infrastructure design (Phase 5), build results (Phase 6), review
    verdicts (Phase 7). Read `eval-results.json` for quantitative metrics.
 
    Consult the Academic shard for ethical considerations:
@@ -218,10 +218,9 @@ Then:
    - Greenfield: `shards/<project_name>/model-card.json`
    - Iteration: `shards/<project_name>/model-card.json` (same; the existing service holds only confirmed Placement targets)
 
-   The JSON must conform to the schema defined in
-   `templates/model-card-schema.json` (JSON Schema, draft 2020-12).
-   See `templates/model-card-schema.md` for an annotated example and
-   field notes.
+   The JSON must conform to the schema {{template model-card-schema.json}}
+   (JSON Schema, draft 2020-12). See {{template model-card-schema}} for an
+   annotated example and field notes.
 
    ML-engineer-specific overrides:
    - `generatedBy`: `"ml-engineer"`.
@@ -242,10 +241,10 @@ Then:
    - Deployment checklist: what needs to happen to go live
    - Risks and mitigations
 
-2. Summarize top findings in 3-5 bullet points
-3. Present deployment checklist
-4. Flag risks, open questions, and dependencies
-5. Confirm the deliverable meets the definition of done
+3. Summarize top findings in 3-5 bullet points
+4. Present deployment checklist
+5. Flag risks, open questions, and dependencies
+6. Confirm the deliverable meets the definition of done
 
 **MLOps handoff:** If the user wants to proceed to deployment, tell them:
 "To deploy and operate this model, run `shards:mlops-engineer` and reference

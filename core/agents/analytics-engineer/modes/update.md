@@ -121,14 +121,10 @@ Write `updates/<project_name>/analytics-engineer-update-spec.md` using this temp
 
 ## Phase 4 — Present and Close (GATE)
 
-Read the spec back to the user in full.
-
-Gate readback (pass this as the `summary`):
-
-Ask the user:
+Read the spec back to the user in full, then ask: "Ready to implement? Or do you
+want to adjust the scope first?" Pass the readback and this question as the gate `summary`:
 
 {{gate kind=final phase=4 id=analytics-engineer-update-phase-4}}
-"Ready to implement? Or do you want to adjust the scope first?"
 
 Wait for their response before taking any further action.
 

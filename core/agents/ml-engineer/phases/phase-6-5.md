@@ -79,7 +79,7 @@ Wait for the user's selection.
 
 ### Execute the selected path
 
-Winner selection is also a lead loop. After the user picks a path, the lead appends the tasks for that path to `shards/<project_name>/tasks.yaml` (entries with `phase: "6.5"`) and validates the list with `tasks_set`; each task cites the path's specification below through `plan_ref`. A task is one candidate re-run, evaluation or branch. Paths `[D]`, `[M]` and `[S]` need no worker and use `delegate: inline` or no tasks at all. Skip logic is unchanged: `[S]` and the "Skip this phase" case create no tasks.
+Winner selection is also a lead loop. After the user picks a path, the lead appends the tasks for that path to `shards/<project_name>/tasks.yaml` (entries with `phase: "6.5"`) and validates the list with `tasks_set`; each task cites the path's specification below through `plan_ref`. A task is one candidate re-run, evaluation or branch. Paths `[D]`, `[M]` and `[S]` need no worker and use `delegate: inline` or no tasks at all; `[S]` creates no tasks.
 
 ### Lead loop
 
@@ -87,14 +87,10 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
 
 {{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
-1. **Load and validate** the 6.5 tasks with `tasks_set` once the path is chosen and the user has agreed to the cost described for it.
-2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3 (candidate re-runs or branches with disjoint `owned_paths`).
-3. **Receive** each worker's result via `task_report`.
-4. **Verify before it counts.** Re-run (or independently check) the acceptance command (for example, re-read the candidate's metrics file and recompute the primary metric and infrastructure dimensions), compare with the `plan_ref` specification, then write an evidence row to the `## Validation` Evidence table (Check = task id + candidate, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone.
-5. **On failure**, re-dispatch with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary.
-6. **Deviations.** If a worker reports a deviation or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend only through a confirmed gate.
-7. **Continue** dispatching tasks unblocked by tasks you have verified as done.
-8. You write no training or evaluation code yourself unless a task is marked `delegate: inline`. Only the lead updates `eval-results.json` `bestCandidate`, and only from verified evidence.
+Run the protocol's lead loop over the 6.5 tasks once the path is chosen and the user has agreed to the cost described for it. ML Engineer specifics:
+- Parallel tasks are candidate re-runs or branches with disjoint `owned_paths`.
+- Verification recomputes from the candidate's metrics file: the primary metric and the infrastructure dimensions (Check = task id + candidate).
+- Only the lead updates `eval-results.json` `bestCandidate`, and only from verified evidence.
 
 **[D] Deterministic pick:** (lead-side, one `delegate: inline` task or no task)
 1. Read `experiments/leaderboard.csv` (Harness plan) or `eval-results.json` (Single approach plan).
@@ -115,7 +111,7 @@ Winner selection is also a lead loop. After the user picks a path, the lead appe
 2. Determine the leading candidate (same selection logic as `[D]`). If no
    candidate has been evaluated, use the Phase 4 candidate the user identifies.
 3. Read [`modes/research.md`](../modes/research.md) and
-   execute Sections A-G with abbreviated setup:
+   run it with this abbreviated Phase 0 setup:
    - Primary metric, direction, target: inherit from Phase 4
    - Baseline value: the leading candidate's current metric (from Phase 6)
    - Mutable scope: inherit from Phase 5 training pipeline; with a Harness plan, only the leading approach's module (`experiments/approaches/<approach_id>.py`) and its `params` in `experiments.yaml`. The runner, `base.py` and the split stay immutable so every iteration is scored the same way as the original comparison.

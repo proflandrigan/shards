@@ -852,16 +852,13 @@ dropping one reviewer — both perspectives matter.
 
 ### D.4 Consultation call format
 
-Call the reviewer:
-
 Run this consult (shown for `researcher`; for another specialist use the same call with its id and an entry its `agent.yaml` declares):
 
 Before this consult, collect data-modeller context (grain, entities, relationships) for the data under review: {{consult data-modeller entry=review task="Grain and relationships for the researcher review"}} Pass that context in the task of the researcher consult below.
 
-
 {{consult researcher entry=service task="AR iteration N review"}}
 
-Brief for each consultant or worker (fill the angle-bracket fields):
+Brief for the consultant (fill the angle-bracket fields):
 
 ```
 You are being consulted mid-AR-loop to review this iteration's result and the

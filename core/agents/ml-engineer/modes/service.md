@@ -106,7 +106,7 @@ clearly inapplicable and say so in the review.
 
 ### 6. Production Readiness Signals
 - Model artefact serialised in the same format the serving layer will load
-  (pickle/joblib/onnx/torchscript — whichever was agreed in Phase 6).
+  (pickle/joblib/onnx/torchscript — whichever was agreed in Phase 5).
 - Inference-path code (any `predict`-style cell) doesn't rely on training-only
   imports or state.
 - Latency of `predict` on a realistic single input is measured somewhere if

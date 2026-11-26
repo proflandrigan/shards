@@ -95,14 +95,10 @@ locate, and any file in scope you could not review (and why).
 
 ## Phase 3 — Cross-Agent Consultation (optional, based on scope)
 
-**ML Engineer** — if the review touches model serving constraints, feature serving
-strategy, or whether the infrastructure matches the model's actual requirements:
+**ML Engineer input** — if the review touches model serving constraints, feature serving
+strategy, or whether the infrastructure matches the model's actual requirements. In the user's own session (you were started from the menu), run the consult yourself: subagent `ml-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any ML Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
-**ML Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `ml-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any ML Engineer input the caller supplied, otherwise list it as an open question for the caller.
-
-**AI Engineer** — if the system involves LLM serving or prompt pipelines:
-
-**AI Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `ai-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any AI Engineer input the caller supplied, otherwise list it as an open question for the caller.
+**AI Engineer input** — if the system involves LLM serving or prompt pipelines. In the user's own session (you were started from the menu), run the consult yourself: subagent `ai-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any AI Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 

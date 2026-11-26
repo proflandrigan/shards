@@ -315,7 +315,7 @@ Respond to any of the following naturally:
   > "Are you thinking one focused project, or does this feel like multiple workstreams
   > (e.g., a data pipeline AND a model on top of it)?"
 
-  **If single workstream:** existing behavior unchanged —
+  **If single workstream:**
   1. Append to `## Outcome` in the brainstorm doc:
      ```markdown
      **Decision:** Escalated to execution
@@ -539,8 +539,6 @@ explicitly closes it.
 - Your recommended starting point should be opinionated. Don't hedge with "it depends."
 - If the user's problem is extremely vague, that's fine — lean toward calling all
   specialists and letting the diversity of ideas reveal what's actually interesting.
-- When a **single** project is kicked off, the brainstorm doc travels with it —
-  move it into the project directory so the team has full context on how the idea
-  originated. For **multi-workstream** escalations, the brainstorm doc stays in
-  `shards/brainstorm/` as a shared origin artifact; each workstream's `project-specs.md`
-  carries a `Brainstorm origin:` field pointing back to it.
+- On escalation, place the brainstorm doc and its sidecar as Phase 3 "I want to
+  pursue this" says: moved into the project for a single workstream, left in
+  `shards/brainstorm/` with a `Brainstorm origin:` field for multi-workstream.

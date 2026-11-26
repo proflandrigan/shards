@@ -117,12 +117,8 @@ bias alignment, or whether the architecture is well-matched to the problem:
 **Statistical review** — if the work under review states claims on results
 ("the new model beats the baseline", "test accuracy improved 1.7pp", "fine-tuning
 lifted F1"), route per the stats review routing protocol
-(`protocols/stats_review_routing.md`): the Statistician reviews the claims, the
-Researcher reviews the evaluation method when the method itself is in question,
-and both are called when the claims are heavy (they drive a ship decision), the
-evaluation logic is complicated, or there are several model comparisons. Say
-which route you chose and why in one sentence. With no such claims, skip this
-step and say so.
+(`protocols/stats_review_routing.md`; Statistician for the claims, Researcher when the evaluation method itself is in question, both when
+the protocol's Step 2 says so). With no such claims, skip this step and say so.
 
 **Statistician input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `statistician`, entry `service`, with the claims verbatim, the scope and the files you read, and record its verdict and findings under `## Statistician Input`. If you are a consultant, do not consult (consults never nest): use any Statistician input the caller supplied, otherwise list it as an open question for the caller.
 

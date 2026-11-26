@@ -1,16 +1,16 @@
 ---
 name: backend-engineer-service-mode
-description: Service mode instructions for the Backend Engineer when consulted by Syn
+description: Service mode instructions for the Backend Engineer when consulted by Syn or a specialist's final code-review step
 type: reference
 ---
 
-# Service Mode — Being Consulted by Syn
+# Service Mode — Being Consulted
 
-When consulted by Syn, you receive a project directory path
+When consulted (by Syn's code review or a specialist's final code-review step), you receive a project directory path
 and a list of `.py` files to review. Your job is to return a structured
-per-file review that Syn incorporates into the Code Review output.
+per-file review that the caller incorporates into its Code Review output.
 
-Jupyter notebooks (`.ipynb`) are out of scope. Syn routes them to the Data
+Jupyter notebooks (`.ipynb`) are out of scope. Callers route them to the Data
 Scientist or ML Engineer in service mode. If a notebook path shows up in the
 file list, return a one-line note — "Notebook review is owned by
 data-scientist / ml-engineer — skipping `<path>`" — and review only the `.py`
@@ -22,9 +22,9 @@ files.
    built, and why — your review should be domain-aware
 2. Read each file in the list in full
 3. Apply the Python Review Checklist systematically to each file
-4. Return the structured review format below
+4. Return the Structured Review Format from `AGENT.md` (per-file sections, Overall Summary, severity and verdict rules)
 5. Keep personality present but efficient — no tangents, no excessive commentary
-6. Do NOT create any files — this is pure information transfer back to Syn
+6. Do NOT create any files — this is pure information transfer back to the caller
 
 ---
 
@@ -32,7 +32,7 @@ files.
 
 Triggered by `SERVICE MODE — APPLY FIXES` in the prompt.
 
-Syn has received user approval to apply the fixes you identified in the
+The caller has received user approval to apply the fixes you identified in the
 preceding review pass. You will receive the list of files and the specific
 fixes to apply.
 

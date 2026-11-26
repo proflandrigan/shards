@@ -239,19 +239,8 @@ Every specialist keeps its bookkeeping in `shards/<project_name>/` (MLOps: `shar
 
 ### Routing Reference
 
-Derive the specialist from the user's intent description. Refer to this list for disambiguation — do not walk it as a decision tree:
-
-- **Data Analyst** — Quick question with a well-defined answer. 1-3 SQL queries. No modeling, no causal reasoning. ("What's our DAU?", "Top 10 customers by revenue")
-- **Data Scientist** — "Why", "what drives", "predict", or "model". Multi-step: EDA, feature engineering, predictive modeling. ("Why is churn spiking?", "Build a lead scoring model")
-- **Data Engineer** — Pipeline work: new source, new model, pipeline fix, dbt. ("Add Stripe data to the warehouse", "Fix the teacher engagement mart")
-- **ML Engineer** — Production ML system: model training, serving infrastructure, latency/memory constraints. ("Build a recommender system", "Optimize the ranking algorithm")
-- **AI Engineer** — LLM-powered systems: prompt engineering, RAG, agents, chatbots, document processing. ("Build a summarization pipeline", "Design a RAG system")
-- **MLOps Engineer** — Deploying/operationalizing existing trained models. Serving infrastructure, training pipelines, monitoring. ("Deploy our churn model", "Our model is drifting")
-- **Data Modeller** — Entity relationships, grain definitions, schema design. ("Walk me through the subscription model", "Design the marketplace entity model")
-- **Analytics Engineer** — dbt transformation layer: staging → intermediate → mart, tests, docs. ("Build a mart for finance", "Refactor the intermediate layer")
-- **BI Engineer** — Dashboards, data visualization apps, chart suites. ("Build a sales dashboard", "Design an executive KPI dashboard")
-- **Applied ML Scientist** — Novel methodology when standard approaches have failed for principled reasons. ("Design a self-supervised framework for sensor data")
-- **Deep Learning Engineer** — Custom deep learning architecture: tensor shapes, hardware constraints, custom training protocol. ("Build a custom transformer", "Design a CNN for segmentation")
+Derive the specialist from the user's intent description. Use the routing
+descriptions above for disambiguation — do not walk them as a decision tree.
 
 **Note on `[AR]` (Autonomous Research) routing:**
 If the user's request is shaped like "improve metric X on system Y — try
@@ -269,7 +258,7 @@ For broad requests like "improve metric X, try everything, across approach
 families" — consider proposing **Syn-initiated `[AR]` fan-out**: Syn spawns
 multiple specialists in parallel, each running its own `[AR]` loop on a
 distinct approach family, and Syn arbitrates. Reference
-[`modes/brainstorm.md`](modes/brainstorm.md) Phase 2 / 3 for the detailed
+[`modes/brainstorm.md`](modes/brainstorm.md) Phase 3 for the detailed
 fan-out flow (also triggered from Brainstorm Mode when multiple viable
 approach families surface).
 
@@ -468,11 +457,9 @@ After Phase 0 is confirmed and project-specs.md is created:
   final Syn review, which is a consult that returns a verdict
 - The user is now directly interacting with the specialist shard for all phases
 
-**Important pre-switch steps:**
-- Create the project directory and project-specs.md BEFORE switching.
-- Collect creativity preference during Phase 0 when routing to Data Analyst or Data Scientist.
-- Collect Quick/Deep preference during Phase 0 when routing to Data Engineer or Data Modeller.
-- Collect new vs. iteration track and existing directory (if iteration) during Phase 0 when routing to any specialist.
+**Important pre-switch step:** create the project directory and project-specs.md
+BEFORE switching, with every Phase 0 field captured (see Phase 0 — Intent
+Discovery and the Phase 0 section template above).
 
 ---
 

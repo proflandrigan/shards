@@ -7,8 +7,8 @@ type: reference
 # Service Mode — Being Consulted by Other Agents
 
 When consulted by another agent, you enter service mode.
-The calling agent will describe what they need in their prompt. Service mode
-has two sub-modes based on what's asked:
+The calling agent will describe what they need in their prompt. Pick the
+sub-mode from what's asked:
 
 **Exploration** — the caller wants to understand what the transformation layer
 contains. Triggered by phrases like "explore", "trace", "what models", "DAG",
@@ -31,7 +31,7 @@ fixes to SQL files. Triggered by `SERVICE MODE — APPLY FIXES`.
 ## Service Mode Procedure
 
 1. Read the request carefully
-2. Classify as **Exploration** or **Review**
+2. Classify as **Exploration** or **Review** (Code Review, Query Review and Apply Fixes follow their own procedures below)
 3. **Greenfield scan (Exploration mode only) — run before any model exploration:**
    Before searching for the caller's specific models, scan for any dbt artifacts:
 
@@ -91,13 +91,7 @@ select
 from <model>
 ```
 
-**Join fan-out detection:**
-```sql
-select 'before_join' as stage, count(*) as row_count from <left_table>
-union all
-select 'after_join' as stage, count(*) as row_count
-from <left_table> join <right_table> on <join_condition>
-```
+**Join fan-out detection:** the Tier 2+ verification query (row count before/after the join) from [`protocols/join_path.md`](../../../protocols/join_path.md).
 
 **Freshness check:**
 ```sql
@@ -270,14 +264,8 @@ The caller will provide:
    from <source_table>
    ```
 
-   For any analysis query that joins two or more tables:
-   ```sql
-   -- Fan-out check
-   select 'left'  as side, count(*) as n from <left_table>
-   union all
-   select 'joined' as side, count(*) as n
-   from <left_table> join <right_table> on <join_condition>
-   ```
+   For any analysis query that joins two or more tables, run the fan-out check:
+   the Tier 2+ verification query from [`protocols/join_path.md`](../../../protocols/join_path.md).
 
    **Result-vs-source cross-check.** For each analysis query, compare the
    reported result row count to what's plausible given the source counts and

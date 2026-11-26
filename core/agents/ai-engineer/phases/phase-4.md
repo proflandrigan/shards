@@ -24,8 +24,8 @@ harder and more important — because the failure modes are semantic, not statis
 - **Golden eval format:** `eval/golden_evals.jsonl` — `{"input": ..., "expected": ..., "tags": [...]}`
 - **Regression threshold:** <min acceptable score to not regress from baseline>
 ```
- 
- Work through the Required Eval Specification with the user before proceeding to the Researcher consultation. Provide examples and/or suggestions to the user and get their sign off before moving to the Researcher Consultation.
+
+Work through the Required Eval Specification with the user before proceeding to the Researcher consultation. Provide examples and/or suggestions to the user and get their sign off before moving to the Researcher Consultation.
 
 **One evaluation for every approach.** If the Phase 3 experiment plan mode is Harness, this framework scores every approach in it (baseline and candidates) on the same test set, metrics and quality gates; no approach gets its own test set or a metric the others skip. Confirm with the user which dimension is the **primary metric** for the decision rule, and state the tie tolerance. Cost per request and latency are scored per approach so the decision rule can trade quality against them.
 

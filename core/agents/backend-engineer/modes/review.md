@@ -81,7 +81,6 @@ Read the relevant files using Glob, Grep, and Read:
   settings, FastAPI lifespan config)
 
 **Do not read everything blindly** — focus on files that bear on the confirmed scope.
-Note any files you expected to find but couldn't locate.
 
 Apply the Assessment Checklist above to every file in scope, section by
 section. Read each file in full before recording findings on it. List any file

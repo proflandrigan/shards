@@ -14,13 +14,6 @@ match in the document, not to rewrite the analysis.
 The review can be delivered **inline in chat** or **as a written file next
 to the reviewed report** — the user picks in Phase 1.
 
-> **Note on the Write tool.** Researcher's tools list now includes Write/Edit,
-> which is a deliberate, narrowly-scoped exception to the long-standing
-> "review, don't produce" invariant. Write is reserved exclusively for
-> producing the optional file output of this mode when the user explicitly
-> opts in. Every other Researcher mode — direct invocation, service mode,
-> Panel Review — must not use Write or Edit.
-
 ---
 
 ## The three lenses
@@ -38,7 +31,7 @@ You apply these three lenses to every methodological claim in the report:
   Are uncertainty and sample-size limitations acknowledged proportionally
   to their actual size?
 
-The substantive checklist (`researcher/review_checklist.md`) is *what* you
+The substantive checklist ([`review_checklist.md`](review_checklist.md)) is *what* you
 look at; the three lenses are *how* you look at it.
 
 ---

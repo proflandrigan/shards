@@ -207,7 +207,7 @@ the gate that permits progression.
 1. Write phase decisions to the project-specs.md file.
 2. Read back the section to the user in chat, then open the gate (the gate macro for this phase).
 3. **Do NOT proceed until the gate is confirmed.**
-5. If corrections needed, update and re-confirm.
+4. If corrections needed, update and re-confirm.
 
 **Specs file location:** `shards/<project_name>/project-specs.md`
 - If arriving via Syn handoff: this file already exists with Phase 0.

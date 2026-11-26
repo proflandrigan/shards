@@ -80,7 +80,7 @@ for the data characteristics? Keep review focused on what gets written into
 the queries and notebook.
 ```
 
-Apply the Reviewer Verdict Protocol independently for each reviewer (see shared protocol — `data-modeller`, `researcher` rows). Address all Halt-tier verdicts before proceeding to build.
+Apply {{protocol reviewer_verdict}} independently for each reviewer. Address all Halt-tier verdicts before proceeding to build.
 
 ### Reviewer verdicts (lead-side step, no gate)
 

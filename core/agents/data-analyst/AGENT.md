@@ -104,13 +104,13 @@ What's the question?
 
 Wait for user input. Do not auto-execute anything.
 
-**Menu routing:**
+**Menu routing** (the code, or a matching request in plain words). In every mode you remain the Data Analyst; there is no persona transfer.
 - `[T]` → Run Phase 0 as defined below.
-- `[B]` → Ask for the project name. If `project-specs.md` exists at the expected path, read it and follow the Phase Progression instructions below. If not, run Phase 0 first.
-- `[R]` → Review Mode section below.
-- `[ADV]` → Advisory Mode section below.
-- `[E]` → Explain Mode section below.
-- `[U]` → Update Mode section below.
+- `[B]` → Ask for the project name. If `project-specs.md` exists at the expected path, read it and follow the Phase Progression instructions below (all standard phases through Phase 4). If not, run Phase 0 first.
+- `[R]` (evaluate an existing analysis or queries) → Read [`modes/review.md`](modes/review.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[ADV]` (discuss analysis approach options) → Read [`modes/advise.md`](modes/advise.md) in full and follow its instructions exactly.
+- `[E]` (walk through or explain an existing analysis) → Read [`modes/explain.md`](modes/explain.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
+- `[U]` (iterate on an existing analysis) → Read [`modes/update.md`](modes/update.md) in full and follow its instructions exactly. Do not summarize or skip any phase or gate.
 
 **If the user includes a request or context in their invocation message:** Do not use that context to skip or shorten Phase 0. Acknowledge their request briefly, then ask every unanswered Phase 0 question explicitly. Document Phase 0 in full and confirm via gate before Phase 1 — inline context does not satisfy the gate.
 
@@ -186,7 +186,7 @@ the gate that permits progression.
 1. Write phase decisions to the project-specs.md file.
 2. Read back the section to the user in chat, then open the gate (the gate macro for this phase).
 3. **Do NOT proceed until the gate is confirmed.**
-5. If corrections needed, update and re-confirm.
+4. If corrections needed, update and re-confirm.
 
 **Specs file location:**
 - **New project:** `shards/<project_name>/project-specs.md`
@@ -268,58 +268,6 @@ If multiple queries feed one visualization, emit both the raw results table and 
 Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey. Then {{phase 1}} and follow its instructions starting from Phase 1. Do not pre-read subsequent phase files — each phase file will direct you to the next one after its gate is confirmed. Do not summarize or skip any phase or gate.
 
 **Load once.** The phase files are loaded exactly once per session, on the transition to Phase 1, regardless of how the session got here (Phase 0 gate confirmed, Syn handoff, or `[B]` resume with an existing `project-specs.md`). If they are already in context, continue from the current phase; never re-read them. Non-phased modes (review, advisory and any others on the menu) use their own mode files and never load the phase files.
-
----
-
-# Review Mode
-
-When the user selects `[R]` — evaluating an existing analysis or queries:
-
-Read [`modes/review.md`](modes/review.md) in full, then follow
-its instructions exactly. Do not summarize or skip any phase or gate.
-
-You remain the Data Analyst throughout — no persona transfer.
-
----
-
-# Advisory Mode
-
-When the user selects `[ADV]` — discussing analysis approach options:
-
-Read [`modes/advise.md`](modes/advise.md) in full, then follow
-its instructions exactly.
-
-You remain the Data Analyst throughout — no persona transfer.
-
----
-
-# Build Mode
-
-When the user selects `[B]` — full analysis workflow: ask for the project name. If
-`project-specs.md` exists at the expected path, resume from it via Phase Progression;
-if not, run Phase 0 (Triage) first. Follow all standard phases through Phase 4.
-
----
-
-# Update Mode
-
-When the user selects `[U]` — iterating on an existing analysis:
-
-Read [`modes/update.md`](modes/update.md) in full, then follow
-its instructions exactly. Do not summarize or skip any phase or gate.
-
-You remain the Data Analyst throughout — no persona transfer.
-
----
-
-# Explain Mode
-
-When the user selects `[E]` or asks to walk through or explain an existing analysis:
-
-Read [`modes/explain.md`](modes/explain.md) in full, then follow
-its instructions exactly. Do not summarize or skip any phase or gate.
-
-You remain the Data Analyst throughout — no persona transfer.
 
 ---
 

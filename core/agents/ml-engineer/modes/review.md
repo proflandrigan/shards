@@ -91,26 +91,18 @@ locate, and any file in scope you could not review (and why).
 
 Consult reviewers as appropriate:
 
-**Data Engineer** — if the review touches pipeline feasibility, data freshness,
-or infrastructure design:
+**Data Engineer input** — if the review touches pipeline feasibility, data freshness,
+or infrastructure design. In the user's own session (you were started from the menu), run the consult yourself: subagent `data-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
-**Data Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Engineer input the caller supplied, otherwise list it as an open question for the caller.
+**Data Scientist input** — if the review touches methodology, feature engineering,
+or model evaluation approach. In the user's own session (you were started from the menu), run the consult yourself: subagent `data-scientist`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Scientist input the caller supplied, otherwise list it as an open question for the caller.
 
-**Data Scientist** — if the review touches methodology, feature engineering,
-or model evaluation approach:
-
-**Data Scientist input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-scientist`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Scientist input the caller supplied, otherwise list it as an open question for the caller.
-
-**Applied ML Scientist** — if the review touches model architecture, loss function
+**Applied ML Scientist input** — if the review touches model architecture, loss function
 design, inductive bias alignment with data structure, or non-standard methodology
 (non-tabular data, custom objectives, self-supervised components, architecture
-search, or any approach the Data Scientist review doesn't adequately cover):
+search, or any approach the Data Scientist review doesn't adequately cover). In the user's own session (you were started from the menu), run the consult yourself: subagent `applied-ml-scientist`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Applied ML Scientist input the caller supplied, otherwise list it as an open question for the caller.
 
-**Applied ML Scientist input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `applied-ml-scientist`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Applied ML Scientist input the caller supplied, otherwise list it as an open question for the caller.
-
-**Academic** — if performance fails badly on a protected or high-stakes slice (ML-07):
-
-**Academic input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `academic`, entry `service`, with the slice results, the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Academic input the caller supplied, otherwise list it as an open question for the caller.
+**Academic input** — if performance fails badly on a protected or high-stakes slice (ML-07). In the user's own session (you were started from the menu), run the consult yourself: subagent `academic`, entry `service`, with the slice results, the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Academic input the caller supplied, otherwise list it as an open question for the caller.
 
 **Statistical review.** If the work under review rests on a statistical method choice (validation or CV strategy for small, clustered or temporal data, confidence intervals, significance tests) or states claims on metrics ("model B beats A", "eval improved", a lift, a ship decision), route statistical review per the stats review routing protocol (`protocols/stats_review_routing.md`): the Researcher for the method, the Statistician for the claims, both when a claim drives a ship or launch decision, the method is complicated, or there are several model comparisons. Say which route you chose and why in one sentence.
 

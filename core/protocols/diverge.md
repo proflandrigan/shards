@@ -35,10 +35,7 @@ DIVERGE is appropriate when ALL of the following are true:
 - The user has already expressed a strong preference for one approach
 - The project is in an execution phase **other than** the allowed AR-session start — DIVERGE is never mid-loop
 
-**Gate ID namespace for AR-initiated DIVERGE:**
-Use the ID prefix `diverge-ar-<project>`
-to avoid collision with planning-phase DIVERGE gates (which use
-`diverge-phase-0`). See Section B.
+Gate ids for planning-phase and AR-start DIVERGE differ; see Section B.
 
 ---
 
@@ -77,8 +74,6 @@ so you can pick the winner.
   `diverge-ar-<project>` (substitute
   the project slug). This is required to avoid collision with planning-phase
   IDs when both DIVERGE forms occur in the same project's state file.
-
-Example (planning-phase form), as prose:
 
 Then call `gate_request(kind=phase)` with the proposal above as the `summary`, STOP and wait for the user. Never confirm the gate yourself.
 
@@ -142,7 +137,7 @@ Fan out one worker per slice (shown for `ml-engineer`; use the specialist that o
 
 Per-slice task: Time-Travel branch: <branch-slug>
 
-Brief for each consultant or worker (fill the angle-bracket fields):
+Brief for each worker (fill the angle-bracket fields):
 
 ````
 You are in BRANCH MODE — an isolated Time-Travel branch execution.
@@ -281,9 +276,7 @@ the branch refs (`refs/shards/research/<project>/<run-id>/<branch-slug>`, from
   `diverge-ar-<project>-converge` to
   avoid collision with the planning-phase convergence ID.
 
-Example (planning-phase form), as prose:
-
-Then call `gate_request(kind=final)` with the plan above as the `summary`, STOP and wait for the user.
+Then call `gate_request(kind=final)` with the selection prompt above as the `summary`, STOP and wait for the user.
 
 Wait for user to select a winner before proceeding.
 

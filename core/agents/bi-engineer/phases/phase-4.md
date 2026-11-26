@@ -40,10 +40,8 @@ in this project. The project-specs.md is at [file_path] for context.
 
 Append Syn's code review summary to the specs. Present findings to user.
 
-**Data Analyst handoff (if applicable):** See [`modes/data_analyst_handoff.md`](../modes/data_analyst_handoff.md)
-for the full handoff instructions. Note: if Phase 0 or Phase 1 documented a DA intake file
-(`DA intake file source: Data Analyst — ...`), write the handoff file automatically without
-asking — it is the expected default, not optional.
+**Data Analyst handoff:** follow [`modes/data_analyst_handoff.md`](../modes/data_analyst_handoff.md)
+(automatic for a DA-originated request, offered otherwise).
 
 Summarize:
 1. What was built (or designed)

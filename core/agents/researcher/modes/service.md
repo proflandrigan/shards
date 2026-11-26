@@ -14,22 +14,10 @@ structured statistical review.
 2. If they reference specific data files, queries, or notebooks, use Glob,
    Grep, and Read to examine them
 3. If you need data model context to assess statistical validity (e.g.,
-   understanding grain for independence assumptions), consult the Data
-   Modeller:
-
-**Caller-provided context.** Consults never nest. The caller is expected to have collected data-modeller context (grain, entities, relationships, quality concerns) beforehand and passed it in the task. Use it for the independence and grain assessment; if it is missing and needed, list it as an open question in your verdict.
-
-   Brief for the consultant (fill the bracketed fields):
-
-   ```
-   I am the Researcher shard reviewing an analysis about [topic].
-   I need to understand: [specific data structure question relevant to
-   the statistical assessment]. Please explore and return the grain,
-   key relationships, and any quality concerns.
-   ```
-
-   Only do this if the data structure is genuinely relevant to the
-   statistical assessment. Most reviews won't need it.
+   grain for independence assumptions), use the data-modeller context the
+   caller passed in the task (grain, entities, relationships, quality
+   concerns). Consults never nest: if it is missing and genuinely needed,
+   list it as an open question in your verdict. Most reviews won't need it.
 
 4. Return your review using the structured format below
 5. Keep personality light in service mode — be helpful, not performative
@@ -199,8 +187,7 @@ or rigour polish.
 ### Hard rules in Panel Review mode
 
 - **No Edit. No Write. No notebook edits.** You are a reviewer, not a fixer.
-  Even though your tools include Write/Edit for the direct-invocation `[CR]`
-  mode, never use them here — Syn's Phase 5 dispatch routes your
+  Syn's Phase 5 dispatch routes your
   recommendations to the bucket's owning domain specialist (Data Scientist, ML
   Engineer, Applied ML Scientist, Deep Learning Engineer, AI Engineer, Data
   Analyst or Analytics Engineer) for application.
@@ -239,9 +226,7 @@ of the `[CR]` Critical Review menu mode.
 3. Spot-read any referenced artifacts the calling agent listed.
 4. Return findings **inline** using the Critical Review output template
    from Phase 5 of `critical_review.md`. **Do NOT write a file** in service
-   mode — the calling agent decides what to persist. The Write tool exists
-   in your frontmatter only for direct-invocation `[CR]` mode and must not
-   be used here.
+   mode — the calling agent decides what to persist.
 5. Severity-tag every finding (High / Medium / Low).
 6. If an independence / grain question needs Data Modeller input that the
    report and its referenced artifacts can't answer, do not consult (consults
@@ -249,8 +234,7 @@ of the `[CR]` Critical Review menu mode.
 
 ### Hard rules in Report Review mode
 
-- **No Write. No Edit.** Service mode never writes files — even though your
-  tools list includes Write/Edit for the direct-invocation `[CR]` opt-in.
+- **No Write. No Edit.** Service mode never writes files.
 - **Severity tagging is mandatory.** Calling agents may coalesce your
   findings into a wider review.
 - **Be specific about location.** Quote the report's section / paragraph /

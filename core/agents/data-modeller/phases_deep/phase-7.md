@@ -58,11 +58,11 @@ for project [project_name] and need physical dbt implementation.
 Model specs: shards/<project_name>/project-specs.md
 
 Summary:
-- Entities modeled: <entity list from Phase 3>
+- Entities modeled: <entity list from Phase 2>
 - Source tables: <source list from Phase 1>
 - Grain definitions: <from Phase 2>
 - Key relationships: <from Phase 3>
-- Proposed mart structure: <from Phase 4>
+- Proposed mart structure: <from Phase 5>
 
 Please implement:
 1. Staging models for each source

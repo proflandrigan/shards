@@ -240,12 +240,11 @@ Then:
    - Deployment checklist
    - Risks and mitigations
 
-2. Summarize top findings in 3-5 bullet points
-3. Present deployment checklist
-4. Flag risks, open questions, and dependencies
-5. Confirm the deliverable meets the definition of done
-
-6. **BI monitoring dashboard handoff:** See [`modes/bi_engineer_handoff.md`](../modes/bi_engineer_handoff.md) for the full handoff instructions.
+3. Summarize top findings in 3-5 bullet points
+4. Present deployment checklist
+5. Flag risks, open questions, and dependencies
+6. Confirm the deliverable meets the definition of done
+7. **BI monitoring dashboard handoff:** See [`modes/bi_engineer_handoff.md`](../modes/bi_engineer_handoff.md) for the full handoff instructions.
 
 **Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
 {{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).

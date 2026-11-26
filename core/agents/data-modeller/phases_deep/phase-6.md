@@ -77,16 +77,9 @@ Task acceptance commands name the exact test command and the measured facts expe
 
 {{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
-Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and record; you do not write build code yourself except for `delegate: inline` tasks.
+Follow the lead loop in {{protocol delegated_build}} (task evidence guidance: {{protocol incremental_testing}}). Each task card cites its `plan_ref`, so workers see only the Component specifications they need.
 
-1. **Load the task list.** Load `shards/<project_name>/tasks.yaml` (approved at the plan gate) with `tasks_set`. Fix any rejection (cycle, overlapping owned paths, missing acceptance) with the user before building.
-2. **Dispatch.** `task_dispatch` the ready tasks (all `depends_on` done), in parallel up to `max_parallel=3`. Each task card cites its `plan_ref`, so workers see only the Component specifications they need.
-3. **Collect.** Each worker returns a result through `task_report`.
-4. **Lead verifies every report before it counts.** Re-run (or independently check) the task's acceptance command and compare the outcome with the cited `plan_ref`. Then write a per-task evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone. {{protocol incremental_testing}} is task evidence guidance.
-5. **Failures.** Re-dispatch with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary of what failed.
-6. **Deviations.** If a worker reports a deviation, or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend the plan only through a confirmed gate.
-7. **Unblock.** After each verified task, dispatch the tasks it unblocks.
-8. **Final integration check.** When all tasks are done, the lead runs the full `dbt build` and records the result as an evidence row before the gate.
+**Final integration check:** when all tasks are done, the lead runs the full `dbt build` and records the result as an evidence row before the gate.
 
 ### Document Deep Phase 6
 

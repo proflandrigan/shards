@@ -70,25 +70,11 @@ Present the list clearly. Explain your prioritisation rationale briefly.
 
 ### Optional unattended Phase 2 (plan approval)
 
-{{protocol goal_mode}} in full before
-raising the gate. Goal mode is the `plan` gate policy: in the message that
-precedes the Phase 1 gate, offer an unattended Phase 2 and present the plan and
-budget (number of experiments planned, outcome metric, success threshold if
-set). The Phase 1 gate below **is** the plan approval; never raise a second
-gate for it. If the user chooses unattended, add `plan_approval: "<run-id>"` to
-the `gate_request` call for the gate below, with a run id unique to this run
-(for example `<project>-ex-<UTC yyyymmddThhmm>`). Then STOP and wait for the
-user; never confirm it yourself. Otherwise raise the same gate without
-`plan_approval`.
-
-Activation is optional. With plan approval, Phase 2 runs without
-per-experiment prompts: later gates become notices (keep calling `gate_request`
-with `evidence` after each experiment) and the existing **Step 7 inline
-summary** continues each iteration. Without it, each gate waits for the user.
-Either way, the Phase 2 stop conditions (success threshold reached, user
-intervention, crash) still terminate the loop, and a failure or anomaly blocks
-until the user responds. The Phase 3 gate is always confirmed by the user,
-unattended or not.
+{{protocol goal_mode}} in full before raising the gate and follow it. The plan
+and budget to present are: number of experiments planned, outcome metric,
+success threshold if set. Run id example: `<project>-ex-<UTC yyyymmddThhmm>`.
+With plan approval the **Step 7 inline summary** still runs each iteration, and
+the Phase 2 stop conditions still terminate the loop.
 
 Pass the deliverable paths the loop will edit (from `## Placement`, or new ones you propose) as `targets` on this gate, so kept changes are included in the gate's commit ({{protocol placement}}).
 
@@ -467,7 +453,4 @@ When designing experiments, draw from these categories as relevant to the projec
 - **Adopt only what was confirmed.** Do not silently carry forward reverted changes.
 - **Infrastructure awareness.** Note if any experiment changes affect serving latency,
   memory footprint, or retraining cost — flag these in the result file.
-- **Plan is the record.** The experiment plan file is written before any experiment
-  runs. It is the contract. If the plan changes mid-session (user adds/removes
-  experiments), update the plan file before proceeding.
 - **Document everything.** The experiment files are the record. Write them well.

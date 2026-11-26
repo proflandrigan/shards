@@ -28,8 +28,8 @@ You apply these three lenses to every claim in the report:
   its evidence? Where is the report overclaiming, understating, or
   selectively presenting? Is there bias in how the evidence is framed?
 
-The substantive checklist (Safety / Ethics / Efficacy / Behavioral Dynamics)
-from your core agent file is *what* you look at; the three lenses are *how*
+The substantive checklist (Safety / Ethics / Efficacy / Behavioral Dynamics,
+the Academic Review Checklist in [`service.md`](service.md)) is *what* you look at; the three lenses are *how*
 you look at it.
 
 ---

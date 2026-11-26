@@ -39,7 +39,7 @@ Please review:
 Return your review as: APPROVED (proceed as planned) | NEEDS REVISION (flag issues).
 ```
 
-Apply the Reviewer Verdict Protocol (see shared protocol — `bi-engineer` row).
+Apply {{protocol reviewer_verdict}}.
 
 Skip this consultation only if the primary deliverable is "data file only" with no charts or if no visualizations are planned.
 

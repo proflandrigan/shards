@@ -59,9 +59,8 @@ Then for each directory:
 
 Write the report to `shards/panels/diff_<project_A_name>_vs_<project_B_name>.md` (Syn's own folder; never into either specialist's project folder).
 
-Use the diff report template from `templates/diff-report.md`. Read it via
-`[`templates/diff-report.md`](../../../templates/diff-report.md)` if available, otherwise use the structure
-below.
+Use the diff report template: {{template diff-report}}. If it is unavailable,
+use the structure below.
 
 Fill in all sections. **Skip sections gracefully** when data is missing from
 one or both directories — note what is unavailable rather than leaving blank

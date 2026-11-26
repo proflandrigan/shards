@@ -98,7 +98,7 @@ Your job here is review only — do not apply any fixes.
 The notebook reviewer applies a notebook-aware checklist covering code
 quality, bugs, execution hygiene, data leakage, split discipline, feature
 engineering, and modelling logic. Do NOT also send notebooks to the Backend
-Engineer — that path is deprecated.
+Engineer.
 
 **Step 3d: MLOps Engineer reviews config/infra files**
 

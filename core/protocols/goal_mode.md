@@ -1,14 +1,13 @@
 ---
 name: goal-mode-protocol
-description: Shared protocol — goal mode is now the `plan` gate policy (unattended loops for AR Phase 2 and Experiment Phase 2)
+description: Shared protocol — goal mode is the `plan` gate policy (unattended loops for AR Phase 2 and Experiment Phase 2)
 type: reference
 ---
 
 # Goal Mode = the `plan` gate policy
 
-Goal mode no longer uses Claude Code `/goal` or a transcript evaluator. Gate-free
-autonomous loops (AR Phase 2, Experiment Phase 2) run under the `plan` gate
-policy:
+Gate-free autonomous loops (AR Phase 2, Experiment Phase 2) run under the
+`plan` gate policy:
 
 - At the pre-loop gate (the agent's own Phase 1 gate), present the plan and
   the budget (iterations, cost ceiling, metric floor, target). If the user

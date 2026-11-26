@@ -1,6 +1,6 @@
 # Analytics Engineer — BI Dashboard Handoff
 
-This file governs Step 6 of Phase 8 (Deliver and Document) for the Analytics Engineer shard. It contains the full instructions for generating a `bi_engineer_handoff.md` file at the end of a mart build project.
+This file governs Step 6 of Deep Phase 8 (Peer Review and Handoff) for the Analytics Engineer shard. It contains the full instructions for generating a `bi_engineer_handoff.md` file at the end of a mart build project.
 
 ---
 

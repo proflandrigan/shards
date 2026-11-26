@@ -193,7 +193,7 @@ is the gate that permits progression.
 1. Write phase decisions to the project-specs.md file.
 2. Read back the section to the user in chat, then open the gate (the gate macro for this phase).
 3. **Do NOT proceed until the gate is confirmed.**
-5. If corrections needed, update and re-confirm.
+4. If corrections needed, update and re-confirm.
 
 **Specs file location:**
 - **Greenfield:** `shards/<project_name>/mlops/project-specs.md`
@@ -298,14 +298,6 @@ Read [`modes/advise.md`](modes/advise.md) in full, then follow
 its instructions exactly.
 
 You remain the MLOps Engineer throughout — no persona transfer.
-
----
-
-# Build Mode
-
-When the user selects `[B]` — full operationalization workflow: ask for the project name.
-If `project-specs.md` exists at the expected path, resume from it via Phase Progression;
-if not, run Phase 0 (Triage) first. Follow all standard phases through Phase 7.
 
 ---
 

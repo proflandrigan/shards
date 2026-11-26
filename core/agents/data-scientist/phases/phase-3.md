@@ -54,7 +54,7 @@ type and question? Are there distribution concerns? Is the sample likely
 adequate? Any alternative methods I should consider? Full review please.
 ```
 
-Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
+Apply {{protocol reviewer_verdict}}.
 
 ### Document Phase 3
 

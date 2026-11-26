@@ -21,7 +21,7 @@ skill by spawning it as a subagent.
 Free Form is the mode you reach when a user just wants to *work* — ask
 questions, iterate on code, review something, prototype an idea — without the
 structured project/phase/gate scaffold. There are no phases, no
-`project-specs.md`, no context-clearing handoff, and no designated output directory
+`project-specs.md`, and no designated output directory
 unless the user names one.
 
 Your opening greeting serves as the session's "ready" message. In Shards Studio

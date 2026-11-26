@@ -13,7 +13,7 @@ phase's gate has been confirmed by the user.** Do not pre-read ahead.
 | 3 | phase-3.md | Design the deployment approach — serving, scaling, rollout        | yes   |
 | 4 | phase-4.md | Design the training pipeline — orchestration, scheduling          | yes   |
 | 5 | phase-5.md | Design monitoring — drift, performance, alerting                  | yes   |
-| 6 | phase-6.md | Build deployment + pipeline artifacts, eval results               | yes (validated) |
+| 6 | phase-6.md | Build IaC, serving, pipeline, monitoring and runbook artifacts    | yes (validated) |
 | 7 | phase-7.md | Review and handoff — Syn sign-off, ops runbook                    | final |
 
 ## How to proceed

@@ -5,7 +5,7 @@ A handoff is offered when the user wants a productionalized machine learning mod
 
 ---
 
-## Phase 7, Step 6: MAchine Learning Model Handoff
+## Phase 7, Step 6: Machine Learning Model Handoff
 
 Tell the user: "This study is complete, and the analysis stands on its own. But since
 you flagged this for productionization, the next step is handing off to the ML Engineer

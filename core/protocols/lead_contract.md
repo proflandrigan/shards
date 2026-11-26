@@ -22,12 +22,7 @@ Nesting is fixed at Syn, then you (depth 1), then your workers (depth 2). Worker
 
 ## Build and execute phases
 
-Run every build or execute phase through the delegated build loop (`{{protocol delegated_build}}`):
-
-- Decompose the plan into task cards, validate them with `tasks_set`, and dispatch your own `<specialist>-worker` workers with `task_dispatch`.
-- You write no build code yourself, except for tasks marked `delegate: inline` (at most 2 per phase).
-- Verify every task with `task_verify` (re-run the acceptance check yourself). A task is done only through `task_verify`, never on a worker's word.
-- A larger workstream means more task cards and a higher `max_parallel`, not more leads.
+Run every build or execute phase through the delegated build loop (`{{protocol delegated_build}}`: task cards validated with `tasks_set`, your own `<specialist>-worker` workers dispatched with `task_dispatch`, every task verified with `task_verify`, no build code of your own beyond `delegate: inline` tasks). A larger workstream means more task cards and a higher `max_parallel`, not more leads.
 
 ## Autonomous research (AR) leads
 
@@ -44,7 +39,7 @@ If a phase calls for a reviewer consult, run it when your host allows a consult 
 
 ## Fallback
 
-If worker subagents genuinely cannot be spawned on this host, use the sequential or inline fallback from `{{protocol delegated_build}}`. Say so in your report, name the reason, and add a `Fallback: <sequential|inline> — <reason>` row to the `## Validation` Evidence table. Never fall back silently. Cards, acceptance checks, `task_verify` calls and evidence rows stay identical.
+If worker subagents genuinely cannot be spawned on this host, use the sequential or inline fallback in `{{protocol delegated_build}}` (with its `Fallback:` evidence row) and name the fallback and its reason in your report.
 
 ## Report
 

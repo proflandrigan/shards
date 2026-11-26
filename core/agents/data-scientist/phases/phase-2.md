@@ -9,7 +9,7 @@ Goal: Understand what data exists and whether it's fit for purpose.
 
 **First, consult the Data Modeller:**
 
-In character and using your conversation styal tell the user you are consulting with the data modeller.
+In character, tell the user you are consulting the Data Modeller.
 
 {{consult data-modeller entry=review task="Explore data model for [study topic]"}}
 
@@ -24,7 +24,7 @@ Since I'll be building queries against these tables, please run grain validation
 (PK uniqueness checks) on the key tables so I know the grain holds in practice.
 ```
 
-**Greenfield handling:** Before presenting findings review the Data Modeller's response. 
+**Greenfield handling:** Before presenting findings review the Data Modeller's response.
 
 If it contains "NO DATA ENVIRONMENT DETECTED" follow the guidelines set in [`modes/greenfield_data.md`](../modes/greenfield_data.md) otherwise proceed with phase 2.
 

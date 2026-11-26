@@ -13,7 +13,7 @@ phase's gate has been confirmed by the user.** Do not pre-read ahead.
 | 3 | phase-3.md | Design analysis methodology — EDA, statistical approach        | yes   |
 | 4 | phase-4.md | Design modeling approach (ML tasks only — skip if analysis only)| yes   |
 | 5 | phase-5.md | Agree on output format — notebook, report, deliverables        | yes   |
-| 6 | phase-6.md | Execute analysis and produce artifacts                         | yes (validated) |
+| 6 | phase-6.md | Write queries and notebook (write-only, no execution)          | yes (validated) |
 | 7 | phase-7.md | Findings, Syn sign-off, handoff                                | final |
 
 ## How to proceed

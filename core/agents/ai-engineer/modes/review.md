@@ -124,12 +124,9 @@ or model serving:
 
 **Statistical review** — if the system under review has an evaluation design or
 states claims on eval results ("eval improved", "prompt B beats prompt A",
-"quality is 92%", "hallucination rate fell"), route per the stats review routing
-protocol (`protocols/stats_review_routing.md`): the Researcher reviews the
-evaluation method, the Statistician reviews the claims, and both are called when
-the claims are heavy (they drive a ship or spend decision), the eval logic is
-complicated, or there are several comparisons. Say which route you chose and why
-in one sentence.
+"quality is 92%", "hallucination rate fell"), route per the
+stats review routing protocol (`protocols/stats_review_routing.md`; Researcher for the evaluation method,
+Statistician for the claims, both when the protocol's Step 2 says so).
 
 **Researcher input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `researcher`, entry `service`, with the evaluation design, the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Researcher input the caller supplied, otherwise list it as an open question for the caller.
 

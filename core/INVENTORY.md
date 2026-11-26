@@ -2,7 +2,9 @@
 
 Generated from `git ls-files src/agents src/templates` at commit 11760a3 (HEAD before the move; also tag `v-legacy` + 1 commit). Every legacy file is mapped to its new path. Moves were done with `git mv`, so `git log --follow` keeps history.
 
-Legend: "-> deleted (orphaned v1 monolith...)" marks the per-agent `modes/phases.md` (analytics-engineer: `modes/quick_phases.md`, `modes/deep_phases.md`) files removed after the move, because the `phases*/` directories replace them and nothing referenced them. "-> deleted in E4" marks Knowledge Ledger files that move now and are removed by E4.
+Legend: "-> deleted (orphaned v1 monolith...)" marks the per-agent `modes/phases.md` (analytics-engineer: `modes/quick_phases.md`, `modes/deep_phases.md`) files removed after the move, because the `phases*/` directories replace them and nothing referenced them. "deleted in E4" marks Knowledge Ledger files that were dropped when E4 removed the Ledger.
+
+Historical record: files added to `core/` after the move (for example newer protocols and templates) are not listed, and later renames are not tracked here.
 
 ## Naming rules
 
@@ -15,7 +17,7 @@ Legend: "-> deleted (orphaned v1 monolith...)" marks the per-agent `modes/phases
 - Academic inline "Service Mode" + review checklist sections of academic.md were extracted into `core/agents/academic/modes/service.md` (new file; AGENT.md keeps a pointer)
 - New in v2 (no legacy source): `core/agents/<id>/agent.yaml`, `persona-summary.md`, `core/schema/agent.schema.json`, and the 4 restored templates (E1.11)
 
-## Mapping (239 files)
+## Mapping (240 files)
 
 | # | Legacy path | New path | Note |
 |---|---|---|---|

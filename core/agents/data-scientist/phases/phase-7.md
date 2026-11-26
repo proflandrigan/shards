@@ -85,12 +85,9 @@ Append all reviews to project-specs.md under a combined `Code Review` heading.
   [summary]. Confirm to proceed to Syn?" Then proceed to Syn.
 - **BLOCKED** → tell the user: "Reviewer has blocked this. Fixing critical
   issues before continuing." Address every critical issue. Update
-  project-specs.md. Resubmit to the same reviewer(s) once. If the second
-  verdict is APPROVED or NEEDS REVISION, proceed to Syn. If still
-  BLOCKED, surface to user: "Reviewer has blocked this twice. [Verbatim
-  second verdict.] How would you like to proceed? (a) Override and proceed
-  to Syn — I'll document the disagreement. (b) Continue fixing — tell me
-  what to change. (c) Stop the project."
+  project-specs.md. Resubmit once and escalate a second BLOCKED per
+  {{protocol reviewer_verdict}}. If the second verdict is APPROVED or
+  NEEDS REVISION, or the user overrides, proceed to Syn.
 
 **Statistician claim review (findings and report):**
 

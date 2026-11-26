@@ -111,7 +111,7 @@ Features computed at inference time match features computed at training time for
 
 Latency, memory, and throughput fit the deployment budget.
 
-- Budget comes from the spec — if unspecified, pin one with the user during Phase 1.
+- Budget comes from the spec — if unspecified, pin one with the user during Phase 2.
 - Measure on representative hardware (not your laptop if it's deploying to a smaller instance).
 - Include cold-start and warm-path numbers separately if they differ.
 

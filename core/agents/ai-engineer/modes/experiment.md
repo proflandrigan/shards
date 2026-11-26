@@ -246,8 +246,6 @@ Before the DS consultation, update `experiments/results.json`:
   }
   ```
 
-After the DS consultation, update the experiment entry's `dsVerdict` field.
-
 ### Step 5.5 — Checkpoint (if versioning enabled)
 
 Follow **Section B** of
@@ -462,6 +460,5 @@ When designing experiments, draw from these categories as relevant to the projec
 - **DS consultation is mandatory.** Do not skip it even if results seem obvious.
 - **Adopt only what was confirmed.** Do not silently carry forward reverted changes.
 - **Plan is the record.** The experiment plan file is written before any experiment
-  runs. It is the contract. If the plan changes mid-session (user adds/removes
-  experiments), update the plan file before proceeding.
+  runs and kept current (see "Write experiment plan file").
 - **Document everything.** The experiment files are the record. Write them well.

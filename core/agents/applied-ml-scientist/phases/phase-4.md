@@ -68,26 +68,10 @@ end.
 Dispatch only tasks with `phase: 4` from the single `tasks.yaml` written
 by the plan phase (the other phase's tasks are not dispatched here).
 
-1. **Load** the task list approved at the plan gate (call `tasks_set`; fix and
-   re-validate if it is rejected).
-2. **Dispatch** ready `phase: 4` tasks (`task_dispatch`) in parallel up to
-   `max_parallel=3`. Tasks that write to the same file (for example the
-   notebook) must be ordered by `depends_on`.
-3. **Collect** each worker's result via `task_report`.
-4. **Verify before counting.** For every report, re-run (or independently
-   check) the acceptance command and compare the output with the `plan_ref`
-   spec. Then write a per-task evidence row to the `## Validation` Evidence
-   table (Check = task id + component, Expected, Observed, Pass/Fail), with the
-   exact command and measured facts (for example `df.shape = (48211, 47)`,
-   output shapes, loss values). Never mark a task done on the worker's word
-   alone.
-5. **On failure** re-dispatch with the failure output as feedback, at most 2
-   retries; then stop and ask the user with a summary.
-6. **Deviations** or a plan that cannot be met: pause dependent tasks and follow
-   {{protocol plan_drift}}; amend the plan only via a confirmed gate.
-7. **Dispatch** tasks unblocked by done tasks until all `phase: 4` tasks
-   are done.
-8. You write no build code yourself except for `delegate: inline` tasks.
+Run the lead loop from the delegated build protocol above. AMS specifics:
+tasks that write to the same file (for example the notebook) are ordered by
+`depends_on`, and each evidence row carries the exact command and measured
+facts (for example `df.shape = (48211, 47)`, output shapes, loss values).
 
 **Final integration check (lead, after all tasks are done):** restart the kernel and run the notebook top to bottom, confirm the modules import cleanly and results match the training run summary you will document. Record
 the result as an evidence row before the gate.

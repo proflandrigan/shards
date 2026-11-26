@@ -1,10 +1,10 @@
 # AI Engineer — BI Monitoring Dashboard Handoff
 
-This file governs Step 6 of Phase 7 (Deliver and Document) for the AI Engineer shard. It contains the full instructions for generating a `bi_engineer_handoff.md` file for operational monitoring of a deployed AI system.
+This file governs the BI monitoring dashboard handoff step of Phase 7 (Review and Handoff) for the AI Engineer shard. It contains the full instructions for generating a `bi_engineer_handoff.md` file for operational monitoring of a deployed AI system.
 
 ---
 
-6. **BI monitoring dashboard handoff:**
+**BI monitoring dashboard handoff:**
 
    Ask the user: "This system produces observable metrics — latency, quality
    scores, cost per request, safety pass rates. Do you want a
