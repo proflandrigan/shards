@@ -74,10 +74,11 @@ Work autonomously. Do not wait for user gates. When a phase file would stop
 and call `gate_request` waiting for user confirmation, do NOT stop and do
 NOT call it — document your decision for the merge step and continue to
 the next phase. Skip your activation menu and Phase 0 — Syn has already scoped
-your work. Do not invoke Syn for review. Return a concise report: artifacts
-produced, key decisions, issues, confidence, and anything the merge step needs
-to know. Your return value follows the fan-out contract in
-`protocols/worker_contract.md` ("Fan-out workers").
+your work. Do not invoke Syn for review. Return only the verdict JSON from the fan-out
+contract in `protocols/worker_contract.md` ("Fan-out workers"), with no other
+text. Put artifacts produced, key decisions, issues and confidence in its
+`summary` and `findings`; write anything longer to a file in your slice
+directory and name that file in `findings`.
 ```
 
 ## Review and merge

@@ -28,19 +28,9 @@ Append Syn's review to the specs. Present to user.
 
 If Syn returns NEEDS REVISION or BLOCKED, once or twice, follow the resolution loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
-If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}.
 
-{{consult syn entry=code_review task="Code review and fix for adhoc analysis"}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-CODE REVIEW MODE. I am the Data Analyst shard. Project: [project_name].
-Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
-in this project. The project-specs.md is at [file_path] for context.
-```
-
-Append Syn's code review summary to the specs. Present findings to user.
+If the user wants the code pass: {{protocol code_review}}
 
 Summarize:
 1. The question that was asked

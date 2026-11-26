@@ -237,7 +237,7 @@ Historical record: files added to `core/` after the move (for example newer prot
 | 214 | `src/agents/specific_instructions/shared/validation_protocol.md` | `core/protocols/validation.md` |  |
 | 215 | `src/agents/specific_instructions/syn/arbiter.md` | `core/agents/syn/modes/arbiter.md` |  |
 | 216 | `src/agents/specific_instructions/syn/brainstorm.md` | `core/agents/syn/modes/brainstorm.md` |  |
-| 217 | `src/agents/specific_instructions/syn/code_review.md` | `core/agents/syn/modes/code_review.md` |  |
+| 217 | `src/agents/specific_instructions/syn/code_review.md` | (dropped) | Moved to `core/protocols/code_review.md`: the owning specialist runs the code pass itself |
 | 218 | `src/agents/specific_instructions/syn/diff.md` | `core/agents/syn/modes/diff.md` |  |
 | 219 | `src/agents/specific_instructions/syn/final_review.md` | `core/agents/syn/modes/final_review.md` |  |
 | 220 | `src/agents/specific_instructions/syn/fixer.md` | `core/agents/syn/modes/fixer.md` |  |

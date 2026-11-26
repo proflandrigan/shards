@@ -37,7 +37,6 @@ Syn's mode files live in `core/agents/syn/modes/`. Three of them are also consul
 | PR Review | `pr_review.md` | `[G]` Walks through GitHub PR comments with guided fixes. Also reached through the `review-pr` skill. |
 | Diff | `diff.md` | `[D]` Cross-project comparison into a structured diff report. |
 | Final Review | `final_review.md` | Consult entry `final_review`. Specialists call it for sign-off; it checks `gates_open` and returns `APPROVED` / `NEEDS REVISION` / `BLOCKED`. |
-| Code Review | `code_review.md` | Consult entry `code_review`. Partitions artifacts by type and routes them: `.sql` to the Analytics Engineer, `.py` to the Backend Engineer, `.ipynb` to the Data Scientist or ML Engineer, config and infrastructure to the MLOps Engineer. |
 | Arbiter | `arbiter.md` | Consult entry `arbiter`. Compares DIVERGE branch reports, builds a leaderboard and recommends a winner. |
 
 Reference material comes through the `knowledge` job rather than a Syn mode; see [Knowledge](../03-protocols/knowledge.md).
@@ -72,7 +71,7 @@ Syn's jobs are `record`, `tasks`, `knowledge`, `review`, `artifacts` and `presen
 - **Claude Code:** `/shards:syn` (switch skill; calls `activate`).
 - **Codex:** `$shards:syn`, or `codex -p shards-syn` (profile file installed by `shards install --codex`).
 - **Utility skills:** `/shards:brainstorm`, `/shards:review-pr`, `/shards:notebook-walkthrough`, `/shards:resume`, `/shards:end`, `/shards:agents`.
-- **Consult subagents:** `syn-final_review`, `syn-code_review`, `syn-arbiter`.
+- **Consult subagents:** `syn-final_review`, `syn-arbiter`. When Syn's final review lists code files, the specialist runs the code pass itself (`core/protocols/code_review.md`): `.sql` to the Analytics Engineer, `.py` to the Backend Engineer, `.ipynb` to the Data Scientist or ML Engineer, config and infrastructure to the MLOps Engineer, then one gate before the specialist applies the approved fixes.
 
 Nothing is published yet, so install from source: [Install](../01-getting-started/install.md).
 

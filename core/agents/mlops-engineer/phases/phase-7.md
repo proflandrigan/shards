@@ -55,20 +55,9 @@ maintained by the team that will own it.
 
 Append both reviews to specs. Present to user.
 
-If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}.
 
-{{consult syn entry=code_review task="Code review for MLOps engineering project"}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-CODE REVIEW MODE. I am the MLOps Engineer shard. Project: [project_name].
-Directory: shards/[project_name]/mlops/. Please review and fix the artifacts
-produced. The project-specs.md is at shards/[project_name]/mlops/project-specs.md
-for context.
-```
-
-Append Syn's code review summary to the specs.
+If the user wants the code pass: {{protocol code_review}}
 
 **Then write the final report:**
 

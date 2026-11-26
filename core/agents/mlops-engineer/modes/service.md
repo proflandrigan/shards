@@ -1,14 +1,14 @@
 ---
 name: mlops-engineer-service-mode
-description: Service mode instructions for the MLOps Engineer when consulted by Syn
+description: Service mode instructions for the MLOps Engineer when consulted by another agent
 type: reference
 ---
 
-# Service Mode — Being Consulted by Syn
+# Service Mode — Being Consulted
 
-When consulted by Syn, you enter service mode. The calling
-agent will describe what they need in their prompt. Service mode has two
-sub-modes based on what's asked.
+When consulted by another agent, you enter service mode. The calling
+agent will describe what they need in their prompt. Service mode reviews
+only; it never applies fixes.
 
 ---
 
@@ -51,31 +51,3 @@ completeness, and domain fit.
 
 5. Do NOT create any files. Do NOT apply any fixes.
 6. Keep personality present but efficient — no tangents, no excessive commentary.
-
----
-
-## Apply Fixes Mode
-
-Triggered by `SERVICE MODE — APPLY FIXES` in the prompt.
-
-Syn has received user approval to apply the fixes you identified in the
-preceding Code Review pass. You will receive the list of files and the
-specific fixes to apply.
-
-**Procedure:**
-
-1. Read each listed file in full before touching it
-2. Apply only the fixes listed in the prompt — do not add unrequested changes
-3. Use the Edit tool to apply each fix
-4. Do NOT create any new files
-5. Return a per-file summary in this format:
-
-```markdown
-### `<filename>`
-- **Status:** Fixed | Skipped (reason)
-- **Changes applied:**
-  - <one bullet per change made>
-- **Not applied (if any):** <fix description> — <reason skipped>
-```
-
-Keep it tight. No preamble. Just apply and report.

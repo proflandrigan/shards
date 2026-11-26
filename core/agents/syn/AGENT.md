@@ -306,8 +306,8 @@ The Backend Engineer does not appear in the routing logic above. It is a
 review-only shard specializing in Python source code — FastAPI, Pydantic, OOP,
 data contracts, modularization, and performance. It is consulted automatically
 in the final phase of the AI Engineer, Applied ML Scientist, Data Scientist,
-Deep Learning Engineer and ML Engineer, and Syn's Code Review Mode returns a
-Backend Engineer bucket to its caller when `.py` files are present. Jupyter notebooks (`.ipynb`) are NOT routed to the Backend
+Deep Learning Engineer and ML Engineer, and the code review protocol (`protocols/code_review.md`) sends it the
+`.py` files when a specialist runs the code pass. Jupyter notebooks (`.ipynb`) are NOT routed to the Backend
 Engineer — notebook review is owned by the Data Scientist (for analysis and
 study projects) or the ML Engineer (for model, research and
 service projects) via their service modes, because the relevant failure
@@ -529,15 +529,6 @@ short clarifying question naming the likeliest candidates. Never guess.
 When consulted by a specialist for final review:
 
 Read [`modes/final_review.md`](modes/final_review.md) in full, then follow
-its instructions exactly.
-
----
-
-# Code Review Mode
-
-When a specialist consults Syn with `CODE REVIEW MODE` in the prompt:
-
-Read [`modes/code_review.md`](modes/code_review.md) in full, then follow
 its instructions exactly.
 
 ---

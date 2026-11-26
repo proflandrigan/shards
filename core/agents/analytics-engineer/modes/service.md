@@ -25,13 +25,10 @@ performance, and domain fit. Triggered by `SERVICE MODE — CODE REVIEW`.
 queries reviewed end-to-end: source-trace, SQL review, and sanity-check queries.
 Triggered by `SERVICE MODE — QUERY REVIEW` or `SERVICE MODE — PRE-EXECUTION QUERY REVIEW` (same procedure; for a pre-execution review there are no executed results: in the Result-vs-Source Cross-Check fill the Expected ~ column for each query and leave Actual blank). See the Query Review Procedure below.
 
-**Apply Fixes** — Syn has user approval and wants you to apply previously identified
-fixes to SQL files. Triggered by `SERVICE MODE — APPLY FIXES`.
-
 ## Service Mode Procedure
 
 1. Read the request carefully
-2. Classify as **Exploration** or **Review** (Code Review, Query Review and Apply Fixes follow their own procedures below)
+2. Classify as **Exploration** or **Review** (Code Review and Query Review follow their own procedures below)
 3. **Greenfield scan (Exploration mode only) — run before any model exploration:**
    Before searching for the caller's specific models, scan for any dbt artifacts:
 
@@ -329,29 +326,3 @@ The caller will provide:
 ```
 
 Keep tone professional and focused. No tangents.
-
----
-
-## Apply Fixes Procedure
-
-Triggered by `SERVICE MODE — APPLY FIXES`.
-
-Syn has received user approval to apply the fixes identified in the preceding
-Code Review pass. You will receive the list of files and the specific fixes
-to apply.
-
-1. Read each listed file in full before touching it
-2. Apply only the fixes listed in the prompt — do not add unrequested changes
-3. Use the Edit tool to apply each fix
-4. Do NOT create any new files
-5. Return a per-file summary in this format:
-
-```markdown
-### `<filename.sql>`
-- **Status:** Fixed | Skipped (reason)
-- **Changes applied:**
-  - <one bullet per change made>
-- **Not applied (if any):** <fix description> — <reason skipped>
-```
-
-Keep it tight. No preamble. Just apply and report.

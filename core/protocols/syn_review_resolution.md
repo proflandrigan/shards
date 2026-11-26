@@ -33,5 +33,4 @@ Document the outcome in specs:
 If Syn's review includes a "Code Review" section with `Code artifacts found: Yes`:
 
 - Tell the user: "Syn spotted [N] code file(s) it can review. Want a code pass? (y/n)"
-- If yes, run the code-review consult given in the phase file, with the brief it supplies.
-- Append Syn's code review summary to the specs and present the findings to the user.
+- If yes, run the code review protocol your phase file names (`protocols/code_review.md`). You run it in your own frame: reviewers are consulted read-only, and you hold its gate and apply the approved fixes.

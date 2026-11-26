@@ -71,7 +71,7 @@ Specialists consult each other at defined points in their phases, with the `{{co
 - Specialists making claims on stats or metrics consult the **Statistician**, which checks whether the conclusion follows (method questions stay with the Researcher).
 - The ML Engineer consults the **Data Modeller** for feature source understanding.
 - The AI Engineer consults the **Academic** for safety and ethics assessment.
-- Every specialist's final phase asks **Syn** for final review (`syn-final_review`), and most also for code review (`syn-code_review`).
+- Every specialist's final phase asks **Syn** for final review (`syn-final_review`), and, when Syn finds code files, offers a code pass that the specialist runs itself (`core/protocols/code_review.md`).
 
 Consultations are in-phase and do not transfer context: the consulted agent returns a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)) and exits. Because consults never nest, a consult that needs another agent's input receives it from the caller in the task text. Each phase ends with a gate: a `gate_request` tool call that only a human confirms ([The Gate Pattern](../03-protocols/gate-pattern.md)).
 

@@ -52,8 +52,7 @@ Append both reviews to project-specs.md under a combined `Code Review` heading.
 - **APPROVED** → proceed directly to Syn review.
 - **NEEDS REVISION** → tell the user: "Reviewer(s) flagged structural
   issues. Fixing before Syn review." Address every listed issue in the
-  project files (the notebook reviewer may also be re-invoked in apply-fixes
-  mode — see Step 5c of Syn's code_review mode for the call pattern). Update
+  project files yourself (consulted reviewers never edit files). Update
   project-specs.md. Re-gate: "Reviewer issues resolved: [summary]. Confirm
   to proceed to Syn?" Then proceed to Syn.
 - **BLOCKED** → tell the user: "Reviewer has blocked this. Fixing critical
@@ -172,19 +171,9 @@ Append Syn's review to specs. Present to user.
 
 If Syn returns NEEDS REVISION or BLOCKED, once or twice, follow the resolution loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
-If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}.
 
-{{consult syn entry=code_review task="Code review and fix for ML engineering project"}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-CODE REVIEW MODE. I am the ML Engineer shard. Project: [project_name].
-Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
-in this project. The project-specs.md is at [file_path] for context.
-```
-
-Append Syn's code review summary to the specs. Present findings to user.
+If the user wants the code pass: {{protocol code_review}}
 
 Then:
 

@@ -16,8 +16,8 @@ description: >
   inference, the Statistician for claims on evaluation metrics, the Academic
   for model card ethics, the MLOps Engineer and Backend Engineer at final review, and Syn for final sign-off.
   Also provides domain-aware Jupyter notebook code review via service mode
-  when consulted by Syn's code_review mode or by another specialist's phase-7
-  review step.
+  when consulted during another specialist's code review
+  (`protocols/code_review.md`).
   Examples:
     - "Build a recommender system for our content platform"
     - "Optimize the ranking algorithm — latency is too high"
@@ -313,16 +313,13 @@ Read [`phases/index.md`](phases/index.md) in full to orient on the phase journey
 
 # Service Mode — Notebook Code Review
 
-When consulted with `SERVICE MODE — NOTEBOOK CODE REVIEW` or
-`SERVICE MODE — APPLY NOTEBOOK FIXES` in the prompt (typically called by
-Syn's `code_review` mode or another specialist's phase-7 step for domain-aware
-Jupyter notebook review):
+When consulted with `SERVICE MODE — NOTEBOOK CODE REVIEW` in the prompt
+(typically from another specialist's code review, `protocols/code_review.md`):
 
 Read [`modes/service.md`](modes/service.md) in
 full and follow its instructions exactly. Do not enter the phased workflow,
 do not display the activation menu, do not produce project-specs.md. Return
-only the structured notebook review (or, in apply-fixes mode, the
-per-notebook change summary) to the caller.
+only the structured notebook review to the caller.
 
 ---
 

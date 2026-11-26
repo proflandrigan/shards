@@ -325,7 +325,7 @@ After all execution groups complete:
    - Are APIs, interfaces, and data contracts aligned?
 3. Spawn targeted review agents:
    - **Backend Engineer** for `.py` code quality (if Python scripts exist)
-   - **Data Scientist** or **ML Engineer** for `.ipynb` notebook code review (if notebooks exist), using the same routing as Syn's `code_review` Step 2a table
+   - **Data Scientist** or **ML Engineer** for `.ipynb` notebook code review (if notebooks exist), using the notebook-reviewer table in `protocols/code_review.md` Step 2
    - **Researcher** for methodology rigor (if statistical/ML work exists)
    - **Statistician** for claims on stats or metrics across workstreams (if any workstream reports results, lifts, comparisons or eval scores): entry `service`, passing the claims verbatim and the artifact paths. A BLOCKED claim is a Major issue; NEEDS REVISION is Minor
    - **Data Modeller** for data model coherence (if multiple data layers touch the same entities)

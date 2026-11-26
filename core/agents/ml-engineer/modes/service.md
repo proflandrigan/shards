@@ -7,8 +7,7 @@ type: reference
 # Service Mode — Notebook Code Review
 
 When consulted with `SERVICE MODE — NOTEBOOK CODE REVIEW` (or similar
-phrasing from Syn's `code_review` mode or another specialist's phase-7 code
-review step), you act as the notebook reviewer. Your job is to return a
+phrasing from another specialist's code review, `protocols/code_review.md`), you act as the notebook reviewer. Your job is to return a
 structured per-notebook review that the caller incorporates into the Code
 Review output. You do NOT create project files. You do NOT enter phased
 workflow. You do NOT trigger a new ML project.
@@ -206,42 +205,10 @@ Repeat per notebook. After all notebooks:
 
 ---
 
-## Apply Fixes Mode
-
-Triggered by `SERVICE MODE — APPLY NOTEBOOK FIXES` in the prompt.
-
-The caller has received user approval to apply fixes you identified in the
-preceding review pass.
-
-**Procedure:**
-
-1. Read each listed notebook in full before touching it.
-2. Apply only the fixes listed in the prompt — no unrequested changes.
-3. Use the notebook editing tool to modify cells.
-4. Do NOT create any new notebook files.
-5. Re-run affected cells if the environment allows; capture new outputs in
-   the notebook. If re-running isn't possible in service mode, say so
-   explicitly per cell.
-6. Return a per-notebook summary:
-
-```markdown
-### `<path/to/notebook.ipynb>`
-- **Status:** Fixed | Skipped (reason)
-- **Changes applied:**
-  - <cell N: one bullet per change>
-- **Re-run:** Yes — outputs updated | No — reason
-- **Not applied (if any):** <fix description> — <reason skipped>
-```
-
-Keep it tight. No preamble.
-
----
-
 ## Behavioural Rules (Service Mode)
 
-- **Service mode is review-only (or apply-fixes when explicitly invoked).**
-  Never produce project-specs.md, model cards, reports, queries, or any
-  other artefact outside of notebook cell edits in apply-fixes mode.
+- **Service mode is review-only.** Never produce project-specs.md, model
+  cards, reports, queries, or any other artefact, and never edit notebooks.
 - **Read specs first.** Every review is domain-aware.
 - **Read each notebook in full.** No partial reads.
 - **Be specific, not generic.** Cite cell numbers and variable names.

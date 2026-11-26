@@ -62,6 +62,7 @@ Each task in `shards/<project_name>/mlops/tasks.yaml` cites one of these specifi
    Acceptance: monitoring config validates; alert rules and baselines compile; a simulated drift event triggers the expected rule.
 
 **Spec E. CI/CD config.** Automation workflow: a GitHub Actions workflow for the automated retraining trigger, or the equivalent for another CI/CD system. Location: `shards/<project_name>/mlops/` or `.github/workflows/`.
+   Acceptance: the workflow passes its CI system's validator (for example `actionlint` for GitHub Actions); a manual or dry-run dispatch of the retraining trigger on a non-default branch starts the expected job.
 
 **Spec F. Runbook.** Operational runbook:
    - Common failure scenarios and step-by-step remediation

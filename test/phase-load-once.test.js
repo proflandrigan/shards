@@ -73,6 +73,12 @@ describe('3.3 Syn-review resolution is a single shared protocol', () => {
     expect(users.length).toBeGreaterThan(0);
     for (const f of users) expect(read(f), rel(f)).toContain('{{protocol syn_review_resolution}}');
   });
+
+  it('the code pass is the code_review protocol run by the specialist, not a Syn consult', () => {
+    const users = files.filter((f) => /Code Review" section/.test(read(f)));
+    for (const f of users) expect(read(f), rel(f)).toContain('{{protocol code_review}}');
+    for (const f of files) expect(read(f), rel(f)).not.toMatch(/entry=code_review|SERVICE MODE — APPLY/);
+  });
 });
 
 describe('3.7 project-specs.md is loaded once and treated as live', () => {
