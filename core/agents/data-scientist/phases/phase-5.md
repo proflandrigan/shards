@@ -1,4 +1,4 @@
-> **Previous:** phase-4.md confirmed
+> **Previous:** phase-4.md confirmed (or phase-3.md, when Phase 4 was skipped for an analysis-only study)
 > **Next:** phase-6.md (read only after this phase's gate is confirmed)
 
 ---

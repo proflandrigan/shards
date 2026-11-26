@@ -6,7 +6,7 @@ type: reference
 
 # Auto-Verify Mode
 
-When a phase requires running many similar read-only verification queries in a row (per-model grain checks, fan-out before/after counts, null-rate scans, freshness checks, dbt show/ls/parse, package metadata, sample inspections), each one normally fires a permission prompt. The user clicks through twenty near-identical "allow" prompts and gradually loses the ability to spot the one prompt that matters.
+When a phase requires running many similar read-only verification queries in a row (per-model grain checks, fan-out before/after counts, null-rate scans, freshness checks, `dbt show`, package metadata, sample inspections), each one normally fires a permission prompt. The user clicks through twenty near-identical "allow" prompts and gradually loses the ability to spot the one prompt that matters.
 
 This protocol bounds those stretches with an auto-verify block. While the block is open, the runtime auto-approves tool calls that match a hardcoded read-only allowlist. Everything outside the allowlist still prompts. Gates always win: an open gate ends the block.
 
@@ -16,7 +16,7 @@ This is **not** `--dangerously-skip-permissions`. The allowlist is hardcoded, th
 
 Enter auto-verify only when **both** of these are true:
 
-1. The next stretch of work is exclusively read-only verification — running queries to check shapes, counts, nulls, fan-out, freshness, sample rows, or invoking read-only CLI subcommands (`dbt show`, `dbt ls`, `dbt parse`, `dbt compile`, `git status`, `git diff`).
+1. The next stretch of work is exclusively read-only verification — running queries to check shapes, counts, nulls, fan-out, freshness, sample rows, or invoking read-only CLI subcommands (`dbt show`, `dbt debug`, `git status`, `git diff`).
 2. You expect to issue **3 or more** similar tool calls in sequence. Below that threshold, the prompt friction isn't worth opening a block.
 
 Concrete fits:
@@ -68,8 +68,9 @@ Out-of-range values are rejected. Only one block can be active per session at a 
 On each tool call, the PreToolUse check consults the block's runtime state and, if the block is live, applies a hardcoded read-only allowlist (plus the SQL guard for warehouse CLIs). Each approval consumes one unit of budget; calls that are not approved do not.
 
 - **Always-safe tools**: `Read`, `Glob`, `Grep`, `WebSearch`
-- **Read-only Bash prefixes**: `git status/log/diff/show/branch/rev-parse/remote -v/remote show`, `ls`, `cat`, `head`, `tail`, `wc`, `file`, `stat`, `pip list/show/freeze`, `npm ls/list/outdated/view`
-- **Read-only dbt subcommands**: `dbt show`, `dbt ls`, `dbt list`, `dbt parse`, `dbt compile`, `dbt deps`, `dbt debug`, `dbt source freshness`
+- **Read-only Bash prefixes**: `git status/log/diff/show/rev-parse/stash list`, `ls`, `cat`, `head`, `tail`, `wc`, `file` (not `-C`/`-m`), `stat`, `pip list/show/freeze`, `npm ls/list/outdated/view`
+- **git listings, argument-checked**: `git branch`, `git tag` and `git remote` only in listing forms (`git branch -a`, `git tag -l`, `git remote -v`, `git remote show <name>`, `git remote get-url`). A bare name after them creates a ref and prompts.
+- **Read-only dbt subcommands**: `dbt show`, `dbt debug`. `dbt ls`, `list`, `parse`, `compile` and `source freshness` write `target/`, and `dbt deps` installs packages, so they prompt.
 - **Read-only BigQuery CLI**: `bq show`, `bq ls`, `bq head`, `bq query --dry_run …`
 - **SELECT-only warehouse-CLI SQL**: `bq query`, `psql -c`, `snowsql -q`, `clickhouse-client --query`, `duckdb -c`, `mysql -e`. The SQL guard strips comments, splits on `;`, and approves only if every statement starts with `SELECT` or `WITH` and contains no DDL/DML keyword.
 
@@ -80,7 +81,7 @@ These always fall through to the normal prompt, even inside a block:
 - the file-writing and editing tools
 - `Bash(rm:*)`, `Bash(mv:*)`, `sudo`, shell redirects (`>`, `>>`), pipe-to-shell, command substitution (`$(...)` or backticks)
 - Compound commands joined with `&&`, `||`, `;`, `|` at the shell level
-- `dbt run`, `dbt build`, `dbt seed`, `dbt snapshot` — even with `--select`
+- `dbt run`, `dbt build`, `dbt seed`, `dbt snapshot` — even with `--select`; also `dbt ls/list/parse/compile/deps/source freshness` (see above)
 - `git push`, `git commit`, `git merge`, `git rebase`
 - `INSERT`, `UPDATE`, `DELETE`, `MERGE`, `CREATE`, `DROP`, `ALTER`, `TRUNCATE`, `GRANT`, `REVOKE`, `COPY` via warehouse CLI
 - Anything matching the user's `permissions.deny[]` list

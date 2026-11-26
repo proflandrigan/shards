@@ -23,7 +23,7 @@ availability rather than full discovery.
 
 Tell the user: "Pulling in the Data Modeller. Feature definitions have to be grounded in actual data models, not what we hope exists."
 
-{{consult data-modeller entry=review task="Explore data model for ML features"}}
+{{consult data-modeller entry=service task="Explore data model for ML features"}}
 
 Brief for the consultant (fill the bracketed fields):
 

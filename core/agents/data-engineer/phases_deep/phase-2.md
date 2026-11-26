@@ -20,7 +20,7 @@ Inspect the existing dbt project for source definitions, staging models, freshne
 
 Tell the user: "Checking with the Data Modeller shard first. I need to know what the grain is before I build anything on top of it."
 
-{{consult data-modeller entry=review task="Explore data model for [topic]"}}
+{{consult data-modeller entry=service task="Explore data model for [topic]"}}
 
 Brief for the consultant (fill the bracketed fields):
 

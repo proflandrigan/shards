@@ -11,7 +11,7 @@ Goal: Understand what data exists and whether it's fit for purpose.
 
 In character, tell the user you are consulting the Data Modeller.
 
-{{consult data-modeller entry=review task="Explore data model for [study topic]"}}
+{{consult data-modeller entry=service task="Explore data model for [study topic]"}}
 
 Brief for the consultant (fill the bracketed fields):
 

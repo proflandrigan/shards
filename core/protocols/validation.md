@@ -16,9 +16,10 @@ Every validation-eligible phase produces three things:
 
 1. **A populated `## Validation` section in `project-specs.md`** — the bridge between soft protocol and hard enforcement.
 2. **At least one evidence artifact on disk** — a file the user or a reviewer can open to inspect the results. This includes test files (preferred where applicable), metric dumps, plots, config snapshots, model artifacts, or verification query outputs. Prose in specs is context, not evidence.
+   When the measured values in the Evidence table are the whole evidence and no file adds to them, write `- none (see Summary)` as the only `### Artifacts` bullet and say in the Summary why there is no file. `gate_request` accepts that override; it rejects an empty `### Artifacts` section.
 3. **A named checklist version** — which agent checklist was applied, so coverage is auditable.
 
-If any of the three is missing, the gate does not close.
+If any of the three is missing (an `### Artifacts` section with no bullet at all counts as missing), the gate does not close.
 
 ## Evidence vs Assertion
 

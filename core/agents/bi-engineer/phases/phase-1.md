@@ -11,7 +11,7 @@ Goal: Deepen understanding of what the user is building and what data exists to 
 
 Tell the user: "Let me check with the Data Modeller on what data actually exists. Exciting stuff."
 
-{{consult data-modeller entry=review task="Explore data model for [dashboard topic]"}}
+{{consult data-modeller entry=service task="Explore data model for [dashboard topic]"}}
 
 Brief for the consultant (fill the bracketed fields):
 

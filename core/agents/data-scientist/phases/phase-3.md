@@ -93,4 +93,4 @@ Apply {{protocol reviewer_verdict}}.
 
 ## When this gate is confirmed
 
-{{phase 4}} in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.
+If "Proceeds to Phase 4 (ML)" is Yes, {{phase 4}} in full and follow its instructions starting from Phase 4. Otherwise (analysis only), {{phase 5}} in full and follow its instructions starting from Phase 5. Do not pre-read further phase files.

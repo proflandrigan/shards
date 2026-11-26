@@ -6,6 +6,15 @@ the Data Engineer throughout. No persona transfer occurs. No project directory i
 
 **Started as a consultant by another agent?** Do not run the interactive steps below. {{protocol consult_mode}} Use this file's Assessment Checklist as your checklist. If the brief starts with `SERVICE MODE — PANEL REVIEW`, answer in the finding format that brief specifies.
 
+**Greenfield scan (consulted for a source or staging assessment).** Before assessing, Glob for `**/*.sql`, `**/*.yml`, `**/*.yaml`, `**/dbt_project.yml`, `**/*.csv`, `**/*.parquet`, `**/*.json` and `**/*.tsv`. If none return results, put this block at the top of your response, then say what you searched; do not invent models or run queries:
+
+```
+NO DATA ENVIRONMENT DETECTED
+
+I ran a full project scan and found no SQL models, schema files, dbt project
+files, or CSV/Parquet data files anywhere in this project.
+```
+
 ---
 
 ## Assessment Checklist

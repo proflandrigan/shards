@@ -167,7 +167,12 @@ Analyze the comment and the code. Determine whether this is:
 
 ### 3d. Gate — wait before applying
 
-{{gate kind=final phase=0 id=syn-pr-review-phase-0.3}}
+Each thread gets its own gate: a confirmed gate id is never asked again, so a shared
+id would let every thread after the first apply without approval. Call `gate_request`
+with `kind=confirm`, `phase=0`, `id=syn-pr-review-phase-0.thread-<n>` (`<n>` is the
+thread number from the header), `requires_human=true` and a one-line `summary` of the
+proposed fix. Stop and wait for the user; never confirm the gate yourself. If the
+answer is **edit**, re-request the same id with the revised fix before applying it.
 > "Apply this fix? Type **y** to apply, **n** to skip, **edit** to describe your
 > own fix instead, or **done** to stop walking through comments."
 

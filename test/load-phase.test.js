@@ -116,6 +116,18 @@ describe('load_phase', () => {
     expect(idx).not.toMatch(/^\|[^|]*\|\s*phase-7\.md\s*\|[^|]*\|[^|]*\boptional\b/m);
   });
 
+  it('data-scientist: optional phase 4 can be skipped from a confirmed phase-3 gate', async () => {
+    const idx = fs.readFileSync(path.join(__dirname, '..', 'core/agents/data-scientist/phases/index.md'), 'utf8');
+    expect(idx).toMatch(/^\|[^|]*\|\s*phase-4\.md\s*\|[^|]*\|[^|]*\boptional\b[^|]*\|\s*$/m);
+    await pushFrame(store('ds'), { agent: 'data-scientist', project: 'p' });
+    let r = await call({ agent: 'data-scientist', n: 5 }, { key: 'ds' });
+    expect(r.isError).toBe(true);
+    expect(text(r)).toContain('gate data-scientist-phase-3 for phase 3');
+    await gate('data-scientist-phase-3', 3, 'data-scientist', { confirm: true, key: 'ds' });
+    r = await call({ agent: 'data-scientist', n: 5 }, { key: 'ds' });
+    expect(r.isError).toBeFalsy();
+  });
+
   it('skipped optional 6-5: phase 7 falls back to the confirmed phase-6 gate', async () => {
     await gate('ml-engineer-phase-6', 6, 'ml-engineer', { confirm: true });
     const r = await call({ agent: 'ml-engineer', n: 7 });
