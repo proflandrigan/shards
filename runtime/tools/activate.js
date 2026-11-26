@@ -52,14 +52,16 @@ module.exports = defineTool({
     let outputDirTemplate = null;
     let created = false;
     if (agent.output_dir) {
-      // A fixed output_dir (no {project}, e.g. shards/academic_reports/) resolves without a project.
+      // A fixed output_dir (no {project}, e.g. shards/academic_reports/) resolves without a project,
+      // but is not created on switch: those agents write files only on request, so the folder appears
+      // with the first file instead of as an empty directory.
       const fixed = !agent.output_dir.includes('{project}');
       if (args.project || fixed) {
         const rel = fixed ? agent.output_dir : agent.output_dir.replace('{project}', args.project);
         const root = path.resolve(ctx.root);
         const abs = path.resolve(root, rel);
         if (abs !== root && !abs.startsWith(root + path.sep)) throw new Error(`Output directory escapes project root: ${rel}`);
-        if (!fs.existsSync(abs)) { fs.mkdirSync(abs, { recursive: true }); created = true; }
+        if (!fixed && !fs.existsSync(abs)) { fs.mkdirSync(abs, { recursive: true }); created = true; }
         outputDir = rel;
       } else {
         outputDirTemplate = agent.output_dir;
