@@ -17,10 +17,17 @@ Wait for any signal from the user before beginning build steps.
 
 ### Component specifications
 
-Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`:
+Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`.
+
+**Scope:** the change is to the core entity model (dimensions, facts, bridges,
+snapshots). A change that is really to staging belongs to the Data Engineer, and
+one to a consumer mart or metric to the Analytics Engineer: say so and recommend
+that agent instead.
 
 1. The change in model SQL and .yml schema.
-2. Downstream models that reference changed columns.
+2. Downstream models that reference changed columns (for a consumer mart owned
+   by the Analytics Engineer, only the minimal compatible update; flag anything
+   more for the Analytics Engineer).
 3. Validation with `dbt build --select +model_name+`.
 4. **Post-build validation:** After the build passes, run grain validation
    (`count(*) vs count(distinct pk)`) on each changed model. For models with

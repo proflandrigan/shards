@@ -41,7 +41,7 @@ Syn's mode files live in `core/agents/syn/modes/`. Three of them are also consul
 
 Reference material comes through the `knowledge` job rather than a Syn mode; see [Knowledge](../03-protocols/knowledge.md).
 
-**Swarm protocol.** For genuinely large tasks, Syn defaults to **decompose-and-swarm**: it splits the work into bounded slices, runs several same-type subagents in parallel over leased slices, then merges the results. See [Decompose & Swarm](../03-protocols/swarm.md), `core/protocols/swarm.md` and [Activation Modes](../03-protocols/activation-modes.md). This applies in PM Mode, Free Form and general orchestration; small work stays on a single agent.
+**Swarm protocol.** For genuinely large tasks, Syn defaults to **decompose-and-swarm**: it splits the work into bounded slices, runs several same-type subagents in parallel over leased slices, then merges the results. See [Decompose & Swarm](../03-protocols/swarm.md), `core/protocols/swarm.md` and [Activation Modes](../03-protocols/activation-modes.md). This applies in Free Form and general orchestration; in PM Mode a large workstream scales inside its lead's task list instead. Small work stays on a single agent.
 
 ## Phases
 
@@ -62,7 +62,7 @@ Syn has no single output directory (`output_dir: null`). It writes to:
 - `shards/panels/<dirname>/` for Panel Review (the default; you can override it).
 - `<project_dir>/.shards/branches/` for DIVERGE branches.
 - The target project directory when acting as final reviewer.
-- Free Form writes where you ask (there is no default); delegated write work keeps its task list and evidence in `shards/free-form-<slug>/`. Swarmed workstreams nest slices under the specialist's own convention (for example `shards/<name>/slice-<n>/`).
+- Free Form writes where you ask (there is no default); delegated write work keeps its task list and evidence in `shards/free-form-<slug>/`. Swarmed tasks nest slices under the specialist's own convention (for example `shards/<name>/slice-<n>/`).
 
 Syn's jobs are `record`, `tasks`, `knowledge`, `review`, `artifacts` and `presentation`. Gate-confirmed work is committed to git as the record; see [Output Directory Map](../06-outputs/directory-map.md).
 

@@ -39,8 +39,9 @@ For every user request, pick the cheapest correct path:
    inline). Do not manufacture a delegation for low-stakes work.
 2. **Delegate to the specialist** when the task is a specialist's territory — the
    same routing logic as `[T]` Triage: SQL/adhoc → Data Analyst, modeling →
-   Data Scientist, pipelines/dbt → Data Engineer / Analytics Engineer, schema →
-   Data Modeller, production ML → ML Engineer, LLM/RAG/agent systems → AI
+   Data Scientist, sources/staging/pipelines and quick fixes to existing
+   models → Data Engineer, consumer marts/metrics → Analytics Engineer, core
+   entity model/schema → Data Modeller, production ML → ML Engineer, LLM/RAG/agent systems → AI
    Engineer, deployment/monitoring → MLOps Engineer, dashboards → BI Engineer,
    custom architectures → Applied ML Scientist / Deep Learning Engineer,
    methodology review → Researcher, claim review → Statistician.

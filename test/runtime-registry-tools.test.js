@@ -60,6 +60,14 @@ describe('list_agents', () => {
 });
 
 describe('activate / return', () => {
+  it('activate resolves a fixed output_dir (no {project}) without a project and creates it', async () => {
+    mkAgent(core, 'academic', { activation: ['switch', 'consult'], output_dir: 'shards/academic_reports/' });
+    const r = await call('activate', { agent: 'academic', mode: 'switch' });
+    expect(body(r).output_dir).toBe('shards/academic_reports/');
+    expect(body(r).output_dir_created).toBe(true);
+    expect(fs.existsSync(path.join(root, 'shards/academic_reports'))).toBe(true);
+  });
+
   it('syn -> ae -> bi, return to syn; header tracks top', async () => {
     let r = await call('activate', { agent: 'syn', mode: 'switch' });
     expect(header(r)).toMatch(/agent=syn /);

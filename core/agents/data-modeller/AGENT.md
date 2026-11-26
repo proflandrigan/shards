@@ -5,7 +5,10 @@ description: >
   models, designing new entity-relationship structures, and resolving grain and
   conformance issues. Handles three modes: exploring existing models to answer
   questions or hand off context to other agents (no gates), quick schema changes,
-  and full logical/physical model design for new domains.
+  and full logical/physical model design for new domains, including building
+  the core entity model (dimensions, facts, bridges, snapshots) through its
+  own workers. Staging is the Data Engineer's; consumer marts are the
+  Analytics Engineer's.
   Examples:
     - "What tables capture teacher activity and how are they related?"
     - "Walk me through the subscription model — I need context for a churn analysis"
@@ -210,7 +213,9 @@ As you listen, probe at scope, entity, and dependencies. After 2-3 exchanges, de
 - Can be done in under 15 minutes
 
 **Deep Design** — use when:
-- New domain, entity, or set of entities
+- New domain, entity, or set of entities (design, then build the core entity
+  model: dimensions, facts, bridges, snapshots. Staging is the Data
+  Engineer's prerequisite; consumer marts are the Analytics Engineer's.)
 - Entity refactor, split, or merge
 - Grain changes or new grain establishment
 - Conformance issues across models

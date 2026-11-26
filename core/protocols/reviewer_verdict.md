@@ -4,7 +4,7 @@ description: Universal three-tier reviewer verdict mapping and escalation script
 type: reference
 ---
 
-Every reviewer returns exactly one of three verdict words: **APPROVED**, **NEEDS REVISION**, or **BLOCKED**. No reviewer defines its own vocabulary. Reviewer-specific nuance (what kind of concern, how severe, which alternatives) goes in the body of the review, never in the verdict word. Map the verdict to a tier and act accordingly. Exceptions: Syn's final review (`entry=final_review`) treats NEEDS REVISION as fix and resubmit; follow {{protocol syn_review_resolution}} for it. Inside an autonomous loop no verdict raises a gate: the Autonomous Research loop acts on each verdict per `autonomous_research.md` §D.2, and the experiment-mode Phase 2 loop records NEEDS REVISION findings as caveats and, on BLOCKED, downgrades the experiment's recommendation (Adopt becomes Refine or Revert); the user sees both at Phase 3.
+Every reviewer returns exactly one of three verdict words: **APPROVED**, **NEEDS REVISION**, or **BLOCKED**. No reviewer defines its own vocabulary. Reviewer-specific nuance (what kind of concern, how severe, which alternatives) goes in the body of the review, never in the verdict word. Map the verdict to a tier and act accordingly. Exceptions: Syn's final review (`entry=final_review`) treats NEEDS REVISION as fix and resubmit; follow {{protocol syn_review_resolution}} for it. Syn's PM Mode workstream review allows up to 3 revision rounds before the user is brought in (earlier on no progress or BLOCKED; `modes/pm.md`), and so does a swarm slice review (`swarm.md`). Inside an autonomous loop no verdict raises a gate: the Autonomous Research loop acts on each verdict per `autonomous_research.md` §D.2, and the experiment-mode Phase 2 loop records NEEDS REVISION findings as caveats and, on BLOCKED, downgrades the experiment's recommendation (Adopt becomes Refine or Revert); the user sees both at Phase 3.
 
 | Verdict | Tier | Meaning | Action |
 |---------|------|---------|--------|
@@ -37,7 +37,7 @@ If a reviewer returns a word outside APPROVED / NEEDS REVISION / BLOCKED, record
 Document the resolution in specs:
 `**Reviewer resolution:** Approved | Approved on resubmit | User override — <rationale> | Project stopped`
 
-**Resubmission cap:** Never resubmit to the same reviewer more than once per phase. After one resubmission, the path is always user escalation — never another consult.
+**Resubmission cap:** Never resubmit to the same reviewer more than once per phase. After one resubmission, the path is always user escalation — never another consult. (Exceptions: the PM Mode and swarm revision rounds named at the top of this protocol.)
 
 **Multi-reviewer arbitration:** When two reviewers in the same phase return conflicting tier verdicts, do not resolve unilaterally. Present both verdicts verbatim to the user with a one-sentence summary of the conflict. Ask which direction to take before making any changes. Document the user's decision in specs.
 

@@ -207,10 +207,11 @@ Every specialist keeps its bookkeeping in `shards/<project_name>/` (MLOps: `shar
 **Data Modeller** — route when:
 - Need to understand existing data model or design a new one
 - Entity relationships, grain definitions, schema design
-- Examples: "Walk me through the subscription model", "Design the marketplace entity model"
+- Designing and building the core entity model (conformed dimensions, facts, bridges, snapshots)
+- Examples: "Walk me through the subscription model", "Design and build the marketplace entity model"
 
 **Analytics Engineer** — route when:
-- Building or refactoring the transformation layer on top of staging (intermediate → mart); new staging and sources go to the Data Engineer
+- Building or refactoring the transformation layer on top of staging (intermediate → consumer marts, aggregates, metrics); new staging and sources go to the Data Engineer, and the core entity model (dims, facts) to the Data Modeller
 - Designing new marts, adding tests/docs/metrics to existing models
 - Iterating on an existing mart (column add, refund attribution, filter fix)
 - Building a metrics layer on top of existing marts

@@ -17,14 +17,20 @@ Wait for any signal from the user before beginning build steps.
 
 ### Component specifications
 
-Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`. Components, in dependency order:
+Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`.
 
-1. Source definitions
-2. Staging models
-3. Intermediate models
-4. Mart / dimension / fact models
+**Scope: the core entity model you designed, nothing else.** Sources and staging
+are the Data Engineer's and are a prerequisite: if the staging this model reads
+does not exist, stop and recommend the Data Engineer before building. Consumer
+marts, aggregates, reporting tables and metrics built on top of the core model
+are the Analytics Engineer's (offered as a handoff in Phase 7). Components, in
+dependency order:
+
+1. Snapshots for SCD Type 2 (an SCD-2 dimension is built from its snapshot)
+2. Dimension models (conformed dimensions)
+3. Fact models at their declared grain
+4. Bridge models for M:M relationships
 5. Schema files with tests and docs (part of each model's task)
-6. Snapshots for SCD Type 2
 
 Every model component comprises its SQL, its .yml schema, and a `dbt build --select +model_name` run; failures are fixed within the task before it reports.
 
@@ -68,8 +74,8 @@ to validate" in the evidence row.
    `dbt show --select <model> --limit 5` — visually confirm column names,
    types, and values look correct before moving on.
 
-Scale to model importance: staging models need only grain + sample; dimension/fact
-models get the full suite.
+Scale to model importance: snapshots and bridges need at least grain + sample;
+dimension and fact models get the full suite.
 
 Task acceptance commands name the exact test command and the measured facts expected.
 
@@ -93,7 +99,7 @@ project-specs.md is at shards/[project_name]/project-specs.md (grain, entities,
 relationships and the component specifications are there).
 Built files: [list from the build log].
 Review the SQL, tests and docs for correctness, layering, test coverage and
-fitness for the transformation layer that will consume them. List each issue
+fitness as the base for the consumer marts and metrics you would build on top. List each issue
 with file and line and the change you would make.
 ```
 

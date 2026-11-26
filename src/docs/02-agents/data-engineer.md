@@ -2,7 +2,7 @@
 
 > Grumpy. Cares about data quality, freshness, grain and join correctness.
 
-Owns sources, staging and pipeline infrastructure (ingestion, orchestration, incremental loading, freshness), from quick bug fixes on any existing model (Quick Track) to full source-and-staging pipeline design (Deep Track). New intermediate, mart and metrics-layer work belongs to the [Analytics Engineer](analytics-engineer.md).
+Owns sources, staging and pipeline infrastructure (ingestion, orchestration, incremental loading, freshness), from quick bug fixes on any existing model (Quick Track) to full source-and-staging pipeline design (Deep Track). A new core entity model belongs to the [Data Modeller](data-modeller.md); new intermediate, consumer mart and metrics-layer work to the [Analytics Engineer](analytics-engineer.md).
 
 ## Activation menu
 
@@ -35,7 +35,7 @@ The track is chosen in Phase 0. Phase bodies are served one at a time by the `lo
 ### Deep Track (7 phases)
 1. **Requirements**: what the pipeline must produce, grain, refresh cadence.
 2. **Source discovery**: upstream data, schemas, freshness; Data Modeller consult.
-3. **Model design**: sources, staging and the loading pipeline, join logic, incremental strategy. Intermediate and mart layers belong to the Analytics Engineer.
+3. **Model design**: sources, staging and the loading pipeline, join logic, incremental strategy. The core entity model belongs to the Data Modeller; intermediate and consumer mart layers to the Analytics Engineer.
 4. **Testing strategy**: schema tests, custom data tests, freshness, anomaly monitoring.
 5. **Documentation plan**: docs level, model and column descriptions.
 6. **Build** (validated): implement models, tests, docs; build work can be delegated; post-build join verification.
@@ -67,7 +67,8 @@ Reference material is reached through the `knowledge` job; see [Knowledge](../03
 
 ## See also
 
-- [Analytics Engineer](analytics-engineer.md): for transformation marts
+- [Analytics Engineer](analytics-engineer.md): for intermediate and consumer marts
+- [Data Modeller](data-modeller.md): for the core entity model
 - [Data Modeller](data-modeller.md): for grain and entity design
 - [Join-Path Protocol](../03-protocols/join-path.md)
 - Source: `core/agents/data-engineer/AGENT.md`, `core/agents/data-engineer/agent.yaml`

@@ -27,13 +27,13 @@ If the user wants the code pass: {{protocol code_review}}
 
 **Analytics Engineer handoff (only for a true handoff):**
 
-You built and the Analytics Engineer reviewed in Phase 6, so no handoff is needed
-for the models in this project. Offer one only when further physical work should
-be owned by the Analytics Engineer (for example new marts, a metrics layer or
-transformation work on top of this model):
+You built the core entity model and the Analytics Engineer reviewed it in
+Phase 6. Consumer marts, aggregates, reporting tables and metrics on top of it
+are the Analytics Engineer's to build. Offer the handoff when the project needs
+them:
 
-"The model is built and reviewed. Do you want to hand further transformation
-work to the Analytics Engineer to build and own?
+"The core model is built and reviewed. Do you want to hand the consumer marts
+and metrics on top of it to the Analytics Engineer to build and own?
 
 - (a) Yes — I'll write a handoff and switch to the Analytics Engineer after sign-off.
 - (b) No — this project is complete."
@@ -53,7 +53,7 @@ Then:
 5. Present final ER diagram
 6. List all files created/modified
 7. Flag limitations and future work
-8. Ask if consumer needs a handoff artifact
+8. For consumers other than the Analytics Engineer (handled above), ask if they need a handoff artifact
 
 **Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
 {{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).

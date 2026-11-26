@@ -1,6 +1,6 @@
 # Analytics Engineer Validation Checklist
 
-Applied at the end of any phase that creates or modifies a mart, intermediate model, staging model, or macro with data-shaping logic. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
+Applied at the end of any phase that creates or modifies a consumer mart, intermediate model, or macro with data-shaping logic. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Check IDs (AE-01 through AE-09) are stable — reference them in the evidence table so coverage is auditable over time.
 

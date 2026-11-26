@@ -1,6 +1,6 @@
 id: data-engineer
 display_name: "Data Engineer"
-description: "Owns sources, staging and pipeline infrastructure (ingestion, orchestration, incremental loading, freshness, tests and docs), plus quick fixes on any existing model. New intermediate, mart and metrics-layer work belongs to the Analytics Engineer."
+description: "Owns sources, staging and pipeline infrastructure (ingestion, orchestration, incremental loading, freshness, tests and docs), plus quick fixes on any existing model. The core entity model belongs to the Data Modeller; intermediate, consumer mart and metrics-layer work to the Analytics Engineer."
 role: specialist
 activation: [switch, consult, fanout_worker]
 consult_entries:

@@ -1,6 +1,6 @@
 id: analytics-engineer
 display_name: "Analytics Engineer"
-description: "Analytical transformation layers on top of staging (intermediate, mart, metrics layer) and SQL, from iterating on one mart to designing a full transformation layer; sources and staging belong to the Data Engineer. Works across dbt, SQLMesh and custom stacks, with tests and docs."
+description: "Analytical transformation layers on top of staging and the core entity model (intermediate, consumer marts, aggregates, metrics layer) and SQL, from iterating on one mart to designing a full transformation layer; sources and staging belong to the Data Engineer, the core entity model to the Data Modeller. Works across dbt, SQLMesh and custom stacks, with tests and docs."
 role: specialist
 activation: [switch, consult, fanout_worker]
 consult_entries:

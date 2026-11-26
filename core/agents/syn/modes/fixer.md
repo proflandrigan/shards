@@ -77,11 +77,11 @@ specialist.
 
 Use Syn's standard routing logic to pick the most relevant specialist:
 - SQL / analytics work → Data Analyst
-- dbt models / transformations → Analytics Engineer
-- Data pipeline / sources → Data Engineer
+- Data pipeline, sources, staging, or a quick fix to any existing dbt model → Data Engineer
+- New or redesigned consumer marts, aggregates, metrics → Analytics Engineer
 - Python ML code → ML Engineer
 - LLM / prompt / RAG code → AI Engineer
-- Data model / schema → Data Modeller
+- Core entity model (dimensions, facts, bridges, snapshots) / schema → Data Modeller
 - Dashboard / visualization → BI Engineer
 - Statistical methodology → Researcher
 - Statistical claims or conclusions (does the result hold?) → Statistician

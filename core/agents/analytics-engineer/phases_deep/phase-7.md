@@ -22,10 +22,11 @@ Each task in `shards/<project_name>/tasks.yaml` cites one of these specification
 Source definitions and staging models are the Data Engineer's; this build reads
 the existing staging layer.
 
+Snapshots and other core entity models are the Data Modeller's.
+
 1. Intermediate models, each with its schema file; fan-out matches Phase 3 predictions.
-2. Mart models, each with its schema file; full validation suite.
-3. Snapshot models (if SCD Type 2).
-6. Singular test files.
+2. Consumer mart models, each with its schema file; full validation suite.
+3. Singular test files.
 
 Every model component comprises:
 - **Join path trace (models with joins):** Before writing SQL for any model that
@@ -71,8 +72,8 @@ Every model component comprises:
      `dbt show --select <model> --limit 5` — visually confirm column names,
      types, and values look correct.
 
-  Scale to model importance: staging models need only grain + sample; intermediate
-  models add fan-out checks if they contain joins; mart/fact models get the full
+  Scale to model importance: intermediate
+  models get grain + sample, plus fan-out checks if they contain joins; mart/fact models get the full
   suite.
 
 Task acceptance commands must name the exact test command and the measured facts expected (row counts, `null rate on join key = 0.00%`, grain check result).

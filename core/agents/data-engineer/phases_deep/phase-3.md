@@ -6,8 +6,10 @@
 ## Deep Phase 3 — Model Design
 
 Goal: Design the source and staging layers and the pipeline that loads them.
-Intermediate and mart models are out of scope on this track; they belong to the
-Analytics Engineer, who builds on your staging layer.
+Everything above staging is out of scope on this track: the core entity model
+(dimensions, facts, bridges, snapshots) is the Data Modeller's, and intermediate,
+consumer mart and metrics models are the Analytics Engineer's. Both build on
+your staging layer.
 
 For each model: model name, grain, key columns, join logic (if any), materialization.
 
@@ -18,7 +20,7 @@ Ask about:
 
 Present as a DAG:
 ```
-[source] → [staged] → (Analytics Engineer: intermediate → mart)
+[source] → [staged] → (Data Modeller: core entity model; Analytics Engineer: intermediate → consumer marts)
 ```
 
 ### Document Deep Phase 3

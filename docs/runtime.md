@@ -294,7 +294,7 @@ Every tool response starts with the state header (section 4). Session-bound tool
 | `ar_end` | Record the stop reason on the research ref, close the AR lease (a branch leaves the shared lease), end the run; removes a branch run's worktree unless `keep_worktree`. | [`research.md`](research.md) |
 
 - `agent` must list the requested mode in its `activation` field.
-- Switch with `project` substitutes it into the agent's `output_dir`, refuses paths that escape the root, and creates the directory if missing. Without `project` it returns `output_dir_template` instead.
+- Switch with `project` substitutes it into the agent's `output_dir`, refuses paths that escape the root, and creates the directory if missing. Without `project` it returns `output_dir_template` instead, unless the `output_dir` has no `{project}` (for example `shards/academic_reports/`): a fixed directory is resolved and created either way.
 - `reground` holds the full re-ground block on switch (section 4). It is empty for other events until E11.7.
 
 **Frame schema.** `frames.json` is `{frames: [...]}`. Index 0 is the base frame and the last element is the top.

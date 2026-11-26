@@ -1,6 +1,6 @@
 # Decompose & Swarm: Parallel Slices for Large Work
 
-When Syn (PM Mode, Free Form or general orchestration) faces a genuinely large task, it decomposes the work into bounded slices and runs them with multiple same-type workers in parallel, then merges the results into one deliverable. This is the default for large work, not an opt-in mode. A single agent remains the default for anything small.
+When Syn (Free Form or general orchestration) faces a genuinely large task, it decomposes the work into bounded slices and runs them with multiple same-type workers in parallel, then merges the results into one deliverable. This is the default for large work, not an opt-in mode. A single agent remains the default for anything small. In PM Mode, a large workstream scales inside its lead's own task list (more task cards, higher `max_parallel`) instead of a Syn-level swarm.
 
 ## When to swarm
 
@@ -17,8 +17,8 @@ Poor candidates: a single SQL query however involved, a one-file change or small
 1. **Judge the scale.** Small means one agent. Genuinely large means swarm.
 2. **Slice.** Each slice is bounded, independently verifiable (its own definition of done), collision-free (its own output paths such as `shards/<name>/slice-<n>/`) and mergeable. Slice again if a slice is still too big.
 3. **Spawn.** Syn opens a fan-out with `fanout_start`, one slice per worker, all launched in parallel. Each worker claims its slice with `fanout_claim` and may write only inside it. See [Activation Modes](activation-modes.md).
-4. **Review.** Each slice returns a verdict (APPROVED, NEEDS REVISION or BLOCKED). Syn sends a slice back with specific feedback when needed, with the same revision cap as PM Mode.
-5. **Merge.** `fanout_collect` merges the verdicts (worst wins). Syn reads the slice artifacts from disk, reconciles interfaces, writes any glue and records the merge in `project-specs.md` or `project-plan.md`.
+4. **Review.** Each slice returns a verdict (APPROVED, NEEDS REVISION or BLOCKED). Syn sends a slice back with specific feedback when needed, up to 3 revision rounds per slice, bringing you in earlier when a round makes no progress or a slice is BLOCKED.
+5. **Merge.** `fanout_collect` merges the verdicts (worst wins). Syn reads the slice artifacts from disk, reconciles interfaces, writes any glue and records the merge in the task's `project-specs.md`.
 
 Workers run autonomously: they do not stop at gates, skip the activation menu and Phase 0, and do not call Syn for review. Syn announces the swarm to you first (how many slices, which types, which paths) and reads slice outputs from disk rather than from task output to protect its own context.
 

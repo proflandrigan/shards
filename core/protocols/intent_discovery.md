@@ -116,12 +116,12 @@ infrastructure). If no data exists, flag and discuss scope.
 **Opener:** "What's changing in the data pipeline — new source, model fix, or something else?"
 
 **Domain probes:**
-- Scope: new source, staging build, pipeline or model fix, performance issue (a new mart build is the Analytics Engineer's)
+- Scope: new source, staging build, pipeline or model fix, performance issue (a new core entity model is the Data Modeller's; a new consumer mart is the Analytics Engineer's)
 - Current state: what exists, what's working, what's broken
 - Upstream/downstream: what feeds the affected models, what they feed
 - "Done" criteria: what should be true after the change
 
-**Assessment:** Determine track — Quick (targeted fix on any model) or Deep (new source or staging layer). A new or redesigned mart goes to the Analytics Engineer.
+**Assessment:** Determine track — Quick (targeted fix on any model) or Deep (new source or staging layer). A new core entity model goes to the Data Modeller; a new or redesigned consumer mart to the Analytics Engineer.
 Route to Quick if the user can point at a specific model and describe the gap precisely.
 
 ### Data Modeller
@@ -129,7 +129,7 @@ Route to Quick if the user can point at a specific model and describe the gap pr
 **Opener:** "What data model are you working on — what's the entity and its grain?"
 
 **Domain probes:**
-- Scope: new model, column change, relationship fix, documentation
+- Scope: new core entity model (dimensions, facts, bridges, snapshots), column change, relationship fix, documentation (staging is the Data Engineer's; consumer marts the Analytics Engineer's)
 - Entity: what business concept, what grain (one row per...)
 - Dependencies: upstream sources, downstream consumers
 - "Done" criteria: what correctness means for this model
@@ -144,12 +144,12 @@ model and the change is additive or cosmetic.
 
 **Domain probes:**
 - Metrics: what measures, what dimensions, what grain
-- Source tables: where the data comes from, staging or raw
+- Source tables: which staging (Data Engineer) and core entity models (Data Modeller) it builds on
 - Business logic: how measures are calculated, what filters apply
 - Consumers: who queries this mart — dashboards, analysts, reports
 
 **Assessment:** Determine track — Quick (targeted fix to existing mart) or Deep
-(new mart, new metric, redesign). Route to Quick if the change is contained to
+(new consumer mart, new metric, redesign; a new core entity model is the Data Modeller's). Route to Quick if the change is contained to
 one model and the user knows the exact logic to adjust.
 
 ### Data Analyst

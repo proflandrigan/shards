@@ -5,7 +5,9 @@
 
 ## Deep Phase 5 — Physical Design Decisions
 
-Goal: Map logical model to dbt implementation decisions.
+Goal: Map logical model to dbt implementation decisions for the core entity
+model (dimensions, facts, bridges, snapshots). Staging it reads is the Data
+Engineer's; consumer marts on top of it are the Analytics Engineer's.
 
 For each entity: dbt layer, materialization, incremental strategy (if applicable),
 SCD approach, model file naming.
@@ -31,7 +33,7 @@ Validate the list with the tasks_set tool; the rules are in {{protocol delegated
 - **Logical → physical mapping:**
   | Entity | dbt Model Name | Layer | Materialization | Notes |
   |--------|---------------|-------|-----------------|-------|
-  | <entity> | <name> | mart | table | |
+  | <entity> | <name> | dimension \| fact \| bridge \| snapshot | table | |
 - **Incremental configs (if applicable):**
   - <model>: unique_key=<col>, strategy=<merge|delete+insert|append>
 - **SCD handling:**

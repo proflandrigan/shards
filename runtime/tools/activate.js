@@ -52,8 +52,10 @@ module.exports = defineTool({
     let outputDirTemplate = null;
     let created = false;
     if (agent.output_dir) {
-      if (args.project) {
-        const rel = agent.output_dir.replace('{project}', args.project);
+      // A fixed output_dir (no {project}, e.g. shards/academic_reports/) resolves without a project.
+      const fixed = !agent.output_dir.includes('{project}');
+      if (args.project || fixed) {
+        const rel = fixed ? agent.output_dir : agent.output_dir.replace('{project}', args.project);
         const root = path.resolve(ctx.root);
         const abs = path.resolve(root, rel);
         if (abs !== root && !abs.startsWith(root + path.sep)) throw new Error(`Output directory escapes project root: ${rel}`);

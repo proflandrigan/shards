@@ -24,7 +24,7 @@ Concrete fits:
 | Situation | Why |
 |---|---|
 | Data Modeller post-build phase running grain + fan-out + null + sample on N models | Repeats N×4 queries; classic prompt-spam pattern |
-| Analytics Engineer per-layer checkpoint validation | Identical sweep across staging → intermediate → mart |
+| Analytics Engineer per-layer checkpoint validation | Identical sweep across intermediate → consumer mart |
 | ML Engineer / Data Scientist verifying feature query joins | Tier 2/3 join verification per join |
 | Data Modeller service-mode consultation running PK/null/fan-out/freshness on the requested tables | Often 4–12 SELECT calls in a row |
 | Join path protocol Tier 2/3 verification (count-before / count-after at every join) | Repeated count comparisons |

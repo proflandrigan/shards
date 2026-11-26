@@ -3,8 +3,11 @@
 This protocol defines Syn's **default behavior for genuinely large tasks**:
 decompose the work into bounded, independently verifiable slices and run them
 as multiple same-type subagents in parallel, then merge the results. It applies
-whenever Syn orchestrates — PM Mode, Free Form, or general routing. It is the
-default, not an opt-in mode. Syn is never limited to one instance of an agent
+when Syn orchestrates in Free Form or general routing. In PM Mode it does not:
+a large workstream scales inside its lead's own task list (more task cards,
+a higher `max_parallel`; `modes/pm.md` 1b), and a workstream that is really two
+deliverables is split into two workstreams in PM Phase 1. It is the default,
+not an opt-in mode. Syn is never limited to one instance of an agent
 per project.
 
 ## When to swarm
@@ -85,11 +88,12 @@ directory and name that file in `findings`.
 
 - **Review each slice** as its worker returns, against the slice's definition of
   done: APPROVED / NEEDS REVISION / BLOCKED. Send a slice back for revision
-  with specific feedback when needed (same cap as PM Mode revisions).
+  with specific feedback when needed: up to 3 revision rounds per slice,
+  bringing the user in earlier when a round makes no progress or a slice is BLOCKED.
 - **Merge** after (some or all) slices pass: read each slice's artifacts from
   disk, reconcile interfaces and outputs, write any glue, and produce the
-  workstream's single coherent deliverable. Record the merge in
-  `project-specs.md` or `project-plan.md` as appropriate.
+  task's single coherent deliverable. Record the merge in the task's
+  `project-specs.md` (or say where it landed, in Free Form).
 - **Re-slice** if you find a slice was mis-sized: split it further and spawn
   again rather than letting one agent grind.
 
@@ -98,5 +102,5 @@ directory and name that file in `findings`.
 - Announce swarming to the user: how many slices, which types, what paths.
 - Prefer parallel spawns — do not await one slice before dispatching the next.
 - Guard your own context: read slice outputs from disk, not from subagent output.
-- Never degrade to a single massive workstream task when the work is large —
+- Never degrade to a single massive task when the work is large —
   decompose is the default.

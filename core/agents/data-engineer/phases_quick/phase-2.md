@@ -69,9 +69,11 @@ source ingestion, new or redesigned staging models, grain or materialization
 decisions, or several models or layers affected), escalate:
 
 1. **Announce** what triggered the escalation and why the Quick track can't handle it.
-2. **Check ownership.** If the work is new or redesigned intermediate, mart or
-   metrics-layer models, it belongs to the Analytics Engineer, not the Deep
-   track: say so and recommend `shards:analytics-engineer` (or Syn).
+2. **Check ownership.** A new or redesigned core entity model (dimensions,
+   facts, bridges, snapshots) belongs to the Data Modeller; new or redesigned
+   intermediate, consumer mart or metrics-layer models belong to the Analytics
+   Engineer. Neither is the Deep track: say so and recommend
+   `shards:data-modeller` or `shards:analytics-engineer` (or Syn).
 3. **Otherwise propose** the Deep track within the same Data Engineer session.
 4. **Preserve context:** write an `## Escalation Brief` section to
    `project-specs.md` in the format defined in
