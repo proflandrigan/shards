@@ -147,7 +147,7 @@ describe('review leases and enforcement', () => {
 });
 
 describe('fanout_collect for review', () => {
-  it('CONFIRMED gives NEEDS REVISION with counts and per_slice; PLAUSIBLE and REFUTED alone give APPROVED', async () => {
+  it('CONFIRMED gives NEEDS REVISION with counts and per_slice; is returned with counts', async () => {
     const { lease } = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('s1'), slice('s2')] });
     const r = await call('fanout_collect', { lease_id: lease.id, results: [{ slice_id: 's1', status: 'CONFIRMED', summary: 'bug', findings: [{ id: 'F1' }] }, { slice_id: 's2', status: 'REFUTED' }] });
     expect(r.isError).toBeFalsy();
@@ -158,11 +158,13 @@ describe('fanout_collect for review', () => {
     expect(out.per_slice.s2.status).toBe('REFUTED');
     expect(L.listActive(sess).find((x) => x.id === lease.id)).toBeUndefined();
   });
-  it('only PLAUSIBLE and REFUTED give APPROVED', async () => {
+  it('an untested PLAUSIBLE is not APPROVED; all REFUTED is', async () => {
     const { lease } = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('s1'), slice('s2')] });
     const out = await fanout.collectFanout(sess, lease.id, [{ slice_id: 's1', status: 'PLAUSIBLE' }, { slice_id: 's2', status: 'REFUTED' }]);
-    expect(out.verdict).toBe('APPROVED');
+    expect(out.verdict).toBe('NEEDS REVISION');
     expect(out.counts).toEqual({ CONFIRMED: 0, PLAUSIBLE: 1, REFUTED: 1 });
+    const next = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('s3')] });
+    expect((await fanout.collectFanout(sess, next.lease.id, [{ slice_id: 's3', status: 'REFUTED' }])).verdict).toBe('APPROVED');
   });
   it('rejects a fix-style verdict, a bad status, unknown and missing slices', async () => {
     const { lease } = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('s1'), slice('s2')] });

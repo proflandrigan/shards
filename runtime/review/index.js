@@ -45,8 +45,8 @@ function assertRunCap(leasesObj, runId, adding) {
   }
 }
 
-// mergeReview(results, lease): one {slice_id, status, summary?, findings?} per slice. Any CONFIRMED finding means
-// NEEDS REVISION; otherwise APPROVED. REFUTED and PLAUSIBLE results are kept in per_slice for the record.
+// mergeReview(results, lease): one {slice_id, status, summary?, findings?} per slice. APPROVED only when every
+// finding was REFUTED: a CONFIRMED one is a real issue and a PLAUSIBLE one was never tested. All are kept in per_slice.
 function mergeReview(results, lease) {
   if (!Array.isArray(results) || !results.length) throw new Error('mergeReview: results must be a non-empty array');
   const want = new Set((lease.slices || []).map((s) => s.id));
@@ -61,7 +61,7 @@ function mergeReview(results, lease) {
   if (missing.length) throw new Error(`mergeVerdicts: missing result for slice(s): ${missing.join(', ')}`);
   const counts = { CONFIRMED: 0, PLAUSIBLE: 0, REFUTED: 0 };
   for (const x of Object.values(per_slice)) counts[x.status] += 1;
-  const verdict = counts.CONFIRMED > 0 ? 'NEEDS REVISION' : 'APPROVED';
+  const verdict = counts.CONFIRMED + counts.PLAUSIBLE > 0 ? 'NEEDS REVISION' : 'APPROVED';
   return { verdict, counts, per_slice };
 }
 
