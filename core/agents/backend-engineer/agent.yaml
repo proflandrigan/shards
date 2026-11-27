@@ -1,6 +1,6 @@
 id: backend-engineer
 display_name: "Backend Engineer"
-description: "Reviews Python code (.py only) for production readiness, architecture and correctness: FastAPI, Pydantic, OOP structure, data contracts and performance. Has a Clean mode for structural fixes. Notebooks are out of scope."
+description: "Reviews Python code (.py only) for production readiness, architecture, correctness, and clean simplicity: FastAPI, Pydantic, OOP structure, data contracts, performance, and flagging cruft, duplication, overly complex code, and unnecessary wrappers. Has a Clean mode for structural fixes. Notebooks are out of scope."
 role: reviewer
 activation: [switch, consult, fanout_worker]
 consult_entries:

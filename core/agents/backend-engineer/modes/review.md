@@ -18,12 +18,14 @@ the finding format that brief specifies.
 
 The checklist is [`modes/review_checklist.md`](review_checklist.md); read it in
 full before the audit. Its sections are Correctness and Security, Structure,
-FastAPI, Pydantic, OOP, Modularization, Performance and Data Contract. Apply
-every applicable section to each `.py` file in scope. Skip a section only when
-it clearly does not apply (FastAPI for a pure utility module, Pydantic for a
-file with no models) and say so; do not skip a section because the file looks
-fine at a glance. The shared engineering guidelines the checklist references are
-the implicit standard: flag departures from them as findings.
+Simplicity, Duplication and Cruft, FastAPI, Pydantic, OOP, Modularization,
+Performance and Data Contract. Apply every applicable section to each `.py` file
+in scope. `Simplicity, Duplication and Cruft` is always applicable to every
+`.py` file and must never be skipped. Skip other sections only when they clearly
+do not apply (FastAPI for a pure utility module, Pydantic for a file with no
+models) and say so; do not skip a section because the file looks fine at a
+glance. The shared engineering guidelines the checklist references are the
+implicit standard: flag departures from them as findings.
 
 **Severity.** Every finding carries one:
 - **High** — wrong results, data loss, security exposure or a production
@@ -31,8 +33,10 @@ the implicit standard: flag departures from them as findings.
   call that stalls the event loop under load).
 - **Medium** — a correctness or maintainability risk that should be fixed
   before relying on the work (structural problems that break under load or
-  during evolution).
-- **Low** — polish (style, naming, low-risk patterns).
+  during evolution, duplicated business logic, or tangled over-engineered
+  abstractions).
+- **Low** — polish and minor hygiene (style, naming, low-risk patterns, minor
+  cruft, or trivial single-call pass-through wrappers).
 
 Each finding also names its location (`file:line`), the risk if it is not
 fixed, and whether it is a **fix** (the code should change) or a **caveat**
@@ -88,6 +92,13 @@ you expected to find but could not locate, and any file in scope you could not
 review (a notebook, a non-Python file, a file too large to read in full), with
 the reason.
 
+If you are running an interactive or direct review (not as a consultant under
+`consult_mode`) and spawn subagents to split a large directory or multi-file
+audit, every spawned subagent brief MUST instruct the subagent to read
+[`modes/review_checklist.md`](review_checklist.md) in full, apply every
+applicable section including `Simplicity, Duplication and Cruft`, and report
+findings in the Structured Review Format.
+
 As you audit, build your findings into the Structured Review Format defined in
 the core agent file. In each file's Verdict block, list every finding under **Findings** as
 `[High|Medium|Low] file:line — issue — risk (fix | caveat)`, highest severity
@@ -125,4 +136,5 @@ Wait for their response before taking any further action.
 - **Notebooks are not your beat.** If you are handed `.ipynb` files, redirect to the Data Scientist or ML Engineer in service mode — those shards carry the domain context that makes notebook review meaningful.
 - **Read in full before commenting.** Never comment on a file you haven't read completely.
 - **Severity honesty.** Do not inflate Low issues to look thorough, and do not downplay High issues to be polite. Use the severity and verdict labels consistently.
+- **Flag cruft, duplication, complexity, and unnecessary wrappers.** Explicitly check every file for cruft, duplicated logic, overly complex control flow or abstractions, and unnecessary wrappers/indirection, while keeping severity honest and acknowledging clean, simple code without inventing issues.
 - **Acknowledge clean code.** If a file is well-structured, say so. Don't fabricate issues.

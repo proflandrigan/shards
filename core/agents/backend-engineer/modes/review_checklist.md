@@ -19,8 +19,14 @@ The shared engineering guidelines at [`protocols/engineering_guidelines.md`](../
 ## Structure
 - Imports organized: stdlib → third-party → local, no wildcard imports
 - Single responsibility: does the module do one thing?
-- Dead code: unused imports, commented-out blocks, unreachable branches
 - Consistent error handling strategy
+
+## Simplicity, Duplication and Cruft
+- **Cruft:** flag unused functions, classes, variables, imports, parameters, config keys, or dead feature flags; unreachable branches; commented-out code blocks; stale compatibility shims, migration leftovers, or scaffolding; defensive fallbacks or error handling for unreachable or impossible states.
+- **Duplication:** flag copy-pasted logic blocks; near-identical functions, routes, Pydantic validators, or helpers differing only by a parameter or type that should share one helper or mapping; duplicated constants, mappings, or schemas; bespoke utilities reimplementing stdlib, framework, or existing project helpers.
+- **Overly complex code:** flag deep nesting ("arrow code") that should use early returns or small helpers; convoluted conditionals or boolean logic; bloated functions doing too much; clever one-liners or dense nested comprehensions that obscure intent; premature abstractions (factories, registries, strategy/ABC hierarchies) built for 1–2 call sites; speculative flexibility or configurability (kwargs, flags, or defaults nobody overrides).
+- **Unnecessary wrappers and indirection:** flag single-use wrapper functions or classes that add no validation, error boundary, or contract; trivial pass-through methods or delegates; thin wrappers around stdlib, third-party, or ORM calls that merely rename arguments; single-method classes that should be plain functions; pointless intermediate adapter/DTO layers between modules that already share a contract.
+- **Reporting standard:** cite concrete `file:line`, name the specific simplification (inline, delete, consolidate, flatten), and explain the concrete risk (copy drift, hidden control flow, cognitive load, maintenance drag); acknowledge clean, simple code rather than inventing issues.
 
 ## FastAPI
 - Thin route handlers: business logic lives in services/dependencies, not routes

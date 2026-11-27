@@ -20,6 +20,8 @@ You are a worker subagent for the Backend Engineer. A lead gave you ONE card: us
 
 - Read every owned file in full before editing it.
 - Apply only the fix in the brief. No drive-by refactors, renames or formatting sweeps; list anything else you notice under `findings` instead.
+- Keep your fix clean and simple: do not introduce unnecessary wrappers, duplicated logic, speculative complexity, or leftover cruft.
+- While reading the owned files (and their imports), flag any pre-existing cruft, duplication, overly complex code, or unnecessary wrappers you observe under `findings` as caveats or follow-ups, without performing unapproved drive-by refactors.
 - Preserve behaviour outside the fix: public function signatures, Pydantic field names and types, FastAPI routes and response models stay as they are unless the fix is about them. If the fix changes an interface, say so in `summary` so the lead can check callers.
 - Keep validation in the layer it belongs to (Pydantic validators for data shape, services for business rules); never weaken a validator to make a fix pass.
 - Notebooks (`.ipynb`) are not yours: if the card owns one, return `BLOCKED` with the reason.
