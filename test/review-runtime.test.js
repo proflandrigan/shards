@@ -219,6 +219,17 @@ describe('review_snapshot', () => {
     expect((await snap({ action: 'start', paths: ['src'] })).isError).toBe(true);
     expect((await snap({ action: 'start', run_id: 'r1', paths: ['../etc'] })).isError).toBe(true);
   });
+  it('leaves out excluded paths, in start and check', async () => {
+    await snap({ action: 'start', run_id: 'r1', paths: ['.'], exclude: ['docs/'] });
+    fs.writeFileSync(path.join(tmp, 'docs/findings.md'), 'new\n');
+    fs.writeFileSync(path.join(tmp, 'docs/b.md'), 'changed\n');
+    expect(body(await snap({ action: 'check', run_id: 'r1' })).clean).toBe(true);
+  });
+  it('refuses a path that does not exist rather than reporting it clean', async () => {
+    const r = await snap({ action: 'start', run_id: 'r1', paths: ['src', 'srcc'] });
+    expect(r.isError).toBe(true);
+    expect(JSON.stringify(r.content)).toContain('srcc');
+  });
   it('snapshot state lives under the session state directory', async () => {
     await snap({ action: 'start', run_id: 'r1', paths: ['src'] });
     expect(fs.existsSync(path.join(state.sessionDir, 'review-snapshots', 'r1.json'))).toBe(true);

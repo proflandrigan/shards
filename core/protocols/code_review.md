@@ -64,6 +64,10 @@ up to 4 verifiers each).
   **Code execution:** approved — allowed commands: <list>
   ```
 
+  A lead opens on its `review` entry where it has one, so also add to its brief:
+  "Where your agent has a service-mode file with a checklist for these files, apply
+  that checklist too."
+
   Leads (use the notebook reviewer from Step 2):
   - SQL: {{review_lead analytics-engineer task="SQL code review for <project_name>"}}
   - Python scripts: {{review_lead backend-engineer task="Python code review for <project_name>"}}

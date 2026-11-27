@@ -310,13 +310,17 @@ parallel. Findings will appear as each returns."*
 
 Before the first lead starts, follow {{protocol review_panel}} section 2: when code
 execution is approved, run
-`review_snapshot(action="start", run_id, paths=<the reviewed paths>)`. Then dispatch
+`review_snapshot(action="start", run_id, paths=<the reviewed paths>)`. When
+`<output_dir>` is inside the project root, also pass
+`exclude=[<output_dir, project-root-relative>]`: findings are written there while
+the leads run. Then dispatch
 **one review lead per unique specialist** in the confirmed panel, not one per
 (specialist, bucket) pair. A specialist in several buckets gets all of its files in
 one brief, grouped by bucket. Exception — **size split:** when one specialist's file
 list exceeds about 25 files or 4,000 lines of source, split it into leads by
 subdirectory (each under the limit) so every file gets a full read; write each part
-as `<reviewer>-findings-<n>.md`.
+as `<reviewer>-findings-<n>.md`. Tell part n to start its slice ids with
+`<reviewer>-<n>-`, so the parts do not share scratch dirs.
 
 Run the leads in **two waves**, each wave as parallel calls in a single message:
 

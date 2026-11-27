@@ -52,13 +52,13 @@ function mergeReview(results, lease) {
   const want = new Set((lease.slices || []).map((s) => s.id));
   const per_slice = {};
   for (const r of results) {
-    if (!r || typeof r.slice_id !== 'string' || !r.slice_id || !want.has(r.slice_id)) throw new Error(`mergeVerdicts: unknown slice "${r && r.slice_id}"`);
-    if (Object.prototype.hasOwnProperty.call(per_slice, r.slice_id)) throw new Error(`mergeVerdicts: duplicate result for slice "${r.slice_id}"`);
-    if (!STATUSES.includes(r.status)) throw new Error(`mergeVerdicts: invalid status "${r.status}" for slice "${r.slice_id}" (CONFIRMED, PLAUSIBLE or REFUTED)`);
+    if (!r || typeof r.slice_id !== 'string' || !r.slice_id || !want.has(r.slice_id)) throw new Error(`mergeReview: unknown slice "${r && r.slice_id}"`);
+    if (Object.prototype.hasOwnProperty.call(per_slice, r.slice_id)) throw new Error(`mergeReview: duplicate result for slice "${r.slice_id}"`);
+    if (!STATUSES.includes(r.status)) throw new Error(`mergeReview: invalid status "${r.status}" for slice "${r.slice_id}" (CONFIRMED, PLAUSIBLE or REFUTED)`);
     per_slice[r.slice_id] = { status: r.status, ...(r.summary !== undefined ? { summary: r.summary } : {}), ...(r.findings !== undefined ? { findings: r.findings } : {}) };
   }
   const missing = [...want].filter((id) => !(id in per_slice));
-  if (missing.length) throw new Error(`mergeVerdicts: missing result for slice(s): ${missing.join(', ')}`);
+  if (missing.length) throw new Error(`mergeReview: missing result for slice(s): ${missing.join(', ')}`);
   const counts = { CONFIRMED: 0, PLAUSIBLE: 0, REFUTED: 0 };
   for (const x of Object.values(per_slice)) counts[x.status] += 1;
   const verdict = counts.CONFIRMED + counts.PLAUSIBLE > 0 ? 'NEEDS REVISION' : 'APPROVED';
@@ -72,7 +72,19 @@ function skipped(name) {
 
 // Walk rel (project-relative file or directory) and record a sha256 per file. Symlinks are recorded by their
 // target text and never followed. Missing paths contribute nothing (their files show up as deleted).
-function hashTree(root, rel, out) {
+function hashFile(abs) {
+  // Chunked: data projects hold files too large to read into one buffer.
+  const h = crypto.createHash('sha256');
+  const buf = Buffer.alloc(1 << 20);
+  const fd = fs.openSync(abs, 'r');
+  try {
+    for (let n = fs.readSync(fd, buf, 0, buf.length, null); n > 0; n = fs.readSync(fd, buf, 0, buf.length, null)) h.update(buf.subarray(0, n));
+  } finally { fs.closeSync(fd); }
+  return h.digest('hex');
+}
+
+function hashTree(root, rel, out, exclude = []) {
+  if (exclude.some((e) => rel === e || rel.startsWith(`${e}/`))) return out;
   const abs = path.join(root, rel);
   let st;
   try { st = fs.lstatSync(abs); } catch (e) { if (e.code === 'ENOENT') return out; throw e; }
@@ -81,10 +93,10 @@ function hashTree(root, rel, out) {
   } else if (st.isDirectory()) {
     for (const name of fs.readdirSync(abs).sort()) {
       if (skipped(name)) continue;
-      hashTree(root, rel === '.' ? name : `${rel}/${name}`, out);
+      hashTree(root, rel === '.' ? name : `${rel}/${name}`, out, exclude);
     }
   } else if (st.isFile()) {
-    out[rel] = crypto.createHash('sha256').update(fs.readFileSync(abs)).digest('hex');
+    out[rel] = hashFile(abs);
   }
   return out;
 }
@@ -93,31 +105,36 @@ function snapshotFile(state, runId) {
   return path.join(state.sessionDir, 'review-snapshots', `${runId}.json`);
 }
 
-function hashPaths(root, paths) {
+function hashPaths(root, paths, exclude) {
   const files = {};
-  for (const p of paths) hashTree(root, p, files);
+  for (const p of paths) hashTree(root, p, files, exclude);
   return files;
 }
 
-// action start: record the baseline for paths (project-relative). action check: re-hash the same paths.
-function snapshot(root, state, { action, run_id: runId, paths } = {}) {
+// action start: record the baseline for paths (project-relative), minus exclude (the caller's own output).
+// action check: re-hash the same paths with the same exclusions.
+function snapshot(root, state, { action, run_id: runId, paths, exclude } = {}) {
   validateRunId(runId);
   const file = snapshotFile(state, runId);
   if (action === 'start') {
     if (!Array.isArray(paths) || !paths.length) throw new Error('review_snapshot start requires paths (project-relative)');
     // '.' means the whole project: reviews are often pointed at the root (lease paths cannot be, snapshots can).
     const norm = [...new Set(paths.map((p) => (p === '.' || p === './' ? '.' : leases.normalizeRel(p))))];
-    const files = hashPaths(root, norm);
+    // A mistyped path would hash nothing and later check as clean, so refuse it.
+    const missing = norm.filter((p) => !fs.existsSync(path.join(root, p)));
+    if (missing.length) throw new Error(`review_snapshot: path(s) not found: ${missing.join(', ')}`);
+    const skip = [...new Set((exclude || []).map((p) => leases.normalizeRel(p)))];
+    const files = hashPaths(root, norm, skip);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     const tmp = `${file}.tmp`;
-    fs.writeFileSync(tmp, JSON.stringify({ run_id: runId, paths: norm, started_at: new Date().toISOString(), files }, null, 2));
+    fs.writeFileSync(tmp, JSON.stringify({ run_id: runId, paths: norm, exclude: skip, started_at: new Date().toISOString(), files }, null, 2));
     fs.renameSync(tmp, file);
-    return { run_id: runId, paths: norm, files: Object.keys(files).length };
+    return { run_id: runId, paths: norm, exclude: skip, files: Object.keys(files).length };
   }
   if (action === 'check') {
     if (!fs.existsSync(file)) throw new Error(`review_snapshot: no snapshot for run ${runId}; call action start first`);
     const base = JSON.parse(fs.readFileSync(file, 'utf8'));
-    const now = hashPaths(root, base.paths);
+    const now = hashPaths(root, base.paths, base.exclude);
     const added = []; const modified = []; const deleted = [];
     for (const [f, h] of Object.entries(now)) if (!(f in base.files)) added.push(f); else if (base.files[f] !== h) modified.push(f);
     for (const f of Object.keys(base.files)) if (!(f in now)) deleted.push(f);

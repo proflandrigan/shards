@@ -16,7 +16,7 @@ Before dispatch, ask the user whether code may run for this review, or inherit a
 
 Pick a `run_id` (`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`), unique per review. Take the snapshot only when code execution is approved. Without approval nothing runs; skip it and record the snapshot as `not run`. Code execution is not available for files outside the project root (snapshot and scratch paths are project-relative). Use `.` to snapshot the whole root.
 
-- Before dispatch: `review_snapshot(action="start", run_id, paths=<the reviewed paths>)`.
+- Before dispatch: `review_snapshot(action="start", run_id, paths=<the reviewed paths>)`. If you write anything inside those paths while the review runs (a report or findings directory), pass it as `exclude=[<project-relative dir>]`, or your own output shows up as a change.
 - After every lead has returned: `review_snapshot(action="check", run_id)`.
 - If `clean` is false, report each added, modified or deleted path to the user as a High finding. The review ran against a changing tree, so its results need a rerun.
 

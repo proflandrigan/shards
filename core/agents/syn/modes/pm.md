@@ -331,7 +331,7 @@ After all execution groups complete:
    - **Statistician** for claims on stats or metrics across workstreams (if any workstream reports results, lifts, comparisons or eval scores): passing the claims verbatim and the artifact paths. A BLOCKED claim is a Major issue; NEEDS REVISION is Minor
    - **Data Modeller** for data model coherence (if multiple data layers touch the same entities)
 
-   - **Approved:** follow `{{protocol review_panel}}` with run ID `pm-<project_name>-integration-<YYYY-MM-DD>` (sanitized as the protocol says). Snapshot the project (`paths=["."]`) before dispatch and check it after the leads return. Launch each reviewer above as a review lead, in one message, for example `{{review_lead backend-engineer task="Integration review for <project_name>"}}`. Each brief carries the run ID and `**Code execution:** approved — allowed commands: ...`.
+   - **Approved:** follow `{{protocol review_panel}}` with run ID `pm-<project_name>-integration-<YYYY-MM-DD>` (sanitized as the protocol says). Snapshot the project (`paths=["."]`) before dispatch and check it after the leads return. Launch each reviewer above as a review lead, in one message, for example `{{review_lead backend-engineer task="Integration review for <project_name>"}}`. Each brief carries the run ID, `**Code execution:** approved — allowed commands: ...` and "Where your agent has a service-mode file with a checklist for these files, apply that checklist too."
    - **Not approved:** consult each reviewer above on its `service` entry, as before, with no run ID or verification.
 4. If issues found:
    - Minor: spawn fix agents or re-task the owning specialist (revision cap applies)
