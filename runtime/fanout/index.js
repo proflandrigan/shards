@@ -74,7 +74,7 @@ async function startFanout(session, { agent, slices, ttl_ms, purpose, run_id: ru
     const lease = await leases.openLease(session, {
       owner: 'review', worker_type: agent, slices: slicesOut, ttl_ms,
       meta: { acceptance, purpose: 'review', run_id: runId },
-      guard: (cur) => review.assertRunCap(cur.leases, runId, norm.length),
+      guard: (cur) => review.assertRunCap(cur.leases, runId, norm.length, norm),
     });
     return { lease, cards: lease.slices.map((s) => card(lease, s)) };
   }

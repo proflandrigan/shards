@@ -6,7 +6,7 @@ const review = require('../review');
 
 module.exports = defineTool({
   name: 'review_snapshot',
-  description: 'Review guardrail: action "start" records a content hash of every file under the project-relative paths (run_id required); action "check" re-hashes the same paths and returns {clean, added, modified, deleted}. start refuses a path that does not exist; its exclude list (project-relative) leaves out your own output directory, and check reuses it. Skips .git, .shards, node_modules, venv, .venv, __pycache__ and .pytest_cache. Run start before the verifiers, check after they finish.',
+  description: 'Review guardrail: action "start" records a content hash of every file under the project-relative paths (run_id required); action "check" re-hashes the same paths and returns {clean, added, modified, deleted}. start refuses a path that does not exist and a run_id that already has a baseline; its exclude list (project-relative) leaves out your own output directory, and check reuses it. Skips .git, .shards, node_modules, venv, .venv, __pycache__ and .pytest_cache. Run start before the verifiers, check after they finish.',
   inputSchema: {
     type: 'object', additionalProperties: false, required: ['action', 'run_id'],
     properties: {

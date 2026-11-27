@@ -34,11 +34,17 @@ function assertRunSlices(slices, runId) {
   }
 }
 
-// Lease guard (runs under the state lock): 16 slices per run_id in the session, open or closed.
-function assertRunCap(leasesObj, runId, adding) {
+// Lease guard (runs under the state lock): 16 slices per run_id in the session, open or closed, and no new
+// slice path may overlap a slice of another live review lease (two verifiers must not share a scratch dir).
+function assertRunCap(leasesObj, runId, adding, newSlices = [], now = Date.now()) {
   let used = 0;
   for (const l of Object.values(leasesObj || {})) {
-    if (l && l.owner === 'review' && l.meta && l.meta.run_id === runId) used += (l.slices || []).length;
+    if (!l || l.owner !== 'review') continue;
+    if (l.meta && l.meta.run_id === runId) used += (l.slices || []).length;
+    if (l.status !== 'active' || !(Date.parse(l.expires_at) > now)) continue;
+    for (const s of newSlices) for (const p of s.paths) for (const o of l.slices || []) for (const q of o.paths || []) {
+      if (leases.pathsOverlap(p, q)) throw new Error(`fanout_start refused: review slice "${s.id}" path ${p} overlaps slice "${o.id}" of active lease ${l.id} (${q})`);
+    }
   }
   if (used + adding > MAX_SLICES_PER_RUN) {
     throw new Error(`fanout_start refused: run ${runId} already has ${used} review slice(s); at most ${MAX_SLICES_PER_RUN} per run_id (this call adds ${adding})`);
@@ -118,6 +124,8 @@ function snapshot(root, state, { action, run_id: runId, paths, exclude } = {}) {
   const file = snapshotFile(state, runId);
   if (action === 'start') {
     if (!Array.isArray(paths) || !paths.length) throw new Error('review_snapshot start requires paths (project-relative)');
+    // A second start would silently replace the baseline and hide changes made since the first one.
+    if (fs.existsSync(file)) throw new Error(`review_snapshot: run ${runId} already has a baseline; call action check, or use a new run_id`);
     // '.' means the whole project: reviews are often pointed at the root (lease paths cannot be, snapshots can).
     const norm = [...new Set(paths.map((p) => (p === '.' || p === './' ? '.' : leases.normalizeRel(p))))];
     // A mistyped path would hash nothing and later check as clean, so refuse it.

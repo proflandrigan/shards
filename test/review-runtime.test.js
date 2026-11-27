@@ -107,6 +107,13 @@ describe('fanout_start purpose=review', () => {
     const other = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: 'run-2', slices: [slice('x', ['.shards/review/run-2/x'])] });
     expect(other.lease.owner).toBe('review');
   });
+  it('refuses a slice that overlaps a slice of another active review lease; allows it once that lease closes', async () => {
+    const first = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('s1')] });
+    await expect(fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('s1b', [`.shards/review/${RUN}/s1/sub`])] })).rejects.toThrow(/overlaps slice "s1"/);
+    await fanout.collectFanout(sess, first.lease.id, [{ slice_id: 's1', status: 'REFUTED' }]);
+    const again = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('s1')] });
+    expect(again.lease.owner).toBe('review');
+  });
   it('pending gate refusal is unchanged for review', async () => {
     const { pushFrame } = require('../runtime/stack');
     const gates = require('../runtime/gates');
@@ -224,6 +231,14 @@ describe('review_snapshot', () => {
     fs.writeFileSync(path.join(tmp, 'docs/findings.md'), 'new\n');
     fs.writeFileSync(path.join(tmp, 'docs/b.md'), 'changed\n');
     expect(body(await snap({ action: 'check', run_id: 'r1' })).clean).toBe(true);
+  });
+  it('refuses a second start for the same run_id so the baseline cannot be reset', async () => {
+    await snap({ action: 'start', run_id: 'r1', paths: ['src'] });
+    fs.writeFileSync(path.join(tmp, 'src/a.py'), 'x = 2\n');
+    const again = await snap({ action: 'start', run_id: 'r1', paths: ['src'] });
+    expect(again.isError).toBe(true);
+    expect(JSON.stringify(again.content)).toContain('already has a baseline');
+    expect(body(await snap({ action: 'check', run_id: 'r1' })).modified).toEqual(['src/a.py']);
   });
   it('refuses a path that does not exist rather than reporting it clean', async () => {
     const r = await snap({ action: 'start', run_id: 'r1', paths: ['src', 'srcc'] });
