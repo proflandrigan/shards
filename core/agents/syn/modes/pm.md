@@ -323,12 +323,16 @@ After all execution groups complete:
    - Do data pipeline outputs match what the model expects?
    - Do model outputs match what downstream components evaluate?
    - Are APIs, interfaces, and data contracts aligned?
-3. Spawn targeted review agents:
+3. Spawn targeted review agents. Ask once in chat before spawning: "Run verified review for the integration review? Reviewers may run only the commands you name, for this review (default no)." Name the commands and the agent count (one review lead per reviewer, up to 4 verifiers each).
+   Reviewers, on either path:
    - **Backend Engineer** for `.py` code quality (if Python scripts exist)
    - **Data Scientist** or **ML Engineer** for `.ipynb` notebook code review (if notebooks exist), using the notebook-reviewer table in `protocols/code_review.md` Step 2
    - **Researcher** for methodology rigor (if statistical/ML work exists)
-   - **Statistician** for claims on stats or metrics across workstreams (if any workstream reports results, lifts, comparisons or eval scores): entry `service`, passing the claims verbatim and the artifact paths. A BLOCKED claim is a Major issue; NEEDS REVISION is Minor
+   - **Statistician** for claims on stats or metrics across workstreams (if any workstream reports results, lifts, comparisons or eval scores): passing the claims verbatim and the artifact paths. A BLOCKED claim is a Major issue; NEEDS REVISION is Minor
    - **Data Modeller** for data model coherence (if multiple data layers touch the same entities)
+
+   - **Approved:** follow `{{protocol review_panel}}` with run ID `pm-<project_name>-integration-<YYYY-MM-DD>` (sanitized as the protocol says). Snapshot the project (`paths=["."]`) before dispatch and check it after the leads return. Launch each reviewer above as a review lead, in one message, for example `{{review_lead backend-engineer task="Integration review for <project_name>"}}`. Each brief carries the run ID and `**Code execution:** approved — allowed commands: ...`.
+   - **Not approved:** consult each reviewer above on its `service` entry, as before, with no run ID or verification.
 4. If issues found:
    - Minor: spawn fix agents or re-task the owning specialist (revision cap applies)
    - Major: escalate to user with Syn's assessment and recommended fix

@@ -12,6 +12,10 @@ Fix items that touch the same file or a shared interface/contract serialize
 Fix items with no shared file or symbol run in parallel within a group. Caveats
 and contradictions awaiting a decision are not scheduled.
 
+Acceptance: a fix item with a CONFIRMED finding uses that finding's repro command
+(under `.shards/review/<run_id>/`) as its accept check. The repro fails now and must
+pass after the fix. Other items keep their existing checks.
+
 ---
 
 ## Execution Groups

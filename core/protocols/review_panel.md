@@ -6,7 +6,7 @@ type: reference
 
 # Review Panel Dispatch
 
-This applies to any caller that runs review leads from the main thread: Syn's panel review mode, a PM integration review, or a specialist's code review. The leads follow `{{protocol review_lead_contract}}`. The execution rules are in `{{protocol review_execution}}`.
+This applies to any caller that runs review leads from the main thread: Syn's panel review mode, a PM integration review, or a specialist's code review. The leads follow the review-lead contract (`review_lead_contract.md`); it governs them, not you. The execution rules are in `{{protocol review_execution}}`.
 
 ## 1. Approval
 
@@ -14,7 +14,7 @@ Before dispatch, ask the user whether code may run for this review, or inherit a
 
 ## 2. Snapshot
 
-Pick a `run_id` (`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`), unique per review.
+Pick a `run_id` (`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`), unique per review. Take the snapshot only when code execution is approved. Without approval nothing runs; skip it and record the snapshot as `not run`. Code execution is not available for files outside the project root (snapshot and scratch paths are project-relative). Use `.` to snapshot the whole root.
 
 - Before dispatch: `review_snapshot(action="start", run_id, paths=<the reviewed paths>)`.
 - After every lead has returned: `review_snapshot(action="check", run_id)`.
@@ -24,7 +24,7 @@ Pick a `run_id` (`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`), unique per review.
 
 - Launch one review lead per specialist on the panel, all in parallel, in one message. Each lead gets only its own files and its lens, plus the approval line and the `run_id`.
 - Do not launch a lead for a bucket that has no files.
-- A review run started inside a nested lead (for example a PM integration review that a workstream lead runs) has no verifiers. Its leads verify inline or leave findings PLAUSIBLE, as `{{protocol review_lead_contract}}` says.
+- A review run started inside a nested lead (for example a PM integration review that a workstream lead runs) has no verifiers. Its leads verify inline or leave findings PLAUSIBLE, as the review-lead contract says.
 
 ## 4. Merge
 

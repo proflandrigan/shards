@@ -4,7 +4,7 @@ Developer notes for lead/worker delegation: the task manifest (`tasks.yaml`), th
 
 ## 1. Overview
 
-A lead (the specialist agent running the phase) splits a phase's build work into tasks. Each non-inline task is handed to a worker subagent that owns a set of paths, runs one acceptance command, and returns one JSON result. Workers never hold gates, never change the plan, and never delegate (`core/protocols/worker_contract.md`).
+A lead (the specialist agent running the phase) splits a phase's build work into tasks. Each non-inline task is handed to a worker subagent that owns a set of paths, runs one acceptance command, and returns one JSON result. Workers never hold gates, never change the plan, and never delegate (`core/protocols/worker_contract.md`). Verified review uses the same lease store with its own leads and verifiers, which may delegate one level down (section 3.2).
 
 The lead owns the plan. A worker's `deviations` do not change anything by themselves; the lead follows `core/protocols/plan_drift.md`.
 
@@ -22,6 +22,7 @@ The lead owns the plan. A worker's `deviations` do not change anything by themse
 | `runtime/leases/index.js` | Path lease store. |
 | `runtime/git/leases.js` | `getLeasedPaths`, used to exclude leased paths from gate commits. |
 | `runtime/fanout/index.js` | Fan-out: `startFanout`, `claimSlice`, `mergeVerdicts`, `collectFanout`. |
+| `runtime/review/index.js`, `runtime/tools/review_snapshot.js` | Review leases: run ids, slice caps, the review merge, `review_snapshot` (section 3.2). |
 | `runtime/tools/fanout_start.js`, `fanout_claim.js`, `fanout_collect.js` | Tools `fanout_start`, `fanout_claim`, `fanout_collect` (section 3.1). |
 | `hooks/pre-tool-use.js`, `hooks/lib/enforce.js`, `hooks/lib/writes.js` | PreToolUse hook: `fanout_claim` binding and write rules (section 3.1). |
 | `runtime/server.js` | `startLeaseSweep`, the scheduled expiry sweep (`SHARDS_LEASE_SWEEP_MS`). |
@@ -105,31 +106,32 @@ On the content side, PM mode launches each workstream with `{{lead <agent>}}` (n
 
 ### 3.1 Fan-out tools (E5.9)
 
-A fan-out is one `fanout`-owned lease over N worker slices, opened by the lead. It does not use `tasks.yaml`. Code: `runtime/fanout/index.js`.
+A fan-out is one `fanout`-owned lease over N worker slices, opened by the lead (`purpose` `fix`, the default). The same tools with `purpose: "review"` open a `review`-owned lease for verified review (section 3.2). It does not use `tasks.yaml`. Code: `runtime/fanout/index.js`.
 
 | Tool | Input | Behaviour |
 |------|-------|-----------|
-| `fanout_start` | `agent`, `slices` (non-empty; each `{id, paths, acceptance}`), `ttl_ms?` | Opens one lease and returns `{lease_id, cards}`, one card per slice. |
+| `fanout_start` | `agent`, `slices` (non-empty; each `{id, paths, acceptance}`), `ttl_ms?`, `purpose?` (`fix` default, or `review`), `run_id?` (required for `review`, refused for `fix`) | Opens one lease and returns `{lease_id, cards}`, one card per slice. `fix` needs `fanout_worker` activation; `review` needs `consult` or `fanout_worker` and has its own rules (section 3.2). |
 | `fanout_claim` | `lease_id`, `slice_id` | A worker's first call. Returns that slice's card. The tool does not bind the worker; binding is done by the PreToolUse hook (below). |
-| `fanout_collect` | `lease_id`, `results` (one `{slice_id, verdict, summary?, findings?}` per slice) | Merges the verdicts, closes the lease, returns the merged result. |
+| `fanout_collect` | `lease_id`, `results` (fix: one `{slice_id, verdict, summary?, findings?}` per slice; review: one `{slice_id, status, summary?, findings?}` per slice) | Merges the results, closes the lease, returns the merged result. Review shape in section 3.2. |
 
 `fanout_start` refusals. Each is a thrown error and no lease is opened:
 
 - The top frame of the session has a pending gate: `fanout_start refused: the active frame has a pending gate (<id>)`. The check uses `pendingForFrame`, which matches a gate of any kind.
 - A gate owned by any frame on the stack is suspended: `fanout_start refused: a gate is suspended (<ids>)`. Resume and resolve it, or force-close it, first (S5F).
-- Unknown agent, or the agent's `activation` does not include `fanout_worker`.
+- Unknown agent, or the agent's `activation` does not include `fanout_worker` (`fix`) or `consult` or `fanout_worker` (`review`).
+- `purpose` is not `fix` or `review`; `run_id` is missing for `review` or given for `fix`; or a review slice breaks the rules in section 3.2 (path outside `.shards/review/<run_id>/`, more than 4 slices in the call, or more than 16 for the run).
 - `slices` is empty; a slice has no string `id`, a duplicate `id`, empty `acceptance`, or no `paths`.
 - Two slices in the same call overlap (equal, or one is a directory prefix of the other). Paths are normalised by `normalizeRel`: project-root-relative, no absolute paths, no `..`. The overlap check covers only the slices of this call. A new fan-out is not checked against other active leases.
 
-Slice card: `{lease_id, slice_id, owned_paths, acceptance, rules}`. `acceptance` is the slice's text as given. `rules` is the fixed string `no gates, no plan changes, no delegation, write only inside owned_paths, return verdict JSON`. The lease TTL is 900000 ms unless `ttl_ms` is given.
+Slice card: `{lease_id, slice_id, owned_paths, acceptance, rules}`. `acceptance` is the slice's text as given. `rules` is the fixed string `no gates, no plan changes, no delegation, write only inside owned_paths, return verdict JSON` for fix leases, and the verifier rules (`review.RULES`, section 3.2) for review leases. The lease TTL is 900000 ms unless `ttl_ms` is given.
 
 `fanout_claim` is refused when there is no active, unexpired `fanout` lease with that id, or the lease has no slice with that id. `fanout_collect` uses the same lookup, so an expired lease cannot be collected.
 
-Binding (PreToolUse, `hooks/lib/enforce.js`). When a `fanout_claim` call carries an `agent_id` (Claude Code subagents), the hook binds that `agent_id` to `{lease_id, slice_id}` before the MCP tool runs. The binding is refused when the lease is not live, the slice does not exist, `agent_type` does not match the lease `worker_type` (compared on the last `:` segment, case-insensitive), the agent is already bound to a different slice, the slice is already bound to a different agent, or the lease already has one bound worker per slice. Re-claiming the same slice with the same agent is accepted. A refused binding denies the call with `shards fanout_claim refused: <reason>`, unless `SHARDS_GATE_ENFORCE=0`, in which case the call proceeds unbound. A `fanout_claim` call with no `agent_id` is allowed and binds nothing.
+Binding (PreToolUse, `hooks/lib/enforce.js`). When a `fanout_claim` call carries an `agent_id` (Claude Code subagents), the hook binds that `agent_id` to `{lease_id, slice_id}` before the MCP tool runs. The binding is refused when the lease is not live, the slice does not exist, `agent_type` does not match the lease `worker_type` (matching rule in section 3.2), the agent is already bound to a different slice, the slice is already bound to a different agent, or the lease already has one bound worker per slice. Re-claiming the same slice with the same agent is accepted. A refused binding denies the call with `shards fanout_claim refused: <reason>`, unless `SHARDS_GATE_ENFORCE=0`, in which case the call proceeds unbound. A `fanout_claim` call with no `agent_id` is allowed and binds nothing.
 
-Gap (TODO): the hook does not check the lease owner. `bindWorker` accepts `task` leases as well as `fanout` leases. The binding is recorded before the MCP tool runs, so a `fanout_claim` against a `task` lease binds in the hook, and the tool then refuses with "no active fanout lease".
+Gap (TODO): the hook does not check the lease owner. `bindWorker` accepts `task` and `review` leases as well as `fanout` leases. The binding is recorded before the MCP tool runs, so a `fanout_claim` against a `task` lease binds in the hook, and the tool then refuses with "no active fanout lease".
 
-`fanout_collect` requires exactly one result per slice. An unknown, duplicate or missing `slice_id`, or an invalid verdict, throws and nothing is closed. Merge rule (`mergeVerdicts`, worst wins): any `BLOCKED` gives `BLOCKED`; otherwise any `NEEDS REVISION` gives `NEEDS REVISION`; otherwise `APPROVED`. The result is `{verdict, per_slice: {<slice_id>: {verdict, summary?, findings?}}}`. The lease is closed whatever the merged verdict is. Collect does not check which agent sent each result.
+`fanout_collect` requires exactly one result per slice. An unknown, duplicate or missing `slice_id`, or an invalid verdict, throws and nothing is closed. Merge rule for fix leases (`mergeVerdicts`, worst wins): any `BLOCKED` gives `BLOCKED`; otherwise any `NEEDS REVISION` gives `NEEDS REVISION`; otherwise `APPROVED`. The result is `{verdict, per_slice: {<slice_id>: {verdict, summary?, findings?}}}`. The lease is closed whatever the merged verdict is. Collect does not check which agent sent each result.
 
 Heartbeat and expiry:
 
@@ -137,19 +139,65 @@ Heartbeat and expiry:
 - `heartbeat(session, id)` in `runtime/leases` has no callers.
 - Expiry has two triggers. The hook runs `expireStale` inline on a PreToolUse call when any active lease is past `expires_at`. The MCP server runs `startLeaseSweep` (`runtime/server.js`) every `SHARDS_LEASE_SWEEP_MS` ms, default 30000. Zero, a negative value or a non-number disables the timer. The sweep covers every session directory under `.shards/state/sessions/` that has a `leases.json`. The timer is `unref()`'d, and it runs only while the MCP server process is alive.
 - `listActive` already excludes expired leases. A worker whose lease has expired loses its binding at once, and its later calls fall under rule 3.
-- SubagentStop (`hooks/subagent-stop.js`, S5F) calls `releaseWorker`: the exiting worker's binding is removed at once (its slice can be re-claimed for a retry) and recorded under `released`. A task-owned lease (one slice, one worker) is closed outright. A fan-out lease stays open until `fanout_collect` or TTL expiry, because collect needs the active lease and the lead must not edit slice paths meanwhile. Idempotent; no output.
+- SubagentStop (`hooks/subagent-stop.js`, S5F) calls `releaseWorker`: the exiting worker's binding is removed at once (its slice can be re-claimed for a retry) and recorded under `released`. A task-owned lease (one slice, one worker) is closed outright. A fan-out or review lease stays open until `fanout_collect` or TTL expiry, because collect needs the active lease and the lead must not edit slice paths meanwhile. Idempotent; no output.
 
 PreToolUse write rules (`hooks/lib/enforce.js`). They apply to non-gate tools. Write detection (`hooks/lib/writes.js`) covers `Write`, `Edit`, `MultiEdit`, `NotebookEdit`, `apply_patch`, the notebook-exec MCP tools, and Bash commands with redirects, `tee`, `sed -i`, `cp`, `mv`, `rm` and similar commands, `git` write subcommands, `dd of=`, `find -delete/-exec/-fprint`, `tar`/`unzip` extraction, `curl`/`wget` output, `rsync`/`scp`, and inline script writes. Targets are resolved against the payload `cwd`; a leading `~` or `~/` expands to the home directory, and `~user`, variables, globs, `eval`, `sh -c` and substitutions count as a write with an unknown target. `cd`/`pushd`/`popd` are not tracked, so a write after one is treated as unknown. Detection is best effort and nothing is executed. Enforcement runs only when the session has a `leases.json` or a `gates.json`.
 
-1. Bound caller (`agent_id` bound to a slice of an active lease). Writes must resolve inside one of that slice's paths. Other writes are denied, and the reason lists the allowed paths. A write whose target cannot be determined is denied. Bound callers are exempt from the pending-gate check in rule 3 (policy: ADR 0011).
+1. Bound caller (`agent_id` bound to a slice of an active lease). Writes must resolve inside one of that slice's paths. Other writes are denied, and the reason lists the allowed paths. A write whose target cannot be determined is denied. Bound callers (fan-out workers and review verifiers) are exempt from the pending-gate check in rule 3 (policy: ADR 0011). Their exec calls (tests, scripts) are not checked against the slice, so rule 1 limits only write tools and detected shell writes.
 2. `fanout_claim` binds (above). This runs even when a gate is pending.
-3. Unbound caller (no `agent_id` bound to a lease: the lead or an unleased subagent). (a) If the top frame has a pending gate, every write or exec call is denied. (b) Otherwise a write whose target is inside, or contains, an active fan-out slice path is denied (`do not edit it from the lead`).
+3. Unbound caller (no `agent_id` bound to a lease: the lead or an unleased subagent). (a) If the top frame has a pending gate, every write or exec call is denied. (b) Otherwise a write whose target is inside, or contains, an active fan-out slice path is denied (`do not edit it from the lead`). Review slices do not count here, so the lead may write inside `.shards/review/`.
 
 `SHARDS_GATE_ENFORCE=0` turns off every deny in rules 1 and 3 and the claim refusal. Binding still records when it succeeds.
 
 Fail-open. An exception in the enforcement step is logged to `<root>/.shards/state/hook-errors.log`, and the call goes ahead. The hook exits 0 in all cases. One exception: an error while binding a `fanout_claim` (including a state I/O error) is turned into a deny, unless `SHARDS_GATE_ENFORCE=0`.
 
 Codex. Codex 0.169.0 sends `agent_id` and `agent_type` on PreToolUse inside a subagent (live-verified payload, compat CX-6), and the hook fires (CX-7), so Codex workers bind through `fanout_claim` like Claude workers. The Codex binding path itself is unit-tested only; a live Codex fan-out run is still open.
+
+### 3.2 Review leases and verifiers (verified review, ADR 0013)
+
+Depth, on Claude Code (the host allows three levels):
+
+```
+main thread (Syn, or the active specialist)              depth 0
+  -> <id>               review lead (general subagent)   depth 1  has Task
+       -> <id>-verify   verifier                         depth 2  no Task
+       -> <other>-service  cross-lens consult            depth 2  no Task
+```
+
+A lead is launched by `{{review_lead}}` (`build/MACROS.md` 3.16). It calls `fanout_start(purpose="review")` (at most 4 slices per call), launches one `<id>-verify` per card, then calls `fanout_collect`. Verifiers and consult entries never spawn.
+
+Rules for `fanout_start(purpose="review")` (`runtime/review/index.js`, `runtime/fanout/index.js`):
+
+- `run_id` matches `^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`, is required, and is stored in the lease `meta.run_id`.
+- Every slice path must sit inside `.shards/review/<run_id>/`. At most 4 slices per call and 16 per `run_id` per session. Every review lease with that run id counts, open or closed, and the cap check runs under the state lock.
+- Review leases never restrict other callers. `findSliceOwning` and `isPathAllowed` skip them, so the lead can still write outside the scratch dirs. A bound verifier is confined to its slice like a worker.
+- Binding uses `fanout_claim` as for workers. The `agent_type` matching rule (`typeAccepted` in `runtime/leases/index.js`): the lease `worker_type` is the agent id `X`; the accepted `agent_type` tail (last `:` segment, lower-cased) is `X`, or `X-worker` for fan-out and task leases, or `X-verify` for review leases. Any other tail is refused. An empty value on either side matches (Codex built-in roles).
+
+`fanout_collect` for a review lease: `results` is one `{slice_id, status, summary?, findings?}` per slice, with `status` one of:
+
+- **CONFIRMED**: the repro ran and its output shows the problem.
+- **PLAUSIBLE**: not verified; the reason is given. Also used when code execution is not approved.
+- **REFUTED**: the test showed no problem. Kept in `per_slice` for the record.
+
+The result is `{verdict, counts, per_slice}`. `verdict` is `APPROVED` only when every finding is REFUTED; otherwise `NEEDS REVISION`. `BLOCKED` is never produced for review leases. Every slice needs exactly one result; an unknown, duplicate or missing `slice_id`, or an invalid status, throws and closes nothing. The lease is closed whatever the verdict.
+
+Guardrails. These limit what the hook and the runtime can see. They are not a sandbox.
+
+- **Code execution.** The brief carries `**Code execution:** approved — allowed commands: ...` or `not approved`. Enforcement is the verifier contract (`core/protocols/review_execution.md`), not the runtime. Verifiers have Bash, and the hook does not check what a command runs.
+- **Scratch dirs.** A verifier writes only to `.shards/review/<run_id>/<slice_id>/`. The hook checks write tools and detected shell writes against the slice. It does not check exec calls, so a repro test can write anywhere the user account can.
+- **Snapshot.** `review_snapshot` (`runtime/review/index.js`) records a sha256 per file under the given project-relative paths. `start` takes `paths` (`.` means the whole project) and writes `<session dir>/review-snapshots/<run_id>.json`. `check` re-hashes the same paths and returns `{clean, added, modified, deleted}`; it fails if there was no `start`. Symlinks are hashed by their target text and never followed. `.git`, `.shards`, `node_modules`, `venv`, `.venv`, `__pycache__` and `.pytest_cache` are skipped. The snapshot reports changes after the fact; it does not stop them.
+
+Subagent MCP tools. A Claude subagent with a `tools:` list gets no `mcp__` tools unless they are listed (compat CC-7). The lists are built in `build/emit.js` from `build/host-tools.js` and prefixed `mcp__plugin_shards_shards__`:
+
+| Subagent | Task | Shards MCP tools |
+|---|---|---|
+| `<id>` (general: lead for a specialist or reviewer) | yes, except Syn | `fanout_start`, `fanout_collect`, `tasks_set`, `task_dispatch`, `task_report`, `task_status`, `task_verify`, `load_phase`, `ar_iterate`, `ar_status`, `ar_defer`, `ar_end` |
+| `syn` (general) | no | none |
+| `<id>-worker` | no | `fanout_claim` |
+| `<id>-verify` | no | `fanout_claim` |
+| `<id>-review`, `-advise`, `-service`, `-final_review`, `-arbiter` | no | none |
+
+`review_snapshot` is not in the lead's list (section 9). `core/protocols/review_panel.md` has the main-thread caller run `start` before dispatch and `check` after the leads return, so this is consistent today. Add it to the list if a lead must call it.
 
 ## 4. Task statuses
 
@@ -179,7 +227,7 @@ Codex. Codex 0.169.0 sends `agent_id` and `agent_type` on PreToolUse inside a su
 
 Leases are stored in state name `leases` as `{leases: {<id>: lease}}`. Every write goes through `StateStore.update`, so it is locked and atomic.
 
-Lease: `{id, session, owner, worker_type, slices: [{id, paths}], meta, status, opened_at, heartbeat_at, expires_at, ttl_ms}`. Owners: `task`, `fanout`. Status: `active`, `closed`, `expired`. Default TTL is 900000 ms (15 minutes).
+Lease: `{id, session, owner, worker_type, slices: [{id, paths}], meta, status, opened_at, heartbeat_at, expires_at, ttl_ms}`. Owners: `task`, `fanout`, `review`. Status: `active`, `closed`, `expired`. Default TTL is 900000 ms (15 minutes).
 
 | Function | Behaviour |
 |----------|-----------|
@@ -192,14 +240,14 @@ Lease: `{id, session, owner, worker_type, slices: [{id, paths}], meta, status, o
 | `findWorkerLease(session, agentId, now?)` | The active lease and slice bound to the agent, or `null`. |
 | `touchWorker(session, agentId, now?)` | Refreshes a bound worker's lease, throttled (section 3.1). Returns `true` when it refreshed. |
 | `findSliceOwning(session, filePath, now?)` | The active fan-out slice that contains, or is contained by, the path, or `null`. Used for unbound callers. |
-| `isPathAllowed(session, agentId, filePath, now?)` | For a bound agent, checks the path against that worker's slice. Otherwise checks active leases whose `worker_type === agentId`. Returns `allowed: true` when neither applies. The hook calls it only for bound callers. |
+| `isPathAllowed(session, agentId, filePath, now?)` | For a bound agent, checks the path against that worker's slice. Otherwise checks active fan-out and task leases whose `worker_type === agentId` (review leases are skipped). Returns `allowed: true` when neither applies. The hook calls it only for bound callers. |
 | `pathsOverlap(a, b)`, `normalizeRel(p)` | Helpers. |
 
 Callers in the runtime today:
 
 - `task_dispatch` opens leases; `task_report` closes them.
-- `fanout_start` opens `fanout` leases; `fanout_collect` closes them (section 3.1).
-- `getLeasedPaths(session)` (`runtime/git/leases.js`) returns the paths of `listActive` leases. `commitGateLocked` in `runtime/git/index.js` excludes those paths from a gate commit.
+- `fanout_start` opens `fanout` leases (`review` leases with `purpose: "review"`); `fanout_collect` closes them (sections 3.1, 3.2).
+- `getLeasedPaths(session)` (`runtime/git/leases.js`) returns the paths of every `listActive` lease, review leases included. `commitGateLocked` in `runtime/git/index.js` excludes those paths from a gate commit.
 - `expireStale` runs from the hook (inline) and from the MCP server sweep (section 3.1). `bindWorker`, `touchWorker`, `findWorkerLease`, `findSliceOwning` and `isPathAllowed` are called from `hooks/lib/enforce.js`. `heartbeat` has no callers. Worker heartbeats go through `touchWorker`.
 
 Expired leases stop excluding paths because `listActive` filters on `expires_at`, even before `expireStale` runs.
@@ -292,6 +340,7 @@ Both keys are docs-only and UNVERIFIED (`docs/compat.md` CX-4): one source says 
 
 | Use | Recommendation | Why |
 |-----|----------------|-----|
+| Review lead and its verifiers (section 3.2) | `agents.max_depth = 2` | the lead is a subagent (depth 1) and its `<id>-verify` helpers are depth 2. With depth 1 the lead cannot spawn verifiers: it leaves findings PLAUSIBLE or verifies inline, and says so. |
 | Consult (specialist asks Syn or a reviewer) | `agents.max_depth = 2` | main thread (0) spawns the specialist's consult at depth 1 only if the specialist runs in the main thread; a specialist that runs as a subagent and consults needs depth 2. With depth 1 the consult is blocked: flatten it (ask the reviewer from the main thread). |
 | Fan-out (`fanout_start`, `{{fanout}}`, `{{delegate}}`) | `agents.max_threads = 4` (or the plan's `max_parallel` if lower) | workers are leaf subagents; width, not depth, is the limit. Excess slices queue or run sequentially. |
 
@@ -313,5 +362,7 @@ The Codex build emits these as commented lines in `.codex/config.toml` (`# [agen
 | Codex and other hosts | OPEN (external). `TODO(owner: proflandrigan)`. |
 | Auto-pause on deviation and amendment refusal in `tasks_set` | Done (E12.6): `runtime/tasks/drift.js`, covered by `test/tasks-drift.test.js`. |
 | Phase rewrites for delegated build | Done (E12.3/E12.4): build phases are lead loops over `<output_dir>/tasks.yaml` (`core/protocols/delegated_build.md`); planning phases decompose the plan into tasks. `core/protocols/incremental_testing.md` is folded in as the task evidence guide (checkpoint gates removed). Guarded by `test/delegated-build.test.js` and the `write_whole_build` coupling metric. |
+| `review_snapshot` is not in the review lead's MCP tool list | OPEN. `build/emit.js` `GENERAL_MCP_TOOLS` omits it, and a subagent with a `tools:` list gets no Shards tools unless listed. Consistent with `review_panel.md` today (the main thread runs `start` and `check`). Add it to the list if a lead must call it. |
+| Review verifiers are not sandboxed | Guardrails only: the snapshot and the scratch dirs (section 3.2). Test processes are not confined by the hook. |
 | Subagent generation for workers | The `worker` entry is validated but no subagent is generated. `TODO(E5.3)`. |
 | Lease heartbeats and stale sweeps for fan-out | Done (section 3.1): `touchWorker` on bound-worker PreToolUse calls, inline expiry in the hook, and the server sweep (`SHARDS_LEASE_SWEEP_MS`). `heartbeat()` has no caller. Task leases get no heartbeat but are still expired by the sweep. |

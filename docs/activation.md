@@ -5,7 +5,7 @@ How a Shards agent becomes active, on which host, with which command. The per-ag
 ## The model
 
 - **switch**: the agent's persona becomes the active frame on the session stack (`activate` pushes, `return` pops). The user talks to that agent, it loads its phases with `load_phase`, and it owns gates until it returns.
-- **consult**: an isolated native subagent (Claude `agents/<id>.md` or `agents/<id>-<entry>.md`; Codex `.codex/agents/<id>-<entry>.toml`). It answers one question and returns a verdict. It never nests: a consult may not itself consult, switch or fan out (decision D2, depth stays 1).
+- **consult**: an isolated native subagent (Claude `agents/<id>.md` or `agents/<id>-<entry>.md`; Codex `.codex/agents/<id>-<entry>.toml`). It answers one question and returns a verdict. A consult entry never nests: it may not itself consult, switch or fan out (decision D2). The general subagent of a reviewer or specialist can act as a review lead that spawns verifiers one level down (ADR 0013, `docs/delegation.md` 3.2).
 - **fanout_worker**: a `<id>-worker` consult entry used by the task manifest and fan-out (see `docs/delegation.md`).
 
 Naming rule: consult subagents exist only if `consult` is in `activation`. The general subagent is `<id>`; each `consult_entries` key gives `<id>-<entry>` (underscores kept, e.g. `syn-final_review`). Switch skills exist only if `switch` is in `activation`: Claude `/shards:<id>`, Codex `$shards:<id>` with profile `shards-<id>` (`codex -p shards-<id>`, profile file `$CODEX_HOME/shards-<id>.config.toml` from `shards install --codex`).
@@ -31,7 +31,7 @@ Naming rule: consult subagents exist only if `consult` is in `activation`. The g
 | statistician | reviewer | consult, switch | /shards:statistician | $shards:statistician / shards-statistician | statistician, statistician-service, statistician-advise |
 | syn | orchestrator | switch, consult | /shards:syn | $shards:syn / shards-syn | syn, syn-final_review, syn-arbiter |
 
-Entries abbreviated with a leading `-` are `<id>` plus the suffix (e.g. `analytics-engineer-review`). Regenerate by reading `activation` and `consult_entries` keys from each `agent.yaml`.
+Entries abbreviated with a leading `-` are `<id>` plus the suffix (e.g. `analytics-engineer-review`). Every agent with a `review` or `service` entry also gets `<id>-verify` (a verifier with no Task tool, ADR 0013); the table omits it. Regenerate by reading `activation` and `consult_entries` keys from each `agent.yaml`.
 
 ## Router
 
@@ -43,7 +43,7 @@ Syn is the router: the "Routing Reference" in `core/agents/syn/AGENT.md` maps in
 
 ## Nesting lint
 
-`build/lint-nesting.js` fails the build when a consult entry (or anything it reads) expands a `consult`, `fanout`, `switch` or `protocol` macro. `NESTING_EXCEPTIONS` (`'<agent>/<entry>'`) is empty by design; add one only with a comment. Per-target relaxation is `options.allowDepth = { codex: true }`, intended for Codex when `max_depth > 1` is confirmed (`docs/compat.md` CX-4).
+`build/lint-nesting.js` fails the build when a consult entry (or anything it reads) expands a `consult`, `fanout`, `switch`, `protocol`, `review_lead` or `verify` macro. The lead contract (`protocols/review_lead_contract.md`) is the one place `{{verify}}` appears; no consult entry reads it. `NESTING_EXCEPTIONS` (`'<agent>/<entry>'`) is empty by design; add one only with a comment. Per-target relaxation is `options.allowDepth = { codex: true }`, intended for Codex when `max_depth > 1` is confirmed (`docs/compat.md` CX-4).
 
 ## Default agent (opt-in)
 

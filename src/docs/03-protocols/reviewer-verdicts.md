@@ -24,6 +24,10 @@ Specialists consult Syn (`final_review`) before closing a build. Syn must read t
 
 `final_review` is refused while any gate is pending or suspended (see [Gate Pattern](gate-pattern.md)).
 
+## Panel review findings
+
+Panel review findings are not verdicts. Each finding has a status: CONFIRMED (a repro test showed the problem), PLAUSIBLE (not verified) or REFUTED (the test showed no problem). The review lead's own answer still carries one of the three verdicts above. See [Activation modes](activation-modes.md#review-leads).
+
 ## See also
 
 - [The Gate Pattern](gate-pattern.md)

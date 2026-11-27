@@ -34,7 +34,7 @@ The E0.6 pass (2026-11-14) made no model runs. The Codex rows were later checked
 | CC-4 | Claude Code | hook fields `session_id`, `agent_id`, `permission_mode` | partly VERIFIED (`session_id` used in repo code); `agent_id`/`permission_mode` documented, strings present in binary | D8, E11.4, D2 |
 | CC-5 | Claude Code | SessionStart sources incl. `compact` | documented (docs), not exercised locally | D6, E11.6 |
 | CC-6 | Claude Code | PreToolUse `permissionDecision: "ask"` vs allow rules | documented (docs), not exercised; allow-rule interaction NOT stated | E11.4 |
-| CC-7 | Claude Code | subagent nesting depth (extra, relevant to D2) | documented (docs), not exercised locally | D2 |
+| CC-7 | Claude Code | subagent nesting depth (extra, relevant to D2) | live-observed 2026-11-27 (three levels, Claude Code 2.1.332); limit and env var still from docs | D2 |
 | CX-1 | Codex | MCP config keys and `approval_mode` | live-verified on Codex 0.169.0, 2026-11-19 (values `auto`/`prompt`/`writes`/`approve`; `prompt` refuses under `codex exec`) | D8, E11.4 |
 | CX-2 | Codex | MCP elicitation | partly observed (0.169.0): a `gate_request` form was sent and dismissed without a decision under `codex exec`; the interactive TUI was not tested | E11.3, E11.5 |
 | CX-3 | Codex | named custom-agent spawn | docs-only, unverified (by `name`; no explicit spawn syntax) | D2, D4 |
@@ -113,7 +113,8 @@ The E0.6 pass (2026-11-14) made no model runs. The Codex rows were later checked
 - Finding: by default a subagent can spawn subagents up to three layers below the main conversation. At the limit the `Agent` tool is withheld (except for forks). `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` changes it; `1` turns nesting off. Syn to specialist to Syn review is depth 2, within the default.
 - Syn to lead to worker (PM mode, `{{lead}}`) is depth 2, also within the default. Setting `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` removes the lead's `Agent` tool, which forces the lead onto the sequential/inline `{{delegate}}` fallback (reported with a `Fallback:` evidence row). Builders keep `Task` in their subagent tools (`build/host-tools.js`).
 - Evidence: https://code.claude.com/docs/en/sub-agents. Binary contains `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (string presence only).
-- Status: documented (docs), not exercised locally.
+- Live observation (2026-11-27, Claude Code 2.1.332, headless `claude -p`): a three-level chain (main -> probe-l1 -> probe-l2 -> probe-l3) ran Bash at each level. PreToolUse `agent_type` was the subagent name. A plugin worker subagent with a `tools:` list reported no `mcp__` tools. That is the subagent's own report, made before this change added the Shards tool names to the generated lists.
+- Status: live-observed for three levels (above). The env var and the withdrawal of `Agent` at the limit are still docs-only.
 - Impact: D2 fan-out and consult chains fit Claude Code defaults. Managed settings could lower the env var.
 
 ## Codex
@@ -238,7 +239,7 @@ Owner for every row: proflandrigan. Every non-VERIFIED item above appears here. 
 | CC-4 | `agent_id` and `permission_mode` presence on PreToolUse unseen in a real payload; gate hook (removed in E11.9) reads neither. Update: Codex payloads incl. `permission_mode` were captured live (CX-6); Claude Code `permission_mode` is still unseen | D8, E11.4, D2 | E0.6-F3: log real PreToolUse/SessionStart/Stop payloads from a throwaway hook in a free local session; record fields in this file | proflandrigan |
 | CC-5 | `compact` SessionStart payload and context survival unobserved | D6, E11.6 | E0.6-F4: run `/compact` in a throwaway session with a SessionStart hook; confirm source and injected context | proflandrigan |
 | CC-6 | `ask` may not override a matching allow rule; repo never emits `ask` | E11.4 | E0.6-F5: local test with allow rule plus hook returning `ask`; if it fails, design E11.4 around `deny` or removing allow rules | proflandrigan |
-| CC-7 | Depth default (3) documented only; managed settings can lower it | D2 | E0.6-F6: confirm with a 2-deep Task chain locally; installer should check `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` | proflandrigan |
+| CC-7 | Depth 3 observed 2026-11-27; managed settings can lower it (untested) | D2 | E0.6-F6: confirm with a 2-deep Task chain locally; installer should check `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` | proflandrigan |
 | CX-1 | DONE (0.169.0): values known; `shards install --codex` sets default `approve`, gate tools `prompt`. Open: the interactive TUI prompt | D8, E11.4 | E0.6-F7: see the prompt in the TUI | proflandrigan |
 | CX-2 | Elicitation request accepted, dismissed under exec; TUI untested | E11.3, E11.5 | E0.6-F8: test the form in the TUI; plain-chat fallback (tier 3) stays the Codex path | proflandrigan |
 | CX-3 | Custom agents selected by model reading `name`, not forced | D2, D4 | E0.6-F9: Codex test that a named agent is reliably chosen; fall back to inline persona text | proflandrigan |

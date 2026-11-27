@@ -2,6 +2,8 @@
 
 Status: Accepted (2026-11-14)
 
+Amended by 0013: subagents can nest to depth 2 (review lead, then verifier), so the Context sentence "Claude Code subagents cannot spawn subagents" is outdated.
+
 ## Context
 
 Activation today depends on the model following instructions. Slash commands tell it to read an agent file and become that agent, and Syn hands off by asking the user to run `/compact`. Every one of the 15 agents is also called through `Task` as a reviewer (236 calls), and five modes (PM, panel-review fix groups, swarm, diverge, brainstorm) launch several specialists in parallel. Claude Code subagents cannot spawn subagents, so nested calls are a known limit.
