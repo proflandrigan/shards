@@ -245,6 +245,21 @@ describe('review_snapshot', () => {
     expect(r.isError).toBe(true);
     expect(JSON.stringify(r.content)).toContain('srcc');
   });
+  it('refuses an exclude that covers a whole snapshot path (it would always check clean)', async () => {
+    for (const exclude of [['src'], ['src/'], ['.shards', 'src']]) {
+      const r = await snap({ action: 'start', run_id: `rx${exclude.length}${exclude[0].length}`, paths: ['src/a.py', 'docs'], exclude });
+      expect(r.isError).toBe(true);
+      expect(JSON.stringify(r.content)).toContain('exclude covers');
+    }
+    expect((await snap({ action: 'start', run_id: 'ok', paths: ['src', 'docs'], exclude: ['src/out'] })).isError).toBeFalsy();
+  });
+  it('names review_snapshot (not lease) in path errors, and accepts a dangling symlink path', async () => {
+    const r = await snap({ action: 'start', run_id: 'r1', paths: ['src'], exclude: ['../x'] });
+    expect(r.isError).toBe(true);
+    expect(JSON.stringify(r.content)).toContain('review_snapshot: exclude');
+    fs.symlinkSync(path.join(tmp, 'missing-target'), path.join(tmp, 'dangling'));
+    expect((await snap({ action: 'start', run_id: 'r2', paths: ['dangling'] })).isError).toBeFalsy();
+  });
   it('snapshot state lives under the session state directory', async () => {
     await snap({ action: 'start', run_id: 'r1', paths: ['src'] });
     expect(fs.existsSync(path.join(state.sessionDir, 'review-snapshots', 'r1.json'))).toBe(true);

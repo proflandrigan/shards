@@ -107,6 +107,17 @@ function hashTree(root, rel, out, exclude = []) {
   return out;
 }
 
+// Project-relative path for review_snapshot, with errors named for this tool rather than for leases.
+function relPath(p, what) {
+  try { return leases.normalizeRel(p); } catch (e) {
+    throw new Error(`review_snapshot: ${what} ${JSON.stringify(p)} must be project-relative, without ".." (${e.message})`);
+  }
+}
+
+function lexists(abs) {
+  try { fs.lstatSync(abs); return true; } catch (e) { if (e.code === 'ENOENT') return false; throw e; }
+}
+
 function snapshotFile(state, runId) {
   return path.join(state.sessionDir, 'review-snapshots', `${runId}.json`);
 }
@@ -127,11 +138,14 @@ function snapshot(root, state, { action, run_id: runId, paths, exclude } = {}) {
     // A second start would silently replace the baseline and hide changes made since the first one.
     if (fs.existsSync(file)) throw new Error(`review_snapshot: run ${runId} already has a baseline; call action check, or use a new run_id`);
     // '.' means the whole project: reviews are often pointed at the root (lease paths cannot be, snapshots can).
-    const norm = [...new Set(paths.map((p) => (p === '.' || p === './' ? '.' : leases.normalizeRel(p))))];
-    // A mistyped path would hash nothing and later check as clean, so refuse it.
-    const missing = norm.filter((p) => !fs.existsSync(path.join(root, p)));
+    const norm = [...new Set(paths.map((p) => (p === '.' || p === './' ? '.' : relPath(p, 'path'))))];
+    // A mistyped path would hash nothing and later check as clean, so refuse it. lstat: a dangling symlink exists.
+    const missing = norm.filter((p) => !lexists(path.join(root, p)));
     if (missing.length) throw new Error(`review_snapshot: path(s) not found: ${missing.join(', ')}`);
-    const skip = [...new Set((exclude || []).map((p) => leases.normalizeRel(p)))];
+    const skip = [...new Set((exclude || []).map((p) => relPath(p, 'exclude')))];
+    // An exclude that covers a whole snapshot path would leave it unwatched, so check would report it clean.
+    const covered = norm.filter((p) => skip.some((e) => p === e || p.startsWith(`${e}/`)));
+    if (covered.length) throw new Error(`review_snapshot: exclude covers the whole of path(s) ${covered.join(', ')}; nothing there would be checked`);
     const files = hashPaths(root, norm, skip);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     const tmp = `${file}.tmp`;

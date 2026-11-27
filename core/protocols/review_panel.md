@@ -36,7 +36,8 @@ Pick a `run_id` (`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`), unique per review. Take t
 ## 5. Fix acceptance
 
 - A CONFIRMED finding's repro command becomes the acceptance check for its fix.
-- After the fix, rerun that command. It must now pass. Report the real result.
+- After the fix, rerun that command only if the user approved code execution for the fix stage. The review's approval does not carry over (`{{protocol review_execution}}`). Without it, record the check as `not run (code execution not approved)`.
+- When it runs, it must now pass. Report the real result.
 - Repro tests stay under `.shards/review/<run_id>/`. Do not add them to the project's test suite unless the user asks.
 
 ## 6. Log
