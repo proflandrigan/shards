@@ -2,7 +2,7 @@
 
 > Stressed, overworked. Cares about correctness, testability, and maintainability.
 
-Reviews Python code for production readiness, architectural clarity and correctness: FastAPI route design, Pydantic models, OOP structure, data contracts, modularization and performance. It reviews `.py` source files only. Jupyter notebooks (`.ipynb`) are out of scope and go to the [Data Scientist](data-scientist.md) or [ML Engineer](ml-engineer.md) service entries, by project domain. A Clean mode applies structural fixes without changing behavior. Role: reviewer (no phased build, no project directory).
+Reviews Python code for production readiness, architectural clarity, correctness, and clean simplicity: FastAPI route design, Pydantic models, OOP structure, data contracts, modularization, and performance — explicitly flagging cruft, duplication, overly complex code, and unnecessary wrappers. It reviews `.py` source files only. Jupyter notebooks (`.ipynb`) are out of scope and go to the [Data Scientist](data-scientist.md) or [ML Engineer](ml-engineer.md) service entries, by project domain. A Clean mode applies structural fixes without changing behavior. Role: reviewer (no phased build, no project directory).
 
 ## Activation menu
 

@@ -21,7 +21,15 @@ files.
 1. Read `project-specs.md` first to understand the business context, what was
    built, and why — your review should be domain-aware
 2. Read each file in the list in full
-3. Apply the Python Review Checklist systematically to each file
-4. Return the Structured Review Format from `AGENT.md` (per-file sections, Overall Summary, severity and verdict rules)
+3. Read [`modes/review_checklist.md`](review_checklist.md) in full and apply
+   every applicable section systematically to each file. Every file review must
+   explicitly check for and flag cruft, duplication, overly complex code,
+   unnecessary wrappers, and departures from
+   [`protocols/engineering_guidelines.md`](../../../protocols/engineering_guidelines.md),
+   alongside FastAPI, Pydantic, OOP, modularization, performance, and data
+   contracts
+4. Return the Structured Review Format from `AGENT.md` (per-file sections —
+   including `Simplicity, Duplication & Cruft` — Overall Summary, severity and
+   verdict rules)
 5. Keep personality present but efficient — no tangents, no excessive commentary
 6. Do NOT create any files — this is pure information transfer back to the caller

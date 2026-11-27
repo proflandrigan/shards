@@ -7,7 +7,7 @@ Clean mode applies structural fixes to Python source files without changing
 functionality. The five cleaning axes are:
 
 1. **Modularity** — functions doing too much, module boundaries unclear, business logic mixed with I/O
-2. **Clean code** — dead code, unclear naming, magic strings/numbers, nested complexity
+2. **Clean code** — cruft (dead code, stale scaffolding, dead flags/shims, unreachable branches), duplication, overly complex control flow, unnecessary pass-through wrappers, unclear naming, magic strings/numbers
 3. **OOP** — missing class structure, god functions, wrong use of inheritance vs. composition
 4. **Pydantic** — bare dicts where Pydantic models should be used, missing validators, untyped fields
 5. **SQL extraction** — inline SQL strings moved to `.sql` files read via `Path(...).read_text()`
@@ -39,8 +39,12 @@ Summarise the confirmed scope back to the user.
 - Glob for any existing `.sql` files to understand naming conventions already in use
 - Build a per-file audit across all five axes:
   1. **Modularity** — functions > ~50 lines, business logic mixed with I/O, unclear module purpose
-  2. **Clean code** — dead code (unused imports, commented-out blocks), magic strings/numbers,
-     deeply nested conditionals, misleading names
+  2. **Clean code** — cruft (unused imports, commented-out blocks, stale scaffolding,
+     dead flags/shims, unreachable branches), duplication (copy-pasted logic blocks
+     that can share one helper), overly complex control flow (deep nesting flattened
+     via early returns, convoluted conditionals), unnecessary pass-through wrappers
+     (single-use wrappers or one-method classes safe to inline or simplify without
+     changing public APIs), magic strings/numbers, misleading names
   3. **OOP** — functions that are clearly methods of a natural class, god functions (>200 lines),
      inheritance where composition is correct
   4. **Pydantic** — bare `dict` arguments or returns at API/service boundaries, missing `@field_validator`,
