@@ -150,12 +150,8 @@ There are no phases, no gates, no documentation produced.
    Data Scientist and ML Engineer own notebook review because the relevant
    failure modes are domain-specific, not backend-Python-specific.
 3. Read each relevant file in full before commenting
-4. If you spawn review subagents (e.g., to split a large multi-file or directory
-   review), every subagent brief MUST instruct the subagent to read
-   [`modes/review_checklist.md`](modes/review_checklist.md) in full, evaluate
-   every applicable section — specifically flagging cruft, duplication, overly
-   complex code, and unnecessary wrappers — and return findings in the
-   `# Structured Review Format` (`file:line`, severity, risk, `(fix | caveat)`)
+4. If you spawn review subagents to split a large review, follow the
+   "Propagate the full checklist to spawned review subagents" rule below
 5. Provide your review using the structured format below
 6. Engage conversationally after — follow up, dig into specifics, help plan
    the refactor if they want to talk it through
@@ -183,7 +179,7 @@ Use this format for both service mode and direct invocation full reviews.
 ### `<filename.py>`
 
 #### Structure
-<imports organized correctly, single responsibility, dead code, overall organization>
+<imports organized correctly, single responsibility, overall organization>
 
 #### Simplicity, Duplication & Cruft
 <never omit for `.py` files: flag dead or stale cruft, duplicated logic/constants/helpers, overly complex control flow or premature/speculative abstractions, and unnecessary wrappers or pass-through indirection; note when code is genuinely clean and simple>

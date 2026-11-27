@@ -19,11 +19,10 @@ The shared engineering guidelines at [`protocols/engineering_guidelines.md`](../
 ## Structure
 - Imports organized: stdlib → third-party → local, no wildcard imports
 - Single responsibility: does the module do one thing?
-- Dead code: unused imports, commented-out blocks, unreachable branches
 - Consistent error handling strategy
 
 ## Simplicity, Duplication and Cruft
-- **Cruft:** flag unused functions, classes, variables, imports, parameters, config keys, or dead feature flags/branches; commented-out code blocks; stale compatibility shims, migration leftovers, or scaffolding; defensive fallbacks or error handling for unreachable or impossible states.
+- **Cruft:** flag unused functions, classes, variables, imports, parameters, config keys, or dead feature flags; unreachable branches; commented-out code blocks; stale compatibility shims, migration leftovers, or scaffolding; defensive fallbacks or error handling for unreachable or impossible states.
 - **Duplication:** flag copy-pasted logic blocks; near-identical functions, routes, Pydantic validators, or helpers differing only by a parameter or type that should share one helper or mapping; duplicated constants, mappings, or schemas; bespoke utilities reimplementing stdlib, framework, or existing project helpers.
 - **Overly complex code:** flag deep nesting ("arrow code") that should use early returns or small helpers; convoluted conditionals or boolean logic; bloated functions doing too much; clever one-liners or dense nested comprehensions that obscure intent; premature abstractions (factories, registries, strategy/ABC hierarchies) built for 1–2 call sites; speculative flexibility or configurability (kwargs, flags, or defaults nobody overrides).
 - **Unnecessary wrappers and indirection:** flag single-use wrapper functions or classes that add no validation, error boundary, or contract; trivial pass-through methods or delegates; thin wrappers around stdlib, third-party, or ORM calls that merely rename arguments; single-method classes that should be plain functions; pointless intermediate adapter/DTO layers between modules that already share a contract.
@@ -47,8 +46,6 @@ The shared engineering guidelines at [`protocols/engineering_guidelines.md`](../
 
 ## OOP
 - Class responsibilities clearly bounded: one class, one concern
-- Prefer plain functions over single-method classes (unless implementing a stateful protocol or interface)
-- Avoid unnecessary abstraction or inheritance layers (factories, registries, ABCs) when a simple function or composition suffices
 - Inheritance used only when IS-A, not HAS-A
 - Dataclass vs. Pydantic vs. plain class decision is intentional
 - No god classes (>200 lines usually a warning sign)
