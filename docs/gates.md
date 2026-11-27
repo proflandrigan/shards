@@ -272,7 +272,7 @@ Exit codes: 0 success, 1 gate or confirm error, 2 usage error.
 | Suspended gates and frame `return`. Only `pending` gates block a pop (`runtime/stack.js`); a suspended gate does not, by design (`gate_suspend` exists to allow leaving). | As designed | |
 | `load_phase` compaction and version-change re-ground | Not built. Only `activate` and `load_phase` return a re-ground block. | `TODO(E11.7)` (section 9) |
 | Copy queue (`copy_report`, `copy_queue`/`copy_stuck` in `gate_request`). The re-ground block does not include it. | Done (E6.8) | |
-| Hook enforcement (block tool calls while a gate is pending). `hooks/lib/enforce.js` denies write/exec calls from unbound callers while the top frame has a pending gate. Bound fan-out workers are exempt (`docs/delegation.md` section 3.1). | Partly done (E5.9) | `TODO(E11.6)` for the remainder |
+| Hook enforcement (block tool calls while a gate is pending). `hooks/lib/enforce.js` denies write/exec calls from unbound callers while the top frame has a pending gate. Bound fan-out workers and review verifiers are exempt (`docs/delegation.md` sections 3.1 and 3.2). | Partly done (E5.9) | `TODO(E11.6)` for the remainder |
 | Lease exclusion. `getLeasedPaths` returns active lease paths, and `commitGate` excludes them. | Done (E5.9) | |
 | Replay at session end | Not implemented. `shards doctor` exists (`docs/doctor.md`); `doctor --fix` replays stuck records. | `TODO(owner: proflandrigan)` |
 | Recovery for `stuck` records and `commit_error` gaps | Partly: `doctor --fix` force-replays stuck records. `commit_error` has no recovery. | `TODO(owner: proflandrigan)` |

@@ -19,7 +19,7 @@ Agents do not hardcode where things go. `shards.config.yaml` maps six **jobs** (
 ## Activation modes
 
 - **switch**: the agent becomes the active persona (a stack frame). `activate` pushes, `return` pops.
-- **consult**: an isolated subagent answers one question and returns a verdict. It never nests.
+- **consult**: an isolated subagent answers one question and returns a verdict. It does not nest. The exception is panel review, where a reviewer's lead can verify its findings with verifier subagents one level down.
 - **fan-out**: several workers handle slices in parallel and their verdicts are merged.
 - **delegated build**: a lead splits build work into tasks owned by workers with path leases and acceptance commands.
 

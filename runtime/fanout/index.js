@@ -2,6 +2,7 @@
 // Fan-out runtime (E5.9): one lease for N parallel worker slices; verdicts merge worst-wins.
 const leases = require('../leases');
 const gates = require('../gates');
+const review = require('../review');
 const { loadAgents } = require('../agents');
 
 const VERDICTS = ['APPROVED', 'NEEDS REVISION', 'BLOCKED'];
@@ -15,11 +16,14 @@ function sessionOf(s) {
 function card(lease, slice) {
   return {
     lease_id: lease.id, slice_id: slice.id, owned_paths: slice.paths,
-    acceptance: (lease.meta && lease.meta.acceptance && lease.meta.acceptance[slice.id]) || '', rules: RULES,
+    acceptance: (lease.meta && lease.meta.acceptance && lease.meta.acceptance[slice.id]) || '',
+    rules: lease.owner === 'review' ? review.RULES : RULES,
   };
 }
 
-async function startFanout(session, { agent, slices, ttl_ms } = {}) {
+// purpose "fix" (default): a fan-out of write workers (fanout_worker). purpose "review": verifier slices under
+// .shards/review/<run_id>/ (consult or fanout_worker agents); review leases never restrict other callers.
+async function startFanout(session, { agent, slices, ttl_ms, purpose, run_id: runId } = {}) {
   sessionOf(session);
   if (session.state) {
     const frames = session.state.read('frames').frames || [];
@@ -33,9 +37,19 @@ async function startFanout(session, { agent, slices, ttl_ms } = {}) {
       if (susIds.length) throw new Error(`fanout_start refused: a gate is suspended (${susIds.join(', ')}). Resume and resolve it (or force-close it) before fanning out.`);
     }
   }
+  const p = purpose === undefined ? 'fix' : purpose;
+  if (p !== 'fix' && p !== 'review') throw new Error(`fanout_start: purpose must be "fix" or "review" (got ${JSON.stringify(purpose)})`);
+  if (p === 'review') {
+    if (runId === undefined) throw new Error('fanout_start: run_id is required when purpose is "review"');
+    review.validateRunId(runId);
+  } else if (runId !== undefined) {
+    throw new Error('fanout_start: run_id is only valid with purpose "review"');
+  }
   const a = loadAgents().get(agent);
   if (!a || a.error) throw new Error(`fanout_start: unknown agent "${agent}"`);
-  if (!Array.isArray(a.activation) || !a.activation.includes('fanout_worker')) throw new Error(`fanout_start: agent "${agent}" does not declare activation fanout_worker`);
+  const act = Array.isArray(a.activation) ? a.activation : [];
+  if (p === 'fix' && !act.includes('fanout_worker')) throw new Error(`fanout_start: agent "${agent}" does not declare activation fanout_worker`);
+  if (p === 'review' && !act.includes('consult') && !act.includes('fanout_worker')) throw new Error(`fanout_start: agent "${agent}" does not declare activation consult or fanout_worker`);
   if (!Array.isArray(slices) || !slices.length) throw new Error('fanout_start: slices must be a non-empty array');
   const ids = new Set();
   const norm = [];
@@ -54,15 +68,25 @@ async function startFanout(session, { agent, slices, ttl_ms } = {}) {
   }
   const acceptance = {};
   for (const s of norm) acceptance[s.id] = s.acceptance;
+  const slicesOut = norm.map(({ id, paths }) => ({ id, paths }));
+  if (p === 'review') {
+    review.assertRunSlices(norm, runId);
+    const lease = await leases.openLease(session, {
+      owner: 'review', worker_type: agent, slices: slicesOut, ttl_ms,
+      meta: { acceptance, purpose: 'review', run_id: runId },
+      guard: (cur) => review.assertRunCap(cur.leases, runId, norm.length, norm, Date.now(), agent),
+    });
+    return { lease, cards: lease.slices.map((s) => card(lease, s)) };
+  }
   const lease = await leases.openLease(session, {
-    owner: 'fanout', worker_type: agent, slices: norm.map(({ id, paths }) => ({ id, paths })), ttl_ms,
+    owner: 'fanout', worker_type: agent, slices: slicesOut, ttl_ms,
     meta: { acceptance, fanout: true },
   });
   return { lease, cards: lease.slices.map((s) => card(lease, s)) };
 }
 
 function getLease(session, leaseId) {
-  const l = leases.listActive(session).find((x) => x.id === leaseId && x.owner === 'fanout');
+  const l = leases.listActive(session).find((x) => x.id === leaseId && (x.owner === 'fanout' || x.owner === 'review'));
   if (!l) throw new Error(`no active fanout lease ${leaseId}`);
   return l;
 }
@@ -82,6 +106,8 @@ function mergeVerdicts(results, lease) {
   for (const r of results) {
     if (!r || typeof r.slice_id !== 'string' || !r.slice_id || (want && !want.has(r.slice_id))) throw new Error(`mergeVerdicts: unknown slice "${r && r.slice_id}"`);
     if (Object.prototype.hasOwnProperty.call(per_slice, r.slice_id)) throw new Error(`mergeVerdicts: duplicate result for slice "${r.slice_id}"`);
+    if (r.verdict === undefined && r.status !== undefined) throw new Error(`mergeVerdicts: slice "${r.slice_id}" has a status; fix lease results take verdict (APPROVED, NEEDS REVISION or BLOCKED), not status`);
+    if (r.status !== undefined) throw new Error(`mergeVerdicts: slice "${r.slice_id}" has both verdict and status; fix lease results take verdict only`);
     if (!VERDICTS.includes(r.verdict)) throw new Error(`mergeVerdicts: invalid verdict "${r.verdict}" for slice "${r.slice_id}"`);
     per_slice[r.slice_id] = { verdict: r.verdict, ...(r.summary !== undefined ? { summary: r.summary } : {}), ...(r.findings !== undefined ? { findings: r.findings } : {}) };
   }
@@ -94,7 +120,7 @@ function mergeVerdicts(results, lease) {
 
 async function collectFanout(session, leaseId, results) {
   const l = getLease(session, leaseId);
-  const merged = mergeVerdicts(results, l);
+  const merged = l.owner === 'review' ? review.mergeReview(results, l) : mergeVerdicts(results, l);
   await leases.closeLease(session, leaseId);
   return merged;
 }

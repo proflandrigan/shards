@@ -29,6 +29,11 @@ directory prefix.
 - **Lens-only reviewers** — `researcher` (statistical method), `statistician`
   (statistical and metric claims) and `academic` (safety, ethics, efficacy for
   people affected). They review and never own or apply fixes.
+- **Review leads** — each panel specialist, launched as a depth-1 review lead
+  (it follows `protocols/review_lead_contract.md`; that contract governs the lead,
+  not you). A lead checks its findings through verifiers
+  (depth 2, which spawn nothing) when code execution is approved, and writes no
+  source files. Verification is not a gate and does not talk to the user.
 
 ---
 
@@ -42,7 +47,9 @@ Ask in a single message:
    target is outside it, the review still runs, but say at the Phase 4 gate
    that fixes cannot be applied from this session (the panel then ends at
    Phase 6 with `Fixes applied: 0`), or the user restarts the session from a
-   root that contains the target.
+   root that contains the target. Code execution (Step 1f) is not available for
+   such a target either, because the snapshot and scratch paths are project-relative;
+   say so.
 2. **What does this directory contain?** Multi-select content tags (user can
    pick multiple, write in their own, or say "I don't know — infer it"):
    - `ml-model` — model training/serving code, feature pipelines, evaluation
@@ -87,6 +94,12 @@ previous panel.
 
 ### Initialize the output
 
+Pick the **run ID**: `panel-<dirname>-<YYYY-MM-DD>`, where `<dirname>` is the
+target's basename. Replace any character outside `[A-Za-z0-9._-]` with `-`, and
+cut the whole ID to 64 characters. If the output directory already holds a panel
+for that date, add `-2`, `-3` and so on. Every snapshot, lead brief, verifier scratch
+dir and repro path uses this ID.
+
 Create `<output_dir>/` and `<output_dir>/findings/`. Then write
 `<output_dir>/panel-report.md` from {{template panel-report}}, filling the
 header and the Phase 0 section:
@@ -98,6 +111,8 @@ header and the Phase 0 section:
 - **Output directory:** <output_dir>
 - **Date:** <date>
 - **Reviewer:** Syn (Panel Review Mode)
+- **Run ID:** <run_id>
+- **Code execution:** not approved (set in Step 1f)
 
 ---
 
@@ -265,6 +280,23 @@ Read this section back to the user. If any bucket is `(needs second lens?)`,
 explicitly ask: *"This bucket only has one reviewer. Add a secondary, or proceed
 with one?"*
 
+### Step 1f: Code execution approval
+
+Running code is off by default. In the same message as the composition readback,
+ask:
+
+> Allow reviewers to run code for this panel? Default is no. If yes, name the exact
+> commands they may run (for example `python -m pytest <path> -q`). Agent count
+> estimate: one review lead per specialist on the panel (N leads), up to 4 verifiers
+> per lead, 16 in the run.
+
+Record the answer in the Phase 1 section as `**Code execution:** approved — allowed
+commands: <list>` or `not approved`. That line goes into every lead brief, so the
+leads know what they may run ({{protocol review_execution}}). The approval covers
+this review only. Running a repro or acceptance check later needs its own approval
+at the Phase 4 gate. If the target is outside the project root, do not ask: say that
+code execution is not available here.
+
 {{gate kind=phase phase=1 id=syn-panel-review-phase-1}}
 
 ---
@@ -276,38 +308,52 @@ parallel. Findings will appear as each returns."*
 
 ### Dispatch plan
 
-Dispatch **one consult per unique specialist** in the confirmed panel — not one
-per (specialist, bucket) pair. A specialist in several buckets gets all of its
-files in one brief, grouped by bucket. Exception — **size split:** when one
-specialist's file list exceeds about 25 files or 4,000 lines of source, split it
-into consults by subdirectory (each under the limit) so every file gets a full
-read; write each part as `<reviewer>-findings-<n>.md`.
+Before the first lead starts, follow {{protocol review_panel}} section 2: when code
+execution is approved, run
+`review_snapshot(action="start", run_id, paths=<the reviewed paths>)`. When
+`<output_dir>` is inside the project root, also pass
+`exclude=[<output_dir, project-root-relative>]`: findings are written there while
+the leads run. Then dispatch
+**one review lead per unique specialist** in the confirmed panel, not one per
+(specialist, bucket) pair. A specialist in several buckets gets all of its files in
+one brief, grouped by bucket. Exception — **size split:** when one specialist's file
+list exceeds about 25 files or 4,000 lines of source, split it into leads by
+subdirectory (each under the limit) so every file gets a full read; write each part
+as `<reviewer>-findings-<n>.md`. Tell part n to start its slice ids with
+`<reviewer>-<n>-`, so the parts do not share scratch dirs.
 
-Run the consults in **two waves**, each wave as parallel calls in a single message:
+Run the leads in **two waves**, each wave as parallel calls in a single message:
 
-- **Wave 1** — every domain reviewer, the Academic (if on the panel) and, when
-  the Researcher or Statistician is on the panel and the target holds SQL or
+- **Wave 1** — every domain reviewer lead, the Academic lead (if on the panel) and,
+  when the Researcher or Statistician is on the panel and the target holds SQL or
   notebooks that query data, a data-modeller context consult (below). If the
-  data-modeller is already a panel reviewer, its panel brief asks for the
-  context section instead of a separate consult.
-- **Wave 2** — the Researcher and the Statistician, with the data-modeller
+  data-modeller is already a panel reviewer, its panel brief asks for the context
+  section instead of a separate consult.
+- **Wave 2** — the Researcher and the Statistician leads, with the data-modeller
   context from wave 1 in their briefs. With neither on the panel there is no
   wave 2. Do not hold wave 1 findings back while waiting: write each as it
   returns.
 
-### Domain reviewer consult
+After every lead has returned, run the snapshot check if you took one (section 2
+of the protocol).
 
-Every domain reviewer is consulted on its `review` entry (its consult-mode
-rules apply: no questions, no gates, no writes, no nested consults). Shown for
-`backend-engineer`; use the same call with each panel specialist's id:
+### Domain reviewer lead
 
-{{consult backend-engineer entry=review task="Panel review for <dirname>"}}
+Every domain reviewer runs as a review lead on its `review` entry (or `service` when
+it has no review entry). The lead reads its files, verifies its High findings when
+code execution is approved, and returns one answer under
+the review-lead contract. Shown for `backend-engineer`; use the same call
+with each panel specialist's id:
 
-Brief for each domain reviewer (fill the angle-bracket fields):
+{{review_lead backend-engineer task="Panel review for <dirname>"}}
+
+Brief for each domain reviewer lead (fill the angle-bracket fields):
 
 ```
-SERVICE MODE — PANEL REVIEW. Review the listed files in <target_dir>.
+PANEL REVIEW. Review the listed files in <target_dir>.
 
+**Run ID:** <run_id>
+**Code execution:** <approved — allowed commands: <list> | not approved>
 **Target directory:** <target_dir>
 **Content tags declared by user:** <tag list>
 **Project context:** <one-paragraph summary from Phase 1a>
@@ -329,16 +375,19 @@ Answer in this format:
 **Verdict:** APPROVED | NEEDS REVISION | BLOCKED
 
 **Findings:**
-| # | Severity | Type | Location | Issue | Suggested fix | Overlaps lens |
-|---|---|---|---|---|---|---|
-| 1 | High/Medium/Low | fix/caveat | path:line (or path cell N, or path § section) | <what is wrong and why it matters> | <one-liner or short snippet> | <other reviewer id, or —> |
+| # | Severity | Type | Location | Issue | Suggested fix | Overlaps lens | Status | Evidence |
+|---|---|---|---|---|---|---|---|---|
+| 1 | High/Medium/Low | fix/caveat | path:line (or path cell N, or path § section) | <what is wrong and why it matters> | <one-liner or short snippet> | <other reviewer id, or —> | CONFIRMED/PLAUSIBLE/REFUTED | command, exit code, repro path (or reason for PLAUSIBLE) |
 
 Severity: High = wrong results, data loss, security exposure or a production
 failure; Medium = a correctness or maintainability risk to fix before relying on
-the work; Low = polish. Type `caveat` = record only, no change to make.
+the work; Low = polish. Type `caveat` = record only, no change to make. Status and
+Evidence follow the review lead contract: CONFIRMED means the repro ran and showed
+the issue; PLAUSIBLE means it was not run (with the reason).
 
 **Coverage:** every listed file, marked reviewed or not reviewed (with reason).
 **Open questions for the caller:** missing context, consults you would have made.
+**Delegation:** verifiers launched, consults run, and any fallback used, or `none`.
 
 Your job here is review only — do not apply any fixes.
 ```
@@ -357,15 +406,17 @@ known quality issues". When the data-modeller *is* a panel reviewer, append to
 its panel brief: *"Also return a `### Grain & relationships context` section
 covering the same questions for every SQL file and notebook query in scope."*
 
-### Researcher consult (wave 2)
+### Researcher lead (wave 2)
 
-{{consult researcher entry=service task="Panel review for <dirname>"}}
+{{review_lead researcher task="Panel review for <dirname>"}}
 
-Brief for the Researcher (fill the bracketed fields):
+Brief for the Researcher lead (fill the bracketed fields):
 
 ```
-SERVICE MODE — PANEL REVIEW. Statistical methodology review.
+PANEL REVIEW. Statistical methodology review.
 
+**Run ID:** <run_id>
+**Code execution:** <approved — allowed commands: <list> | not approved>
 **Target directory:** <target_dir>
 **Content tags declared by user:** <tag list>
 **Project context:** <one-paragraph summary>
@@ -387,19 +438,21 @@ lanes. Claims whose conclusions you doubt go under "Claims for the
 Statistician". Review only — do not apply any fixes.
 ```
 
-### Statistician consult (wave 2)
+### Statistician lead (wave 2)
 
 Only when Step 1d found claims. The Statistician reviews the claims, the
 Researcher keeps the method; follow Step 3 of
-`protocols/stats_review_routing.md` for both consults.
+`protocols/stats_review_routing.md` for both leads.
 
-{{consult statistician entry=service task="Panel review of claims for <dirname>"}}
+{{review_lead statistician task="Panel review of claims for <dirname>"}}
 
-Brief for the Statistician (fill the bracketed fields):
+Brief for the Statistician lead (fill the bracketed fields):
 
 ```
-SERVICE MODE — PANEL REVIEW. Review of statistical and metric claims.
+PANEL REVIEW. Review of statistical and metric claims.
 
+**Run ID:** <run_id>
+**Code execution:** <approved — allowed commands: <list> | not approved>
 **Target directory:** <target_dir>
 **Content tags declared by user:** <tag list>
 **Data-modeller context (grain, entities, clustering):** <from wave 1, or "not collected">
@@ -412,18 +465,20 @@ Return your usual structured review, with the file and cell/section of every
 claim in the findings table. Review only — do not apply any fixes.
 ```
 
-### Academic consult (wave 1, `user-impact` only)
+### Academic lead (wave 1, `user-impact` only)
 
-{{consult academic entry=service task="Panel review of user impact for <dirname>"}}
+{{review_lead academic task="Panel review of user impact for <dirname>"}}
+
+The brief carries the same `**Run ID:**` and `**Code execution:**` lines as the other leads.
 
 Brief: the project context, the files that decide what users see, the reports,
 and the question "what are the safety, ethical and efficacy risks for the people
 this system affects, with the file/section each risk comes from?" Ask for
 High/Medium/Low severity per concern and a concrete mitigation.
 
-### Append findings as each consult returns
+### Append findings as each lead returns
 
-As each consult completes, immediately write the reviewer's response verbatim to:
+As each lead or consult completes, immediately write the reviewer's response verbatim to:
 
 `<output_dir>/findings/<reviewer-name>-findings.md`
 
@@ -442,7 +497,7 @@ with this header:
 <verbatim reviewer response>
 ```
 
-Do not wait for all consults to return before writing. Give the user a brief
+Do not wait for all leads to return before writing. Give the user a brief
 progress update as each one returns ("Backend Engineer is back — NEEDS
 REVISION, 4 findings; ML Engineer still working...").
 
@@ -450,21 +505,34 @@ REVISION, 4 findings; ML Engineer still working...").
 
 ## Phase 3 — Coalescence
 
-Once all consults have returned, read all `<output_dir>/findings/*.md` files.
+Once all leads have returned, read all `<output_dir>/findings/*.md` files.
 
 ### Step 3a: Coverage and format check
 
 - **Coverage.** Every file in every bucket must be marked reviewed by each
   reviewer assigned to that bucket. For gaps, or for a response that has no
-  severities or no locations, re-consult that reviewer **once** with only the
-  missing files or a request to restate its findings in the panel format. Count
+  severities, no locations or no Status, re-launch that reviewer's lead **once** with
+  only the missing files or a request to restate its findings in the panel format. Count
   this as the reviewer's one resubmit (reviewer verdict protocol). Gaps that
   remain are listed under "Coverage gaps" in the report — never silently dropped.
 - **Verdicts.** Record each reviewer's verdict. A word outside APPROVED / NEEDS
   REVISION / BLOCKED is handled per {{protocol reviewer_verdict}}.
+- **Snapshot.** If code execution was not approved there is no snapshot: record
+  `not run`. Otherwise run `review_snapshot(action="check", run_id)` (section 2 of
+  {{protocol review_panel}}). Record `clean`, or the added, modified and deleted paths.
+  Each changed path is a High finding in the table: Type `snapshot`, Status CONFIRMED,
+  Evidence = the check output, Owning specialist `unowned`. The review ran against a
+  changing tree, so the user decides at Phase 4 whether to rerun it.
+- **Delegation.** Keep each lead's `Delegation` line verbatim for the report.
 
 ### Step 3b: Normalize
 
+- **Status and Evidence.** Keep each lead's Status (CONFIRMED | PLAUSIBLE | REFUTED)
+  and its Evidence, for every reviewer, lens-only included.
+- **REFUTED rows** leave the findings table. List them under "Refuted findings" with
+  their repro paths. They are still logged.
+- **Unverified High.** A High finding that is not CONFIRMED shows as `High (unverified)`
+  in the Severity column. Medium and Low keep their severity and status as returned.
 - Domain reviewer and Researcher findings keep their High/Medium/Low severity.
 - Statistician findings map: INVALIDATES → High, WEAKENS → Medium. OFFENDS
   findings are non-blocking: list them under "Statistician style notes
@@ -528,6 +596,8 @@ Append a `## Phase 3 — Coalesced Findings` section to `panel-report.md`:
 - **Low severity:** N
 - **Conflict groups:** N (fixes that touch overlapping locations)
 - **Contradictions awaiting a decision:** N
+- **Refuted (dropped from the table):** N
+- **Snapshot check:** clean | N paths changed (listed under Findings)
 
 ### Reviewer verdicts
 
@@ -537,11 +607,21 @@ Append a `## Phase 3 — Coalesced Findings` section to `panel-report.md`:
 
 ### Findings table
 
-| ID | Severity | Type | File(s) | Reviewer(s) | Issue | Cross-reviewer agreement | Suggested fix | Owning specialist | Conflict group |
-|---|---|---|---|---|---|---|---|---|---|
-| F1 | High | fix | `train.py:42-58` | backend-engineer, ml-engineer | <issue> | Both flagged this section | <fix> | ml-engineer | — |
-| F2 | Medium | fix | `cohort.sql` | analytics-engineer | <issue> | — | <fix> | analytics-engineer | cg-1 |
-| F3 | Medium | fix | `cohort.sql` | researcher | <statistical issue> | — | <fix recommendation> | analytics-engineer (Researcher does not apply fixes) | cg-1 |
+| ID | Severity | Type | Status | Evidence | File(s) | Reviewer(s) | Issue | Cross-reviewer agreement | Suggested fix | Owning specialist | Conflict group |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| F1 | High | fix | CONFIRMED | `pytest -p no:cacheprovider .shards/review/<run_id>/f1-…/test_repro.py` exit 1; repro `.shards/review/<run_id>/f1-…/test_repro.py` | `train.py:42-58` | backend-engineer, ml-engineer | <issue> | Both flagged this section | <fix> | ml-engineer | — |
+| F2 | High (unverified) | fix | PLAUSIBLE | code execution not approved | `cohort.sql` | analytics-engineer | <issue> | — | <fix> | analytics-engineer | cg-1 |
+| F3 | Medium | fix | PLAUSIBLE | repro could not run (timeout) | `cohort.sql` | researcher | <statistical issue> | — | <fix recommendation> | analytics-engineer (Researcher does not apply fixes) | cg-1 |
+
+### Refuted findings
+
+| Lead | Issue | Repro command | Exit code | Repro path |
+|---|---|---|---|---|
+| <reviewer> | <issue> | <command> | <n> | `.shards/review/<run_id>/<slice_id>/…` |
+
+### Review leads and delegation
+
+- backend-engineer: Delegation: <verifiers launched (n), consults (ids), fallback or none>
 
 ### Methodological Concerns (Researcher's lens)
 
@@ -612,6 +692,12 @@ Give every fix item an acceptance check the worker can run, e.g. "file parses
 "`pytest tests/test_serve.py` passes". Prefer an existing test command when the
 target has one.
 
+**Confirmed findings.** A fix item that carries a CONFIRMED finding uses that
+finding's repro command as its acceptance check (`{{protocol review_panel}}`
+section 5). The repro is the test under `.shards/review/<run_id>/<slice_id>/`. It
+fails now, so it must pass after the fix. Items without a CONFIRMED finding keep
+their own check. A PLAUSIBLE finding has no repro, so its item keeps its check.
+
 ### Write the plan
 
 Write `<output_dir>/sequencing-plan.md` from {{template panel-sequencing-plan}},
@@ -663,7 +749,11 @@ sequencing plan back to the user. Then:
 - list contradictions and ask which recommendation to keep;
 - list open questions only the user can answer;
 - ask: "Apply fixes in this order? (y to execute, n to stop, or list specific
-  fix IDs to apply only those)"
+  fix IDs to apply only those)";
+- ask, default no: "May the fix stage run the repro and acceptance commands listed
+  in the sequencing plan? (Code execution for the fix stage is a separate approval.)"
+  Without a yes, fix workers do not run code: their acceptance is recorded as
+  `not run (code execution not approved)`, and Phase 6 does not rerun the repros.
 
 {{gate kind=phase phase=4 id=syn-panel-review-phase-4}}
 
@@ -719,12 +809,15 @@ PANEL REVIEW FIX. The user has approved the following fix in <target_dir>.
 **Issue:** <coalesced issue description>
 **Suggested fix:** <fix description>
 **Originating reviewer(s):** <reviewer ids>
-**Acceptance check:** <command or check>
+**Acceptance check:** <command or check, or the repro command for a CONFIRMED finding>
+**Code execution (fix stage):** <approved — allowed commands: <list> | not approved>
 
 Apply only this fix (file-editing tool, or the notebook editing tool for
 .ipynb). Do not exceed its scope.
 
-Run the acceptance check. Return verdict JSON with: APPROVED = fix applied
+Run the acceptance check only if the fix-stage line approves it, under
+{{protocol review_execution}}; otherwise report acceptance as not run. A repro
+acceptance check must fail before the fix and pass after it. Return verdict JSON with: APPROVED = fix applied
 and acceptance passed; NEEDS REVISION = fix applied with a deviation or
 caveat (describe it in summary); BLOCKED = not applied (technical
 disagreement, a file outside your owned paths, or acceptance failing), with
@@ -787,8 +880,9 @@ is also Refused or Failed, log it, show it to the user and ask again: skip it
 ### Step 6a: Verify High-severity fixes
 
 For every **Applied** or **Applied with caveat** fix with High severity,
-re-consult its originating reviewer(s) once, in parallel (one consult per
-reviewer, same entry as Phase 2), with the original finding and the diff:
+re-consult its originating reviewer(s) once, in parallel. This is an ordinary
+consult on the reviewer's `service` entry, not a review lead: the re-check reads
+the diff and runs no verifier. Send one consult per reviewer, for example `{{consult backend-engineer entry=service task="Panel re-check for <dirname>"}}`, with the original finding and the diff:
 *"SERVICE MODE — PANEL REVIEW. Verify that these fixes resolve your findings
 without introducing new issues in the changed lines. Answer with a verdict and,
 per fix ID, Resolved / Not resolved / New issue (with location)."* This verification consult is not a resubmit under the
@@ -796,6 +890,15 @@ reviewer verdict protocol: it reviews new changes, not the original work.
 Record each answer in `fix-log.md` under `## Verification`. Do not dispatch further fixes
 here: a Not resolved or New issue result is reported to the user at the gate
 below as a candidate for a follow-up panel.
+
+### Step 6a-2: Rerun repro commands
+
+Only if the Phase 4 fix-stage approval was given. For each fixed item that carries a
+CONFIRMED finding, rerun that finding's repro command under
+{{protocol review_execution}}, with the same timeout and no `cd`. Record the command,
+the real exit code and the output excerpt in `fix-log.md` under `## Repro reruns`. A
+repro must now exit 0. One that still fails is **Not resolved** and goes to the user
+at the gate. Without the approval, write `not run (code execution not approved)`.
 
 ### Step 6b: Summary
 
@@ -817,6 +920,7 @@ Append a `## Phase 6 — Summary` section to `panel-report.md`:
 - **Failed fixes:** <n> — see `fix-log.md`
 - **Skipped fixes (user excluded or dependent on a skipped fix):** <n>
 - **Verification:** <n> resolved, <n> not resolved, <n> new issues
+- **Repro reruns:** <n> passed, <n> failed, <n> not run
 - **Coverage gaps:** <n files, or "None">
 ```
 
@@ -864,8 +968,13 @@ follow-up panel on the unresolved items.
 - **Syn never edits the target directory's files.** Owning specialists apply
   fixes as fan-out workers. Syn writes only to `<output_dir>/` (plus the
   Phase 6 back-reference line).
-- **Append findings as each consult returns.** Don't batch-write at the end —
+- **Append findings as each lead returns.** Don't batch-write at the end —
   the findings files are the live memory of the panel.
+- **Depth.** Syn launches review leads (depth 1). A lead's verifiers are depth 2 and
+  spawn nothing. Syn never launches verifiers itself, and no helper consults under
+  another. Run checks yourself only when the Phase 4 or Phase 6 approval covers them.
+- **Run ID.** Every snapshot, lead brief, verifier scratch dir and repro path carries
+  the run ID from Phase 0.
 - **Severity is earned, not voted.** Agreement between reviewers is recorded,
   but severity is the highest any reviewer gave, not inflated by headcount.
 - **Contradictions go to the user.** Never pick between two reviewers'

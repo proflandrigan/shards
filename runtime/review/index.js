@@ -1,0 +1,182 @@
+'use strict';
+// Review runtime (verified review delegation): run ids, slice rules for purpose=review leases, the verdict merge
+// for review leases, and the content snapshot a review uses to prove it changed nothing outside its scratch dirs.
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const leases = require('../leases');
+
+const RUN_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+const MAX_SLICES_PER_CALL = 4;
+const MAX_SLICES_PER_RUN = 16;
+const MAX_SLICES_PER_LEAD = 4;
+const STATUSES = ['CONFIRMED', 'PLAUSIBLE', 'REFUTED'];
+const RULES = 'verifier: no gates, no delegation (never spawn subagents), no source fixes; write only inside owned_paths (your scratch dir); run code only if the brief says code execution is approved; return status JSON {slice_id, status: CONFIRMED|PLAUSIBLE|REFUTED, summary, findings}';
+const SKIP_NAMES = new Set(['.git', '.shards', 'node_modules', 'venv', '.venv', '__pycache__', '.pytest_cache']);
+
+function validateRunId(runId) {
+  if (typeof runId !== 'string' || !RUN_ID_RE.test(runId)) throw new Error(`run_id must match ${RUN_ID_RE} (got ${JSON.stringify(runId)})`);
+  return runId;
+}
+
+function runDir(runId) {
+  return `.shards/review/${runId}`;
+}
+
+// Every review slice path must sit strictly inside .shards/review/<run_id>/ (slices are normalized already).
+function assertRunSlices(slices, runId) {
+  validateRunId(runId);
+  if (slices.length > MAX_SLICES_PER_CALL) throw new Error(`fanout_start: at most ${MAX_SLICES_PER_CALL} review slices per call (got ${slices.length})`);
+  const prefix = `${runDir(runId)}/`;
+  for (const s of slices) {
+    for (const p of s.paths) {
+      if (!p.startsWith(prefix)) throw new Error(`fanout_start: review slice "${s.id}" path ${p} must be inside ${runDir(runId)}/`);
+    }
+  }
+}
+
+// Lease guard (runs under the state lock): 16 slices per run_id in the session and 4 per lead (the lease's agent)
+// within that run_id, open or closed, and no new slice path may overlap a slice of another live review lease (two
+// verifiers must not share a scratch dir). One review lead per specialist per run, so the agent id names the lead.
+function assertRunCap(leasesObj, runId, adding, newSlices = [], now = Date.now(), agent = null) {
+  let used = 0; let usedByLead = 0;
+  for (const l of Object.values(leasesObj || {})) {
+    if (!l || l.owner !== 'review') continue;
+    if (l.meta && l.meta.run_id === runId) {
+      used += (l.slices || []).length;
+      if (agent && l.worker_type === agent) usedByLead += (l.slices || []).length;
+    }
+    if (l.status !== 'active' || !(Date.parse(l.expires_at) > now)) continue;
+    for (const s of newSlices) for (const p of s.paths) for (const o of l.slices || []) for (const q of o.paths || []) {
+      if (leases.pathsOverlap(p, q)) throw new Error(`fanout_start refused: review slice "${s.id}" path ${p} overlaps slice "${o.id}" of active lease ${l.id} (${q})`);
+    }
+  }
+  if (used + adding > MAX_SLICES_PER_RUN) {
+    throw new Error(`fanout_start refused: run ${runId} already has ${used} review slice(s); at most ${MAX_SLICES_PER_RUN} per run_id (this call adds ${adding})`);
+  }
+  if (agent && usedByLead + adding > MAX_SLICES_PER_LEAD) {
+    throw new Error(`fanout_start refused: lead ${agent} already has ${usedByLead} verifier slice(s) in run ${runId}; at most ${MAX_SLICES_PER_LEAD} per lead per run_id (this call adds ${adding})`);
+  }
+}
+
+// mergeReview(results, lease): one {slice_id, status, summary?, findings?} per slice. APPROVED only when every
+// finding was REFUTED: a CONFIRMED one is a real issue and a PLAUSIBLE one was never tested. All are kept in per_slice.
+function mergeReview(results, lease) {
+  if (!Array.isArray(results) || !results.length) throw new Error('mergeReview: results must be a non-empty array');
+  const want = new Set((lease.slices || []).map((s) => s.id));
+  const per_slice = {};
+  for (const r of results) {
+    if (!r || typeof r.slice_id !== 'string' || !r.slice_id || !want.has(r.slice_id)) throw new Error(`mergeReview: unknown slice "${r && r.slice_id}"`);
+    if (Object.prototype.hasOwnProperty.call(per_slice, r.slice_id)) throw new Error(`mergeReview: duplicate result for slice "${r.slice_id}"`);
+    if (r.status === undefined && r.verdict !== undefined) throw new Error(`mergeReview: slice "${r.slice_id}" has a verdict; review lease results take status (CONFIRMED, PLAUSIBLE or REFUTED), not verdict`);
+    if (r.verdict !== undefined) throw new Error(`mergeReview: slice "${r.slice_id}" has both status and verdict; review lease results take status only`);
+    if (!STATUSES.includes(r.status)) throw new Error(`mergeReview: invalid status "${r.status}" for slice "${r.slice_id}" (CONFIRMED, PLAUSIBLE or REFUTED)`);
+    per_slice[r.slice_id] = { status: r.status, ...(r.summary !== undefined ? { summary: r.summary } : {}), ...(r.findings !== undefined ? { findings: r.findings } : {}) };
+  }
+  const missing = [...want].filter((id) => !(id in per_slice));
+  if (missing.length) throw new Error(`mergeReview: missing result for slice(s): ${missing.join(', ')}`);
+  const counts = { CONFIRMED: 0, PLAUSIBLE: 0, REFUTED: 0 };
+  for (const x of Object.values(per_slice)) counts[x.status] += 1;
+  const verdict = counts.CONFIRMED + counts.PLAUSIBLE > 0 ? 'NEEDS REVISION' : 'APPROVED';
+  return { verdict, counts, per_slice };
+}
+
+// ---------- content snapshot (review_snapshot) ----------
+function skipped(name) {
+  return SKIP_NAMES.has(name);
+}
+
+// Walk rel (project-relative file or directory) and record a sha256 per file. Symlinks are recorded by their
+// target text and never followed. Missing paths contribute nothing (their files show up as deleted).
+function hashFile(abs) {
+  // Chunked: data projects hold files too large to read into one buffer.
+  const h = crypto.createHash('sha256');
+  const buf = Buffer.alloc(1 << 20);
+  const fd = fs.openSync(abs, 'r');
+  try {
+    for (let n = fs.readSync(fd, buf, 0, buf.length, null); n > 0; n = fs.readSync(fd, buf, 0, buf.length, null)) h.update(buf.subarray(0, n));
+  } finally { fs.closeSync(fd); }
+  return h.digest('hex');
+}
+
+function hashTree(root, rel, out, exclude = []) {
+  if (exclude.some((e) => rel === e || rel.startsWith(`${e}/`))) return out;
+  const abs = path.join(root, rel);
+  let st;
+  try { st = fs.lstatSync(abs); } catch (e) { if (e.code === 'ENOENT') return out; throw e; }
+  if (st.isSymbolicLink()) {
+    out[rel] = `link:${crypto.createHash('sha256').update(fs.readlinkSync(abs)).digest('hex')}`;
+  } else if (st.isDirectory()) {
+    for (const name of fs.readdirSync(abs).sort()) {
+      if (skipped(name)) continue;
+      hashTree(root, rel === '.' ? name : `${rel}/${name}`, out, exclude);
+    }
+  } else if (st.isFile()) {
+    out[rel] = hashFile(abs);
+  }
+  return out;
+}
+
+// Project-relative path for review_snapshot, with errors named for this tool rather than for leases.
+function relPath(p, what) {
+  try { return leases.normalizeRel(p); } catch (e) {
+    throw new Error(`review_snapshot: ${what} ${JSON.stringify(p)} must be project-relative, without ".." (${e.message})`);
+  }
+}
+
+function lexists(abs) {
+  try { fs.lstatSync(abs); return true; } catch (e) { if (e.code === 'ENOENT') return false; throw e; }
+}
+
+function snapshotFile(state, runId) {
+  return path.join(state.sessionDir, 'review-snapshots', `${runId}.json`);
+}
+
+function hashPaths(root, paths, exclude) {
+  const files = {};
+  for (const p of paths) hashTree(root, p, files, exclude);
+  return files;
+}
+
+// action start: record the baseline for paths (project-relative), minus exclude (the caller's own output).
+// action check: re-hash the same paths with the same exclusions.
+function snapshot(root, state, { action, run_id: runId, paths, exclude } = {}) {
+  validateRunId(runId);
+  const file = snapshotFile(state, runId);
+  if (action === 'start') {
+    if (!Array.isArray(paths) || !paths.length) throw new Error('review_snapshot start requires paths (project-relative)');
+    // A second start would silently replace the baseline and hide changes made since the first one.
+    if (fs.existsSync(file)) throw new Error(`review_snapshot: run ${runId} already has a baseline; call action check, or use a new run_id`);
+    // '.' means the whole project: reviews are often pointed at the root (lease paths cannot be, snapshots can).
+    const norm = [...new Set(paths.map((p) => (p === '.' || p === './' ? '.' : relPath(p, 'path'))))];
+    // A mistyped path would hash nothing and later check as clean, so refuse it. lstat: a dangling symlink exists.
+    const missing = norm.filter((p) => !lexists(path.join(root, p)));
+    if (missing.length) throw new Error(`review_snapshot: path(s) not found: ${missing.join(', ')}`);
+    const skip = [...new Set((exclude || []).map((p) => relPath(p, 'exclude')))];
+    // An exclude that covers a whole snapshot path would leave it unwatched, so check would report it clean.
+    const covered = norm.filter((p) => skip.some((e) => p === e || p.startsWith(`${e}/`)));
+    if (covered.length) throw new Error(`review_snapshot: exclude covers the whole of path(s) ${covered.join(', ')}; nothing there would be checked`);
+    const files = hashPaths(root, norm, skip);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    const tmp = `${file}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify({ run_id: runId, paths: norm, exclude: skip, started_at: new Date().toISOString(), files }, null, 2));
+    fs.renameSync(tmp, file);
+    return { run_id: runId, paths: norm, exclude: skip, files: Object.keys(files).length };
+  }
+  if (action === 'check') {
+    if (!fs.existsSync(file)) throw new Error(`review_snapshot: no snapshot for run ${runId}; call action start first`);
+    const base = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const now = hashPaths(root, base.paths, base.exclude);
+    const added = []; const modified = []; const deleted = [];
+    for (const [f, h] of Object.entries(now)) if (!(f in base.files)) added.push(f); else if (base.files[f] !== h) modified.push(f);
+    for (const f of Object.keys(base.files)) if (!(f in now)) deleted.push(f);
+    const clean = !added.length && !modified.length && !deleted.length;
+    return { clean, added: added.sort(), modified: modified.sort(), deleted: deleted.sort() };
+  }
+  throw new Error('review_snapshot action must be start or check');
+}
+
+module.exports = {
+  RULES, STATUSES, RUN_ID_RE, MAX_SLICES_PER_CALL, MAX_SLICES_PER_RUN, MAX_SLICES_PER_LEAD,
+  validateRunId, runDir, assertRunSlices, assertRunCap, mergeReview, hashTree, snapshot,
+};

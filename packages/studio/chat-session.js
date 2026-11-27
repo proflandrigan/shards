@@ -33,7 +33,7 @@ const STUDIO_ALLOWED_RUNTIME_TOOLS = Object.freeze([
   'activate', 'return', 'active', 'list_agents', 'shards_status', 'jira_context',
   'load_phase', 'gate_request', 'gates_open', 'gate_resume',
   'artifact_emit', 'copy_report', 'auto_verify_end',
-  'fanout_start', 'fanout_claim', 'fanout_collect',
+  'fanout_start', 'fanout_claim', 'fanout_collect', 'review_snapshot',
   'tasks_set', 'task_dispatch', 'task_report', 'task_status', 'task_verify',
   'sessions_list', 'sessions_resume', 'sessions_end',
   'notebook_stop', 'ar_status', 'ar_end',

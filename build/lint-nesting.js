@@ -2,7 +2,7 @@
 // Nesting lint (plan E5.6 / D2): consults never nest.
 // For every {{consult X entry=E}} / {{fanout X ...}} under core/, the target's entry content file
 // (core/agents/X/<consult_entries[E]>), plus any core/protocols/<name>.md it pulls in via {{protocol}},
-// must not contain {{consult}}, {{fanout}} or {{switch}}. Macros are scanned with build/macros.js
+// must not contain {{consult}}, {{fanout}}, {{switch}}, {{review_lead}} or {{verify}}. Macros are scanned with build/macros.js
 // expandText, so escaped \{{ matches the compiler.
 //
 // Exceptions:
@@ -16,7 +16,12 @@ const { expandText } = require('./macros.js');
 const { loadCore, walk, label } = require('./core.js');
 
 const NESTING_EXCEPTIONS = [];
-const NESTING_MACROS = new Set(['consult', 'fanout', 'switch']);
+// review_lead (a review lead, depth 1) and verify (verifiers, depth 2) are nesting macros too: reachable from a
+// consult/fanout entry they would nest a helper under a consultant.
+const NESTING_MACROS = new Set(['consult', 'fanout', 'switch', 'review_lead', 'verify']);
+// Files that must hold no nesting macro at all, whatever calls them: verifiers never spawn (verifier_contract.md is
+// the verifier subagent's prompt, which has no Task tool).
+const LEAF_PROTOCOLS = ['verifier_contract.md'];
 
 function scan(file, text) {
   const hits = [];
@@ -27,12 +32,26 @@ function scan(file, text) {
   return hits.map((m) => ({ file, ...m }));
 }
 
+// Leaf files never nest on any target, not even where allowDepth permits nesting.
+function leafErrors(coreDir) {
+  const errors = [];
+  for (const leaf of LEAF_PROTOCOLS) {
+    const file = path.join(coreDir, 'protocols', leaf);
+    if (!fs.existsSync(file)) continue;
+    for (const m of scan(file, fs.readFileSync(file, 'utf8'))) {
+      if (!NESTING_MACROS.has(m.name)) continue;
+      errors.push(`${label(m.file)}:${m.line}: nested {{${m.name}}} in ${leaf}; verifiers are leaves and never spawn (D2)`);
+    }
+  }
+  return errors;
+}
+
 function lintNesting(core, opts = {}) {
   const { allowDepth = {}, target = null } = opts;
-  if (target && allowDepth[target]) return [];
   const coreDir = typeof core === 'string' ? core : core.coreDir;
+  const errors = leafErrors(coreDir);
+  if (target && allowDepth[target]) return errors;
   const loaded = typeof core === 'string' ? loadCore(core) : core;
-  const errors = [];
   const reported = new Set();
   const cache = new Map();
   const read = (f) => {

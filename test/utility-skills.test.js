@@ -89,6 +89,8 @@ describe('E7.3 release consult subagents', () => {
     const want = [];
     for (const a of agents.filter((x) => x.y.activation.includes('consult'))) {
       want.push(a.id, ...Object.keys(a.y.consult_entries || {}).map((e) => `${a.id}-${e}`));
+      const ce = a.y.consult_entries || {};
+      if (ce.review || ce.service) want.push(`${a.id}-verify`);
     }
     expect(want.length).toBeGreaterThan(0);
     expect(ls(path.join(D.rel, 'agents')).map((f) => f.replace(/\.md$/, '')).sort()).toEqual([...new Set(want)].sort());
@@ -98,7 +100,9 @@ describe('E7.3 release consult subagents', () => {
       expect(f.name).toBe(n);
       expect(String(f.description).length).toBeGreaterThan(0);
       expect('model' in f).toBe(false);
-      const lead = agents.some((x) => x.id === n && x.y.activation.includes('fanout_worker') && (x.y.capabilities || []).includes('delegate'));
+      // Only a general subagent keeps Task: builders with workers, and reviewers that can lead a review.
+      const lead = agents.some((x) => x.id === n && (x.y.capabilities || []).includes('delegate')
+        && (x.y.activation.includes('fanout_worker') || (x.y.role === 'reviewer' && !!((x.y.consult_entries || {}).review || (x.y.consult_entries || {}).service))));
       if (!lead) expect(String(f.tools || '').split(',').map((s) => s.trim())).not.toContain('Task');
       expect(String(f.tools || '').split(',').map((s) => s.trim())).not.toContain('Agent');
     }

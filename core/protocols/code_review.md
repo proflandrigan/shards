@@ -1,6 +1,6 @@
 ---
 name: code-review-protocol
-description: Code pass run by the specialist in its own final phase — partition the project's code by type, consult the domain reviewer for each bucket, gate, then apply the approved fixes
+description: Code pass run by the specialist in its own final phase — partition the project's code by type, consult or (when code execution is approved) verify with a review lead for each bucket, gate, then apply the approved fixes
 type: reference
 ---
 
@@ -9,8 +9,9 @@ type: reference
 Run this when Syn's final review includes a "Code Review" section and the user
 wants the code pass (see the Code Review follow-up in
 `protocols/syn_review_resolution.md`). You, the specialist who owns the project,
-run every step in your own frame. Reviewers are consulted read-only; you hold
-the gate and you apply the approved fixes.
+run every step in your own frame. Reviewers never apply fixes and write nothing in
+the project; verifiers write only in their scratch dirs. You hold the gate and you
+apply the approved fixes.
 
 ## Step 1: Read project context
 
@@ -46,9 +47,40 @@ skip that bucket and say in the summary that your own phase checks covered it.
 
 ## Step 3: Consult a reviewer per bucket
 
-Consult the reviewers for the non-empty buckets, in parallel when there are
-several. Each one reviews only; none applies fixes. Use this brief for each,
-naming the bucket:
+Before dispatch, offer verified review. Ask once in chat: "Run verified review?
+Reviewers may run only the commands you name, for this review only (default no)."
+Name the commands you would allow and the agent count (one review lead per bucket,
+up to 4 verifiers each).
+
+- **Not approved (default):** consult the reviewers for the non-empty buckets, as
+  below, in parallel when there are several.
+- **Approved:** follow `{{protocol review_panel}}` (run ID
+  `code-review-<project_name>-<YYYY-MM-DD>`, sanitized as the protocol says;
+  snapshot before dispatch, check after). Launch one review lead per non-empty
+  bucket, in one message, using the same brief plus these two lines:
+
+  ```
+  **Run ID:** <run_id>
+  **Code execution:** approved — allowed commands: <list>
+  ```
+
+  A lead opens on its `review` entry where it has one, so also add to its brief:
+  "Where your agent has a service-mode file with a checklist for these files, apply
+  that checklist too."
+
+  Leads (use the notebook reviewer from Step 2):
+  - SQL: {{review_lead analytics-engineer task="SQL code review for <project_name>"}}
+  - Python scripts: {{review_lead backend-engineer task="Python code review for <project_name>"}}
+  - Notebooks, Data Scientist: {{review_lead data-scientist task="Notebook code review for <project_name>"}}
+  - Notebooks, ML Engineer: {{review_lead ml-engineer task="Notebook code review for <project_name>"}}
+  - Config/infra: {{review_lead mlops-engineer task="Config/infra code review for <project_name>"}}
+
+  **A workstream lead does not launch review leads.** If your brief runs you as a
+  PM workstream lead (`WORKSTREAM LEAD`), you are already depth 1: keep the
+  ordinary consults below, whatever the approval says, and name that in the summary.
+
+Each reviewer reviews only; none applies fixes. Ordinary consults (not approved),
+naming the bucket, use this brief for each:
 
 ```
 SERVICE MODE — CODE REVIEW. Review the following <SQL files | Python scripts |
@@ -72,6 +104,11 @@ Take each review as returned; do not re-review the files yourself.
 Present the consolidated findings, one section per bucket, then ask:
 "Apply fixes? (y to fix all, n to skip, or list specific filenames)"
 
+If the review was verified, show each finding's Status and Evidence, list REFUTED
+findings separately with their repro paths, mark an unverified High finding
+`High (unverified)`, and report the snapshot check result (`{{protocol review_panel}}`
+section 3).
+
 Call `gate_request` with `kind=confirm`, your current phase number, the id of
 your current phase gate with `.code-review` appended (for example
 `data-scientist-phase-7.code-review` or `analytics-engineer-deep-phase-8.code-review`),
@@ -89,6 +126,13 @@ Apply exactly the approved fixes, file by file, with the editing tools
 needs more than the reviewer's stated change, stop and ask the user, and
 re-consult that reviewer on the changed files before you record it.
 
+If the review was verified, a CONFIRMED finding's repro command is the acceptance
+check for its fix. The repro lives under `.shards/review/<run_id>/` and fails now, so
+it must pass after the fix (`{{protocol review_panel}}` section 5). Then ask once more,
+default no: "Rerun the repro commands now? Only the listed commands." If yes, rerun
+each one under `{{protocol review_execution}}` and record the real exit code and
+output. A repro that still fails is reported to the user, not called fixed.
+
 ## Step 6: Record the result
 
 Append to `project-specs.md` and present it to the user:
@@ -99,6 +143,7 @@ Append to `project-specs.md` and present it to the user:
 - **Files reviewed:** N
 - **Issues found:** N
 - **Fixes applied:** N
+- **Verified review:** yes (run ID <run_id>; snapshot clean | N paths changed) | no
 
 ### <Bucket> (<reviewer>)
 <per-file findings and fix status, "no files", or "covered by own phase checks">

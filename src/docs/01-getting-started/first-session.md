@@ -30,7 +30,7 @@ Approving an advancing gate commits the agent's output paths to your current bra
 
 ## Reviews and consults
 
-Specialists consult reviewers (the Researcher, the Data Modeller, and so on) as isolated subagents that return a verdict, and Syn gives final sign-off. These do not take over the conversation. In build phases a lead may split work across workers; see [Delegated build](../03-protocols/delegated-build.md).
+Specialists consult reviewers (the Researcher, the Data Modeller, and so on) as isolated subagents that return a verdict, and Syn gives final sign-off. These do not take over the conversation. In build phases a lead may split work across workers; see [Delegated build](../03-protocols/delegated-build.md). In panel review, each specialist's lead can have its High findings checked by verifier subagents; code runs only if you approve it (see [Activation modes](../03-protocols/activation-modes.md)).
 
 ## Pause, end, resume
 

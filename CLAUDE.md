@@ -19,7 +19,7 @@ Node.js 18+. Run the suite with `npm test` (`vitest run`; `vitest.config.js` alr
 | `core/templates/` | Output templates with `{{PLACEHOLDER}}` tokens (`project-specs.md`, `project-plan.md`, reports, model card) |
 | `core/schema/` | JSON Schemas: `agent`, `binding`, `shards-config`, `gate-request`, `event`, `task-result`, `tasks`, artifact schemas |
 | `build/` | Compiler: `compile.js`, `render.js`, `macros.js` (see `build/MACROS.md`), `emit.js`, `package.js`, `skills.js`, `activation-check.js` |
-| `runtime/` | `shards-mcp` stdio MCP server: `server.js`, `registry.js`, `tools/` (one file per tool), `gates/`, `session/`, `sessions/`, `fanout/`, `leases/`, `tasks/`, `config/`, `notebook/`, `state/` |
+| `runtime/` | `shards-mcp` stdio MCP server: `server.js`, `registry.js`, `tools/` (one file per tool), `gates/`, `session/`, `sessions/`, `fanout/`, `leases/`, `review/`, `tasks/`, `config/`, `notebook/`, `state/` |
 | `hooks/` | Host hook shims (SessionStart, UserPromptSubmit, PreToolUse, SubagentStop) for Claude Code and Codex; `hooks/lib/enforce.js` holds the write-blocking rules |
 | `bindings/` | Binding files (`bindings/<name>.md`); git serves all jobs and Jira serves tasks. Format spec in `bindings/README.md` |
 | `cli/` | The `shards` CLI (`cli/shards.js`, commands in `cli/commands/`) |
@@ -55,7 +55,7 @@ node cli/shards.js migrate --dry-run
 
 **Agent taxonomy** (from `agent.yaml` `role`): orchestrator (`syn`), specialists (`data-analyst`, `data-scientist`, `ml-engineer`, `ai-engineer`, `data-engineer`, `data-modeller`, `analytics-engineer`, `applied-ml-scientist`, `deep-learning-engineer`, `bi-engineer`, `mlops-engineer`), reviewers (`researcher`, `statistician`, `academic`, `backend-engineer`).
 
-**Activation modes** (ADR 0002, 0009; `docs/activation.md`, `docs/delegation.md`): `switch` (the main thread becomes the agent via the `activate` tool; `return` pops back), `consult` (a one-shot read-only subagent returning a verdict), `fan-out` (parallel workers over leased slices), and delegated build (worker subagents execute a task list under a gate). The set an agent supports is in its `agent.yaml`.
+**Activation modes** (ADR 0002, 0009, 0013; `docs/activation.md`, `docs/delegation.md`): `switch` (the main thread becomes the agent via the `activate` tool; `return` pops back), `consult` (a one-shot read-only subagent returning a verdict; a reviewer's general subagent can act as a review lead that spawns verifier subagents one level down), `fan-out` (parallel workers over leased slices, or review leases for verified review), and delegated build (worker subagents execute a task list under a gate). The set an agent supports is in its `agent.yaml`.
 
 **Gates are tool calls** (ADR 0008; `docs/gates.md`): the agent calls `gate_request`; the runtime records it and the PreToolUse hook blocks writes while a gate is pending. Confirmation uses three tiers (1 elicitation, 2 host permission prompt via `gate_advance`, 3 verbatim chat reply via `gate_confirm`), and `gates.policy` in `shards.config.yaml` (`strict`, `phase` or `plan`) controls how often gates ask; no text fences are involved. ADR 0011: a pending gate blocks subagents without a fan-out lease. Tools: `gate_request`, `gate_advance`, `gate_confirm`, `gate_force_close`, `gate_suspend`, `gate_resume`, `gates_open`, `load_phase`. Each phase file is served only after the previous gate is confirmed.
 
