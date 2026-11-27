@@ -164,12 +164,12 @@ main thread (Syn, or the active specialist)              depth 0
        -> <other>-service  cross-lens consult            depth 2  no Task
 ```
 
-A lead is launched by `{{review_lead}}` (`build/MACROS.md` 3.16). It calls `fanout_start(purpose="review")` (at most 4 slices per call), launches one `<id>-verify` per card, then calls `fanout_collect`. Verifiers and consult entries never spawn.
+A lead is launched by `{{review_lead}}` (`build/MACROS.md` 3.16). It calls `fanout_start(purpose="review")` (at most 4 slices per call and 4 per lead in a run), launches one `<id>-verify` per card, then calls `fanout_collect`. Verifiers and consult entries never spawn.
 
 Rules for `fanout_start(purpose="review")` (`runtime/review/index.js`, `runtime/fanout/index.js`):
 
 - `run_id` matches `^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`, is required, and is stored in the lease `meta.run_id`.
-- Every slice path must sit inside `.shards/review/<run_id>/`. At most 4 slices per call and 16 per `run_id` per session. Every review lease with that run id counts, open or closed, and the cap check runs under the state lock.
+- Every slice path must sit inside `.shards/review/<run_id>/`. At most 4 slices per call, 4 per agent (the lead) per `run_id`, and 16 per `run_id` per session. Every review lease with that run id counts, open or closed, and the cap check runs under the state lock.
 - Unlike fix fan-outs, a review slice is also checked against the slices of every other live review lease: a path that overlaps one (equal, or a directory prefix either way) is refused, so two verifiers never share a scratch dir. The check runs in the same guard as the cap.
 - Review leases never restrict other callers. `findSliceOwning` and `isPathAllowed` skip them, so the lead can still write outside the scratch dirs. A bound verifier is confined to its slice like a worker.
 - Binding uses `fanout_claim` as for workers. The `agent_type` matching rule (`typeAccepted` in `runtime/leases/index.js`): the lease `worker_type` is the agent id `X`; the accepted `agent_type` tail (last `:` segment, lower-cased) is `X`, or `X-worker` for fan-out and task leases, or `X-verify` for review leases. Any other tail is refused. An empty value on either side matches (Codex built-in roles).

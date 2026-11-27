@@ -74,7 +74,7 @@ async function startFanout(session, { agent, slices, ttl_ms, purpose, run_id: ru
     const lease = await leases.openLease(session, {
       owner: 'review', worker_type: agent, slices: slicesOut, ttl_ms,
       meta: { acceptance, purpose: 'review', run_id: runId },
-      guard: (cur) => review.assertRunCap(cur.leases, runId, norm.length, norm),
+      guard: (cur) => review.assertRunCap(cur.leases, runId, norm.length, norm, Date.now(), agent),
     });
     return { lease, cards: lease.slices.map((s) => card(lease, s)) };
   }
@@ -106,6 +106,8 @@ function mergeVerdicts(results, lease) {
   for (const r of results) {
     if (!r || typeof r.slice_id !== 'string' || !r.slice_id || (want && !want.has(r.slice_id))) throw new Error(`mergeVerdicts: unknown slice "${r && r.slice_id}"`);
     if (Object.prototype.hasOwnProperty.call(per_slice, r.slice_id)) throw new Error(`mergeVerdicts: duplicate result for slice "${r.slice_id}"`);
+    if (r.verdict === undefined && r.status !== undefined) throw new Error(`mergeVerdicts: slice "${r.slice_id}" has a status; fix lease results take verdict (APPROVED, NEEDS REVISION or BLOCKED), not status`);
+    if (r.status !== undefined) throw new Error(`mergeVerdicts: slice "${r.slice_id}" has both verdict and status; fix lease results take verdict only`);
     if (!VERDICTS.includes(r.verdict)) throw new Error(`mergeVerdicts: invalid verdict "${r.verdict}" for slice "${r.slice_id}"`);
     per_slice[r.slice_id] = { verdict: r.verdict, ...(r.summary !== undefined ? { summary: r.summary } : {}), ...(r.findings !== undefined ? { findings: r.findings } : {}) };
   }

@@ -151,7 +151,7 @@ Compiles to text only: launch the agent as a review lead whose prompt starts "En
 Takes no arguments. Used inside `protocols/review_lead_contract.md` only (a review lead's verify step; see 3.16). It tells the lead to:
 1. honour the brief's code-execution line (`not approved`: no verifier runs code, every finding stays PLAUSIBLE);
 2. verify every High finding, and Medium ones if budget allows;
-3. call `fanout_start(agent=<its agent id>, purpose="review", run_id, slices=[{id, paths, acceptance}, ...])` with one slice per finding, `paths` = `.shards/review/<run_id>/<slice id>/`; at most 4 slices per call and 16 per run;
+3. call `fanout_start(agent=<its agent id>, purpose="review", run_id, slices=[{id, paths, acceptance}, ...])` with one slice per finding, `paths` = `.shards/review/<run_id>/<slice id>/`; at most 4 slices per call, 4 per lead in a run (across calls) and 16 per run;
 4. launch one `<its agent id>-verify` subagent per card (claude: one message; codex: `spawn_agent`, needs `agents.max_depth = 2`; skills: isolated invocation, or verify inline and say so), each starting "Entry verify: read ... and ... first" plus its card;
 5. call `fanout_collect(lease_id, results)`. The caller, not the lead, takes the source snapshot (`protocols/review_panel.md`).
 

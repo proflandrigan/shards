@@ -11,7 +11,7 @@ Panel review had one pass per specialist. Its High findings were never tested, s
 ## Decision
 
 - **Depth.** Main thread (Syn, or the active specialist) launches one review lead per specialist: the specialist's general subagent, at depth 1. The lead launches helpers at depth 2: `<id>-verify` verifiers, and cross-lens consults of other agents' consult entries. Helpers never spawn. The host default of three levels is enough. Codex needs `agents.max_depth = 2`.
-- **Review leases.** A lead opens a `review`-owned lease with `fanout_start(purpose="review", run_id, slices)`. Slice paths must sit inside `.shards/review/<run_id>/`. Limits: 4 slices per call and 16 per `run_id` per session, counting closed leases too. Review leases never restrict other callers.
+- **Review leases.** A lead opens a `review`-owned lease with `fanout_start(purpose="review", run_id, slices)`. Slice paths must sit inside `.shards/review/<run_id>/`. Limits: 4 slices per call, 4 per agent (the lead) per `run_id`, and 16 per `run_id` per session, counting closed leases too. Review leases never restrict other callers.
 - **Statuses.** Each finding is CONFIRMED (the repro ran and showed it), PLAUSIBLE (not verified, with a reason) or REFUTED (the test showed no problem). `fanout_collect` on a review lease returns `APPROVED` only when every verified finding is REFUTED, otherwise `NEEDS REVISION`. The lead's own answer to its caller still uses the three reviewer verdicts, `BLOCKED` included.
 - **Code execution is off by default.** It runs only when the user approves it for the review, and the approval travels in the brief. Without approval, every finding is PLAUSIBLE.
 - **Reviewers hold no gates and never fix source files.** Fixes go through the normal fan-out path.

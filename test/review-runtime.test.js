@@ -99,13 +99,24 @@ describe('fanout_start purpose=review', () => {
     await expect(fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: five })).rejects.toThrow(/at most 4/);
   });
   it('at most 16 slices per run_id per session, counting closed leases; other run ids are separate', async () => {
+    const leads = ['researcher', 'statistician', 'academic', 'backend-engineer'];
     for (let i = 0; i < 4; i += 1) {
-      const { lease } = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: ['a', 'b', 'c', 'd'].map((x) => slice(`${x}${i}`)) });
+      const { lease } = await fanout.startFanout(sess, { agent: leads[i], purpose: 'review', run_id: RUN, slices: ['a', 'b', 'c', 'd'].map((x) => slice(`${x}${i}`)) });
       if (i === 0) await fanout.collectFanout(sess, lease.id, ['a0', 'b0', 'c0', 'd0'].map((s) => ({ slice_id: s, status: 'REFUTED' })));
     }
-    await expect(fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('x')] })).rejects.toThrow(/16 per run_id/);
+    await expect(fanout.startFanout(sess, { agent: 'data-scientist', purpose: 'review', run_id: RUN, slices: [slice('x')] })).rejects.toThrow(/16 per run_id/);
     const other = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: 'run-2', slices: [slice('x', ['.shards/review/run-2/x'])] });
     expect(other.lease.owner).toBe('review');
+  });
+  it('at most 4 slices per lead per run_id across calls, counting closed leases; other leads and runs are separate', async () => {
+    const first = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('r1'), slice('r2')] });
+    await fanout.collectFanout(sess, first.lease.id, ['r1', 'r2'].map((s) => ({ slice_id: s, status: 'REFUTED' })));
+    await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('r3'), slice('r4')] });
+    await expect(fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('r5')] })).rejects.toThrow(/at most 4 per lead/);
+    const other = await fanout.startFanout(sess, { agent: 'statistician', purpose: 'review', run_id: RUN, slices: [slice('s1')] });
+    expect(other.lease.worker_type).toBe('statistician');
+    const nextRun = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: 'run-2', slices: [slice('r5', ['.shards/review/run-2/r5'])] });
+    expect(nextRun.lease.owner).toBe('review');
   });
   it('refuses a slice that overlaps a slice of another active review lease; allows it once that lease closes', async () => {
     const first = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('s1')] });
@@ -180,6 +191,18 @@ describe('fanout_collect for review', () => {
     await expect(fanout.collectFanout(sess, lease.id, [{ slice_id: 'z', status: 'REFUTED' }])).rejects.toThrow(/unknown slice/);
     const r = await call('fanout_collect', { lease_id: lease.id, results: [{ slice_id: 's1', verdict: 'APPROVED' }] });
     expect(r.isError).toBe(true);
+  });
+  it('names the mix-up when a result uses the other lease type\'s field', async () => {
+    const rv = await fanout.startFanout(sess, { agent: 'researcher', purpose: 'review', run_id: RUN, slices: [slice('s1')] });
+    await expect(fanout.collectFanout(sess, rv.lease.id, [{ slice_id: 's1', verdict: 'APPROVED' }])).rejects.toThrow(/review lease results take status/);
+    await expect(fanout.collectFanout(sess, rv.lease.id, [{ slice_id: 's1', status: 'REFUTED', verdict: 'APPROVED' }])).rejects.toThrow(/both status and verdict/);
+    const fx = await fanout.startFanout(sess, { agent: 'ml-engineer', slices: [{ id: 'a', paths: ['models/a'], acceptance: 'x' }] });
+    await expect(fanout.collectFanout(sess, fx.lease.id, [{ slice_id: 'a', status: 'REFUTED' }])).rejects.toThrow(/fix lease results take verdict/);
+    await expect(fanout.collectFanout(sess, fx.lease.id, [{ slice_id: 'a', verdict: 'APPROVED', status: 'REFUTED' }])).rejects.toThrow(/both verdict and status/);
+    const r = await call('fanout_collect', { lease_id: fx.lease.id, results: [{ slice_id: 'a', status: 'CONFIRMED' }] });
+    expect(r.isError).toBe(true);
+    expect(JSON.stringify(r.content)).toContain('fix lease results take verdict');
+    expect(L.listActive(sess).some((x) => x.id === fx.lease.id)).toBe(true); // a refused collect leaves the lease open
   });
   it('fix leases keep the verdict shape', async () => {
     const { lease } = await fanout.startFanout(sess, { agent: 'ml-engineer', slices: [{ id: 'a', paths: ['models/a'], acceptance: 'x' }] });
