@@ -51,6 +51,7 @@ function checkEmitted(core, writtenFiles, target) {
     const ext = claude ? 'md' : 'toml';
     need(`${base}/${id}.${ext}`, `consultable agent '${id}'`);
     for (const e of entries) need(`${base}/${id}-${e}.${ext}`, `consult entry '${e}' of '${id}'`);
+    if (entries.includes('review') || entries.includes('service')) need(`${base}/${id}-verify.${ext}`, `verifier of reviewer '${id}'`);
   }
   return errors;
 }

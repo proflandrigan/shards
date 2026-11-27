@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { StateStore } = require('../state/store');
 
-const OWNERS = ['task', 'fanout'];
+const OWNERS = ['task', 'fanout', 'review'];
 const DEFAULT_TTL_MS = 900000;
 
 function storeOf(session) {
@@ -50,7 +50,7 @@ const leasesOf = (cur) => (cur && cur.leases) || {};
 const isLive = (l, now) => l.status === 'active' && Date.parse(l.expires_at) > now;
 
 async function openLease(session, opts = {}) {
-  const { owner, worker_type, ttl_ms, meta } = opts;
+  const { owner, worker_type, ttl_ms, meta, guard } = opts;
   if (!OWNERS.includes(owner)) throw new Error(`owner must be one of ${OWNERS.join('|')}`);
   if (typeof worker_type !== 'string' || !worker_type) throw new Error('worker_type required');
   const slices = validateSlices(opts.slices);
@@ -63,6 +63,7 @@ async function openLease(session, opts = {}) {
   };
   await storeOf(session).update('leases', (cur) => {
     cur.leases = leasesOf(cur);
+    if (guard) guard(cur); // runs under the state lock; throws to refuse the lease
     cur.leases[lease.id] = lease;
     return cur;
   });
@@ -98,6 +99,11 @@ async function closeLease(session, id) {
 
 function listActive(session, now = Date.now()) {
   return Object.values(leasesOf(storeOf(session).read('leases'))).filter((l) => isLive(l, now));
+}
+
+// Every lease in the session, open or closed (review runs count closed leases against their cap).
+function allLeases(session) {
+  return Object.values(leasesOf(storeOf(session).read('leases')));
 }
 
 async function expireStale(session, now = Date.now()) {
@@ -162,10 +168,17 @@ async function mutate(session, fn, { bump = true } = {}) {
 }
 
 const typeTail = (t) => String(t || '').toLowerCase().split(':').pop();
-function typesMatch(a, b) {
-  if (!a || !b) return true;
-  const x = String(a).toLowerCase(); const y = String(b).toLowerCase();
-  return x === y || typeTail(x) === typeTail(y);
+// Which agent_type tails may claim a lease. The lease worker_type is the agent id X. A fan-out or task worker
+// is X or X-worker (the subagent name); a review verifier is X or X-verify. Any other suffix (including the
+// other purpose's suffix) is refused. An empty agent_type or worker_type matches (Codex built-in roles).
+function typeAccepted(agentType, owner, workerType) {
+  if (!agentType || !workerType) return true;
+  const tail = typeTail(agentType);
+  const id = typeTail(workerType);
+  if (tail === id) return true;
+  if ((owner === 'fanout' || owner === 'task') && tail === `${id}-worker`) return true;
+  if (owner === 'review' && tail === `${id}-verify`) return true;
+  return false;
 }
 
 // Bind a host agent_id (from the hook payload) to one slice of an active lease (E5.9/E12).
@@ -178,7 +191,7 @@ async function bindWorker(session, { agentId, agentType, leaseId, sliceId } = {}
     if (!isLive(l, now)) throw new Error(`lease ${leaseId} is ${l.status === 'active' ? 'expired' : l.status}`);
     if (!OWNERS.includes(l.owner)) throw new Error(`lease ${leaseId} owner ${l.owner} does not allow workers`);
     if (!l.slices.some((s) => s.id === sliceId)) throw new Error(`lease ${leaseId} has no slice ${sliceId}`);
-    if (!typesMatch(agentType, l.worker_type)) throw new Error(`agent_type ${agentType} does not match lease worker_type ${l.worker_type}`);
+    if (!typeAccepted(agentType, l.owner, l.worker_type)) throw new Error(`agent_type ${agentType} does not match lease worker_type ${l.worker_type}`);
     const workers = l.workers || {};
     const prev = workers[agentId];
     if (prev && prev.slice_id !== sliceId) throw new Error(`agent ${agentId} is already bound to slice ${prev.slice_id}`);
@@ -263,7 +276,8 @@ function findSliceOwning(session, filePath, now = Date.now()) {
 
 function isPathAllowed(session, agentId, filePath, now = Date.now()) {
   const bound = findWorkerLease(session, agentId, now);
-  const mine = bound ? [] : listActive(session, now).filter((l) => l.worker_type === agentId);
+  // Review leases never restrict other callers (only their own bound verifiers, handled above).
+  const mine = bound ? [] : listActive(session, now).filter((l) => l.worker_type === agentId && l.owner !== 'review');
   if (!bound && !mine.length) return { allowed: true, lease_id: null, reason: 'no active lease for agent' };
   const rel = relOf(session, filePath);
   const leaseId = bound ? bound.lease.id : mine[0].id;
@@ -457,4 +471,4 @@ function isArImmutable(session, lease, filePath) {
   return (lease.ar.immutable || []).some((e) => entryCovers(e, rel) || entryUnder(e, rel));
 }
 
-module.exports = { openArLease, closeArLease, getActiveArLease, touchArLease, checkArWrite, isArImmutable, entryCovers, globBase, AR_OWNER, AR_DEFAULT_TTL_MS, releaseWorker, bindWorker, findWorkerLease, touchWorker, findSliceOwning, openLease, heartbeat, closeLease, listActive, expireStale, isPathAllowed, pathsOverlap, normalizeRel, OWNERS, DEFAULT_TTL_MS };
+module.exports = { allLeases, typeAccepted, openArLease, closeArLease, getActiveArLease, touchArLease, checkArWrite, isArImmutable, entryCovers, globBase, AR_OWNER, AR_DEFAULT_TTL_MS, releaseWorker, bindWorker, findWorkerLease, touchWorker, findSliceOwning, openLease, heartbeat, closeLease, listActive, expireStale, isPathAllowed, pathsOverlap, normalizeRel, OWNERS, DEFAULT_TTL_MS };

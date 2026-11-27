@@ -5,7 +5,7 @@ const fanout = require('../fanout');
 
 module.exports = defineTool({
   name: 'fanout_start',
-  description: 'Start a fan-out: open one lease over non-overlapping worker slices and return one contract card per slice. Refused while the active frame has a pending or suspended gate. Launch one worker per card in parallel; each worker calls fanout_claim first, writes only inside its owned_paths, and returns verdict JSON. Then call fanout_collect.',
+  description: 'Start a fan-out: open one lease over non-overlapping worker slices and return one contract card per slice. Refused while the active frame has a pending or suspended gate. purpose "fix" (default) starts write workers (agent needs fanout_worker). purpose "review" starts verifier slices for a review run (agent needs consult or fanout_worker; run_id required; slice paths inside .shards/review/<run_id>/; at most 4 slices per call and 16 per run_id). Launch one worker per card in parallel; each worker calls fanout_claim first, writes only inside its owned_paths, and returns its result. Then call fanout_collect.',
   inputSchema: {
     type: 'object', additionalProperties: false, required: ['agent', 'slices'],
     properties: {
@@ -13,6 +13,8 @@ module.exports = defineTool({
       slices: { type: 'array', minItems: 1, items: { type: 'object', additionalProperties: false, required: ['id', 'paths', 'acceptance'], properties: {
         id: { type: 'string', minLength: 1 }, paths: { type: 'array', minItems: 1, items: { type: 'string', minLength: 1 } }, acceptance: { type: 'string', minLength: 1 } } } },
       ttl_ms: { type: 'integer', minimum: 1 },
+      purpose: { type: 'string', enum: ['fix', 'review'] },
+      run_id: { type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$' },
     },
   },
   async handler(args, ctx) {

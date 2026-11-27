@@ -64,6 +64,28 @@ function render(m, target) {
       const fb = target === 'skills' ? ' If this host cannot give the lead its own isolated workers, the lead uses the sequential or inline fallback of the delegated build loop and must say so in its report (reason, plus a `Fallback: <sequential|inline> — <reason>` row in the project-specs.md Validation evidence table).' : '';
       return `Launch \`${m.agent}\` as a workstream lead: ${how}. Start its prompt with "Entry lead: read ${lc} first, then follow your own phases as the lead".${task} Give it the brief: the workstream dir (its \`scope\`), its slice of the plan, owned paths, acceptance checks and the report format you want back. The lead holds no gates and does not talk to the user; it runs its build phases through the delegated build loop, passing \`scope=<workstream dir>\` on every ${T('tasks_set')}, ${T('task_dispatch')}, ${T('task_report')}, ${T('task_status')} and ${T('task_verify')} call, and dispatches \`${m.agent}\` workers (entry worker) itself. It returns the structured report the brief asks for. To run several workstreams, ${par}.${fb} Then verify each lead's report before continuing.`;
     }
+    case 'review_lead': {
+      const rc = contentPath(target, 'protocols/review_lead_contract.md');
+      const file = contentPath(target, `agents/${m.agent}/${m.file}`);
+      const task = m.task ? ` Task: ${m.task}.` : '';
+      const how = target === 'claude' ? `run the \`${m.agent}\` subagent by name (the Agent tool) as the review lead`
+        : target === 'codex' ? `spawn the \`${m.agent}\` agent with spawn_agent as the review lead (this nests Syn -> lead -> verifier, so Codex needs \`agents.max_depth = 2\` or higher)`
+          : `invoke the \`${m.agent}\` skill in an isolated context as the review lead if the host supports it`;
+      const par = target === 'claude' ? 'launch independent review leads in parallel, all in a single message'
+        : target === 'codex' ? 'spawn independent review leads in parallel with spawn_agent'
+          : 'run independent review leads in parallel only if the host supports concurrent isolated skill invocations, otherwise one after another';
+      const fb = target === 'skills' ? ' If this host cannot isolate the lead, the lead reviews inline in this session and says so in its report.' : '';
+      return `Launch \`${m.agent}\` as a review lead: ${how}. Start its prompt with "Entry review_lead: read ${rc} first, then ${file}".${task} Give it the brief: the review scope (paths and the question), the \`run_id\`, the \`**Code execution:**\` line (\`approved — allowed commands: ...\` or \`not approved\`) and the report format you want back. The lead holds no gates, never fixes source files and does not talk to the user. It reviews, then verifies its High findings itself through its verifiers (see the review lead contract). To review several specialists, ${par}.${fb} Verify each lead's report (statuses CONFIRMED, PLAUSIBLE, REFUTED) before continuing.`;
+    }
+    case 'verify': {
+      const rc = contentPath(target, 'protocols/review_lead_contract.md');
+      const vc = contentPath(target, 'protocols/verifier_contract.md');
+      const re = contentPath(target, 'protocols/review_execution.md');
+      const how = target === 'claude' ? 'launch one `<your agent id>-verify` subagent per card in a single message'
+        : target === 'codex' ? 'spawn one `<your agent id>-verify` agent per card in parallel with spawn_agent (this nests lead -> verifier, so Codex needs `agents.max_depth = 2`)'
+          : 'invoke the `<your agent id>` skill once per card in an isolated context if the host supports it; otherwise verify inline, one finding at a time, and say so in your report';
+      return `Verify the findings (review lead steps, contract ${rc}). (1) Check the brief's \`**Code execution:**\` line: when it is \`not approved\`, no verifier runs code and every finding stays PLAUSIBLE. (2) Verify every High finding, and Medium ones if budget allows. The \`run_id\` comes from your brief; the caller owns the source snapshot, so do not take one yourself. (3) Call ${T('fanout_start')}(agent=<your agent id>, purpose="review", run_id=<run id>, slices=[{id, paths, acceptance}, ...]) with one slice per finding: \`id\` is \`<your agent id>-<finding id>\` (unique across the leads sharing this run), \`paths\` is \`.shards/review/<run id>/<slice id>/\`, \`acceptance\` the claim the repro must confirm. At most 4 slices per call and 16 per run. It returns a lease and one card per slice. (4) ${how}, each starting with "Entry verify: read ${vc} and ${re} first" plus its card. (5) When all verifiers return, call ${T('fanout_collect')}(lease_id, results) with one result per slice. Verifiers never spawn further.`;
+    }
     case 'delegate': {
       const wf = contentPath(target, 'agents/<worker>/modes/worker.md');
       const pd = contentPath(target, 'protocols/plan_drift.md');

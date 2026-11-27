@@ -5,13 +5,14 @@ const fanout = require('../fanout');
 
 module.exports = defineTool({
   name: 'fanout_collect',
-  description: 'Collect fan-out results: one {slice_id, verdict, summary?, findings?} per slice (verdict APPROVED, NEEDS REVISION or BLOCKED). Merges worst-wins (BLOCKED, then NEEDS REVISION, else APPROVED), closes the lease and returns the merged verdict. Every slice must have exactly one result.',
+  description: 'Collect fan-out results, one per slice. Fix leases: {slice_id, verdict, summary?, findings?} with verdict APPROVED, NEEDS REVISION or BLOCKED; merged worst-wins and returned as the verdict. Review leases: {slice_id, status, summary?, findings?} with status CONFIRMED, PLAUSIBLE or REFUTED; verdict is NEEDS REVISION if any CONFIRMED, else APPROVED, with counts and per_slice. Closes the lease. Every slice must have exactly one result.',
   inputSchema: {
     type: 'object', additionalProperties: false, required: ['lease_id', 'results'],
     properties: {
       lease_id: { type: 'string', minLength: 1 },
-      results: { type: 'array', minItems: 1, items: { type: 'object', required: ['slice_id', 'verdict'], properties: {
-        slice_id: { type: 'string', minLength: 1 }, verdict: { type: 'string', enum: ['APPROVED', 'NEEDS REVISION', 'BLOCKED'] }, summary: { type: 'string' }, findings: {} } } },
+      results: { type: 'array', minItems: 1, items: { type: 'object', required: ['slice_id'], anyOf: [{ required: ['verdict'] }, { required: ['status'] }], properties: {
+        slice_id: { type: 'string', minLength: 1 }, verdict: { type: 'string', enum: ['APPROVED', 'NEEDS REVISION', 'BLOCKED'] },
+        status: { type: 'string', enum: ['CONFIRMED', 'PLAUSIBLE', 'REFUTED'] }, summary: { type: 'string' }, findings: {} } } },
     },
   },
   async handler(args, ctx) {

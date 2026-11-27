@@ -23,17 +23,20 @@ const CLAUDE_TOOLS = {
 
 const HOST_TOOLS = { claude: CLAUDE_TOOLS };
 
-// Claude subagent tool allowlist for an agent.yaml document. `delegate` (Task) is kept only for builders that have
-// their own workers (activation includes fanout_worker): as a workstream lead they spawn same-specialist workers
-// (Syn -> lead -> worker, depth 2). Reviewers and orchestrator-only agents have no workers, so Task is dropped
-// for them (consults do not nest). An explicit but fully-dropped list yields [] (no tools key); an absent list yields the default.
+// Claude subagent tool allowlist for an agent.yaml document. `delegate` (Task) is kept for builders that have their
+// own workers (activation includes fanout_worker: a workstream lead spawns same-specialist workers, depth 2) and for
+// reviewers with a review or service entry (a review lead spawns verifiers, depth 2). Other agents (the orchestrator,
+// specialists without workers) have no workers, so Task is dropped for them. Consult entries and workers never get
+// Task (the caller strips it). An explicit but fully-dropped list yields [] (no tools key); an absent list yields the default.
 function claudeToolsOf(doc) {
   const caps = doc && Array.isArray(doc.capabilities) ? doc.capabilities : null;
   const list = caps || DEFAULT_CAPABILITIES;
   const hasWorkers = !!(doc && Array.isArray(doc.activation) && doc.activation.includes('fanout_worker'));
+  const ce = (doc && doc.consult_entries) || {};
+  const reviewLead = !!(doc && doc.role === 'reviewer' && (ce.review || ce.service));
   const out = [];
   for (const c of list) {
-    if (c === 'delegate' && caps && !hasWorkers) continue;
+    if (c === 'delegate' && caps && !hasWorkers && !reviewLead) continue;
     for (const t of CLAUDE_TOOLS[c] || []) if (!out.includes(t)) out.push(t);
   }
   return out;

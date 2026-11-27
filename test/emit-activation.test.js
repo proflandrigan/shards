@@ -56,7 +56,12 @@ describe('E5.3 native subagents', () => {
   const consulting = agents.filter((a) => a.y.activation.includes('consult'));
   it('emits general + one per consult entry, unique names', () => {
     const expected = [];
-    for (const a of consulting) { expected.push(a.id); for (const e of Object.keys(a.y.consult_entries || {})) expected.push(`${a.id}-${e}`); }
+    for (const a of consulting) {
+      expected.push(a.id);
+      for (const e of Object.keys(a.y.consult_entries || {})) expected.push(`${a.id}-${e}`);
+      // spec item 10: a verifier subagent for every consultable agent with a review or service entry
+      if (a.y.consult_entries && (a.y.consult_entries.review || a.y.consult_entries.service)) expected.push(`${a.id}-verify`);
+    }
     expect(ls(path.join(co, 'agents')).map((f) => f.replace(/\.md$/, '')).sort()).toEqual([...new Set(expected)].sort());
     expect(ls(path.join(cx, '.codex/agents')).map((f) => f.replace(/\.toml$/, '')).sort()).toEqual([...new Set(expected)].sort());
     expect(new Set(expected).size).toBe(expected.length);
@@ -70,10 +75,12 @@ describe('E5.3 native subagents', () => {
       expect(head).toMatch(new RegExp(`^name: ${f.replace(/\.md$/, '')}$`, 'm'));
       const tools = (head.match(/^tools: (.*)$/m) || [])[1] || '';
       expect(tools.split(', ')).not.toContain('Agent');
-      // Task only on the general subagent of builders with workers (workstream leads); never on entries/workers/reviewers.
+      // Task only on the general subagent of leads: builders with workers (workstream leads) and reviewers with a
+      // review or service entry (review leads). Never on entries, workers, verifiers or the orchestrator.
       const id = f.replace(/\.md$/, '');
       const a = agents.find((x) => x.id === id);
-      const lead = !!a && a.y.activation.includes('fanout_worker') && (a.y.capabilities || []).includes('delegate');
+      const ce = (a && a.y.consult_entries) || {};
+      const lead = !!a && (a.y.activation.includes('fanout_worker') || (a.y.role === 'reviewer' && !!(ce.review || ce.service))) && (a.y.capabilities || []).includes('delegate');
       if (!lead) expect(tools.split(', ')).not.toContain('Task');
     }
     for (const f of ls(path.join(cx, '.codex/agents'))) expect(read(cx, '.codex/agents', f).split('developer_instructions')[0]).not.toMatch(/^model\s*=/m);

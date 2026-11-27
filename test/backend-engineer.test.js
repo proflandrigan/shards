@@ -54,10 +54,12 @@ describe('backend-engineer cleanliness and checklist propagation', () => {
     for (const rel of claudeFiles) {
       expectSubagentRules(read(claudeOut, rel));
     }
+    // The verifier carries the verifier contract, not the code-review rules.
+    expect(read(claudeOut, 'agents/backend-engineer-verify.md')).toContain('# Verifier Contract');
 
     const codexFiles = fs
       .readdirSync(path.join(codexOut, '.codex/agents'))
-      .filter((f) => f.startsWith('backend-engineer') && f.endsWith('.toml'))
+      .filter((f) => f.startsWith('backend-engineer') && f.endsWith('.toml') && f !== 'backend-engineer-verify.toml')
       .sort();
     expect(codexFiles).toEqual([
       'backend-engineer-review.toml',

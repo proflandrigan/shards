@@ -11,7 +11,7 @@ const NON_ADVANCING = new Set(['checkpoint', 'confirm']);
 const TRACKS = ['quick', 'deep'];
 const PHASE_RE = /^\d+(-\d+)*$/;
 const NAMES = ['switch', 'consult', 'fanout', 'return', 'phase', 'protocol', 'template', 'gate', 'auto_verify',
-  'record.write', 'tasks.create', 'tasks.update', 'tasks.list', 'tasks.get', 'knowledge.search', 'artifact.emit', 'delegate', 'lead', 'jira_context'];
+  'record.write', 'tasks.create', 'tasks.update', 'tasks.list', 'tasks.get', 'knowledge.search', 'artifact.emit', 'delegate', 'lead', 'review_lead', 'verify', 'jira_context'];
 
 // Derive enclosing context from a path relative to core/ (posix).
 function fileContext(rel) {
@@ -89,6 +89,22 @@ function resolveMacro(macro, core, ctx) {
       Object.assign(model, { agent: vals.agent, task: vals.task });
       break;
     }
+    case 'review_lead': {
+      const a = agentOf(vals.agent, 'agent');
+      let entry = null;
+      if (a) {
+        const act = a.doc.activation || [];
+        const ce = a.doc.consult_entries || {};
+        if (!act.includes('consult')) err(`agent '${a.id}' does not support consult activation (required to run as a review lead)`);
+        entry = ce.review ? 'review' : ce.service ? 'service' : null;
+        if (!entry) err(`agent '${a.id}' has neither a review nor a service consult entry; a review lead needs one (its consult_entries: ${Object.keys(ce).join(', ') || '(none)'})`);
+        else model.file = ce[entry];
+      }
+      Object.assign(model, { agent: vals.agent, task: vals.task, entry });
+      break;
+    }
+    case 'verify':
+      break;
     case 'delegate': {
       if (vals.tasks !== undefined && !vals.tasks.trim()) err('tasks must be a non-empty path in {{delegate}}');
       if (vals.max_parallel !== undefined && !/^[1-9]\d*$/.test(vals.max_parallel)) err(`invalid value for max_parallel '${vals.max_parallel}': expected positive integer`);
@@ -220,6 +236,8 @@ const SPECS = {
   'knowledge.search': { positional: [], named: ['query', 'scope'], required: ['query'] },
   'artifact.emit': { positional: [], named: ['type', 'path', 'meta'], required: ['type', 'path'] },
   lead: { positional: ['agent'], named: ['task'], required: ['agent'] },
+  review_lead: { positional: ['agent'], named: ['task'], required: ['agent'] },
+  verify: { positional: [], named: [], required: [] },
   delegate: { positional: [], named: ['tasks', 'max_parallel', 'mode'], required: [] },
 };
 

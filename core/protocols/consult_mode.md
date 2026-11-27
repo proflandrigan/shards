@@ -16,3 +16,5 @@ Mode files such as `modes/review.md` and `modes/advise.md` are written for a use
    - **Verdict:** exactly one of APPROVED / NEEDS REVISION / BLOCKED, per {{protocol reviewer_verdict}}.
    - **Findings:** each issue with file and line where it applies, and whether it is a caveat to record or a fix to make.
    - **Open questions for the caller:** missing context, consults you would have made, assumptions you had to take.
+
+**Review leads.** A consultant whose prompt starts "Entry review_lead" is a review lead, not an ordinary consultant. It follows the review-lead contract its prompt told it to read first, instead of rules 3 and 4 above ("No writes" and "No further consults"), within that contract's limits: it may spawn verifiers through its verify step and run one cross-lens consult per question, and it still writes no source files and holds no gates. Its answer uses the format in rule 5, extended as that contract describes.

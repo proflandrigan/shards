@@ -33,6 +33,7 @@ describe('activation inventory', () => {
     for (const a of core.agents.values()) {
       files.push(`skills/${a.id}/SKILL.md`, `agents/${a.id}.md`);
       for (const e of Object.keys(a.doc.consult_entries || {})) files.push(`agents/${a.id}-${e}.md`);
+      if (a.doc.consult_entries && (a.doc.consult_entries.review || a.doc.consult_entries.service)) files.push(`agents/${a.id}-verify.md`);
     }
     expect(checkEmitted(core, files, 'claude')).toEqual([]);
     const errs = checkEmitted(core, files.filter((f) => f !== 'skills/syn/SKILL.md' && f !== 'agents/researcher-service.md'), 'claude');

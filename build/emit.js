@@ -36,6 +36,15 @@ function readSummary(a) {
   try { return fs.readFileSync(path.join(a.dir, 'persona-summary.md'), 'utf8').trim(); } catch (_) { return ''; }
 }
 
+// Runtime tools a Claude subagent needs (its tools: list, host-neutral Claude names plus the Shards MCP tools,
+// which a subagent with a tools: list does not get unless they are listed). Only the claude target has tool lists.
+const GENERAL_MCP_TOOLS = ['fanout_start', 'fanout_collect', 'tasks_set', 'task_dispatch', 'task_report', 'task_status',
+  'task_verify', 'load_phase', 'ar_iterate', 'ar_status', 'ar_defer', 'ar_end'];
+const WORKER_MCP_TOOLS = ['fanout_claim'];
+const VERIFY_TOOLS = ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'Bash'];
+const mcpTools = (names) => names.map((n) => `${CLAUDE_TOOL_PREFIX}${n}`);
+const hasVerifier = (a) => !!((a.doc.consult_entries || {}).review || (a.doc.consult_entries || {}).service);
+
 // E5.3: one subagent prompt per consult entry (plus a general one).
 function entryPrompt(a, entry, rendered) {
   const summary = readSummary(a) || a.doc.description;
@@ -46,6 +55,16 @@ function entryPrompt(a, entry, rendered) {
   if (entry === 'worker') {
     const wc = rendered.get('content/protocols/worker_contract.md');
     if (wc) parts.push(String(wc).trim());
+  }
+  return `${parts.join('\n\n---\n\n')}\n`;
+}
+
+// Verifier prompt (spec item 10): persona summary + verifier contract + review execution rules. No Task tool.
+function verifyPrompt(a, rendered) {
+  const parts = [readSummary(a) || a.doc.description];
+  for (const f of ['protocols/verifier_contract.md', 'protocols/review_execution.md']) {
+    const body = rendered.get(`content/${f}`);
+    if (body) parts.push(String(body).trim());
   }
   return `${parts.join('\n\n---\n\n')}\n`;
 }
@@ -119,9 +138,15 @@ function emitTarget({ target, core, rendered, agentBodies, report, dev, outDir, 
     if (!consultable(a) || (target !== 'claude' && target !== 'codex')) continue;
     const tools = claudeToolsOf(a.doc); // host-neutral capabilities -> Claude tool names (build/host-tools.js)
     const entryTools = tools.filter((t) => t !== 'Task'); // consult entries and workers never delegate; only the general subagent (the lead) keeps Task
-    const subs = [{ name: id, description, prompt: generalPrompt(a, target, optIn && id === 'syn'), main: id === 'syn', tools }];
+    const general = target === 'claude' && tools.includes('Task') ? [...tools, ...mcpTools(GENERAL_MCP_TOOLS)] : tools;
+    const subs = [{ name: id, description, prompt: generalPrompt(a, target, optIn && id === 'syn'), main: id === 'syn', tools: general }];
     for (const entry of Object.keys(a.doc.consult_entries || {}).sort()) {
-      subs.push({ name: `${id}-${entry}`, description: `${description} (consult entry: ${entry})`, prompt: entryPrompt(a, entry, rendered), tools: entryTools });
+      const workerTools = entry === 'worker' && target === 'claude' ? [...entryTools, ...mcpTools(WORKER_MCP_TOOLS)] : entryTools;
+      subs.push({ name: `${id}-${entry}`, description: `${description} (consult entry: ${entry})`, prompt: entryPrompt(a, entry, rendered), tools: workerTools });
+    }
+    if (hasVerifier(a)) {
+      const verifyTools = target === 'claude' ? [...VERIFY_TOOLS, ...mcpTools(WORKER_MCP_TOOLS)] : [];
+      subs.push({ name: `${id}-verify`, description: `${description} (verifier: writes and runs repro tests for review findings)`, prompt: verifyPrompt(a, rendered), tools: verifyTools });
     }
     for (const s of subs) {
       if (target === 'claude') {
