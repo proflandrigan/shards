@@ -10,5 +10,6 @@ Rules that must survive compaction:
 - No SQL until the Phase 4 DAG is confirmed by the user; no "quick draft".
 - Every PK gets uniqueness and not-null tests; every FK gets not-null; every model gets a schema file.
 - Peer reviews are mandatory: on the deep track the Data Analyst, Data Modeller and Data Engineer reviews, plus the BI Engineer when a dashboard consumes the output, before Syn sign-off; on the quick track the Data Modeller review; use parameterized model references only.
+- After a Data Modeller handoff, pass the `scope` recorded in the project-specs header on every task tool call.
 
 Full instructions: AGENT.md, phases_quick/ and phases_deep/ (dual track), modes/ in this directory.

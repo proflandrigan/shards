@@ -171,7 +171,7 @@ When all tasks are verified done, finalize `eval-results.json` (status `complete
 
 ```
 
-Evidence rows go in the project's `## Validation` section (schema in `protocols/validation.md`; `gate_request` parses it), not inside this phase section:
+Evidence rows go in the project's `## Validation` section (schema in `protocols/validation.md`; `gate_request` parses it), not inside this phase section. `task_verify` appends one row per task; hand-write only the integration, harness and Fallback rows:
 
 | Check | Expected | Observed | Pass/Fail | Notes |
 |-------|----------|----------|-----------|-------|

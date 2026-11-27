@@ -103,7 +103,7 @@ fitness as the base for the consumer marts and metrics you would build on top. L
 with file and line and the change you would make.
 ```
 
-Apply {{protocol reviewer_verdict}}. For NEEDS REVISION or BLOCKED findings, the reviewed tasks are already done and cannot be re-dispatched, so add review-fix tasks through {{protocol plan_drift}}: raise its amendment gate with the findings as the proposed change, then call `tasks_set` with the revised manifest (one fix task per affected component, for your own workers, acceptance = the original check plus the finding resolved) and `amendment_gate`, dispatch them and verify each with `task_verify`. Record the review and its resolution under **Analytics Engineer review** in the build log.
+Apply {{protocol reviewer_verdict}}. For NEEDS REVISION or BLOCKED findings, the reviewed tasks are already done and cannot be re-dispatched, so add review-fix tasks through {{protocol plan_drift}}: raise its amendment gate with the findings as the proposed change, then call `tasks_set` with a manifest holding only the new fix tasks (one per affected component, for your own workers, acceptance = the original check plus the finding resolved, no `depends_on` on the already-done tasks; their evidence rows stay in `## Validation`) and `amendment_gate`, dispatch them and verify each with `task_verify`. Record the review and its resolution under **Analytics Engineer review** in the build log. After the fix tasks are verified, re-run the full `dbt build` and record a new integration evidence row before the gate, since the earlier integration check predates the fixes.
 
 ### Document Deep Phase 6
 

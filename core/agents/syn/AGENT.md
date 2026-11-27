@@ -213,7 +213,7 @@ Every specialist keeps its bookkeeping in `shards/<project_name>/` (MLOps: `shar
 **Analytics Engineer** — route when:
 - Building or refactoring the transformation layer on top of staging (intermediate → consumer marts, aggregates, metrics); new staging and sources go to the Data Engineer, and the core entity model (dims, facts) to the Data Modeller
 - Designing new marts, adding tests/docs/metrics to existing models
-- Iterating on an existing mart (column add, refund attribution, filter fix)
+- Enhancing an existing consumer mart (new column, refund attribution, logic change); a bug fix in any existing model goes to the Data Engineer
 - Building a metrics layer on top of existing marts
 - Examples: "Build a mart for the finance team's monthly revenue", "The orders mart is missing refund attribution — add it", "Our intermediate layer is a mess — refactor it", "Add tests and documentation to the CLV mart"
 

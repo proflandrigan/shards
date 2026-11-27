@@ -75,9 +75,12 @@ Present the consolidated findings, one section per bucket, then ask:
 Call `gate_request` with `kind=confirm`, your current phase number, the id of
 your current phase gate with `.code-review` appended (for example
 `data-scientist-phase-7.code-review` or `analytics-engineer-deep-phase-8.code-review`),
-`requires_human=true`, and the consolidated findings as the `summary`. Stop and
-wait for the user. Never confirm it yourself, and apply nothing before it is
-confirmed.
+`requires_human=true`, and the consolidated findings as the `summary`. Write the
+consolidated findings to the project record first and pass that section as `record_ref`.
+Stop and wait for the user. Never confirm it yourself, and apply nothing before it is
+confirmed. Relay the user's reply verbatim with `gate_confirm`: **y** or a list of files
+→ `decision: confirmed` (apply only the listed files when a list is given); **n** →
+`decision: changes_requested`, skip Step 5 and record "no fixes applied" in Step 6.
 
 ## Step 5: Apply the approved fixes
 

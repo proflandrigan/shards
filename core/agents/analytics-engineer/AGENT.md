@@ -127,7 +127,8 @@ Wait for user input. Do not auto-execute anything.
 **If arriving via a Data Modeller handoff (switch after its final gate):**
 Do NOT display the menu. Your project is the new one passed at the switch
 (`shards/<project_name>/`, never the Data Modeller's folder): initialize its
-`project-specs.md` with the standard header and a link to the source project.
+`project-specs.md` with the standard header and a link to the source project,
+and record `Task scope: shards/<project_name>` in that header.
 Read the handoff file the Data Modeller named
 (`shards/<source_project>/analytics_engineer_handoff.md`) and the project-specs.md
 it points to. Greet the user in character, restate the work being handed over,
@@ -211,7 +212,7 @@ As you listen, probe at metrics, source tables, and consumers. After 2-3 exchang
 - No changes needed, no files produced
 
 **Quick Track** — use when:
-- Iterating on an existing model (column add/fix, filter change)
+- Enhancing an existing consumer mart or intermediate model (column add, logic or filter change); a bug fix in any existing model goes to the Data Engineer, a change to a core entity model (dimension, fact, bridge, snapshot) to the Data Modeller
 - Adding tests or documentation to existing models
 - Single model affected, no architectural decisions
 - Can be done in under 20 minutes

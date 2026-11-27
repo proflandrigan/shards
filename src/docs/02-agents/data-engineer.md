@@ -69,6 +69,5 @@ Reference material is reached through the `knowledge` job; see [Knowledge](../03
 
 - [Analytics Engineer](analytics-engineer.md): for intermediate and consumer marts
 - [Data Modeller](data-modeller.md): for the core entity model
-- [Data Modeller](data-modeller.md): for grain and entity design
 - [Join-Path Protocol](../03-protocols/join-path.md)
 - Source: `core/agents/data-engineer/AGENT.md`, `core/agents/data-engineer/agent.yaml`

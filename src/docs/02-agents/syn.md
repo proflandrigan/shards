@@ -23,7 +23,7 @@ Give Syn a Jira issue key or browse URL to start with a specific target. For an 
 
 ## Modes
 
-Syn's mode files live in `core/agents/syn/modes/`. Three of them are also consult entries (`agent.yaml` `consult_entries`) that other agents call as one-shot subagents.
+Syn's mode files live in `core/agents/syn/modes/`. Two of them are also consult entries (`agent.yaml` `consult_entries`) that other agents call as one-shot subagents.
 
 | Mode | File | Purpose |
 |---|---|---|
@@ -49,7 +49,7 @@ Syn has no phases of its own. It runs a **Phase 0 Triage** that selects a specia
 
 ## Consulted by
 
-Every specialist consults Syn for final review through the `final_review` entry, which runs as a read-only subagent. Syn returns a three-tier verdict; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md). Code review and DIVERGE arbitration use the `code_review` and `arbiter` entries the same way.
+Every specialist consults Syn for final review through the `final_review` entry, which runs as a read-only subagent. Syn returns a three-tier verdict; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md). DIVERGE arbitration uses the `arbiter` entry the same way. Code review is no longer a Syn consult: the owning specialist runs `core/protocols/code_review.md`.
 
 ## Output directory
 

@@ -35,7 +35,7 @@ function stateNameFor(scope) {
   return `${STATE_NAME}-scope-${h.replace(/[0-9a-f]/g, (c) => String.fromCharCode(97 + parseInt(c, 16)))}`;
 }
 
-const SCOPE_DESC = 'Pass the same `scope` (project-root-relative workstream dir, e.g. "shards/churn_model") on every task_* call when you are a workstream lead under PM mode (the lead contract gives it); omit otherwise. Each scope has its own manifest, task states, drift state and TASKS.md (<scope>/TASKS.md).';
+const SCOPE_DESC = 'Pass the same `scope` (project-root-relative workstream dir, e.g. "shards/churn_model") on every task_* call when you are a workstream lead under PM mode (the lead contract gives it), or when your instructions give you a scope because another lead\'s manifest is already registered in this session (an Analytics Engineer after a Data Modeller handoff, Syn Free Form); omit otherwise. Each scope has its own manifest, task states, drift state and TASKS.md (<scope>/TASKS.md).';
 const SCOPE_PROP = { type: 'string', minLength: 1, description: SCOPE_DESC };
 const DEFAULT_TTL_MS = 900000;
 const SATISFIED = ['done'];

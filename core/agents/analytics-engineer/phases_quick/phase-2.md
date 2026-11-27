@@ -32,7 +32,7 @@ Each task in `shards/<project_name>/tasks.yaml` cites one of these specification
 
 {{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
-Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and record; you do not write build code yourself except for `delegate: inline` tasks.
+Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and record; you do not write build code yourself except for `delegate: inline` tasks. If the project-specs header records a `Task scope`, pass it as `scope` on every task tool call.
 
 This is a small build (two tasks or fewer in practice). The plan may mark its tasks `delegate: inline`; when it does, the lead performs those tasks itself, but still follows the same loop, the same acceptance commands and the same per-task evidence rows.
 
@@ -49,7 +49,7 @@ against grain, keys and relationships and surfaces issues, without editing.
 Brief: the project-specs path, the files changed, each changed model's stated
 grain and the joins touched; ask for each issue with file, line and the change
 to make. Apply {{protocol reviewer_verdict}}: for NEEDS REVISION or BLOCKED
-findings, the reviewed tasks are already done and cannot be re-dispatched, so add review-fix tasks through {{protocol plan_drift}}: raise its amendment gate with the findings as the proposed change, then call `tasks_set` with the revised manifest (one fix task per affected component, for your own workers, acceptance = the original check plus the finding resolved) and `amendment_gate`, dispatch them and verify each with `task_verify`. Do this before the gate.
+findings, the reviewed tasks are already done and cannot be re-dispatched, so add review-fix tasks through {{protocol plan_drift}}: raise its amendment gate with the findings as the proposed change, then call `tasks_set` with a manifest holding only the new fix tasks (one per affected component, for your own workers, acceptance = the original check plus the finding resolved, no `depends_on` on the already-done tasks; their evidence rows stay in `## Validation`) and `amendment_gate`, dispatch them and verify each with `task_verify`. Do this before the gate.
 
 **Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
 {{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).

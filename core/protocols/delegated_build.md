@@ -59,6 +59,8 @@ When all tasks are verified, run the final integration checks (for example Resta
 
 When Syn's PM mode launched you as a workstream lead, `{{protocol lead_contract}}` also applies: pass `scope=<workstream dir>` on every task tool call, and never call `gate_request`. Where this protocol says to request a gate or stop and ask the user, record the decision in `project-specs.md` or return `BLOCKED` to Syn instead.
 
+**Scope outside PM mode.** If your instructions give you a `scope` (because another lead's task manifest is already registered in this session, for example an Analytics Engineer after a Data Modeller handoff, or Syn Free Form), pass it on every `tasks_set`, `task_dispatch`, `task_report`, `task_verify` and `task_status` call.
+
 ## Sequential or inline fallback
 
 Use a fallback only when worker subagents genuinely cannot be spawned on the host. Convenience is not a reason. In that case the lead works through the same task cards one at a time (sequential, or inline in its own session). Name the reason in the report to your caller and add a `Fallback: <sequential|inline> — <reason>` row to the `## Validation` Evidence table of `project-specs.md`. Never fall back silently. The cards, acceptance checks, `task_verify` calls and evidence rows are identical, and verification still means running the acceptance command and recording the observed result before the next task starts.

@@ -75,8 +75,7 @@ This gate is where the user agrees to the whole run, so the message before it
 must state the plan in full:
 - the experiments, in order, and the experiment count;
 - the outcome metric and the success threshold (or "none set");
-- the stopping rule: run all planned experiments, or stop at the first
-  experiment that reaches the threshold (ask the user which, now);
+- the stopping rule agreed in Setup (run all planned experiments, or stop at the first that reaches the threshold), restated;
 - the stop conditions below, which end the loop early in any case.
 
 Record the agreed stopping rule in the experiment plan. If the user changes the
@@ -288,7 +287,7 @@ After receiving the Researcher response, fill in the `## Researcher Review` sect
 the result file with the Researcher's assessment. Also update the `researcherVerdict`
 field in `experiments/results.json` for this experiment entry.
 
-If this experiment's result will be reported as a win, a loss or a ranking (any claim on the outcome metric), also consult the Statistician on that claim, routed per {{protocol stats_review_routing}}: {{consult statistician entry=service task="Claim review for experiment N"}} Pass the metrics table above, the claim you intend to make, and the paths to the result file (`experiments/experiment_<N>_<name>.md`) and `experiments/results.json`. Record its verdict next to the Researcher's in the result file's `## Researcher Review` section under a `Statistician:` line, and set the entry's `statisticianVerdict` field in `experiments/results.json` (leave it empty when no claim review ran). This runs once per iteration that makes such a claim, so it adds one consult per qualifying iteration; count it toward the experiment count and stopping rule agreed in Phase 1. Inside the loop never ask the user: record NEEDS REVISION findings as caveats in the result file, and on BLOCKED downgrade the recommendation (Adopt becomes Refine) and rewrite the claim to the Statistician's "What the evidence actually supports" wording. The user sees these in Phase 3.
+If this experiment's result will be reported as a win, a loss or a ranking (any claim on the outcome metric), also consult the Statistician on that claim, routed per {{protocol stats_review_routing}}: {{consult statistician entry=service task="Claim review for experiment N"}} Pass the metrics table above, the claim you intend to make, and the paths to the result file (`experiments/experiment_<N>_<name>.md`) and `experiments/results.json`. Record its verdict next to the Researcher's in the result file's `## Researcher Review` section under a `Statistician:` line, and set the entry's `statisticianVerdict` field in `experiments/results.json` (leave it empty when no claim review ran). This runs once per iteration that makes such a claim, so it adds one consult per qualifying iteration; it does not count as an experiment; mention the expected extra consults when presenting the plan in Phase 1. On BLOCKED, also rewrite the claim to the Statistician's "What the evidence actually supports" wording. The user sees these in Phase 3.
 
 **No gates in the loop.** Act on this step's verdicts without asking the user: record NEEDS REVISION findings as caveats in the result file, and on BLOCKED downgrade the recommendation (Adopt becomes Refine or Revert). The user sees both at Phase 3 ({{protocol reviewer_verdict}}, loop exception).
 

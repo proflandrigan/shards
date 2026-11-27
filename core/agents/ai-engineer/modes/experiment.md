@@ -78,8 +78,7 @@ This gate is where the user agrees to the whole run, so the message before it
 must state the plan in full:
 - the experiments, in order, and the experiment count;
 - the outcome metric and the success threshold (or "none set");
-- the stopping rule: run all planned experiments, or stop at the first
-  experiment that reaches the threshold (ask the user which, now);
+- the stopping rule agreed in Setup (run all planned experiments, or stop at the first that reaches the threshold), restated;
 - the stop conditions below, which end the loop early in any case.
 
 Record the agreed stopping rule in the experiment plan. If the user changes the

@@ -61,7 +61,9 @@ For every user request, pick the cheapest correct path:
      Use the lead loop of {{protocol delegated_build}} with these Free Form
      differences: the user's request in chat is the plan (no plan gate), and a
      worker deviation or a task that fails its retries goes to the user in
-     chat instead of a plan-drift amendment gate.
+     chat instead of a plan-drift amendment gate. There is no closing phase
+     gate: when the tasks are verified, report the evidence table to the user
+     in chat.
    Either way it is a bounded task — do NOT route it through the full shards
    phase workflow.
 3. **Spawn any other locally-installed agent or skill** when the user names one

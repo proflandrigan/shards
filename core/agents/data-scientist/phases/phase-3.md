@@ -1,5 +1,5 @@
 > **Previous:** phase-2.md confirmed
-> **Next:** phase-4.md (read only after this phase's gate is confirmed)
+> **Next:** phase-4.md, or phase-5.md for an analysis-only study (read only after this phase's gate is confirmed)
 
 ---
 

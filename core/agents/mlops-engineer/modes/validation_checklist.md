@@ -22,7 +22,7 @@ Rolling back to the prior version can be done without data loss or extended down
 - Execute the rollback in staging and verify the prior version resumes correctly.
 - Recovery time objective (RTO) measured.
 
-**Observed format:** `rollback procedure: docs/runbooks/rollback.md | staging rehearsal: rolled from v2.3 → v2.2 in 94s, 0 failed requests during cutover ✓ | RTO target <5min ✓`
+**Observed format:** `rollback procedure: shards/<project>/mlops/runbook.md (rollback procedure section) | staging rehearsal: rolled from v2.3 → v2.2 in 94s, 0 failed requests during cutover ✓ | RTO target <5min ✓`
 
 ## MLO-03 — Monitoring Configured & Firing
 
@@ -97,7 +97,7 @@ The service has a runbook, and the on-call team can use it.
 - On-call team walkthrough held.
 - First-responder permissions configured (access to logs, metrics, rollback controls).
 
-**Observed format:** `runbook: docs/runbooks/<svc>.md (health checks, common failures, rollback, escalation) | on-call walkthrough: 2026-04-21 with #ml-oncall team (6 engineers) ✓ | permissions verified: all on-call engineers can access Grafana + trigger rollback`
+**Observed format:** `runbook: shards/<project>/mlops/runbook.md (health checks, common failures, rollback, escalation) | on-call walkthrough: 2026-04-21 with #ml-oncall team (6 engineers) ✓ | permissions verified: all on-call engineers can access Grafana + trigger rollback`
 
 ## MLO-10 — Registry & Lineage Recorded
 

@@ -207,9 +207,9 @@ Then:
    - Greenfield: `shards/<project_name>/model-card.json`
    - Iteration: `shards/<project_name>/model-card.json` (same; the existing service holds only confirmed Placement targets)
 
-   The JSON must conform to the schema {{template model-card-schema.json}}
-   (JSON Schema, draft 2020-12). See {{template model-card-schema}} for an
-   annotated example and field notes.
+   Follow the annotated example and field notes: {{template model-card-schema}}
+   The JSON must validate against `model-card-schema.json` in the same
+   templates folder (JSON Schema, draft 2020-12).
 
    ML-engineer-specific overrides:
    - `generatedBy`: `"ml-engineer"`.

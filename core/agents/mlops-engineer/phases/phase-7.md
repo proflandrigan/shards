@@ -9,11 +9,13 @@
 test), MLO-02 (rollback rehearsal) and MLO-03 (alerts fire) need a running
 deployment, so they are applied here, not at the Phase 6 build gate
 (`modes/validation_checklist.md`). Deploying is an outward action: tell the user
-exactly what you will deploy and where (staging only, never production), then ask.
+exactly what you will deploy and where (staging only, never production) and
+that you will dispatch the retraining trigger on CI once, then ask.
 
 {{gate kind=confirm name=staging-deploy requires_human=true}}
 
-Once confirmed, deploy to staging with the Phase 6 artifacts, run MLO-01, MLO-02
+Once confirmed, deploy to staging with the Phase 6 artifacts, dispatch the
+retraining trigger once on the real CI system (Spec E), run MLO-01, MLO-02
 and MLO-03 as the checklist describes, and add their rows (replacing the Phase 6
 `n/a` rows) to the `## Validation` Evidence table with the commands run and the
 measured facts. Update the `## Validation` section's `**Applied at:**` line to Phase 7, and keep the Evidence table's Notes column: every `n/a` row needs a non-empty note (`protocols/validation.md`). If no staging environment is available, record each as `✗`

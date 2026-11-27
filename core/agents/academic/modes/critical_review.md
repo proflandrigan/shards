@@ -220,6 +220,8 @@ _APPROVED = report stands as written | NEEDS REVISION = caveats should be added 
 If file mode: write the file, then read it back to the user in full.
 If inline mode: present the review in chat.
 
+If the review file was written outside `shards/academic_reports/` (a directory the user named), pass its path as `targets` on this gate so it is committed.
+
 Gate readback (pass this as the `summary`):
 
 Ask the user:

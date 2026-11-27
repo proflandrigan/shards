@@ -38,6 +38,9 @@ and metrics on top of it to the Analytics Engineer to build and own?
 - (a) Yes — I'll write a handoff and switch to the Analytics Engineer after sign-off.
 - (b) No — this project is complete."
 
+{{gate kind=confirm phase=7 track=deep name=ae-handoff requires_human=true}}
+If the user declines, relay their reply with `gate_confirm` and `decision: changes_requested`, skip the handoff file, and record "Not requested."
+
 If (a), write `shards/<project_name>/analytics_engineer_handoff.md` with: the
 project-specs path, entities and grains (Phase 2), key relationships (Phase 3),
 the built models and their tests (Phase 6 build log), the Analytics Engineer's
@@ -105,3 +108,4 @@ Engineer builds the handed-over work in that project, starting from the handoff
 file:
 
 {{switch analytics-engineer}}
+In that `activate` call also pass `project="<project_name>_transform"` (or the name the user gave); without it the Analytics Engineer has no project.

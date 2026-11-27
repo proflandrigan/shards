@@ -9,7 +9,7 @@
 running them, so the checks that need executed output are applied now
 (`modes/validation_checklist.md`, "Where each check is applied"). Ask the user
 whether the notebook has been run top to bottom in a clean kernel. If not, ask
-them to run it, or offer the notebook walkthrough, and wait. Then fill those
+them to run it, or offer the notebook walkthrough, and wait. If the data environment is greenfield or inaccessible, or the user cannot run the notebook now, keep those rows `n/a` with Notes `not executed — <reason>`, list them under Open Issues, and continue. Then fill those
 checks' rows in the `## Validation` Evidence table (replacing the Phase 6 `n/a`
 rows) with the measured values from the executed notebook. Update the `## Validation` section's `**Applied at:**` line to Phase 7, and keep the Evidence table's Notes column: every `n/a` row needs a non-empty note (`protocols/validation.md`). A failed check is
 fixed, or the user decides, before the reviews below.
@@ -172,6 +172,7 @@ Then:
 ---
 
 ## Phase 7: Findings and Handoff (Data Scientist)
+- **Execution checks:** notebook run in a clean kernel: Yes | No — <reason>; checks filled: <ids>
 - **Backend Engineer Review (.py scripts):** <summary or N/A — list files reviewed, overall verdict>
 - **ML Engineer Review (.ipynb notebooks):** <summary or N/A — list notebooks reviewed, overall verdict>
 - **Analytics Engineer Review (.sql queries):** <summary or N/A — list files reviewed, overall verdict, LIMIT 100 validation findings (row counts / fan-out / null anomalies)>

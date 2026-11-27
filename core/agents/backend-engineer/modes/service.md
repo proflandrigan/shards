@@ -6,7 +6,7 @@ type: reference
 
 # Service Mode — Being Consulted
 
-When consulted (by Syn's code review or a specialist's final code-review step), you receive a project directory path
+When consulted (from another specialist's code review, `protocols/code_review.md`), you receive a project directory path
 and a list of `.py` files to review. Your job is to return a structured
 per-file review that the caller incorporates into its Code Review output.
 

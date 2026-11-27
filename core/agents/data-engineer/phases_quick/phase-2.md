@@ -78,7 +78,7 @@ decisions, or several models or layers affected), escalate:
 4. **Preserve context:** write an `## Escalation Brief` section to
    `project-specs.md` in the format defined in
    [`protocols/behavioral_rules.md`](../../../protocols/behavioral_rules.md), with
-   **Target agent** `Data Engineer (Deep Track)` (or `Analytics Engineer`).
+   **Target agent** `Data Engineer (Deep Track)`, `Data Modeller` or `Analytics Engineer`.
 
 After the user confirms a Deep escalation, read
 [`phases_deep/index.md`](../phases_deep/index.md), then {{phase 1 track=deep}} and
