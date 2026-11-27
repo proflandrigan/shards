@@ -58,7 +58,7 @@ Present the full plan before touching any file:
 - For each file: list every change to be made, in plain language, per axis
 - For SQL extractions: list each query, its proposed `.sql` filename
   (convention: `sql/<module_name>/<query_name>.sql`), and the line in the
-  source where it will be replaced with `Path(__file__).parent / "sql" / "..."`)
+  source where it will be replaced with `(Path(__file__).parent / "sql" / "...").read_text()`)
 - Flag any change that requires judgment the agent cannot make statically:
   - "I cannot confirm this restructuring is safe without seeing the callers"
   - "This class interface change affects public API — confirm before I proceed"
@@ -84,8 +84,7 @@ Work through files one at a time:
      no rewriting
    - Replace the inline string in the source with:
      ```python
-     Path(__file__).parent / "sql" / "<module_name>" / "<query_name>.sql"
-     ).read_text()
+     (Path(__file__).parent / "sql" / "<module_name>" / "<query_name>.sql").read_text()
      ```
      or the equivalent pattern already used in the codebase (match existing conventions
      found in Phase 2)
@@ -138,10 +137,10 @@ functionality. No removed functionality.>
 
 Read the summary back to the user.
 
-Gate readback (pass this as the `summary`):
-
 Ask:
-
-{{gate kind=final phase=5 id=backend-engineer-clean-phase-5}}
 - Anything you'd like to revert or reconsider?
 - Want a follow-up full review (`[R]`) to confirm the cleaned state?
+
+Pass the readback and these questions as the gate `summary`:
+
+{{gate kind=final phase=5 id=backend-engineer-clean-phase-5}}

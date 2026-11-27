@@ -5,6 +5,15 @@
 
 ## Phase 7 — Review and Handoff
 
+**Execution checks (first).** Phase 6 wrote the queries and the notebook without
+running them, so the checks that need executed output are applied now
+(`modes/validation_checklist.md`, "Where each check is applied"). Ask the user
+whether the notebook has been run top to bottom in a clean kernel. If not, ask
+them to run it, or offer the notebook walkthrough, and wait. If the data environment is greenfield or inaccessible, or the user cannot run the notebook now, keep those rows `n/a` with Notes `not executed — <reason>`, list them under Open Issues, and continue. Then fill those
+checks' rows in the `## Validation` Evidence table (replacing the Phase 6 `n/a`
+rows) with the measured values from the executed notebook. Update the `## Validation` section's `**Applied at:**` line to Phase 7, and keep the Evidence table's Notes column: every `n/a` row needs a non-empty note (`protocols/validation.md`). A failed check is
+fixed, or the user decides, before the reviews below.
+
 **Code review (Python scripts, notebooks, and SQL):**
 
 Tell the user: "Before Syn reviews this, we're running code review. Python
@@ -85,12 +94,9 @@ Append all reviews to project-specs.md under a combined `Code Review` heading.
   [summary]. Confirm to proceed to Syn?" Then proceed to Syn.
 - **BLOCKED** → tell the user: "Reviewer has blocked this. Fixing critical
   issues before continuing." Address every critical issue. Update
-  project-specs.md. Resubmit to the same reviewer(s) once. If the second
-  verdict is APPROVED or NEEDS REVISION, proceed to Syn. If still
-  BLOCKED, surface to user: "Reviewer has blocked this twice. [Verbatim
-  second verdict.] How would you like to proceed? (a) Override and proceed
-  to Syn — I'll document the disagreement. (b) Continue fixing — tell me
-  what to change. (c) Stop the project."
+  project-specs.md. Resubmit once and escalate a second BLOCKED per
+  {{protocol reviewer_verdict}}. If the second verdict is APPROVED or
+  NEEDS REVISION, or the user overrides, proceed to Syn.
 
 **Statistician claim review (findings and report):**
 
@@ -138,19 +144,9 @@ Append Syn's review to specs. Present to user.
 
 If Syn returns NEEDS REVISION or BLOCKED, once or twice, follow the resolution loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
-If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}.
 
-{{consult syn entry=code_review task="Code review and fix for data science study"}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-CODE REVIEW MODE. I am the Data Scientist shard. Project: [project_name].
-Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
-in this project. The project-specs.md is at [file_path] for context.
-```
-
-Append Syn's code review summary to the specs. Present findings to user.
+If the user wants the code pass: {{protocol code_review}}
 
 Then:
 
@@ -176,6 +172,7 @@ Then:
 ---
 
 ## Phase 7: Findings and Handoff (Data Scientist)
+- **Execution checks:** notebook run in a clean kernel: Yes | No — <reason>; checks filled: <ids>
 - **Backend Engineer Review (.py scripts):** <summary or N/A — list files reviewed, overall verdict>
 - **ML Engineer Review (.ipynb notebooks):** <summary or N/A — list notebooks reviewed, overall verdict>
 - **Analytics Engineer Review (.sql queries):** <summary or N/A — list files reviewed, overall verdict, LIMIT 100 validation findings (row counts / fan-out / null anomalies)>
@@ -205,7 +202,7 @@ Then:
 
 Update specs header status to `Complete`.
 
-{{gate kind=final}}
+{{gate kind=final validates=data-scientist}}
 
 ---
 

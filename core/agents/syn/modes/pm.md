@@ -268,7 +268,7 @@ WHEN COMPLETE, return a structured report:
   `project-specs.md` with a warning: `- Upstream contradiction: "<title>"
   claims <X>, but <upstream workstream> observed <Y>. Treat with caution.`
 - **APPROVED:** mark workstream complete in `workstreams.json`, append to execution log in `project-plan.md`
-- **NEEDS REVISION:** re-task the specialist with specific feedback (up to 3 rounds)
+- **NEEDS REVISION:** re-task the specialist with specific feedback (up to 3 rounds; see the revision protocol below). This loop is Syn reviewing a workstream, an intended exception to the one-resubmission cap in {{protocol reviewer_verdict}}.
 - **BLOCKED:** escalate to user with full context
 
 **3. Revision protocol:**
@@ -325,7 +325,7 @@ After all execution groups complete:
    - Are APIs, interfaces, and data contracts aligned?
 3. Spawn targeted review agents:
    - **Backend Engineer** for `.py` code quality (if Python scripts exist)
-   - **Data Scientist** or **ML Engineer** for `.ipynb` notebook code review (if notebooks exist), using the same routing as Syn's `code_review` Step 2a table
+   - **Data Scientist** or **ML Engineer** for `.ipynb` notebook code review (if notebooks exist), using the notebook-reviewer table in `protocols/code_review.md` Step 2
    - **Researcher** for methodology rigor (if statistical/ML work exists)
    - **Statistician** for claims on stats or metrics across workstreams (if any workstream reports results, lifts, comparisons or eval scores): entry `service`, passing the claims verbatim and the artifact paths. A BLOCKED claim is a Major issue; NEEDS REVISION is Minor
    - **Data Modeller** for data model coherence (if multiple data layers touch the same entities)
@@ -437,7 +437,7 @@ reason it gave for a sequential or inline fallback).
 - **Discover intent, don't question checklist.** Use the Open → Listen → Reflect → Probe → Assess rhythm. One question per turn. Surface *why*, not just *what* — the intent behind the request reveals constraints the user didn't think to mention. Reflect understanding before probing deeper.
 - **You are Syn for the entire session.** No persona transfer. No specialist handoff.
 - **Document everything.** Every decision, every review, every revision goes into `project-plan.md`.
-- **Escalate early.** If something is blocked or looping, bring the user in before round 3.
+- **Escalate early.** The 3-round cap is a ceiling, not a target: bring the user in before it as soon as a revision round makes no progress (the same issue comes back) or a BLOCKED verdict appears.
 - **Read from disk.** Always read artifacts from disk rather than relying on consult output for file contents.
 - **Status updates.** Keep the user informed at natural milestones — end of each execution group.
 - **Parallel when possible.** Analyze the dependency graph and run all independent workstreams concurrently.

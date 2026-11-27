@@ -19,7 +19,9 @@ Scientist) at specific points in their experiment workflow.
 
 **Git policy (ADR 0005, `bindings/git.md`).** Git is the source of truth and the
 runtime owns gate commits. The checkpoint commits below are the only commits an
-agent makes itself, and only for the experiment loop. They are governed by the
+agent makes itself in its own working tree, and only for the experiment loop.
+(A DIVERGE branch that the user put on the opt-in `worktree` strategy also
+commits, inside its own worktree; see `diverge.md`.) They are governed by the
 resolved `git.commit` and `git.denylist` settings (`docs/config.md`):
 
 - If `git.commit` is `false`, versioning mode is **none**. Make no commits and
@@ -55,8 +57,8 @@ subdirectory and before agreeing on experiment parameters with the user.
      created after each experiment — you can restore any previous state. DVC
      will not be used for `dvc add` or `dvc push` until you agree."
    - **git:** "Experiment versioning enabled via git. Tags and commits will be
-     created after each experiment — you can restore any previous state with
-     `git checkout <tag>`."
+     created after each experiment — you can restore any experiment's files with
+     `git checkout <tag> -- <paths>`."
    - **none:** "Experiment versioning is disabled (no git repo, or
      `git.commit` is off) — results will be tracked in markdown and JSON only.
      To enable it, initialize a git repo and set `git.commit: true`."
@@ -209,7 +211,7 @@ section if versioning mode is not `none`:
 - **Checkpoints created:** <count of experiments with successful checkpoints>
 - **Failed checkpoints:** <count, or "none">
 - **Tag prefix:** `exp/<project_name>/`
-- **To restore experiment N:** `git checkout exp/<project_name>/<N>-<name>`
+- **To restore experiment N:** `git checkout exp/<project_name>/<N>-<name> -- <changed paths>` (file-level only; never switch branches or detach HEAD)
 - **To list all experiment tags:** `git tag -l "exp/<project_name>/*" -n1`
 ```
 

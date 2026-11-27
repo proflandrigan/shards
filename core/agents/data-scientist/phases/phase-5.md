@@ -1,4 +1,4 @@
-> **Previous:** phase-4.md confirmed
+> **Previous:** phase-4.md confirmed (or phase-3.md, when Phase 4 was skipped for an analysis-only study)
 > **Next:** phase-6.md (read only after this phase's gate is confirmed)
 
 ---
@@ -39,7 +39,7 @@ Please review:
 Return your review as: APPROVED (proceed as planned) | NEEDS REVISION (flag issues).
 ```
 
-Apply the Reviewer Verdict Protocol (see shared protocol — `bi-engineer` row).
+Apply {{protocol reviewer_verdict}}.
 
 Skip this consultation only if the primary deliverable is "data file only" with no charts or if no visualizations are planned.
 

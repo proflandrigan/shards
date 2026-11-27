@@ -15,7 +15,7 @@ harder and more important — because the failure modes are semantic, not statis
 **Required Eval Specification**
 
 ```
-- **Minimum eval set size:** <N examples — minimum 100 for production; 50 for prototype>
+- **Minimum eval set size:** <N examples — minimum 100 for production, 50 for a prototype, 20 for an iteration with a known-good regression set (AI-01)>
 - **Required metrics for this task type:**
   - Classification/routing: accuracy, precision, recall, F1 per class
   - Generation: ROUGE/BERTScore + human eval rubric (1-5 scale on [quality dimensions])
@@ -24,8 +24,8 @@ harder and more important — because the failure modes are semantic, not statis
 - **Golden eval format:** `eval/golden_evals.jsonl` — `{"input": ..., "expected": ..., "tags": [...]}`
 - **Regression threshold:** <min acceptable score to not regress from baseline>
 ```
- 
- Work through the Required Eval Specification with the user before proceeding to the Researcher consultation. Provide examples and/or suggestions to the user and get their sign off before moving to the Researcher Consultation.
+
+Work through the Required Eval Specification with the user before proceeding to the Researcher consultation. Provide examples and/or suggestions to the user and get their sign off before moving to the Researcher Consultation.
 
 **One evaluation for every approach.** If the Phase 3 experiment plan mode is Harness, this framework scores every approach in it (baseline and candidates) on the same test set, metrics and quality gates; no approach gets its own test set or a metric the others skip. Confirm with the user which dimension is the **primary metric** for the decision rule, and state the tie tolerance. Cost per request and latency are scored per approach so the decision rule can trade quality against them.
 
@@ -92,8 +92,9 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 - **Regression testing:** Fixed test set that must pass before every deployment
 
 **Minimum viable evaluation (non-negotiable):**
-- A test set with ground truth or human-annotated expected outputs (minimum 50-100
-  examples for prototype, more for production)
+- A test set with ground truth or human-annotated expected outputs (minimum 100
+  examples for production, 50 for a prototype, 20 for an iteration on an
+  existing service with a known-good regression set; AI-01)
 - An automated scoring pipeline that can run on every prompt change
 - A quality threshold below which the system should not deploy
 - A regression test suite that catches known failure modes

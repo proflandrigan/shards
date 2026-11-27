@@ -19,12 +19,14 @@ Wait for any signal from the user before beginning build steps.
 
 Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`. Components, in dependency order:
 
-1. Source definitions (sources.yml updates); source freshness passes.
-2. Staging models (one task per model or small related group), each with its schema file.
-3. Intermediate models, each with its schema file; fan-out matches Phase 3 predictions.
-4. Mart models, each with its schema file; full validation suite.
-5. Snapshot models (if SCD Type 2).
-6. Singular test files.
+Source definitions and staging models are the Data Engineer's; this build reads
+the existing staging layer.
+
+Snapshots and other core entity models are the Data Modeller's.
+
+1. Intermediate models, each with its schema file; fan-out matches Phase 3 predictions.
+2. Consumer mart models, each with its schema file; full validation suite.
+3. Singular test files.
 
 Every model component comprises:
 - **Join path trace (models with joins):** Before writing SQL for any model that
@@ -55,15 +57,9 @@ Every model component comprises:
      from <model>
      -- FAIL if total_rows != distinct_pks
      ```
-  2. **Join fan-out verification** (models with joins — Tier 2+ from
-     `protocols/join_path.md`):
-     ```sql
-     select 'before_join' as stage, count(*) as row_count from <left_model>
-     union all
-     select 'after_join', count(*)
-     from <left_model> join <right_model> on <join_condition>
-     -- FAIL if after > before and diverges from predicted fan-out in Phase 3
-     ```
+  2. **Join fan-out verification** (models with joins): run the Tier 2+
+     verification query from [`protocols/join_path.md`](../../../protocols/join_path.md)
+     at each join. FAIL if after > before and it diverges from the fan-out predicted in Phase 3.
   3. **PK/FK null check** (mart and fact models):
      ```sql
      select '<column>' as col, count(*) as total,
@@ -76,8 +72,8 @@ Every model component comprises:
      `dbt show --select <model> --limit 5` — visually confirm column names,
      types, and values look correct.
 
-  Scale to model importance: staging models need only grain + sample; intermediate
-  models add fan-out checks if they contain joins; mart/fact models get the full
+  Scale to model importance: intermediate
+  models get grain + sample, plus fan-out checks if they contain joins; mart/fact models get the full
   suite.
 
 Task acceptance commands must name the exact test command and the measured facts expected (row counts, `null rate on join key = 0.00%`, grain check result).
@@ -86,42 +82,13 @@ Task acceptance commands must name the exact test command and the measured facts
 
 {{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
-Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and record; you do not write build code yourself except for `delegate: inline` tasks.
+Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and record; you do not write build code yourself except for `delegate: inline` tasks. If the project-specs header records a `Task scope`, pass it as `scope` on every task tool call.
 
-1. **Load the task list.** Load `shards/<project_name>/tasks.yaml` (approved at the plan gate) with `tasks_set`. Fix any rejection (cycle, overlapping owned paths, missing acceptance) with the user before building.
-2. **Dispatch.** `task_dispatch` the ready tasks (all `depends_on` done), in parallel up to `max_parallel=3`. Each task card cites its `plan_ref`, so workers see only the Component specifications they need.
-3. **Collect.** Each worker returns a result through `task_report`.
-4. **Lead verifies every report before it counts.** Re-run (or independently check) the task's acceptance command and compare the outcome with the cited `plan_ref`. Then write a per-task evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone. {{protocol incremental_testing}} is task evidence guidance.
-5. **Failures.** Re-dispatch with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary of what failed.
-6. **Deviations.** If a worker reports a deviation, or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend the plan only through a confirmed gate.
-7. **Unblock.** After each verified task, dispatch the tasks it unblocks.
-8. **DAG updates.** After the lead verifies a model task, update the DAG file with the completed model highlighted (e.g. `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`) and re-emit with the same `panel_id` from Phase 4 so it updates in place:
+Run the protocol's lead loop on `shards/<project_name>/tasks.yaml` (approved at the plan gate), dispatching up to `max_parallel=3`; each task card cites its `plan_ref`, so workers see only the Component specifications they need. {{protocol incremental_testing}} is task evidence guidance. In addition:
+
+1. **DAG updates.** After the lead verifies a model task, update the DAG file with the completed model highlighted (e.g. `style stg_orders fill:#1a3a1a,stroke:#2a6a2a,color:#60a060`) and re-emit with the same `panel_id` from Phase 4 so it updates in place:
    {{artifact.emit type=dag path=shards/<project_name>/dag.mmd meta="title=DAG: <project_name> panel_id=dag-<project_name>"}}
-9. **Final integration check.** When all tasks are done, the lead runs the full stack build/test (e.g. `dbt build`) and records the result as an evidence row before the gate.
-
-**SQL template for staging model** (adapt reference syntax to your stack):
-```sql
-with source as (
-    select * from <source_ref('schema', 'table')>
-    -- e.g., {{ source('schema', 'table') }} in dbt
-),
-
-renamed as (
-    select
-        -- primary key
-        <source_pk_col>     as <entity_id>,
-
-        -- attributes
-        <col_a>             as <standardized_name>,
-        <col_b>::<type>     as <standardized_name>,
-
-        -- metadata
-        _loaded_at
-    from source
-)
-
-select * from renamed
-```
+2. **Final integration check.** When all tasks are done, the lead runs the full stack build/test (e.g. `dbt build`) and records the result as an evidence row before the gate.
 
 **SQL template for intermediate model** (adapt reference syntax to your stack):
 ```sql

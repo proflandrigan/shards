@@ -19,8 +19,10 @@ Ask the user:
    constraints — latency, cost, team capability)
 3. Is there a preferred outcome, or is this an open exploration?
 
+Once the user answers, restate the question in your own words to confirm alignment,
+then raise the gate and wait for confirmation.
+
 {{gate kind=phase phase=1 id=ml-engineer-advise-phase-1}}
-Restate the question in your own words to confirm alignment. Wait for confirmation.
 
 ---
 
@@ -43,16 +45,13 @@ paths and context warrants it, but file reading is not required.
 
 If the question touches areas outside core ML engineering, consult as appropriate:
 
-**Data Engineer** — infrastructure feasibility, pipeline complexity:
-**Data Engineer input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Engineer input the caller supplied, otherwise list it as an open question for the caller.
+**Data Engineer input** — infrastructure feasibility, pipeline complexity. In the user's own session (you were started from the menu), run the consult yourself: subagent `data-engineer`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Engineer input the caller supplied, otherwise list it as an open question for the caller.
 
-**Data Scientist** — methodology, feature engineering, evaluation approach:
-**Data Scientist input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `data-scientist`, entry `advise`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Scientist input the caller supplied, otherwise list it as an open question for the caller.
+**Data Scientist input** — methodology, feature engineering, evaluation approach. In the user's own session (you were started from the menu), run the consult yourself: subagent `data-scientist`, entry `advise`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Data Scientist input the caller supplied, otherwise list it as an open question for the caller.
 
-**Applied ML Scientist** — architecture choice, loss function design, inductive
+**Applied ML Scientist input** — architecture choice, loss function design, inductive
 bias alignment, cutting-edge method comparison, or any decision involving
-non-tabular data or non-standard methodology:
-**Applied ML Scientist input.** In the user's own session (you were started from the menu), run the consult yourself: subagent `applied-ml-scientist`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Applied ML Scientist input the caller supplied, otherwise list it as an open question for the caller.
+non-tabular data or non-standard methodology. In the user's own session (you were started from the menu), run the consult yourself: subagent `applied-ml-scientist`, entry `review`, with the scope and the files you read, and record its verdict. If you are a consultant, do not consult (consults never nest): use any Applied ML Scientist input the caller supplied, otherwise list it as an open question for the caller.
 
 ---
 

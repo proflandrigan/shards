@@ -55,17 +55,19 @@ If it does:
    dbt project files. For transformation work, I need to know what we're building on:
    - (a) Staged data exists — tell me the source system and whether it's already
      modeled in staging. I'll design the transformation layer from there.
-   - (b) Raw data exists but no staging models yet — I'll need to flag that staging
-     models are a prerequisite. I can design them alongside the transformation layer,
-     but the Data Engineer should own the staging work.
+   - (b) Raw data exists but no staging models yet — staging is a prerequisite and
+     it is the Data Engineer's to build. I'll recommend running the Data Engineer for
+     the staging layer first; meanwhile I can design the transformation layer
+     against the planned staging contract.
    - (c) No data exists yet — I can do contract-first design: define expected staging
      models, intermediate shells, and mart stubs ready for when data arrives.
      Nothing will run until staging data exists.
    Which situation are we in?"
 3. Wait for the user's response before proceeding.
    - (a): proceed with provided source info.
-   - (b): note that staging is a prerequisite; scope includes staging design but
-     implementation should be reviewed by Data Engineer.
+   - (b): note that staging is a prerequisite owned by the Data Engineer; scope
+     excludes staging. Design against the staging contract and recommend
+     `shards:data-engineer` (or Syn) for the staging build.
    - (c): set Data sufficiency: `Insufficient`, proceed as contract-first design.
      All models will be flagged [THEORETICAL — UNTESTED].
 

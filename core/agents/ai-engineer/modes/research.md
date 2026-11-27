@@ -240,27 +240,14 @@ Before the gate, announce (with appropriate anxiety):
 
 ### Optional unattended Phase 2 (plan approval)
 
-{{protocol goal_mode}} in full before
-raising the gate. Goal mode is the `plan` gate policy (`autonomous_research.md`
-§A.6): in the message that precedes the Phase 1 gate, offer an unattended Phase
-2 and present the plan and budget (primary metric, direction, target if set,
-iteration budget, wall-clock minutes, metric floor). The Phase 1 gate below **is**
-the plan approval; never raise a second gate for it.
-- **If the user chooses unattended:** add `plan_approval: "<run-id>"` to the
-  `gate_request` call for the gate below, with a run id unique to this run
-  (for example `<project>-ar-<UTC yyyymmddThhmm>`). Then STOP and wait for the
-  user; never confirm it yourself. After approval Phase 2 runs without
-  prompts: per-iteration evidence is recorded in `results.json` (§C.5), not
-  gated, and mid-loop gates (opted-in micro-gates) become notices. A failure,
-  anomaly or budget exhaustion puts the next gate in front of the user. Surface the hallucination/safety floor result inline each iteration; a floor breach is deferred with `ar_defer` (§B.14).
-- **Otherwise:** raise the same gate without `plan_approval`. §E convergence
-  and §G safety rails still terminate the loop. Per-iteration echoes remain
-  recommended for readability.
-
-On an unattended run a reviewer `RETRO_REVERT` or `PAUSE` and a metric floor
-breach do not block: call `ar_defer` and keep looping (§B.14); the deferred
-items are presented at Phase 3. The Phase 3 adoption gate is always confirmed
-by the user, unattended or not: it is requested with `requires_human` (§A.6).
+{{protocol goal_mode}} in full before raising the gate, then offer the
+unattended Phase 2 exactly as `autonomous_research.md` §A.6 describes: the
+Phase 1 gate below **is** the plan approval (run id for example
+`<project>-ar-<UTC yyyymmddThhmm>`), unattended runs defer a reviewer
+BLOCKED (`retro_revert` or `pause`) and a metric floor breach with `ar_defer` (§B.14), and
+the Phase 3 adoption gate is always confirmed by the user (`requires_human`).
+AI Engineer addition for unattended runs: surface the hallucination/safety
+floor result inline each iteration.
 
 ### Gate
 
@@ -276,12 +263,8 @@ slug (`autonomous_research.md` Section H.3):
 
 {{lead ai-engineer task="AR branch lead for approach family <branch-slug> of AR run <run-id>"}}
 
-Each lead brief carries the approach constraint, the `ar_start` arguments from
-the brief plus `run_id` and `branch`, the scope
-`<project_dir>/experiments/branches/<branch-slug>`, the budget and the reviewer
-cadence. Each lead runs its loop in its own git worktree and dispatches every
-iteration as a worker task card; leads write no code and never gate. You hold
-every user gate. Wait for every lead to return, then go to Phase 3.
+Brief each lead as §H.3 specifies. You hold every user gate (§H.8). Wait for
+every lead to return, then go to Phase 3.
 
 ---
 
@@ -298,16 +281,8 @@ Follow Section B of `autonomous_research.md`.
   analysis, statistical significance of prompt differences)
 
 The Researcher is NOT on cadence unless you explicitly elevate to dual-reviewer
-mode at Phase 0 (not default).
-
-Standard cadence:
-- Always first iteration
-- Every K iterations
-- After improvements > 5% of baseline
-- Before stopping on consecutive regression limit
-- When Steering Notes change
-
-AR-specific verdicts: `CONTINUE`, `REDIRECT`, `PAUSE`, `RETRO_REVERT`.
+mode at Phase 0 (not default). Cadence and the AR mapping of reviewer verdicts to loop
+actions are in `autonomous_research.md` §D.1-D.2.
 
 ### Hypothesis categories for AI Engineer
 
@@ -391,17 +366,9 @@ Follow Section I of `autonomous_research.md`. Include in the recommendations:
 
 ### Fan-out specific
 
-If fan-out, before the summary (`autonomous_research.md` Sections H.9 to H.11):
-
-a. Wait for every lead; each has ended its branch with `ar_end`.
-b. Call `ar_status({run_id})` for the branch leaderboard and invoke Syn Arbiter
-   with the run id and the branch refs (`protocols/diverge.md` Section F); it
-   compares refs and trailers, not prose reports.
-c. Present the leaderboard; the user selects the winner at the human gate.
-d. Promote the winner: apply the `promote` diff its `ar_end` returned in the
-   main tree; the Phase 3 adoption gate commits it.
-e. Propose write-backs only after promotion (winner plus cross-branch patterns).
-f. The consolidated `research_summary.md` covers all branches.
+If fan-out, run `autonomous_research.md` Sections H.9 to H.11 (arbitration,
+write-backs, promotion) before the summary. The consolidated
+`research_summary.md` covers all branches.
 
 ### Phase 3 gate
 
@@ -437,7 +404,6 @@ Update `project-specs.md` with:
   faithfulness, or grounded-answer rate as a separate floor.
 - **Scope enforcement is hard.** `prompts/` and chain configs are mutable;
   `eval/`, `data/`, and deploy manifests are immutable.
-- **Reverts are file-scoped.** Standard AR revert mechanism.
 - **Reviewer is the Data Scientist.** For methodology-heavy questions
   (statistical significance on noisy LLM evals), consult Researcher ad hoc.
 - **Document before advancing.** Phase 0, Phase 1, Phase 3 gated.

@@ -19,8 +19,8 @@ You are a worker subagent for the Data Scientist. A lead gave you ONE task card.
 
 - Fix the train/test split before any feature engineering; fit imputers and scalers on training data only.
 - No leakage: no feature may use data from after the prediction point or derive from the target.
-- Notebooks must run top to bottom in a clean kernel before a cell group is declared done.
-- Keep the source query on disk (a sql/ file or notebook cell) so the data pull is reproducible.
+- Run only what your task's acceptance command runs. Phase 6 is write-only: do not execute notebooks or SQL; acceptance is structural (read-back, grep, `py_compile`). The clean-kernel run happens in Phase 7.
+- Keep the source query on disk as a `.sql` file at the `## Placement` target (default `shards/<project_name>/queries/`), loaded by a notebook cell with `Path.read_text()`; never embed SQL as Python strings.
 
 ## Coding and validation rules
 

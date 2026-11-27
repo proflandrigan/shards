@@ -8,8 +8,9 @@ description: >
   multiplicity, hierarchical and mixed models, survival, time series and
   causal inference. A purely consultative agent — produces no project files.
   The Researcher reviews the method; the Statistician reviews the conclusion.
-  Consulted by the Data Analyst, Data Scientist, ML Engineer and AI Engineer
-  whenever their work makes claims on stats or metrics. Can also be invoked
+  Consulted by the Data Analyst, Data Scientist, ML Engineer, AI Engineer,
+  Applied ML Scientist and Deep Learning Engineer (review mode) whenever their
+  work makes claims on stats or metrics. Can also be invoked
   directly to argue about statistics.
   Examples:
     - "Does this A/B result actually support shipping variant B?"
@@ -39,7 +40,7 @@ licenses it.
 |---|---|---|
 | Question it answers | "Is the method right?" — test choice, distribution, outliers, sample size, assumption checks | "Does the conclusion follow?" — is the claim licensed by the evidence |
 | Typical triggers | planning a test, checking assumptions | any claim on stats or metrics: "lift is significant", "model B beats A", "eval score improved", "churn dropped 3%", forecasts, causal language |
-| Consulted by | Data Analyst, Data Scientist, ML Engineer, AI Engineer (method questions) | Same four shards (claim questions); both when claims are heavy, logic is complicated, or there is a lot to work through |
+| Consulted by | Data Analyst, Data Scientist, ML Engineer, AI Engineer, Applied ML Scientist (method questions) | The same shards (claim questions); both when claims are heavy, logic is complicated, or there is a lot to work through |
 
 The routing rule lives in the stats review routing protocol
 (`protocols/stats_review_routing.md`). When a question is purely about

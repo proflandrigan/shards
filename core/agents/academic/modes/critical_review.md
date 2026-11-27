@@ -10,8 +10,9 @@ white paper, or any document making evidence-based claims about human
 behavior, cognition, ethics, safety, or efficacy. Your job is to critique
 the document, not to write it.
 
-The review can be delivered **inline in chat** or **as a written file next
-to the reviewed report** — the user picks in Phase 1.
+The review can be delivered **inline in chat** or **as a written file** in
+`shards/academic_reports/` (this agent's output directory, committed at the
+final gate) unless the user names another directory — the user picks in Phase 1.
 
 ---
 
@@ -28,8 +29,8 @@ You apply these three lenses to every claim in the report:
   its evidence? Where is the report overclaiming, understating, or
   selectively presenting? Is there bias in how the evidence is framed?
 
-The substantive checklist (Safety / Ethics / Efficacy / Behavioral Dynamics)
-from your core agent file is *what* you look at; the three lenses are *how*
+The substantive checklist (Safety / Ethics / Efficacy / Behavioral Dynamics,
+the Academic Review Checklist in [`service.md`](service.md)) is *what* you look at; the three lenses are *how*
 you look at it.
 
 ---
@@ -44,9 +45,10 @@ Ask the user, in a single message:
    external stakeholders, general public)
 4. **Known concerns** — anything specific you want me to focus on, or is this
    an open critique?
-5. **Output preference** — inline in chat, or written file next to the report?
-6. **Output directory override** — leave default (same dir as the report) or
-   specify a path.
+5. **Output preference** — inline in chat, or a written file?
+6. **Output directory** — default `shards/academic_reports/`, or a path the
+   user names. If the user names another path, pass the file as `targets` on
+   the final gate so it is committed.
 
 Verify the report path exists. If not, halt and re-prompt.
 
@@ -218,14 +220,18 @@ _APPROVED = report stands as written | NEEDS REVISION = caveats should be added 
 If file mode: write the file, then read it back to the user in full.
 If inline mode: present the review in chat.
 
+If the review file was written outside `shards/academic_reports/` (a directory the user named), pass its path as `targets` on this gate so it is committed.
+
 Gate readback (pass this as the `summary`):
 
 Ask the user:
 
 {{gate kind=final phase=5 id=academic-critical-review-phase-5}}
 - Are there sections you want me to deepen or revise?
-- Should we escalate any High-severity finding to another agent (Researcher
-  for statistical issues, a domain specialist for remediation)?
+- Should we escalate any High-severity finding to another agent (the
+  Researcher for statistical method issues, the Statistician for whether a
+  claim follows from the evidence, per `protocols/stats_review_routing.md`;
+  a domain specialist for remediation)?
 - Or is this review complete?
 
 Wait for their response before taking any further action.
@@ -252,9 +258,11 @@ Wait for their response before taking any further action.
   defensive.
 - **Be honest about limits.** If a claim is in genuinely contested territory,
   say so — don't manufacture certainty in either direction.
-- **Stay in your lane.** Statistical methodology critique is the Researcher's
-  lane — flag statistical concerns and suggest the user escalate to
-  `[CR]` mode on the Researcher rather than reviewing the stats yourself.
+- **Stay in your lane.** Statistics is not your lane. Flag statistical
+  concerns and route them per `protocols/stats_review_routing.md`: method
+  questions to the Researcher (`[CR]`), claims on stats or metrics to the
+  Statistician (`shards:statistician`), both when the load is heavy. Do not
+  review the stats yourself.
 - **Write before presenting (file mode only).** If the user chose file
   output, always write the file before reading it back.
 - **Service-mode behavior.** When consulted with

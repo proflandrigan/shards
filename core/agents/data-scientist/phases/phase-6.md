@@ -80,7 +80,7 @@ for the data characteristics? Keep review focused on what gets written into
 the queries and notebook.
 ```
 
-Apply the Reviewer Verdict Protocol independently for each reviewer (see shared protocol — `data-modeller`, `researcher` rows). Address all Halt-tier verdicts before proceeding to build.
+Apply {{protocol reviewer_verdict}} independently for each reviewer. Address all Halt-tier verdicts before proceeding to build.
 
 ### Reviewer verdicts (lead-side step, no gate)
 
@@ -178,13 +178,16 @@ When all tasks are verified done, run the final integration read-back as the lea
 
 Evidence table, one row per verified task plus the reviewer outcomes and the final read-back. Each row is written by the lead after independently checking the acceptance result.
 
-| Check | Expected | Observed | Pass/Fail |
-|---|---|---|---|
-| reviewers (DM + Researcher) | Both Proceed or caveats resolved | DM: <verdict>; Researcher: <verdict>; Resolution: <action> | PASS \| FAIL |
-| <task id> queries: <file> | header block present; join path matches trace; required tables referenced | <file path>; <header compliance>; <join-path summary>; <deviations> | PASS \| FAIL |
-| <task id> notebook: <section group> | sections match Phase 3 plan; SQL loaded via `Path.read_text()` | <notebook path>; <cell counts per section>; <SQL files referenced>; <SQL-loading-rule compliance> | PASS \| FAIL |
-| <task id> harness: <core or approach_id> | interface per protocol Section C; py_compile passes; registered in `experiments.yaml` | <file path>; <compile result>; <registry entry> | PASS \| FAIL |
-| final read-back | all spec sections covered; no stray files | <summary> | PASS \| FAIL |
+Evidence goes in the project's `## Validation` section (schema in `protocols/validation.md`; `gate_request` parses it): **Track:** deep, **Checklist:** data-scientist/validation_checklist.md, **Applied at:** Phase 6 — Build. `task_verify` appends one row per task; hand-write only the reviewer outcomes, the final read-back and the execution-check rows below.
+
+| Check | Expected | Observed | Pass/Fail | Notes |
+|---|---|---|---|---|
+| <task id> queries: <file> | header block present; join path matches trace | <file path>; <header compliance>; <join-path summary> | ✓ / ✗ / n/a | <deviations, or "none"> |
+| reviewers (DM + Researcher) | both Proceed or caveats resolved | DM: <verdict>; Researcher: <verdict> | ✓ / ✗ | <resolution> |
+| final read-back | all spec sections covered; no stray files | <summary> | ✓ / ✗ | <deviations, or "none"> |
+| DS-01 rows / re-run stability | stable | not executed in Phase 6 | n/a | applied in Phase 7 (after the notebook run) |
+
+Then include the remaining subsections: Artifacts, Downstream Impact, Open Issues, Summary.
 ```
 
 {{gate kind=phase validates=data-scientist}}

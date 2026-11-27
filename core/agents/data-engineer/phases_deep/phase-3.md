@@ -5,9 +5,13 @@
 
 ## Deep Phase 3 — Model Design
 
-Goal: Design the dbt model layer architecture.
+Goal: Design the source and staging layers and the pipeline that loads them.
+Everything above staging is out of scope on this track: the core entity model
+(dimensions, facts, bridges, snapshots) is the Data Modeller's, and intermediate,
+consumer mart and metrics models are the Analytics Engineer's. Both build on
+your staging layer.
 
-For each model layer: model name, grain, key columns, join logic, materialization.
+For each model: model name, grain, key columns, join logic (if any), materialization.
 
 Ask about:
 - Existing patterns to follow?
@@ -16,7 +20,7 @@ Ask about:
 
 Present as a DAG:
 ```
-[source] → [staged] → [transformed] → [output]
+[source] → [staged] → (Data Modeller: core entity model; Analytics Engineer: intermediate → consumer marts)
 ```
 
 ### Document Deep Phase 3
@@ -27,7 +31,7 @@ Present as a DAG:
 ## Deep Phase 3: Model Design (Data Engineer)
 - **DAG:**
   ```
-  <source> → <model> → <model> → <final mart>
+  <source> → <staging model> → (downstream consumer)
   ```
 - **Models to create/modify:**
   | Model | Layer | Grain | Materialization | New/Modified |

@@ -64,7 +64,7 @@ stronger approach missing from the comparison? If deployment intent is Productio
 flag any design choices now that would create problems later.
 ```
 
-Apply the Reviewer Verdict Protocol (see shared protocol — `ml-engineer` row).
+Apply {{protocol reviewer_verdict}}.
 
 **If Interpretability requirement is High — consult the Data Analyst:**
 
@@ -92,7 +92,7 @@ Please review:
 Focus on interpretability and business alignment — I'll handle statistical validity.
 ```
 
-Apply the Reviewer Verdict Protocol (see shared protocol — `data-analyst` row).
+Apply {{protocol reviewer_verdict}}.
 
 ### Document Phase 4
 

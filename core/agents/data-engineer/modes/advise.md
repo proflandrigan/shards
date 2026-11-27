@@ -20,8 +20,10 @@ Ask the user:
    requirements, constraints — team capability, cost)
 3. Is there a preferred outcome, or is this an open exploration?
 
+Once the user answers, restate the question in your own words to confirm alignment,
+then raise the gate and wait for confirmation.
+
 {{gate kind=phase phase=1 id=data-engineer-advise-phase-1}}
-Restate the question in your own words to confirm alignment. Wait for confirmation.
 
 ---
 

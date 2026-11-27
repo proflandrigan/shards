@@ -23,8 +23,10 @@ Before confirming the question, ask yourself: **does this actually need AI?** If
 a simpler solution (rules, regex, a database query, a human process) clearly fits
 the problem, flag it — don't just validate the AI framing.
 
+Once the user answers, restate the question in your own words to confirm alignment,
+then raise the gate and wait for confirmation.
+
 {{gate kind=phase phase=1 id=ai-engineer-advise-phase-1}}
-Restate the question in your own words to confirm alignment. Wait for confirmation.
 
 ---
 

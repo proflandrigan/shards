@@ -57,7 +57,7 @@ Does that match what you had in mind?
 
 **Scale check:** If the scope includes more than 2 of the following, raise a flag:
 - New source tables or data sources not in the existing transformation chain
-- More than 2 new models (staging, intermediate, or mart)
+- More than 2 new models (intermediate or mart; new staging models go to the Data Engineer)
 - A change to the grain of an existing mart
 - Structural redesign of the DAG or layer architecture
 
@@ -121,14 +121,10 @@ Write `updates/<project_name>/analytics-engineer-update-spec.md` using this temp
 
 ## Phase 4 — Present and Close (GATE)
 
-Read the spec back to the user in full.
-
-Gate readback (pass this as the `summary`):
-
-Ask the user:
+Read the spec back to the user in full, then ask: "Ready to implement? Or do you
+want to adjust the scope first?" Pass the readback and this question as the gate `summary`:
 
 {{gate kind=final phase=4 id=analytics-engineer-update-phase-4}}
-"Ready to implement? Or do you want to adjust the scope first?"
 
 Wait for their response before taking any further action.
 

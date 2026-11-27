@@ -800,7 +800,8 @@ function renderExperimentDashboard(container, panel) {
         reverted: e.reverted === true ? 'yes' : (e.reverted === false ? 'no' : ''),
         evalType: e.evalType || '',
         hypothesisSource: e.hypothesisSource || '',
-        reviewerVerdict: e.reviewerVerdict || ''
+        reviewerVerdict: e.reviewerVerdict || '',
+        reviewerAction: e.reviewerAction || ''
       };
     });
 
@@ -842,7 +843,16 @@ function renderExperimentDashboard(container, panel) {
           formatter: function(cell) {
             var v = cell.getValue();
             if (!v) return '';
-            return '<span class="ar-reviewer-verdict ar-rv-' + esc(v.toLowerCase()) + '">' + esc(v) + '</span>';
+            var act = cell.getRow().getData().reviewerAction;
+            // Map verdict words written before the AR rename (results.json from older runs).
+            var legacyMap = { CONTINUE: 'APPROVED', REDIRECT: 'NEEDS REVISION', PAUSE: 'BLOCKED', RETRO_REVERT: 'BLOCKED' };
+            if (legacyMap[v]) {
+              if (v === 'PAUSE' && !act) act = 'pause';
+              if (v === 'RETRO_REVERT' && !act) act = 'retro_revert';
+              v = legacyMap[v];
+            }
+            var label = act ? v + ' (' + act + ')' : v;
+            return '<span class="ar-reviewer-verdict ar-rv-' + esc(v.toLowerCase().replace(/\s+/g, '_')) + '">' + esc(label) + '</span>';
           }
         }
       );

@@ -54,12 +54,6 @@ silently inflate training examples.
 Return your full review with query validation results.
 ```
 
-The Data Modeller will run a bulk read-only validation sweep — that's an
-auto-verify fit on the consultation side (the Data Modeller's `modes/service.md`
-already references it). On your side, no marker is needed for the consult
-itself; auto-verify only matters when the calling agent is the one running
-the bulk queries.
-
 ### Component specifications
 
 Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. Workers see only the referenced sections, so keep each self-contained. Output locations: the confirmed `## Placement` targets; paths below under `<output_dir>` are the new-project default only.
@@ -176,14 +170,9 @@ Each task in `tasks.yaml` cites one of these specifications through `plan_ref`. 
 
 {{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
-1. **Load the task list** approved at the plan gate (`<output_dir>/tasks.yaml`) and validate it with `tasks_set`. Each task cites a specification above through `plan_ref`.
-2. **Dispatch** ready tasks with `task_dispatch`, in parallel up to the cap of 3. Query tasks can run in parallel; notebook, baseline and candidate tasks follow their `depends_on` order. Harness approach tasks run in parallel once the harness-core task is verified done.
-3. **Receive** each worker's result via `task_report`.
-4. **Verify before it counts.** Re-run (or independently check) the acceptance command, compare with the `plan_ref` specification, then write an evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail), with measured facts (for example `df.shape = (48211, 47)`, `null rate on join key = 0.00%`). Never mark a task done on the worker's word alone.
-5. **On failure**, re-dispatch the task with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary.
-6. **Deviations.** If a worker reports a deviation or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend the plan or task list only through a confirmed gate.
-7. **Continue** dispatching tasks unblocked by tasks you have verified as done.
-8. You write no build code yourself unless a task is marked `delegate: inline`.
+Run the protocol's lead loop over the approved `<output_dir>/tasks.yaml`. ML Engineer specifics:
+- **Ordering.** Query tasks can run in parallel; notebook, baseline and candidate tasks follow their `depends_on` order. Harness approach tasks run in parallel once the harness-core task is verified done.
+- **Evidence rows** carry measured facts (for example `df.shape = (48211, 47)`, `null rate on join key = 0.00%`).
 
 After the baseline and candidate tasks are verified done, run the results review below as the lead. Then finalize `eval-results.json` (status `complete`, summary verdict computed) and record the final integration evidence row before documenting the phase.
 
@@ -303,13 +292,14 @@ Apply {{protocol reviewer_verdict}}. On BLOCKED, do not carry the claim forward:
 - **Deviations from plan:** <changes and why, or "none">
 - **Surprising findings:** <anything unexpected>
 
-### Validation
-
-| Check | Expected | Observed | Pass/Fail |
-|---|---|---|---|
-| <task id> <component> | <acceptance expected> | <measured facts> | PASS \| FAIL |
-| <task id> harness: <core or approach_id> | interface per protocol Section C; smoke-fit passes; leaderboard row written | <file path>; <smoke-fit result>; <primary metric> | PASS \| FAIL |
 ```
+
+Evidence rows go in the project's `## Validation` section (schema in `protocols/validation.md`; `gate_request` parses it), not inside this phase section. `task_verify` appends one row per task; hand-write only the integration, harness and Fallback rows:
+
+| Check | Expected | Observed | Pass/Fail | Notes |
+|-------|----------|----------|-----------|-------|
+| <task id> <component> | <acceptance expected> | <measured facts> | ✓ / ✗ / n/a | <one-line context; required for n/a> |
+| <task id> harness: <core or approach_id> | interface per protocol Section C; smoke-fit passes; leaderboard row written | <file path>; <smoke-fit result>; <primary metric> | ✓ / ✗ / n/a | <one-line context; required for n/a> |
 
 {{gate kind=phase validates=ml-engineer}}
 

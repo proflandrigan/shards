@@ -53,9 +53,9 @@ The Data Analyst is a single 4-phase track by design; it escalates to the Data S
 | Design or debug a neural architecture | [Deep Learning Engineer](deep-learning-engineer.md) |
 | Propose a novel ML method | [Applied ML Scientist](applied-ml-scientist.md) |
 | Deploy/monitor/retrain a model | [MLOps Engineer](mlops-engineer.md) |
-| Build a data pipeline or dbt model | [Data Engineer](data-engineer.md) |
-| Design a schema or resolve grain issues | [Data Modeller](data-modeller.md) |
-| Build a mart or transformation layer | [Analytics Engineer](analytics-engineer.md) |
+| Add a source, build staging or fix a pipeline (or quick-fix any model) | [Data Engineer](data-engineer.md) |
+| Design (and build) a core entity model, or resolve grain issues | [Data Modeller](data-modeller.md) |
+| Build consumer marts, aggregates or metrics on top of the core model | [Analytics Engineer](analytics-engineer.md) |
 | Build a dashboard | [BI Engineer](bi-engineer.md) |
 | Review Python (`.py`) code for quality | [Backend Engineer](backend-engineer.md) |
 | Validate statistical methodology | [Researcher](researcher.md) |
@@ -71,7 +71,7 @@ Specialists consult each other at defined points in their phases, with the `{{co
 - Specialists making claims on stats or metrics consult the **Statistician**, which checks whether the conclusion follows (method questions stay with the Researcher).
 - The ML Engineer consults the **Data Modeller** for feature source understanding.
 - The AI Engineer consults the **Academic** for safety and ethics assessment.
-- Every specialist's final phase asks **Syn** for final review (`syn-final_review`), and most also for code review (`syn-code_review`).
+- Every specialist's final phase asks **Syn** for final review (`syn-final_review`), and, when Syn finds code files, offers a code pass that the specialist runs itself (`core/protocols/code_review.md`).
 
 Consultations are in-phase and do not transfer context: the consulted agent returns a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)) and exits. Because consults never nest, a consult that needs another agent's input receives it from the caller in the task text. Each phase ends with a gate: a `gate_request` tool call that only a human confirms ([The Gate Pattern](../03-protocols/gate-pattern.md)).
 

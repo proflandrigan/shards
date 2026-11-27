@@ -28,37 +28,10 @@
   Validation:
   Any phase that produces a durable artifact (mart, model, notebook, service,
   pipeline, dashboard, data model) must populate a ## Validation section
-  before its gate closes. See:
+  before its gate closes, following the "Specs Section Schema" (the format
+  `gate_request` validates) in
     [`protocols/validation.md`](../protocols/validation.md)
-  and the agent's own:
-    the agent's modes/validation_checklist.md
-
-  The schema `gate_request` validates against:
-
-    ## Validation
-
-    **Track:** quick | deep | fixer
-    **Mode:** <agent-specific — optional, omit the line if not meaningful>
-    **Checklist:** <agent_name>/validation_checklist.md
-    **Applied at:** Phase <N> — <phase name>
-
-    ### Evidence
-
-    | Check | Expected | Observed | Pass/Fail | Notes |
-    |-------|----------|----------|-----------|-------|
-    | <id> | <predicted> | <measured value> | ✓ / ✗ / n/a | <required if n/a> |
-
-    ### Artifacts
-    - `<path/to/evidence-file>` — <what it shows>
-
-    ### Downstream Impact
-    - `<consumer>` — verified intact | not applicable | broken → fixed in <ref>
-
-    ### Open Issues
-    - <issue> | none
-
-    ### Summary
-    <2-4 sentences on what was validated, what failed and was fixed, residual risk>
+  and the agent's own modes/validation_checklist.md.
 
   If multiple phases produce validation sections, overwrite rather than append —
   validation uses the last ## Validation section in the file.

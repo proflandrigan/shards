@@ -48,7 +48,7 @@ A refused confirmation leaves the gate pending. If you request changes, the agen
 
 - `strict`: a human confirms every gate, including checkpoint and confirm.
 - `phase` (default): `phase`, `final`, `execute` and `handoff` need a human. `checkpoint` and `confirm` gates are recorded automatically when the agent passes `evidence: { status: "pass" }`. A fail, an anomaly or missing evidence leaves them pending.
-- `plan`: you approve a plan approval gate (plan plus budget) once per run. After that every gate in that project is a notice until a failure, anomaly or budget limit puts a human back in the loop. A new run needs a fresh approval. Goal mode (unattended Autonomous Research and experiment loops) is this policy; there the agent's Phase 1 gate is the plan approval, and the Phase 3 adoption gate still waits for you.
+- `plan`: you approve a plan approval gate (plan plus budget) once per run. After that every gate in that project is a notice until a failure, anomaly or budget limit puts a human back in the loop. A new run needs a fresh approval. Goal mode (unattended Autonomous Research loops) is this policy; there the agent's Phase 1 gate is the plan approval, and the Phase 3 adoption gate still waits for you. Experiment mode needs no plan policy: its Phase 1 gate agrees the experiments and the stopping point, and Phase 2 runs to it without gates.
 
 ## What a confirmed gate does
 

@@ -54,7 +54,7 @@ If verdict is APPROVED and code artifacts were found, also append:
 - **Files:**
   - `<relative path>` — <file type, e.g. Python script, SQL query, Jupyter notebook>
   - ...
-- **Offer:** Code review available. Specialist should ask the user if they want a code pass.
+- **Offer:** Code review available. The specialist asks the user whether they want a code pass and, if so, runs the code review protocol itself.
 ```
 
 If no code files are found, or if the verdict is NEEDS REVISION or BLOCKED,

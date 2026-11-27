@@ -1,6 +1,6 @@
 # Data Engineer Validation Checklist
 
-Applied at the end of any phase that creates or modifies a data pipeline, dbt model, staging/intermediate layer, source ingestion, or warehouse infrastructure. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
+Applied at the end of any phase that creates or modifies a data pipeline, dbt model, staging layer, source ingestion, or warehouse infrastructure. Results render into the `## Validation` section of `project-specs.md` per `protocols/validation.md`.
 
 Check IDs (DE-01 through DE-09) are stable. Data Engineering validation is pipeline-mechanic focused: contract adherence, re-run correctness, recovery behavior — not the semantic meaning of the data (that's Analytics Engineer territory).
 
@@ -118,7 +118,7 @@ Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/
 
 - `schema.yml` entries for sources and models — DE-01, DE-08
 - `tests/` directory — DE-08
-- `models/staging/<source>/` + `models/intermediate/` + `models/marts/` SQL files
+- `models/staging/<source>/` SQL files (plus any existing intermediate or mart model touched by a quick fix)
 - Runbook: `docs/runbooks/<pipeline>.md` — DE-09
 - Freshness/monitoring config — DE-05, DE-09
 

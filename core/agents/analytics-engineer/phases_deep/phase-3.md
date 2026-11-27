@@ -13,9 +13,16 @@ relationships before writing a single CTE.
 Ask about:
 - Confirmed grain for the target mart (from Phase 1 — verify it's still right)
 - Grain for each intermediate model needed
-- Many-to-many relationships that need bridge models?
+- Many-to-many relationships in the planned joins (an existing bridge to use)?
 - Fan-out risks from any planned joins?
-- Conformed dimensions already in use elsewhere?
+- Conformed dimensions and facts already in use elsewhere?
+
+**Core entity model check.** You build on the core entity model; you do not
+create it. If the work needs a new conformed dimension, a new fact at a new
+grain, a new bridge or an SCD snapshot, stop: that is the Data Modeller's to
+design and build. Tell the user, recommend `shards:data-modeller` (or Syn), and
+record it under **Core model prerequisites** below. Continue only for the
+consumer layer that can be built on what already exists.
 
 **Consult Data Modeller for grain confirmation and entity design:**
 
@@ -43,8 +50,9 @@ Please review and return:
    haven't anticipated?
 2. Are there many-to-many relationship risks in the planned joins that could
    cause fan-out? Which joins are highest risk?
-3. Are there conformed dimensions already in the project I should use instead
-   of defining new ones?
+3. Which existing conformed dimensions, facts and bridges should I build on?
+   Does anything I need require a new core entity model (dimension, fact,
+   bridge, snapshot)? If so, say what, because that is yours to build first.
 4. Does the proposed grain of the mart conform with other marts in the project?
    Any conformance conflicts?
 5. Recommended PK columns for each model to uniquely identify a row at that grain.
@@ -64,14 +72,14 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `data-modeller` row
 - **Confirmed model grains:**
   | Model | Layer | Grain Statement | PK Column(s) |
   |-------|-------|-----------------|--------------|
-  | <model> | staging | one row per <source_event_id> | <source_event_id> |
   | <model> | intermediate | one row per <entity> per <period> | <surrogate_key> |
   | <model> | mart | one row per <entity> | <entity_id> |
 - **Many-to-many relationship risks identified:**
   - <risk or "none">
 - **Conformed dimensions in use:**
   - <dimension model>: <shared across which marts>
-  - (or "none — new grain only")
+  - (or "none — consumer layer reads existing facts only")
+- **Core model prerequisites (Data Modeller):** <new dimensions/facts/bridges/snapshots needed, or "none">
 - **Data Modeller consultation:**
   - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Tier: Proceed | Proceed with caveats | Halt

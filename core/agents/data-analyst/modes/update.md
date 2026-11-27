@@ -115,12 +115,10 @@ Write `updates/<project_name>/data-analyst-update-spec.md` using this template:
 
 Read the spec back to the user in full.
 
-Gate readback (pass this as the `summary`):
-
-Ask the user:
+Ask the user: "Ready to implement? Or do you want to adjust the scope first?"
+Pass the readback and this question as the gate `summary`:
 
 {{gate kind=final phase=4 id=data-analyst-update-phase-4}}
-"Ready to implement? Or do you want to adjust the scope first?"
 
 Wait for their response before taking any further action.
 

@@ -3,8 +3,11 @@
 This protocol defines Syn's **default behavior for genuinely large tasks**:
 decompose the work into bounded, independently verifiable slices and run them
 as multiple same-type subagents in parallel, then merge the results. It applies
-whenever Syn orchestrates — PM Mode, Free Form, or general routing. It is the
-default, not an opt-in mode. Syn is never limited to one instance of an agent
+when Syn orchestrates in Free Form or general routing. In PM Mode it does not:
+a large workstream scales inside its lead's own task list (more task cards,
+a higher `max_parallel`; `modes/pm.md` 1b), and a workstream that is really two
+deliverables is split into two workstreams in PM Phase 1. It is the default,
+not an opt-in mode. Syn is never limited to one instance of an agent
 per project.
 
 ## When to swarm
@@ -36,8 +39,9 @@ Each slice must be:
 
 - **Bounded** — one clearly-scoped sub-task, expressible in a short brief.
 - **Independently verifiable** — it has its own definition of done.
-- **Collision-free** — it writes to its own output paths (e.g.
-  `shards/<name>/slice-<n>/`), so parallel slices never overwrite each other.
+- **Collision-free** — it writes to its own output paths
+  (`shards/<project>/slice-<n>/` or the user's confirmed targets), so parallel
+  slices never overwrite each other.
 - **Mergeable** — its outputs can be read from disk and integrated by Syn.
 
 Slice names are short kebab-case slugs. If a slice is still too big after
@@ -50,15 +54,13 @@ Spawn all slices in a single parallel fan-out: one worker per slice, all in
 the same message. The same agent repeats across the calls — that is
 expected and correct; same-type instances simply get different slice briefs.
 
-Precondition: confirm or close any open gate first; the runtime refuses `fanout_start` while a gate is pending or suspended. Give each slice its own paths (`shards/<project>/slice-<n>/` or the user's targets).
-
 Fan out one worker per slice (shown for `ml-engineer`; use the specialist that owns the slices and name the slices accordingly):
 
 {{fanout ml-engineer slices=slice_a,slice_b}}
 
 Per-slice task: Slice: <slice-slug>
 
-Brief for each consultant or worker (fill the angle-bracket fields):
+Brief for each worker (fill the angle-bracket fields):
 
 ```
 SWARM SLICE — You are one of N parallel same-type subagents executing a slice
@@ -75,21 +77,23 @@ Work autonomously. Do not wait for user gates. When a phase file would stop
 and call `gate_request` waiting for user confirmation, do NOT stop and do
 NOT call it — document your decision for the merge step and continue to
 the next phase. Skip your activation menu and Phase 0 — Syn has already scoped
-your work. Do not invoke Syn for review. Return a concise report: artifacts
-produced, key decisions, issues, confidence, and anything the merge step needs
-to know. Your return value follows the fan-out contract in
-`protocols/worker_contract.md` ("Fan-out workers").
+your work. Do not invoke Syn for review. Return only the verdict JSON from the fan-out
+contract in `protocols/worker_contract.md` ("Fan-out workers"), with no other
+text. Put artifacts produced, key decisions, issues and confidence in its
+`summary` and `findings`; write anything longer to a file in your slice
+directory and name that file in `findings`.
 ```
 
 ## Review and merge
 
 - **Review each slice** as its worker returns, against the slice's definition of
   done: APPROVED / NEEDS REVISION / BLOCKED. Send a slice back for revision
-  with specific feedback when needed (same cap as PM Mode revisions).
+  with specific feedback when needed: up to 3 revision rounds per slice,
+  bringing the user in earlier when a round makes no progress or a slice is BLOCKED.
 - **Merge** after (some or all) slices pass: read each slice's artifacts from
   disk, reconcile interfaces and outputs, write any glue, and produce the
-  workstream's single coherent deliverable. Record the merge in
-  `project-specs.md` or `project-plan.md` as appropriate.
+  task's single coherent deliverable. Record the merge in the task's
+  `project-specs.md` (or say where it landed, in Free Form).
 - **Re-slice** if you find a slice was mis-sized: split it further and spawn
   again rather than letting one agent grind.
 
@@ -98,5 +102,5 @@ to know. Your return value follows the fan-out contract in
 - Announce swarming to the user: how many slices, which types, what paths.
 - Prefer parallel spawns — do not await one slice before dispatching the next.
 - Guard your own context: read slice outputs from disk, not from subagent output.
-- Never degrade to a single massive workstream task when the work is large —
+- Never degrade to a single massive task when the work is large —
   decompose is the default.

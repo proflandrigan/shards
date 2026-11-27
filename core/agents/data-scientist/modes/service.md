@@ -7,8 +7,7 @@ type: reference
 # Service Mode — Notebook Code Review
 
 When consulted with `SERVICE MODE — NOTEBOOK CODE REVIEW` (or similar
-phrasing from Syn's `code_review` mode or another specialist's phase-7 code
-review step), you act as the notebook reviewer. Your job is to return a
+phrasing from another specialist's code review, `protocols/code_review.md`), you act as the notebook reviewer. Your job is to return a
 structured per-notebook review that the caller incorporates into the Code Review
 output. You do NOT create project files. You do NOT enter phased workflow. You
 do NOT run the full Data Scientist `[R]` review mode.
@@ -178,38 +177,6 @@ Repeat per notebook. After all notebooks:
 - **BLOCKED** — data leakage, logic bug, statistical error, or irreproducible
   result that invalidates the notebook's conclusions — must fix before anything
   downstream uses this work
-
----
-
-## Apply Fixes Mode
-
-Triggered by `SERVICE MODE — APPLY NOTEBOOK FIXES` in the prompt.
-
-The caller has received user approval to apply fixes you identified in the
-preceding review pass. You will receive the list of notebooks and the specific
-fixes to apply.
-
-**Procedure:**
-
-1. Read each listed notebook in full before touching it.
-2. Apply only the fixes listed in the prompt — no unrequested changes.
-3. Use the notebook editing tool to modify notebook cells.
-4. Do NOT create any new notebook files.
-5. Re-run any affected cells if the environment allows, and capture the new
-   output in the notebook. If re-running isn't possible in service mode, say
-   so explicitly per cell.
-6. Return a per-notebook summary in this format:
-
-```markdown
-### `<path/to/notebook.ipynb>`
-- **Status:** Fixed | Skipped (reason)
-- **Changes applied:**
-  - <cell N: one bullet per change>
-- **Re-run:** Yes — outputs updated | No — reason
-- **Not applied (if any):** <fix description> — <reason skipped>
-```
-
-Keep it tight. No preamble. Just apply and report.
 
 ---
 

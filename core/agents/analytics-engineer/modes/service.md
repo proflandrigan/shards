@@ -7,8 +7,8 @@ type: reference
 # Service Mode — Being Consulted by Other Agents
 
 When consulted by another agent, you enter service mode.
-The calling agent will describe what they need in their prompt. Service mode
-has two sub-modes based on what's asked:
+The calling agent will describe what they need in their prompt. Pick the
+sub-mode from what's asked:
 
 **Exploration** — the caller wants to understand what the transformation layer
 contains. Triggered by phrases like "explore", "trace", "what models", "DAG",
@@ -25,13 +25,10 @@ performance, and domain fit. Triggered by `SERVICE MODE — CODE REVIEW`.
 queries reviewed end-to-end: source-trace, SQL review, and sanity-check queries.
 Triggered by `SERVICE MODE — QUERY REVIEW` or `SERVICE MODE — PRE-EXECUTION QUERY REVIEW` (same procedure; for a pre-execution review there are no executed results: in the Result-vs-Source Cross-Check fill the Expected ~ column for each query and leave Actual blank). See the Query Review Procedure below.
 
-**Apply Fixes** — Syn has user approval and wants you to apply previously identified
-fixes to SQL files. Triggered by `SERVICE MODE — APPLY FIXES`.
-
 ## Service Mode Procedure
 
 1. Read the request carefully
-2. Classify as **Exploration** or **Review**
+2. Classify as **Exploration** or **Review** (Code Review and Query Review follow their own procedures below)
 3. **Greenfield scan (Exploration mode only) — run before any model exploration:**
    Before searching for the caller's specific models, scan for any dbt artifacts:
 
@@ -91,13 +88,7 @@ select
 from <model>
 ```
 
-**Join fan-out detection:**
-```sql
-select 'before_join' as stage, count(*) as row_count from <left_table>
-union all
-select 'after_join' as stage, count(*) as row_count
-from <left_table> join <right_table> on <join_condition>
-```
+**Join fan-out detection:** the Tier 2+ verification query (row count before/after the join) from [`protocols/join_path.md`](../../../protocols/join_path.md).
 
 **Freshness check:**
 ```sql
@@ -270,14 +261,8 @@ The caller will provide:
    from <source_table>
    ```
 
-   For any analysis query that joins two or more tables:
-   ```sql
-   -- Fan-out check
-   select 'left'  as side, count(*) as n from <left_table>
-   union all
-   select 'joined' as side, count(*) as n
-   from <left_table> join <right_table> on <join_condition>
-   ```
+   For any analysis query that joins two or more tables, run the fan-out check:
+   the Tier 2+ verification query from [`protocols/join_path.md`](../../../protocols/join_path.md).
 
    **Result-vs-source cross-check.** For each analysis query, compare the
    reported result row count to what's plausible given the source counts and
@@ -341,29 +326,3 @@ The caller will provide:
 ```
 
 Keep tone professional and focused. No tangents.
-
----
-
-## Apply Fixes Procedure
-
-Triggered by `SERVICE MODE — APPLY FIXES`.
-
-Syn has received user approval to apply the fixes identified in the preceding
-Code Review pass. You will receive the list of files and the specific fixes
-to apply.
-
-1. Read each listed file in full before touching it
-2. Apply only the fixes listed in the prompt — do not add unrequested changes
-3. Use the Edit tool to apply each fix
-4. Do NOT create any new files
-5. Return a per-file summary in this format:
-
-```markdown
-### `<filename.sql>`
-- **Status:** Fixed | Skipped (reason)
-- **Changes applied:**
-  - <one bullet per change made>
-- **Not applied (if any):** <fix description> — <reason skipped>
-```
-
-Keep it tight. No preamble. Just apply and report.

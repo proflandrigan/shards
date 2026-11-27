@@ -52,8 +52,7 @@ Append both reviews to project-specs.md under a combined `Code Review` heading.
 - **APPROVED** → proceed directly to Syn review.
 - **NEEDS REVISION** → tell the user: "Reviewer(s) flagged structural
   issues. Fixing before Syn review." Address every listed issue in the
-  project files (the notebook reviewer may also be re-invoked in apply-fixes
-  mode — see Step 5c of Syn's code_review mode for the call pattern). Update
+  project files yourself (consulted reviewers never edit files). Update
   project-specs.md. Re-gate: "Reviewer issues resolved: [summary]. Confirm
   to proceed to Syn?" Then proceed to Syn.
 - **BLOCKED** → tell the user: "Reviewer has blocked this. Fixing critical
@@ -131,11 +130,11 @@ Project directory: shards/<project_name>/
 Specs: shards/<project_name>/project-specs.md
 
 Summary:
-- Model type: <final model type from Phase 4>
-- Inference requirements: <latency, throughput from Phase 6>
-- Serving format: <from Phase 6 production considerations>
-- Feature pipeline: <from Phase 6>
-- Retraining trigger: <from Phase 6>
+- Model type: <final model type from Phase 6 / 6.5>
+- Inference requirements: <latency, throughput budgets from Phase 2; measured in Phase 6>
+- Serving format: <from Phase 5 serving infrastructure>
+- Feature pipeline: <from Phase 5>
+- Retraining trigger: <from Phase 5>
 
 Please review:
 1. Is the proposed serving infrastructure appropriate for the latency and
@@ -172,26 +171,16 @@ Append Syn's review to specs. Present to user.
 
 If Syn returns NEEDS REVISION or BLOCKED, once or twice, follow the resolution loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
-If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}.
 
-{{consult syn entry=code_review task="Code review and fix for ML engineering project"}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-CODE REVIEW MODE. I am the ML Engineer shard. Project: [project_name].
-Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
-in this project. The project-specs.md is at [file_path] for context.
-```
-
-Append Syn's code review summary to the specs. Present findings to user.
+If the user wants the code pass: {{protocol code_review}}
 
 Then:
 
 1. **Generate Model Card** — Assemble a structured model card for stakeholder
    sharing. Extract from the live `project-specs.md` (already loaded): ML system type and description
    (Phase 1), data sources (Phase 3), model design and evaluation strategy
-   (Phase 4), feature engineering (Phase 5), build results (Phase 6), review
+   (Phase 4), infrastructure design (Phase 5), build results (Phase 6), review
    verdicts (Phase 7). Read `eval-results.json` for quantitative metrics.
 
    Consult the Academic shard for ethical considerations:
@@ -218,10 +207,9 @@ Then:
    - Greenfield: `shards/<project_name>/model-card.json`
    - Iteration: `shards/<project_name>/model-card.json` (same; the existing service holds only confirmed Placement targets)
 
-   The JSON must conform to the schema defined in
-   `templates/model-card-schema.json` (JSON Schema, draft 2020-12).
-   See `templates/model-card-schema.md` for an annotated example and
-   field notes.
+   Follow the annotated example and field notes: {{template model-card-schema}}
+   The JSON must validate against `model-card-schema.json` in the same
+   templates folder (JSON Schema, draft 2020-12).
 
    ML-engineer-specific overrides:
    - `generatedBy`: `"ml-engineer"`.
@@ -242,10 +230,10 @@ Then:
    - Deployment checklist: what needs to happen to go live
    - Risks and mitigations
 
-2. Summarize top findings in 3-5 bullet points
-3. Present deployment checklist
-4. Flag risks, open questions, and dependencies
-5. Confirm the deliverable meets the definition of done
+3. Summarize top findings in 3-5 bullet points
+4. Present deployment checklist
+5. Flag risks, open questions, and dependencies
+6. Confirm the deliverable meets the definition of done
 
 **MLOps handoff:** If the user wants to proceed to deployment, tell them:
 "To deploy and operate this model, run `shards:mlops-engineer` and reference

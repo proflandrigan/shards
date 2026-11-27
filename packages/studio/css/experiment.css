@@ -231,7 +231,6 @@
   background: #1e1e32;
   color: #6a8ac8;
 }
-.ar-reviewer-verdict.ar-rv-continue { background: #1a2a1a; color: #4a9; }
-.ar-reviewer-verdict.ar-rv-redirect { background: #2a2a1a; color: #c8a84a; }
-.ar-reviewer-verdict.ar-rv-pause { background: #2a1a1a; color: #c84a4a; }
-.ar-reviewer-verdict.ar-rv-retro_revert { background: #2a1a1a; color: #c84a4a; }
+.ar-reviewer-verdict.ar-rv-approved { background: #1a2a1a; color: #4a9; }
+.ar-reviewer-verdict.ar-rv-needs_revision { background: #2a2a1a; color: #c8a84a; }
+.ar-reviewer-verdict.ar-rv-blocked { background: #2a1a1a; color: #c84a4a; }

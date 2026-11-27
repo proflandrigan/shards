@@ -24,15 +24,14 @@ strategy, incremental config if applicable, key columns, key joins.
 
 Ask about:
 - Existing naming conventions to follow?
-- Materialization preferences? (views for staging, tables/incremental for marts)
+- Materialization preferences? (views for intermediate, tables/incremental for marts)
 - Historical backfill needed?
 - Macros to create or reuse?
 
 Materialization guidance (state your reasoning, not just the choice):
-- Staging: view (lightweight, always fresh, no storage cost)
 - Intermediate: view unless large or expensive to compute — then table
-- Mart: table or incremental; incremental when >10M rows or expensive recomputation
-- Snapshots for SCD Type 2
+- Consumer mart: table or incremental; incremental when >10M rows or expensive recomputation
+- (Staging is the Data Engineer's; snapshots and other core entity models are the Data Modeller's.)
 
 ### Document Deep Phase 4
 
@@ -47,7 +46,6 @@ Materialization guidance (state your reasoning, not just the choice):
 - **Models to create/modify:**
   | Model | Layer | Grain | Materialization | New/Modified | File Path |
   |-------|-------|-------|-----------------|--------------|-----------|
-  | <name> | staging | one per <x> | view | New | models/staging/<name>.sql |
   | <name> | intermediate | one per <x> per <y> | view | New | models/intermediate/<name>.sql |
   | <name> | marts | one per <x> | table | New | models/marts/<name>.sql |
 - **Incremental strategy (if applicable):**

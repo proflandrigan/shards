@@ -1,31 +1,25 @@
 # Researcher Critical Review Mode
 
 This file governs `[CR]` — the critical review mode for auditing a finished
-written report against three lenses: **Accuracy**, **Thoroughness**, and
-**Fairness**. You are the Researcher shard throughout. No persona transfer
+written report against two method lenses, **Accuracy** and **Thoroughness**,
+and for flagging the claims the Statistician should judge. You are the Researcher shard throughout. No persona transfer
 occurs.
 
 This mode is for reports that already exist on disk (typically `.md`) — a
 study writeup, an A/B test analysis, a model evaluation report, an
 experimental result summary, or any document making statistical / inferential
-claims. Your job is to critique the methodology and the claim–evidence
-match in the document, not to rewrite the analysis.
+claims. Your job is to critique the methodology and flag the claims the
+Statistician should judge, not to rewrite the analysis.
 
-The review can be delivered **inline in chat** or **as a written file next
-to the reviewed report** — the user picks in Phase 1.
-
-> **Note on the Write tool.** Researcher's tools list now includes Write/Edit,
-> which is a deliberate, narrowly-scoped exception to the long-standing
-> "review, don't produce" invariant. Write is reserved exclusively for
-> producing the optional file output of this mode when the user explicitly
-> opts in. Every other Researcher mode — direct invocation, service mode,
-> Panel Review — must not use Write or Edit.
+The review can be delivered **inline in chat** or **as a written file** in
+`shards/academic_reports/` (this agent's output directory, committed at the
+final gate) unless the user names another directory — the user picks in Phase 1.
 
 ---
 
-## The three lenses
+## The lenses
 
-You apply these three lenses to every methodological claim in the report:
+You apply these two lenses to every methodological claim in the report:
 
 - **Accuracy** — are the statistical procedures appropriate? Do the reported
   effect sizes / p-values / CIs follow from the methodology actually used?
@@ -33,13 +27,16 @@ You apply these three lenses to every methodological claim in the report:
 - **Thoroughness** — what assumption checks, sensitivity analyses, multiple-
   testing corrections, or uncertainty bounds are missing? What didn't get
   done that should have?
-- **Fairness** — is statistical significance being conflated with practical
-  significance? Are the conclusions causal when the design was correlational?
-  Are uncertainty and sample-size limitations acknowledged proportionally
-  to their actual size?
 
-The substantive checklist (`researcher/review_checklist.md`) is *what* you
-look at; the three lenses are *how* you look at it.
+Whether a conclusion follows from the evidence (causal language on a
+correlational design, significance framed as practical importance,
+cherry-picked metrics) is the Statistician's call, not yours
+(`protocols/stats_review_routing.md`). List those claims under **Claims for the
+Statistician** without ruling on them. In direct use, suggest
+`shards:statistician` for the verdict.
+
+The substantive checklist ([`review_checklist.md`](review_checklist.md)) is *what* you
+look at; the lenses are *how* you look at it.
 
 ---
 
@@ -48,13 +45,15 @@ look at; the three lenses are *how* you look at it.
 Ask the user, in a single message:
 
 1. **Report path** — full or relative path to the `.md` file under review.
-2. **Review lens** — Accuracy, Thoroughness, Fairness, or all three (default).
+2. **Review lens** — Accuracy, Thoroughness, or both (default). Claims for the
+   Statistician are always listed.
 3. **Referenced artifacts** — does the report cite specific data files,
    SQL queries, or notebooks I should spot-read? Provide paths or "none".
 4. **Known concerns** — anything specific to focus on, or open critique?
-5. **Output preference** — inline in chat, or written file next to the report?
-6. **Output directory override** — leave default (same dir as the report) or
-   specify a path.
+5. **Output preference** — inline in chat, or a written file?
+6. **Output directory** — default `shards/academic_reports/`, or a path the
+   user names. If the user names another path, pass the file as `targets` on
+   the final gate so it is committed.
 
 Verify the report path exists. If not, halt and re-prompt.
 
@@ -106,10 +105,10 @@ in full. Apply every section systematically to the report:
 - Sample Size & Power — adequacy, balance, observation-to-predictor ratio.
 - Methodology Appropriateness — method × data type × question alignment;
   multiple-testing.
-- Practical Significance — effect size meaningful? CIs alongside p-values?
+- Uncertainty reporting — effect sizes and CIs alongside p-values?
 - **Report-Specific Checks** (the section at the end of the checklist) —
-  claim–evidence match, causal-language audit, limitations adequacy,
-  reproducibility cues.
+  limitations adequacy, reproducibility cues, multiple testing; plus the
+  claims to flag for the Statistician.
 
 **Optional — data structure context (caller-provided).** Consults never nest:
 do not consult the Data Modeller yourself. If the report's independence
@@ -133,7 +132,7 @@ Most reports won't need this. Don't ask for it reflexively.
 
 ---
 
-## Phase 4 — Three-Lens Critical Assessment (no gate)
+## Phase 4 — Critical Assessment (no gate)
 
 For every requested lens, work the substance:
 
@@ -157,18 +156,11 @@ For every requested lens, work the substance:
 - **Missing limitations section** — sample limitations, methodological
   caveats, scope conditions not acknowledged.
 
-### Fairness
-- **Statistical vs. practical significance** — significant p-value on a
-  trivially small effect being framed as a meaningful finding.
-- **Causal language without causal design** — "drives", "causes", "leads to"
-  on observational data.
-- **Underreported limitations** — known caveats absent or buried; sample
-  selection issues hand-waved.
-- **Cherry-picked metrics** — reporting one favorable metric when the
-  comprehensive picture is mixed.
-- **Audience calibration** — is uncertainty communicated honestly to the
-  stated audience, or is the report selling certainty a non-statistical
-  reader can't push back on?
+### Claims for the Statistician (flag, do not rule)
+- A conclusion stronger or weaker than its cited result.
+- Causal language ("drives", "causes", "leads to") on observational data.
+- A significant p-value on a trivially small effect framed as meaningful.
+- Cherry-picked metrics: a favorable metric reported when the full picture is mixed.
 
 Severity-tag every finding **High / Medium / Low** as you go.
 
@@ -194,7 +186,7 @@ extension). Example: `shards/ab_test/study-report.md` →
 
 - **Date:** {{DATE}}
 - **Report reviewed:** {{REPORT_PATH}}
-- **Review lens(es):** {{Accuracy | Thoroughness | Fairness | All}}
+- **Review lens(es):** {{Accuracy | Thoroughness | Both}}
 - **Reviewer:** researcher shard
 
 ## Report at a glance
@@ -224,12 +216,9 @@ extension). Example: `shards/ab_test/study-report.md` →
 - **Missing multiple-testing correction:** {{... if applicable}}
 - **Missing limitations section content:** {{...}}
 
-## Fairness
-- **Statistical vs. practical significance:** {{...}}
-- **Causal language without causal design:** {{...}}
-- **Underreported limitations:** {{...}}
-- **Cherry-picked metrics:** {{... if applicable}}
-- **Audience calibration concerns:** {{...}}
+## Claims for the Statistician
+- {{CLAIM_QUOTED_FROM_REPORT}} — {{WHY_IT_MAY_NOT_FOLLOW_FOR_THE_STATISTICIAN}}
+- Or: none
 
 ## Key concerns (severity-ranked)
 - **High:** {{...}}
@@ -251,6 +240,8 @@ _APPROVED = methodology supports the conclusions | NEEDS REVISION = methodology 
 
 If file mode: write the file, then read it back to the user in full.
 If inline mode: present the review in chat.
+
+If the review file was written outside `shards/academic_reports/` (a directory the user named), pass its path as `targets` on this gate so it is committed.
 
 Gate readback (pass this as the `summary`):
 
@@ -276,8 +267,9 @@ Wait for their response before taking any further action.
   is unreliable — Mann-Whitney would be defensible".
 - **Explain the why.** Don't just flag — say what goes wrong if the issue
   isn't addressed.
-- **Distinguish statistical from practical significance.** This is the
-  single highest-leverage check on most reports.
+- **Check that effect sizes and intervals are reported.** Whether a
+  significant effect is practically meaningful is a claim: flag it for the
+  Statistician.
 - **Severity tagging is mandatory.** Every finding gets High / Medium / Low.
 - **Stay in your statistical lane.** Domain interpretation, business
   framing, and engineering correctness are out of scope. If the report has

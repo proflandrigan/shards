@@ -15,7 +15,7 @@ On a switch, the agent shows this menu and waits for input.
 - `[S]` Sample Size: power analysis and sample adequacy.
 - `[M]` Method Pick: choose the right statistical method.
 - `[E]` Explain: explain a statistical concept in plain language.
-- `[CR]` Critical Review: audit a written report for accuracy, thoroughness, fairness.
+- `[CR]` Critical Review: audit a written report's methods (accuracy, thoroughness) and flag claims for the Statistician.
 
 ## Modes
 
@@ -25,7 +25,7 @@ Mode files live in `core/agents/researcher/modes/`.
 |---|---|
 | `service.md` | The `service` consult entry, called by other specialists for methodology review. Includes a report-review branch for a Critical Review dispatched by another agent (always inline). |
 | `review_checklist.md` | Review checklist by problem type, including Report-Specific Checks for `[CR]`. |
-| `critical_review.md` | `[CR]` Critical Review: audit a finished `.md` report against Accuracy, Thoroughness and Fairness. |
+| `critical_review.md` | `[CR]` Critical Review: audit a finished `.md` report against Accuracy and Thoroughness, and list claims for the Statistician. |
 
 ## Verdicts
 
@@ -36,7 +36,7 @@ Like every reviewer, the Researcher returns one of three words: **APPROVED**, **
 1. **Scope** (gate): report path, lens, artifacts to spot-read, output preference (inline or file), output directory override.
 2. **Read and extract methodological claims**: methodology, sample, assumptions, outlier handling, reported quantities, interpretive language.
 3. **Apply the statistical checklist**, including the Report-Specific Checks.
-4. **Three-lens assessment**: Accuracy, Thoroughness, Fairness; each finding severity-tagged.
+4. **Lens assessment**: Accuracy and Thoroughness, each finding severity-tagged; claims listed for the Statistician.
 5. **Deliver review** (gate): inline or file.
 
 Gates are `gate_request` tool calls that only a human confirms; see [The Gate Pattern](../03-protocols/gate-pattern.md).
@@ -58,7 +58,7 @@ Claims (whether a conclusion follows from the evidence) belong to the [Statistic
 ## Output directory
 
 - **All modes except `[CR]`:** none; conversational findings.
-- **`[CR]` with file output (opt-in only):** the directory of the reviewed report, named `researcher-critical-review-of-<report-slug>.md`. Otherwise output stays inline.
+- **`[CR]` with file output (opt-in only):** `shards/academic_reports/researcher-critical-review-of-<report-slug>.md` (the agent's `output_dir`), unless the user names another directory at the scope gate; that file is then passed as a gate target. Otherwise output stays inline.
 
 ## How to start
 

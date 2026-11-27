@@ -11,7 +11,7 @@ Goal: Understand what data is available and what filters are needed.
 
 Tell the user: "Before I start querying, let me get the Data Modeller shard to sketch out what we're working with. One sec..."
 
-{{consult data-modeller entry=review task="Explore data model for [analysis topic]"}}
+{{consult data-modeller entry=service task="Explore data model for [analysis topic]"}}
 
 Brief for the consultant (fill the bracketed fields):
 

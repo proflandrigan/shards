@@ -21,61 +21,32 @@ your final review verdict. Check for gaps, consistency, and completeness.
 
 Append Syn's review to the specs. Present it to the user.
 
-If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}.
 
-{{consult syn entry=code_review task="Code review and fix for data model"}}
+If the user wants the code pass: {{protocol code_review}}
 
-Brief for the consultant (fill the bracketed fields):
+**Analytics Engineer handoff (only for a true handoff):**
 
-```
-CODE REVIEW MODE. I am the Data Modeller shard. Project: [project_name].
-Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
-in this project. The project-specs.md is at [file_path] for context.
-```
+You built the core entity model and the Analytics Engineer reviewed it in
+Phase 6. Consumer marts, aggregates, reporting tables and metrics on top of it
+are the Analytics Engineer's to build. Offer the handoff when the project needs
+them:
 
-Append Syn's code review summary to the specs. Present findings to user.
+"The core model is built and reviewed. Do you want to hand the consumer marts
+and metrics on top of it to the Analytics Engineer to build and own?
 
-**Analytics Engineer handoff (conditional):**
+- (a) Yes — I'll write a handoff and switch to the Analytics Engineer after sign-off.
+- (b) No — this project is complete."
 
-After presenting the completed logical model, ask:
-"The logical data model is complete. Would you like to hand this off to the
-Analytics Engineer to build the physical dbt implementation (staging models,
-intermediate transforms, mart SQL, tests, and documentation)?
+{{gate kind=confirm phase=7 track=deep name=ae-handoff requires_human=true}}
+If the user declines, relay their reply with `gate_confirm` and `decision: changes_requested`, skip the handoff file, and record "Not requested."
 
-- (a) Yes — I'll invoke the Analytics Engineer with a full handoff.
-- (b) No — the logical model is the deliverable."
-
-If user says (a), invoke:
-
-{{consult analytics-engineer entry=review task="Physical dbt implementation of logical model: [project_name]"}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-I am the Data Modeller shard. I have completed the logical data model
-for project [project_name] and need physical dbt implementation.
-
-Model specs: shards/<project_name>/project-specs.md
-
-Summary:
-- Entities modeled: <entity list from Phase 3>
-- Source tables: <source list from Phase 1>
-- Grain definitions: <from Phase 2>
-- Key relationships: <from Phase 3>
-- Proposed mart structure: <from Phase 4>
-
-Please implement:
-1. Staging models for each source
-2. Intermediate transforms as needed
-3. Mart models matching the logical model's entity grain
-4. dbt schema tests (uniqueness, not-null, accepted values, relationships)
-5. Column-level documentation
-
-Please read shards/<project_name>/project-specs.md for full context and the
-complete ER diagram.
-```
-
-Document the outcome in Phase 7 specs.
+If (a), write `shards/<project_name>/analytics_engineer_handoff.md` with: the
+project-specs path, entities and grains (Phase 2), key relationships (Phase 3),
+the built models and their tests (Phase 6 build log), the Analytics Engineer's
+Phase 6 review findings, and the work being handed over. Record the choice
+under **Analytics Engineer handoff** below; the switch happens after the final
+gate (see "When this gate is confirmed").
 
 Then:
 1. Run full DAG validation
@@ -85,7 +56,7 @@ Then:
 5. Present final ER diagram
 6. List all files created/modified
 7. Flag limitations and future work
-8. Ask if consumer needs a handoff artifact
+8. For consumers other than the Analytics Engineer (handled above), ask if they need a handoff artifact
 
 **Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
 {{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
@@ -112,7 +83,7 @@ Then:
   - <file path>
 - **Known limitations:**
   - <limitation>
-- **Analytics Engineer handoff:** Not requested | Invoked — <handoff summary>
+- **Analytics Engineer handoff:** Not requested | Requested — <work handed over; handoff file path>
 - **Original request fulfilled:** Yes | Partially | No — <explanation>
 - **Write-backs proposed:**
   - <title> → <knowledge job destination> (confirmed | declined | pending)
@@ -129,3 +100,12 @@ Update specs header status to `Complete`.
 ## When this gate is confirmed
 
 This is the final phase. Once Syn returns APPROVED sign-off, the project is complete. Do not read further files.
+
+If the user requested the Analytics Engineer handoff, tell the user the handoff
+file path, then switch and pass a new project in the `activate` call,
+`project="<project_name>_transform"` (or a name the user gives); the Analytics
+Engineer builds the handed-over work in that project, starting from the handoff
+file:
+
+{{switch analytics-engineer}}
+In that `activate` call also pass `project="<project_name>_transform"` (or the name the user gave); without it the Analytics Engineer has no project.

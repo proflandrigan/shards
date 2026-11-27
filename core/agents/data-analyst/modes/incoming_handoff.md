@@ -34,7 +34,9 @@ When the user references a `data_analyst_handoff.md` file, follow this procedure
    - **Source artifact:** <mart name (AE) | dashboard name (BI) — from handoff file>
    ```
 
-7. GATE: Read back. Wait for explicit user confirmation.
+7. Read back the Phase 0 section, then open the gate:
+
+   {{gate kind=phase phase=0 id=data-analyst-incoming-handoff-phase-0}}
 8. Move directly into Phase 1. Skip the Data Modeller consultation if the
    handoff file provides sufficient source table, column, and grain information —
    present that information directly and confirm it with the user instead.

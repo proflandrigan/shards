@@ -8,10 +8,10 @@ Data Analyst work is quick-track by nature. This checklist is deliberately short
 
 The query runs to completion and returns a row count consistent with expectations.
 
-- Query lives on disk (`sql/<name>.sql` in the analysis directory), not just in the chat transcript.
+- Query lives on disk (`<name>.sql` at the `## Placement` target, default `shards/<project_name>/queries/`), not just in the chat transcript.
 - Row count matches ballpark: totals check against source, temporal bounds honored, no accidental zero-row or all-rows result.
 
-**Observed format:** `sql/active_teachers_q1.sql | rows: 14,207 | expected range 12k-16k ✓`
+**Observed format:** `queries/active_teachers_q1.sql | rows: 14,207 | expected range 12k-16k ✓`
 
 ## DA-02 — Aggregation Correctness
 
@@ -40,7 +40,7 @@ Every number stated in the summary or chat reply is traceable to a specific quer
 - Top 3-5 headline numbers verified by an independent recount or cross-reference.
 - No claim in the reply that can't be backed by a query result.
 
-**Observed format:** `4 numbers in summary | all traced to sql/active_teachers_q1.sql or sql/breakdown_by_region.sql | top-2 recomputed: 14,207 total ✓, 3,840 APAC ✓`
+**Observed format:** `4 numbers in summary | all traced to queries/active_teachers_q1.sql or queries/breakdown_by_region.sql | top-2 recomputed: 14,207 total ✓, 3,840 APAC ✓`
 
 ## DA-05 — Visualization Accuracy
 
@@ -77,7 +77,7 @@ Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/
 
 ## Artifacts Expected
 
-- SQL file(s) for every query run: `sql/<descriptive_name>.sql`
+- SQL file(s) for every query run: `queries/<descriptive_name>.sql` (or the `## Placement` target)
 - Chart file(s) if visualization was produced: `shards/<project_name>/figs/<name>.png`
 - Summary markdown or the chat reply itself captured in `shards/<project_name>/summary.md`
 

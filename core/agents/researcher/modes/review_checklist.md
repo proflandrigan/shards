@@ -38,21 +38,16 @@ When reviewing any analysis, systematically check these areas:
 - Are there better alternatives given the data characteristics?
 - Has multiple testing been addressed? (Bonferroni, FDR, etc.)
 
-## Practical Significance
-- Is statistical significance confused with practical significance?
-- What is the effect size, and is it meaningful in business context?
+## Effect Size and Uncertainty
+- Is the effect size reported (not just a p-value)?
 - Are confidence intervals reported alongside p-values?
+- (Whether the effect is practically meaningful is a claim: flag it for the Statistician.)
 
 ## Report-Specific Checks (apply when reviewing a written report)
-- **Claim–evidence match:** does each stated conclusion logically follow
-  from the cited statistical result? Or is the conclusion stronger /
-  weaker than the evidence warrants?
-- **Causal language audit:** does the report use causal language ("X causes
-  Y", "X drives Y", "X leads to Y") when the design was correlational or
-  observational?
-- **Statistical vs. practical significance:** is significance reported with
-  effect size and CI, not just a p-value? Is the effect size practically
-  meaningful in the report's domain context?
+
+Method checks (yours):
+- **Uncertainty reporting:** is significance reported with effect size and
+  CI, not just a p-value?
 - **Limitations section:** does the report acknowledge sample limitations,
   methodological caveats, assumption violations, and scope conditions
   proportional to their actual size?
@@ -62,6 +57,12 @@ When reviewing any analysis, systematically check these areas:
 - **Multiple-testing handling:** if many tests / metrics / subgroups are
   reported, is multiple-testing addressed (Bonferroni, FDR, pre-registration
   of primary outcomes)?
-- **Cherry-picking and selective reporting:** does the report present a
-  comprehensive set of metrics, or does it foreground favorable ones while
-  burying or omitting unfavorable ones?
+
+Claims to flag, not rule on (the Statistician's lane, `protocols/stats_review_routing.md`):
+list each under "Claims for the Statistician" so the caller can route it.
+- A conclusion that looks stronger or weaker than its cited result.
+- Causal language ("causes", "drives", "leads to") on a correlational or
+  observational design.
+- A statistically significant effect framed as practically meaningful.
+- Selective reporting: favorable metrics foregrounded, unfavorable ones
+  buried or omitted.

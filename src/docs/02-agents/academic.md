@@ -57,8 +57,10 @@ Any specialist can also ask for a review of user-facing impact or behavioral eff
 
 ## Output directory
 
-- **Report mode:** `shards/<project>/` for the project it belongs to, or `shards/academic_reports/` when standalone.
-- **Critical Review mode:** the directory of the reviewed report, named `academic-critical-review-of-<report-slug>.md` (overridable at the scope gate). It can be pointed at any directory, including ones Shards did not create.
+`output_dir` is `shards/academic_reports/`, so files there are committed at the gate.
+
+- **Report mode:** `shards/academic_reports/<report_name>.md`.
+- **Critical Review mode:** `shards/academic_reports/academic-critical-review-of-<report-slug>.md`, unless the user names another directory at the scope gate (that file is then passed as a gate target so it is still committed).
 - **Everything else:** conversational findings only.
 
 ## How to start

@@ -222,37 +222,18 @@ confirms either solo AR (current brief) or fan-out.
 
 ### Behavioral exception announcement
 
-Before the gate, announce:
-
-> "Facilitate, don't generate" is suspended for Phase 2 of this AR session. I
-> will autonomously generate hypotheses, implement changes, and auto-keep or
-> auto-revert each iteration based on the primary metric. You can steer at any
-> time by editing `experiments/research_brief.md` — I re-read it every
-> iteration. Phase 0, Phase 1, and Phase 3 remain gated.
+Before the gate, make the announcement in `autonomous_research.md` §A.5.
 
 ### Optional unattended Phase 2 (plan approval)
 
-{{protocol goal_mode}} in full before
-raising the gate. Goal mode is the `plan` gate policy (`autonomous_research.md`
-§A.6): in the message that precedes the Phase 1 gate, offer an unattended Phase
-2 and present the plan and budget (primary metric, direction, target if set,
-iteration budget, wall-clock minutes, metric floor). The Phase 1 gate below **is**
-the plan approval; never raise a second gate for it.
-- **If the user chooses unattended:** add `plan_approval: "<run-id>"` to the
-  `gate_request` call for the gate below, with a run id unique to this run
-  (for example `<project>-ar-<UTC yyyymmddThhmm>`). Then STOP and wait for the
-  user; never confirm it yourself. After approval Phase 2 runs without
-  prompts: per-iteration evidence is recorded in `results.json` (§C.5), not
-  gated, and mid-loop gates (opted-in micro-gates) become notices. A failure,
-  anomaly or budget exhaustion puts the next gate in front of the user.
-- **Otherwise:** raise the same gate without `plan_approval`. §E convergence
-  and §G safety rails still terminate the loop. Per-iteration echoes remain
-  recommended for readability.
-
-On an unattended run a reviewer `RETRO_REVERT` or `PAUSE` and a metric floor
-breach do not block: call `ar_defer` and keep looping (§B.14); the deferred
-items are presented at Phase 3. The Phase 3 adoption gate is always confirmed
-by the user, unattended or not: it is requested with `requires_human` (§A.6).
+{{protocol goal_mode}} in full before raising the gate, and offer an
+unattended Phase 2 per `autonomous_research.md` §A.6 (plan and budget: primary
+metric, direction, target if set, iteration budget, wall-clock minutes, metric
+floor). The Phase 1 gate below **is** the plan approval; if the user chooses
+unattended, add `plan_approval: "<run-id>"` (for example
+`<project>-ar-<UTC yyyymmddThhmm>`) to it. On an unattended run, reviewer
+BLOCKED (`retro_revert`/`pause`) and metric floor breaches are deferred with `ar_defer`
+(§B.14).
 
 ### Gate
 
@@ -301,58 +282,16 @@ iteration N:
 
 ### Reviewer: Data Scientist
 
-Your reviewer for AR is the Data Scientist. Consult per Section D.4
-of the shared protocol. Standard cadence:
-- Always on first iteration
-- Every K iterations (K from Phase 0)
-- After improvements > 5% of baseline
-- Before stopping on consecutive regression limit
-- When Steering Notes change
-
-Apply the reviewer verdict protocol
-(`protocols/reviewer_verdict.md`) afterward. AR-specific verdicts: `CONTINUE`,
-`REDIRECT`, `PAUSE`, `RETRO_REVERT`.
+Your reviewer for AR is the Data Scientist. Consult on the Section D.1 cadence
+(K from Phase 0) with the Section D.4 call format, and handle its verdicts per
+Section D.2.
 
 ### Hypothesis categories for ML Engineer
 
-Draw from these when generating the next hypothesis (adaptively — pick
-categories based on accumulated results, not in a fixed order):
-
-**Hyperparameter tuning**
-- Learning rate, regularisation strength (L1/L2/alpha)
-- Tree depth, n_estimators, min_samples_leaf
-- Dropout rate, batch size, number of epochs
-
-**Feature engineering**
-- New features: interaction terms, lag features, aggregations
-- Remove low-signal or collinear features
-- Transformations: log, normalization, binning
-- Label encoding vs. one-hot vs. target encoding
-
-**Model architecture swap**
-- XGBoost → LightGBM or CatBoost
-- Logistic regression → gradient boosting baseline
-- Add / remove layers (DL models if in scope)
-
-**Training data changes**
-- Class imbalance handling (oversampling, undersampling, class weights)
-- Data augmentation
-- Label correction / noise filtering
-- Training window changes (more/less historical data)
-
-**Decision threshold optimization**
-- Threshold tuning for precision/recall trade-off
-- Cost-sensitive threshold selection
-
-**Ensemble methods**
-- Stacking or blending multiple models
-- Calibration layer addition
-- Voting ensemble
-
-**Serving-safe simplifications**
-- Model compression (quantization, pruning)
-- Knowledge distillation
-- Feature reduction for inference latency
+Draw from the categories in the "Experiment Categories (ML Engineer)" section
+of [`modes/experiment.md`](experiment.md) when generating the next hypothesis
+(adaptively — pick categories based on accumulated results, not in a fixed
+order).
 
 ### Production-awareness (ML Engineer specific)
 
@@ -441,13 +380,8 @@ Update `project-specs.md` to reflect:
 ## Behavioral Rules (AR-specific)
 
 - **Stay in role.** You are the ML Engineer throughout. No persona transfer.
-- **Scope enforcement is hard.** Every Edit/Write verifies the target path is
-  in the mutable set. Violations halt the loop.
-- **Reverts are file-scoped.** Never `git reset --hard`, never `git clean -f`.
-- **Proxy honesty.** If you use a proxy for evaluation, say so and run a full
-  eval at the configured cadence (`eval.full_every`). A full eval that does not
-  confirm the proxy-kept chain unwinds it; a proxy below metric floor gets a
-  full re-eval (`ar_iterate(full=true)`).
+- **Safety rails.** Scope enforcement, file-scoped reverts and proxy honesty
+  follow `autonomous_research.md` Section G and §C.6.
 - **Serving awareness never sleeps.** Even inside the AR loop, flag changes
   that affect latency, memory, or feature availability.
 - **Adopt only what was confirmed.** At Phase 3 the user chooses what to keep

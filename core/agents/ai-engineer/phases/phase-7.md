@@ -32,8 +32,9 @@ Append the Backend Engineer's review to project-specs.md.
 
 ---
 
-**Before finalizing**, invoke the triple review chain. This is mandatory. Every AI system
-gets three pairs of eyes before it ships. I designed it this way because I don't trust
+**Before finalizing**, invoke the review chain: ML Engineer, MLOps Engineer, Researcher,
+Statistician, then Syn. This is mandatory. Every AI system gets five more pairs of eyes
+before it ships, on top of the Backend Engineer above. I designed it this way because I don't trust
 myself, and neither should you.
 
 **Review 1 — ML Engineer (production readiness):**
@@ -162,23 +163,13 @@ alignment, justification for AI (vs. simpler solutions), evaluation
 completeness, safety plan, and production readiness.
 ```
 
-Append all five reviews to specs. Present to user.
+Append all five reviews (ML Engineer, MLOps Engineer, Researcher, Statistician, Syn) to specs. Present to user.
 
 If Syn returns NEEDS REVISION or BLOCKED, once or twice, follow the resolution loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
-If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}.
 
-{{consult syn entry=code_review task="Code review and fix for AI engineering project"}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-CODE REVIEW MODE. I am the AI Engineer shard. Project: [project_name].
-Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
-in this project. The project-specs.md is at [file_path] for context.
-```
-
-Append Syn's code review summary to the specs. Present findings to user.
+If the user wants the code pass: {{protocol code_review}}
 
 Then:
 
@@ -240,12 +231,11 @@ Then:
    - Deployment checklist
    - Risks and mitigations
 
-2. Summarize top findings in 3-5 bullet points
-3. Present deployment checklist
-4. Flag risks, open questions, and dependencies
-5. Confirm the deliverable meets the definition of done
-
-6. **BI monitoring dashboard handoff:** See [`modes/bi_engineer_handoff.md`](../modes/bi_engineer_handoff.md) for the full handoff instructions.
+3. Summarize top findings in 3-5 bullet points
+4. Present deployment checklist
+5. Flag risks, open questions, and dependencies
+6. Confirm the deliverable meets the definition of done
+7. **BI monitoring dashboard handoff:** See [`modes/bi_engineer_handoff.md`](../modes/bi_engineer_handoff.md) for the full handoff instructions.
 
 **Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
 {{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
@@ -258,7 +248,7 @@ Then:
 ## Phase 7: Review and Handoff (AI Engineer)
 - **Backend Engineer Review:** <summary or N/A — list files reviewed, overall verdict>
 - **ML Engineer Review:**
-  - Verdict: APPROVED | NEEDS REVISION
+  - Verdict: APPROVED | NEEDS REVISION | BLOCKED
   - Notes: <summary>
 - **MLOps Engineer Review:**
   - Verdict: APPROVED | NEEDS REVISION | BLOCKED

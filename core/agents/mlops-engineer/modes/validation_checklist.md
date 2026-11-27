@@ -22,7 +22,7 @@ Rolling back to the prior version can be done without data loss or extended down
 - Execute the rollback in staging and verify the prior version resumes correctly.
 - Recovery time objective (RTO) measured.
 
-**Observed format:** `rollback procedure: docs/runbooks/rollback.md | staging rehearsal: rolled from v2.3 → v2.2 in 94s, 0 failed requests during cutover ✓ | RTO target <5min ✓`
+**Observed format:** `rollback procedure: shards/<project>/mlops/runbook.md (rollback procedure section) | staging rehearsal: rolled from v2.3 → v2.2 in 94s, 0 failed requests during cutover ✓ | RTO target <5min ✓`
 
 ## MLO-03 — Monitoring Configured & Firing
 
@@ -97,7 +97,7 @@ The service has a runbook, and the on-call team can use it.
 - On-call team walkthrough held.
 - First-responder permissions configured (access to logs, metrics, rollback controls).
 
-**Observed format:** `runbook: docs/runbooks/<svc>.md (health checks, common failures, rollback, escalation) | on-call walkthrough: 2026-04-21 with #ml-oncall team (6 engineers) ✓ | permissions verified: all on-call engineers can access Grafana + trigger rollback`
+**Observed format:** `runbook: shards/<project>/mlops/runbook.md (health checks, common failures, rollback, escalation) | on-call walkthrough: 2026-04-21 with #ml-oncall team (6 engineers) ✓ | permissions verified: all on-call engineers can access Grafana + trigger rollback`
 
 ## MLO-10 — Registry & Lineage Recorded
 
@@ -123,12 +123,13 @@ Rows are indexed by `(Track, Mode)` per `protocols/validation.md`.
 | **quick** | `hotfix` | MLO-01, MLO-02 | MLO-03 | rest |
 | **fixer** | (Mode omitted) | MLO-01 + MLO-02 rehearsal + "what changed, what didn't break" | — | rest |
 
+**Where each check is applied (deep track).** MLO-01, MLO-02 and MLO-03 need a deployed staging environment, so they are applied in Phase 7 (the staging deployment step), not at the Phase 6 build gate. At the Phase 6 gate, record them as `n/a` with Notes `applied in Phase 7 (staging deploy)`. Every other required check is applied at Phase 6.
+
 Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. {{protocol validation}}.
 
 ## Artifacts Expected
 
-- `docs/runbooks/<svc>.md` — MLO-09
-- `docs/runbooks/rollback.md` — MLO-02
+- The runbook at the confirmed `## Placement` target (greenfield: `shards/<project>/mlops/runbook.md`) — MLO-09, and its rollback procedure section — MLO-02
 - Monitoring configs at the confirmed `## Placement` target (greenfield: `shards/<project>/mlops/monitoring/`) — MLO-03, MLO-04
 - `pipelines/retrain_<svc>.py` or equivalent — MLO-05
 - `results/deploy_smoke.log`, `results/load_test.json` — MLO-01, MLO-07

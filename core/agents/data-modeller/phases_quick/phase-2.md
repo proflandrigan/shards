@@ -17,10 +17,17 @@ Wait for any signal from the user before beginning build steps.
 
 ### Component specifications
 
-Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`:
+Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`.
+
+**Scope:** the change is to the core entity model (dimensions, facts, bridges,
+snapshots). A change that is really to staging belongs to the Data Engineer, and
+one to a consumer mart or metric to the Analytics Engineer: say so and recommend
+that agent instead.
 
 1. The change in model SQL and .yml schema.
-2. Downstream models that reference changed columns.
+2. Downstream models that reference changed columns (for a consumer mart owned
+   by the Analytics Engineer, only the minimal compatible update; flag anything
+   more for the Analytics Engineer).
 3. Validation with `dbt build --select +model_name+`.
 4. **Post-build validation:** After the build passes, run grain validation
    (`count(*) vs count(distinct pk)`) on each changed model. For models with
@@ -35,18 +42,15 @@ Each task in `shards/<project_name>/tasks.yaml` cites one of these specification
 
 {{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
-Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and record; you do not write build code yourself except for `delegate: inline` tasks.
+Follow the lead loop in {{protocol delegated_build}} (task evidence guidance: {{protocol incremental_testing}}). Each task card cites its `plan_ref`, so workers see only the Component specifications they need.
 
-This is a small build (two tasks or fewer in practice). The plan may mark its tasks `delegate: inline`; when it does, the lead performs those tasks itself, but still follows the same loop, the same acceptance commands and the same per-task evidence rows below.
+This is a small build (two tasks or fewer in practice). Tasks marked `delegate: inline` are done by the lead itself, through the same loop, acceptance commands and per-task evidence rows. When all tasks are done, summarize what changed.
 
-1. **Load the task list.** Load `shards/<project_name>/tasks.yaml` (approved at the plan gate) with `tasks_set`. Fix any rejection (cycle, overlapping owned paths, missing acceptance) with the user before building.
-2. **Dispatch.** `task_dispatch` the ready tasks (all `depends_on` done), in parallel up to `max_parallel=3`. Each task card cites its `plan_ref`, so workers see only the Component specifications they need.
-3. **Collect.** Each worker returns a result through `task_report`.
-4. **Lead verifies every report before it counts.** Re-run (or independently check) the task's acceptance command and compare the outcome with the cited `plan_ref`. Then write a per-task evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone. {{protocol incremental_testing}} is task evidence guidance.
-5. **Failures.** Re-dispatch with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary of what failed.
-6. **Deviations.** If a worker reports a deviation, or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend the plan only through a confirmed gate.
-7. **Unblock.** After each verified task, dispatch the tasks it unblocks.
-8. **Wrap up.** When all tasks are done, summarize what changed.
+**Analytics Engineer review.** You orchestrate the build; the Analytics Engineer reviews it and surfaces issues, without editing:
+
+{{consult analytics-engineer entry=review task="Review the quick-track model change for [project_name]"}}
+
+Brief: the project-specs path, the files changed and the change's intent; ask for each issue with file, line and the change to make. Apply {{protocol reviewer_verdict}}: for NEEDS REVISION or BLOCKED findings, the reviewed tasks are already done and cannot be re-dispatched, so add review-fix tasks through {{protocol plan_drift}}: raise its amendment gate with the findings as the proposed change, then call `tasks_set` with a manifest holding only the new fix tasks (one per affected component, for your own workers, acceptance = the original check plus the finding resolved, no `depends_on` on the already-done tasks; their evidence rows stay in `## Validation`) and `amendment_gate`, dispatch them and verify each with `task_verify`.
 
 **Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
 {{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).
@@ -64,6 +68,7 @@ Append to project-specs.md:
 - **Downstream updates:** <files updated or "none needed">
 - **Task evidence:** one row per task in the `## Validation` Evidence table
 - **Validation result:** Pass | Fail — <details>
+- **Analytics Engineer review:** APPROVED | NEEDS REVISION → resolved | BLOCKED → resolved — <issues or "none">
 - **Post-build validation:** PASS | FAIL | SKIPPED (no data) — <details>
 - **Follow-up needed:** Yes / No — <if yes, describe>
 - **Write-backs proposed:**

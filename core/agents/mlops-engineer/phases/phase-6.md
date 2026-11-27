@@ -62,6 +62,7 @@ Each task in `shards/<project_name>/mlops/tasks.yaml` cites one of these specifi
    Acceptance: monitoring config validates; alert rules and baselines compile; a simulated drift event triggers the expected rule.
 
 **Spec E. CI/CD config.** Automation workflow: a GitHub Actions workflow for the automated retraining trigger, or the equivalent for another CI/CD system. Location: `shards/<project_name>/mlops/` or `.github/workflows/`.
+   Acceptance: the workflow passes its CI system's validator (for example `actionlint` for GitHub Actions); the retraining trigger runs locally or in a dry-run mode that touches no remote system. (Dispatching it on the real CI system is an outward action: it happens in Phase 7 after the staging-deploy gate.)
 
 **Spec F. Runbook.** Operational runbook:
    - Common failure scenarios and step-by-step remediation
@@ -71,7 +72,7 @@ Each task in `shards/<project_name>/mlops/tasks.yaml` cites one of these specifi
    - Deployment checklist (pre-deploy, deploy, post-deploy validation)
 
    Location: `shards/<project_name>/mlops/runbook.md`.
-   Acceptance: the rollback procedure is walked through against the staging environment (or manually verified on the sandbox).
+   Acceptance: the runbook exists at its target with every section above, and the rollback procedure names exact commands and artifact versions. (Rehearsing the rollback is MLO-02, applied in Phase 7 after the staging deploy.)
 
 ### Lead loop
 
@@ -109,12 +110,13 @@ When all tasks are verified done, record the final integration evidence row in `
 - **Deviations from plan:** <changes and why, or "none">
 - **Known gaps:** <anything that requires manual setup or future work>
 
-### Validation
-
-| Check | Expected | Observed | Pass/Fail |
-|---|---|---|---|
-| <task id> <component> | <acceptance expected> | <command and measured facts> | PASS \| FAIL |
 ```
+
+Evidence rows go in the project's `## Validation` section (schema in `protocols/validation.md`; `gate_request` parses it), not inside this phase section. `task_verify` appends one row per task; hand-write only the integration, harness and Fallback rows:
+
+| Check | Expected | Observed | Pass/Fail | Notes |
+|-------|----------|----------|-----------|-------|
+| <task id> <component> | <acceptance expected> | <command and measured facts> | ✓ / ✗ / n/a | <one-line context; required for n/a> |
 
 {{gate kind=phase validates=mlops-engineer}}
 

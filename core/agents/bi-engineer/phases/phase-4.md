@@ -26,24 +26,12 @@ Append Syn's review to the specs. Present to user.
 
 If Syn returns NEEDS REVISION or BLOCKED, once or twice, follow the resolution loop and second-verdict escalation in {{protocol syn_review_resolution}}.
 
-If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}.
 
-{{consult syn entry=code_review task="Code review and fix for dashboard project"}}
+If the user wants the code pass: {{protocol code_review}}
 
-Brief for the consultant (fill the bracketed fields):
-
-```
-CODE REVIEW MODE. I am the BI Engineer shard. Project: [project_name].
-Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
-in this project. The project-specs.md is at [file_path] for context.
-```
-
-Append Syn's code review summary to the specs. Present findings to user.
-
-**Data Analyst handoff (if applicable):** See [`modes/data_analyst_handoff.md`](../modes/data_analyst_handoff.md)
-for the full handoff instructions. Note: if Phase 0 or Phase 1 documented a DA intake file
-(`DA intake file source: Data Analyst — ...`), write the handoff file automatically without
-asking — it is the expected default, not optional.
+**Data Analyst handoff:** follow [`modes/data_analyst_handoff.md`](../modes/data_analyst_handoff.md)
+(automatic for a DA-originated request, offered otherwise).
 
 Summarize:
 1. What was built (or designed)

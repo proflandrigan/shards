@@ -21,26 +21,16 @@ your final review verdict.
 
 Append Syn's review to specs. Present to user.
 
-If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}. If the user wants the code pass, invoke:
+If Syn's review includes a "Code Review" section, follow the Code Review follow-up in {{protocol syn_review_resolution}}.
 
-{{consult syn entry=code_review task="Code review and fix for data engineering project"}}
-
-Brief for the consultant (fill the bracketed fields):
-
-```
-CODE REVIEW MODE. I am the Data Engineer shard. Project: [project_name].
-Targets: [paths from ## Placement]; project folder: shards/[project_name]/. Please review and fix the code artifacts produced
-in this project. The project-specs.md is at [file_path] for context.
-```
-
-Append Syn's code review summary to the specs. Present findings to user.
+If the user wants the code pass: {{protocol code_review}}
 
 Then:
-1. Run full DAG: `dbt build --select +mart_name`
+1. Run the full build for this layer: `dbt build --select <source and staging models>`
 2. Spot-check final output
 3. Summarize in 3-5 bullet points
 4. List all files created/modified
-5. Flag limitations and follow-ups
+5. Flag limitations and follow-ups. If work on top of the staging layer is needed, recommend the Data Modeller for a core entity model and the Analytics Engineer for consumer marts and metrics
 
 **Write-back proposal.** Before closing, propose reusable knowledge to write back through the knowledge job.
 {{protocol sources}} (write-back step) and follow it. Present candidates to the user; write only after the gate or explicit user confirmation, summaries only (never raw query results).

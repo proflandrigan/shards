@@ -56,8 +56,8 @@
       "min": 1
     },
     {
-      "id": "syn-pr-review-phase-0.3",
-      "kind": "final",
+      "id": "syn-pr-review-*-phase-0.thread-*",
+      "kind": "confirm",
       "min": 1
     }
   ],

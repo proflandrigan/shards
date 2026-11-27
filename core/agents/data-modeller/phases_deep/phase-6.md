@@ -17,14 +17,20 @@ Wait for any signal from the user before beginning build steps.
 
 ### Component specifications
 
-Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`. Components, in dependency order:
+Each task in `shards/<project_name>/tasks.yaml` cites one of these specifications through its `plan_ref`.
 
-1. Source definitions
-2. Staging models
-3. Intermediate models
-4. Mart / dimension / fact models
+**Scope: the core entity model you designed, nothing else.** Sources and staging
+are the Data Engineer's and are a prerequisite: if the staging this model reads
+does not exist, stop and recommend the Data Engineer before building. Consumer
+marts, aggregates, reporting tables and metrics built on top of the core model
+are the Analytics Engineer's (offered as a handoff in Phase 7). Components, in
+dependency order:
+
+1. Snapshots for SCD Type 2 (an SCD-2 dimension is built from its snapshot)
+2. Dimension models (conformed dimensions)
+3. Fact models at their declared grain
+4. Bridge models for M:M relationships
 5. Schema files with tests and docs (part of each model's task)
-6. Snapshots for SCD Type 2
 
 Every model component comprises its SQL, its .yml schema, and a `dbt build --select +model_name` run; failures are fixed within the task before it reports.
 
@@ -68,8 +74,8 @@ to validate" in the evidence row.
    `dbt show --select <model> --limit 5` — visually confirm column names,
    types, and values look correct before moving on.
 
-Scale to model importance: staging models need only grain + sample; dimension/fact
-models get the full suite.
+Scale to model importance: snapshots and bridges need at least grain + sample;
+dimension and fact models get the full suite.
 
 Task acceptance commands name the exact test command and the measured facts expected.
 
@@ -77,16 +83,27 @@ Task acceptance commands name the exact test command and the measured facts expe
 
 {{delegate tasks=shards/<project_name>/tasks.yaml max_parallel=3}}
 
-Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and record; you do not write build code yourself except for `delegate: inline` tasks.
+Follow the lead loop in {{protocol delegated_build}} (task evidence guidance: {{protocol incremental_testing}}). Each task card cites its `plan_ref`, so workers see only the Component specifications they need.
 
-1. **Load the task list.** Load `shards/<project_name>/tasks.yaml` (approved at the plan gate) with `tasks_set`. Fix any rejection (cycle, overlapping owned paths, missing acceptance) with the user before building.
-2. **Dispatch.** `task_dispatch` the ready tasks (all `depends_on` done), in parallel up to `max_parallel=3`. Each task card cites its `plan_ref`, so workers see only the Component specifications they need.
-3. **Collect.** Each worker returns a result through `task_report`.
-4. **Lead verifies every report before it counts.** Re-run (or independently check) the task's acceptance command and compare the outcome with the cited `plan_ref`. Then write a per-task evidence row to the `## Validation` Evidence table (Check = task id + component, Expected, Observed, Pass/Fail). Never mark a task done on the worker's word alone. {{protocol incremental_testing}} is task evidence guidance.
-5. **Failures.** Re-dispatch with the failure output as feedback, at most 2 retries; then stop and ask the user with a summary of what failed.
-6. **Deviations.** If a worker reports a deviation, or the plan cannot be met, pause dependent tasks and follow {{protocol plan_drift}}; amend the plan only through a confirmed gate.
-7. **Unblock.** After each verified task, dispatch the tasks it unblocks.
-8. **Final integration check.** When all tasks are done, the lead runs the full `dbt build` and records the result as an evidence row before the gate.
+**Final integration check:** when all tasks are done, the lead runs the full `dbt build` and records the result as an evidence row before the gate.
+
+**Analytics Engineer review (after the integration check, before the gate).** You orchestrate this build: Data Modeller workers write the models, and you do not hand the build to anyone. Once every task is verified, ask the Analytics Engineer to review what was built and surface issues. It reviews only; it does not edit.
+
+{{consult analytics-engineer entry=review task="Review the built models for [project_name]"}}
+
+Brief for the consultant (fill the bracketed fields):
+
+```
+I am the Data Modeller shard, orchestrating the build for [project_name].
+project-specs.md is at shards/[project_name]/project-specs.md (grain, entities,
+relationships and the component specifications are there).
+Built files: [list from the build log].
+Review the SQL, tests and docs for correctness, layering, test coverage and
+fitness as the base for the consumer marts and metrics you would build on top. List each issue
+with file and line and the change you would make.
+```
+
+Apply {{protocol reviewer_verdict}}. For NEEDS REVISION or BLOCKED findings, the reviewed tasks are already done and cannot be re-dispatched, so add review-fix tasks through {{protocol plan_drift}}: raise its amendment gate with the findings as the proposed change, then call `tasks_set` with a manifest holding only the new fix tasks (one per affected component, for your own workers, acceptance = the original check plus the finding resolved, no `depends_on` on the already-done tasks; their evidence rows stay in `## Validation`) and `amendment_gate`, dispatch them and verify each with `task_verify`. Record the review and its resolution under **Analytics Engineer review** in the build log. After the fix tasks are verified, re-run the full `dbt build` and record a new integration evidence row before the gate, since the earlier integration check predates the fixes.
 
 ### Document Deep Phase 6
 
@@ -107,6 +124,8 @@ Follow {{protocol delegated_build}}. You are the lead: you dispatch, verify and 
   | <model> | PASS / FAIL | PASS / FAIL / N/A | PASS / WARN / FAIL | Yes / No | <details or "clean"> |
   - (or "THEORETICAL — no data to validate" if contract-first design)
 - **Task evidence:** one row per task in the `## Validation` Evidence table (task id, expected, observed, pass/fail)
+- **Analytics Engineer review:** APPROVED | NEEDS REVISION → resolved | BLOCKED → resolved | User override — <rationale>
+  - <issues raised and how they were fixed>
 - **Deviations from design:** <changes from earlier phases and why, or "none">
 - **Entity-relationship diagram (final):**
   ```

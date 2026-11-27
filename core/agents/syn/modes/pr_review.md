@@ -167,17 +167,26 @@ Analyze the comment and the code. Determine whether this is:
 
 ### 3d. Gate — wait before applying
 
-{{gate kind=final phase=0 id=syn-pr-review-phase-0.3}}
+Each thread gets its own gate: a confirmed gate id is never asked again, so a shared
+id would let every thread after the first apply without approval. Call `gate_request`
+with `kind=confirm`, `phase=0`, `id=syn-pr-review-<pr>-phase-0.thread-<n>` (`<pr>` is the
+PR number and `<n>` the thread number from the header; ids must differ across PRs, or a
+second review in the same session would find thread 1 already confirmed),
+`requires_human=true` and a one-line `summary` of the proposed fix. Write the proposed
+fix to the review record first and pass that section as `record_ref`. Stop and wait for
+the user; never confirm the gate yourself.
 > "Apply this fix? Type **y** to apply, **n** to skip, **edit** to describe your
 > own fix instead, or **done** to stop walking through comments."
 
-- **y** — Apply using the `Edit` tool. After applying, read back the changed
-  lines to confirm. Then announce: "✓ Fix applied."
-- **n** / **skip** — "Skipping. Moving on."
-- **edit** — "What change would you like? Describe it and I'll apply it."
-  Apply the user's version, then confirm.
-- **done** — Jump to Step 4 immediately.
-- **q** / **quit** — Same as **done**.
+Relay the user's reply verbatim with `gate_confirm`, so every answer resolves the gate:
+
+- **y** — `decision: confirmed`. Apply using the `Edit` tool. After applying, read back
+  the changed lines to confirm. Then announce: "✓ Fix applied."
+- **n** / **skip** — `decision: changes_requested`. "Skipping. Moving on."
+- **edit** — `decision: changes_requested`. "What change would you like? Describe it and
+  I'll apply it." Then re-request the SAME gate id with the revised fix as the summary and
+  wait again; apply only after that gate is confirmed.
+- **done** / **q** / **quit** — `decision: changes_requested`. Jump to Step 4 immediately.
 
 After each thread (applied or skipped), display progress:
 > "Thread \<n\>/\<total\> done."

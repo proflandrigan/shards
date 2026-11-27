@@ -1,14 +1,14 @@
 ---
 name: goal-mode-protocol
-description: Shared protocol — goal mode is now the `plan` gate policy (unattended loops for AR Phase 2 and Experiment Phase 2)
+description: Shared protocol — goal mode is the `plan` gate policy (unattended loops for AR Phase 2)
 type: reference
 ---
 
 # Goal Mode = the `plan` gate policy
 
-Goal mode no longer uses Claude Code `/goal` or a transcript evaluator. Gate-free
-autonomous loops (AR Phase 2, Experiment Phase 2) run under the `plan` gate
-policy:
+The gate-free AR Phase 2 loop runs under the `plan` gate policy. (Experiment
+mode has no Phase 2 gates at all: its Phase 1 gate agrees the plan and the
+stopping point, and Phase 2 runs to it; see each `experiment.md`.)
 
 - At the pre-loop gate (the agent's own Phase 1 gate), present the plan and
   the budget (iterations, cost ceiling, metric floor, target). If the user
@@ -20,8 +20,7 @@ policy:
   a new run id and needs a fresh confirmation; the notice budget is per run.
 - Once the user confirms, later gate kinds become notices and the loop keeps
   running. AR records per-iteration evidence in `results.json` and does not
-  gate each iteration (`autonomous_research.md` A.6); experiment mode keeps
-  calling `gate_request` with `evidence` after each experiment.
+  gate each iteration (`autonomous_research.md` A.6).
 - The loop stops on failure, anomaly, or budget exhaustion, and the next gate
   waits for a human again.
 - The Phase 3 adoption gate is always confirmed by a human, even after a plan
@@ -29,5 +28,4 @@ policy:
   once every run of the approved plan has ended the plan covers no further gate.
 
 Details: `autonomous_research.md` Section A.6 and `docs/gates.md` (policies).
-Stop conditions are unchanged (AR §E convergence, §G safety rails; each
-`experiment.md` Phase 2 stop conditions).
+Stop conditions are unchanged (AR §E convergence, §G safety rails).

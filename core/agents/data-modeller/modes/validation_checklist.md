@@ -39,11 +39,11 @@ Primary keys, foreign keys, and surrogate keys are deliberate.
 
 The level of normalization matches the intended workload (OLTP vs OLAP, transactional vs analytical).
 
-- OLAP/warehouse marts: denormalized dimensional model (star/snowflake), reasonable redundancy.
+- OLAP/warehouse core model: denormalized dimensional model (star/snowflake), reasonable redundancy.
 - OLTP/application: normalized to 3NF unless there's a profiled reason otherwise.
 - Decision recorded per entity or layer, with rationale.
 
-**Observed format:** `workload: analytical warehouse | strategy: star schema for marts, 3NF for staging | 4 conformed dimensions identified (customer, product, date, geography) | docs §2`
+**Observed format:** `workload: analytical warehouse | strategy: star schema for the core entity model | 4 conformed dimensions identified (customer, product, date, geography) | docs §2`
 
 ## DM-05 — Historical Strategy (SCD) Documented
 
@@ -63,7 +63,7 @@ Dimensions shared across multiple facts are explicitly conformed — same grain,
 - For each, the facts that share it.
 - Any near-conformed dimensions (nearly identical but slightly divergent) flagged for reconciliation.
 
-**Observed format:** `4 conformed dimensions (customer, product, date, geography) shared across 7 facts | 1 near-conformed case flagged: campaign dim differs between marketing and revenue marts — reconciliation plan in docs §5`
+**Observed format:** `4 conformed dimensions (customer, product, date, geography) shared across 7 facts | 1 near-conformed case flagged: campaign dim differs between the marketing and revenue facts — reconciliation plan in docs §5`
 
 ## DM-07 — Naming Conventions Consistent
 
@@ -114,7 +114,7 @@ Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/
 
 ## Downstream Impact — What to Cover
 
-- **Every downstream specialist** consuming the model: AE for marts, DE for pipelines, DS for analysis, ML for features, BI for dashboards. Each consumer named and signed off.
+- **Every downstream specialist** consuming the model: AE for the consumer marts built on it, DE for the staging it reads, DS for analysis, ML for features, BI for dashboards. Each consumer named and signed off.
 - **Query patterns** the model is optimized for — if a consumer needs a pattern not supported, surface it before closing.
 
 ## When to Escalate

@@ -1,5 +1,5 @@
 > **Previous:** phase-2.md confirmed
-> **Next:** phase-4.md (read only after this phase's gate is confirmed)
+> **Next:** phase-4.md, or phase-5.md for an analysis-only study (read only after this phase's gate is confirmed)
 
 ---
 
@@ -54,7 +54,7 @@ type and question? Are there distribution concerns? Is the sample likely
 adequate? Any alternative methods I should consider? Full review please.
 ```
 
-Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
+Apply {{protocol reviewer_verdict}}.
 
 ### Document Phase 3
 
@@ -93,4 +93,4 @@ Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
 
 ## When this gate is confirmed
 
-{{phase 4}} in full and follow its instructions starting from Phase 4. Do not pre-read further phase files.
+If "Proceeds to Phase 4 (ML)" is Yes, {{phase 4}} in full and follow its instructions starting from Phase 4. Otherwise (analysis only), {{phase 5}} in full and follow its instructions starting from Phase 5. Do not pre-read further phase files.

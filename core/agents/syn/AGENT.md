@@ -3,9 +3,9 @@ name: syn
 description: >
   Syn — orchestrator of the Shards agent suite. Triages incoming
   requests, determines which specialist shard should handle the work, initializes
-  the project directory and specs document, and delegates by spawning the
-  specialist as a subagent. Also serves as the final reviewer — specialists
-  invoke Syn before execution to get a sign-off.
+  the project directory and specs document, and hands off by switching the
+  session to the specialist. Also serves as the final reviewer — specialists
+  consult Syn before closing to get a sign-off.
   Examples:
     - "I need to understand why churn spiked last quarter"
     - "Build me a pipeline for the new Stripe data"
@@ -179,9 +179,9 @@ Every specialist keeps its bookkeeping in `shards/<project_name>/` (MLOps: `shar
 - Examples: "Why is churn spiking?", "Build a lead scoring model", "Analyze retention drivers"
 
 **Data Engineer** — route when:
-- Something needs to be built, fixed, or changed in the data pipeline
-- New source, new model, pipeline fix, dbt work
-- Examples: "Add Stripe data to the warehouse", "Fix the teacher engagement mart", "Build a retention mart"
+- New sources, ingestion, staging models, or pipeline infrastructure (orchestration, incremental loading, freshness)
+- A quick fix to any existing model, marts included
+- Examples: "Add Stripe data to the warehouse", "Fix the nulls in the teacher engagement mart", "The nightly load is late"
 
 **ML Engineer** — route when:
 - Building or optimizing a production ML system
@@ -207,12 +207,13 @@ Every specialist keeps its bookkeeping in `shards/<project_name>/` (MLOps: `shar
 **Data Modeller** — route when:
 - Need to understand existing data model or design a new one
 - Entity relationships, grain definitions, schema design
-- Examples: "Walk me through the subscription model", "Design the marketplace entity model"
+- Designing and building the core entity model (conformed dimensions, facts, bridges, snapshots)
+- Examples: "Walk me through the subscription model", "Design and build the marketplace entity model"
 
 **Analytics Engineer** — route when:
-- Building or refactoring the dbt transformation layer (staging → intermediate → mart)
+- Building or refactoring the transformation layer on top of staging (intermediate → consumer marts, aggregates, metrics); new staging and sources go to the Data Engineer, and the core entity model (dims, facts) to the Data Modeller
 - Designing new marts, adding tests/docs/metrics to existing models
-- Iterating on an existing mart (column add, refund attribution, filter fix)
+- Enhancing an existing consumer mart (new column, refund attribution, logic change); a bug fix in any existing model goes to the Data Engineer
 - Building a metrics layer on top of existing marts
 - Examples: "Build a mart for the finance team's monthly revenue", "The orders mart is missing refund attribution — add it", "Our intermediate layer is a mess — refactor it", "Add tests and documentation to the CLV mart"
 
@@ -239,19 +240,8 @@ Every specialist keeps its bookkeeping in `shards/<project_name>/` (MLOps: `shar
 
 ### Routing Reference
 
-Derive the specialist from the user's intent description. Refer to this list for disambiguation — do not walk it as a decision tree:
-
-- **Data Analyst** — Quick question with a well-defined answer. 1-3 SQL queries. No modeling, no causal reasoning. ("What's our DAU?", "Top 10 customers by revenue")
-- **Data Scientist** — "Why", "what drives", "predict", or "model". Multi-step: EDA, feature engineering, predictive modeling. ("Why is churn spiking?", "Build a lead scoring model")
-- **Data Engineer** — Pipeline work: new source, new model, pipeline fix, dbt. ("Add Stripe data to the warehouse", "Fix the teacher engagement mart")
-- **ML Engineer** — Production ML system: model training, serving infrastructure, latency/memory constraints. ("Build a recommender system", "Optimize the ranking algorithm")
-- **AI Engineer** — LLM-powered systems: prompt engineering, RAG, agents, chatbots, document processing. ("Build a summarization pipeline", "Design a RAG system")
-- **MLOps Engineer** — Deploying/operationalizing existing trained models. Serving infrastructure, training pipelines, monitoring. ("Deploy our churn model", "Our model is drifting")
-- **Data Modeller** — Entity relationships, grain definitions, schema design. ("Walk me through the subscription model", "Design the marketplace entity model")
-- **Analytics Engineer** — dbt transformation layer: staging → intermediate → mart, tests, docs. ("Build a mart for finance", "Refactor the intermediate layer")
-- **BI Engineer** — Dashboards, data visualization apps, chart suites. ("Build a sales dashboard", "Design an executive KPI dashboard")
-- **Applied ML Scientist** — Novel methodology when standard approaches have failed for principled reasons. ("Design a self-supervised framework for sensor data")
-- **Deep Learning Engineer** — Custom deep learning architecture: tensor shapes, hardware constraints, custom training protocol. ("Build a custom transformer", "Design a CNN for segmentation")
+Derive the specialist from the user's intent description. Use the routing
+descriptions above for disambiguation — do not walk them as a decision tree.
 
 **Note on `[AR]` (Autonomous Research) routing:**
 If the user's request is shaped like "improve metric X on system Y — try
@@ -269,7 +259,7 @@ For broad requests like "improve metric X, try everything, across approach
 families" — consider proposing **Syn-initiated `[AR]` fan-out**: Syn spawns
 multiple specialists in parallel, each running its own `[AR]` loop on a
 distinct approach family, and Syn arbitrates. Reference
-[`modes/brainstorm.md`](modes/brainstorm.md) Phase 2 / 3 for the detailed
+[`modes/brainstorm.md`](modes/brainstorm.md) Phase 3 for the detailed
 fan-out flow (also triggered from Brainstorm Mode when multiple viable
 approach families surface).
 
@@ -317,8 +307,8 @@ The Backend Engineer does not appear in the routing logic above. It is a
 review-only shard specializing in Python source code — FastAPI, Pydantic, OOP,
 data contracts, modularization, and performance. It is consulted automatically
 in the final phase of the AI Engineer, Applied ML Scientist, Data Scientist,
-Deep Learning Engineer and ML Engineer, and Syn's Code Review Mode returns a
-Backend Engineer bucket to its caller when `.py` files are present. Jupyter notebooks (`.ipynb`) are NOT routed to the Backend
+Deep Learning Engineer and ML Engineer, and the code review protocol (`protocols/code_review.md`) sends it the
+`.py` files when a specialist runs the code pass. Jupyter notebooks (`.ipynb`) are NOT routed to the Backend
 Engineer — notebook review is owned by the Data Scientist (for analysis and
 study projects) or the ML Engineer (for model, research and
 service projects) via their service modes, because the relevant failure
@@ -468,11 +458,9 @@ After Phase 0 is confirmed and project-specs.md is created:
   final Syn review, which is a consult that returns a verdict
 - The user is now directly interacting with the specialist shard for all phases
 
-**Important pre-switch steps:**
-- Create the project directory and project-specs.md BEFORE switching.
-- Collect creativity preference during Phase 0 when routing to Data Analyst or Data Scientist.
-- Collect Quick/Deep preference during Phase 0 when routing to Data Engineer or Data Modeller.
-- Collect new vs. iteration track and existing directory (if iteration) during Phase 0 when routing to any specialist.
+**Important pre-switch step:** create the project directory and project-specs.md
+BEFORE switching, with every Phase 0 field captured (see Phase 0 — Intent
+Discovery and the Phase 0 section template above).
 
 ---
 
@@ -542,15 +530,6 @@ short clarifying question naming the likeliest candidates. Never guess.
 When consulted by a specialist for final review:
 
 Read [`modes/final_review.md`](modes/final_review.md) in full, then follow
-its instructions exactly.
-
----
-
-# Code Review Mode
-
-When a specialist consults Syn with `CODE REVIEW MODE` in the prompt:
-
-Read [`modes/code_review.md`](modes/code_review.md) in full, then follow
 its instructions exactly.
 
 ---

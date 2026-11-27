@@ -7,13 +7,12 @@ A handoff is offered when the user wants a production monitoring dashboard built
 
 ## Phase 7: BI Monitoring Dashboard Handoff
 
-**BI monitoring dashboard handoff:**
-
 Ask the user: "Every production model benefits from a monitoring dashboard.
 Do you want a `bi_engineer_handoff.md` so the BI Engineer shard can build
 performance monitoring on top of this model?"
 
-{{gate kind=phase phase=7 id=ml-engineer-bi-engineer-handoff-phase-7}}
+{{gate kind=confirm phase=7 name=bi-handoff requires_human=true}}
+If the user declines, relay their reply with `gate_confirm` and `decision: changes_requested`, skip the file, and note "declined" in the specs.
 
 If yes, write `shards/<project_name>/bi_engineer_handoff.md`:
 
@@ -38,7 +37,7 @@ If yes, write `shards/<project_name>/bi_engineer_handoff.md`:
 - Dashboard type: Model monitoring / performance tracking
 
 ## Key Metrics to Display
-- Model performance: <offline metrics from Phase 5> — prediction distribution drift
+- Model performance: <offline metrics from Phase 4 evaluation strategy> — prediction distribution drift
 - Data quality: <feature drift indicators> — missing features, schema changes, data staleness
 - System health: <latency metric> p99 target: <latency target> | error rate | throughput
 - Business metrics: <online metrics from Phase 4 evaluation strategy>

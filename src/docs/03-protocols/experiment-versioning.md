@@ -24,7 +24,7 @@ If a git or dvc command fails, the specialist warns, records the failure in the 
 |---|---|
 | `experiments/results.json` | Top-level `versioningMode`, and per experiment a `checkpoint` object with `type`, `tag` and `commit`. |
 | `experiments/experiment_<N>_<name>.md` | The per-experiment result file. |
-| `experiments/experiment_summary.md` | Phase 3 summary. With versioning on it ends with a Versioning section: mode, checkpoints created, failures, tag prefix, and the commands to restore (`git checkout exp/<project_name>/<N>-<name>`) or list tags. |
+| `experiments/experiment_summary.md` | Phase 3 summary. With versioning on it ends with a Versioning section: mode, checkpoints created, failures, tag prefix, and the commands to restore (file-level: `git checkout exp/<project_name>/<N>-<name> -- <paths>`) or list tags. |
 
 ## Parallel branches
 

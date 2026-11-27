@@ -10,11 +10,11 @@ Check IDs (DS-01 through DS-12) are stable. Data Science validation blends data 
 
 The source query or dataset is documented, reproducible, and stable between runs.
 
-- The SQL or loading code lives on disk (in a `sql/` file, notebook cell, or pipeline module) — not just in memory.
+- The SQL lives on disk as a `.sql` file at the `## Placement` target (default `queries/`), loaded by the notebook — not just in memory.
 - Row count is stable on re-run, or the variance is characterized (e.g., "live data, +1-3% per day").
 - Schema matches what the analysis assumes. Unexpected columns or missing columns are a bug.
 
-**Observed format:** `source: sql/revenue_pull.sql | rows: 184,302 | rerun_delta: +12 rows (< 0.01%) ✓ | schema_diff: none`
+**Observed format:** `source: queries/revenue_pull.sql | rows: 184,302 | rerun_delta: +12 rows (< 0.01%) ✓ | schema_diff: none`
 
 ### DS-02 — Missingness Map
 
@@ -152,6 +152,8 @@ Rows are indexed by `(Track, Mode)` per `protocols/validation.md`.
 | **quick** | `experiment` (kept `[X]` iteration) | DS-11 + headline metric diff vs prior | DS-12 | rest |
 | **fixer** | (Mode omitted) | DS-11, DS-12 + "what changed, what didn't break" | — | rest |
 
+**Where each check is applied (deep track).** Phase 6 is write-only, so its gate validates only what can be checked without running anything: query and notebook files on disk, schemas and join paths traced, the planned sections present. Every check whose Observed value needs executed output (row counts and re-run stability in DS-01, missingness, outliers, metrics, the clean-kernel run in DS-11, the claims map in DS-12) is applied in Phase 7, after the notebook has been run. At the Phase 6 gate, record those as `n/a` with Notes `applied in Phase 7 (after the notebook run)`.
+
 Any skipped or inapplicable check must still appear as a row with `Pass/Fail: n/a` and a Notes cell giving the reason. See `protocols/validation.md` for the n/a convention.
 
 ## Artifacts Expected
@@ -162,7 +164,7 @@ For deep-track validation, the `### Artifacts` section should name at least:
 - `tests/` directory or `test_features.py` — DS-10 (when modeling)
 - `results/missingness_report.json` — DS-02
 - `results/claims_map.md` — DS-12
-- Source query file (`sql/<name>.sql`) — DS-01
+- Source query file (`queries/<name>.sql`, or the `## Placement` target) — DS-01
 
 For studies with modeling, add the ML Engineer's expected artifacts via DS-09.
 

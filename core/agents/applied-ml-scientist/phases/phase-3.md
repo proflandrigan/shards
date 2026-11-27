@@ -56,7 +56,7 @@ Please review from a statistical methodology perspective:
 Keep the review focused on experimental design and statistical inference.
 ```
 
-Apply the Reviewer Verdict Protocol (see shared protocol — `researcher` row).
+Apply the verdict per {{protocol reviewer_verdict}}.
 
 ### Decompose the plan into tasks
 

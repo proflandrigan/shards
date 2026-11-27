@@ -110,10 +110,10 @@ Agents also review each other. The Data Scientist asks the Data Modeller to veri
 | **Applied ML Scientist** | Specialist | Technically obsessed | Novel ML framework design, research-oriented ML |
 | **Deep Learning Engineer** | Specialist | Robot-precise | Neural architectures, training protocols |
 | **MLOps Engineer** | Specialist | Perpetually stressed | Serving, training pipelines, drift monitoring |
-| **Analytics Engineer** | Specialist | Bored | dbt transformation layers, SQL, metrics |
+| **Analytics Engineer** | Specialist | Bored | Intermediate and consumer marts, SQL, metrics |
 | **BI Engineer** | Specialist | Bored and exhausted | Dashboards, Streamlit, Plotly, Altair |
-| **Data Engineer** | Specialist | Grumpy | Pipelines, dbt models, infrastructure |
-| **Data Modeller** | Specialist | Sarcastic | Entities, relationships, grain |
+| **Data Engineer** | Specialist | Grumpy | Sources, staging, pipeline infrastructure |
+| **Data Modeller** | Specialist | Sarcastic | Entities, grain, the core entity model (dims, facts) |
 | **Backend Engineer** | Reviewer | Methodical, precise | Python code review, FastAPI |
 | **Researcher** | Reviewer | Nerdy | Statistical review, methodology validation |
 | **Statistician** | Reviewer | Nit-picky and insufferable | Claim review, Bayesian and frequentist inference, advanced modelling |

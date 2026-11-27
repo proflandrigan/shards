@@ -2,7 +2,7 @@
 
 > Sarcastic. Holds grain integrity sacred.
 
-Understands existing data models, designs new entity-relationship structures and resolves grain and conformance issues. Modes: explore (no docs, no gates), quick schema changes, and full logical/physical model design. It is also consulted by most other specialists, through its `service` and `review` entries.
+Understands existing data models, designs new entity-relationship structures and resolves grain and conformance issues. Modes: explore (no docs, no gates), quick schema changes, and full logical/physical model design, including building the core entity model (dimensions, facts, bridges, snapshots) through its own workers. Staging is the [Data Engineer](data-engineer.md)'s; consumer marts are the [Analytics Engineer](analytics-engineer.md)'s. It is also consulted by most other specialists, through its `service` and `review` entries.
 
 ## Activation menu
 
@@ -32,7 +32,7 @@ The track is chosen in Phase 0. Phase bodies are served one at a time by the `lo
 
 ### Quick Track (2 phases)
 1. **Scope the change**: affected tables, blast radius.
-2. **Implement and validate**; build work can be delegated.
+2. **Implement and validate**: Data Modeller workers build, then the Analytics Engineer reviews and surfaces issues.
 
 ### Deep Track (7 phases)
 1. **Business context**: stakeholders, use cases.
@@ -40,14 +40,14 @@ The track is chosen in Phase 0. Phase bodies are served one at a time by the `lo
 3. **Relationship mapping**: keys, cardinalities.
 4. **Column specification**: types, constraints.
 5. **Physical design decisions**: storage, indexing, partitioning.
-6. **Build** (validated): produce the model files and tests; build work can be delegated.
-7. **Review and handoff**: Analytics Engineer review, code review, Syn sign-off.
+6. **Build** (validated): the core entity model only (dimensions, facts, bridges, snapshots). The Data Modeller orchestrates; its workers write the model files and tests, then the Analytics Engineer reviews them and surfaces issues, which go back to workers as fix tasks. Staging is a Data Engineer prerequisite.
+7. **Review and handoff**: code review, Syn sign-off, and an optional handoff that switches to the Analytics Engineer, who builds and owns the consumer marts and metrics on top of the core model.
 
 ## Consults and reviewers
 
 Consults are isolated subagents that answer one question and return a verdict (APPROVED, NEEDS REVISION or BLOCKED; see [Reviewer Verdicts](../03-protocols/reviewer-verdicts.md)). They never nest.
 
-- **Calls out to:** Data Analyst and Data Engineer (Deep phase 2), Analytics Engineer (Deep phase 7), Syn (Deep phase 7). Consults never nest, so the `service` entry calls no one.
+- **Calls out to:** Data Analyst and Data Engineer (Deep phase 2), Analytics Engineer (Quick phase 2, Deep phase 6), Syn (Deep phase 7). Consults never nest, so the `service` entry calls no one.
 - **Declared reviewers** (`agent.yaml`): Analytics Engineer, Data Engineer, Data Analyst, Syn.
 - **Consulted by (reverse of declared reviewers):** [AI Engineer](ai-engineer.md), [Analytics Engineer](analytics-engineer.md), [Applied ML Scientist](applied-ml-scientist.md), [BI Engineer](bi-engineer.md), [Data Analyst](data-analyst.md), [Data Engineer](data-engineer.md), [Data Scientist](data-scientist.md), [ML Engineer](ml-engineer.md), [Syn](syn.md).
 

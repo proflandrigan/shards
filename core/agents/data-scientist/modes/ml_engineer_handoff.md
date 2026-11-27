@@ -5,7 +5,7 @@ A handoff is offered when the user wants a productionalized machine learning mod
 
 ---
 
-## Phase 7, Step 6: MAchine Learning Model Handoff
+## Phase 7, Step 6: Machine Learning Model Handoff
 
 Tell the user: "This study is complete, and the analysis stands on its own. But since
 you flagged this for productionization, the next step is handing off to the ML Engineer
@@ -31,9 +31,9 @@ Write the file `shards/<project_name>/ml_engineer_handoff.md`:
 - Experiment plan: <mode (Harness | Single approach), approaches (baseline and candidates), recommended lead, decision rule — from Phase 4>
 - Interpretability requirement: <from Phase 4>
 
-## Results (from Phase 6)
-- Best metric: <metric: value>
-- Experiment harness: <shards/<project_name>/experiments/ and its leaderboard.md, or "None (single approach)"; study was write-only, so the harness has not been run>
+## Results (Phase 6 build, Phase 7 execution checks)
+- Best metric: <metric: value from the executed notebook (Phase 7 execution checks), or "not run">
+- Experiment harness: <shards/<project_name>/experiments/ and its leaderboard.md, or "None (single approach)"; say whether it was run in the Phase 7 execution checks>
 - Notebook: <path from Phase 6>
 - Query files: <paths from Phase 6>
 
